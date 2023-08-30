@@ -66,19 +66,12 @@ class DashboardController extends Controller
     }
     public function totalInfo(Request $request)
     {
-        $expenses=ExpensesType::all();
         $car = Car::all();
 
         $data = [
-        'debtAccount'=>$this->debtAccount->wallet->balance,
-        'transfersAccount'=>$this->transfersAccount->wallet->balance,
-        'outAccount'=>$this->outAccount->wallet->balance,
-        'inAccount'=>$this->inAccount->wallet->balance,
-        'mainAccount'=>$this->mainAccount->wallet->balance,
-        'outSupplier'=>$this->outSupplier->wallet->balance,
-        'debtSupplier'=>$this->debtSupplier->wallet->balance,
-        'allCars'=>$car->count(),
-        'carsInStock'=>$car->where('client_id',null)->count()
+        'mainAccount'=>$this->mainAccount->wallet->balance??0,
+        'allCars'=>$car->count()??0,
+        'carsInStock'=>$car->where('client_id',null)->count()??0
         ];
         return response()->json(['data'=>$data]); 
 
