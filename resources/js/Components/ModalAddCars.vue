@@ -5,6 +5,13 @@ const props = defineProps({
   show: Boolean,
   formData: Object,
 });
+function getTodayDate() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 </script>
   <template>
   <Transition name="modal">
@@ -86,6 +93,17 @@ const props = defineProps({
                   type="number"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.car_number"
+                />
+              </div>
+              <div className="mb-4 mx-1">
+                <label class="dark:text-gray-200" for="pin">
+                  {{ $t("expenses") }}</label
+                >
+                <input
+                  id="expenses"
+                  type="number"
+                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  v-model="formData.expenses"
                 />
               </div>
               <div className="mb-4 mx-1">
@@ -195,6 +213,7 @@ const props = defineProps({
                 <button
                   class="modal-default-button py-3 bg-rose-500 rounded col-6"
                   @click="
+                    formData.date=formData.date ? formData.date : getTodayDate()
                     $emit('a', formData);
                     formData = '';
                   "

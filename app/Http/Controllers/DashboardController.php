@@ -64,6 +64,16 @@ class DashboardController extends Controller
         'mainAccount'=>$this->mainAccount->wallet->balance,'allCars'=>$allCars ]);   
 
     }
+    public function sales(Request $request)
+    {
+        $car = Car::all();
+    
+        $allCars = $car->count();
+
+        return Inertia::render('Sales', ['url'=>$this->url,
+        'mainAccount'=>$this->mainAccount->wallet->balance,'allCars'=>$allCars ]);   
+
+    }
     public function totalInfo(Request $request)
     {
         $car = Car::all();
@@ -226,7 +236,9 @@ class DashboardController extends Controller
             'total'=> $total_amount,
             'paid'=> $request->paid,
             'year'=> $request->year,
-            'car_color'=> $request->car_color
+            'car_color'=> $request->car_color,
+            'date'=> $request->date,
+            'expenses'=> $request->expenses,
              ]);
              if($request->paid??0){
                 if($request->paid-$total_amount >0){
@@ -297,7 +309,12 @@ class DashboardController extends Controller
                 'note', 'image', 'user_id', 'no',
                 'car_owner', 'car_type', 'vin', 'car_number', 'dinar',
                 'dolar_price', 'dolar_custom', 'shipping_dolar',
-                'coc_dolar', 'checkout', 'paid'
+                'coc_dolar', 'checkout', 'paid','dinar_s',
+                'dolar_price_s',
+                'dolar_custom_s',
+                'checkout_s',
+                'shipping_dolar_s','expenses',
+                'coc_dolar_s',
             ];
 
             // Extract the relevant fields from the $request object

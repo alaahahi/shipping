@@ -36,9 +36,18 @@ const switchLocale = (locale) => {
                   :href="route('dashboard')"
                   :active="route().current('dashboard')"
                 >
-                  {{ $t("home") }}
+                  {{ $t("purchases") }}
                 </NavLink>
               </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <NavLink
+                  :href="route('sales')"
+                  :active="route().current('sales')"
+                >
+                  {{ $t("sales") }}
+                </NavLink>
+              </div>
+              
               <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                 <NavLink
                   :href="route('users.index')"

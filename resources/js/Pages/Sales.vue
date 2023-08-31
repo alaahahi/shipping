@@ -34,55 +34,41 @@ const columns = [
   { prop: 'car_color',name:  t('car_color')},
   { prop: "vin", name:  t('vin') },
   { prop: "car_number", name:  t('car_number')},
-  { prop: "dinar", name:  t('dinar'), columnType: 'numeric'  },
-  { prop: "dolar_price", name:  t('dolar_price') ,columnType: 'numeric'   },
+  { prop: "dinar_s", name:  t('dinar'), columnType: 'numeric'  },
+  { prop: "dolar_price_s", name:  t('dolar_price') ,columnType: 'numeric'   },
   {
     prop: "dolar_custom",
     name:  t('dolar_custom'),
     columnType: 'numeric',
     readonly: true, // Set the column as readonly
     cellTemplate: (createElement,props) => {
-      const dinar = props.data[props.rowIndex].dinar || 0;
-      const dolar_price = props.data[props.rowIndex].dolar_price || 0;
-      return (dinar / dolar_price).toFixed(2) || 0;
+      const dinar_s = props.data[props.rowIndex].dinar_s || 0;
+      const dolar_price_s = props.data[props.rowIndex].dolar_price_s || 0;
+      return ((dinar_s / dolar_price_s)||0).toFixed(2) ;
     },
   },
   { prop: "note", name:  t('note') },
-  { prop: "shipping_dolar", name:  t('shipping_dolar'),columnType: 'numeric'  },
-  { prop: "coc_dolar", name:  t('coc_dolar'),columnType: 'numeric'  },
-  { prop: "checkout", name:  t('checkout') ,columnType: 'numeric' },
+  { prop: "shipping_dolar_s", name:  t('shipping_dolar'),columnType: 'numeric'  },
+  { prop: "coc_dolar_s", name:  t('coc_dolar'),columnType: 'numeric'  },
+  { prop: "checkout_s", name:  t('checkout') ,columnType: 'numeric' },
   { prop: "expenses", name:  t('expenses') ,columnType: 'numeric' },
+
   {
     prop: "total",
     name:  t('total'),
     columnType: 'numeric',
     readonly: true, // Set the column as readonly
     cellTemplate: (createElement,props) => {
-      const checkout = props.data[props.rowIndex].checkout || 0;
-      const shipping = props.data[props.rowIndex].shipping_dolar || 0;
-      const coc_dolar = props.data[props.rowIndex].coc_dolar || 0;
-      const dinar = props.data[props.rowIndex].dinar || 0;
-      const dolar_price = props.data[props.rowIndex].dolar_price || 0;
+      const checkout_s = props.data[props.rowIndex].checkout_s || 0;
+      const shipping_s= props.data[props.rowIndex].shipping_dolar_s || 0;
+      const coc_dolar_s = props.data[props.rowIndex].coc_dolar_s || 0;
+      const dinar_s = props.data[props.rowIndex].dinar_s || 0;
+      const dolar_price_s = props.data[props.rowIndex].dolar_price_s || 0;
       const expenses = props.data[props.rowIndex].expenses || 0;
-      return ((checkout + shipping+coc_dolar+expenses+(dinar/dolar_price)||0).toFixed(0));
+      return ((checkout_s + shipping_s+coc_dolar_s+expenses+(dinar_s/dolar_price_s)||0).toFixed(0));
     },
   },
   { prop: "paid", name:  t('paid') ,columnType: 'numeric' },
-  {
-    prop: "profit",
-    name:  t('profit'),
-    columnType: 'numeric',
-    readonly: true, // Set the column as readonly
-    cellTemplate: (createElement,props) => {
-      const checkout = props.data[props.rowIndex].checkout || 0;
-      const shipping = props.data[props.rowIndex].shipping_dolar || 0;
-      const coc_dolar = props.data[props.rowIndex].coc_dolar || 0;
-      const dinar = props.data[props.rowIndex].dinar || 0;
-      const dolar_price = props.data[props.rowIndex].dolar_price || 0;
-      const paid = props.data[props.rowIndex].paid || 0;
-      return (paid-(checkout + shipping +coc_dolar+(dinar/dolar_price))).toFixed(0);
-    },
-  },
   { prop: "date", name:  t('date'),columnType: "date",size: 130, },
   
 ];
@@ -531,7 +517,7 @@ getResultsCar();
                                {{ $t('genExpenses') }}
                           </button>
                         </div> -->
-                        <div>
+                        <!-- <div>
                           <button
                             type="button"
                             @click="openAddCar()"
@@ -539,7 +525,7 @@ getResultsCar();
                             className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-green-500 rounded">
                             {{ $t('addCar') }} 
                           </button>
-                        </div>
+                        </div> -->
                         <!-- <div>
                           <a
                             type="button"
@@ -676,16 +662,16 @@ getResultsCar();
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_color }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.vin }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_number }}</td> 
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dinar  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dolar_price}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.dinar / car.dolar_price).toFixed(2) }}</td> 
+                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dinar_s  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dolar_price_s}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.dinar_s / car.dolar_price_s).toFixed(2) }}</td> 
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.note }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.shipping_dolar}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.coc_dolar  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.checkout}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.checkout+car.shipping_dolar+ car.coc_dolar +(car.dinar / car.dolar_price)).toFixed(1) }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.shipping_dolar_s}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.coc_dolar_s  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.checkout_s}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.checkout_s+car.shipping_dolar_s+ car.coc_dolar_s +(car.dinar_s / car.dolar_price_s)).toFixed(1) }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.paid}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.paid-(car.checkout+car.shipping_dolar+ car.coc_dolar +(car.dinar / car.dolar_price))).toFixed(1)  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.paid-(car.checkout_s+car.shipping_dolar_s+ car.coc_dolar_s +(car.dinar_s / car.dolar_price_s))).toFixed(1)  }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.date  }}</td>
                                     <!-- <td className="border dark:border-gray-800 text-start px-2 py-2">
                                     <button

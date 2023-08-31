@@ -60,7 +60,14 @@ class Car extends Model
         'profit	',
         'date',
         'car_color',
-        'year'
+        'year',
+        'expenses',
+        'dinar_s',
+        'dolar_price_s',
+        'dolar_custom_s',
+        'checkout_s',
+        'shipping_dolar_s',
+        'coc_dolar_s',
     ];
     public function user()
     {
