@@ -4,14 +4,16 @@ import { ref, computed } from "vue";
 const props = defineProps({
   show: Boolean,
   formData: Object,
+  client: Array,
 });
 function getTodayDate() {
   const today = new Date();
   const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
+let showClient = ref(false);
 </script>
   <template>
   <Transition name="modal">
@@ -21,24 +23,82 @@ function getTodayDate() {
           <div class="modal-header">
             <slot name="header">
               <h2 class="text-center dark:text-gray-200">
-              {{ $t("add_car") }}
-            </h2>
+                {{ $t("add_car") }}
+              </h2>
             </slot>
           </div>
           <div class="modal-body">
-         
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 lg:gap-2">
-              <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
-                  {{ $t("car_owner") }}</label
-                >
+            <div
+              class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2"
+            >
+              <div class="mb-4 mx-1">
+                <label class="dark:text-gray-200" for="color_id">{{
+                  $t("car_owner")
+                }}</label>
+                <div class="relative">
+                  <select
+                    v-if="!showClient"
+                    v-model="formData.client_id"
+                    id="color_id"
+                    class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  >
+                    <option selected disabled>
+                      {{ $t("selectCustomer") }}
+                    </option>
+                    <option
+                      v-for="(card, index) in client"
+                      :key="index"
+                      :value="card.id"
+                    >
+                      {{ card.name }}
+                    </option>
+                  </select>
+                  <button
+                    type="button"
+                    @click="
+                      showClient = true;
+                      formData.client_name = '';
+                    "
+                    v-if="!showClient"
+                    class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-green-500 rounded-tl-lg rounded-bl-lg"
+                  >
+                    {{ $t("addCustomer") }}
+                  </button>
+                </div>
+                <div class="relative">
+                  <input
+                    id="note"
+                    v-if="showClient"
+                    type="text"
+                    class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                    v-model="formData.client_name"
+                  />
+                  <button
+                    type="button"
+                    @click="
+                      showClient = false;
+                      formData.client = '';
+                    "
+                    v-if="showClient"
+                    class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-pink-500 rounded-tl-lg rounded-bl-lg"
+                  >
+                    {{ $t("selectCustomer") }}
+                  </button>
+                </div>
+              </div>
+              <div className="mb-4 mx-1" v-if="showClient">
+                {{ $t("phoneNumber") }}
                 <input
-                  id="car_owner"
-                  type="text"
+                  id="note"
+                  type="number"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="formData.car_owner"
+                  v-model="formData.client_phone"
                 />
               </div>
+            </div>
+            <div
+              class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 lg:gap-2"
+            >
               <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="pin">
                   {{ $t("car_type") }}</label
@@ -85,7 +145,7 @@ function getTodayDate() {
                 />
               </div>
               <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
+                <label class="dark:text-gray-200" for="car_number">
                   {{ $t("car_number") }}</label
                 >
                 <input
@@ -96,7 +156,7 @@ function getTodayDate() {
                 />
               </div>
               <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
+                <label class="dark:text-gray-200" for="expenses">
                   {{ $t("expenses") }}</label
                 >
                 <input
@@ -107,7 +167,7 @@ function getTodayDate() {
                 />
               </div>
               <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
+                <label class="dark:text-gray-200" for="dinar">
                   {{ $t("dinar") }}</label
                 >
                 <input
@@ -118,7 +178,7 @@ function getTodayDate() {
                 />
               </div>
               <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
+                <label class="dark:text-gray-200" for="dolar_price">
                   {{ $t("dolar_price") }}</label
                 >
                 <input
@@ -129,7 +189,7 @@ function getTodayDate() {
                 />
               </div>
               <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
+                <label class="dark:text-gray-200" for="shipping_dolar">
                   {{ $t("shipping_dolar") }}</label
                 >
                 <input
@@ -140,7 +200,7 @@ function getTodayDate() {
                 />
               </div>
               <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
+                <label class="dark:text-gray-200" for="coc_dolar">
                   {{ $t("coc_dolar") }}</label
                 >
                 <input
@@ -151,7 +211,7 @@ function getTodayDate() {
                 />
               </div>
               <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
+                <label class="dark:text-gray-200" for="checkout">
                   {{ $t("checkout") }}</label
                 >
                 <input
@@ -162,7 +222,7 @@ function getTodayDate() {
                 />
               </div>
               <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
+                <label class="dark:text-gray-200" for="paid">
                   {{ $t("paid") }}</label
                 >
                 <input
@@ -173,7 +233,7 @@ function getTodayDate() {
                 />
               </div>
               <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
+                <label class="dark:text-gray-200" for="date">
                   {{ $t("date") }}</label
                 >
                 <input
@@ -185,11 +245,10 @@ function getTodayDate() {
               </div>
             </div>
 
-
             <div className="mb-4 mx-1">
-              <label class="dark:text-gray-200" for="note">{{
-                $t("note")
-              }}</label>
+              <label class="dark:text-gray-200" for="note">
+                {{$t("note")}}
+              </label>
               <input
                 id="note"
                 type="text"
@@ -213,12 +272,13 @@ function getTodayDate() {
                 <button
                   class="modal-default-button py-3 bg-rose-500 rounded col-6"
                   @click="
-                    formData.date=formData.date ? formData.date : getTodayDate()
+                    formData.date = formData.date
+                      ? formData.date
+                      : getTodayDate();
                     $emit('a', formData);
                     formData = '';
                   "
-                  :disabled="!(formData.car_owner)"
-                >
+                  :disabled="(!formData.client_id)&&(!formData.client_name)">
                   {{ $t("yes") }}
                 </button>
               </div>

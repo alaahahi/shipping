@@ -47,7 +47,14 @@ const switchLocale = (locale) => {
                   {{ $t("sales") }}
                 </NavLink>
               </div>
-              
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <NavLink
+                  :href="route('clients')"
+                  :active="route().current('clients')"
+                >
+                  {{ $t("clients") }}
+                </NavLink>
+              </div>
               <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                 <NavLink
                   :href="route('users.index')"
@@ -64,14 +71,7 @@ const switchLocale = (locale) => {
                   {{ $t("allCars") }}
                 </NavLink>
               </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                <NavLink
-                  :href="route('clients')"
-                  :active="route().current('clients')"
-                >
-                  {{ $t("clients") }}
-                </NavLink>
-              </div>
+             
       
               <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                 <NavLink

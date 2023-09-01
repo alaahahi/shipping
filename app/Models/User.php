@@ -80,4 +80,8 @@ class User extends Authenticatable
     {
         return $this->hasOne(Wallet::class);
     }
+    public function name()
+    {
+        return $this->hasOne(Name::class);
+    }
 }

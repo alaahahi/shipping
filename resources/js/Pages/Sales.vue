@@ -27,14 +27,14 @@ let data = ref({});
 const columnTypes = ref({ 'date': new Plugin(),'numeric': new NumberColumnType('0,0') });
 const toast = useToast();
 const columns = [
-  { prop: "no", name: t('no'),size:50,  },
-  { prop: "car_owner", name:  t('car_owner') },
+{ prop: "no", name: t('no'),size:50,  },
+  { prop: "client", name:  t('car_owner') ,size:150,readonly: true},
   { prop: "car_type", name:  t('car_type') },
   { prop: "year", name:  t('year'), size:70},
   { prop: 'car_color',name:  t('car_color')},
-  { prop: "vin", name:  t('vin') },
+  { prop: "vin", name:  t('vin'),size:150 },
   { prop: "car_number", name:  t('car_number')},
-  { prop: "dinar_s", name:  t('dinar'), columnType: 'numeric'  },
+  { prop: "dinar", name:  t('dinar'), columnType: 'numeric'  },
   { prop: "dolar_price_s", name:  t('dolar_price') ,columnType: 'numeric'   },
   {
     prop: "dolar_custom",
@@ -574,7 +574,7 @@ getResultsCar();
                       </div>
                       <div>
                         <div>
-                        <revo-grid  theme="material" :columnTypes="columnTypes"  exporting="true" :source="car.data" :columns="columns" ref="grid"  style="height: 480px;direction: ltr;" @afteredit="handleEdit"   />
+                        <revo-grid  rowClass="background" theme="material" :columnTypes="columnTypes"  exporting="true" :source="car.data" :columns="columns" ref="grid"  style="height: 480px;direction: ltr;" @afteredit="handleEdit"   />
                         <div class="mt-3 text-center" style="direction: ltr;">
                           <TailwindPagination
                             :data="car"
@@ -975,5 +975,8 @@ width: unset !important;
 }
 .rgRow > div {
   text-align: center !important;
+}
+.rgCell.disabled {
+    background-color: unset !important;
 }
 </style>

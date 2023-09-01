@@ -57,7 +57,7 @@ class TransfersController extends Controller
     }
     public function index(Request $request)
     {
-        $users = User::where('id', $this->mainAccount->id)->get();
+        $users = User::where('id', $this->mainAccount->id)->orWhere('type_id',$this->userClient)->get();
         return Inertia::render('FormRegistrationCourt', ['url'=>$this->url,'users'=>$users]);
 
     }

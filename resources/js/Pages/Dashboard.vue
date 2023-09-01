@@ -23,16 +23,24 @@ const {t} = useI18n();
 
 import NumberColumnType from '@revolist/revogrid-column-numeral'; // import library
 
+
+const props = defineProps({
+
+  client:Array,
+
+});
+
+
 let data = ref({});
 const columnTypes = ref({ 'date': new Plugin(),'numeric': new NumberColumnType('0,0') });
 const toast = useToast();
 const columns = [
   { prop: "no", name: t('no'),size:50,  },
-  { prop: "car_owner", name:  t('car_owner') },
+  { prop: "client", name:  t('car_owner') ,size:150,readonly: true},
   { prop: "car_type", name:  t('car_type') },
   { prop: "year", name:  t('year'), size:70},
   { prop: 'car_color',name:  t('car_color')},
-  { prop: "vin", name:  t('vin') },
+  { prop: "vin", name:  t('vin'),size:150 },
   { prop: "car_number", name:  t('car_number')},
   { prop: "dinar", name:  t('dinar'), columnType: 'numeric'  },
   { prop: "dolar_price", name:  t('dolar_price') ,columnType: 'numeric'   },
@@ -80,7 +88,8 @@ const columns = [
       const dinar = props.data[props.rowIndex].dinar || 0;
       const dolar_price = props.data[props.rowIndex].dolar_price || 0;
       const paid = props.data[props.rowIndex].paid || 0;
-      return (paid-(checkout + shipping +coc_dolar+(dinar/dolar_price))).toFixed(0);
+      const expenses = props.data[props.rowIndex].expenses || 0;
+      return (paid-(checkout+expenses + shipping +coc_dolar+(dinar/dolar_price))).toFixed(0);
     },
   },
   { prop: "date", name:  t('date'),columnType: "date",size: 130, },
@@ -357,10 +366,7 @@ getResultsCar();
     <ModalAddCar
             :formData="formData"
             :show="showModalCar ? true : false"
-            :company="company"
-            :name="name"
-            :color="color"
-            :user="user"
+            :client="client"
             :carModel="carModel"
             @a="confirmCar($event)"
             @close="showModalCar = false"
@@ -588,7 +594,7 @@ getResultsCar();
                       </div>
                       <div>
                         <div>
-                        <revo-grid  theme="material" :columnTypes="columnTypes"  exporting="true" :source="car.data" :columns="columns" ref="grid"  style="height: 480px;direction: ltr;" @afteredit="handleEdit"   />
+                        <revo-grid  rowClass="background" theme="material" :columnTypes="columnTypes"  exporting="true" :source="car.data" :columns="columns" ref="grid"  style="height: 480px;direction: ltr;" @afteredit="handleEdit"   />
                         <div class="mt-3 text-center" style="direction: ltr;">
                           <TailwindPagination
                             :data="car"
@@ -989,5 +995,8 @@ width: unset !important;
 }
 .rgRow > div {
   text-align: center !important;
+}
+.rgCell.disabled {
+    background-color: unset !important;
 }
 </style>

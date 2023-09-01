@@ -59,8 +59,8 @@ class DashboardController extends Controller
         $car = Car::all();
     
         $allCars = $car->count();
-
-        return Inertia::render('Dashboard', ['url'=>$this->url,
+        $client = User::where('type_id', $this->userClient)->get();
+        return Inertia::render('Dashboard', ['client'=>$client,
         'mainAccount'=>$this->mainAccount->wallet->balance,'allCars'=>$allCars ]);   
 
     }
@@ -193,6 +193,10 @@ class DashboardController extends Controller
     }
     public function addCars(Request $request)
     {
+        $client_id =$request->client_id;
+    
+
+
         $car_id=$request->id??0;
 
         $maxNo = Car::max('no');
@@ -208,18 +212,26 @@ class DashboardController extends Controller
         $coc_dolar=$request->coc_dolar ?? 0;
         $dinar=$request->dinar ?? 0;
         $dolar_price=$request->dolar_price ?? 1;
+        $expenses=$request->expenses ?? 0;
+        $paid=$paid ?? 0;
         if($dolar_price==0){
             $dolar_price=1;
         }
-        $total_amount = ($checkout+$shipping_dolar+ $coc_dolar +($dinar / $dolar_price)) ??0;
-        if($request->image ){
-            foreach ($request->image as $image) {
-                $imageName = $image->getClientOriginalName().$no;
-                $filename = pathinfo($imageName, PATHINFO_FILENAME);
-                $imagePath = UploadHelper::upload('image', $image, $filename, 'storage/car');
-                $images[] = $imagePath;
-            }    
+        $total_amount = ($checkout+$shipping_dolar+$expenses+ $coc_dolar +($dinar / $dolar_price));
+        $dolar_custom=$dinar/$dolar_price;
+        if( $client_id==0){
+            $client = new User;
+            $client->name = $request->client_name;
+            $client->phone = $request->client_phone;
+            $client->type_id = $this->userClient;
+            $client->save();
+            Wallet::create(['user_id' => $client->id,'balance'=>$total_amount-$paid]);
+            $client_id=$client->id;
+        }else{
+            $wallet = Wallet::where('user_id',$client_id)->first();
+            $wallet->increment('balance',$total_amount-$paid); 
         }
+
         $car=Car::create([
             'note'=> $request->note??'',
             'no'=>$no,
@@ -229,24 +241,26 @@ class DashboardController extends Controller
             'car_number'=> $request->car_number,
             'dinar'=> $request->dinar,
             'dolar_price'=> $request->dolar_price,
-            'dolar_custom'=> $request->dolar_custom,
+            'dolar_custom'=> $dolar_custom,
             'shipping_dolar'=> $request->shipping_dolar,
             'coc_dolar'=> $request->coc_dolar,
             'checkout'=> $request->checkout,
             'total'=> $total_amount,
-            'paid'=> $request->paid,
+            'paid'=> $paid,
             'year'=> $request->year,
             'car_color'=> $request->car_color,
             'date'=> $request->date,
             'expenses'=> $request->expenses,
+            'profit'=> $paid-$total_amount,
+            'client_id'=>$client_id
              ]);
-             if($request->paid??0){
-                if($request->paid-$total_amount >0){
-                    $desc=trans('text.payCar').' '.$total_amount.trans('text.payDone').($request->paid);
-                    $this->accountingController->increaseWallet(($request->paid-$total_amount), $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
+             if($paid){
+                if($paid-$total_amount >0){
+                    $desc=trans('text.payCar').' '.$total_amount.trans('text.payDone').($paid);
+                    $this->accountingController->increaseWallet(($paid-$total_amount), $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
                 }else
                 $desc=trans('text.payCar').' '.$total_amount.trans('text.payDone');
-                $this->accountingController->decreaseWallet(($request->paid-$total_amount), $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
+                $this->accountingController->decreaseWallet(($paid-$total_amount), $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
              }else{
                 $desc=trans('text.payCar').' '.$total_amount.trans('text.payDone');
                 $this->accountingController->decreaseWallet(($total_amount), $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
@@ -481,7 +495,7 @@ class DashboardController extends Controller
         if($type==0){
             $data =    $data->where('results', $type);
         }
-        $data =$data->orderBy('no', 'DESC')->paginate(10);
+        $data =$data->orderBy('no', 'DESC')->paginate(10)->toArray();
         return Response::json($data, 200);
     }
     public function getIndexCarSearch()
