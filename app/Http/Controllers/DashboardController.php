@@ -64,13 +64,25 @@ class DashboardController extends Controller
         'mainAccount'=>$this->mainAccount->wallet->balance,'allCars'=>$allCars ]);   
 
     }
+    public function purchases(Request $request)
+    {
+        $car = Car::all();
+    
+        $allCars = $car->count();
+        $client = User::where('type_id', $this->userClient)->get();
+
+        return Inertia::render('purchases', ['client'=>$client,
+        'mainAccount'=>$this->mainAccount->wallet->balance,'allCars'=>$allCars ]);   
+
+    }
     public function sales(Request $request)
     {
         $car = Car::all();
     
         $allCars = $car->count();
+        $client = User::where('type_id', $this->userClient)->get();
 
-        return Inertia::render('Sales', ['url'=>$this->url,
+        return Inertia::render('Sales', ['client'=>$client,
         'mainAccount'=>$this->mainAccount->wallet->balance,'allCars'=>$allCars ]);   
 
     }
@@ -487,6 +499,7 @@ class DashboardController extends Controller
     }
     public function getIndexCar()
     {
+        $user_id =$_GET['user_id'] ?? '';
         $data =  Car::with('carmodel')->with('name')->with('color')->with('company')->with('client')->with('transactions');
         $type =$_GET['type'] ?? '';
         if($type){
@@ -494,6 +507,9 @@ class DashboardController extends Controller
         }
         if($type==0){
             $data =    $data->where('results', $type);
+        }
+        if($user_id){
+            $data =    $data->where('client_id',  $user_id);
         }
         $data =$data->orderBy('no', 'DESC')->paginate(10)->toArray();
         return Response::json($data, 200);

@@ -184,8 +184,8 @@ const formatter = ref({
   date: 'D/MM/YYYY',
   month: 'MM'
 })
-const getResultsCar = async (page = 1) => {
-    const response = await fetch(`/getIndexCar?page=${page}`);
+const getResultsCar = async (user_id='',page = 1) => {
+    const response = await fetch(`/getIndexCar?page=${page}&user_id=${user_id}`);
     car.value = await response.json();
 }
 const getResultsCarSearch = async (q='',page = 1) => {
@@ -344,7 +344,10 @@ function confirmDelCar(V) {
 
 
 }
-
+function getDarkModePreference() {
+  const darkModePreference = localStorage.getItem('darkMode');
+  return darkModePreference==='true' ?'darkCompact':'compact'; // Convert the string to a boolean
+}
 getResultsCar();
 </script>
 
@@ -470,7 +473,7 @@ getResultsCar();
             <div class="bg-white overflow-hidden shadow-sm ">
                 <div class="p-6  dark:bg-gray-900">
                     <div class="flex flex-col">
-                      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 lg:gap-1">
+                      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2 lg:gap-1">
                         <div>
                           <form class="flex items-center max-w-5xl">
                             <label  class="dark:text-gray-200" for="simple-search"  ></label>
@@ -537,7 +540,7 @@ getResultsCar();
                                {{ $t('genExpenses') }}
                           </button>
                         </div> -->
-                        <div>
+                        <!-- <div>
                           <button
                             type="button"
                             @click="openAddCar()"
@@ -545,7 +548,7 @@ getResultsCar();
                             className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-green-500 rounded">
                             {{ $t('addCar') }} 
                           </button>
-                        </div>
+                        </div> -->
                         <!-- <div>
                           <a
                             type="button"
@@ -565,6 +568,13 @@ getResultsCar();
                           </button>
                         </div> -->
                         <div>
+                            <InputLabel class="mb-1" for="invoice_number" value="حساب" />
+                            <select @change="getResultsCar(user_id)" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
+                              <option value="0" disabled>اختار المندوب</option>
+                              <option v-for="(user, index) in client" :key="index" :value="user.id">{{ user.name }}</option>
+                            </select>
+                        </div>
+                        <div class="text-center">
                           <button
                             type="button"
                             @click="openAddToBox()"
@@ -573,181 +583,21 @@ getResultsCar();
                             {{ $t('addToTheFund') }}  
                           </button>
                         </div>
-                        <div>
+                        <div  class="text-center">
                           <button
                             type="button"
                             @click="openAddFromBox()"
-                            style="min-width:250px;"
+                            style="min-width:150px;"
                             className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-pink-600 rounded">
                             {{ $t('withdrawFromTheFund') }}   
                           </button>
                         </div>
-                        <!-- <div>
-                          <a
-                            type="button"
-                            :href="route('clients')"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 mx-2 text-center py-2 font-bold text-white bg-red-700 rounded">
-                            {{ $t('clients') }}  
-                          </a>
-                        </div> -->
+
                       </div>
                       <div>
-                        <div>
-                        <revo-grid  rowClass="background" theme="material" :columnTypes="columnTypes"  exporting="true" :source="car.data" :columns="columns" ref="grid"  style="height: 480px;direction: ltr;" @afteredit="handleEdit"   />
-                        <div class="mt-3 text-center" style="direction: ltr;">
-                          <TailwindPagination
-                            :data="car"
-                            @pagination-change-page="getResultsCar"
-                            :limit ="10"
-                            :item-classes="['bg-white','dark:bg-gray-600','text-gray-500','dark:text-gray-300','border-gray-300','dark:border-gray-900','hover:bg-gray-200']"
-                            :activeClasses="[  'bg-rose-50','border-rose-500','text-rose-600',]"
-                          />
-                        </div>
-
-                        </div>
+                    
                         <div class="relative overflow-x-auto shadow-md sm:rounded-lg" v-if="false">
-                          <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
-                              <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
-                                  <tr>
-                                      <th scope="col" class="px-1 py-3 text-base	" >
-                                        {{ $t('no') }}  
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base	">
-                                        {{ $t('car_owner') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('car_type') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('year') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('color') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('vin') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('car_number') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('dinar') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('dolar_price') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('dolar_custom') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('note') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('shipping_dolar') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('coc_dolar') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('checkout') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('total') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('paid') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('profit') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('date') }}
-                                      </th>
-
-
-                                      <!-- <th scope="col" class="px-1 py-3 text-base" style="width: 350px;">
-                                        {{ $t('execute') }}
-                                      </th> -->
-                                  </tr>
-                              </thead>
-                              <tbody>
-
-
-                                <tr v-for="car in car.data" :key="car.id" :class="car.results == 0?'bg-gray-100 dark:bg-gray-600':car.results == 1 ?'bg-red-100 dark:bg-red-900':car.results == 2 ?'bg-green-100 dark:bg-green-900':''"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.no }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_owner }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_type}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.year}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_color }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.vin }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_number }}</td> 
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dinar  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dolar_price}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.dinar / car.dolar_price).toFixed(2) }}</td> 
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.note }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.shipping_dolar}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.coc_dolar  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.checkout}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.checkout+car.shipping_dolar+ car.coc_dolar +(car.dinar / car.dolar_price)).toFixed(1) }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.paid}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.paid-(car.checkout+car.shipping_dolar+ car.coc_dolar +(car.dinar / car.dolar_price))).toFixed(1)  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.date  }}</td>
-                                    <!-- <td className="border dark:border-gray-800 text-start px-2 py-2">
-                                    <button
-                                      tabIndex="1"
-                                      
-                                      class="px-2 py-1 text-base text-white mx-1 bg-slate-500 rounded"
-                                      @click="openAddCar(car)"
-                                    >
-                                      {{ $t('edit') }}
-                                    </button>
-          
-                                    <button
-                                      tabIndex="1"
-                                      class="px-4 py-1 text-base text-white mx-1 bg-purple-500 rounded"
-                                      v-if="car.results == 0"
-                                      @click="openSaleCar(car)"
-                                    >
-                                      {{ $t('sell') }}
-                                    </button>
-                                    <button
-                                      tabIndex="1"
-                                      class="px-2 py-1 text-base text-white mx-1 bg-blue-600 rounded"
-                                      @click="openAddExpenses(car)"
-                                    >
-                                      {{ $t('expenses') }}
-                                    </button>
-                                    <button
-                                      tabIndex="1"
-                                      class="px-2 py-1 text-base text-white mx-1 bg-green-500 rounded"
-                                      v-if="car.results != 0 && (car.pay_price - car.paid_amount_pay == 0)"
-                                      @click="openAddCarPayment(car)"
-                                    >
-                                      {{ $t('view_payments') }}
-                                    </button>
-                                    <button
-                                      tabIndex="1"
-                                      class="px-2 py-1 text-base text-white mx-1 bg-red-700 rounded"
-                                      v-if="car.results == 1 && (car.pay_price - car.paid_amount_pay != 0)"
-                                      @click="openAddCarPayment(car)"
-                                    >
-                                      {{ $t('add_payment') }}
-                                    </button>
-
-                                    <button
-                                      tabIndex="1"
-                                      
-                                      class="px-2 py-1 text-base text-white mx-1 bg-orange-500 rounded"
-                                      @click="openModalDelCar(car)"
-                                    >
-                                      {{ $t('delete') }}
-                                    </button>
-
-                                    </td> -->
-                                </tr>
-                              </tbody>
-                          </table>
+                
                         </div>
              
                       </div>
@@ -998,5 +848,8 @@ width: unset !important;
 }
 .rgCell.disabled {
     background-color: unset !important;
+}
+.rgCell{
+  padding-top: 7px !important;
 }
 </style>
