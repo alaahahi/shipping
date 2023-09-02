@@ -709,7 +709,7 @@ getResultsCar();
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.coc_dolar_s  }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.checkout_s}}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.expenses}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.total_s }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.total_s).toFixed(0) }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.paid}}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.date  }}</td>
                                      <td className="border dark:border-gray-800 text-start px-2 py-2">

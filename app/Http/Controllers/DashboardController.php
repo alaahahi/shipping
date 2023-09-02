@@ -556,43 +556,18 @@ class DashboardController extends Controller
         return Response::json('ok', 200);    
     }
     public function DelCar(Request $request){
-
-
-
         $car=Car::find($request->id);
-
-        if(($car->client_id??0)&&($car->paid_amount??0)){
-            $desc=' مرتج حذف سيارة'.$car->paid_amount;
-            $wallet = Wallet::where('user_id',$car->client_id)->first();
-            $wallet->decrement('balance',$car->pay_price-$car->paid_amount_pay);
-            $this->accountingController->decreaseWallet($car->pay_price-$car->paid_amount_pay, $desc,$this->debtAccount->id,$car->id,'App\Models\Car');
-        }
-        if(($car->paid_amount??0)>0){
-            $desc=' مرتج حذف سيارة'.$car->paid_amount;
-            $this->accountingController->increaseWallet($car->paid_amount, $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
-            $this->accountingController->increaseWallet($car->paid_amount, $desc,$this->inAccount->id,$car->id,'App\Models\Car');
-            $this->accountingController->decreaseWallet($car->paid_amount, $desc,$this->outAccount->id,$car->id,'App\Models\Car' );
-
-        }
-        if(($car->purchase_price??0)-($car->paid_amount_pay??0)>0){
-            $desc=' مرتج حذف سيارة'.$car->paid_amount_pay;
-            $this->accountingController->decreaseWallet($car->purchase_price-$car->paid_amount_pay, $desc,$this->outSupplier->id,$car->id,'App\Models\Car');
-            $this->accountingController->increaseWallet($car->purchase_price-$car->paid_amount_pay, $desc,$this->debtSupplier->id,$car->id,'App\Models\Car');
-        }
-
+        $desc=' مرتج حذف سيارة'.$car->total;
+        $wallet = Wallet::where('user_id',$car->client_id)->first();
+        $this->accountingController->increaseWallet($car->total, $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
+        $this->accountingController->decreaseWallet($car->paid , $desc,$car->client_id,$car->id,'App\Models\Car');
         $car->delete();
         DB::statement('SET @row_number = 0');
-
         DB::table('car')
             ->whereNull('deleted_at') // Apply soft delete constraint
             ->orderBy('id') // Assuming 'id' is the primary key column
             ->update(['no' => DB::raw('(@row_number:=@row_number + 1)')]);
-            
-       
-
-        return Response::json('delete is done', 200);    
-
-        
+        return Response::json('delete is done', 200);
     }
     
 }

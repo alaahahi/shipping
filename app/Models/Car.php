@@ -6,12 +6,11 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Car extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
     protected $table = 'car';
     protected $fillable = [
         'id',
@@ -74,7 +73,6 @@ class Car extends Model
     {
         return $this->belongsTo(User::class);
     }
-    protected $dates = ['deleted_at']; // Define the deleted_at column as a date
     public function company()
     {
         return $this->belongsTo(Company::class, 'company_id');
