@@ -473,7 +473,7 @@ getResultsCar();
             <div class="bg-white overflow-hidden shadow-sm ">
                 <div class="p-6  dark:bg-gray-900">
                     <div class="flex flex-col">
-                      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2 lg:gap-1">
+                      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2 lg:gap-1"  v-if="false">
                         <div>
                           <form class="flex items-center max-w-5xl">
                             <label  class="dark:text-gray-200" for="simple-search"  ></label>

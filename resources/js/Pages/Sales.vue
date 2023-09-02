@@ -4,6 +4,9 @@ import { Head } from '@inertiajs/inertia-vue3';
 import VueTailwindDatepicker from 'vue-tailwind-datepicker'
 import Modal from "@/Components/Modal.vue";
 import ModalAddCar from "@/Components/ModalAddCars.vue";
+import ModalEditCars from "@/Components/ModalEditCar_S.vue";
+
+
 import ModalAddSale from "@/Components/ModalAddSale.vue";
 import ModalAddExpenses from "@/Components/ModalAddExpenses.vue";
 import ModalAddGenExpenses from "@/Components/ModalAddGenExpenses.vue";
@@ -23,47 +26,64 @@ const {t} = useI18n();
 
 import NumberColumnType from '@revolist/revogrid-column-numeral'; // import library
 
+
 const props = defineProps({
 
-client:Array,
+  client:Array,
 
 });
+
+
 let data = ref({});
 const columnTypes = ref({ 'date': new Plugin(),'numeric': new NumberColumnType('0,0') });
 const toast = useToast();
 const columns = [
-{ prop: "no", name: t('no'),size:50,  },
+  { prop: "no", name: t('no'),size:50,  },
   { prop: "client", name:  t('car_owner') ,size:150,readonly: true},
   { prop: "car_type", name:  t('car_type') },
   { prop: "year", name:  t('year'), size:70},
   { prop: 'car_color',name:  t('car_color')},
   { prop: "vin", name:  t('vin'),size:150 },
   { prop: "car_number", name:  t('car_number')},
-  { prop: "dinar_s", name:  t('dinar'), columnType: 'numeric'  },
-  { prop: "dolar_price_s", name:  t('dolar_price') ,columnType: 'numeric'   },
+  { prop: "dinar", name:  t('dinar'), columnType: 'numeric'  },
+  { prop: "dolar_price", name:  t('dolar_price') ,columnType: 'numeric'   },
   {
     prop: "dolar_custom",
     name:  t('dolar_custom'),
     columnType: 'numeric',
     readonly: true, // Set the column as readonly
     cellTemplate: (createElement,props) => {
-      const dinar_s = props.data[props.rowIndex].dinar_s || 0;
-      const dolar_price_s = props.data[props.rowIndex].dolar_price_s || 0;
-      return ((dinar_s / dolar_price_s)||0).toFixed(0) ;
+      const dinar = props.data[props.rowIndex].dinar || 0;
+      const dolar_price = props.data[props.rowIndex].dolar_price || 0;
+      return (dinar / dolar_price).toFixed(2) || 0;
     },
   },
-  { prop: "shipping_dolar_s", name:  t('shipping_dolar'),columnType: 'numeric'  },
-  { prop: "coc_dolar_s", name:  t('coc_dolar'),columnType: 'numeric'  },
-  { prop: "checkout_s", name:  t('checkout') ,columnType: 'numeric' },
+  { prop: "shipping_dolar", name:  t('shipping_dolar'),columnType: 'numeric'  },
+  { prop: "coc_dolar", name:  t('coc_dolar'),columnType: 'numeric'  },
+  { prop: "checkout", name:  t('checkout') ,columnType: 'numeric' },
   { prop: "expenses", name:  t('expenses') ,columnType: 'numeric' },
-
   {
-    prop: "total_s",
+    prop: "total",
     name:  t('total'),
     columnType: 'numeric',
     readonly: true, // Set the column as readonly
+    cellTemplate: (createElement,props) => {
+      const checkout = props.data[props.rowIndex].checkout || 0;
+      const shipping = props.data[props.rowIndex].shipping_dolar || 0;
+      const coc_dolar = props.data[props.rowIndex].coc_dolar || 0;
+      const dinar = props.data[props.rowIndex].dinar || 0;
+      const dolar_price = props.data[props.rowIndex].dolar_price || 0;
+      const expenses = props.data[props.rowIndex].expenses || 0;
+      return ((checkout + shipping+coc_dolar+expenses+(dinar/dolar_price)||0).toFixed(0));
+    },
   },
   { prop: "paid", name:  t('paid') ,columnType: 'numeric' },
+  {
+    prop: "profit",
+    name:  t('profit'),
+    columnType: 'numeric',
+    readonly: true, // Set the column as readonly
+  },
   { prop: "date", name:  t('date'),columnType: "date",size: 130, },
   { prop: "note", name:  t('note') },
 
@@ -98,6 +118,7 @@ let showModalToBox =  ref(false);
 let showModalFromBox =  ref(false);
 let showModalAddTransfers =  ref(false);
 let showModalAddCarPayment =  ref(false);
+let showModalEditCars=ref(false);
 let showModalDelCar =  ref(false);
 let mainAccount= ref(0)
 let allCars= ref(0)
@@ -105,7 +126,10 @@ let allCars= ref(0)
 function openModal() {
   showModal.value = true;
 }
-
+function openModalEditCars(form={}){
+  formData.value=form
+  showModalEditCars.value = true;
+}
 function openModalDelCar(form={}) {
   formData.value=form
   showModalDelCar.value = true;
@@ -157,7 +181,7 @@ const formatter = ref({
   date: 'D/MM/YYYY',
   month: 'MM'
 })
-const getResultsCar = async (page = 1,user_id='',) => {
+const getResultsCar = async (page = 1,user_id='') => {
     const response = await fetch(`/getIndexCar?page=${page}&user_id=${user_id}`);
     car.value = await response.json();
 }
@@ -206,6 +230,8 @@ function confirmCar(V) {
   })
 }
 function confirmUpdateCar(V) {
+  showModalEditCars.value = false;
+
   axios.post('/api/updateCars',V)
   .then(response => {
     showModal.value = false;
@@ -215,6 +241,7 @@ function confirmUpdateCar(V) {
         rtl: true
 
       });
+
       getcountTotalInfo()
       getResultsCar();
 
@@ -228,6 +255,7 @@ function confirmUpdateCar(V) {
         rtl: true
 
       });
+
   })
 }
 
@@ -343,10 +371,7 @@ getResultsCar();
     <ModalAddCar
             :formData="formData"
             :show="showModalCar ? true : false"
-            :company="company"
-            :name="name"
-            :color="color"
-            :user="user"
+            :client="client"
             :carModel="carModel"
             @a="confirmCar($event)"
             @close="showModalCar = false"
@@ -354,6 +379,17 @@ getResultsCar();
         <template #header>
           </template>
     </ModalAddCar>
+    <ModalEditCars
+            :formData="formData"
+            :show="showModalEditCars ? true : false"
+            :client="client"
+            :carModel="carModel"
+            @a="confirmUpdateCar($event)"
+            @close="showModalEditCars = false"
+            >
+        <template #header>
+          </template>
+    </ModalEditCars>
     <ModalAddSale
             :formData="formData"
             :show="showModalCarSale ? true : false"
@@ -440,17 +476,21 @@ getResultsCar();
             @close="showModalDelCar = false"
             >
           <template #header>
+            <h2 class=" mb-5 dark:text-white text-center">
+
           هل متأكد من حذف السيارة
           ؟
+          </h2>
           </template>
     </ModalDelCar>
+
     <AuthenticatedLayout>
         <div class="py-2">
         <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 ">
             <div class="bg-white overflow-hidden shadow-sm ">
                 <div class="p-6  dark:bg-gray-900">
                     <div class="flex flex-col">
-                      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2 lg:gap-1">
+                      <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-2 lg:gap-1">
                         <div>
                           <form class="flex items-center max-w-5xl">
                             <label  class="dark:text-gray-200" for="simple-search"  ></label>
@@ -545,14 +585,13 @@ getResultsCar();
                           </button>
                         </div> -->
                         <div>
-                            <InputLabel class="mb-1" for="invoice_number" value="حساب" />
                             <select @change="getResultsCar(1,user_id)" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
                               <option value="undefined" disabled> {{ $t("selectCustomer") }}</option>
                               <option value="">{{ $t("allOwners") }}</option>
-
                               <option v-for="(user, index) in client" :key="index" :value="user.id">{{ user.name }}</option>
                             </select>
                         </div>
+        
                         <div class="text-center">
                           <button
                             type="button"
@@ -575,7 +614,6 @@ getResultsCar();
                       </div>
                       <div>
                         <div>
-                        <revo-grid  row-size="50"  rowClass="background" :theme="getDarkModePreference()" :columnTypes="columnTypes"  exporting="true" :source="car.data" :columns="columns" ref="grid"  style="height: 575px;direction: ltr;" @afteredit="handleEdit"   />
                         <div class="mt-3 text-center" style="direction: ltr;">
                           <TailwindPagination
                             :data="car"
@@ -587,7 +625,7 @@ getResultsCar();
                         </div>
 
                         </div>
-                        <div class="relative overflow-x-auto shadow-md sm:rounded-lg" v-if="false">
+                        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
                           <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
                               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
                                   <tr>
@@ -634,30 +672,30 @@ getResultsCar();
                                         {{ $t('checkout') }}
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
+                                        {{ $t('expenses') }}
+                                      </th>
+                                      <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t('total') }}
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t('paid') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('profit') }}
-                                      </th>
+                                  
                                       <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t('date') }}
                                       </th>
-
-
-                                      <!-- <th scope="col" class="px-1 py-3 text-base" style="width: 350px;">
+                
+                                      <th scope="col" class="px-1 py-3 text-base" style="width: 150px;">
                                         {{ $t('execute') }}
-                                      </th> -->
+                                      </th>
                                   </tr>
                               </thead>
                               <tbody>
 
 
-                                <tr v-for="car in car.data" :key="car.id" :class="car.results == 0?'bg-gray-100 dark:bg-gray-600':car.results == 1 ?'bg-red-100 dark:bg-red-900':car.results == 2 ?'bg-green-100 dark:bg-green-900':''"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <tr v-for="car in car.data" :key="car.id" :class="car.results == 0 ?'bg-red-100 dark:bg-red-900':car.results == 1 ?'bg-green-100 dark:bg-green-900':''"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.no }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_owner }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.client?.name }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_type}}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.year}}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_color }}</td>
@@ -665,24 +703,33 @@ getResultsCar();
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_number }}</td> 
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dinar_s  }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dolar_price_s}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.dinar_s / car.dolar_price_s).toFixed(2) }}</td> 
+                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ ((car.dinar_s / car.dolar_price_s||0)?.toFixed(0)) }}</td> 
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.note }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.shipping_dolar_s}}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.coc_dolar_s  }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.checkout_s}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.checkout_s+car.shipping_dolar_s+ car.coc_dolar_s +(car.dinar_s / car.dolar_price_s)).toFixed(1) }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.expenses}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.total_s }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.paid}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.paid-(car.checkout_s+car.shipping_dolar_s+ car.coc_dolar_s +(car.dinar_s / car.dolar_price_s))).toFixed(1)  }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.date  }}</td>
-                                    <!-- <td className="border dark:border-gray-800 text-start px-2 py-2">
+                                     <td className="border dark:border-gray-800 text-start px-2 py-2">
                                     <button
                                       tabIndex="1"
                                       
                                       class="px-2 py-1 text-base text-white mx-1 bg-slate-500 rounded"
-                                      @click="openAddCar(car)"
+                                      @click="openModalEditCars(car)"
                                     >
                                       {{ $t('edit') }}
                                     </button>
+                                    <button
+                                      tabIndex="1"
+                                      
+                                      class="px-2 py-1 text-base text-white mx-1 bg-orange-500 rounded"
+                                      @click="openModalDelCar(car)"
+                                    >
+                                      {{ $t('delete') }}
+                                    </button>
+                                    <!-- 
           
                                     <button
                                       tabIndex="1"
@@ -716,21 +763,22 @@ getResultsCar();
                                       {{ $t('add_payment') }}
                                     </button>
 
-                                    <button
-                                      tabIndex="1"
-                                      
-                                      class="px-2 py-1 text-base text-white mx-1 bg-orange-500 rounded"
-                                      @click="openModalDelCar(car)"
-                                    >
-                                      {{ $t('delete') }}
-                                    </button>
+                                    -->
 
-                                    </td> -->
+                                    </td> 
                                 </tr>
                               </tbody>
                           </table>
                         </div>
-             
+                        <div class="mt-3 text-center" style="direction: ltr;">
+                          <TailwindPagination
+                            :data="car"
+                            @pagination-change-page="getResultsCar"
+                            :limit ="10"
+                            :item-classes="['bg-white','dark:bg-gray-600','text-gray-500','dark:text-gray-300','border-gray-300','dark:border-gray-900','hover:bg-gray-200']"
+                            :activeClasses="[  'bg-rose-50','border-rose-500','text-rose-600',]"
+                          />
+                        </div>
                       </div>
                       <div>
                         <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">     

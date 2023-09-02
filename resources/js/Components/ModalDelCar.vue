@@ -12,11 +12,7 @@ export default {
       <div v-if="show" class="modal-mask ">
         <div class="modal-wrapper ">
           <div class="modal-container dark:bg-gray-900">
-            <div class="modal-header" style="    height: 40px;
-    color: #fff;
-    text-align: center;
-    padding: 0 29px;
-    margin: 20px 0">
+            <div class="modal-header">
               <slot name="header"></slot>
             </div>
   

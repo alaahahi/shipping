@@ -95,16 +95,6 @@ class Car extends Model
     {
         return $this->belongsTo(User::class);
     }
-    public function toArray()
-    {
-        $data = parent::toArray();
-        
-        $data['client'] = $this->client->name ?? null;
-
-        $data['background'] = $this->results==0 ? 'bg-red-100 dark:bg-red-900' : 'bg-green-100 dark:bg-green-900';
-
-        return $data;
-    }
     public function transactions()
     {
         return $this->morphMany(Transactions::class, 'morphed');
