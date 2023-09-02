@@ -100,7 +100,7 @@ class Car extends Model
         
         $data['client'] = $this->client->name ?? null;
 
-        $data['background'] = $this->total_amount==0 ? 'bg-red-100 dark:bg-red-900' : 'bg-green-100 dark:bg-green-900';
+        $data['background'] = $this->results==0 ? 'bg-red-100 dark:bg-red-900' : 'bg-green-100 dark:bg-green-900';
 
         return $data;
     }

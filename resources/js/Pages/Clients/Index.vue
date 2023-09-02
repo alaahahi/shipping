@@ -71,7 +71,7 @@ function open(id) {
     <AuthenticatedLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-gray-200">
-                إدارة الزبائن
+               {{$t('Customer_management')}}
             </h2>
         </template>
             <ModalAddCardUser
@@ -118,7 +118,7 @@ function open(id) {
                                                 className="px-2 py-1 text-sm text-white bg-slate-500 rounded"
                                                 :href="route('users.edit', user.id)"
                                                 v-if="user.email!='admin@admin.com'">
-                                                تعديل
+                                                عرض
                                             </Link>
 
                                             <!-- <button

@@ -14,6 +14,7 @@ const i18n = useI18n();
 const locale = ref("en"); // Default locale
 const switchLocale = (locale) => {
   i18n.locale.value = locale;
+  localStorage.setItem('lang', locale);
 };
 </script>
 

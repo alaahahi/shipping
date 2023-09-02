@@ -39,7 +39,7 @@ const columns = [
   { prop: 'car_color',name:  t('car_color')},
   { prop: "vin", name:  t('vin'),size:150 },
   { prop: "car_number", name:  t('car_number')},
-  { prop: "dinar", name:  t('dinar'), columnType: 'numeric'  },
+  { prop: "dinar_s", name:  t('dinar'), columnType: 'numeric'  },
   { prop: "dolar_price_s", name:  t('dolar_price') ,columnType: 'numeric'   },
   {
     prop: "dolar_custom",
@@ -49,7 +49,7 @@ const columns = [
     cellTemplate: (createElement,props) => {
       const dinar_s = props.data[props.rowIndex].dinar_s || 0;
       const dolar_price_s = props.data[props.rowIndex].dolar_price_s || 0;
-      return ((dinar_s / dolar_price_s)||0).toFixed(2) ;
+      return ((dinar_s / dolar_price_s)||0).toFixed(0) ;
     },
   },
   { prop: "note", name:  t('note') },
@@ -59,7 +59,7 @@ const columns = [
   { prop: "expenses", name:  t('expenses') ,columnType: 'numeric' },
 
   {
-    prop: "total",
+    prop: "total_s",
     name:  t('total'),
     columnType: 'numeric',
     readonly: true, // Set the column as readonly
@@ -70,7 +70,7 @@ const columns = [
       const dinar_s = props.data[props.rowIndex].dinar_s || 0;
       const dolar_price_s = props.data[props.rowIndex].dolar_price_s || 0;
       const expenses = props.data[props.rowIndex].expenses || 0;
-      return ((checkout_s + shipping_s+coc_dolar_s+expenses+(dinar_s/dolar_price_s)||0).toFixed(0));
+      return ((checkout_s + shipping_s+coc_dolar_s+expenses+(dinar_s/dolar_price_s)||0));
     },
   },
   { prop: "paid", name:  t('paid') ,columnType: 'numeric' },
@@ -166,7 +166,7 @@ const formatter = ref({
   date: 'D/MM/YYYY',
   month: 'MM'
 })
-const getResultsCar = async (user_id='',page = 1) => {
+const getResultsCar = async (page = 1,user_id='',) => {
     const response = await fetch(`/getIndexCar?page=${page}&user_id=${user_id}`);
     car.value = await response.json();
 }
@@ -225,6 +225,7 @@ function confirmUpdateCar(V) {
 
       });
       getcountTotalInfo()
+      getResultsCar();
 
   })
   .catch(error => {
@@ -554,8 +555,10 @@ getResultsCar();
                         </div> -->
                         <div>
                             <InputLabel class="mb-1" for="invoice_number" value="حساب" />
-                            <select @change="getResultsCar(user_id)" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
-                              <option value="0" disabled>اختار المندوب</option>
+                            <select @change="getResultsCar(1,user_id)" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
+                              <option value="undefined" disabled> {{ $t("selectCustomer") }}</option>
+                              <option value="">{{ $t("allOwners") }}</option>
+
                               <option v-for="(user, index) in client" :key="index" :value="user.id">{{ user.name }}</option>
                             </select>
                         </div>
@@ -581,7 +584,7 @@ getResultsCar();
                       </div>
                       <div>
                         <div>
-                        <revo-grid  row-size="50"  rowClass="background" :theme="getDarkModePreference()" :columnTypes="columnTypes"  exporting="true" :source="car.data" :columns="columns" ref="grid"  style="height: 480px;direction: ltr;" @afteredit="handleEdit"   />
+                        <revo-grid  row-size="50"  rowClass="background" :theme="getDarkModePreference()" :columnTypes="columnTypes"  exporting="true" :source="car.data" :columns="columns" ref="grid"  style="height: 575px;direction: ltr;" @afteredit="handleEdit"   />
                         <div class="mt-3 text-center" style="direction: ltr;">
                           <TailwindPagination
                             :data="car"
@@ -968,25 +971,3 @@ getResultsCar();
     </div>   
     </AuthenticatedLayout>
 </template>
-<style>
-.Vue-Toastification__container {
-width: unset !important;
-}
-.duet-date__dialog {
-  direction: ltr;
-    right: 0;
-    top: 44px;
-}
-.header-rgRow{
-  text-align: center;
-}
-.rgRow > div {
-  text-align: center !important;
-}
-.rgCell.disabled {
-    background-color: unset !important;
-}
-.rgCell{
-  padding-top: 7px !important;
-}
-</style>

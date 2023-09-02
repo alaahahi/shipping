@@ -218,14 +218,15 @@ class DashboardController extends Controller
         }else{
             $no = $maxNo + 1;
         }
-        $images=[];
+        $results=0;
         $checkout=$request->checkout ?? 0;
         $shipping_dolar=$request->shipping_dolar ?? 0;
         $coc_dolar=$request->coc_dolar ?? 0;
         $dinar=$request->dinar ?? 0;
         $dolar_price=$request->dolar_price ?? 1;
         $expenses=$request->expenses ?? 0;
-        $paid=$paid ?? 0;
+        $paid=$request->paid ?? 0;
+        
         if($dolar_price==0){
             $dolar_price=1;
         }
@@ -237,11 +238,8 @@ class DashboardController extends Controller
             $client->phone = $request->client_phone;
             $client->type_id = $this->userClient;
             $client->save();
-            Wallet::create(['user_id' => $client->id,'balance'=>$total_amount-$paid]);
+            Wallet::create(['user_id' => $client->id,'balance'=>0]);
             $client_id=$client->id;
-        }else{
-            $wallet = Wallet::where('user_id',$client_id)->first();
-            $wallet->increment('balance',$total_amount-$paid); 
         }
 
         $car=Car::create([
@@ -264,18 +262,26 @@ class DashboardController extends Controller
             'date'=> $request->date,
             'expenses'=> $request->expenses,
             'profit'=> $paid-$total_amount,
-            'client_id'=>$client_id
+            'client_id'=>$client_id,
+            'results'=> $results
+
              ]);
              if($paid){
-                if($paid-$total_amount >0){
+                if($paid-$total_amount >=0){
+                    $car->increment('results'); 
                     $desc=trans('text.payCar').' '.$total_amount.trans('text.payDone').($paid);
                     $this->accountingController->increaseWallet(($paid-$total_amount), $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
+                    $this->accountingController->increaseWallet(($total_amount), $desc,$client_id,$car->id,'App\Models\User');
                 }else
-                $desc=trans('text.payCar').' '.$total_amount.trans('text.payDone');
+                $desc=trans('text.payCar').' '.trans('text.payDone').' '.$total_amount;
                 $this->accountingController->decreaseWallet(($paid-$total_amount), $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
+                $this->accountingController->decreaseWallet(($total_amount), $desc,$client_id,$car->id,'App\Models\User');
+
              }else{
-                $desc=trans('text.payCar').' '.$total_amount.trans('text.payDone');
+                $desc=trans('text.payCar').' '.trans('text.payDone').' '.$total_amount;;
                 $this->accountingController->decreaseWallet(($total_amount), $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
+                $this->accountingController->decreaseWallet(($total_amount), $desc,$client_id,$car->id,'App\Models\User');
+
              }
             
  
@@ -320,14 +326,21 @@ class DashboardController extends Controller
             }
             $purchase_paid_old=$car->paid;
             if($paid > $purchase_paid_old){
+                $car->increment('results'); 
                 $paid_new = $paid - $purchase_paid_old;
                 $desc=trans('text.editCar').' '.trans('text.from').$purchase_paid_old.trans('text.to').$paid;
+                $descClient = trans('text.descClient').' '.$paid_new.' '.trans('text.for_car').$car->car_type.' '.$car->vin;
                 $this->accountingController->increaseWallet($paid_new, $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
+                $this->accountingController->increaseWallet($paid_new, $descClient,$car->client_id,$car->id,'App\Models\User');
+
             }
             if($paid < $purchase_paid_old){
                 $paid_new =$purchase_paid_old - $paid;
                 $desc=trans('text.editCar').' '.trans('text.from').$purchase_paid_old.' '.trans('text.to').$paid;
+                $descClient = trans('text.descClient').' '.$paid_new.' '.trans('text.for_car').$car->car_type.' '.$car->vin;
                 $this->accountingController->decreaseWallet($paid_new, $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
+                $this->accountingController->decreaseWallet($paid_new, $descClient,$car->client_id,$car->id,'App\Models\User');
+
             }
             // Define an array of field names that you want to update
             $fillableFields = [

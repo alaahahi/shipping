@@ -12,6 +12,64 @@
         @routes
         @vite('resources/js/app.js')
         @inertiaHead
+        <style>
+            body::-webkit-scrollbar {
+                width: 12px;
+                }
+
+                body::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                }
+
+                body::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 6px;
+                }
+
+                /* Style the scrollbars for Firefox */
+                body {
+                scrollbar-width: thin;
+                scrollbar-color: #888 #f1f1f1;
+                }
+                .hydrated::-webkit-scrollbar {
+                width: 12px;
+                }
+
+                .hydrated::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                }
+
+                .hydrated::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 6px;
+                }
+                .scroll-rgCol
+                /* Style the scrollbars for Firefox */
+                .hydrated {
+                scrollbar-width: thin;
+                scrollbar-color: #888 #f1f1f1;
+                }
+                .Vue-Toastification__container {
+                width: unset !important;
+                }
+                .duet-date__dialog {
+                direction: ltr;
+                    right: 0;
+                    top: 44px;
+                }
+                .header-rgRow{
+                text-align: center;
+                }
+                .rgRow > div {
+                text-align: center !important;
+                }
+                .rgCell.disabled {
+                    background-color: unset !important;
+                }
+                .rgCell{
+                padding-top: 7px !important;
+                }
+        </style>
     </head>
     <body class="font-sans antialiased">
         @inertia

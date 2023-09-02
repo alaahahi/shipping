@@ -63,7 +63,7 @@ function method1(id) {
   <AuthenticatedLayout>
     <template #header>
       <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-gray-200">
-          حركة الحسابات 
+           {{ $t('Accounts_Transactions') }} 
       </h2>
     </template>
     <modal
@@ -72,9 +72,6 @@ function method1(id) {
       @a="method1($event, arg1)"
       @close="showModal = false"
     >
-      <template #header>
-        <h3 class="text-center dark:text-gray-200">إدارة الاستمارات</h3>
-      </template>
     </modal>
     <div v-if="$page.props.success">
       <div
@@ -94,7 +91,7 @@ function method1(id) {
             <div class="flex flex-row">
               <div class="basis-1/2 px-4">
                 <select @change="getResults()" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
-                  <option value="0" disabled>اختار الحساب</option>
+                  <option value="0" disabled>{{ $t('select_account') }}</option>
                   <option v-for="(user, index) in users" :key="index" :value="user.id">{{ user.name }}</option>
                 </select>
               </div>
@@ -109,7 +106,7 @@ function method1(id) {
                         <div class="flex flex-row">
                           <div class="basis-1/3">
                             <div className="mb-4 mx-5">
-                              <InputLabel for="invoice_number" value="الحساب" />
+                              <InputLabel for="invoice_number" :value="$t('account')" />
                               <TextInput
                                 id="invoice_number"
                                 type="text"
@@ -121,7 +118,7 @@ function method1(id) {
                           </div>
                           <div class="basis-1/3">
                             <div className="mb-4 mx-5">
-                              <InputLabel for="date" value="لتاريخ" />
+                              <InputLabel for="date" :value="$t('to_date')" />
                               <TextInput
                                 id="date"
                                 type="text"
@@ -133,7 +130,7 @@ function method1(id) {
                           </div>
                           <div class="basis-1/3">
                             <div className="mb-4 mx-5">
-                              <InputLabel for="totalAmount" value="المجموع بالدولار " />
+                              <InputLabel for="totalAmount" :value="$t('Total_in_dollars')" />
                               <TextInput
                                 id="totalAmount"
                                 type="text"
@@ -155,9 +152,10 @@ function method1(id) {
                 <thead
                   class="700 bg-rose-500 text-white text-center rounded-l-lg">
                   <tr class="bg-rose-500 rounded-l-lg mb-2 sm:mb-0">
-                    <th className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200">النوع</th>
-                    <th className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200">الوصف</th>
-                    <th className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200">المبلغ</th>
+                    <th className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200">{{$t('type')}}</th>
+                    <th className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200">{{$t('date')}}</th>
+                    <th className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200">{{$t('description')}}</th>
+                    <th className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200">{{$t('amount')}}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -165,6 +163,7 @@ function method1(id) {
                     v-for="user in laravelData.data"
                     :key="user.id"  class="hover:bg-gray-800 text-center">
                   <td className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200 td">{{ user.type }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200 td">{{ user.created }}</td>
                   <td className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200 td">{{ user.description }}</td>
                   <td className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200 td">{{ user.amount  }}</td>
                   </tr>

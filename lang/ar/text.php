@@ -17,6 +17,9 @@ return [
     'editCar' => 'تعديل الدفعة لسيارة ',
     'from' => 'من',
     'to' => 'ل ',
+    'descClient' => 'دفعة من التاجر مبلغ'  ,
+    'debutNow' => '',
+    'debutAfter' => '',
     'payDone' => 'وتم دفع مبلغ',
     'buyCar' => 'بيع سيارة سعر البيع',
     'genExpenses'=>'مصاريف عامة',
@@ -28,5 +31,6 @@ return [
     'expensesExpDubai'=>'مصاريف دبي بقيمة ',
     'expensesExpErbil'=>'مصاريف أربيل بقيمة ',
     'expensesExpPay'=>'دفعة للمورد بقيمة ',
-    'addPayment'=>'إضافة دفعة بقيمة'
+    'addPayment'=>'إضافة دفعة بقيمة',
+    'for_car'=>'للسيارة'
 ];

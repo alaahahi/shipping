@@ -1,15 +1,18 @@
 <script>
+
 export default {
     props: {
       show: Boolean,
       data:Object
     }
   }
+
+
   </script>
   
   <template>
     <Transition name="modal">
-      <div v-if="show" class="modal-mask ">
+      <div v-if="show" class="modal-mask " ref="dialog">
         <div class="modal-wrapper ">
           <div class="modal-container dark:bg-gray-900">
             <div class="modal-header">
@@ -28,7 +31,8 @@ export default {
               <div class="basis-1/2 px-4">              <button
                     class="modal-default-button py-3  bg-rose-500 rounded col-6"
                     @click="$emit('a',data);"
-                    @keyup.enter="$emit('a', data);" 
+                    @keydown.enter="$emit('a', data);"
+                    
                   >نعم</button>
                 </div>
 
