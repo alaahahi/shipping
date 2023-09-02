@@ -52,7 +52,6 @@ const columns = [
       return ((dinar_s / dolar_price_s)||0).toFixed(0) ;
     },
   },
-  { prop: "note", name:  t('note') },
   { prop: "shipping_dolar_s", name:  t('shipping_dolar'),columnType: 'numeric'  },
   { prop: "coc_dolar_s", name:  t('coc_dolar'),columnType: 'numeric'  },
   { prop: "checkout_s", name:  t('checkout') ,columnType: 'numeric' },
@@ -63,19 +62,11 @@ const columns = [
     name:  t('total'),
     columnType: 'numeric',
     readonly: true, // Set the column as readonly
-    cellTemplate: (createElement,props) => {
-      const checkout_s = props.data[props.rowIndex].checkout_s || 0;
-      const shipping_s= props.data[props.rowIndex].shipping_dolar_s || 0;
-      const coc_dolar_s = props.data[props.rowIndex].coc_dolar_s || 0;
-      const dinar_s = props.data[props.rowIndex].dinar_s || 0;
-      const dolar_price_s = props.data[props.rowIndex].dolar_price_s || 0;
-      const expenses = props.data[props.rowIndex].expenses || 0;
-      return ((checkout_s + shipping_s+coc_dolar_s+expenses+(dinar_s/dolar_price_s)||0));
-    },
   },
   { prop: "paid", name:  t('paid') ,columnType: 'numeric' },
   { prop: "date", name:  t('date'),columnType: "date",size: 130, },
-  
+  { prop: "note", name:  t('note') },
+
 ];
   const handleEdit = (event) => {
 

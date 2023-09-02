@@ -206,11 +206,7 @@ class DashboardController extends Controller
     public function addCars(Request $request)
     {
         $client_id =$request->client_id;
-    
-
-
         $car_id=$request->id??0;
-
         $maxNo = Car::max('no');
 
         if($car_id){
@@ -230,8 +226,8 @@ class DashboardController extends Controller
         if($dolar_price==0){
             $dolar_price=1;
         }
-        $total_amount = ($checkout+$shipping_dolar+$expenses+ $coc_dolar +($dinar / $dolar_price));
-        $dolar_custom=$dinar/$dolar_price;
+        $dolar_custom=$dinar/$dolar_price ??0;
+        $total_amount = $checkout+$shipping_dolar+$expenses+ $coc_dolar +$dolar_custom;
         if( $client_id==0){
             $client = new User;
             $client->name = $request->client_name;
@@ -241,7 +237,6 @@ class DashboardController extends Controller
             Wallet::create(['user_id' => $client->id,'balance'=>0]);
             $client_id=$client->id;
         }
-
         $car=Car::create([
             'note'=> $request->note??'',
             'no'=>$no,
@@ -261,31 +256,23 @@ class DashboardController extends Controller
             'car_color'=> $request->car_color,
             'date'=> $request->date,
             'expenses'=> $request->expenses,
-            'profit'=> $paid-$total_amount,
             'client_id'=>$client_id,
-            'results'=> $results
-
+            'results'=> $results,
+            'total_s'=> $request->expenses,
              ]);
              if($paid){
                 if($paid-$total_amount >=0){
                     $car->increment('results'); 
                     $desc=trans('text.payCar').' '.$total_amount.trans('text.payDone').($paid);
                     $this->accountingController->increaseWallet(($paid-$total_amount), $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
-                    $this->accountingController->increaseWallet(($total_amount), $desc,$client_id,$car->id,'App\Models\User');
                 }else
                 $desc=trans('text.payCar').' '.trans('text.payDone').' '.$total_amount;
                 $this->accountingController->decreaseWallet(($paid-$total_amount), $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
-                $this->accountingController->decreaseWallet(($total_amount), $desc,$client_id,$car->id,'App\Models\User');
 
              }else{
                 $desc=trans('text.payCar').' '.trans('text.payDone').' '.$total_amount;;
                 $this->accountingController->decreaseWallet(($total_amount), $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
-                $this->accountingController->decreaseWallet(($total_amount), $desc,$client_id,$car->id,'App\Models\User');
-
              }
-            
- 
-
         return Response::json('ok', 200);    
     }
     public function updateCars(Request $request)
@@ -299,34 +286,28 @@ class DashboardController extends Controller
         }else{
             $no = $maxNo + 1;
         }
-        $images=[];
-        $checkout=$request->checkout ?? 0;
-        $shipping_dolar=$request->shipping_dolar ?? 0;
-        $coc_dolar=$request->coc_dolar ?? 0;
-        $dinar=$request->dinar ?? 0;
-        $dolar_price=$request->dolar_price ?? 1;
-        $paid=$request->paid ??0;
-        if($dolar_price==0){
-            $dolar_price=1;
+        $car=Car::find($car_id);
+        if(!isset($no)){
+            $no=$car->no;
+           
         }
-        $total_amount = ($checkout+$shipping_dolar+ $coc_dolar +($dinar / $dolar_price)) ??0;
-        // if($request->image ){
-        //     foreach ($request->image as $image) {
-        //         $imageName = $image->getClientOriginalName().$no;
-        //         $filename = pathinfo($imageName, PATHINFO_FILENAME);
-        //         $imagePath = UploadHelper::upload('image', $image, $filename, 'storage/car');
-        //         $images[] = $imagePath;
-        //     }    
-        // }
+        $images=[];
+        $checkout_s=$request->checkout_s ?? $car->checkout_s;
+        $shipping_dolar_s=$request->shipping_dolar_s ??  $car->shipping_dolar_s;
+        $coc_dolar_s=$request->coc_dolar_s ?? $car->coc_dolar_s;
+        $dinar_s=$request->dinar_s ?? $car->dinar_s ;
+        $dolar_price_s=$request->dolar_price_s ?? $car->dolar_price_s;
+        $paid=$request->paid ??0;
+        if($dolar_price_s==0){
+            $dolar_price_s=1;
+        }
+        $total_amount_s = ($checkout_s+$shipping_dolar_s+ $coc_dolar_s +($dinar_s / $dolar_price_s)+$car->expenses) ??0;
 
-            $car=Car::find($car_id);
-            if(!isset($no)){
-                $no=$car->no;
-               
-            }
+        $total_s=$total_amount_s;
+        $profit=$total_s-$car->total;
+
             $purchase_paid_old=$car->paid;
             if($paid > $purchase_paid_old){
-                $car->increment('results'); 
                 $paid_new = $paid - $purchase_paid_old;
                 $desc=trans('text.editCar').' '.trans('text.from').$purchase_paid_old.trans('text.to').$paid;
                 $descClient = trans('text.descClient').' '.$paid_new.' '.trans('text.for_car').$car->car_type.' '.$car->vin;
@@ -354,16 +335,20 @@ class DashboardController extends Controller
                 'checkout_s',
                 'shipping_dolar_s','expenses',
                 'coc_dolar_s',
+                'total_s',
+                'profit'
             ];
-
             // Extract the relevant fields from the $request object
             $dataToUpdate = $request->only($fillableFields);
-
             // If 'purchase_price' and 'paid_amount' are calculated separately, add them to $dataToUpdate
+            $dataToUpdate['total_s']=$total_s;
+            $dataToUpdate['profit']=$profit;
 
             // Update the car model
             $car->update($dataToUpdate);
-      
+            if(((int)($car->paid)) >= ((int)($car->total_s))){
+                $car->increment('results'); 
+            }
 
         return Response::json('ok', 200);    
     }

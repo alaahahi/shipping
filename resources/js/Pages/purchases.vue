@@ -55,7 +55,6 @@ const columns = [
       return (dinar / dolar_price).toFixed(2) || 0;
     },
   },
-  { prop: "note", name:  t('note') },
   { prop: "shipping_dolar", name:  t('shipping_dolar'),columnType: 'numeric'  },
   { prop: "coc_dolar", name:  t('coc_dolar'),columnType: 'numeric'  },
   { prop: "checkout", name:  t('checkout') ,columnType: 'numeric' },
@@ -81,19 +80,10 @@ const columns = [
     name:  t('profit'),
     columnType: 'numeric',
     readonly: true, // Set the column as readonly
-    cellTemplate: (createElement,props) => {
-      const checkout = props.data[props.rowIndex].checkout || 0;
-      const shipping = props.data[props.rowIndex].shipping_dolar || 0;
-      const coc_dolar = props.data[props.rowIndex].coc_dolar || 0;
-      const dinar = props.data[props.rowIndex].dinar || 0;
-      const dolar_price = props.data[props.rowIndex].dolar_price || 0;
-      const paid = props.data[props.rowIndex].paid || 0;
-      const expenses = props.data[props.rowIndex].expenses || 0;
-      return (paid-(checkout+expenses + shipping +coc_dolar+(dinar/dolar_price))).toFixed(0);
-    },
   },
   { prop: "date", name:  t('date'),columnType: "date",size: 130, },
-  
+  { prop: "note", name:  t('note') },
+
 ];
   const handleEdit = (event) => {
 
@@ -243,6 +233,7 @@ function confirmUpdateCar(V) {
 
       });
       getcountTotalInfo()
+      getResultsCar();
 
   })
   .catch(error => {
@@ -254,6 +245,7 @@ function confirmUpdateCar(V) {
         rtl: true
 
       });
+
   })
 }
 

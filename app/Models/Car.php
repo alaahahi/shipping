@@ -57,7 +57,7 @@ class Car extends Model
         'coc_dolar',
         'total',
         'paid',
-        'profit	',
+        'profit',
         'date',
         'car_color',
         'year',
@@ -68,6 +68,7 @@ class Car extends Model
         'checkout_s',
         'shipping_dolar_s',
         'coc_dolar_s',
+        'total_s',
     ];
     public function user()
     {
