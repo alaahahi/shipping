@@ -620,18 +620,6 @@ getResultsCar();
 
                       </div>
                       <div>
-                        <div>
-                        <div class="mt-3 text-center" style="direction: ltr;">
-                          <TailwindPagination
-                            :data="car"
-                            @pagination-change-page="getResultsCar"
-                            :limit ="10"
-                            :item-classes="['bg-white','dark:bg-gray-600','text-gray-500','dark:text-gray-300','border-gray-300','dark:border-gray-900','hover:bg-gray-200']"
-                            :activeClasses="[  'bg-rose-50','border-rose-500','text-rose-600',]"
-                          />
-                        </div>
-
-                        </div>
                         <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
                           <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
                               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
@@ -702,7 +690,7 @@ getResultsCar();
                               <tbody>
 
 
-                                <tr v-for="car in car.data" :key="car.id" :class="car.results == 0 ?'bg-red-100 dark:bg-red-900':car.results == 1 ?'bg-green-100 dark:bg-green-900':''"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <tr v-for="car in car.data" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.no }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.client?.name }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_type}}</td>

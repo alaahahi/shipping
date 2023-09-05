@@ -24,20 +24,33 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use PDF;
 use Illuminate\Support\Facades\DB;
-
-
+use Illuminate\Support\Facades\Http;
+use App\Models\Transfers;
+use App\Models\Car;
+use App\Models\Company;
+use App\Models\Name;
+use App\Models\CarModel;
+use App\Models\Color;
+use App\Models\ExpensesType;
+use App\Models\Expenses;
 
 
 class AccountingController extends Controller
 {
     public function __construct(){
         $this->url = env('FRONTEND_URL');
-         $this->userAdmin =  UserType::where('name', 'admin')->first()->id;
-         $this->userSeles =  UserType::where('name', 'seles')->first()->id;
-         $this->userClient =  UserType::where('name', 'client')->first()->id;
-         $this->userAccount =  UserType::where('name', 'account')->first()->id;
-
-
+        $this->userAdmin =  UserType::where('name', 'admin')->first()->id;
+        $this->userSeles =  UserType::where('name', 'seles')->first()->id;
+        $this->userClient =  UserType::where('name', 'client')->first()->id;
+        $this->userAccount =  UserType::where('name', 'account')->first()->id;
+    
+        $this->mainAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','main@account.com')->first();
+        $this->inAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','in@account.com')->first();
+        $this->outAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','out@account.com')->first();
+        $this->debtAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','debt@account.com')->first();
+        $this->transfersAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','transfers@account.com')->first();
+        $this->outSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-out')->first();
+        $this->debtSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-debt')->first();
     }
 
     /**
@@ -45,7 +58,37 @@ class AccountingController extends Controller
      *
      * @return Response
      */
-    
+    public function getIndexAccountsSelas()
+    { 
+        $user_id = $_GET['user_id'] ?? 0;
+        $client = User::with('wallet')->where('id', $user_id)->first();
+        $transactions = Transactions ::where('wallet_id', $client?->wallet?->id);
+        //$data = $transactions->paginate(10);
+        $cars = Car::where('client_id',$client->id);
+
+        $car_total = $cars->count();
+        $car_total_unpaid =     Car::where('client_id',$client->id)->where('results',0)->count();
+        $car_total_uncomplete = Car::where('client_id',$client->id)->where('results',1)->count();
+        $car_total_complete =   Car::where('client_id',$client->id)->where('results',2)->count();
+        $cars_paid=   Car::where('client_id',$client->id)->sum('paid');
+        $cars_sum=   Car::where('client_id',$client->id)->sum('total_s');
+        $cars_need_paid=$cars_sum-$cars_paid;
+        // Additional logic to retrieve client data
+        $clientData = [
+            'totalAmount' =>  $transactions->sum('amount'),
+            'data' => $cars->get(),
+            'client'=>$client,
+            'car_total'=>$car_total,
+            'car_total_unpaid'=>$car_total_unpaid,
+            'car_total_complete'=>$car_total_complete,
+            'car_total_uncomplete'=>$car_total_uncomplete,
+            'cars_sum'=>$cars_sum,
+            'cars_paid'=>$cars_paid,
+            'cars_need_paid'=>$cars_need_paid,
+            'date'=> Carbon::now()->format('Y-m-d')
+        ];
+        return Response::json($clientData, 200);
+    }
     public function paySelse(Request $request,$id)
     {
         try {

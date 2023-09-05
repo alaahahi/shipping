@@ -61,30 +61,7 @@ class TransfersController extends Controller
         return Inertia::render('FormRegistrationCourt', ['url'=>$this->url,'users'=>$users]);
 
     }
-    public function getIndexAccountsSelas()
-    { 
-        $user_id = $_GET['user_id'] ?? 0;
-        $sales = User::with('wallet')->where('id', $user_id)->first();
-        $transactions = Transactions ::where('wallet_id', $sales?->wallet?->id);
 
-        $data = $transactions->paginate(10);
-        $profile_count = Car::where('user_id', $sales?->id)->where('results',1)->count();
-        // Additional logic to retrieve sales data
-        $salesData = [
-            'totalAmount' =>  $transactions->sum('amount'),
-            'count' => $profile_count,
-            'total' => $data?->total(),
-            'to' => $data?->currentPage(),
-            'from' => $data?->lastPage(),
-            'current_page' => $data?->currentPage(),
-            'per_page' => $data?->perPage(),
-            'last_page' => $data?->lastPage(),
-            'data' => $data?->items(),
-            'sales'=>$sales,
-            'date'=> Carbon::now()->format('Y-m-d')
-        ];
-        return Response::json($salesData, 200);
-    }
     public function getcountComp(Request $request)
     {
         $profile=  Car::all();

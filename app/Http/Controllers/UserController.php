@@ -51,7 +51,13 @@ class UserController extends Controller
         $cards= Card::all();
         return Inertia::render('Clients/Index', ['url'=>$this->url,'cards'=>$cards]);
     }
-    
+    public function showClients($id)
+    {
+        $clients = User::where('type_id', $this->userClient)->get();
+
+        $client= user::find($id);
+        return Inertia::render('Clients/Show', ['url'=>$this->url,'client'=>$client,'clients'=>$clients,'client_id'=>$id]);
+    }
     public function show ()
     {
         return Inertia::render('Users/Index', ['url'=>$this->url]);

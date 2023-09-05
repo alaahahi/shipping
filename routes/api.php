@@ -41,7 +41,7 @@ Route::get('getSaler',[UserController::class, 'getSaler']);
 
 Route::get('addTransfers',[TransfersController::class, 'addTransfers'])->name('addTransfers');
 Route::get('transfers',[TransfersController::class, 'index'])->name('transfers');
-Route::get('getIndexAccountsSelas',[TransfersController::class, 'getIndexAccountsSelas'])->name('getIndexAccountsSelas');
+Route::get('getIndexAccountsSelas',[AccountingController::class, 'getIndexAccountsSelas'])->name('getIndexAccountsSelas');
 
 Route::get('carConfig',[CarConfigController::class, 'index'])->name('carConfig');
 Route::get('addCompany',[CarConfigController::class, 'create'])->name('addCompany');

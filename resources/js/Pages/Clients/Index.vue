@@ -84,7 +84,7 @@ function open(id) {
 ْ      </template>
         </ModalAddCardUser>
             <div class="py-12">
-                <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div class=" mx-auto sm:px-6 lg:px-8">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6  dark:bg-gray-900">
                             <div className="flex items-center justify-between mb-6">
@@ -116,7 +116,7 @@ function open(id) {
                                             <Link
                                                 tabIndex="1"
                                                 className="px-2 py-1 text-sm text-white bg-slate-500 rounded"
-                                                :href="route('users.edit', user.id)"
+                                                :href="route('showClients', user.id)"
                                                 v-if="user.email!='admin@admin.com'">
                                                 عرض
                                             </Link>

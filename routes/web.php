@@ -47,6 +47,8 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('ban/{id}',[UserController::class, 'ban'])->name("ban");
     Route::get('sentToCourt/{id}',[FormRegistrationController::class, 'sentToCourt'])->name("sentToCourt");
     Route::get('clients',[UserController::class, 'clients'])->name('clients');
+    Route::get('showClients/{id}',[UserController::class, 'showClients'])->name('showClients');
+
     Route::get('getIndexClients',[UserController::class, 'getIndexClients'])->name("getIndexClients");
     Route::get('addClients',[UserController::class, 'addClients'])->name('addClients');
     Route::post('clientsStore',[UserController::class, 'clientsStore'])->name('clientsStore');
