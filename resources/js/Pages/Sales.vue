@@ -4,7 +4,6 @@ import { Head } from '@inertiajs/inertia-vue3';
 import VueTailwindDatepicker from 'vue-tailwind-datepicker'
 import Modal from "@/Components/Modal.vue";
 import ModalAddCar from "@/Components/ModalAddCars.vue";
-import ModalEditCars from "@/Components/ModalEditCar_S.vue";
 
 
 import ModalAddSale from "@/Components/ModalAddSale.vue";
@@ -15,6 +14,8 @@ import ModalSpanFromBox from "@/Components/ModalSpanFromBox.vue";
 import ModalAddTransfers from "@/Components/ModalAddTransfers.vue";
 import ModalAddCarPayment from "@/Components/ModalAddCarPayment.vue";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
+import ModalEditCars from "@/Components/ModalEditCar_S.vue";
+
 import RevoGrid  from "@revolist/vue3-datagrid";
 import { TailwindPagination } from "laravel-vue-pagination";
 import { useToast } from "vue-toastification";

@@ -111,6 +111,23 @@ class AccountingController extends Controller
         return Response::json('ok', 200);
 
     }
+    public function addPaymentCar()
+    {
+        $user_id = $_GET['user_id']??0;
+        $car_id = $_GET['car_id']??0;
+        $amount=$_GET['amount']??0;
+        $car = Car::find($car_id);
+        $car->increment('paid',$amount);
+        $wallet = Wallet::where('user_id',$car->client_id)->first();
+        $desc=trans('text.addPayment').' '.$amount.'$'.' || '.$_GET['note']??'';
+        $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\Car',$user_id);
+        $this->decreaseWallet($amount, $desc,$car->client_id,$car_id,'App\Models\Car',$user_id);
+        if($car->paid-$car->total_s >= 0){
+            $car->update(['results'=>2]); 
+        }
+
+        return Response::json('ok', 200);    
+    }
     public function receiveCard(Request $request)
     {
         $authUser = auth()->user();

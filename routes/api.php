@@ -72,12 +72,13 @@ Route::post('addGenExpenses',[DashboardController::class, 'addGenExpenses']);
 Route::get('showCar',[CarConfigController::class, 'showCar']);
 
 Route::get('addExpenses',[DashboardController::class, 'addExpenses'])->name('addExpenses');
-Route::get('addPaymentCar',[DashboardController::class, 'addPaymentCar'])->name('addPaymentCar');
+Route::get('addPaymentCar',[AccountingController::class, 'addPaymentCar'])->name('addPaymentCar');
 
 
 Route::get('addToBox',[DashboardController::class, 'addToBox'])->name('addToBox');
 Route::get('withDrawFromBox',[DashboardController::class, 'withDrawFromBox'])->name('withDrawFromBox');
 
+Route::get('check_vin',[CarConfigController::class, 'check_vin']);
 
 
 

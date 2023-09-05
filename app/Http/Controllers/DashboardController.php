@@ -534,27 +534,7 @@ class DashboardController extends Controller
         
         return Response::json('ok', 200);    
     }
-    public function addPaymentCar()
-    {
-        $user_id = $_GET['user_id']??0;
-        $car_id = $_GET['car_id']??0;
-        $amount=$_GET['amount']??0;
-        $car = Car::find($car_id);
-        $car->increment('paid_amount_pay',$amount);
-        $wallet = Wallet::where('user_id',$car->client_id)->first();
-        $desc=trans('text.addPayment').' '.$amount.'$'.' || '.$_GET['note']??'';
-        $this->accountingController->increaseWallet($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\Car',$user_id);
-        $this->accountingController->increaseWallet($amount, $desc,$this->inAccount->id,$car_id,'App\Models\Car',$user_id);
-        $this->accountingController->decreaseWallet($amount, $desc,$this->debtSupplier->id,$car_id,'App\Models\Car',$user_id);
-        if($car->pay_price-$car->paid_amount_pay >= 0){
-            $this->accountingController->decreaseWallet($amount, $desc,$this->debtAccount->id,$car->id,'App\Models\Car',$user_id);
-            $wallet->decrement('balance',$amount); 
-        }
-        if($car->pay_price-$car->paid_amount_pay==0){
-            $car->increment('results'); 
-        }
-        return Response::json('ok', 200);    
-    }
+
     public function DelCar(Request $request){
         $car=Car::find($request->id);
         $desc=' مرتج حذف سيارة'.$car->total;

@@ -7,10 +7,21 @@ import { TailwindPagination } from "laravel-vue-pagination";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import axios from 'axios';
+import ModalDelCar from "@/Components/ModalDelCar.vue";
+import ModalEditCars from "@/Components/ModalEditCar_S.vue";
+import ModalAddCarPayment from "@/Components/ModalAddCarPayment.vue";
+import { useToast } from "vue-toastification";
+const toast = useToast();
 
 const laravelData = ref({});
 const client_id = props.client_id;
 const isLoading = ref(0);
+let showModalEditCars=ref(false);
+let showModalDelCar =  ref(false);
+let showModalAddCarPayment =  ref(false);
+
+const total = ref(0);
+const formData = ref({});
 
 
 const showReceiveBtn = ref(0);
@@ -62,6 +73,85 @@ function method1(id) {
   getResults();
   showModal.value = false;
 }
+function openModalDelCar(form={}) {
+  formData.value=form
+  showModalDelCar.value = true;
+}
+function openModalEditCars(form={}){
+  formData.value=form
+  showModalEditCars.value = true;
+}
+function openAddCarPayment(form={}) {
+    formData.value=form
+    showModalAddCarPayment.value = true;
+}
+function confirmDelCar(V) {
+  axios.post('/api/DelCar',V)
+  .then(response => {
+    showModalDelCar.value = false;
+      window.location.reload();
+  })
+  .catch(error => {
+    console.error(error);
+  })
+
+
+}
+function confirmUpdateCar(V) {
+  showModalEditCars.value = false;
+
+  axios.post('/api/updateCars',V)
+  .then(response => {
+    showModal.value = false;
+    toast.success("تم التعديل بنجاح", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+
+      getcountTotalInfo()
+      getResultsCar();
+
+  })
+  .catch(error => {
+    showModal.vcons
+    toast.error("لم التعديل بنجاح", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+
+  })
+}
+function confirmAddPayment(V) {
+  axios.get(`/api/addPaymentCar?car_id=${V.id}&amount=${V.amountPayment??0}&note=${V.notePayment??''}`)
+  .then(response => {
+    showModalAddCarPayment.value = false;
+    toast.success( " تم دفع مبلغ دولار "+V.amountPayment+" بنجاح ", {
+        timeout: 3000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+window.location.reload();
+
+
+  })
+  .catch(error => {
+    showModal.value = false;
+
+    toast.error("لم التعديل بنجاح", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+
+  })
+
+}
 </script>
 
 <template>
@@ -72,6 +162,42 @@ function method1(id) {
             شركة سلام جلال
       </h2>
     </template>
+    <ModalEditCars
+            :formData="formData"
+            :show="showModalEditCars ? true : false"
+            :client="clients"
+            :carModel="carModel"
+            @a="confirmUpdateCar($event)"
+            @close="showModalEditCars = false"
+            >
+        <template #header>
+          </template>
+    </ModalEditCars>
+    <ModalAddCarPayment
+            :formData="formData"
+            :show="showModalAddCarPayment ? true : false"
+            :user="user"
+            @a="confirmAddPayment($event)"
+            @close="showModalAddCarPayment = false"
+            >
+        <template #header>
+          </template>
+    </ModalAddCarPayment>
+
+    <ModalDelCar
+            :show="showModalDelCar ? true : false"
+            :formData="formData"
+            @a="confirmDelCar($event)"
+            @close="showModalDelCar = false"
+            >
+          <template #header>
+            <h2 class=" mb-5 dark:text-white text-center">
+
+          هل متأكد من حذف السيارة
+          ؟
+          </h2>
+          </template>
+    </ModalDelCar>
     <modal
       :show="showModal ? true : false"
       :data="showModal.toString()"
@@ -92,7 +218,7 @@ function method1(id) {
       </div>
     </div>
     <div class="py-4">
-      <h2 class="text-center pb-2">{{ $t('client_bill') }}</h2>
+      <h2 class="text-center pb-2">{{ $t('sales_bill') }}</h2>
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6 bg-white  border-gray-200">
@@ -234,7 +360,7 @@ function method1(id) {
                                 id="percentage"
                                 type="text"
                                 class="mt-1 block w-full"
-                                :value="total"
+                                v-model="total"
                               />
                             </div>
                           </div>
@@ -264,9 +390,6 @@ function method1(id) {
                                   <tr>
                                       <th scope="col" class="px-1 py-3 text-base	" >
                                         {{ $t('no') }}  
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base	">
-                                        {{ $t('car_owner') }}
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t('car_type') }}
@@ -318,7 +441,7 @@ function method1(id) {
                                         {{ $t('date') }}
                                       </th>
                 
-                                      <th scope="col" class="px-1 py-3 text-base" style="width: 150px;">
+                                      <th scope="col" class="px-1 py-3 text-base" style="width: 240px;">
                                         {{ $t('execute') }}
                                       </th>
                                   </tr>
@@ -328,7 +451,6 @@ function method1(id) {
 
                                 <tr v-for="car in  laravelData.data" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.no }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.client?.name }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_type}}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.year}}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_color }}</td>
@@ -361,6 +483,15 @@ function method1(id) {
                                       @click="openModalDelCar(car)"
                                     >
                                       {{ $t('delete') }}
+                                    </button>
+                                    <button
+                                      v-if="car.total_s != car.paid"
+                                      tabIndex="1"
+                                      
+                                      class="px-2 py-1 text-base text-white mx-1 bg-green-500 rounded"
+                                      @click="openAddCarPayment(car)"
+                                    >
+                                      {{ $t('complet_pay') }}
                                     </button>
                                     <!-- 
           
