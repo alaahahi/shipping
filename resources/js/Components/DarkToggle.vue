@@ -35,7 +35,7 @@ export default {
       }
       // Store dark mode status in local storage
       localStorage.setItem('darkMode', this.darkMode);
-      window.location.reload();
+      //window.location.reload();
 
     },
   },
