@@ -317,17 +317,7 @@ function confirmWithDrawFromBox(V) {
       console.error(error);
     });
 }
-function confirmAddPayment(V) {
-  fetch(`/addPaymentCar?car_id=${V.id}&user_id=${V.user_id}&amount=${V.amountPayment??0}&note=${V.notePayment??''}`)
-    .then(() => {
-      showModalFromBox.value = false;
-      window.location.reload();
 
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-}
 function confirmDelCar(V) {
   axios.post('/api/DelCar',V)
   .then(response => {
@@ -345,6 +335,33 @@ function getDarkModePreference() {
   return darkModePreference==='true' ?'darkCompact':'compact'; // Convert the string to a boolean
 }
 getResultsCar();
+
+function confirmAddPayment(V) {
+  axios.get(`/api/addPaymentCar?car_id=${V.id}&amount=${V.amountPayment??0}&note=${V.notePayment??''}`)
+  .then(response => {
+    showModalAddCarPayment.value = false;
+    toast.success( " تم دفع مبلغ دولار "+V.amountPayment+" بنجاح ", {
+        timeout: 3000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+    window.location.reload();
+
+
+  })
+  .catch(error => {
+    showModal.value = false;
+
+    toast.error("لم التعديل بنجاح", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+
+  })
+}
 </script>
 
 <template>
@@ -676,7 +693,7 @@ getResultsCar();
                                         {{ $t('date') }}
                                       </th>
                 
-                                      <th scope="col" class="px-1 py-3 text-base" style="width: 150px;">
+                                      <th scope="col" class="px-1 py-3 text-base" style="width: 250px;">
                                         {{ $t('execute') }}
                                       </th>
                                   </tr>
@@ -720,6 +737,14 @@ getResultsCar();
                                       @click="openModalDelCar(car)"
                                     >
                                       {{ $t('delete') }}
+                                    </button>
+                                    <button
+                                      v-if="car.total_s != car.paid"
+                                      tabIndex="1"
+                                      class="px-2 py-1 text-base text-white mx-1 bg-green-500 rounded"
+                                      @click="openAddCarPayment(car)"
+                                    >
+                                      {{ $t('complet_pay') }}
                                     </button>
                                     <!-- 
           

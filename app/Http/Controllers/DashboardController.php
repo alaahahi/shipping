@@ -259,19 +259,11 @@ class DashboardController extends Controller
             'results'=> $results,
             'total_s'=> $request->expenses,
              ]);
-             if($paid){
-                if($paid-$total_amount >=0){
-                    $car->increment('results'); 
-                    $desc=trans('text.payCar').' '.$total_amount.trans('text.payDone').($paid);
-                    $this->accountingController->increaseWallet(($paid-$total_amount), $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
-                }else
-                $desc=trans('text.payCar').' '.trans('text.payDone').' '.$total_amount;
-                $this->accountingController->decreaseWallet(($paid-$total_amount), $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
-
-             }else{
+    
                 $desc=trans('text.payCar').' '.trans('text.payDone').' '.$total_amount;;
                 $this->accountingController->decreaseWallet(($total_amount), $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
-             }
+                $this->accountingController->increaseWallet($request->expenses, $desc,$car->client_id,$car->id,'App\Models\User',$user_id);
+
         return Response::json('ok', 200);    
     }
     public function updateCars(Request $request)

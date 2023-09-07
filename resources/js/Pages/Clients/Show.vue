@@ -370,7 +370,7 @@ function confirmAddPaymentTotal(amount,client_id) {
                             </div>
                           </div>
                           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 lg:gap-1">
-                           <div className="mb-4 mx-5 print:hidden">
+                           <div className="mb-4 mx-5 print:hidden" v-if="laravelData?.cars_need_paid">
                               <InputLabel for="pay" value="تأكيد الدفع" />
                               <button
                               @click.prevent="confirmAddPaymentTotal(total,client_id)"
