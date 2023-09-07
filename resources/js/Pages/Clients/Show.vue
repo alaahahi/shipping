@@ -135,7 +135,7 @@ function confirmAddPayment(V) {
         rtl: true
 
       });
-window.location.reload();
+    window.location.reload();
 
 
   })
@@ -150,7 +150,32 @@ window.location.reload();
       });
 
   })
+}
+function confirmAddPaymentTotal(amount,client_id) {
+  axios.get(`/api/addPaymentCarTotal?amount=${amount??0}&client_id=${client_id??''}`)
+  .then(response => {
+    showModalAddCarPayment.value = false;
+    toast.success( " تم دفع مبلغ دولار "+amount+" بنجاح ", {
+        timeout: 3000,
+        position: "bottom-right",
+        rtl: true
 
+      });
+    window.location.reload();
+
+
+  })
+  .catch(error => {
+    showModal.value = false;
+
+    toast.error("لم التعديل بنجاح", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+
+  })
 }
 </script>
 
@@ -249,8 +274,7 @@ window.location.reload();
                   <div class="mx-auto">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                       <div class=" bg-white  border-gray-200">
-                        <div class="flex flex-row">
-                          <div class="basis-1/4">
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 lg:gap-1">
                             <div className="mb-4 mx-5">
                               <InputLabel for="car_total" value="مجموع السيارات" />
                               <TextInput
@@ -261,8 +285,6 @@ window.location.reload();
                                 disabled
                               />
                             </div>
-                          </div>
-                          <div class="basis-1/4">
                             <div className="mb-4 mx-5">
                               <InputLabel for="car_total_complete" value="مجموع السيارات مكتمل" />
                               <TextInput
@@ -273,9 +295,6 @@ window.location.reload();
                                 disabled
                               />
                             </div>
-                          </div>
-
-                          <div class="basis-1/4">
                             <div className="mb-4 mx-5">
                               <InputLabel for="car_total_unpaid" value="مجموع السيارات غير مدفوع" />
                               <TextInput
@@ -286,8 +305,6 @@ window.location.reload();
                                 disabled
                               />
                             </div>
-                          </div>
-                          <div class="basis-1/4">
                             <div className="mb-4 mx-5">
                               <InputLabel for="car_total_uncomplete" value=" مجموع السيارات مدفوع وغير مكمل" />
                               <TextInput
@@ -298,7 +315,6 @@ window.location.reload();
                                 disabled
                               />
                             </div>
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -312,8 +328,7 @@ window.location.reload();
                   <div class="mx-auto">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                       <div class="bg-white">
-                        <div class="flex flex-row">
-                          <div class="basis-1/3">
+                          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 lg:gap-1">
                             <div className="mb-4 mx-5">
                               <InputLabel for="cars_sum" :value="$t('Total_in_dollars')" />
                               <TextInput
@@ -324,8 +339,6 @@ window.location.reload();
                                 disabled
                               />
                             </div>
-                          </div>
-                          <div class="basis-1/3">
                             <div className="mb-4 mx-5">
                               <InputLabel for="cars_paid" value="مجموع المدفوع بالدولار" />
                               <TextInput
@@ -336,9 +349,6 @@ window.location.reload();
                                 disabled
                               />
                             </div>
-                          </div>
-
-                          <div class="basis-1/3">
                             <div className="mb-4 mx-5">
                               <InputLabel for="cars_need_paid" value="مجموع الدين بالدولار" />
                               <TextInput
@@ -349,11 +359,6 @@ window.location.reload();
                                 disabled
                               />
                             </div>
-                          </div>
-                 
-                        </div>
-                        <div class="flex flex-row">
-                          <div class="basis-1/3">
                             <div className="mb-4 mx-5">
                               <InputLabel for="percentage" value=" المبلغ بالدولار" />
                               <TextInput
@@ -364,18 +369,16 @@ window.location.reload();
                               />
                             </div>
                           </div>
-                          <div class="basis-1/3">
-                            <div className="mb-4 mx-5 print:hidden">
+                          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 lg:gap-1">
+                           <div className="mb-4 mx-5 print:hidden">
                               <InputLabel for="pay" value="تأكيد الدفع" />
                               <button
-                              @click.prevent="pay(laravelData.client?.id)"
+                              @click.prevent="confirmAddPaymentTotal(total,client_id)"
                               :disabled="isLoading || !parseInt(laravelData.totalAmount)"
-                              class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-green-500 rounded" style="width: 100%"
-                            >
+                              class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-green-500 rounded" style="width: 100%">
                               <span v-if="!isLoading">دفع</span>
                               <span v-else>جاري الحفظ...</span>
                             </button>
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -447,8 +450,6 @@ window.location.reload();
                                   </tr>
                               </thead>
                               <tbody>
-
-
                                 <tr v-for="car in  laravelData.data" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.no }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_type}}</td>
@@ -478,7 +479,6 @@ window.location.reload();
                                     </button>
                                     <button
                                       tabIndex="1"
-                                      
                                       class="px-2 py-1 text-base text-white mx-1 bg-orange-500 rounded"
                                       @click="openModalDelCar(car)"
                                     >
@@ -487,14 +487,12 @@ window.location.reload();
                                     <button
                                       v-if="car.total_s != car.paid"
                                       tabIndex="1"
-                                      
                                       class="px-2 py-1 text-base text-white mx-1 bg-green-500 rounded"
                                       @click="openAddCarPayment(car)"
                                     >
                                       {{ $t('complet_pay') }}
                                     </button>
                                     <!-- 
-          
                                     <button
                                       tabIndex="1"
                                       class="px-4 py-1 text-base text-white mx-1 bg-purple-500 rounded"
@@ -526,9 +524,7 @@ window.location.reload();
                                     >
                                       {{ $t('add_payment') }}
                                     </button>
-
                                     -->
-
                                     </td> 
                                 </tr>
                               </tbody>

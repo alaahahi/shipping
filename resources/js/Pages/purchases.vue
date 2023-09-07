@@ -5,8 +5,6 @@ import VueTailwindDatepicker from 'vue-tailwind-datepicker'
 import Modal from "@/Components/Modal.vue";
 import ModalAddCar from "@/Components/ModalAddCars.vue";
 import ModalEditCars from "@/Components/ModalEditCars.vue";
-
-
 import ModalAddSale from "@/Components/ModalAddSale.vue";
 import ModalAddExpenses from "@/Components/ModalAddExpenses.vue";
 import ModalAddGenExpenses from "@/Components/ModalAddGenExpenses.vue";
@@ -22,20 +20,16 @@ import axios from 'axios';
 import { ref } from 'vue';
 import Plugin from "@revolist/revogrid-column-date";
 import { useI18n } from "vue-i18n";
+
 const {t} = useI18n();
 
-import NumberColumnType from '@revolist/revogrid-column-numeral'; // import library
+import NumberColumnType from '@revolist/revogrid-column-numeral';
 
-
-const props = defineProps({
-
-  client:Array,
-
-});
+const props = defineProps({client:Array});
 
 
 let data = ref({});
-const columnTypes = ref({ 'date': new Plugin(),'numeric': new NumberColumnType('0,0') });
+// const columnTypes = ref({ 'date': new Plugin(),'numeric': new NumberColumnType('0,0') });
 const toast = useToast();
 const columns = [
   { prop: "no", name: t('no'),size:50,  },
@@ -88,17 +82,17 @@ const columns = [
   { prop: "note", name:  t('note') },
 
 ];
-  const handleEdit = (event) => {
+//   const handleEdit = (event) => {
 
-  const rowIndex = event.detail.rowIndex;
-  const colIndex = (event.detail.prop).replace(/["\s]/g, '');
-  const newValue = event.detail.val;
-  const id =car.value.data[rowIndex].id;
-  //car.value.data[rowIndex][colIndex] = newValue;
+//   const rowIndex = event.detail.rowIndex;
+//   const colIndex = (event.detail.prop).replace(/["\s]/g, '');
+//   const newValue = event.detail.val;
+//   const id =car.value.data[rowIndex].id;
+//   //car.value.data[rowIndex][colIndex] = newValue;
 
-  // You can save the changes to a backend here if needed
-  saveChangesToBackend(id,colIndex,newValue);
-};
+//   // You can save the changes to a backend here if needed
+//   saveChangesToBackend(id,colIndex,newValue);
+// };
 let showModal = ref(false);
 
 const saveChangesToBackend = (id,colIndex,newValue) => {

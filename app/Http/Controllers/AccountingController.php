@@ -125,6 +125,39 @@ class AccountingController extends Controller
         if($car->paid-$car->total_s >= 0){
             $car->update(['results'=>2]); 
         }
+        elseif($amount){
+            $car->update(['results'=>1]); 
+        }
+
+        return Response::json('ok', 200);    
+    }
+    public function addPaymentCarTotal()
+    {
+        $client_id  = $_GET['client_id']  ??0;
+        $amount  = $_GET['amount']  ??0;
+        $cars = Car::where('client_id',$client_id)->whereIn('results', [0, 1])->get();
+        $needToPay=0;
+
+        foreach ($cars as $car) {
+            $needToPay = $car->total_s - $car->paid;
+        
+            if ($needToPay <= $amount) {
+                // Deduct the amount and update 'paid' for this car
+                $amount -= $needToPay;
+                $car->update(['paid' => $car->total_s,'results' =>2]);
+            } else {
+                // Deduct what's available in $amount and update 'paid' accordingly
+                $car->update(['paid' => $car->paid + $amount,'results' =>1]);
+                $amount = 0;
+                break; // Stop processing if the amount is exhausted
+            }
+        }
+
+        
+        $wallet = Wallet::where('user_id',$car->client_id)->first();
+        $desc=trans('text.addPayment').' '.$amount.'$'.' || '.$_GET['note']??'';
+        $this->c($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\Car',$user_id);
+        $this->decreaseWallet($amount, $desc,$car->client_id,$car_id,'App\Models\Car',$user_id);
 
         return Response::json('ok', 200);    
     }

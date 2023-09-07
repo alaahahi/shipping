@@ -251,7 +251,6 @@ class DashboardController extends Controller
             'coc_dolar'=> $request->coc_dolar,
             'checkout'=> $request->checkout,
             'total'=> $total_amount,
-            'paid'=> $paid,
             'year'=> $request->year,
             'car_color'=> $request->car_color,
             'date'=> $request->date,
