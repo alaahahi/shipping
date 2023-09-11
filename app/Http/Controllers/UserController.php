@@ -9,6 +9,8 @@ use Inertia\Inertia;
 use App\Models\Wallet;
 use App\Models\User;
 use App\Models\Card;
+use App\Models\Car;
+
 use App\Models\UserType;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
@@ -69,7 +71,18 @@ class UserController extends Controller
     }
     public function getIndexClients()
     {
-        $data = User::with('userType:id,name','wallet')->where('type_id', $this->userClient)->paginate(10);
+        $data = User::with('userType:id,name', 'wallet')
+    ->where('type_id', $this->userClient)
+    ->paginate(10);
+
+        $data->getCollection()->transform(function ($user) {
+            $user->car_total_uncomplete = Car::where('client_id', $user->id)->where('results', 1)->orWhere('results', 0)->count();
+            $user->car_total_complete = Car::where('client_id', $user->id)->where('results', 2)->count();
+            
+            return $user;
+        });
+
+        
         return Response::json($data, 200);
     }
     public function addClients()

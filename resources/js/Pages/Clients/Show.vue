@@ -244,7 +244,7 @@ function confirmAddPaymentTotal(amount,client_id) {
     </div>
     <div class="py-4">
       <h2 class="text-center pb-2 dark:text-gray-400">{{ $t('sales_bill') }}</h2>
-      <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
+      <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 p-6 dark:bg-gray-900">
         <div class=" overflow-hidden shadow-sm sm:rounded-lg">
             <div class="flex flex-row">
               <div class="basis-1/2 pr-4">

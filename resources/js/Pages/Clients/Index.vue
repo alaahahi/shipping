@@ -101,6 +101,9 @@ function open(id) {
                                         <th className="px-1 py-3 text-base">{{ $t('number') }}</th>
                                         <th className="px-1 py-3 text-base">{{ $t('name') }}</th>
                                         <th className="px-1 py-3 text-base">{{ $t('phoneNumber') }}</th>
+                                        <th className="px-1 py-3 text-base">مجموع السيارات غير مكتمل</th>
+                                        <th className="px-1 py-3 text-base">مجموع السيارات مكتمل</th>
+
                                         <th className="px-1 py-3 text-base">{{ $t('debt') }}</th>
                                         <th className="px-1 py-3 text-base">{{ $t('execute') }}</th>       
                                     </tr>
@@ -111,6 +114,8 @@ function open(id) {
                                         <td className="border dark:border-gray-800 text-center px-4 py-2 text-base"> {{user.id }}</td>
                                         <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ user.name }}</td>
                                         <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ user.phone }}</td>
+                                        <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{user.car_total_uncomplete}}</td>
+                                        <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{user.car_total_complete}}</td>
                                         <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ user.wallet ? '$'+user.wallet['balance']:0   }}</td>
                                         <td className="border dark:border-gray-800 text-center px-4 py-2 text-base"  style="min-height: 42px;">
                                             <Link
