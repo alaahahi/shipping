@@ -50,6 +50,9 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('showClients/{id}',[UserController::class, 'showClients'])->name('showClients');
 
     Route::get('getIndexClients',[UserController::class, 'getIndexClients'])->name("getIndexClients");
+    Route::get('getIndexClientsSearch',[UserController::class, 'getIndexClients'])->name("getIndexClientsSearch");
+
+    
     Route::get('addClients',[UserController::class, 'addClients'])->name('addClients');
     Route::post('clientsStore',[UserController::class, 'clientsStore'])->name('clientsStore');
 

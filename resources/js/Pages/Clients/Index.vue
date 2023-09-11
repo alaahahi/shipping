@@ -12,51 +12,19 @@ const getResults = async (page = 1) => {
     laravelData.value = await response.json();
 }
 getResults();
-
+const getResultSearch = async (q) => {
+    const response = await fetch(`/getIndexClientsSearch?q=${q}`);
+    laravelData.value = await response.json();
+}
 
 const props = defineProps({
     url:String,
-    cards:Array
 });
 
-const form = useForm();
 
-function destroy(id) {
-        form.delete(route('users.destroy', id));
-        window.location.reload();
- 
-}
-function ban(id) {
-
-        form.get(route('ban', id));
-        window.location.reload();
-   
-}
-function unban(id) {
-   
-        form.get(route('unban', id));
-        window.location.reload();
-}
 let showModal = ref(false);
 let user_id = ref(0);
-function confirm(V) {
-    let card_id = V.card_id
-    let card = V.card
-    fetch(`/addUserCard/${card_id}/${card}/${ user_id.value}`).then(() => {
-        showModal.value = false;
-        user_id.value=0
-        window.location.reload();
-    })
-    .catch((error) => {
-        showModal.value = false;
-        user_id.value=0
-    });
-    
-}
-function open(id) {
-    user_id.value=id
-    showModal.value = true;
-}
+
 </script>
 
 <template>
@@ -67,31 +35,129 @@ function open(id) {
                {{$t('Customer_management')}}
             </h2>
         </template>
-            <ModalAddCardUser
-            :show="showModal ? true : false"
-            :data="cards"
-            @a="confirm($event)"
-            @close="showModal = false"
-            >
-      <template #header>
-ْ      </template>
-        </ModalAddCardUser>
+
             <div class="py-12">
                 <div class=" mx-auto sm:px-6 lg:px-8">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6  dark:bg-gray-900">
-                            <div className="flex items-center justify-between mb-6">
-                                <Link
-                                    className="px-6 py-2 text-white bg-rose-500 rounded-md focus:outline-none"
+                            <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-2 lg:gap-1">
+                        <div>
+                          <form class="flex items-center max-w-5xl">
+                            <label  class="dark:text-gray-200" for="simple-search"  ></label>
+                            <div class="relative w-full">
+                              <div
+                                class="
+                                  absolute
+                                  inset-y-0
+                                  left-0
+                                  flex
+                                  items-center
+                                  pl-3
+                                  pointer-events-none
+                                "
+                              >
+                                <svg
+                                  aria-hidden="true"
+                                  class="w-5 h-5 text-gray-500 dark:text-gray-200 dark:text-gray-400"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    fill-rule="evenodd"
+                                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                                    clip-rule="evenodd"
+                                  ></path>
+                                </svg>
+                              </div>
+                              <input
+                                v-model="searchTerm"
+                                @input="getResultSearch(searchTerm)"
+                                type="text"
+                                id="simple-search"
+                                class="
+                                  bg-gray-50
+                                  border border-gray-300
+                                  text-gray-900 text-sm
+                                  rounded-lg
+                                  focus:ring-blue-500 focus:border-blue-500
+                                  block
+                                  w-full
+                                  pl-10
+                                  p-2.5
+                                  dark:bg-gray-700
+                                  dark:border-gray-600
+                                  dark:placeholder-gray-400
+                                  dark:text-white
+                                  dark:focus:ring-blue-500
+                                  dark:focus:border-blue-500
+                                "
+                                placeholder="بحث"
+                                required
+                              />
+                            </div>
+                          </form>
+                        </div>
+                        <!-- <div>
+                          <button
+                            type="button"
+                            @click="openAddGenExpenses()"
+                            style="min-width:150px;"
+                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-red-500 rounded">
+                               {{ $t('genExpenses') }}
+                          </button>
+                        </div> -->
+                        <!-- <div>
+                          <button
+                            type="button"
+                            @click="openAddCar()"
+                            style="min-width:150px;"
+                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-green-500 rounded">
+                            {{ $t('addCar') }} 
+                          </button>
+                        </div> -->
+                        <!-- <div>
+                          <a
+                            type="button"
+                            :href="route('FormRegistrationCompleted')"
+                            style="min-width:150px;"
+                            className="px-6 mb-12 text-center mx-2 py-2 font-bold text-white bg-blue-600 rounded">
+                            {{ $t('allCars') }}
+                          </a>
+                        </div> -->
+                        <!-- <div>
+                          <button
+                            type="button"
+                            @click="openAddTransfers()"
+                            style="min-width:150px;"
+                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-indigo-600 rounded">
+                            {{ $t('transfers') }} 
+                          </button>
+                        </div> -->
+                        <div>
+                            <select @change="getResultSearch(user_id)" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
+                              <option value="undefined" disabled> {{ $t("selectCustomer") }}</option>
+                              <option value="">{{ $t("allOwners") }}</option>
+                              <option value="debit">يوجد دين</option>
+                            </select>
+                        </div>
+                        <div class="text-center">
+                            <Link
+                                    style="display: inline-block"
+                                    className="px-6 py-2 font-bold text-white bg-red-600 rounded "
                                     :href="route('addClients')">
                                     {{ $t('addCustomer') }}
-                                </Link>
-                            </div>
+                            </Link>
+                        </div>
+
+
+                      </div>
+
+                 
                             <div class="overflow-x-auto shadow-md ">
                             <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
                                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
                                     <tr>
-                                        <th className="px-1 py-3 text-base">{{ $t('number') }}</th>
                                         <th className="px-1 py-3 text-base">{{ $t('name') }}</th>
                                         <th className="px-1 py-3 text-base">{{ $t('phoneNumber') }}</th>
                                         <th className="px-1 py-3 text-base">مجموع السيارات غير مكتمل</th>
@@ -103,7 +169,6 @@ function open(id) {
                                 <tbody class="flex-1 sm:flex-none dark:bg-gray-700 dark:text-gray-200">
                                 
                                     <tr v-for="user in laravelData.data" :key="user.id"  class="text-center dark:text-gray-200mb-2 sm:mb-0 "  :class="user.wallet['balance'] <= 0 ?'bg-green-100 dark:bg-green-900':'bg-red-100 dark:bg-red-900'" >
-                                        <td className="border dark:border-gray-800 text-center px-4 py-2 text-base"> {{user.id }}</td>
                                         <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ user.name }}</td>
                                         <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ user.phone }}</td>
                                         <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{user.car_total_uncomplete}}</td>

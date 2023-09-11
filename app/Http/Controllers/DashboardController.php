@@ -262,7 +262,7 @@ class DashboardController extends Controller
     
                 $desc=trans('text.payCar').' '.trans('text.payDone').' '.$total_amount;;
                 $this->accountingController->decreaseWallet(($total_amount), $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
-                $this->accountingController->increaseWallet($request->expenses, $desc,$car->client_id,$car->id,'App\Models\User',$user_id);
+                $this->accountingController->increaseWallet($request->expenses, $desc,$car->client_id,$car->id,'App\Models\User',$car->client_id);
 
         return Response::json('ok', 200);    
     }
