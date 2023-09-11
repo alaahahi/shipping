@@ -95,24 +95,24 @@ function open(id) {
                                 </Link>
                             </div>
                             <div class="overflow-x-auto shadow-md ">
-                            <table  class="w-full my-5">      
-                                <thead class="700 bg-rose-500 text-white text-center rounded-l-lg">
-                                    <tr  class="bg-rose-500  rounded-l-lg  mb-2 sm:mb-0">
-                                        <th className="px-4 py-2 border dark:border-gray-900 w-20">{{ $t('number') }}</th>
-                                        <th className="px-4 py-2 border dark:border-gray-900">{{ $t('name') }}</th>
-                                        <th className="px-4 py-2 border dark:border-gray-900">{{ $t('phoneNumber') }}</th>
-                                        <th className="px-4 py-2 border dark:border-gray-900">{{ $t('debt') }}</th>
-                                        <th className="px-4 py-2 border dark:border-gray-900">{{ $t('execute') }}</th>       
+                            <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
+                                    <tr>
+                                        <th className="px-1 py-3 text-base">{{ $t('number') }}</th>
+                                        <th className="px-1 py-3 text-base">{{ $t('name') }}</th>
+                                        <th className="px-1 py-3 text-base">{{ $t('phoneNumber') }}</th>
+                                        <th className="px-1 py-3 text-base">{{ $t('debt') }}</th>
+                                        <th className="px-1 py-3 text-base">{{ $t('execute') }}</th>       
                                     </tr>
                                 </thead>
                                 <tbody class="flex-1 sm:flex-none dark:bg-gray-700 dark:text-gray-200">
                                 
-                                    <tr v-for="user in laravelData.data" :key="user.id"  class="text-center dark:text-gray-200mb-2 sm:mb-0 ">
-                                        <td className="px-4 py-2 border dark:border-gray-900"> {{user.id }}</td>
-                                        <td className="px-4 py-2 border dark:border-gray-900">{{ user.name }}</td>
-                                        <td className="px-4 py-2 border dark:border-gray-900">{{ user.phone }}</td>
-                                        <td className="px-4 py-2 border dark:border-gray-900">{{ user.wallet ? '$'+user.wallet['balance']:0   }}</td>
-                                        <td className="px-4 py-2 border dark:border-gray-900"  style="min-height: 42px;">
+                                    <tr v-for="user in laravelData.data" :key="user.id"  class="text-center dark:text-gray-200mb-2 sm:mb-0 "  :class="user.wallet['balance'] <= 0 ?'bg-green-100 dark:bg-green-900':'bg-red-100 dark:bg-red-900'" >
+                                        <td className="border dark:border-gray-800 text-center px-4 py-2 text-base"> {{user.id }}</td>
+                                        <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ user.name }}</td>
+                                        <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ user.phone }}</td>
+                                        <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ user.wallet ? '$'+user.wallet['balance']:0   }}</td>
+                                        <td className="border dark:border-gray-800 text-center px-4 py-2 text-base"  style="min-height: 42px;">
                                             <Link
                                                 tabIndex="1"
                                                 className="px-2 py-1 text-sm text-white bg-slate-500 rounded"
