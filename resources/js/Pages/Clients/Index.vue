@@ -7,17 +7,10 @@ import { TailwindPagination } from 'laravel-vue-pagination';
 import ModalAddCardUser from "@/Components/ModalAddCardUser.vue";
 
 const laravelData = ref({});
-const userLocation = ref({});
 const getResults = async (page = 1) => {
     const response = await fetch(`/getIndexClients?page=${page}`);
     laravelData.value = await response.json();
 }
-const getUserLocation = async (id) => {
-    const response = await fetch(`/userLocation/${id}`);
-    userLocation.value = await response.json();
-
-}
-
 getResults();
 
 
@@ -103,7 +96,6 @@ function open(id) {
                                         <th className="px-1 py-3 text-base">{{ $t('phoneNumber') }}</th>
                                         <th className="px-1 py-3 text-base">مجموع السيارات غير مكتمل</th>
                                         <th className="px-1 py-3 text-base">مجموع السيارات مكتمل</th>
-
                                         <th className="px-1 py-3 text-base">{{ $t('debt') }}</th>
                                         <th className="px-1 py-3 text-base">{{ $t('execute') }}</th>       
                                     </tr>
