@@ -42,7 +42,7 @@ const submit = () => {
                         <div className="flex items-center justify-between mb-6">
                             <Link
                                 className="px-6 py-2 text-white bg-gray-500 rounded-md focus:outline-none"
-                                :href="route('users.index')"
+                                :href="route('clients')"
                             >
                                 {{ $t('return') }}
                             </Link>
