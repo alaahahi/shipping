@@ -136,7 +136,7 @@ let user_id = ref(0);
                         </div> -->
                         <div>
                             <select @change="getResultSearch(user_id)" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
-                              <option value="undefined" disabled> {{ $t("selectCustomer") }}</option>
+                              <option value="0" disabled> {{ $t("selectCustomer") }}</option>
                               <option value="">{{ $t("allOwners") }}</option>
                               <option value="debit">يوجد دين</option>
                             </select>
