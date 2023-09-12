@@ -71,54 +71,43 @@ class UserController extends Controller
     }
     public function getIndexClients()
     {
-        $q =$_GET['q'] ?? '';
-        if($q)
-        {
-            $data = User::with('userType:id,name', 'wallet')->where('type_id', $this->userClient)->where('name',$q)->orWhere('phone',$q)->paginate(50);
-            if($data){
-                $data->getCollection()->transform(function ($user) {
-                    $user->car_total_uncomplete = Car::where('client_id', $user->id)->whereIn('results', [0, 1])->count();
-                    $user->car_total_complete = Car::where('client_id', $user->id)->where('results', 2)->count();
-                    return $user;
+        $q = $_GET['q'] ?? '';
+        $dataQuery = User::with('userType:id,name', 'wallet')
+            ->where('type_id', $this->userClient);
+        
+        if ($q) {
+            if ($q !== 'debit') {
+                $dataQuery->where(function ($query) use ($q) {
+                    $query->where('name', $q)->orWhere('phone', $q);
                 });
-            }  
-    
-        }
-        elseif($q=='debit'){
-            $data = User::with('userType:id,name', 'wallet')->where('type_id', $this->userClient)->where('name',$q)->orWhere('phone',$q)->paginate(50);
-            if ($data) {
-                $data->getCollection()->transform(function ($user) {
-                    $user->car_total_uncomplete = Car::where('client_id', $user->id)->whereIn('results', [0, 1])->count();
-                    $user->car_total_complete = Car::where('client_id', $user->id)->where('results', 2)->count();
-                    
-                    return $user;
-                });
-            
-                // Filter the collection to keep only users with car_total_uncomplete > 0
-                $filteredData = $data->getCollection()->filter(function ($user) {
-                    return $user->car_total_uncomplete > 0;
-                });
-            
-                // Check if there are any users with car_total_uncomplete > 0
-                if ($filteredData->isNotEmpty()) {
-                    // Return the filtered collection
-                    return $filteredData;
-                }
+                $paginationLimit = 50;
+            } else {
+                $paginationLimit = 10;
             }
-    
+        } else {
+            $paginationLimit = 10;
         }
-        else{
-            $data = User::with('userType:id,name', 'wallet')->where('type_id', $this->userClient)->paginate(10);
-            if($data){
-                $data->getCollection()->transform(function ($user) {
-                    $user->car_total_uncomplete = Car::where('client_id', $user->id)->whereIn('results', [0, 1])->count();
-                    $user->car_total_complete = Car::where('client_id', $user->id)->where('results', 2)->count();
-                    
-                    return $user;
-                });
-            }  
-    
+        
+        $data = $dataQuery->paginate($paginationLimit);
+        
+        $data->getCollection()->transform(function ($user) {
+            $user->car_total_uncomplete = Car::where('client_id', $user->id)->whereIn('results', [0, 1])->count();
+            $user->car_total_complete = Car::where('client_id', $user->id)->where('results', 2)->count();
+            
+            if ($user->car_total_uncomplete > 0) {
+                return $user;
+            }
+            
+            return $user;
+        });
+        
+        // Filter the collection to keep only users with car_total_uncomplete > 0
+        if ($q === 'debit') {
+            $data->setCollection($data->getCollection()->filter(function ($user) {
+                return $user->car_total_uncomplete > 0;
+            }));
         }
+        
 
 
         

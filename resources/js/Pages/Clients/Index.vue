@@ -168,7 +168,7 @@ let user_id = ref(0);
                                 </thead>
                                 <tbody class="flex-1 sm:flex-none dark:bg-gray-700 dark:text-gray-200">
                                 
-                                    <tr v-for="user in laravelData.data" :key="user.id"  class="text-center dark:text-gray-200mb-2 sm:mb-0 "  :class="user.wallet['balance'] <= 0 ?'bg-green-100 dark:bg-green-900':'bg-red-100 dark:bg-red-900'" >
+                                    <tr v-for="user in laravelData.data" :key="user.id"  class="text-center dark:text-gray-200mb-2 sm:mb-0 "  :class="user.car_total_uncomplete <= 0 ?'bg-green-100 dark:bg-green-900':'bg-red-100 dark:bg-red-900'" >
                                         <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ user.name }}</td>
                                         <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ user.phone }}</td>
                                         <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{user.car_total_uncomplete}}</td>
