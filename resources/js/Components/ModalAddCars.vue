@@ -19,6 +19,9 @@ function check_vin(v){
     axios.get(`/api/check_vin?car_vin=${v}`)
   .then(response => {
     showErrorVin.value =  response.data;
+    if(!showErrorVin.value){
+      VinApi(v)
+    }
   })
   .catch(error => {
     console.error(error);
@@ -27,6 +30,19 @@ function check_vin(v){
     showErrorVin.value = false;
 
   }
+}
+function VinApi (v){
+  props.formData.car_type=''
+    props.formData.year=''
+    axios.get(`https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${v}?format=json`)
+  .then(response => {
+    props.formData.car_type=(response.data.Results[0].Make ? response.data.Results[0].Make:response.data.Results[0].Manufacturer)+' '+response.data.Results[0].Model
+    props.formData.year=response.data.Results[0].ModelYear
+
+  })
+  .catch(error => {
+    console.error(error);
+  })
 }
 let showClient = ref(false);
 let showErrorVin = ref(false);
@@ -118,7 +134,22 @@ let showErrorVin = ref(false);
             </div>
             <div
               class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 lg:gap-2"
-            >
+            >  
+              <div className="mb-4 mx-1">
+                <label class="dark:text-gray-200" for="pin">
+                  {{ $t("vin") }}</label
+                >
+                <input
+                  id="vin"
+                  type="text"
+                  @change="check_vin(formData.vin)"
+                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  v-model="formData.vin"
+                />
+                <div class="text-red-700" v-if="showErrorVin">
+                  رقم الشاصي مستخدم
+                </div>
+              </div>
               <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="pin">
                   {{ $t("car_type") }}</label
@@ -153,21 +184,7 @@ let showErrorVin = ref(false);
                 />
               </div>
 
-              <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
-                  {{ $t("vin") }}</label
-                >
-                <input
-                  id="vin"
-                  type="text"
-                  @change="check_vin(formData.vin)"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="formData.vin"
-                />
-                <div class="text-red-700" v-if="showErrorVin">
-                  رقم الشاصي مستخدم
-                </div>
-              </div>
+       
               <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="car_number">
                   {{ $t("car_number") }}</label
