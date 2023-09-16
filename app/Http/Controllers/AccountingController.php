@@ -148,15 +148,15 @@ class AccountingController extends Controller
                 $amount -= $needToPay;
                 $car->update(['paid' => $car->total_s,'results' =>2]);
                 $desc=trans('text.addPayment').' '.$amount.'$'.' || '.$note;
-                $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\Car',$user_id);
-                $this->decreaseWallet($amount, $desc,$car->client_id,$car_id,'App\Models\Car',$user_id);
+                $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car->id,'App\Models\Car',$user_id);
+                $this->decreaseWallet($amount, $desc,$car->client_id,$car->id,'App\Models\Car',$user_id);
             } else {
                 // Deduct what's available in $amount and update 'paid' accordingly
                 $car->update(['paid' => $car->paid + $amount,'results' =>1]);
                 $amount = 0;
                 $desc=trans('text.addPayment').' '.$amount.'$'.' || '.$note;
-                $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\Car',$user_id);
-                $this->decreaseWallet($amount, $desc,$car->client_id,$car_id,'App\Models\Car',$user_id);
+                $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car->id,'App\Models\Car',$user_id);
+                $this->decreaseWallet($amount, $desc,$car->client_id,$car->id,'App\Models\Car',$user_id);
                 break; // Stop processing if the amount is exhausted
 
             }

@@ -711,7 +711,7 @@ function confirmAddPayment(V) {
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_number }}</td> 
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.dinar  }}</td>
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.dolar_price}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.dinar/car.dolar_price }}</td> 
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ ((car.dinar/car.dolar_price)*100).toFixed(0)||0}}</td> 
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.note }}</td>
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.shipping_dolar}}</td>
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.coc_dolar  }}</td>
