@@ -724,7 +724,6 @@ function confirmAddPayment(V) {
                                      <td className="border dark:border-gray-800 text-start px-2 py-2">
                                     <button
                                       tabIndex="1"
-                                      
                                       class="px-2 py-1  text-white mx-1 bg-slate-500 rounded"
                                       @click="openModalEditCars(car)"
                                     >

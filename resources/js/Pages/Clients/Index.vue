@@ -5,25 +5,30 @@ import { Head, Link, useForm } from '@inertiajs/inertia-vue3';
 import { ref } from 'vue';
 import { TailwindPagination } from 'laravel-vue-pagination';
 import ModalAddCardUser from "@/Components/ModalAddCardUser.vue";
+import InputLabel from "@/Components/InputLabel.vue";
+import TextInput from "@/Components/TextInput.vue";
+import axios from 'axios';
 
 const laravelData = ref({});
-const getResults = async (page = 1) => {
-    const response = await fetch(`/getIndexClients?page=${page}`);
-    laravelData.value = await response.json();
+let showModal = ref(false);
+let user_id = ref(0);
+const from = ref(0);
+const to = ref(0);
+const isLoading = ref(0);
+const getResults = async (v,page = 1) => {
+  axios.get(`/getIndexClients?page=${page}&user_id=${user_id.value}&from=${from.value}&to=${to.value}`)
+  .then(response => {
+    laravelData.value =  response.data;
+  })
+  .catch(error => {
+    console.error(error);
+  })
 }
 getResults();
 const getResultSearch = async (q) => {
     const response = await fetch(`/getIndexClientsSearch?q=${q}`);
     laravelData.value = await response.json();
 }
-
-const props = defineProps({
-    url:String,
-});
-
-
-let showModal = ref(false);
-let user_id = ref(0);
 
 </script>
 
@@ -40,8 +45,10 @@ let user_id = ref(0);
                 <div class=" mx-auto sm:px-6 lg:px-8">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6  dark:bg-gray-900">
-                            <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-2 lg:gap-1">
+                            <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-7 gap-2 lg:gap-1">
                         <div>
+                          <InputLabel for="from" :value="$t('search')" class="mb-1" />
+
                           <form class="flex items-center max-w-5xl">
                             <label  class="dark:text-gray-200" for="simple-search"  ></label>
                             <div class="relative w-full">
@@ -135,21 +142,67 @@ let user_id = ref(0);
                           </button>
                         </div> -->
                         <div>
+                          <InputLabel for="from" value="تحديد الفئة" class="mb-1" />
+
                             <select @change="getResultSearch(user_id)" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
                               <option value="0" disabled> {{ $t("selectCustomer") }}</option>
                               <option value="">{{ $t("allOwners") }}</option>
                               <option value="debit">يوجد دين</option>
                             </select>
                         </div>
-                        <div class="text-center">
+                        <div class="text-center px-4">
+                          <InputLabel for="pay" value="اضافة" class="mb-1" />
+
                             <Link
-                                    style="display: inline-block"
-                                    className="px-6 py-2 font-bold text-white bg-red-600 rounded "
+                                    style="display: block"
+                                    className="px-6 mb-12 py-2 mt-1 font-bold text-white bg-red-500 rounded"
                                     :href="route('addClients')">
                                     {{ $t('addCustomer') }}
                             </Link>
                         </div>
-
+                        <div class=" px-4">
+                          <div className="mb-4 mx-5">
+                              <InputLabel for="from" :value="$t('from_date')" />
+                              <TextInput
+                                id="from"
+                                type="date"
+                                class="mt-1 block w-full"
+                                v-model="from"
+                                
+                              />
+                            </div>
+                          </div>
+                          <div class=" px-4">
+                            <div className="mb-4 mx-5">
+                              <InputLabel for="to" :value="$t('to_date')" />
+                              <TextInput
+                                id="to"
+                                type="date"
+                                class="mt-1 block w-full"
+                                v-model="to"
+                              />
+                            </div>
+                        </div>
+                        <div className="mb-4  mr-5 print:hidden">
+                            <InputLabel for="pay" value="فلترة" />
+                            <button
+                            @click.prevent="getResults()"
+                            :disabled="isLoading || !parseInt(user_id)"
+                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded" style="width: 100%">
+                            <span v-if="!isLoading">فلترة</span>
+                            <span v-else>جاري الحفظ...</span>
+                          </button>
+                        </div>
+                        <div className="mb-4  mr-5 print:hidden" >
+                            <InputLabel for="pay" value="طباعة" />
+                            <button
+                            @click.prevent="confirmAddPaymentTotal(total,client_id)"
+                            :disabled="isLoading || !parseInt(user_id)"
+                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded" style="width: 100%">
+                            <span v-if="!isLoading">طباعة</span>
+                            <span v-else>جاري الحفظ...</span>
+                          </button>
+                        </div>
 
                       </div>
 

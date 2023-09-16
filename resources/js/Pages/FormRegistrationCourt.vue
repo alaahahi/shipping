@@ -6,56 +6,38 @@ import { ref } from "vue";
 import { TailwindPagination } from "laravel-vue-pagination";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
+import axios from 'axios';
 
 const laravelData = ref({});
 const user_id = ref(0);
 const isLoading = ref(0);
+const from = ref(0);
+const to = ref(0);
 
 
-const showReceiveBtn = ref(0);
-const getResults = async (page = 1) => {
-  const response = await fetch(
-    `/api/getIndexAccountsSelas?page=${page}&user_id=${user_id.value}`
-  );
-  laravelData.value = await response.json();
-};
 
+
+const getResults = async (v,page = 1) => {
+  axios.get(`/api/getIndexAccountsSelas?page=${page}&user_id=${user_id.value}&from=${from.value}&to=${to.value}`)
+  .then(response => {
+    laravelData.value =  response.data;
+  })
+  .catch(error => {
+    console.error(error);
+  })
+}
 
 const props = defineProps({
   url: String,
   users:Array
 });
 
-const form = useForm();
+
 
 let showModal = ref(false);
-const pay = async (id) => {
-  const response = await fetch(`/paySelse/${id}`);
-  getResults();
-
-};
 
 
-const results = (id) => {
-  if(id==0){
-        return 'إنتظار تسليم الصندوق';
-    }
-    if(id==1){
-        return 'تم التسليم';
-    }
-  if (id == 2) {
-    return "مكتمل";
-  }
 
-};
-function sendToCourt(id) {
-  showModal.value = id;
-}
-function method1(id) {
-  form.get(route("sentToCourt", id));
-  getResults();
-  showModal.value = false;
-}
 </script>
 
 <template>
@@ -88,14 +70,57 @@ function method1(id) {
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6  dark:bg-gray-900">
-            <div class="flex flex-row">
-              <div class="basis-1/2 px-4">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 lg:gap-1">
+              <div class=" px-4">
+                <InputLabel for="to" class="mb-1" value="كشف حساب" />
                 <select @change="getResults()" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
                   <option value="0" disabled>{{ $t('select_account') }}</option>
                   <option v-for="(user, index) in users" :key="index" :value="user.id">{{ user.name }}</option>
                 </select>
               </div>
-
+              <div class=" px-4">
+                <div className="mb-4 mx-5">
+                    <InputLabel for="from" :value="$t('from_date')" />
+                    <TextInput
+                      id="from"
+                      type="date"
+                      class="mt-1 block w-full"
+                      v-model="from"
+                      
+                    />
+                  </div>
+                </div>
+                <div class=" px-4">
+                  <div className="mb-4 mx-5">
+                    <InputLabel for="to" :value="$t('to_date')" />
+                    <TextInput
+                      id="to"
+                      type="date"
+                      class="mt-1 block w-full"
+                      v-model="to"
+                    />
+                  </div>
+              </div>
+              <div className="mb-4  mr-5 print:hidden">
+                  <InputLabel for="pay" value="فلترة" />
+                  <button
+                  @click.prevent="getResults()"
+                  :disabled="isLoading || !parseInt(user_id)"
+                  class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded" style="width: 100%">
+                  <span v-if="!isLoading">فلترة</span>
+                  <span v-else>جاري الحفظ...</span>
+                </button>
+              </div>
+              <div className="mb-4  mr-5 print:hidden" >
+                  <InputLabel for="pay" value="طباعة" />
+                  <button
+                  @click.prevent="confirmAddPaymentTotal(total,client_id)"
+                  :disabled="isLoading || !parseInt(user_id)"
+                  class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded" style="width: 100%">
+                  <span v-if="!isLoading">طباعة</span>
+                  <span v-else>جاري الحفظ...</span>
+                </button>
+              </div>
             </div>
             <div class="flex flex-row">
               <div class="grow">
