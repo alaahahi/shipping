@@ -233,7 +233,7 @@ function confirmCar(V) {
 function confirmUpdateCar(V) {
   showModalEditCars.value = false;
 
-  axios.post('/api/updateCars',V)
+  axios.post('/api/updateCarsS',V)
   .then(response => {
     showModal.value = false;
     toast.success("تم التعديل بنجاح", {
@@ -721,7 +721,7 @@ function confirmAddPayment(V) {
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_number }}</td> 
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dinar_s  }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dolar_price_s}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ ((car.dinar_s / car.dolar_price_s||0)?.toFixed(0)) }}</td> 
+                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dolar_custom_s  }}</td> 
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.note }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.shipping_dolar_s}}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.coc_dolar_s  }}</td>

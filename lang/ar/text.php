@@ -25,6 +25,7 @@ return [
     'genExpenses'=>'مصاريف عامة',
     'addTransfer'=>'حوالة بقيمة',
     'addToBox'=>'إضافة للصندوق مبلغ',
+    'addExpenses'=>'إضافة مصاريف مبلغ',
     'withDrawFromBox'=>'سحب من الصندوق مبلغ',
     'expensesShippingDubai'=>'مصاريف شحن دبي بقيمة ',
     'expensesShippingErbil'=>'مصاريف شحن أربيل بقيمة ',

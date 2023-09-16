@@ -15,7 +15,7 @@ const isLoading = ref(0);
 const showReceiveBtn = ref(0);
 const getResults = async (page = 1) => {
   const response = await fetch(
-    `/getIndexAccountsSelas?page=${page}&user_id=${user_id.value}`
+    `/api/getIndexAccountsSelas?page=${page}&user_id=${user_id.value}`
   );
   laravelData.value = await response.json();
 };

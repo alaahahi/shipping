@@ -100,7 +100,7 @@ function confirmDelCar(V) {
 function confirmUpdateCar(V) {
   showModalEditCars.value = false;
 
-  axios.post('/api/updateCars',V)
+  axios.post('/api/updateCarsS',V)
   .then(response => {
     showModal.value = false;
     toast.success("تم التعديل بنجاح", {
@@ -111,7 +111,6 @@ function confirmUpdateCar(V) {
       });
 
       getcountTotalInfo()
-      getResultsCar();
 
   })
   .catch(error => {

@@ -226,7 +226,7 @@ function confirmCar(V) {
 function confirmUpdateCar(V) {
   showModalEditCars.value = false;
 
-  axios.post('/api/updateCars',V)
+  axios.post('/api/updateCarsP',V)
   .then(response => {
     showModal.value = false;
     toast.success("تم التعديل بنجاح", {
@@ -693,7 +693,7 @@ function confirmAddPayment(V) {
                                         {{ $t('date') }}
                                       </th>
                 
-                                      <th scope="col" class="px-1 py-3 text-base" style="width: 250px;">
+                                      <th scope="col" class="px-1 py-3 text-base" style="width: 150px;">
                                         {{ $t('execute') }}
                                       </th>
                                   </tr>
@@ -711,7 +711,7 @@ function confirmAddPayment(V) {
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_number }}</td> 
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dinar  }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dolar_price}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.dinar / car.dolar_price).toFixed(0) }}</td> 
+                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dolar_custom }}</td> 
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.note }}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.shipping_dolar}}</td>
                                     <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.coc_dolar  }}</td>
@@ -738,14 +738,14 @@ function confirmAddPayment(V) {
                                     >
                                       {{ $t('delete') }}
                                     </button>
-                                    <button
+                                    <!-- <button
                                       v-if="car.total_s != car.paid"
                                       tabIndex="1"
                                       class="px-2 py-1 text-base text-white mx-1 bg-green-500 rounded"
                                       @click="openAddCarPayment(car)"
                                     >
                                       {{ $t('complet_pay') }}
-                                    </button>
+                                    </button> -->
                                     <!-- 
           
                                     <button

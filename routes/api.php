@@ -51,7 +51,8 @@ Route::get('addCarModel',[CarConfigController::class, 'storeCarModel'])->name('a
 Route::get('addColor',[CarConfigController::class, 'storeColor'])->name('addColor');
 Route::post('addCar',[DashboardController::class, 'addCar'])->name('addCar');
 Route::post('addCars',[DashboardController::class, 'addCars'])->name('addCars');
-Route::post('updateCars',[DashboardController::class, 'updateCars'])->name('updateCars');
+Route::post('updateCarsS',[DashboardController::class, 'updateCarsS'])->name('updateCarsS');
+Route::post('updateCarsP',[DashboardController::class, 'updateCarsP'])->name('updateCarsP');
 
 Route::get('/getcount', [DashboardController::class, 'getcount'])->name('getcount');
 
