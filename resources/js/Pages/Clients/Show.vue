@@ -561,7 +561,7 @@ function confirmAddPaymentTotal(amount, client_id) {
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1 print:hidden"
                     >
-                      {{ (car.dinar_s / car.dolar_price_s || 0)?.toFixed(0) }}
+                      {{ ((car.dinar_s/car.dolar_price_s)*100)?.toFixed(0)||0 }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1 print:hidden"
