@@ -139,6 +139,7 @@ class AccountingController extends Controller
         $note = $_GET['note'] ?? '';
         $cars = Car::where('client_id',$client_id)->whereIn('results', [0, 1])->get();
         $needToPay=0;
+        $user_id=$_GET['user_id']??0;
 
         foreach ($cars as $car) {
             $needToPay = $car->total_s - $car->paid;
