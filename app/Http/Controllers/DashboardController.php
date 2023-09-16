@@ -250,7 +250,6 @@ class DashboardController extends Controller
             'car_number'=> $request->car_number,
             'dinar'=> $request->dinar,
             'dolar_price'=> $request->dolar_price,
-            'dolar_custom'=> $dolar_custom,
             'shipping_dolar'=> $request->shipping_dolar,
             'coc_dolar'=> $request->coc_dolar,
             'checkout'=> $request->checkout,
@@ -265,10 +264,13 @@ class DashboardController extends Controller
             'profit'=>($total_amount*-1)
              ]);
                 if($total_amount){
-                    $desc=trans('text.payCar').' '.trans('text.payDone').' '.$total_amount;
+                    $desc=trans('text.payCar').' '.$total_amount.trans('text.for_car').' '.$request->vin;
                     if($total_amount){
                         $this->accountingController->decreaseWallet(($total_amount),$desc,$this->mainAccount->id,$car->id,'App\Models\Car');
-                        $this->accountingController->increaseWallet($total_amount,$desc,$car->client_id,$car->id,'App\Models\User',$car->client_id);
+                        if($expenses){
+                            $desc=trans('text.addExpenses').' '.$expenses.' '.trans('text.for_car').' '.$request->vin;
+                            $this->accountingController->increaseWallet($expenses,$desc,$car->client_id,$car->id,'App\Models\User',$car->client_id);
+                        }
                     }
                 }
 
@@ -356,9 +358,12 @@ class DashboardController extends Controller
         $total_s = (($checkout_s+$shipping_dolar_s+ $coc_dolar_s +(int)($dinar_s / ($dolar_price_s))+$expenses) ??0);
         $profit=$total_s-$car->total;
         //$descClient = trans('text.descClient').' '.$total_s.' '.trans('text.for_car').$car->car_type.' '.$car->vin;
-        $descClient = trans('text.addExpenses').' '.$total_s-$car->total_s.' '.trans('text.for_car').$car->car_type.' '.$car->vin;
-        $this->accountingController->decreaseWallet($total_s-$car->total_s, $descClient,$this->mainAccount->id,$car->id,'App\Models\Car');
-        $this->accountingController->decreaseWallet($total_s-$car->total_s, $descClient,$car->client_id,$car->id,'App\Models\User');
+        if($expenses-$car->expenses){
+            $desc = trans('text.editExpenses').' '.$expenses-$car->expenses.' '.trans('text.for_car').$car->car_type.' '.$car->vin;
+            $this->accountingController->decreaseWallet($expenses-$car->expenses, $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
+        }
+        $descClient = trans('text.editExpenses').' '.$total_s-$car->total_s.' '.trans('text.for_car').$car->car_type.' '.$car->vin;
+        $this->accountingController->increaseWallet($total_s-$car->total_s, $descClient,$car->client_id,$car->id,'App\Models\User');
 
             // Extract the relevant fields from the $request object
             $dataToUpdate = $request->all();
@@ -367,9 +372,7 @@ class DashboardController extends Controller
             $dataToUpdate['profit']=$profit;
             // Update the car model
             $car->update($dataToUpdate);
-            if(((int)($car->paid)) >= ((int)($car->total_s))){
-                $car->increment('results'); 
-            }
+            
 
         return Response::json('ok', 200);    
     }

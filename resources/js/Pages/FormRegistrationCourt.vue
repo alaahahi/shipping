@@ -160,7 +160,7 @@ function method1(id) {
                 </thead>
                 <tbody>
                   <tr
-                    v-for="user in laravelData.data"
+                    v-for="user in laravelData.transactions"
                     :key="user.id"  class="hover:bg-gray-800 text-center">
                   <td className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200 td">{{ user.type }}</td>
                   <td className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200 td">{{ user.created }}</td>

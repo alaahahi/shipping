@@ -75,7 +75,7 @@ class AccountingController extends Controller
         $cars_need_paid=$cars_sum-$cars_paid;
         // Additional logic to retrieve client data
         $clientData = [
-            'totalAmount' =>  $transactions->sum('amount'),
+            'totalAmount' =>  $client->wallet->balance,
             'data' => $cars->get(),
             'client'=>$client,
             'car_total'=>$car_total,
@@ -85,6 +85,7 @@ class AccountingController extends Controller
             'cars_sum'=>$cars_sum,
             'cars_paid'=>$cars_paid,
             'cars_need_paid'=>$cars_need_paid,
+            'transactions'=>$transactions->get(),
             'date'=> Carbon::now()->format('Y-m-d')
         ];
         return Response::json($clientData, 200);
@@ -135,6 +136,7 @@ class AccountingController extends Controller
     {
         $client_id  = $_GET['client_id']  ??0;
         $amount  = $_GET['amount']  ??0;
+        $note = $_GET['note'] ?? '';
         $cars = Car::where('client_id',$client_id)->whereIn('results', [0, 1])->get();
         $needToPay=0;
 
@@ -145,19 +147,23 @@ class AccountingController extends Controller
                 // Deduct the amount and update 'paid' for this car
                 $amount -= $needToPay;
                 $car->update(['paid' => $car->total_s,'results' =>2]);
+                $desc=trans('text.addPayment').' '.$amount.'$'.' || '.$note;
+                $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\Car',$user_id);
+                $this->decreaseWallet($amount, $desc,$car->client_id,$car_id,'App\Models\Car',$user_id);
             } else {
                 // Deduct what's available in $amount and update 'paid' accordingly
                 $car->update(['paid' => $car->paid + $amount,'results' =>1]);
                 $amount = 0;
+                $desc=trans('text.addPayment').' '.$amount.'$'.' || '.$note;
+                $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\Car',$user_id);
+                $this->decreaseWallet($amount, $desc,$car->client_id,$car_id,'App\Models\Car',$user_id);
                 break; // Stop processing if the amount is exhausted
+
             }
         }
 
         
-        $wallet = Wallet::where('user_id',$car->client_id)->first();
-        $desc=trans('text.addPayment').' '.$amount.'$'.' || '.$_GET['note']??'';
-        $this->c($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\Car',$user_id);
-        $this->decreaseWallet($amount, $desc,$car->client_id,$car_id,'App\Models\Car',$user_id);
+
 
         return Response::json('ok', 200);    
     }

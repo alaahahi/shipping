@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'payCar' => 'أضافة سيارة',
+    'payCar' => 'اضافة سيارة',
     'editCar' => 'تعديل الدفعة لسيارة ',
     'from' => 'من',
     'to' => 'ل ',
@@ -21,17 +21,18 @@ return [
     'debutNow' => '',
     'debutAfter' => '',
     'payDone' => 'وتم دفع مبلغ',
-    'buyCar' => 'بيع سيارة سعر البيع',
-    'genExpenses'=>'مصاريف عامة',
-    'addTransfer'=>'حوالة بقيمة',
-    'addToBox'=>'إضافة للصندوق مبلغ',
-    'addExpenses'=>'إضافة مصاريف مبلغ',
-    'withDrawFromBox'=>'سحب من الصندوق مبلغ',
-    'expensesShippingDubai'=>'مصاريف شحن دبي بقيمة ',
-    'expensesShippingErbil'=>'مصاريف شحن أربيل بقيمة ',
-    'expensesExpDubai'=>'مصاريف دبي بقيمة ',
-    'expensesExpErbil'=>'مصاريف أربيل بقيمة ',
-    'expensesExpPay'=>'دفعة للمورد بقيمة ',
-    'addPayment'=>'إضافة دفعة بقيمة',
-    'for_car'=>'للسيارة'
+    'buyCar' => ' بيع سيارة سعر البيع',
+    'genExpenses'=>' مصاريف عامة',
+    'addTransfer'=>' حوالة بقيمة',
+    'addToBox'=>' إضافة للصندوق مبلغ',
+    'addExpenses'=>' إضافة مصاريف مبلغ',
+    'editExpenses'=>' تعديل مصاريف مبلغ',
+    'withDrawFromBox'=>' سحب من الصندوق مبلغ',
+    'expensesShippingDubai'=>' مصاريف شحن دبي بقيمة ',
+    'expensesShippingErbil'=>' مصاريف شحن أربيل بقيمة ',
+    'expensesExpDubai'=>' مصاريف دبي بقيمة ',
+    'expensesExpErbil'=>' مصاريف أربيل بقيمة ',
+    'expensesExpPay'=>' دفعة للمورد بقيمة ',
+    'addPayment'=>' إضافة دفعة بقيمة',
+    'for_car'=>' للسيارة'
 ];
