@@ -702,30 +702,30 @@ function confirmAddPayment(V) {
 
 
                                 <tr v-for="car in car.data" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.no }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.client?.name }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_type}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.year}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_color }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.vin }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_number }}</td> 
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dinar  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dolar_price}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dinar/car.dolar_price }}</td> 
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.note }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.shipping_dolar}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.coc_dolar  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.checkout}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.expenses}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.total).toFixed(0)  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.paid}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.total_s-car.total).toFixed(0) }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.date  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.no }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.client?.name }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_type}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.year}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_color }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.vin }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_number }}</td> 
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.dinar  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.dolar_price}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.dinar/car.dolar_price }}</td> 
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.note }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.shipping_dolar}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.coc_dolar  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.checkout}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.expenses}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ (car.total).toFixed(0)  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.paid}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ (car.total_s-car.total).toFixed(0) }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.date  }}</td>
                                      <td className="border dark:border-gray-800 text-start px-2 py-2">
                                     <button
                                       tabIndex="1"
                                       
-                                      class="px-2 py-1 text-base text-white mx-1 bg-slate-500 rounded"
+                                      class="px-2 py-1  text-white mx-1 bg-slate-500 rounded"
                                       @click="openModalEditCars(car)"
                                     >
                                       {{ $t('edit') }}
@@ -733,7 +733,7 @@ function confirmAddPayment(V) {
                                     <button
                                       tabIndex="1"
                                       
-                                      class="px-2 py-1 text-base text-white mx-1 bg-orange-500 rounded"
+                                      class="px-2 py-1  text-white mx-1 bg-orange-500 rounded"
                                       @click="openModalDelCar(car)"
                                     >
                                       {{ $t('delete') }}
@@ -741,7 +741,7 @@ function confirmAddPayment(V) {
                                     <!-- <button
                                       v-if="car.total_s != car.paid"
                                       tabIndex="1"
-                                      class="px-2 py-1 text-base text-white mx-1 bg-green-500 rounded"
+                                      class="px-2 py-1  text-white mx-1 bg-green-500 rounded"
                                       @click="openAddCarPayment(car)"
                                     >
                                       {{ $t('complet_pay') }}

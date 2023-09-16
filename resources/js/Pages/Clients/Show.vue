@@ -378,98 +378,99 @@ function confirmAddPaymentTotal(amount,client_id) {
               </div>
             </div>
             <div>
-              <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
-                              <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
-                                  <tr>
-                                      <th scope="col" class="px-1 py-3 text-base	" >
+              <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                  <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
+                  <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
+                  <tr  class="rounded-l-lg mb-2 sm:mb-0">
+                                      <th scope="col" class="px-1 py-2 text-base	" >
                                         {{ $t('no') }}  
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-1 py-2 text-base">
                                         {{ $t('car_type') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-1 py-2 text-base">
                                         {{ $t('year') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-1 py-2 text-base">
                                         {{ $t('color') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-1 py-2 text-base">
                                         {{ $t('vin') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-1 py-2 text-base">
                                         {{ $t('car_number') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-1 py-2 text-base">
                                         {{ $t('dinar') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-1 py-2 text-base">
                                         {{ $t('dolar_price') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base print:hidden">
+                                      <th scope="col" class="px-1 py-2 text-base print:hidden">
                                         {{ $t('dolar_custom') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base print:hidden">
+                                      <th scope="col" class="px-1 py-2 text-base print:hidden">
                                         {{ $t('note') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-1 py-2 text-base">
                                         {{ $t('shipping_dolar') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-1 py-2 text-base">
                                         {{ $t('coc_dolar') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-1 py-2 text-base">
                                         {{ $t('checkout') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-1 py-2 text-base">
                                         {{ $t('expenses') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-1 py-2 text-base">
                                         {{ $t('total') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-1 py-2 text-base">
                                         {{ $t('paid') }}
                                       </th>
                                   
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-1 py-2 text-base">
                                         {{ $t('date') }}
                                       </th>
                 
-                                      <th scope="col" class="px-1 py-3 text-base print:hidden" style="width: 240px;">
+                                      <th scope="col" class="px-1 py-2 text-base print:hidden" style="width: 240px;">
                                         {{ $t('execute') }}
                                       </th>
                                   </tr>
                               </thead>
                               <tbody>
                                 <tr v-for="(car ,i) in  laravelData.data" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class=" border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ i+1 }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_type}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.year}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_color }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.vin }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.car_number }}</td> 
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dinar_s  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.dolar_price_s}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base print:hidden">{{ ((car.dinar_s / car.dolar_price_s||0)?.toFixed(0)) }}</td> 
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base print:hidden">{{ car.note }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.shipping_dolar_s}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.coc_dolar_s  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.checkout_s}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.expenses}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ (car.total_s).toFixed(0) }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.paid}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-4 py-2 text-base">{{ car.date  }}</td>
-                                     <td className="border dark:border-gray-800 text-start px-2 py-2 print:hidden">
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1">{{ i+1 }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1">{{ car.car_type}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1">{{ car.year}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1">{{ car.car_color }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1">{{ car.vin }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1">{{ car.car_number }}</td> 
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1">{{ car.dinar_s  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1">{{ car.dolar_price_s}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1 print:hidden">{{ ((car.dinar_s / car.dolar_price_s||0)?.toFixed(0)) }}</td> 
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1 print:hidden">{{ car.note }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1">{{ car.shipping_dolar_s}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1">{{ car.coc_dolar_s  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1">{{ car.checkout_s}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1">{{ car.expenses}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1">{{ (car.total_s).toFixed(0) }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1">{{ car.paid}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-1">{{ car.date  }}</td>
+                                     <td className="border dark:border-gray-800 text-start px-2 py-1 print:hidden">
                                     <button
                                       tabIndex="1"
                                       
-                                      class="px-2 py-1 text-base text-white mx-1 bg-slate-500 rounded"
+                                      class="px-2 py-1 text-white mx-1 bg-slate-500 rounded"
                                       @click="openModalEditCars(car)"
                                     >
                                       {{ $t('edit') }}
                                     </button>
                                     <button
                                       tabIndex="1"
-                                      class="px-2 py-1 text-base text-white mx-1 bg-orange-500 rounded"
+                                      class="px-2 py-1  text-white mx-1 bg-orange-500 rounded"
                                       @click="openModalDelCar(car)"
                                     >
                                       {{ $t('delete') }}
@@ -477,7 +478,7 @@ function confirmAddPaymentTotal(amount,client_id) {
                                     <button
                                       v-if="car.total_s != car.paid"
                                       tabIndex="1"
-                                      class="px-2 py-1 text-base text-white mx-1 bg-green-500 rounded"
+                                      class="px-2 py-1 text-white mx-1 bg-green-500 rounded"
                                       @click="openAddCarPayment(car)"
                                     >
                                       {{ $t('complet_pay') }}
@@ -519,6 +520,7 @@ function confirmAddPaymentTotal(amount,client_id) {
                                 </tr>
                               </tbody>
               </table>
+              </div>
             </div>
 
             <div class="mt-3 text-center" style="direction: ltr;">

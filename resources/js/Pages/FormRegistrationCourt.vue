@@ -147,25 +147,24 @@ function method1(id) {
                 </div>
               </div>
             </div>
-            <div class="overflow-x-auto shadow-md">
-              <table class="w-full my-5">
-                <thead
-                  class="700 bg-rose-500 text-white text-center rounded-l-lg">
-                  <tr class="bg-rose-500 rounded-l-lg mb-2 sm:mb-0">
-                    <th className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200">{{$t('type')}}</th>
-                    <th className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200">{{$t('date')}}</th>
-                    <th className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200">{{$t('description')}}</th>
-                    <th className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200">{{$t('amount')}}</th>
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                  <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
+                  <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
+                  <tr  class="bg-rose-500 text-gray-100 rounded-l-lg mb-2 sm:mb-0">
+                    <th className="px-1 py-2 text-base">{{$t('type')}}</th>
+                    <th className="px-1 py-2 text-base">{{$t('date')}}</th>
+                    <th className="px-1 py-2 text-base">{{$t('description')}}</th>
+                    <th className="px-1 py-2 text-base">{{$t('amount')}}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr
                     v-for="user in laravelData.transactions"
-                    :key="user.id"  class="hover:bg-gray-800 text-center">
-                  <td className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200 td">{{ user.type }}</td>
-                  <td className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200 td">{{ user.created }}</td>
-                  <td className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200 td">{{ user.description }}</td>
-                  <td className="px-4 py-2 border dark:border-gray-900 dark:text-gray-200 td">{{ user.amount  }}</td>
+                    :key="user.id"  class="text-center">
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.type }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.created }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.description }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.amount  }}</td>
                   </tr>
                 </tbody>
               </table>
