@@ -28,27 +28,90 @@
 
     </div>
     </div>
-    <div class="row p-2 text-center border-top border-bottom" >
-    <div class="col-4"> 
-    الاسم:
-    <span></span>
+    <div class="row p-2 text-center border-top border-bottom" style="font-size: 14px">
+    <div class="col-3"> 
+    التاجر:
+    {{$clientData['client']->name}}
     </div>
-    <div class="col-4">
-    التاريخ:
-    <span style="direction: ltr;"></span>
+    <div class="col-3">
+    موبايل:
+    {{$clientData['client']->phone}}
     </div>
-    <div class="col-4">
-    رقم الهاتف:
-        <span></span>
+    <div class="col-3">
+    من تاريخ:
+    <?= $_GET['from'] ??'' ?>
+    </div>
+    <div class="col-3">
+        حتى تاريخ:
+    <?= $_GET['to'] ??'' ?>
     </div>
   </div>
-  <div class="row text-center">
-
+  <div class="row p-2 text-center border-bottom alert-primary "  style="font-size: 14px">
+    <div class="col-3"> 
+    مجموع النهائي:
+    {{$clientData['cars_sum']}}
+    </div>
+    <div class="col-3">
+    مبلغ مدفوع:
+    {{$clientData['cars_paid']}}
+    </div>
+    <div class="col-3">
+     مبلغ الباقي:
+     {{$clientData['cars_need_paid']}}
+    </div>
+    <div class="col-3">
+      عدد السيارات:
+    {{$clientData['car_total']}}
+    </div>
   </div>
   <div class="row text-center py-2">
-    <div class="col-6">
-        
-    </div>   
+    <table class="table table-sm table-striped table-bordered" style="font-size: 12px">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">السيارة</th>
+            <th scope="col">تاريخ</th>
+            <th scope="col">رقم شاسى</th>
+            <th scope="col">رقم كاتى</th>
+            <th scope="col">لون</th>
+            <th scope="col">موديل</th>
+            <th scope="col">كمرك</th>
+            <th scope="col">تخليص</th>
+            <th scope="col">شهادة</th>
+            <th scope="col">نقل</th>
+            <th scope="col">مصاريف</th>
+            <th scope="col">مجموع</th>
+          </tr>
+        </thead>
+        <tbody>
+            @foreach ($clientData['data'] as $key=>$data)
+            <tr>
+                <th scope="row">{{$key+1}}</th>
+                <td>{{$data->car_type}}</td>
+                <td>{{$data->date}}</td>
+                <td>{{$data->vin}}</td>
+                <td>{{$data->car_number}}</td>
+                <td>{{$data->car_color}}</td>
+                <td>{{$data->year}}</td>
+                <td>    <?php
+                    $dinar_s = $data->dinar_s;
+                    $dolar_price_s = $data->dolar_price_s ?? 1;
+                
+                    if ($dolar_price_s != 0) {
+                        echo $dinar_s / $dolar_price_s;
+                    } else {
+                        echo 0; // or any other appropriate message
+                    }
+                    ?></td>
+                <td>{{$data->checkout_s}}</td>
+                <td>{{$data->coc_dolar_s}}</td>
+                <td>{{$data->shipping_dolar_s}}</td>
+                <td>{{$data->expenses}}</td>
+                <td>{{$data->total_s}}</td>
+              </tr>
+            @endforeach
+        </tbody>
+      </table>  
   </div>
 </div>
 </body>
