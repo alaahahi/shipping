@@ -100,7 +100,7 @@
                     $dolar_price_s = $data->dolar_price_s ?? 1;
                 
                     if ($dolar_price_s != 0) {
-                        echo $dinar_s / $dolar_price_s;
+                        echo round(($dinar_s / $dolar_price_s)*100);
                     } else {
                         echo 0; // or any other appropriate message
                     }
@@ -122,13 +122,13 @@
     $(document).ready(function() {
         // Function to open the print dialog
         function openPrintDialog() {
-            window.print();
+           // window.print();
         }
     
         // Call the function to open the print dialog
         openPrintDialog();
     });
     </script>
-    
+
 </body>
 </html>
