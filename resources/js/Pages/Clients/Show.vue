@@ -29,7 +29,7 @@ const formData = ref({});
 const showReceiveBtn = ref(0);
 const getResults = async (v, page = 1) => {
   axios
-    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${v ? v : client_id}`)
+    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${v ? v : client_id}&from=${from.value}&to=${to.value}`)
     .then((response) => {
       laravelData.value = response.data;
     })
@@ -304,7 +304,6 @@ function confirmAddPaymentTotal(amount, client_id) {
               <InputLabel for="pay" value="فلترة" />
               <button
                 @click.prevent="getResults()"
-                :disabled="isLoading || !parseInt(user_id)"
                 class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded"
                 style="width: 100%"
               >
@@ -314,15 +313,15 @@ function confirmAddPaymentTotal(amount, client_id) {
             </div>
             <div className="mb-4  mr-5 print:hidden">
               <InputLabel for="pay" value="طباعة" />
-              <button
-                @click.prevent="confirmAddPaymentTotal(total, client_id)"
-                :disabled="isLoading || !parseInt(user_id)"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded"
+              <a
+                :href="`/api/getIndexAccountsSelas?user_id=${client_id}&from=${from}&to=${to}&print=1`"
+                target="_blank"
+                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded block text-center"
                 style="width: 100%"
               >
                 <span v-if="!isLoading">طباعة</span>
                 <span v-else>جاري الحفظ...</span>
-              </button>
+              </a>
             </div>
 
             <div className="mb-4  mr-5">

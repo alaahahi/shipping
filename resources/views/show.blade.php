@@ -1,82 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>دائرة صحة محافظة كركوك</title>
+    <title>شركة سلام جلال أيوب</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-  
 </head>
 <body style="direction: rtl;">
 <div class="container">       
 <div class="row">
-    <div class="col-4 text-center py-4">
-
-        <div>
+    <div class="col-4 text-center py-3">
+        <h5>
        {{$config['first_title_ar']}}
-        </div>
-        <div>
+        </h5>
+        <h5>
         {{$config['second_title_ar']}}
-        </div>
-        <div>
-        {{$config['third_title_ar']}}
-        </div>
+        </h5>
     </div>
-    <div class="col-4 text-center py-4">
+    <div class="col-4 text-center py-3">
 
-    @include('logo')
     
        
-    <p>بطاقة الهلال الأحمر</p>
+    <h5 class="pt-3">  كشف حساب</h5>
     </div>
-    <div class="col-4 text-center py-4"> 
-        <div>
-       {{$config['first_title_kr']}}
-        </div>
-        <div>
-        {{$config['second_title_kr']}}
-        </div>
-        <div>
-        {{$config['third_title_kr']}}
-        </div>
+    <div class="col-4 text-center py-3"> 
+        @include('Components.logo')
+
     </div>
     </div>
-    <div class="row pb-3 text-center" >
+    <div class="row p-2 text-center border-top border-bottom" >
     <div class="col-4"> 
-    التسلسل:
-    <span>{{$profile->no}}</span>
+    الاسم:
+    <span></span>
     </div>
     <div class="col-4">
     التاريخ:
-    <span style="direction: ltr;">{{$profile->created_at}}</span>
+    <span style="direction: ltr;"></span>
     </div>
     <div class="col-4">
-    رقم الوصل:
-        <span>{{$profile->invoice_number}}</span>
+    رقم الهاتف:
+        <span></span>
     </div>
   </div>
   <div class="row text-center">
-    <div>
-        <h4 class="text-primary">   معلومات البطاقة</h4>
-    </div>
+
   </div>
   <div class="row text-center py-2">
     <div class="col-6">
-            <div>
-            الاسم:   {{ $profile->husband_name }}
-            </div>
-            <div>
-            بطاقة رقم:   {{ $profile->card_number }}
-            </div>
-            <div>
-            أفراد العائلة:   {{ $profile->family_name }}
-            </div>
-            <div>
-            الهاتف:   {{ $profile->husband_job }}
-            </div>
-            <div>
-            العنوان:   {{ $profile->phone_number }}    
-            </div>
+        
     </div>   
   </div>
 </div>

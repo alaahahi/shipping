@@ -72,24 +72,27 @@ class UserController extends Controller
     public function getIndexClients()
     {
         $q = $_GET['q'] ?? '';
-        $dataQuery = User::with('userType:id,name', 'wallet')
-            ->where('type_id', $this->userClient);
+        $from =  $_GET['from'] ?? 0;
+        $to =$_GET['to'] ?? 0 ;
         
+        $dataQuery = User::with('userType:id,name', 'wallet')
+        ->where('type_id', $this->userClient);
+    
         if ($q) {
             if ($q !== 'debit') {
-                $dataQuery->where(function ($query) use ($q) {
-                    $query->where('name', $q)->orWhere('phone', $q);
-                });
-                $paginationLimit = 50;
-            } else {
-                $paginationLimit = 10;
+                $dataQuery =  $dataQuery->where('name', 'like', '%' . $q . '%')->orWhere('phone', 'like', '%' . $q . '%');
             }
+            
+            $paginationLimit = $q !== 'debit' ? 50 : 10;
         } else {
             $paginationLimit = 10;
         }
-        
+        if ($from && $to) {
+            $dataQuery->whereBetween('created', [$from, $to]);
+            $paginationLimit = 10;
+        } 
         $data = $dataQuery->paginate($paginationLimit);
-        
+
         $data->getCollection()->transform(function ($user) {
             $user->car_total_uncomplete = Car::where('client_id', $user->id)->whereIn('results', [0, 1])->count();
             $user->car_total_complete = Car::where('client_id', $user->id)->where('results', 2)->count();
@@ -139,6 +142,7 @@ class UserController extends Controller
                     'name' => $request->name,
                     'type_id' => $this->userSeles,
                     'email' => $request->email,
+                    'created' =>Carbon::now()->format('Y-m-d'),
                     'password' => Hash::make($request->password),
                     'phone' => $request->phone
                 ]);
@@ -156,7 +160,8 @@ class UserController extends Controller
                 $user = User::create([
                     'name' => $request->name,
                     'type_id' => $this->userClient,
-                    'phone' => $request->phone
+                    'phone' => $request->phone,
+                    'created' =>Carbon::now()->format('Y-m-d'),
                 ]);
   
                 Wallet::create(['user_id' => $user->id]);

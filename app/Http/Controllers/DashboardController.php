@@ -236,6 +236,7 @@ class DashboardController extends Controller
             $client = new User;
             $client->name = $request->client_name;
             $client->phone = $request->client_phone;
+            $client->created =Carbon::now()->format('Y-m-d');
             $client->type_id = $this->userClient;
             $client->save();
             Wallet::create(['user_id' => $client->id,'balance'=>0]);
@@ -489,6 +490,7 @@ class DashboardController extends Controller
             $client->name = $request->client_name;
             $client->phone = $request->client_phone;
             $client->type_id = $this->userClient;
+            $client->created =Carbon::now()->format('Y-m-d');
             $client->save();
             Wallet::create(['user_id' => $client->id,'balance'=>$pay_price-$paid_amount_pay]);
             $client_id=$client->id;

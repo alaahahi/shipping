@@ -14,9 +14,10 @@ let showModal = ref(false);
 let user_id = ref(0);
 const from = ref(0);
 const to = ref(0);
+const q = ref('');
 const isLoading = ref(0);
-const getResults = async (v,page = 1) => {
-  axios.get(`/getIndexClients?page=${page}&user_id=${user_id.value}&from=${from.value}&to=${to.value}`)
+const getResults = async (page = 1) => {
+  axios.get(`/getIndexClients?page=${page}&user_id=${user_id.value}&from=${from.value}&to=${to.value}&q=${q.value}`)
   .then(response => {
     laravelData.value =  response.data;
   })
@@ -25,10 +26,6 @@ const getResults = async (v,page = 1) => {
   })
 }
 getResults();
-const getResultSearch = async (q) => {
-    const response = await fetch(`/getIndexClientsSearch?q=${q}`);
-    laravelData.value = await response.json();
-}
 
 </script>
 
@@ -78,8 +75,8 @@ const getResultSearch = async (q) => {
                                 </svg>
                               </div>
                               <input
-                                v-model="searchTerm"
-                                @input="getResultSearch(searchTerm)"
+                                v-model="q"
+                                @input="getResults(q)"
                                 type="text"
                                 id="simple-search"
                                 class="
@@ -144,9 +141,8 @@ const getResultSearch = async (q) => {
                         <div>
                           <InputLabel for="from" value="تحديد الفئة" class="mb-1" />
 
-                            <select @change="getResultSearch(user_id)" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
-                              <option value="0" disabled> {{ $t("selectCustomer") }}</option>
-                              <option value="">{{ $t("allOwners") }}</option>
+                            <select @change="getResults()" v-model="q" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
+                              <option value="0">{{ $t("allOwners") }}</option>
                               <option value="debit">يوجد دين</option>
                             </select>
                         </div>
@@ -161,7 +157,7 @@ const getResultSearch = async (q) => {
                             </Link>
                         </div>
                         <div class=" px-4">
-                          <div className="mb-4 mx-5">
+                          <div className="mb-4">
                               <InputLabel for="from" :value="$t('from_date')" />
                               <TextInput
                                 id="from"
@@ -173,7 +169,7 @@ const getResultSearch = async (q) => {
                             </div>
                           </div>
                           <div class=" px-4">
-                            <div className="mb-4 mx-5">
+                            <div className="mb-4">
                               <InputLabel for="to" :value="$t('to_date')" />
                               <TextInput
                                 id="to"
@@ -187,7 +183,6 @@ const getResultSearch = async (q) => {
                             <InputLabel for="pay" value="فلترة" />
                             <button
                             @click.prevent="getResults()"
-                            :disabled="isLoading || !parseInt(user_id)"
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded" style="width: 100%">
                             <span v-if="!isLoading">فلترة</span>
                             <span v-else>جاري الحفظ...</span>
@@ -197,7 +192,6 @@ const getResultSearch = async (q) => {
                             <InputLabel for="pay" value="طباعة" />
                             <button
                             @click.prevent="confirmAddPaymentTotal(total,client_id)"
-                            :disabled="isLoading || !parseInt(user_id)"
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded" style="width: 100%">
                             <span v-if="!isLoading">طباعة</span>
                             <span v-else>جاري الحفظ...</span>

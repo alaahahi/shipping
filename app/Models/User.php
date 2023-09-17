@@ -30,7 +30,8 @@ class User extends Authenticatable
         'parent_id',
         'is_band',
         'phone',
-        'device'
+        'device',
+        'created'
     ];
 
     /**

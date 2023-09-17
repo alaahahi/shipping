@@ -61,21 +61,39 @@ class AccountingController extends Controller
     public function getIndexAccountsSelas()
     { 
         $user_id = $_GET['user_id'] ?? 0;
-        $client = User::with('wallet')->where('id', $user_id)->first();
-        $transactions = Transactions ::where('wallet_id', $client?->wallet?->id);
-        //$data = $transactions->paginate(10);
-        $cars = Car::where('client_id',$client->id);
+        $from =  $_GET['from'] ?? 0;
+        $to =$_GET['to'] ?? 0;
+        $print =$_GET['print'] ?? 0;
 
-        $car_total = $cars->count();
-        $car_total_unpaid =     Car::where('client_id',$client->id)->where('results',0)->count();
-        $car_total_uncomplete = Car::where('client_id',$client->id)->where('results',1)->count();
-        $car_total_complete =   Car::where('client_id',$client->id)->where('results',2)->count();
-        $cars_paid=   Car::where('client_id',$client->id)->sum('paid');
-        $cars_sum=   Car::where('client_id',$client->id)->sum('total_s');
-        $cars_need_paid=$cars_sum-$cars_paid;
+        
+        $client = User::with('wallet')->where('id', $user_id)->first();
+        if($from && $to ){
+            $transactions = Transactions ::where('wallet_id', $client?->wallet?->id)->whereBetween('created', [$from, $to]);
+            $cars = Car::where('client_id',$client->id)->whereBetween('date', [$from, $to]);
+            $car_total = $cars->count();
+            $car_total_unpaid =     Car::where('client_id',$client->id)->where('results',0)->whereBetween('date', [$from, $to])->count();
+            $car_total_uncomplete = Car::where('client_id',$client->id)->where('results',1)->whereBetween('date', [$from, $to])->count();
+            $car_total_complete =   Car::where('client_id',$client->id)->where('results',2)->whereBetween('date', [$from, $to])->count();
+            $cars_paid=   Car::where('client_id',$client->id)->whereBetween('date', [$from, $to])->sum('paid');
+            $cars_sum=   Car::where('client_id',$client->id)->whereBetween('date', [$from, $to])->sum('total_s');
+            $cars_need_paid=$cars_sum-$cars_paid;
+        }else{
+            $transactions = Transactions ::where('wallet_id', $client?->wallet?->id);
+            $cars = Car::where('client_id',$client->id);
+
+            $car_total = $cars->count();
+            $car_total_unpaid =     Car::where('client_id',$client->id)->where('results',0)->count();
+            $car_total_uncomplete = Car::where('client_id',$client->id)->where('results',1)->count();
+            $car_total_complete =   Car::where('client_id',$client->id)->where('results',2)->count();
+            $cars_paid=   Car::where('client_id',$client->id)->sum('paid');
+            $cars_sum=   Car::where('client_id',$client->id)->sum('total_s');
+            $cars_need_paid=$cars_sum-$cars_paid;
+        }
+        //$data = $transactions->paginate(10);
+ 
         // Additional logic to retrieve client data
         $clientData = [
-            'totalAmount' =>  $client->wallet->balance,
+            'totalAmount' =>   $transactions->sum('amount'),
             'data' => $cars->get(),
             'client'=>$client,
             'car_total'=>$car_total,
@@ -88,6 +106,11 @@ class AccountingController extends Controller
             'transactions'=>$transactions->get(),
             'date'=> Carbon::now()->format('Y-m-d')
         ];
+        if($print){
+            $config=SystemConfig::first();
+
+            return view('show',compact('clientData','config'));
+         }
         return Response::json($clientData, 200);
     }
     public function paySelse(Request $request,$id)

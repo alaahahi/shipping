@@ -70,7 +70,7 @@ let showModal = ref(false);
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6  dark:bg-gray-900">
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 lg:gap-1">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 lg:gap-1">
               <div class=" px-4">
                 <InputLabel for="to" class="mb-1" value="كشف حساب" />
                 <select @change="getResults()" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
@@ -78,6 +78,16 @@ let showModal = ref(false);
                   <option v-for="(user, index) in users" :key="index" :value="user.id">{{ user.name }}</option>
                 </select>
               </div>
+              <div className="px-4">
+                              <InputLabel for="totalAmount" :value="$t('Total_in_dollars')" />
+                              <TextInput
+                                id="totalAmount"
+                                type="text"
+                                class="mt-1 block w-full"
+                                v-model="laravelData.totalAmount"
+                                disabled
+                              />
+                            </div>
               <div class=" px-4">
                 <div className="mb-4 mx-5">
                     <InputLabel for="from" :value="$t('from_date')" />
@@ -122,57 +132,7 @@ let showModal = ref(false);
                 </button>
               </div>
             </div>
-            <div class="flex flex-row">
-              <div class="grow">
-                <div class="pb-3">
-                  <div class="mx-auto mx-7">
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                      <div class="p-6  dark:bg-gray-900">
-                        <div class="flex flex-row">
-                          <div class="basis-1/3">
-                            <div className="mb-4 mx-5">
-                              <InputLabel for="invoice_number" :value="$t('account')" />
-                              <TextInput
-                                id="invoice_number"
-                                type="text"
-                                class="mt-1 block w-full"
-                                :value="laravelData.sales?.name"
-                                disabled
-                              />
-                            </div>
-                          </div>
-                          <div class="basis-1/3">
-                            <div className="mb-4 mx-5">
-                              <InputLabel for="date" :value="$t('to_date')" />
-                              <TextInput
-                                id="date"
-                                type="text"
-                                class="mt-1 block w-full"
-                                v-model="laravelData.date"
-                                disabled
-                              />
-                            </div>
-                          </div>
-                          <div class="basis-1/3">
-                            <div className="mb-4 mx-5">
-                              <InputLabel for="totalAmount" :value="$t('Total_in_dollars')" />
-                              <TextInput
-                                id="totalAmount"
-                                type="text"
-                                class="mt-1 block w-full"
-                                v-model="laravelData.totalAmount"
-                                disabled
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg mt-4">
                   <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
                   <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
                   <tr  class="bg-rose-500 text-gray-100 rounded-l-lg mb-2 sm:mb-0">
