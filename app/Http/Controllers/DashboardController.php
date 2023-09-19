@@ -43,7 +43,14 @@ class DashboardController extends Controller
     $this->transfersAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','transfers@account.com')->first();
     $this->outSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-out')->first();
     $this->debtSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-debt')->first();
-    
+    $this->onlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts')->first();
+    $this->debtOnlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-debt')->first();
+    $this->howler= User::with('wallet')->where('type_id', $this->userAccount)->where('email','howler')->first();
+    $this->shippingCoc= User::with('wallet')->where('type_id', $this->userAccount)->where('email','shipping-coc')->first();
+    $this->border= User::with('wallet')->where('type_id', $this->userAccount)->where('email','border')->first();
+    $this->iran= User::with('wallet')->where('type_id', $this->userAccount)->where('email','iran')->first();
+    $this->dubai= User::with('wallet')->where('type_id', $this->userAccount)->where('email','dubai')->first();
+
     }
     public function __invoke(Request $request)
     {
@@ -61,6 +68,12 @@ class DashboardController extends Controller
         $allCars = $car->count();
         $client = User::where('type_id', $this->userClient)->get();
         return Inertia::render('Dashboard', ['client'=>$client,
+        'onlineContracts'=>$this->onlineContracts->wallet->balance,
+        'howler'=>$this->howler->wallet->balance,
+        'shippingCoc'=>$this->shippingCoc->wallet->balance,
+        'border'=>$this->border->wallet->balance,
+        'iran'=>$this->iran->wallet->balance,
+        'dubai'=>$this->dubai->wallet->balance,
         'mainAccount'=>$this->mainAccount->wallet->balance,'allCars'=>$allCars ]);   
 
     }
@@ -92,6 +105,13 @@ class DashboardController extends Controller
 
         $data = [
         'mainAccount'=>$this->mainAccount->wallet->balance??0,
+        'onlineContracts'=>$this->onlineContracts->wallet->balance??0,
+        'howler'=>$this->howler->wallet->balance??0,
+        'shippingCoc'=>$this->shippingCoc->wallet->balance??0,
+        'border'=>$this->border->wallet->balance??0,
+        'iran'=>$this->iran->wallet->balance??0,
+        'dubai'=>$this->dubai->wallet->balance??0,
+        'debtOnlineContracts'=>$this->debtOnlineContracts->wallet->balance??0,
         'allCars'=>$car->count()??0,
         'carsInStock'=>$car->where('client_id',null)->count()??0
         ];
@@ -384,32 +404,49 @@ class DashboardController extends Controller
 
     }
     public function addGenExpenses (Request $request){
+        $factor=$request->factor ?? 1;
         $expenses = Expenses::create([
             'user_id' => $request->user_id,
-            'reason' => $request->reason ?? '',
-            'amount' => $request->amount ?? 0,
+            'factor' => $factor,
+            'amount' => (($request->amount)/ $factor) ?? 0,
             'note' => $request->note ?? '',
         ]);
         if($expenses->id){
-            $desc=trans('text.genExpenses');
-            $this->accountingController->increaseWallet($expenses->amount, $desc,$this->outAccount->id,($request->user_id??0),'App\Models\User', ($request->user_id??0));
-            $this->accountingController->decreaseWallet($expenses->amount, $desc,$this->mainAccount->id,($request->user_id??0),'App\Models\User', ($request->user_id??0));
+            $desc=trans('text.genExpenses').' '.$expenses->reason.' '.(($request->amount)/ $factor);
+            $this->accountingController->increaseWallet((($request->amount)/ $factor), $desc,$this->howler->id,($request->user_id??0),'App\Models\User', ($request->user_id??0));
+            //$this->accountingController->decreaseWallet($expenses->amount, $desc,$this->mainAccount->id,($request->user_id??0),'App\Models\User', ($request->user_id??0));
         }
-        return Response::json('ok', 200);    
-
+        return Response::json('ok', 200);
     }
-    public function GenExpenses (){
+    public function GenExpenses (Request $request){
+        $factor=$request->factor ?? 1;
         $expenses = Expenses::create([
-            'user_id' => $_GET['user_id'],
-            'reason' => $_GET['reason'],
-            'amount' => $_GET['amount'],
-            'note' => $_GET['note'],
+            'factor' => $factor,
+            'amount' => ($request->amount)/ $factor ?? 0,
+            'note' => $request->note ?? '',
+            'expenses_type_id'=>$request->expenses_type_id
         ]);
-        if($expenses->id){
-            $desc=trans('text.genExpenses');
-            $this->accountingController->increaseWallet($expenses->amount, $desc,$this->outAccount->id,($_GET['user_id']??0),'App\Models\User', ($_GET['user_id']??0));
-            $this->accountingController->decreaseWallet($expenses->amount, $desc,$this->mainAccount->id,($_GET['user_id']??0),'App\Models\User', ($_GET['user_id']??0));
+        if($expenses->id && $request->expenses_type_id==1){
+            $desc=trans('text.genExpenses').' '.$expenses->reason.' '.(($request->amount)/ $factor);
+            $this->accountingController->increaseWallet((($request->amount)/ $factor), $desc,$this->howler->id,($request->user_id??0),'App\Models\User', ($request->user_id??0));
         }
+        if($expenses->id && $request->expenses_type_id==2){
+            $desc=trans('text.genExpenses').' '.$expenses->reason.' '.(($request->amount)/ $factor);
+            $this->accountingController->increaseWallet((($request->amount)/ $factor), $desc,$this->dubai->id,($request->user_id??0),'App\Models\User', ($request->user_id??0));
+        }
+        if($expenses->id && $request->expenses_type_id==3){
+            $desc=trans('text.genExpenses').' '.$expenses->reason.' '.(($request->amount)/ $factor);
+            $this->accountingController->increaseWallet((($request->amount)/ $factor), $desc,$this->iran->id,($request->user_id??0),'App\Models\User', ($request->user_id??0));
+        }
+        if($expenses->id && $request->expenses_type_id==4){
+            $desc=trans('text.genExpenses').' '.$expenses->reason.' '.(($request->amount)/ $factor);
+            $this->accountingController->increaseWallet((($request->amount)/ $factor), $desc,$this->border->id,($request->user_id??0),'App\Models\User', ($request->user_id??0));
+        }
+        if($expenses->id && $request->expenses_type_id==5){
+            $desc=trans('text.genExpenses').' '.$expenses->reason.' '.(($request->amount)/ $factor);
+            $this->accountingController->increaseWallet((($request->amount)/ $factor), $desc,$this->shippingCoc->id,($request->user_id??0),'App\Models\User', ($request->user_id??0));
+        }
+
         return Response::json('ok', 200);    
 
     }
@@ -524,7 +561,7 @@ class DashboardController extends Controller
     public function getIndexCar()
     {
         $user_id =$_GET['user_id'] ?? '';
-        $data =  Car::with('carmodel')->with('name')->with('color')->with('company')->with('client')->with('transactions');
+        $data =  Car::with('contract')->with('name')->with('client')->with('transactions');
         $type =$_GET['type'] ?? '';
         if($type){
             $data =    $data->where('results', $type);

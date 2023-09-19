@@ -10,7 +10,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\TransfersController;
 use App\Http\Controllers\CarConfigController;
-
+use App\Http\Controllers\OnlineContractsController;
 use App\Models\SystemConfig;
 
 /*
@@ -158,7 +158,15 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('delColor/{id}',[CarConfigController::class, 'delColor'])->name('delColor');
     Route::get('companyStoreEdit',[CarConfigController::class, 'index'])->name('companyStoreEdit');
     Route::post('companyStoreEdit',[CarConfigController::class, 'storeEdit'])->name('companyStoreEdit');
-    
+
+
+    Route::get('online_contracts',[OnlineContractsController::class, 'online_contracts'])->name('online_contracts');
+    Route::get('dubai',[TransfersController::class, 'dubai'])->name('dubai');
+    Route::get('iran',[TransfersController::class, 'iran'])->name('iran');
+    Route::get('border',[TransfersController::class, 'border'])->name('border');
+    Route::get('coc',[TransfersController::class, 'coc'])->name('coc');
+    Route::get('howler',[TransfersController::class, 'howler'])->name('howler');
+
     
 
  });

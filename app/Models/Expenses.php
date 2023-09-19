@@ -18,6 +18,8 @@ class Expenses extends Model
         'reason',
         'amount',
         'note',
+        'factor',
+        'expenses_type_id',
         'created_at',
         'updated_at'
     ];

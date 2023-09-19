@@ -89,6 +89,10 @@ class Car extends Model
     {
         return $this->belongsTo(Color::class);
     }
+    public function contract()
+    {
+        return $this->hasOne(Contract::class);
+    }
     public function Client()
     {
         return $this->belongsTo(User::class);

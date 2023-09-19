@@ -93,7 +93,7 @@ const switchLocale = (locale) => {
                 </NavLink>
               </div>
         -->
-        <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                 <NavLink
                   :href="route('transfers')"
                   :active="route().current('transfers')"
@@ -101,6 +101,57 @@ const switchLocale = (locale) => {
                   {{ $t("accounts") }}
                 </NavLink>
               </div>
+                    
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <NavLink
+                  :href="route('online_contracts')"
+                  :active="route().current('online_contracts')"
+                >
+                  {{ $t("online_contracts") }}
+                </NavLink>
+              </div>
+              <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <NavLink
+                  :href="route('dubai')"
+                  :active="route().current('dubai')"
+                >
+                {{ $t("dubai") }}
+                </NavLink>
+              </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <NavLink
+                  :href="route('iran')"
+                  :active="route().current('iran')"
+                >
+                {{ $t("iran") }}
+                </NavLink>
+              </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <NavLink
+                  :href="route('border')"
+                  :active="route().current('border')"
+                >
+                {{ $t("border") }}
+                </NavLink>
+              </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <NavLink
+                  :href="route('coc')"
+                  :active="route().current('coc')"
+                >
+                {{ $t("shipping_coc") }}
+                </NavLink>
+              </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <NavLink
+                  :href="route('howler')"
+                  :active="route().current('howler')"
+                >
+                {{ $t("howler") }}
+
+                  
+                </NavLink>
+              </div> -->
             </div>
             <div class="hidden sm:flex sm:items-center sm:ml-6">
               <div class="ml-3 relative">

@@ -16,6 +16,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\TransfersController;
 use App\Http\Controllers\CarConfigController;
+use App\Http\Controllers\OnlineContractsController;
 
 use App\Models\SystemConfig;
 
@@ -74,6 +75,10 @@ Route::get('showCar',[CarConfigController::class, 'showCar']);
 
 Route::get('addExpenses',[DashboardController::class, 'addExpenses'])->name('addExpenses');
 Route::get('addPaymentCar',[AccountingController::class, 'addPaymentCar'])->name('addPaymentCar');
+Route::get('addCarContracts',[OnlineContractsController::class, 'addCarContracts'])->name('addCarContracts');
+Route::get('editCarContracts',[OnlineContractsController::class, 'editCarContracts'])->name('editCarContracts');
+
+
 Route::get('addPaymentCarTotal',[AccountingController::class, 'addPaymentCarTotal'])->name('addPaymentCarTotal');
 
 

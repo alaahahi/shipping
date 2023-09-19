@@ -36,7 +36,6 @@ class TransfersController extends Controller
     $this->userSeles =  UserType::where('name', 'seles')->first()->id;
     $this->userClient =  UserType::where('name', 'client')->first()->id;
     $this->userAccount =  UserType::where('name', 'account')->first()->id;
-
     $this->mainAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','main@account.com')->first();
     $this->inAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','in@account.com')->first();
     $this->outAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','out@account.com')->first();
@@ -44,7 +43,14 @@ class TransfersController extends Controller
     $this->transfersAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','transfers@account.com')->first();
     $this->outSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-out')->first();
     $this->debtSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-debt')->first();
-    
+    $this->onlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts')->first();
+    $this->debtOnlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-debt')->first();
+    $this->howler= User::with('wallet')->where('type_id', $this->userAccount)->where('email','howler')->first();
+    $this->shippingCoc= User::with('wallet')->where('type_id', $this->userAccount)->where('email','shipping-coc')->first();
+    $this->border= User::with('wallet')->where('type_id', $this->userAccount)->where('email','border')->first();
+    $this->iran= User::with('wallet')->where('type_id', $this->userAccount)->where('email','iran')->first();
+    $this->dubai= User::with('wallet')->where('type_id', $this->userAccount)->where('email','dubai')->first();
+
     }
     public function __invoke(Request $request)
     {
@@ -57,7 +63,7 @@ class TransfersController extends Controller
     }
     public function index(Request $request)
     {
-        $users = User::where('id', $this->mainAccount->id)->orWhere('type_id',$this->userClient)->get();
+        $users = User::where('id', $this->mainAccount->id)->orWhere('id', $this->howler->id)->orWhere('id', $this->shippingCoc->id)->orWhere('id', $this->border->id)->orWhere('id', $this->iran->id)->orWhere('id', $this->dubai->id)->orWhere('id', $this->onlineContracts->id)->orWhere('type_id',$this->userClient)->get();
         return Inertia::render('FormRegistrationCourt', ['url'=>$this->url,'users'=>$users]);
 
     }
