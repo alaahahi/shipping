@@ -83,13 +83,13 @@ class UserController extends Controller
                 $dataQuery =  $dataQuery->where('name', 'like', '%' . $q . '%')->orWhere('phone', 'like', '%' . $q . '%');
             }
             
-            $paginationLimit = $q !== 'debit' ? 50 : 10;
+            $paginationLimit = $q !== 'debit' ? 1000 : 1000;
         } else {
-            $paginationLimit = 10;
+            $paginationLimit = 1000;
         }
         if ($from && $to) {
             $dataQuery->whereBetween('created', [$from, $to]);
-            $paginationLimit = 10;
+            $paginationLimit = 1000;
         } 
         $data = $dataQuery->paginate($paginationLimit);
 
