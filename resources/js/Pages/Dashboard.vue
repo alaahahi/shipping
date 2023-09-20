@@ -493,8 +493,8 @@ getResultsCar();
           ؟
           </template>
     </ModalDelCar>
-    <AuthenticatedLayout  v-if="$page.props.auth.user.type_id==1">
-        <div class="py-2">
+    <AuthenticatedLayout >
+        <div class="py-2"  v-if="$page.props.auth.user.type_id==1">
         <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 ">
             <div class="bg-white overflow-hidden shadow-sm ">
                 <div class="p-6  dark:bg-gray-900">
@@ -812,119 +812,119 @@ getResultsCar();
                     </div>
                 </div>
             </div>
-        <div >
-        <!-- <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="p-6  dark:bg-gray-900" style="border-radius: 8px;">
-                  <div class="flex flex-row">
-                                    <div class="basis-1/4">
-                                      <button
-                                        type="button"
-                                        @click="getcountComp()"
-                                        style="width: 70%;"
-                                        className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-rose-500 rounded"
-                                      >
-                                      فلترة
-                                      </button>
-                                    </div>
-                                    <div class="basis-3/4" style="direction: ltr;">
-                                      <vue-tailwind-datepicker overlay :options="options" :disable-date="dDate"  i18n="ar"  as-single use-range v-model="dateValue" />
-                                    </div>
-                  </div>
-                  <div class="flex pt-5 items-center">
-                  <div class="mx-auto container align-middle">
-                        <div class="grid grid-cols-2 gap-2" style="display: flow-root;">
-                          <div class="shadow rounded-lg py-3 px-5 bg-white" >
-                            <div class="flex flex-row justify-between items-center">
-                              <div>
-                                <h6 class="text-2xl">المعاملات المنجزة </h6>
-                                <h4 class="text-black text-4xl font-bold text-rigth">{{countComp}}</h4>
+          <div >
+          <!-- <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                  <div class="p-6  dark:bg-gray-900" style="border-radius: 8px;">
+                    <div class="flex flex-row">
+                                      <div class="basis-1/4">
+                                        <button
+                                          type="button"
+                                          @click="getcountComp()"
+                                          style="width: 70%;"
+                                          className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-rose-500 rounded"
+                                        >
+                                        فلترة
+                                        </button>
+                                      </div>
+                                      <div class="basis-3/4" style="direction: ltr;">
+                                        <vue-tailwind-datepicker overlay :options="options" :disable-date="dDate"  i18n="ar"  as-single use-range v-model="dateValue" />
+                                      </div>
+                    </div>
+                    <div class="flex pt-5 items-center">
+                    <div class="mx-auto container align-middle">
+                          <div class="grid grid-cols-2 gap-2" style="display: flow-root;">
+                            <div class="shadow rounded-lg py-3 px-5 bg-white" >
+                              <div class="flex flex-row justify-between items-center">
+                                <div>
+                                  <h6 class="text-2xl">المعاملات المنجزة </h6>
+                                  <h4 class="text-black text-4xl font-bold text-rigth">{{countComp}}</h4>
+                                </div>
+                                <div>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-12 w-12"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="#14B8A6"
+                                    stroke-width="2"
+                                  >
+                                    <path
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
+                                    />
+                                  </svg>
+                                </div>
                               </div>
-                              <div>
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  class="h-12 w-12"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="#14B8A6"
-                                  stroke-width="2"
-                                >
-                                  <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
-                                  />
-                                </svg>
-                              </div>
-                            </div>
-                            <div class="text-left flex flex-row justify-start items-center">
-                              <span class="mr-1">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  class="h-6 w-6"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="#14B8A6"
-                                  stroke-width="2"
-                                >
-                                  <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                                  />
-                                </svg>
-                              </span>
-                             
-                            </div>
-                          </div>
-                          <div class="shadow rounded-lg py-3 px-5 bg-white" v-if="false">
-                            <div class="flex flex-row justify-between items-center">
-                              <div>
-                                <h6 class="text-2xl">Serials viewed</h6>
-                                <h4 class="text-black text-4xl font-bold text-left">41</h4>
-                              </div>
-                              <div>
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  class="h-12 w-12"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="#EF4444"
-                                  stroke-width="2"
-                                >
-                                  <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
-                                  />
-                                </svg>
+                              <div class="text-left flex flex-row justify-start items-center">
+                                <span class="mr-1">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-6 w-6"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="#14B8A6"
+                                    stroke-width="2"
+                                  >
+                                    <path
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                                    />
+                                  </svg>
+                                </span>
+                              
                               </div>
                             </div>
-                            <div class="text-left flex flex-row justify-start items-center">
-                              <span class="mr-1">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  class="h-6 w-6"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="#EF4444"
-                                  stroke-width="{2}"
-                                >
-                                  <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
-                                  />
-                                </svg>
-                              </span>
-                              <p><span class="text-red-500 font-bold">12%</span> in 7 days</p>
+                            <div class="shadow rounded-lg py-3 px-5 bg-white" v-if="false">
+                              <div class="flex flex-row justify-between items-center">
+                                <div>
+                                  <h6 class="text-2xl">Serials viewed</h6>
+                                  <h4 class="text-black text-4xl font-bold text-left">41</h4>
+                                </div>
+                                <div>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-12 w-12"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="#EF4444"
+                                    stroke-width="2"
+                                  >
+                                    <path
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
+                                    />
+                                  </svg>
+                                </div>
+                              </div>
+                              <div class="text-left flex flex-row justify-start items-center">
+                                <span class="mr-1">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-6 w-6"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="#EF4444"
+                                    stroke-width="{2}"
+                                  >
+                                    <path
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
+                                    />
+                                  </svg>
+                                </span>
+                                <p><span class="text-red-500 font-bold">12%</span> in 7 days</p>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
+                    </div>
                   </div>
-                </div>
-                    </div> -->
-    </div>   
+                      </div> -->
+      </div>   
     </AuthenticatedLayout>
 </template>
 <style>
