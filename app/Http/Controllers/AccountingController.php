@@ -64,7 +64,7 @@ class AccountingController extends Controller
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
         $print =$_GET['print'] ?? 0;
-
+        $transactions_id = $_GET['transactions_id'] ?? 0;
         
         $client = User::with('wallet')->where('id', $user_id)->first();
         if($from && $to ){
@@ -106,10 +106,15 @@ class AccountingController extends Controller
             'transactions'=>$transactions->get(),
             'date'=> Carbon::now()->format('Y-m-d')
         ];
-        if($print){
+        if($print==1){
             $config=SystemConfig::first();
 
             return view('show',compact('clientData','config'));
+         }
+         if($print==2){
+            $config=SystemConfig::first();
+
+            return view('receipt',compact('clientData','config','transactions_id'));
          }
         return Response::json($clientData, 200);
     }

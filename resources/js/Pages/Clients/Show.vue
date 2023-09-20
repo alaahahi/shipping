@@ -498,7 +498,7 @@ function confirmAddPaymentTotal(amount, client_id) {
                     <th
                       scope="col"
                       class="px-1 py-2 text-base print:hidden"
-                      style="width: 240px"
+                      style="width: 250px"
                     >
                       {{ $t("execute") }}
                     </th>
@@ -627,15 +627,8 @@ function confirmAddPaymentTotal(amount, client_id) {
                       >
                         {{ $t("complet_pay") }}
                       </button>
-                      <!-- 
-                                    <button
-                                      tabIndex="1"
-                                      class="px-4 py-1 text-base text-white mx-1 bg-purple-500 rounded"
-                                      v-if="car.results == 0"
-                                      @click="openSaleCar(car)"
-                                    >
-                                      {{ $t('sell') }}
-                                    </button>
+                   
+                                       <!-- 
                                     <button
                                       tabIndex="1"
                                       class="px-2 py-1 text-base text-white mx-1 bg-blue-600 rounded"

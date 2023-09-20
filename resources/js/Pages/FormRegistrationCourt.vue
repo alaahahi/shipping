@@ -140,6 +140,13 @@ let showModal = ref(false);
                     <th className="px-1 py-2 text-base">{{$t('date')}}</th>
                     <th className="px-1 py-2 text-base">{{$t('description')}}</th>
                     <th className="px-1 py-2 text-base">{{$t('amount')}}</th>
+                    <th
+                      scope="col"
+                      class="px-1 py-2 text-base print:hidden"
+                      style="width: 250px"
+                    >
+                      {{ $t("execute") }}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -150,6 +157,15 @@ let showModal = ref(false);
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.created }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.description }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.amount  }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">  
+                                    <a v-if="user.type =='out'"
+                                    :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&from=${from}&to=${to}&print=2&transactions_id=${user.id}`"
+                                    tabIndex="1"
+                                    class="px-4 py-1  text-white  m-1 bg-purple-500 rounded"
+                                    >
+                                    طباعة وصل
+                                    </a></td>
+
                   </tr>
                 </tbody>
               </table>
