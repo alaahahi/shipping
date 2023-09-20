@@ -222,7 +222,7 @@ function confirmAddPaymentTotal(amount, client_id) {
       @close="showModal = false"
     >
     </modal>
-    <div v-if="$page.props.success">
+    <div v-if="$page.props.success" >
       <div
         id="alert-2"
         class="p-4 mb-4 bg-red-100 rounded-lg dark:bg-red-200 text-center"
@@ -233,7 +233,7 @@ function confirmAddPaymentTotal(amount, client_id) {
         </div>
       </div>
     </div>
-    <div class="py-4">
+    <div class="py-4" v-if="$page.props.auth.user.type_id==1">
       <h2 class="text-center pb-2 dark:text-gray-400">
         {{ $t("sales_bill") }}
       </h2>
