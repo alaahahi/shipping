@@ -796,7 +796,7 @@ function confirmAddPayment(V) {
                           />
                         </div>
                       </div>
-                      <div>
+                      <div v-if="$page.props.auth.user.type_id==1">
                         <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">     
                           <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">

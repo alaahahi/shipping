@@ -165,7 +165,7 @@ class TransfersController extends Controller
         if($type==0){
             $data =    $data->where('results', $type);
         }
-        $data =$data->paginate(10);
+        $data =$data->paginate(1000);
         return Response::json($data, 200);
     }
     
