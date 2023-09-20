@@ -158,7 +158,7 @@ let showModal = ref(false);
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.description }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.amount  }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">  
-                                    <a v-if="user.type =='out'"
+                                    <a v-if="user.type =='out' && user.amount<0"
                                     :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&from=${from}&to=${to}&print=2&transactions_id=${user.id}`"
                                     tabIndex="1"
                                     class="px-4 py-1  text-white  m-1 bg-purple-500 rounded"
