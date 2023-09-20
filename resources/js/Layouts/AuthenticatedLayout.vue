@@ -50,7 +50,7 @@ const switchLocale = (locale) => {
                 </NavLink>
                 
               </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex" v-if="$page.props.auth.user.type_id==1">
                 <NavLink
                   :href="route('sales')"
                   :active="route().current('sales')"
@@ -58,7 +58,7 @@ const switchLocale = (locale) => {
                   {{ $t("sales") }}
                 </NavLink>
               </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1">
                 <NavLink
                   :href="route('clients')"
                   :active="route().current('clients')"
@@ -93,7 +93,7 @@ const switchLocale = (locale) => {
                 </NavLink>
               </div>
         -->
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1">
                 <NavLink
                   :href="route('transfers')"
                   :active="route().current('transfers')"
@@ -102,7 +102,7 @@ const switchLocale = (locale) => {
                 </NavLink>
               </div>
                     
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1">
                 <NavLink
                   :href="route('online_contracts')"
                   :active="route().current('online_contracts')"
