@@ -1,8 +1,8 @@
-@php
-use App\Helpers\Help;
-$Help = new Help();
-@endphp
 
+@php
+use App\Helpers\Help as MyHelp;
+$Help = new MyHelp();
+@endphp
 <!DOCTYPE html>
 <html>
 <head>
