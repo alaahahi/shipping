@@ -1,6 +1,8 @@
-<?php 
+@php
 use App\Helpers\Help;
-?>
+$Help = new Help();
+@endphp
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -73,7 +75,7 @@ use App\Helpers\Help;
 
       <div class="col-12  p-2  pe-5"> 
          مبلغ قدره :
-         {{ Help::numberToWords($amount)}}
+         {{ $Help->numberToWords($amount)}}
         </div>
         <div class="col-12  p-2  pe-5"> 
           الملاحظات:
@@ -212,7 +214,7 @@ use App\Helpers\Help;
   
         <div class="col-12  p-2  pe-5"> 
            مبلغ قدره :
-           {{ Help::numberToWords($amount)}}
+           {{  $Help->numberToWords($amount)}}
           </div>
           <div class="col-12  p-2  pe-5"> 
             الملاحظات:
