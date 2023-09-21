@@ -1,3 +1,6 @@
+<?php 
+use App\Helpers\Help;
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -33,7 +36,6 @@
     <div class="col-4 text-center py-3">
 
     
-       
     <h5 class="pt-3"> وصل قبض</h5>
     <h5 class="pt-1">Cash Receipt Voucher </h5>
     </div>
@@ -45,8 +47,8 @@
     <div class="row p-2 text-center border-top border-bottom" style="font-size: 14px">
       <div class="col-3"> 
       الرقم:
-      {{$clientData['client']->id}}
-      </div>
+      {{$transactions_id}}
+    </div>
       <div class="col-3">
  
       </div>
@@ -71,7 +73,7 @@
 
       <div class="col-12  p-2  pe-5"> 
          مبلغ قدره :
-         {{$amount}}
+         {{ Help::numberToWords($amount)}}
         </div>
         <div class="col-12  p-2  pe-5"> 
           الملاحظات:
@@ -210,7 +212,7 @@
   
         <div class="col-12  p-2  pe-5"> 
            مبلغ قدره :
-           {{$amount}}
+           {{ Help::numberToWords($amount)}}
           </div>
           <div class="col-12  p-2  pe-5"> 
             الملاحظات:

@@ -197,10 +197,10 @@ return [
         App\Providers\RouteServiceProvider::class,
         Mccarlosen\LaravelMpdf\LaravelMpdfServiceProvider::class,
         SimpleSoftwareIO\QrCode\QrCodeServiceProvider::class,
-        Intervention\Image\ImageServiceProvider::class
+        Intervention\Image\ImageServiceProvider::class,
 
 
-
+        Alkoumi\LaravelArabicTafqeet\LaravelArabicTafqeetServiceProvider::class,
     ],
 
     /*

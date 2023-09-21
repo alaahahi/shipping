@@ -1,4 +1,11 @@
 <?php return array (
+  'alkoumi/laravel-arabic-tafqeet' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Alkoumi\\LaravelArabicTafqeet\\LaravelArabicTafqeetServiceProvider',
+    ),
+  ),
   'carlos-meneses/laravel-mpdf' => 
   array (
     'providers' => 
@@ -75,6 +82,13 @@
     'providers' => 
     array (
       0 => 'Termwind\\Laravel\\TermwindServiceProvider',
+    ),
+  ),
+  'scottlaurent/accounting' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Scottlaurent\\Accounting\\Providers\\AccountingServiceProvider',
     ),
   ),
   'simplesoftwareio/simple-qrcode' => 
