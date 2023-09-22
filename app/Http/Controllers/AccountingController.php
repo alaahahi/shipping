@@ -164,34 +164,35 @@ class AccountingController extends Controller
     {
         $client_id  = $_GET['client_id']  ??0;
         $amount  = $_GET['amount']  ??0;
+        $amount_o  = $_GET['amount']  ??0;
         $note = $_GET['note'] ?? '';
         $cars = Car::where('client_id',$client_id)->whereIn('results', [0, 1])->get();
         $needToPay=0;
         $user_id=$_GET['user_id']??0;
-
+        $carsName = '';
         foreach ($cars as $car) {
             $needToPay = $car->total_s - $car->paid;
-        
+            $carsName = $car->car_type.' '.$carsName;
             if ($needToPay <= $amount) {
                 // Deduct the amount and update 'paid' for this car
                 $amount -= $needToPay;
                 $car->update(['paid' => $car->total_s,'results' =>2]);
-                $desc=trans('text.addPayment').' '.$amount.'$'.' || '.$note;
-                $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car->id,'App\Models\Car',$user_id);
-                $this->decreaseWallet($amount, $desc,$car->client_id,$car->id,'App\Models\Car',$user_id);
+  
             } else {
                 // Deduct what's available in $amount and update 'paid' accordingly
                 $car->update(['paid' => $car->paid + $amount,'results' =>1]);
                 $amount = 0;
-                $desc=trans('text.addPayment').' '.$amount.'$'.' || '.$note;
-                $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car->id,'App\Models\Car',$user_id);
-                $this->decreaseWallet($amount, $desc,$car->client_id,$car->id,'App\Models\Car',$user_id);
                 break; // Stop processing if the amount is exhausted
 
             }
-        }
 
+           
+        }
+        $desc=trans('text.addPayment').' '.$amount_o.'$'.' || '.$note.' و '.$carsName;
+
+        $this->increaseWallet($amount_o, $desc,$this->mainAccount->id,$this->mainAccount->id,'App\Models\Car',$user_id);
         
+        $this->decreaseWallet($amount_o, $desc,$client_id,$client_id,'App\Models\Car',$user_id);
 
 
         return Response::json('ok', 200);    
