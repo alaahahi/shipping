@@ -9,7 +9,7 @@ import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import axios from 'axios';
 
-const laravelData = ref({});
+const laravelData = ref([]);
 let showModal = ref(false);
 let user_id = ref(0);
 const from = ref(0);
@@ -19,7 +19,17 @@ const isLoading = ref(0);
 const getResults = async (page = 1) => {
   axios.get(`/getIndexClients?page=${page}&user_id=${user_id.value}&from=${from.value}&to=${to.value}&q=${q.value}`)
   .then(response => {
-    laravelData.value =  response.data;
+    laravelData.value =  response.data.data.sort((a, b) => {
+  // First, sort by wallet.balance in descending order
+  const balanceComparison = b.wallet.balance - a.wallet.balance;
+
+  // If wallet.balance is the same, sort by car_total_uncomplete in ascending order
+  if (balanceComparison === 0) {
+    return b.car_total_uncomplete - a.car_total_uncomplete;
+  }
+
+  return balanceComparison;
+});
   })
   .catch(error => {
     console.error(error);
@@ -215,11 +225,10 @@ getResults();
                                 </thead>
                                 <tbody class="flex-1 sm:flex-none dark:bg-gray-700 dark:text-gray-200">
                                 
-                                    <tr v-for="user in laravelData.data" :key="user.id"  class="text-center dark:text-gray-200 mb-2 sm:mb-0 "  :class="user.car_total_uncomplete <= 0 ?'bg-green-100 dark:bg-green-900':'bg-red-100 dark:bg-red-900'" >
+                                    <tr v-for="user in laravelData" :key="user.id"  class="text-center dark:text-gray-200 mb-2 sm:mb-0 "  :class="user.car_total_uncomplete <= 0 ?'bg-green-100 dark:bg-green-900':'bg-red-100 dark:bg-red-900'" >
                                         <td className="border dark:border-gray-800 text-center px-4 py-2">{{ user.name }}</td>
                                         <td className="border dark:border-gray-800 text-center px-4 py-2">{{ user.phone }}</td>
                                         <td className="border dark:border-gray-800 text-center px-4 py-2">{{user.car_total_uncomplete}}</td>
-                                        <td className="border dark:border-gray-800 text-center px-4 py-2">{{user.car_total_complete}}</td>
                                         <td className="border dark:border-gray-800 text-center px-4 py-2">{{ user.wallet ? '$'+user.wallet['balance']:0   }}</td>
                                         <td className="border dark:border-gray-800 text-center px-4 py-2"  style="min-height: 42px;">
                                             <Link
