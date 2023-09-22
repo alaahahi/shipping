@@ -11,18 +11,15 @@ import ModalSpanFromBox from "@/Components/ModalSpanFromBox.vue";
 import ModalAddTransfers from "@/Components/ModalAddTransfers.vue";
 import ModalAddCarPayment from "@/Components/ModalAddCarPayment.vue";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
-import RevoGrid  from "@revolist/vue3-datagrid";
 import { TailwindPagination } from "laravel-vue-pagination"
 import { Head, Link, useForm } from '@inertiajs/inertia-vue3';
 ;
 import { useToast } from "vue-toastification";
 import axios from 'axios';
 import { ref } from 'vue';
-import Plugin from "@revolist/revogrid-column-date";
 import { useI18n } from "vue-i18n";
 const {t} = useI18n();
 
-import NumberColumnType from '@revolist/revogrid-column-numeral'; // import library
 
 
 const props = defineProps({
