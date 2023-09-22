@@ -28,7 +28,7 @@ function check_vin(v){
   })
   }else{
     showErrorVin.value = false;
-
+  
   }
 }
 function VinApi (v){
@@ -92,6 +92,7 @@ let showErrorVin = ref(false);
                     @click="
                       showClient = true;
                       formData.client_name = '';
+                      formData.client_id='';
                     "
                     v-if="!showClient"
                     class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-green-500 rounded-tl-lg rounded-bl-lg"
