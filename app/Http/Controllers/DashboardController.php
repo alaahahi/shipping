@@ -288,10 +288,7 @@ class DashboardController extends Controller
                     $desc=trans('text.payCar').' '.$total_amount.trans('text.for_car').' '.$request->vin;
                     if($total_amount){
                         $this->accountingController->decreaseWallet(($total_amount),$desc,$this->mainAccount->id,$car->id,'App\Models\Car');
-                        if($expenses){
-                            $desc=trans('text.addExpenses').' '.$expenses.' '.trans('text.for_car').' '.$request->vin;
-                            $this->accountingController->increaseWallet($expenses,$desc,$car->client_id,$car->id,'App\Models\User',$car->client_id);
-                        }
+          
                     }
                 }
 
@@ -339,7 +336,7 @@ class DashboardController extends Controller
             $dataToUpdate['total']=$total;
 
             $this->accountingController->decreaseWallet(($total-$car->total), $descClient,$this->mainAccount->id,$car->id,'App\Models\Car');
-            $this->accountingController->decreaseWallet(($total-$car->total), $descClient,$car->client_id,$car->id,'App\Models\User');
+            //$this->accountingController->increaseWallet(($total-$car->total), $descClient,$car->client_id,$car->id,'App\Models\User');
             $car->update($dataToUpdate);
 
 
