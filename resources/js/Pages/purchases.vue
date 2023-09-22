@@ -1,7 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/inertia-vue3';
-import VueTailwindDatepicker from 'vue-tailwind-datepicker'
 import Modal from "@/Components/Modal.vue";
 import ModalAddCar from "@/Components/ModalAddCars.vue";
 import ModalEditCars from "@/Components/ModalEditCars.vue";
@@ -13,75 +12,26 @@ import ModalSpanFromBox from "@/Components/ModalSpanFromBox.vue";
 import ModalAddTransfers from "@/Components/ModalAddTransfers.vue";
 import ModalAddCarPayment from "@/Components/ModalAddCarPayment.vue";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
-import RevoGrid  from "@revolist/vue3-datagrid";
 import { TailwindPagination } from "laravel-vue-pagination";
 import { useToast } from "vue-toastification";
 import axios from 'axios';
 import { ref } from 'vue';
-import Plugin from "@revolist/revogrid-column-date";
 import { useI18n } from "vue-i18n";
+import VuePincodeInput from 'vue3-pincode-input';
 
 const {t} = useI18n();
 
-import NumberColumnType from '@revolist/revogrid-column-numeral';
 
 const props = defineProps({client:Array});
 
 
 let data = ref({});
+let pincode = ref(0);
+
+
 // const columnTypes = ref({ 'date': new Plugin(),'numeric': new NumberColumnType('0,0') });
 const toast = useToast();
-const columns = [
-  { prop: "no", name: t('no'),size:50,  },
-  { prop: "client", name:  t('car_owner') ,size:150,readonly: true},
-  { prop: "car_type", name:  t('car_type') },
-  { prop: "year", name:  t('year'), size:70},
-  { prop: 'car_color',name:  t('car_color')},
-  { prop: "vin", name:  t('vin'),size:150 },
-  { prop: "car_number", name:  t('car_number')},
-  { prop: "dinar", name:  t('dinar'), columnType: 'numeric'  },
-  { prop: "dolar_price", name:  t('dolar_price') ,columnType: 'numeric'   },
-  {
-    prop: "dolar_custom",
-    name:  t('dolar_custom'),
-    columnType: 'numeric',
-    readonly: true, // Set the column as readonly
-    cellTemplate: (createElement,props) => {
-      const dinar = props.data[props.rowIndex].dinar || 0;
-      const dolar_price = props.data[props.rowIndex].dolar_price || 0;
-      return (dinar / dolar_price).toFixed(2) || 0;
-    },
-  },
-  { prop: "shipping_dolar", name:  t('shipping_dolar'),columnType: 'numeric'  },
-  { prop: "coc_dolar", name:  t('coc_dolar'),columnType: 'numeric'  },
-  { prop: "checkout", name:  t('checkout') ,columnType: 'numeric' },
-  { prop: "expenses", name:  t('expenses') ,columnType: 'numeric' },
-  {
-    prop: "total",
-    name:  t('total'),
-    columnType: 'numeric',
-    readonly: true, // Set the column as readonly
-    cellTemplate: (createElement,props) => {
-      const checkout = props.data[props.rowIndex].checkout || 0;
-      const shipping = props.data[props.rowIndex].shipping_dolar || 0;
-      const coc_dolar = props.data[props.rowIndex].coc_dolar || 0;
-      const dinar = props.data[props.rowIndex].dinar || 0;
-      const dolar_price = props.data[props.rowIndex].dolar_price || 0;
-      const expenses = props.data[props.rowIndex].expenses || 0;
-      return ((checkout + shipping+coc_dolar+expenses+(dinar/dolar_price)||0).toFixed(0));
-    },
-  },
-  { prop: "paid", name:  t('paid') ,columnType: 'numeric' },
-  {
-    prop: "profit",
-    name:  t('profit'),
-    columnType: 'numeric',
-    readonly: true, // Set the column as readonly
-  },
-  { prop: "date", name:  t('date'),columnType: "date",size: 130, },
-  { prop: "note", name:  t('note') },
 
-];
 //   const handleEdit = (event) => {
 
 //   const rowIndex = event.detail.rowIndex;
@@ -322,7 +272,8 @@ function confirmDelCar(V) {
   axios.post('/api/DelCar',V)
   .then(response => {
     showModalDelCar.value = false;
-      window.location.reload();
+    getResultsCar()
+    getcountTotalInfo()
   })
   .catch(error => {
     console.error(error);
@@ -495,7 +446,18 @@ function confirmAddPayment(V) {
     </ModalDelCar>
 
     <AuthenticatedLayout>
-        <div class="py-2">
+      <div class="py-2" v-if="pincode !=98653">
+        <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 ">
+            <div class="bg-white overflow-hidden shadow-sm d-flex text-center "  dir="ltr">
+              <VuePincodeInput v-model="pincode" :digits="5" :secure="true" class="justify-center py-5"
+              success-class="border-2 border-green-400"
+              input-class="rounded-full  text-gray-500 border-2 border-gray-200 shadow"
+
+              />
+          </div>
+        </div>
+      </div >
+        <div class="py-2"  v-if="pincode ==98653">
         <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 ">
             <div class="bg-white overflow-hidden shadow-sm ">
                 <div class="p-6  dark:bg-gray-900">
@@ -907,10 +869,10 @@ function confirmAddPayment(V) {
                         </div>
                       </div>
                       </div>
-                    </div>
-                    </div>
+                  </div>
                 </div>
             </div>
+        </div>
         <div >
         <!-- <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="p-6  dark:bg-gray-900" style="border-radius: 8px;">

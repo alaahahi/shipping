@@ -16,16 +16,13 @@ import ModalAddCarPayment from "@/Components/ModalAddCarPayment.vue";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
 import ModalEditCars from "@/Components/ModalEditCar_S.vue";
 
-import RevoGrid  from "@revolist/vue3-datagrid";
 import { TailwindPagination } from "laravel-vue-pagination";
 import { useToast } from "vue-toastification";
 import axios from 'axios';
 import { ref } from 'vue';
-import Plugin from "@revolist/revogrid-column-date";
 import { useI18n } from "vue-i18n";
 const {t} = useI18n();
 
-import NumberColumnType from '@revolist/revogrid-column-numeral'; // import library
 
 
 const props = defineProps({
@@ -36,77 +33,11 @@ const props = defineProps({
 
 
 let data = ref({});
-const columnTypes = ref({ 'date': new Plugin(),'numeric': new NumberColumnType('0,0') });
 const toast = useToast();
-const columns = [
-  { prop: "no", name: t('no'),size:50,  },
-  { prop: "client", name:  t('car_owner') ,size:150,readonly: true},
-  { prop: "car_type", name:  t('car_type') },
-  { prop: "year", name:  t('year'), size:70},
-  { prop: 'car_color',name:  t('car_color')},
-  { prop: "vin", name:  t('vin'),size:150 },
-  { prop: "car_number", name:  t('car_number')},
-  { prop: "dinar", name:  t('dinar'), columnType: 'numeric'  },
-  { prop: "dolar_price", name:  t('dolar_price') ,columnType: 'numeric'   },
-  {
-    prop: "dolar_custom",
-    name:  t('dolar_custom'),
-    columnType: 'numeric',
-    readonly: true, // Set the column as readonly
-    cellTemplate: (createElement,props) => {
-      const dinar = props.data[props.rowIndex].dinar || 0;
-      const dolar_price = props.data[props.rowIndex].dolar_price || 0;
-      return (dinar / dolar_price).toFixed(2) || 0;
-    },
-  },
-  { prop: "shipping_dolar", name:  t('shipping_dolar'),columnType: 'numeric'  },
-  { prop: "coc_dolar", name:  t('coc_dolar'),columnType: 'numeric'  },
-  { prop: "checkout", name:  t('checkout') ,columnType: 'numeric' },
-  { prop: "expenses", name:  t('expenses') ,columnType: 'numeric' },
-  {
-    prop: "total",
-    name:  t('total'),
-    columnType: 'numeric',
-    readonly: true, // Set the column as readonly
-    cellTemplate: (createElement,props) => {
-      const checkout = props.data[props.rowIndex].checkout || 0;
-      const shipping = props.data[props.rowIndex].shipping_dolar || 0;
-      const coc_dolar = props.data[props.rowIndex].coc_dolar || 0;
-      const dinar = props.data[props.rowIndex].dinar || 0;
-      const dolar_price = props.data[props.rowIndex].dolar_price || 0;
-      const expenses = props.data[props.rowIndex].expenses || 0;
-      return ((checkout + shipping+coc_dolar+expenses+(dinar/dolar_price)||0).toFixed(0));
-    },
-  },
-  { prop: "paid", name:  t('paid') ,columnType: 'numeric' },
-  {
-    prop: "profit",
-    name:  t('profit'),
-    columnType: 'numeric',
-    readonly: true, // Set the column as readonly
-  },
-  { prop: "date", name:  t('date'),columnType: "date",size: 130, },
-  { prop: "note", name:  t('note') },
 
-];
-  const handleEdit = (event) => {
-
-  const rowIndex = event.detail.rowIndex;
-  const colIndex = (event.detail.prop).replace(/["\s]/g, '');
-  const newValue = event.detail.val;
-  const id =car.value.data[rowIndex].id;
-  //car.value.data[rowIndex][colIndex] = newValue;
-
-  // You can save the changes to a backend here if needed
-  saveChangesToBackend(id,colIndex,newValue);
-};
 let showModal = ref(false);
 
-const saveChangesToBackend = (id,colIndex,newValue) => {
-  data.value={'id':id,[colIndex]:newValue}
-  showModal.value=true;
-  // Simulated function to save changes to a backend
-};
+
 
 
 let searchTerm = ref('');
