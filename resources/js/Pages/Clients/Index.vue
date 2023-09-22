@@ -225,12 +225,13 @@ getResults();
                                 </thead>
                                 <tbody class="flex-1 sm:flex-none dark:bg-gray-700 dark:text-gray-200">
                                 
-                                    <tr v-for="user in laravelData" :key="user.id"  class="text-center dark:text-gray-200 mb-2 sm:mb-0 "  :class="user.car_total_uncomplete <= 0 ?'bg-green-100 dark:bg-green-900':'bg-red-100 dark:bg-red-900'" >
-                                        <td className="border dark:border-gray-800 text-center px-4 py-2">{{ user.name }}</td>
-                                        <td className="border dark:border-gray-800 text-center px-4 py-2">{{ user.phone }}</td>
-                                        <td className="border dark:border-gray-800 text-center px-4 py-2">{{user.car_total_uncomplete}}</td>
-                                        <td className="border dark:border-gray-800 text-center px-4 py-2">{{ user.wallet ? '$'+user.wallet['balance']:0   }}</td>
-                                        <td className="border dark:border-gray-800 text-center px-4 py-2"  style="min-height: 42px;">
+                                    <tr v-for="user in laravelData" :key="user.id"  class="border-b border-white dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600 "  :class="user.car_total_uncomplete <= 0 ?'bg-green-100 dark:bg-green-900':'bg-red-100 dark:bg-red-900'" >
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{ user.name }}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{ user.phone }}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_total_uncomplete}}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_total_complete}}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{ user.wallet ? '$'+user.wallet['balance']:0   }}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2"  style="min-height: 42px;">
                                             <Link
                                                 tabIndex="1"
                                                 className="px-2 py-1 text-sm text-white bg-slate-500 rounded"
