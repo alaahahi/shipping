@@ -57,7 +57,7 @@ let need_pay =  ref(0);
                   id="id"
                   type="text"
                   disabled
-                  :value="formData.total_s-(formData.paid+(formData.amountPayment||0))"
+                  :value="formData.total_s-(formData.paid+(formData.amountPayment||0)+(formData.discount||0))"
                   class=" mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
                    />
                 </div>
@@ -71,6 +71,14 @@ let need_pay =  ref(0);
                 type="number"
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
                 v-model="formData.amountPayment" />
+              </div>
+              <div className="mb-4 mx-5">
+              <label  class="dark:text-gray-200" for="amountPayment" >{{ $t('discount') }}</label>
+              <input
+                id="discount"
+                type="number"
+                class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                v-model="formData.discount" />
               </div>
               <div className="mb-4 mx-5">
               <label  class="dark:text-gray-200" for="notePayment" >{{ $t('note') }} </label>

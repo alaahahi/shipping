@@ -275,7 +275,7 @@ function getDarkModePreference() {
 getResultsCar();
 
 function confirmAddPayment(V) {
-  axios.get(`/api/addPaymentCar?car_id=${V.id}&amount=${V.amountPayment??0}&note=${V.notePayment??''}`)
+  axios.get(`/api/addPaymentCar?car_id=${V.id}&discount=${V.discount??0}&amount=${V.amountPayment??0}&note=${V.notePayment??''}`)
   .then(response => {
     showModalAddCarPayment.value = false;
     toast.success( " تم دفع مبلغ دولار "+V.amountPayment+" بنجاح ", {
@@ -629,7 +629,9 @@ function confirmAddPayment(V) {
                                       <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t('paid') }}
                                       </th>
-                                  
+                                      <th scope="col" class="px-1 py-3 text-base">
+                                        {{ $t('discount') }}
+                                      </th>
                                       <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t('date') }}
                                       </th>
@@ -660,6 +662,8 @@ function confirmAddPayment(V) {
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.expenses}}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ (car.total_s).toFixed(0) }}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.paid}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.discount}}</td>
+
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.date  }}</td>
                                      <td className="border dark:border-gray-800 text-start px-1 py-2">
                                     <button

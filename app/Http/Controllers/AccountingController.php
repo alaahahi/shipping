@@ -145,13 +145,15 @@ class AccountingController extends Controller
         $user_id = $_GET['user_id']??0;
         $car_id = $_GET['car_id']??0;
         $amount=$_GET['amount']??0;
+        $discount = $_GET['discount']??0;
         $car = Car::find($car_id);
         $car->increment('paid',$amount);
+        $car->increment('discount',$discount);
         $wallet = Wallet::where('user_id',$car->client_id)->first();
-        $desc=trans('text.addPayment').' '.$amount.'$'.' || '.$_GET['note']??'';
+        $desc=trans('text.addPayment').' '.$amount.'$ خصم بقيمة'.$discount.' || '.$_GET['note']??'';
         $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\Car',$user_id);
         $this->decreaseWallet($amount, $desc,$car->client_id,$car_id,'App\Models\Car',$user_id);
-        if($car->paid-$car->total_s >= 0){
+        if((($car->paid)+($car->discount))-$car->total_s >= 0){
             $car->update(['results'=>2]); 
         }
         elseif($amount){

@@ -15,13 +15,6 @@ class Car extends Model
     protected $fillable = [
         'id',
         'no',
-        'name_id',
-        'company_id',
-        'color_id',
-        'model_id',
-        'image',
-        'pin',
-        'price',
         'phone_number',
         'invoice_number',
         'paid_amount',
@@ -68,6 +61,7 @@ class Car extends Model
         'shipping_dolar_s',
         'coc_dolar_s',
         'total_s',
+        'discount'
     ];
     public function user()
     {
