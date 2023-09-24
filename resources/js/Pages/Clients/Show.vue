@@ -495,7 +495,9 @@ function confirmAddPaymentTotal(amount, client_id) {
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("paid") }}
                     </th>
-
+                    <th scope="col" class="px-1 py-2 text-base">
+                      {{ $t("discount") }}
+                    </th>
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("date") }}
                     </th>
@@ -602,6 +604,8 @@ function confirmAddPaymentTotal(amount, client_id) {
                     >
                       {{ car.paid }}
                     </td>
+                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.discount}}</td>
+
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
