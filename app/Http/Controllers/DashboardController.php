@@ -105,7 +105,7 @@ class DashboardController extends Controller
         $car = Car::all();
         $sumTotal = $car->sum('total');
         $sumPaid = $car->sum('paid');
-        $sumDebit = $car->whereIn('results',[0,1])->sum('results');
+        $sumDebit = $car->whereIn('results',[0,1])->sum('profit_s');
         $sumProfit = $car->where('results',2)->sum('profit');
         $data = [
         'mainAccount'=>$this->mainAccount->wallet->balance??0,
