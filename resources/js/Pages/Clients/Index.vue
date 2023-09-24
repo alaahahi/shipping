@@ -53,6 +53,24 @@ function openModalEditClient(form = {}) {
   formData.value = form;
   showModalEditClient.value = true;
 }
+function confirmAddClient(V) {
+  axios.post('/api/clientsStore',V)
+  .then(response => {
+      window.location.reload();
+  })
+  .catch(error => {
+    console.error(error);
+  })
+}
+function confirmEditClient(V) {
+  axios.post('/api/clientsEdit',V)
+  .then(response => {
+      window.location.reload();
+  })
+  .catch(error => {
+    console.error(error);
+  })
+}
 </script>
 
 <template>
@@ -63,7 +81,7 @@ function openModalEditClient(form = {}) {
             :show="showModalAddClient"
             :formData="formData"
 
-            @a="confirmAddToBox($event)"
+            @a="confirmAddClient($event)"
             @close="showModalAddClient = false"
             >
         <template #header>
@@ -74,7 +92,7 @@ function openModalEditClient(form = {}) {
             :show="showModalEditClient"
             :formData="formData"
 
-            @a="confirmAddToBox($event)"
+            @a="confirmEditClient($event)"
             @close="showModalEditClient = false"
             >
         <template #header>
@@ -258,9 +276,9 @@ function openModalEditClient(form = {}) {
                                 <tbody class="flex-1 sm:flex-none dark:bg-gray-700 dark:text-gray-200">
                                 
                                     <tr v-for="(user,i) in laravelData" :key="user.id"  class="border-b border-white dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600 "  :class="user.car_total_uncomplete <= 0 ?'bg-green-100 dark:bg-green-900':'bg-red-100 dark:bg-red-900'" >
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{i }}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{ user.name }}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{ user.phone }}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{i}}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.name}}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.phone}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_total_uncomplete}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_total_complete}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{ user.wallet ? '$'+user.wallet['balance']:0   }}</td>

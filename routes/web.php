@@ -53,16 +53,7 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('getIndexClientsSearch',[UserController::class, 'getIndexClients'])->name("getIndexClientsSearch");
 
     
-    Route::get('addClients',[UserController::class, 'addClients'])->name('addClients');
-    Route::put('clientsStore',[UserController::class, 'clientsStore'])->name('clientsStore');
-    Route::get('editClients/{id}',[UserController::class, 'editClients'])->name('editClients');
 
-    
-    
-    Route::get('unban/{id}',[UserController::class, 'unban'])->name("unban");
-    Route::get('/userLocation/{id}',[UserController::class, 'userLocation'])->name("userLocation");
-    
-    Route::get('تسجيل-الاستمارة',[FormRegistrationController::class, 'create'])->name('تسجيل-الاستمارة');
     Route::post('formRegistration',[FormRegistrationController::class, 'store'])->name('formRegistration');
     
     Route::post('formRegistrationstoreEdit/{id}',[FormRegistrationController::class, 'storeEdit'])->name('formRegistrationstoreEdit');

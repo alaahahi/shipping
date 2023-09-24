@@ -38,7 +38,8 @@ Route::get('ackUserMassages/{sender}/{receiver}/{date}',[UserController::class, 
 
 Route::get('getSaler',[UserController::class, 'getSaler']);
 
-
+Route::post('clientsStore',[UserController::class, 'clientsStore'])->name('clientsStore');
+Route::post('clientsEdit',[UserController::class, 'clientsEdit'])->name('clientsEdit');
 
 Route::get('addTransfers',[TransfersController::class, 'addTransfers'])->name('addTransfers');
 Route::get('transfers',[TransfersController::class, 'index'])->name('transfers');

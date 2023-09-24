@@ -155,20 +155,20 @@ class UserController extends Controller
   
                 Wallet::create(['user_id' => $user->id]);
      
-                return Response::json($data, 200);
+                return Response::json($user, 200);
     }
-    public function clientsEdit($id,Request $request)
+    public function clientsEdit(Request $request)
     {
         Validator::make($request->all(), [
             'name' => 'required|string|max:255',
            ])->validate();
            //$userChief_id =User::where('type_id',  $this->userChief)->first()->id ?? 0 ;
-                $user = User::find($id)->update([
+                $user = User::find($request->id)->update([
                     'name' => $request->name,
                     'phone' => $request->phone,
                 ]);
        
-                return Response::json($data, 200);
+        return Response::json($user, 200);
     }
     public function getCoordinator(Request $request)
     {
