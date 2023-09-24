@@ -9,7 +9,7 @@ import { Head, Link, useForm } from '@inertiajs/inertia-vue3';
 
 
 const props = defineProps({
-    user: Array,
+    user: Object,
     url:String,
     usersType: Array,
     userSeles:String,
@@ -19,11 +19,7 @@ const props = defineProps({
 
 const form = useForm({
     name: props.user.name,
-    email: props.user.email,
-    password: props.user.password,
-    userType:props.user.userType,
-    parent_id:props.user.parent_id,
-    percentage:props.user.percentage,
+    phone: props.user.phone,
 });
 
 const submit = () => {
@@ -71,59 +67,16 @@ const submit = () => {
                                         {{ form.errors.name }}
                                     </span>
                                     </div>
-                                    <div className="mb-4">
-
-                                        <InputLabel for="email" value="اسم المستخدم" />
-                                        
-                                        <TextInput 
-                                            id="email" 
-                                            type="text" 
-                                            class="mt-1 block w-full" 
-                                            v-model="form.email" 
-                                            autofocus />
-
-                                        <span className="text-red-600" v-if="form.errors.email">
-                                            Sorry,Username is not available
-                                        </span>
-                                    </div>
-                                    <div className="mb-4">
-
-                                    <InputLabel for="password" value="كلمة المرور" />
-                                    
+         
+                                    <div class="mb-4">
+                                    <InputLabel for="phone" :value="$t('phone')" />
                                     <TextInput 
-                                        id="password" 
-                                        type="text" 
-                                        class="mt-1 block w-full" 
-                                        v-model="form.password" 
-                                        autofocus />
-
-                                    <span className="text-red-600" v-if="form.errors.password">
-                                        {{ form.errors.password }}
-                                    </span>
-                                    </div>
-
-                                    
-
-                                    <div className="mb-4">
-                                    <InputLabel for="getCoordinator" value="صلاحيات المستخدم" />
-                                    <select  v-model="form.userType"  id="userType" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                    <option selected disabled>تغير صلاحيات المستخدم</option>
-                                    <option v-for="(user, index) in usersType" :key="index" :value="user.id">{{ user.name }}</option>
-                                    </select>
-                                    </div>
-                                    <div className="mb-4" v-if="form.userType == userSeles || form.userType == userHospital || form.userType == userDoctor">
-
-                                    <InputLabel for="percentage" value="نسبة المبيعات" />
-
-                                    <TextInput 
-                                        id="percentage" 
+                                        id="phone" 
                                         type="number" 
                                         class="mt-1 block w-full" 
-                                        v-model="form.percentage" 
-                                        />                     
+                                        v-model="form.phone" 
+                                    />
                                     </div>
-     
-
                                 </div>
   
                                 <div className="mt-4">

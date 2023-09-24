@@ -66,10 +66,11 @@ let showModalEditCars=ref(false);
 let showModalDelCar =  ref(false);
 let mainAccount= ref(0)
 let allCars= ref(0)
+let sumTotal= ref(0)
+let sumPaid= ref(0)
+let sumProfit= ref(0)
+let sumDebit= ref(0)
 
-function openModal() {
-  showModal.value = true;
-}
 function openModalEditCars(form={}){
   formData.value=form
   showModalEditCars.value = true;
@@ -153,7 +154,11 @@ const getcountTotalInfo = async () => {
   axios.get('/api/totalInfo')
   .then(response => {
     mainAccount.value = response.data.data.mainAccount;
+    sumTotal.value= response.data.data.sumTotal;
+    sumPaid.value= response.data.data.sumPaid;
     allCars.value =response.data.data.allCars;
+    sumProfit.value= response.data.data.sumProfit;
+    sumDebit.value= response.data.data.sumDebit;
   })
   .catch(error => {
     console.error(error);
@@ -446,7 +451,7 @@ function confirmAddPayment(V) {
     </ModalDelCar>
 
     <AuthenticatedLayout>
-      <div class="py-2" v-if="pincode !=98653">
+      <div class="py-2" v-if="pincode !=19735">
         <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 ">
             <div class="bg-white overflow-hidden shadow-sm d-flex text-center "  dir="ltr">
               <VuePincodeInput v-model="pincode" :digits="5" :secure="true" class="justify-center py-5"
@@ -457,7 +462,7 @@ function confirmAddPayment(V) {
           </div>
         </div>
       </div >
-        <div class="py-2"  v-if="pincode ==98653">
+        <div class="py-2"  v-if="pincode ==19735">
         <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 ">
             <div class="bg-white overflow-hidden shadow-sm ">
                 <div class="p-6  dark:bg-gray-900">
@@ -664,29 +669,29 @@ function confirmAddPayment(V) {
 
 
                                 <tr v-for="car in car.data" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.no }}</td>
-                                    <td className="border dark:border-gray-900 text-center text-black px-2 py-2 " style="font-weight: bold;font-size: 16px;">{{ car.client?.name }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_type}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.year}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_color }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.vin }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_number }}</td> 
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.dinar  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.dolar_price}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ ((car.dinar/car.dolar_price)*100)?.toFixed(0)||0}}</td> 
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.note }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.shipping_dolar}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.coc_dolar  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.checkout}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.expenses}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ (car.total).toFixed(0)  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.paid}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ (car.total_s-car.total).toFixed(0) }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.date  }}</td>
-                                     <td className="border dark:border-gray-800 text-start px-2 py-2">
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.no }}</td>
+                                    <td className="border dark:border-gray-900 text-center text-black px-1 py-2 " style="font-weight: bold;font-size: 16px;">{{ car.client?.name }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_type}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.year}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_color }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.vin }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_number }}</td> 
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.dinar  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.dolar_price}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ ((car.dinar/car.dolar_price)*100)?.toFixed(0)||0}}</td> 
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.note }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.shipping_dolar}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.coc_dolar  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.checkout}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.expenses}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ (car.total).toFixed(0)  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.paid}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ (car.total_s-car.total).toFixed(0) }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.date  }}</td>
+                                     <td className="border dark:border-gray-800 text-start px-1 py-2">
                                     <button
                                       tabIndex="1"
-                                      class="px-2 py-1  text-white mx-1 bg-slate-500 rounded"
+                                      class="px-1 py-1  text-white mx-1 bg-slate-500 rounded"
                                       @click="openModalEditCars(car)"
                                     >
                                       {{ $t('edit') }}
@@ -694,7 +699,7 @@ function confirmAddPayment(V) {
                                     <button
                                       tabIndex="1"
                                       
-                                      class="px-2 py-1  text-white mx-1 bg-orange-500 rounded"
+                                      class="px-1 py-1  text-white mx-1 bg-orange-500 rounded"
                                       @click="openModalDelCar(car)"
                                     >
                                       {{ $t('delete') }}
@@ -702,7 +707,7 @@ function confirmAddPayment(V) {
                                     <!-- <button
                                       v-if="car.total_s != car.paid"
                                       tabIndex="1"
-                                      class="px-2 py-1  text-white mx-1 bg-green-500 rounded"
+                                      class="px-1 py-1  text-white mx-1 bg-green-500 rounded"
                                       @click="openAddCarPayment(car)"
                                     >
                                       {{ $t('complet_pay') }}
@@ -719,14 +724,14 @@ function confirmAddPayment(V) {
                                     </button>
                                     <button
                                       tabIndex="1"
-                                      class="px-2 py-1 text-base text-white mx-1 bg-blue-600 rounded"
+                                      class="px-1 py-1 text-base text-white mx-1 bg-blue-600 rounded"
                                       @click="openAddExpenses(car)"
                                     >
                                       {{ $t('expenses') }}
                                     </button>
                                     <button
                                       tabIndex="1"
-                                      class="px-2 py-1 text-base text-white mx-1 bg-green-500 rounded"
+                                      class="px-1 py-1 text-base text-white mx-1 bg-green-500 rounded"
                                       v-if="car.results != 0 && (car.pay_price - car.paid_amount_pay == 0)"
                                       @click="openAddCarPayment(car)"
                                     >
@@ -734,7 +739,7 @@ function confirmAddPayment(V) {
                                     </button>
                                     <button
                                       tabIndex="1"
-                                      class="px-2 py-1 text-base text-white mx-1 bg-red-700 rounded"
+                                      class="px-1 py-1 text-base text-white mx-1 bg-red-700 rounded"
                                       v-if="car.results == 1 && (car.pay_price - car.paid_amount_pay != 0)"
                                       @click="openAddCarPayment(car)"
                                     >
@@ -759,7 +764,7 @@ function confirmAddPayment(V) {
                         </div>
                       </div>
                       <div v-if="$page.props.auth.user.type_id==1">
-                        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">     
+                        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5">     
                           <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -771,18 +776,52 @@ function confirmAddPayment(V) {
                               <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ mainAccount }}</p>
                             </div>
                           </div>
-                          <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">إجمالي التكاليف </h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ sumTotal }}</p>
+                            </div>
+                          </div>
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">إجمالي المدفوعات من الزبائن</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ sumPaid }}</p>
+                            </div>
+                          </div>
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">  صافي الربح</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ sumProfit }}</p>
+                            </div>
+                          </div>
+
+
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                               </svg>
                             </div>
-                      
                             <div class="mr-4">
-                              <h2 class="font-semibold"> {{ $t('fundIncome') }} </h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ inAccount.wallet?.balance }}</p>
+                              <h2 class="font-semibold"> الدين </h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ sumDebit }}</p>
                             </div>
-                          </div> -->
+                          </div>
                           <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

@@ -10,6 +10,9 @@ import axios from "axios";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
 import ModalEditCars from "@/Components/ModalEditCar_S.vue";
 import ModalAddCarPayment from "@/Components/ModalAddCarPayment.vue";
+
+
+
 import { useToast } from "vue-toastification";
 const toast = useToast();
 
@@ -22,6 +25,7 @@ const to = ref(0);
 let showModalEditCars = ref(false);
 let showModalDelCar = ref(false);
 let showModalAddCarPayment = ref(false);
+
 
 const total = ref(0);
 const formData = ref({});
@@ -80,6 +84,7 @@ function openModalEditCars(form = {}) {
   formData.value = form;
   showModalEditCars.value = true;
 }
+
 function openAddCarPayment(form = {}) {
   formData.value = form;
   showModalAddCarPayment.value = true;

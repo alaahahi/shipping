@@ -524,7 +524,7 @@ getResultsCar();
                             {{ $t('shipping_coc') }} 
                           </button>
                         </div>
-                        <div class="text-center">
+                        <!-- <div class="text-center">
                           <button
                             type="button"
                             @click="openAddToBox()"
@@ -541,7 +541,7 @@ getResultsCar();
                             className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-pink-600 rounded">
                             {{ $t('withdrawFromTheFund') }}   
                           </button>
-                        </div>
+                        </div> -->
 
                       </div>
                       <div>

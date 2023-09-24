@@ -643,29 +643,29 @@ function confirmAddPayment(V) {
 
 
                                 <tr v-for="car in car.data" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.no }}</td>
-                                    <td className="border dark:border-gray-800 text-center text-black px-2 py-2 " style="font-weight: bold;font-size: 16px;">{{ car.client?.name }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_type}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.year}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_color }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.vin }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_number }}</td> 
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.dinar_s  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.dolar_price_s}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ ((car.dinar_s/car.dolar_price_s)*100)?.toFixed(0)||0}}</td> 
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.note }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.shipping_dolar_s}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.coc_dolar_s  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.checkout_s}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.expenses}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ (car.total_s).toFixed(0) }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.paid}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.date  }}</td>
-                                     <td className="border dark:border-gray-800 text-start px-2 py-2">
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.no }}</td>
+                                    <td className="border dark:border-gray-800 text-center text-black px-1 py-2 " style="font-weight: bold;font-size: 16px;">{{ car.client?.name }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_type}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.year}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_color }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.vin }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_number }}</td> 
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.dinar_s  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.dolar_price_s}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ ((car.dinar_s/car.dolar_price_s)*100)?.toFixed(0)||0}}</td> 
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.note }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.shipping_dolar_s}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.coc_dolar_s  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.checkout_s}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.expenses}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ (car.total_s).toFixed(0) }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.paid}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.date  }}</td>
+                                     <td className="border dark:border-gray-800 text-start px-1 py-2">
                                     <button
                                       tabIndex="1"
                                       
-                                      class="px-2 py-1  text-white mx-1 bg-slate-500 rounded"
+                                      class="px-1 py-1  text-white mx-1 bg-slate-500 rounded"
                                       @click="openModalEditCars(car)"
                                     >
                                       {{ $t('edit') }}
@@ -673,7 +673,7 @@ function confirmAddPayment(V) {
                                     <button
                                       tabIndex="1"
                                       
-                                      class="px-2 py-1  text-white mx-1 bg-orange-500 rounded"
+                                      class="px-1 py-1  text-white mx-1 bg-orange-500 rounded"
                                       @click="openModalDelCar(car)"
                                     >
                                       {{ $t('delete') }}
@@ -681,7 +681,7 @@ function confirmAddPayment(V) {
                                     <button
                                       v-if="car.total_s != car.paid"
                                       tabIndex="1"
-                                      class="px-2 py-1  text-white mx-1 bg-green-500 rounded"
+                                      class="px-1 py-1  text-white mx-1 bg-green-500 rounded"
                                       @click="openAddCarPayment(car)"
                                     >
                                       {{ $t('complet_pay') }}
@@ -698,14 +698,14 @@ function confirmAddPayment(V) {
                                     </button>
                                     <button
                                       tabIndex="1"
-                                      class="px-2 py-1  text-white mx-1 bg-blue-600 rounded"
+                                      class="px-1 py-1  text-white mx-1 bg-blue-600 rounded"
                                       @click="openAddExpenses(car)"
                                     >
                                       {{ $t('expenses') }}
                                     </button>
                                     <button
                                       tabIndex="1"
-                                      class="px-2 py-1  text-white mx-1 bg-green-500 rounded"
+                                      class="px-1 py-1  text-white mx-1 bg-green-500 rounded"
                                       v-if="car.results != 0 && (car.pay_price - car.paid_amount_pay == 0)"
                                       @click="openAddCarPayment(car)"
                                     >
@@ -713,7 +713,7 @@ function confirmAddPayment(V) {
                                     </button>
                                     <button
                                       tabIndex="1"
-                                      class="px-2 py-1 text-base text-white mx-1 bg-red-700 rounded"
+                                      class="px-1 py-1 text-base text-white mx-1 bg-red-700 rounded"
                                       v-if="car.results == 1 && (car.pay_price - car.paid_amount_pay != 0)"
                                       @click="openAddCarPayment(car)"
                                     >

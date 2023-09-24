@@ -8,9 +8,13 @@ import ModalAddCardUser from "@/Components/ModalAddCardUser.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import axios from 'axios';
+import ModalAddClient from "@/Components/ModalAddClient.vue";
+import ModalEditClient from "@/Components/ModalEditClient.vue";
+let showModalEditClient = ref(false);
+let showModalAddClient = ref(false);
 
 const laravelData = ref([]);
-let showModal = ref(false);
+let formData = ref({});
 let user_id = ref(0);
 const from = ref(0);
 const to = ref(0);
@@ -19,35 +23,63 @@ const isLoading = ref(0);
 const getResults = async (page = 1) => {
   axios.get(`/getIndexClients?page=${page}&user_id=${user_id.value}&from=${from.value}&to=${to.value}&q=${q.value}`)
   .then(response => {
-    laravelData.value =  response.data.data.sort((a, b) => {
-  // First, sort by wallet.balance in descending order
-  const balanceComparison = b.wallet.balance - a.wallet.balance;
+    try {
+      laravelData.value =  response.data.data?.sort((a, b) => {
+      // First, sort by wallet.balance in descending order
+      const balanceComparison = b.wallet.balance - a.wallet.balance;
 
-  // If wallet.balance is the same, sort by car_total_uncomplete in ascending order
-  if (balanceComparison === 0) {
-    return b.car_total_uncomplete - a.car_total_uncomplete;
-  }
+      // If wallet.balance is the same, sort by car_total_uncomplete in ascending order
+      if (balanceComparison === 0) {
+        return b.car_total_uncomplete - a.car_total_uncomplete;
+      }
 
-  return balanceComparison;
-});
+      return balanceComparison;
+    });
+    } catch (error) {
+      laravelData.value =  response.data.data
+    }
+
   })
   .catch(error => {
     console.error(error);
   })
 }
 getResults();
-
+function openModalAddClient(form = {}) {
+  formData.value = form;
+  showModalAddClient.value = true;
+}
+function openModalEditClient(form = {}) {
+  formData.value = form;
+  showModalEditClient.value = true;
+}
 </script>
 
 <template>
     <Head title="Dashboard" />
     <AuthenticatedLayout>
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-gray-200">
-               {{$t('Customer_management')}}
-            </h2>
-        </template>
+  
+      <ModalEditClient
+            :show="showModalAddClient"
+            :formData="formData"
 
+            @a="confirmAddToBox($event)"
+            @close="showModalAddClient = false"
+            >
+        <template #header>
+          </template>
+    </ModalEditClient>
+
+    <ModalEditClient
+            :show="showModalEditClient"
+            :formData="formData"
+
+            @a="confirmAddToBox($event)"
+            @close="showModalEditClient = false"
+            >
+        <template #header>
+          </template>
+    </ModalEditClient>
             <div class="py-12">
                 <div class=" mx-auto sm:px-6 lg:px-8">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -159,12 +191,11 @@ getResults();
                         <div class="text-center px-4">
                           <InputLabel for="pay" value="اضافة" class="mb-1" />
 
-                            <Link
-                                    style="display: block"
+                            <button
                                     className="px-6 mb-12 py-2 mt-1 font-bold text-white bg-red-500 rounded"
-                                    :href="route('addClients')">
+                                    @click="openModalAddClient()">
                                     {{ $t('addCustomer') }}
-                            </Link>
+                            </button>
                         </div>
                         <div class=" px-4">
                           <div className="mb-4">
@@ -215,6 +246,7 @@ getResults();
                         <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
                         <tr  class="rounded-l-lg mb-2 sm:mb-0">
+                                        <th className="px-1 py-2 text-base">#</th>
                                         <th className="px-1 py-2 text-base">{{ $t('name') }}</th>
                                         <th className="px-1 py-2 text-base">{{ $t('phoneNumber') }}</th>
                                         <th className="px-1 py-2 text-base">مجموع السيارات غير مكتمل</th>
@@ -225,30 +257,28 @@ getResults();
                                 </thead>
                                 <tbody class="flex-1 sm:flex-none dark:bg-gray-700 dark:text-gray-200">
                                 
-                                    <tr v-for="user in laravelData" :key="user.id"  class="border-b border-white dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600 "  :class="user.car_total_uncomplete <= 0 ?'bg-green-100 dark:bg-green-900':'bg-red-100 dark:bg-red-900'" >
+                                    <tr v-for="(user,i) in laravelData" :key="user.id"  class="border-b border-white dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600 "  :class="user.car_total_uncomplete <= 0 ?'bg-green-100 dark:bg-green-900':'bg-red-100 dark:bg-red-900'" >
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{i }}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{ user.name }}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{ user.phone }}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_total_uncomplete}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_total_complete}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{ user.wallet ? '$'+user.wallet['balance']:0   }}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2"  style="min-height: 42px;">
-                                            <Link
-                                                tabIndex="1"
-                                                className="px-2 py-1 text-sm text-white bg-slate-500 rounded"
-                                                :href="route('showClients', user.id)"
-                                                v-if="user.email!='admin@admin.com'">
-                                                عرض
-                                            </Link>
-
-                                            <!-- <button
-                                                @click="destroy(user.id)"
-                                                tabIndex="-1"
-                                                type="button"
-                                                className="mx-1 px-2 py-1 text-sm text-white bg-rose-500 rounded"
-                                                v-if="user.email!='admin@admin.com'"
+                                        <Link
+                                            tabIndex="1"
+                                            className="px-2 py-1 text-sm text-white bg-slate-500 rounded"
+                                            :href="route('showClients', user.id)"
                                             >
-                                                حذف
-                                            </button> -->
+                                            عرض
+                                        </Link>
+                                        <button
+                                            tabIndex="1"
+                                            className="px-2 py-1 mr-4 text-sm text-white bg-red-500 rounded"
+                                            @click="openModalEditClient(user)"
+                                            >
+                                            تعديل
+                                        </button>
                                             
                                             <!-- <button 
                                                 @click="ban(user.id)"

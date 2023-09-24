@@ -93,6 +93,7 @@ class DashboardController extends Controller
         $car = Car::all();
     
         $allCars = $car->count();
+
         $client = User::where('type_id', $this->userClient)->get();
 
         return Inertia::render('Sales', ['client'=>$client,
@@ -102,7 +103,10 @@ class DashboardController extends Controller
     public function totalInfo(Request $request)
     {
         $car = Car::all();
-
+        $sumTotal = $car->sum('total');
+        $sumPaid = $car->sum('paid');
+        $sumDebit = $car->whereIn('results',[0,1])->sum('results');
+        $sumProfit = $car->where('results',2)->sum('profit');
         $data = [
         'mainAccount'=>$this->mainAccount->wallet->balance??0,
         'onlineContracts'=>$this->onlineContracts->wallet->balance??0,
@@ -111,6 +115,10 @@ class DashboardController extends Controller
         'border'=>$this->border->wallet->balance??0,
         'iran'=>$this->iran->wallet->balance??0,
         'dubai'=>$this->dubai->wallet->balance??0,
+        'sumTotal'=>$sumTotal,
+        'sumPaid'=>$sumPaid,
+        'sumDebit'=>$sumDebit,
+        'sumProfit'=>$sumProfit,
         'debtOnlineContracts'=>$this->debtOnlineContracts->wallet->balance??0,
         'allCars'=>$car->count()??0,
         'carsInStock'=>$car->where('client_id',null)->count()??0

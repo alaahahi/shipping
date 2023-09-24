@@ -54,8 +54,10 @@ Route::group(['middleware' => ['auth','verified']], function () {
 
     
     Route::get('addClients',[UserController::class, 'addClients'])->name('addClients');
-    Route::post('clientsStore',[UserController::class, 'clientsStore'])->name('clientsStore');
+    Route::put('clientsStore',[UserController::class, 'clientsStore'])->name('clientsStore');
+    Route::get('editClients/{id}',[UserController::class, 'editClients'])->name('editClients');
 
+    
     
     Route::get('unban/{id}',[UserController::class, 'unban'])->name("unban");
     Route::get('/userLocation/{id}',[UserController::class, 'userLocation'])->name("userLocation");

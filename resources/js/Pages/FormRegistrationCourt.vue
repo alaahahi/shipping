@@ -43,11 +43,6 @@ let showModal = ref(false);
 <template>
   <Head title="Dashboard" />
   <AuthenticatedLayout>
-    <template #header>
-      <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-gray-200">
-           {{ $t('Accounts_Transactions') }} 
-      </h2>
-    </template>
     <modal
       :show="showModal ? true : false"
       :data="showModal.toString()"
@@ -136,6 +131,7 @@ let showModal = ref(false);
                   <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
                   <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
                   <tr  class="bg-rose-500 text-gray-100 rounded-l-lg mb-2 sm:mb-0">
+                    <th className="px-1 py-2 text-base">#</th>
                     <th className="px-1 py-2 text-base">{{$t('type')}}</th>
                     <th className="px-1 py-2 text-base">{{$t('date')}}</th>
                     <th className="px-1 py-2 text-base">{{$t('description')}}</th>
@@ -151,21 +147,22 @@ let showModal = ref(false);
                 </thead>
                 <tbody>
                   <tr
-                    v-for="user in laravelData.transactions"
+                    v-for="(user,i) in laravelData.transactions"
                     :key="user.id"  class="text-center">
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{i }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.type }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.created }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.description }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.amount  }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">  
-                                    <a v-if="user.type =='out' && user.amount<0"
-                                    :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&from=${from}&to=${to}&print=2&transactions_id=${user.id}`"
-                                    tabIndex="1"
-                                    class="px-4 py-1  text-white  m-1 bg-purple-500 rounded"
-                                    >
-                                    طباعة وصل
-                                    </a></td>
-
+                    <a v-if="user.type =='out' && user.amount<0" target="_blank"
+                    :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&from=${from}&to=${to}&print=2&transactions_id=${user.id}`"
+                    tabIndex="1"
+                    class="px-4 py-1  text-white  m-1 bg-purple-500 rounded"
+                    >
+                    طباعة وصل
+                    </a>
+                  </td>
                   </tr>
                 </tbody>
               </table>

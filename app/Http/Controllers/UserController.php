@@ -110,20 +110,9 @@ class UserController extends Controller
                 return $user->car_total_uncomplete > 0;
             }));
         }
-        
-
-
-        
         return Response::json($data, 200);
     }
-    public function addClients()
-    {
-        $usersType = UserType::all();
-        $userSeles=$this->userSeles;
-        $userDoctor =  $this->userClient;
-        $userHospital = '';
-        return Inertia::render('Clients/Create',['usersType'=>$usersType,'userSeles'=>$userSeles,'userDoctor'=>$userDoctor,'userHospital'=>$userHospital]);
-    }
+
     public function create()
     {
         $usersType = UserType::all();
@@ -166,9 +155,21 @@ class UserController extends Controller
   
                 Wallet::create(['user_id' => $user->id]);
      
-        return Inertia::render('Clients/Index', ['url'=>$this->url]);
+                return Response::json($data, 200);
     }
-
+    public function clientsEdit($id,Request $request)
+    {
+        Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+           ])->validate();
+           //$userChief_id =User::where('type_id',  $this->userChief)->first()->id ?? 0 ;
+                $user = User::find($id)->update([
+                    'name' => $request->name,
+                    'phone' => $request->phone,
+                ]);
+       
+                return Response::json($data, 200);
+    }
     public function getCoordinator(Request $request)
     {
         $user =User::where('type_id', $request->id);
@@ -255,7 +256,7 @@ class UserController extends Controller
                 break;
         }
         
-        return Inertia::render('Users/Index', ['url'=>$this->url]);
+        return Inertia::render('clients', ['url'=>$this->url]);
 
     }
     
@@ -319,90 +320,9 @@ class UserController extends Controller
         
     }
 
-    public function getcontact($id, Request $request)
-    {
-        $authUser =$this->Authorization($request);
-        try {
-            $coordinator=User::where('type_id', $this->userCoordinator)->where('id','!=',$authUser->id)->where('public_key','!=',null);
-            //return Response::json($coordinatorUser);
-            $chaef=User::where('id',  $authUser->parent_id)->where('public_key','!=',null);
-            if( $authUser->type_id == $this->userChief){
-                return Response::json(['status' => 200,'massage' => 'users found','sources' => [],'coordinator' => $coordinator->get(),'chaef' =>[]],200);
-            }
-            else{
-            $user =User::where('parent_id', $id)->where('public_key','!=',null);
-            return Response::json(['status' => 200,'massage' => 'users found','sources' => $user->get(),'coordinator' => $coordinator->get(),'chaef' => $chaef->get()],200);
-            }
-        } catch (\Throwable $th) {
-             return  Response::json(['status' => 400,'massage' => 'user not found'],400);
-        }
-    }
-        
-    public function getUserMassages($id,$user, Request $request)
-    
-    {
-     try {
-       $authUser = $this->Authorization($request);
-       return  Massage::where('receiver_id', '=',  $authUser->id)->where('sender_id', '=',$user)->where('is_download', '=',0)->get();
-         } catch (\Throwable $th) {
-            return  Response::json(['status' => 401,'massage' => 'user Authorization not found'],401);
-        }
-    }
-    public function getMassages($id, Request $request)
-    {
-     try {
-            $authUser = $this->Authorization($request);
-            return  Massage::where('receiver_id', '=', $authUser->id)->where('is_download', '=',0)->get();
-     } catch (\Throwable $th) {
-                return  Response::json(['status' => 401,'massage' => 'user Authorization not found'],401);
-            }
-    }
-    public function ackUserMassages($sender,$receiver,$date)
-    {
-        $date = substr($date, 0, strpos($date, "."));
-            try {
-                $massage =Massage::where('receiver_id', '=', $sender)->where('sender_id','=',$receiver)->where('created_at','<=',$date)->update(['is_download' => 1]);
-                if($massage){
-                    return Response::json(['status' => 200,'massage' => 'operation is  success file downloaded'],200);
-                }else
-                    return Response::json(['status' => 200,'massage' => 'operation is  success but no new massage'],200);
-            } catch (\Throwable $th) {
-                return $th;
-                    return  Response::json(['status' => 400,'massage' => 'massage not found'],400);
-            }
-            
-    }
-    public function userLocation($id)
-    {
-        // date('Y-m-d H:i:s', strtotime($data['datetime']))
-            try {
-                $massage =Massage::where('sender_id','=',$id)->get();
-                $massage = $massage->map(function ($massage) {
-                    return ['lat' => floatval(Crypt::decryptString($massage->Lat)),'lng' => floatval(Crypt::decryptString($massage->lng))] ;
-                });          
-                 return Response::json(['status' => 200,'massage' => 'massage','data' =>   $massage],200);
 
-            } catch (\Throwable $th) {
-                return $th;
-                    return  Response::json(['status' => 400,'massage' => 'massage not found'],400);
-            }
-    }
-    public function addUserCard($card_id,$card,$user_id)
-    {
-        // date('Y-m-d H:i:s', strtotime($data['datetime']))
-            try {
-                $wallet = Wallet::where('user_id', $user_id)->first();
-                $old_card = $wallet->card; 
-                $new_card = $card; 
-                $wallet->update(['card' => $old_card+$new_card]);
-            
-                 return Response::json(['status' => 200,'massage' => 'massage','data' =>   $wallet],200);
-
-            } catch (\Throwable $th) {
-                return $th;
-                    return  Response::json(['status' => 400,'massage' => 'massage not found'],400);
-            }
-    }
+  
+ 
     
     public function Authorization($request){
         $token = substr($request->header('Authorization') ,7);;
