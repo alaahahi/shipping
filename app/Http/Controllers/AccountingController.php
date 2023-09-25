@@ -152,15 +152,14 @@ class AccountingController extends Controller
         $wallet = Wallet::where('user_id',$car->client_id)->first();
         $desc=trans('text.addPayment').' '.$amount.'$ خصم بقيمة'.$discount.' || '.$_GET['note']??'';
         $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\Car',$user_id);
-        $this->decreaseWallet($amount, $desc,$car->client_id,$car_id,'App\Models\Car',$user_id);
+        $transaction = $this->decreaseWallet($amount, $desc,$car->client_id,$car_id,'App\Models\Car',$user_id);
         if((($car->paid)+($car->discount))-$car->total_s >= 0){
             $car->update(['results'=>2]); 
         }
         elseif($amount){
             $car->update(['results'=>1]); 
         }
-
-        return Response::json('ok', 200);    
+        return Response::json($transaction, 200);    
     }
     public function addPaymentCarTotal()
     {
@@ -247,7 +246,7 @@ class AccountingController extends Controller
         $user=  User::with('wallet')->find($user_id);
         if($id = $user->wallet->id){
         $transactionDetils = ['type' => 'in','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>$user_added,'created'=>$currentDate];
-        Transactions::create($transactionDetils);
+        $transaction = Transactions::create($transactionDetils);
         $wallet = Wallet::find($id);
         $wallet->increment('balance', $amount);
         }
@@ -255,7 +254,7 @@ class AccountingController extends Controller
             return null;
         }
         // Finally return the updated wallet.
-        return $wallet;
+        return $transaction;
     }
 
     public function decreaseWallet(int $amount,$desc,$user_id,$morphed_id=0,$morphed_type='',$user_added=0) 
@@ -264,17 +263,16 @@ class AccountingController extends Controller
         $user=  User::with('wallet')->find($user_id);
         if($id = $user->wallet->id){
         $wallet = Wallet::find($id);
-            $wallet->decrement('balance', $amount);
             $transactionDetils = ['type' => 'out','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>1,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>$user_added,'created'=>$currentDate];
-            Transactions::create($transactionDetils);
-         
-        
+            $transaction =Transactions::create($transactionDetils);
+            $wallet->decrement('balance', $amount);
+
         }
         if (is_null($wallet)) {
             return null;
         }
         // Finally return the updated wallet.
-        return $wallet;
+        return $transaction;
     }
     
     }
