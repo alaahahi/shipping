@@ -160,7 +160,14 @@ let showModal = ref(false);
                     tabIndex="1"
                     class="px-4 py-1  text-white  m-1 bg-purple-500 rounded"
                     >
-                    طباعة وصل
+                    طباعة وصل قبض
+                    </a>
+                    <a v-if="user.type =='in' && user.amount" target="_blank"
+                    :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&from=${from}&to=${to}&print=2&transactions_id=${user.id}`"
+                    tabIndex="1"
+                    class="px-4 py-1  text-white  m-1 bg-purple-500 rounded"
+                    >
+                    طباعة وصل دفع
                     </a>
                   </td>
                   </tr>

@@ -583,7 +583,9 @@ class DashboardController extends Controller
     public function getIndexCarSearch()
     {
         $term = $_GET['q']??'';
-        $data =  Car::with('carmodel')->with('name')->with('color')->with('company')->with('client')->orwhere('vin', 'LIKE','%'.$term.'%')->orwhere('car_owner', 'LIKE','%'.$term.'%')->orwhere('car_type', 'LIKE','%'.$term.'%');
+        $data =  Car::with('client')->orwhere('car_number', 'LIKE','%'.$term.'%')->orwhere('vin', 'LIKE','%'.$term.'%')->orwhere('car_type', 'LIKE','%'.$term.'%')->orWhereHas('client', function ($query) use ($term) {
+            $query->where('name', 'LIKE', '%' . $term . '%');
+        });
         $data =$data->orderBy('no', 'DESC')->paginate(100);
         return Response::json($data, 200);
     }
