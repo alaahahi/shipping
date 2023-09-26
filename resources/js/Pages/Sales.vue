@@ -684,7 +684,7 @@ function confirmAddPayment(V) {
                                       {{ $t('delete') }}
                                     </button>
                                     <button
-                                      v-if="car.total_s != car.paid"
+                                      v-if="car.total_s != (car.paid+ car.discount)"
                                       tabIndex="1"
                                       class="px-1 py-1  text-white mx-1 bg-green-500 rounded"
                                       @click="openAddCarPayment(car)"
