@@ -19,9 +19,11 @@ let need_pay =  ref(0);
     <Transition name="modal">
       <div v-if="show" class="modal-mask ">
         <div class="modal-wrapper ">
+
           <div class="modal-container dark:bg-gray-900">
             <div class="modal-header">
-              <slot name="header"></slot>
+              <slot name="header">    
+</slot>
             </div>
 
             <div class="modal-body">
