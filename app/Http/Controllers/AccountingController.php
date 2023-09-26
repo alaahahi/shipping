@@ -85,7 +85,7 @@ class AccountingController extends Controller
             $car_total_unpaid =     Car::where('client_id',$client->id)->where('results',0)->count();
             $car_total_uncomplete = Car::where('client_id',$client->id)->where('results',1)->count();
             $car_total_complete =   Car::where('client_id',$client->id)->where('results',2)->count();
-            $cars_paid=   Car::where('client_id',$client->id)->sum('paid');
+            $cars_paid=   Car::where('client_id',$client->id)->sum('paid')+Car::where('client_id',$client->id)->sum('discount');
             $cars_sum=   Car::where('client_id',$client->id)->sum('total_s');
             $cars_need_paid=$cars_sum-$cars_paid;
         }
