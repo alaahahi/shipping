@@ -158,12 +158,12 @@ let showModal = ref(false);
                     <a v-if="user.type =='out' && user.amount<0" target="_blank"
                     :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&from=${from}&to=${to}&print=2&transactions_id=${user.id}`"
                     tabIndex="1"
-                    class="px-4 py-1  text-white  m-1 bg-purple-500 rounded"
+                    class="px-4 py-1  text-white  m-1 bg-green-500 rounded"
                     >
                     طباعة وصل قبض
                     </a>
                     <a v-if="user.type =='in' && user.amount" target="_blank"
-                    :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&from=${from}&to=${to}&print=2&transactions_id=${user.id}`"
+                    :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&from=${from}&to=${to}&print=3&transactions_id=${user.id}`"
                     tabIndex="1"
                     class="px-4 py-1  text-white  m-1 bg-purple-500 rounded"
                     >

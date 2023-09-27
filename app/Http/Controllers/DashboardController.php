@@ -606,11 +606,16 @@ class DashboardController extends Controller
     }
 
     public function DelCar(Request $request){
-        $car=Car::find($request->id);
+        $car=Car::with('client')->find($request->id);
         $desc=' مرتج حذف سيارة'.$car->total;
         $wallet = Wallet::where('user_id',$car->client_id)->first();
         $this->accountingController->increaseWallet($car->total, $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
-        $this->accountingController->decreaseWallet($car->paid , $desc,$car->client_id,$car->id,'App\Models\Car');
+        if($car->results == 0 && $car->total_s!=0){
+            $trans = $this->accountingController->decreaseWallet($car->total_s , $desc,$car->client->id,$car->id,'App\Models\Car');
+        }
+        if($car->results == 1){
+            $trans = $this->accountingController->decreaseWallet($car->total_s-$car->paid , $desc,$car->client->id,$car->id,'App\Models\Car');
+            }
         $car->delete();
         DB::statement('SET @row_number = 0');
         DB::table('car')

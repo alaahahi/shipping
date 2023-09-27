@@ -116,6 +116,11 @@ class AccountingController extends Controller
 
             return view('receipt',compact('clientData','config','transactions_id'));
          }
+         if($print==3){
+            $config=SystemConfig::first();
+
+            return view('receiptPayment',compact('clientData','config','transactions_id'));
+         }
         return Response::json($clientData, 200);
     }
     public function paySelse(Request $request,$id)

@@ -18,6 +18,11 @@ import axios from 'axios';
 import { ref } from 'vue';
 import { useI18n } from "vue-i18n";
 import VuePincodeInput from 'vue3-pincode-input';
+import { Link } from '@inertiajs/inertia-vue3';
+import show from "@/Components/icon/show.vue";
+import pay from "@/Components/icon/pay.vue";
+import trash from "@/Components/icon/trash.vue";
+import edit from "@/Components/icon/edit.vue";
 
 const {t} = useI18n();
 
@@ -688,13 +693,14 @@ function confirmAddPayment(V) {
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.paid}}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ (car.total_s-car.total).toFixed(0) }}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.date  }}</td>
-                                     <td className="border dark:border-gray-800 text-start px-1 py-2">
-                                    <button
+                                    <td className="border dark:border-gray-800 text-start px-1 py-2">
+                                      <button
                                       tabIndex="1"
+                                      
                                       class="px-1 py-1  text-white mx-1 bg-slate-500 rounded"
                                       @click="openModalEditCars(car)"
                                     >
-                                      {{ $t('edit') }}
+                                     <edit />
                                     </button>
                                     <button
                                       tabIndex="1"
@@ -702,8 +708,16 @@ function confirmAddPayment(V) {
                                       class="px-1 py-1  text-white mx-1 bg-orange-500 rounded"
                                       @click="openModalDelCar(car)"
                                     >
-                                      {{ $t('delete') }}
+                                    <trash />
                                     </button>
+                                    <Link
+                                      style="display:inline-flex;"
+                                      className="px-1 py-1  text-white mx-1 bg-blue-500 rounded d-inline-block"
+                                      :href="route('showClients',car.client?.id)">
+                                    <show />
+                                    </Link>
+
+                                   
                                     <!-- <button
                                       v-if="car.total_s != car.paid"
                                       tabIndex="1"

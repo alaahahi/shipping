@@ -23,7 +23,8 @@ let need_pay =  ref(0);
           <div class="modal-container dark:bg-gray-900">
             <div class="modal-header">
               <slot name="header">    
-</slot>
+                </slot>
+            <h4 class="text-center py-3">اكمال الدفع للسيارة {{ formData.car_type ?? ''}}</h4>
             </div>
 
             <div class="modal-body">

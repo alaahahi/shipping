@@ -10,6 +10,11 @@ import TextInput from "@/Components/TextInput.vue";
 import axios from 'axios';
 import ModalAddClient from "@/Components/ModalAddClient.vue";
 import ModalEditClient from "@/Components/ModalEditClient.vue";
+import show from "@/Components/icon/show.vue";
+import pay from "@/Components/icon/pay.vue";
+import trash from "@/Components/icon/trash.vue";
+import edit from "@/Components/icon/edit.vue";
+
 let showModalEditClient = ref(false);
 let showModalAddClient = ref(false);
 
@@ -277,26 +282,28 @@ function confirmEditClient(V) {
                                 
                                     <tr v-for="(user,i) in laravelData" :key="user.id"  class="border-b border-white dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600 "  :class="user.car_total_uncomplete <= 0 ?'bg-green-100 dark:bg-green-900':'bg-red-100 dark:bg-red-900'" >
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{i}}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.name}}</td>
+                                        <td className="border border-white dark:border-gray-800 text-center  dark:text-gray-200 text-black px-1 py-2 " style="font-weight: bold;font-size: 16px;">{{user.name}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.phone}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_total_uncomplete}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_total_complete}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{ user.wallet ? '$'+user.wallet['balance']:0   }}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2"  style="min-height: 42px;">
-                                        <Link
-                                            tabIndex="1"
-                                            className="px-2 py-1 text-sm text-white bg-slate-500 rounded"
-                                            :href="route('showClients', user.id)"
-                                            >
-                                            عرض
-                                        </Link>
+                          
                                         <button
-                                            tabIndex="1"
-                                            className="px-2 py-1 mr-4 text-sm text-white bg-red-500 rounded"
-                                            @click="openModalEditClient(user)"
-                                            >
-                                            تعديل
+                                          tabIndex="1"
+                                          
+                                          class="px-1 py-1  text-white mx-1 bg-slate-500 rounded"
+                                          @click="openModalEditClient(car)"
+                                        >
+                                        <edit />
                                         </button>
+
+                                        <Link
+                                          style="display:inline-flex;"
+                                          className="px-1 py-1  text-white mx-1 bg-blue-500 rounded d-inline-block"
+                                          :href="route('showClients', user.id)">
+                                        <show />
+                                        </Link>
                                             
                                             <!-- <button 
                                                 @click="ban(user.id)"

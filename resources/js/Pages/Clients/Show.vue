@@ -10,7 +10,10 @@ import axios from "axios";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
 import ModalEditCars from "@/Components/ModalEditCar_S.vue";
 import ModalAddCarPayment from "@/Components/ModalAddCarPayment.vue";
-
+import show from "@/Components/icon/show.vue";
+import pay from "@/Components/icon/pay.vue";
+import trash from "@/Components/icon/trash.vue";
+import edit from "@/Components/icon/edit.vue";
 
 
 import { useToast } from "vue-toastification";
@@ -52,10 +55,6 @@ const props = defineProps({
 const form = useForm();
 
 let showModal = ref(false);
-const pay = async (id) => {
-  const response = await fetch(`/paySelse/${id}`);
-  getResults();
-};
 
 const results = (id) => {
   if (id == 0) {
@@ -113,11 +112,10 @@ function confirmUpdateCar(V) {
         rtl: true,
       });
 
-      getcountTotalInfo();
     })
     .catch((error) => {
-      showModal.vcons;
-      toast.error("لم التعديل بنجاح", {
+      
+       toast.error("لم التعديل بنجاح", {
         timeout: 2000,
         position: "bottom-right",
         rtl: true,
@@ -138,12 +136,14 @@ function confirmAddPayment(V) {
         position: "bottom-right",
         rtl: true,
       });
+
       let transaction=response.data
+
       window.open(`/api/getIndexAccountsSelas?user_id=${props.client_id}&print=2&transactions_id=${transaction.id}`, '_blank');
     })
     .catch((error) => {
       showModal.value = false;
-
+      console.log(error)
       toast.error("لم التعديل بنجاح", {
         timeout: 2000,
         position: "bottom-right",
@@ -193,7 +193,6 @@ function confirmAddPaymentTotal(amount, client_id) {
       :formData="formData"
       :show="showModalEditCars ? true : false"
       :client="clients"
-      :carModel="carModel"
       @a="confirmUpdateCar($event)"
       @close="showModalEditCars = false"
     >
@@ -202,7 +201,6 @@ function confirmAddPaymentTotal(amount, client_id) {
     <ModalAddCarPayment
       :formData="formData"
       :show="showModalAddCarPayment ? true : false"
-      :user="user"
       @a="confirmAddPayment($event)"
       @close="showModalAddCarPayment = false"
     >
@@ -506,7 +504,7 @@ function confirmAddPaymentTotal(amount, client_id) {
                     <th
                       scope="col"
                       class="px-1 py-2 text-base print:hidden"
-                      style="width: 250px"
+                      style="width:150px"
                     >
                       {{ $t("execute") }}
                     </th>
@@ -615,29 +613,31 @@ function confirmAddPaymentTotal(amount, client_id) {
                     <td
                       className="border dark:border-gray-800 text-start px-2 py-1 print:hidden"
                     >
+    
                       <button
                         tabIndex="1"
-                        class="px-2 py-1 text-white mx-1 bg-slate-500 rounded"
+                        
+                        class="px-1 py-1  text-white mx-1 bg-slate-500 rounded"
                         @click="openModalEditCars(car)"
                       >
-                        {{ $t("edit") }}
+                        <edit />
                       </button>
                       <button
                         tabIndex="1"
-                        class="px-2 py-1 text-white mx-1 bg-orange-500 rounded"
+                        
+                        class="px-1 py-1  text-white mx-1 bg-orange-500 rounded"
                         @click="openModalDelCar(car)"
                       >
-                        {{ $t("delete") }}
+                        <trash />
                       </button>
                       <button
                         v-if="car.total_s != (car.paid+ car.discount)"
                         tabIndex="1"
-                        class="px-2 py-1 text-white mx-1 bg-green-500 rounded"
+                        class="px-1 py-1  text-white mx-1 bg-green-500 rounded"
                         @click="openAddCarPayment(car)"
                       >
-                        {{ $t("complet_pay") }}
+                        <pay />
                       </button>
-                   
                                        <!-- 
                                     <button
                                       tabIndex="1"

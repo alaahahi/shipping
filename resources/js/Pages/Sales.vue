@@ -4,6 +4,11 @@ import { Head } from '@inertiajs/inertia-vue3';
 import VueTailwindDatepicker from 'vue-tailwind-datepicker'
 import Modal from "@/Components/Modal.vue";
 import ModalAddCar from "@/Components/ModalAddCars.vue";
+import { Link } from '@inertiajs/inertia-vue3';
+import show from "@/Components/icon/show.vue";
+import pay from "@/Components/icon/pay.vue";
+import trash from "@/Components/icon/trash.vue";
+import edit from "@/Components/icon/edit.vue";
 
 
 import ModalAddSale from "@/Components/ModalAddSale.vue";
@@ -260,7 +265,14 @@ function confirmDelCar(V) {
   axios.post('/api/DelCar',V)
   .then(response => {
     showModalDelCar.value = false;
-      window.location.reload();
+    toast.success("تم التعديل بنجاح وخصم المبلغ من دين الزبون", {
+        timeout: 3000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+    getResultsCar();
+  
   })
   .catch(error => {
     console.error(error);
@@ -277,6 +289,8 @@ getResultsCar();
 function confirmAddPayment(V) {
   axios.get(`/api/addPaymentCar?car_id=${V.id}&discount=${V.discount??0}&amount=${V.amountPayment??0}&note=${V.notePayment??''}`)
   .then(response => {
+    getResultsCar();
+
     showModalAddCarPayment.value = false;
     toast.success( " تم دفع مبلغ دولار "+V.amountPayment+" بنجاح ", {
         timeout: 3000,
@@ -637,7 +651,7 @@ function confirmAddPayment(V) {
                                         {{ $t('date') }}
                                       </th>
                 
-                                      <th scope="col" class="px-1 py-3 text-base" style="width: 250px;">
+                                      <th scope="col" class="px-1 py-3 text-base" style="width: 180px;">
                                         {{ $t('execute') }}
                                       </th>
                                   </tr>
@@ -673,7 +687,7 @@ function confirmAddPayment(V) {
                                       class="px-1 py-1  text-white mx-1 bg-slate-500 rounded"
                                       @click="openModalEditCars(car)"
                                     >
-                                      {{ $t('edit') }}
+                                     <edit />
                                     </button>
                                     <button
                                       tabIndex="1"
@@ -681,7 +695,7 @@ function confirmAddPayment(V) {
                                       class="px-1 py-1  text-white mx-1 bg-orange-500 rounded"
                                       @click="openModalDelCar(car)"
                                     >
-                                      {{ $t('delete') }}
+                                      <trash />
                                     </button>
                                     <button
                                       v-if="car.total_s != (car.paid+ car.discount)"
@@ -689,8 +703,14 @@ function confirmAddPayment(V) {
                                       class="px-1 py-1  text-white mx-1 bg-green-500 rounded"
                                       @click="openAddCarPayment(car)"
                                     >
-                                      {{ $t('complet_pay') }}
+                                     <pay />
                                     </button>
+                                    <Link
+                                      style="display:inline-flex;"
+                                      className="px-1 py-1  text-white mx-1 bg-blue-500 rounded d-inline-block"
+                                      :href="route('showClients',car.client?.id)">
+                                    <show />
+                                    </Link>
                                     <!-- 
           
                                     <button
@@ -825,7 +845,7 @@ function confirmAddPayment(V) {
                               <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{allCars}}</p>
                             </div>
                           </div>
-
+ 
                           <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
