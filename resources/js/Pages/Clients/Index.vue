@@ -326,7 +326,7 @@ function confirmDelClient(V) {
                                           tabIndex="1"
                                           
                                           class="px-1 py-1  text-white mx-1 bg-slate-500 rounded"
-                                          @click="openModalEditClient(car)"
+                                          @click="openModalEditClient(user)"
                                         >
                                         <edit />
                                         </button>
