@@ -14,9 +14,11 @@ import show from "@/Components/icon/show.vue";
 import pay from "@/Components/icon/pay.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
+import ModalDelClient from "@/Components/ModalDelCar.vue";
 
 let showModalEditClient = ref(false);
 let showModalAddClient = ref(false);
+let showModalDelClient = ref(false);
 
 const laravelData = ref([]);
 let formData = ref({});
@@ -76,6 +78,23 @@ function confirmEditClient(V) {
     console.error(error);
   })
 }
+function openModalDelClient(form={}) {
+  formData.value=form
+  showModalDelClient.value = true;
+}
+function confirmDelClient(V) {
+  axios.post('/api/delClient',V)
+  .then(response => {
+    showModalDelClient.value = false;
+    getResults();
+
+  })
+  .catch(error => {
+    console.error(error);
+  })
+
+
+}
 </script>
 
 <template>
@@ -92,7 +111,21 @@ function confirmEditClient(V) {
         <template #header>
           </template>
     </ModalEditClient>
+    <ModalDelClient
+            :show="showModalDelClient ? true : false"
+            :formData="formData"
+            @a="confirmDelClient($event)"
+            @close="showModalDelClient = false"
+            >
+          <template #header>
+            <h2 class=" mb-5 dark:text-white text-center">
 
+          هل متأكد من حذف التاجر
+           {{ formData.name  }}
+          ؟
+          </h2>
+          </template>
+    </ModalDelClient>
     <ModalEditClient
             :show="showModalEditClient"
             :formData="formData"
@@ -304,6 +337,14 @@ function confirmEditClient(V) {
                                           :href="route('showClients', user.id)">
                                         <show />
                                         </Link>
+                                        <button
+                                          tabIndex="1"
+                                          v-if="user?.wallet['balance'] <= 0"
+                                          class="px-1 py-1  text-white mx-1 bg-orange-500 rounded"
+                                          @click="openModalDelClient(user)"
+                                        >
+                                          <trash />
+                                        </button>
                                             
                                             <!-- <button 
                                                 @click="ban(user.id)"

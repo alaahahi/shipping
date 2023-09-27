@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use App\Models\Massage;
 use Carbon\Carbon;
+use App\Models\Transactions;
 
 class UserController extends Controller
 {
@@ -169,6 +170,36 @@ class UserController extends Controller
                 ]);
        
         return Response::json($user, 200);
+    }
+    public function delClient(Request $request)
+    {
+    // Find the client
+    $client = User::with('wallet')->where('id', $request->id)->first();
+
+    if ($client) {
+        // Get related transactions
+        $transactions = Transactions::where('wallet_id', $client->wallet->id)->get();
+
+        // Get related cars
+        $cars = Car::where('client_id', $client->id)->get();
+
+        // Delete transactions
+        $transactions->each(function ($transaction) {
+            $transaction->delete();
+        });
+
+        // Delete cars
+        $cars->each(function ($car) {
+            $car->delete();
+        });
+
+        // Delete the client
+        $client->delete();
+
+        return response()->json(['message' => 'Client and related records deleted'], 200);
+    }
+
+    return response()->json(['message' => 'Client not found'], 404);
     }
     public function getCoordinator(Request $request)
     {
