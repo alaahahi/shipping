@@ -56,7 +56,7 @@ class UserController extends Controller
     }
     public function showClients($id)
     {
-        $clients = User::where('type_id', $this->userClient)->get();
+        $clients = User::with('wallet')->where('type_id', $this->userClient)->get();
 
         $client= user::find($id);
         return Inertia::render('Clients/Show', ['url'=>$this->url,'client'=>$client,'clients'=>$clients,'client_id'=>$id]);

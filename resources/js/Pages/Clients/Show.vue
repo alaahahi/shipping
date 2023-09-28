@@ -274,13 +274,13 @@ function confirmAddPaymentTotal(amount, client_id,discount) {
                 <option value="undefined" disabled>
                   {{ $t("selectCustomer") }}
                 </option>
+                <template v-for="(user, index) in clients" :key="index">
                 <option
-                  v-for="(user, index) in clients"
-                  :key="index"
-                  :value="user.id"
-                >
+                  v-if="user.wallet.balance > 0 || user.id ==client_id"
+                  :value="user.id">
                   {{ user.name }}
                 </option>
+              </template>
               </select>
             </div>
             <div>
