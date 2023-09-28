@@ -33,13 +33,27 @@ let showModalAddCarPayment = ref(false);
 const total = ref(0);
 const formData = ref({});
 const discount= ref(0);
-
+const client_Select = ref(0);
 const showReceiveBtn = ref(0);
-const getResults = async (v, page = 1) => {
+const getResults = async (page = 1) => {
   axios
-    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${v ? v : client_id}&from=${from.value}&to=${to.value}`)
+    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${client_id}&from=${from.value}&to=${to.value}`)
     .then((response) => {
       laravelData.value = response.data;
+      client_Select.value = response.data.client.id
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+};
+const getResultsSelect = async (page = 1) => {
+
+  axios
+    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${client_Select.value}&from=${from.value}&to=${to.value}`)
+    .then((response) => {
+      laravelData.value = response.data;
+
+
     })
     .catch((error) => {
       console.error(error);
@@ -252,8 +266,8 @@ function confirmAddPaymentTotal(amount, client_id,discount) {
                 :value="$t('Account')"
               />
               <select
-                @change="getResults(client_id)"
-                v-model="client_id"
+                @change="getResultsSelect()"
+                v-model="client_Select"
                 id="default"
                 class="pr-8 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:border-gray-400 dark:placeholder-gray-400 dark:text-gray-600 dark:focus:ring-red-500 dark:focus:border-red-500"
               >
