@@ -74,9 +74,11 @@ class AccountingController extends Controller
             $car_total_unpaid =     Car::where('client_id',$client->id)->where('results',0)->whereBetween('date', [$from, $to])->count();
             $car_total_uncomplete = Car::where('client_id',$client->id)->where('results',1)->whereBetween('date', [$from, $to])->count();
             $car_total_complete =   Car::where('client_id',$client->id)->where('results',2)->whereBetween('date', [$from, $to])->count();
+            $cars_discount=   Car::where('client_id',$client->id)->whereBetween('date', [$from, $to])->sum('discount');
             $cars_paid=   Car::where('client_id',$client->id)->whereBetween('date', [$from, $to])->sum('paid');
             $cars_sum=   Car::where('client_id',$client->id)->whereBetween('date', [$from, $to])->sum('total_s');
-            $cars_need_paid=$cars_sum-$cars_paid;
+
+            $cars_need_paid=$cars_sum-($cars_paid+$cars_discount);
         }else{
             $transactions = Transactions ::where('wallet_id', $client?->wallet?->id);
             $cars = Car::where('client_id',$client->id);
@@ -85,9 +87,10 @@ class AccountingController extends Controller
             $car_total_unpaid =     Car::where('client_id',$client->id)->where('results',0)->count();
             $car_total_uncomplete = Car::where('client_id',$client->id)->where('results',1)->count();
             $car_total_complete =   Car::where('client_id',$client->id)->where('results',2)->count();
-            $cars_paid=   Car::where('client_id',$client->id)->sum('paid')+Car::where('client_id',$client->id)->sum('discount');
+            $cars_discount=Car::where('client_id',$client->id)->sum('discount');
+            $cars_paid=   Car::where('client_id',$client->id)->sum('paid');
             $cars_sum=   Car::where('client_id',$client->id)->sum('total_s');
-            $cars_need_paid=$cars_sum-$cars_paid;
+            $cars_need_paid=$cars_sum-($cars_paid+$cars_discount);
         }
         //$data = $transactions->paginate(10);
  
@@ -102,6 +105,7 @@ class AccountingController extends Controller
             'car_total_uncomplete'=>$car_total_uncomplete,
             'cars_sum'=>$cars_sum,
             'cars_paid'=>$cars_paid,
+            'cars_discount'=>$cars_discount,
             'cars_need_paid'=>$cars_need_paid,
             'transactions'=>$transactions->get(),
             'date'=> Carbon::now()->format('Y-m-d')
@@ -169,20 +173,24 @@ class AccountingController extends Controller
     public function addPaymentCarTotal()
     {
         $client_id  = $_GET['client_id']  ??0;
-        $amount  = $_GET['amount']  ??0;
         $amount_o  = $_GET['amount']  ??0;
         $note = $_GET['note'] ?? '';
-        $cars = Car::where('client_id',$client_id)->whereIn('results', [0, 1])->get();
+        $discount= $_GET['discount']  ??0;
+        $amount  = $_GET['amount']   ??0;
+        $paided =false;
+        $cars = Car::where('client_id',$client_id)->whereIn('results', [0, 1]);
         $needToPay=0;
         $user_id=$_GET['user_id']??0;
         $carsName = '';
-        foreach ($cars as $car) {
-            $needToPay = $car->total_s - $car->paid;
+        if($cars){
+        foreach ($cars->get() as $car) {
+            $paided = true;
+            $needToPay = $car->total_s - ($car->paid + $car->discount);
             $carsName = $car->car_type.' '.$carsName;
             if ($needToPay <= $amount) {
                 // Deduct the amount and update 'paid' for this car
                 $amount -= $needToPay;
-                $car->update(['paid' => $car->total_s,'results' =>2]);
+                $car->update(['paid' => $car->total_s-$car->discount,'results' =>2]);
   
             } else {
                 // Deduct what's available in $amount and update 'paid' accordingly
@@ -194,14 +202,22 @@ class AccountingController extends Controller
 
            
         }
-        $desc=trans('text.addPayment').' '.$amount_o.'$'.' || '.$note.' و '.$carsName;
+        if($paided){
+        ($cars->first())->increment('discount',$discount);
+        }
+       
+        $desc=trans('text.addPayment').' '.$amount_o.'$ خصم بقيمة'.$discount.' || '.$note.' و '.$carsName;;
 
         $this->increaseWallet($amount_o, $desc,$this->mainAccount->id,$this->mainAccount->id,'App\Models\Car',$user_id);
         
-        $this->decreaseWallet($amount_o, $desc,$client_id,$client_id,'App\Models\Car',$user_id);
-
-
+        $this->decreaseWallet($amount_o+$discount, $desc,$client_id,$client_id,'App\Models\Car',$user_id);
         return Response::json('ok', 200);    
+
+        }
+        else{
+            return Response::json('no cars', 200);    
+
+        }
     }
     public function receiveCard(Request $request)
     {

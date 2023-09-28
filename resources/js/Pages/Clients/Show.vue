@@ -32,6 +32,7 @@ let showModalAddCarPayment = ref(false);
 
 const total = ref(0);
 const formData = ref({});
+const discount= ref(0);
 
 const showReceiveBtn = ref(0);
 const getResults = async (v, page = 1) => {
@@ -151,12 +152,10 @@ function confirmAddPayment(V) {
       });
     });
 }
-function confirmAddPaymentTotal(amount, client_id) {
+function confirmAddPaymentTotal(amount, client_id,discount) {
   axios
     .get(
-      `/api/addPaymentCarTotal?amount=${amount ?? 0}&client_id=${
-        client_id ?? ""
-      }`
+      `/api/addPaymentCarTotal?amount=${amount ?? 0}&discount=${discount ?? 0}&client_id=${ client_id ?? 0}`
     )
     .then((response) => {
       showModalAddCarPayment.value = false;
@@ -399,6 +398,16 @@ function confirmAddPaymentTotal(amount, client_id) {
               />
             </div>
             <div className="mb-4  mr-5">
+              <InputLabel for="cars_discount" value="مجموع الخصومات بالدولار" />
+              <TextInput
+                id="cars_discount"
+                type="text"
+                class="mt-1 block w-full"
+                :value="laravelData?.cars_discount"
+                disabled
+              />
+            </div>
+            <div className="mb-4  mr-5">
               <InputLabel for="cars_need_paid" value="مجموع الدين بالدولار" />
               <TextInput
                 id="cars_need_paid"
@@ -420,6 +429,18 @@ function confirmAddPaymentTotal(amount, client_id) {
                 v-model="total"
               />
             </div>
+            <div className="mb-4  mr-5" v-if="laravelData?.cars_need_paid">
+              <InputLabel
+                for="discount"
+                value="الخصم"
+              />
+              <TextInput
+                id="discount"
+                type="text"
+                class="mt-1 block w-full"
+                v-model="discount"
+              />
+            </div>
           </div>
           <div
             class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 lg:gap-1"
@@ -427,7 +448,7 @@ function confirmAddPaymentTotal(amount, client_id) {
             <div className="mb-4  mr-5 print:hidden" v-if="total">
               <InputLabel for="pay" value="تأكيد الدفع" />
               <button
-                @click.prevent="confirmAddPaymentTotal(total, client_id)"
+                @click.prevent="confirmAddPaymentTotal(total, client_id,discount)"
                 :disabled="isLoading || !parseInt(laravelData.totalAmount)"
                 class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-green-500 rounded"
                 style="width: 100%"
