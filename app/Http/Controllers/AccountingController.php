@@ -178,7 +178,8 @@ class AccountingController extends Controller
         $discount= $_GET['discount']  ??0;
         $amount  = $_GET['amount']   ??0;
         $paided =false;
-        $cars = Car::where('client_id',$client_id)->whereIn('results', [0, 1]);
+        $cars = Car::where('client_id',$client_id)->whereIn('results',[0, 1]);
+        //dd($cars->count());
         $needToPay=0;
         $user_id=$_GET['user_id']??0;
         $carsName = '';
@@ -202,15 +203,15 @@ class AccountingController extends Controller
 
            
         }
-        if($paided){
-        ($cars->first())->increment('discount',$discount);
-        }
-       
+     
         $desc=trans('text.addPayment').' '.$amount_o.'$ خصم بقيمة'.$discount.' || '.$note.' و '.$carsName;;
 
         $this->increaseWallet($amount_o, $desc,$this->mainAccount->id,$this->mainAccount->id,'App\Models\Car',$user_id);
         
         $this->decreaseWallet($amount_o+$discount, $desc,$client_id,$client_id,'App\Models\Car',$user_id);
+        if($paided && $discount){
+            ($cars->first())->increment('discount',$discount);
+            }
         return Response::json('ok', 200);    
 
         }
