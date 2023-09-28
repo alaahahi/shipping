@@ -178,8 +178,7 @@ class AccountingController extends Controller
         $discount= $_GET['discount']  ??0;
         $amount  = $_GET['amount']   ??0;
         $paided =false;
-        $cars = Car::where('client_id',$client_id)->whereIn('results',[0, 1]);
-        //dd($cars->count());
+        $cars = Car::where('client_id',$client_id)->where('total_s','!=',0)->whereIn('results',[0, 1]);
         $needToPay=0;
         $user_id=$_GET['user_id']??0;
         $carsName = '';
