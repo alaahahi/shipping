@@ -179,11 +179,11 @@ class AccountingController extends Controller
         $amount  = $_GET['amount']   ??0;
         $paided =false;
         $cars = Car::where('client_id',$client_id)->where('total_s','!=',0)->whereIn('results',[0, 1]);
+        $carFirst = Car::where('client_id',$client_id)->where('total_s','!=',0)->whereIn('results',[0, 1])->first(); 
         $needToPay=0;
         $user_id=$_GET['user_id']??0;
         $carsName = '';
-        if($cars){
-        $carFirst =   $cars->first();
+        if($carFirst){
         foreach ($cars->get() as $car) {
             $paided = true;
             $needToPay = $car->total_s - ($car->paid + $car->discount);
