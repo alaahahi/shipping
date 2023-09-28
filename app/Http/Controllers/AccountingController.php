@@ -183,6 +183,7 @@ class AccountingController extends Controller
         $user_id=$_GET['user_id']??0;
         $carsName = '';
         if($cars){
+        $carFirst =   $cars->first();
         foreach ($cars->get() as $car) {
             $paided = true;
             $needToPay = $car->total_s - ($car->paid + $car->discount);
@@ -193,23 +194,29 @@ class AccountingController extends Controller
                 $car->update(['paid' => $car->total_s-$car->discount,'results' =>2]);
   
             } else {
-                // Deduct what's available in $amount and update 'paid' accordingly
-                $car->update(['paid' => $car->paid + $amount,'results' =>1]);
-                $amount = 0;
-                break; // Stop processing if the amount is exhausted
+                if($needToPay <= $amount+$discount){
+                    $car->update(['paid' => $car->paid + $amount,'results' =>2]);
+                    $amount = 0;
+                    break; // Stop processing if the amount is exhausted
+                }else{
+                    $car->update(['paid' => $car->paid + $amount,'results' =>1]);
+                    $amount = 0;
+                    break; // Stop processing if the amount is exhausted 
+                }
+
 
             }
 
            
         }
-     
+
         $desc=trans('text.addPayment').' '.$amount_o.'$ خصم بقيمة'.$discount.' || '.$note.' و '.$carsName;;
 
         $this->increaseWallet($amount_o, $desc,$this->mainAccount->id,$this->mainAccount->id,'App\Models\Car',$user_id);
         
         $this->decreaseWallet($amount_o+$discount, $desc,$client_id,$client_id,'App\Models\Car',$user_id);
         if($paided && $discount){
-            ($cars->first())->increment('discount',$discount);
+            $carFirst->increment('discount',$discount);
             }
         return Response::json('ok', 200);    
 
