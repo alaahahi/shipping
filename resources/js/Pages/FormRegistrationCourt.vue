@@ -7,14 +7,21 @@ import { TailwindPagination } from "laravel-vue-pagination";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import axios from 'axios';
+import show from "@/Components/icon/show.vue";
+import pay from "@/Components/icon/pay.vue";
+import trash from "@/Components/icon/trash.vue";
+import edit from "@/Components/icon/edit.vue";
+import ModalDelClient from "@/Components/ModalDelCar.vue";
 
 const laravelData = ref({});
 const user_id = ref(0);
 const isLoading = ref(0);
 const from = ref(0);
 const to = ref(0);
+const formData = ref({});
 
 
+const showModalDelClient = ref(0);
 
 
 const getResults = async (v,page = 1) => {
@@ -33,7 +40,23 @@ const props = defineProps({
 });
 
 
+function openModalDelClient(form={}) {
+  formData.value=form
+  showModalDelClient.value = true;
+}
+function confirmDelClient(V) {
+  axios.post('/api/deleteTransactions',V)
+  .then(response => {
+    showModalDelClient.value = false;
+    getResults();
 
+  })
+  .catch(error => {
+    console.error(error);
+  })
+
+
+}
 let showModal = ref(false);
 
 
@@ -43,6 +66,24 @@ let showModal = ref(false);
 <template>
   <Head title="Dashboard" />
   <AuthenticatedLayout>
+    <ModalDelClient
+            :show="showModalDelClient ? true : false"
+            :formData="formData"
+            @a="confirmDelClient($event)"
+            @close="showModalDelClient = false"
+            >
+          <template #header>
+            <h2 class=" mb-5 dark:text-white text-center">
+
+          هل متأكد من حذف العملية رقم
+           {{ formData.id  }}
+           بقيمة 
+           {{ formData.amount }}
+          ؟
+          </h2>
+          </template>
+    </ModalDelClient>
+
     <modal
       :show="showModal ? true : false"
       :data="showModal.toString()"
@@ -132,6 +173,7 @@ let showModal = ref(false);
                   <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
                   <tr  class="bg-rose-500 text-gray-100 rounded-l-lg mb-2 sm:mb-0">
                     <th className="px-1 py-2 text-base">#</th>
+                    <th className="px-1 py-2 text-base">{{$t('no')}}</th>
                     <th className="px-1 py-2 text-base">{{$t('type')}}</th>
                     <th className="px-1 py-2 text-base">{{$t('date')}}</th>
                     <th className="px-1 py-2 text-base">{{$t('description')}}</th>
@@ -150,6 +192,7 @@ let showModal = ref(false);
                     v-for="(user,i) in laravelData.transactions"
                     :key="user.id"  class="text-center">
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{i }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.id }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.type }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.created }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.description }}</td>
@@ -169,6 +212,13 @@ let showModal = ref(false);
                     >
                     طباعة وصل دفع
                     </a>
+                    <button
+                      tabIndex="1"
+                      class="px-1 py-1  text-white mx-1 bg-orange-500 rounded"
+                      @click="openModalDelClient(user)"
+                    >
+                      <trash />
+                    </button>
                   </td>
                   </tr>
                 </tbody>

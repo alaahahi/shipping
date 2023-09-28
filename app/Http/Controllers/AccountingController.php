@@ -270,28 +270,34 @@ class AccountingController extends Controller
     }
     public function increaseWallet(int $amount,$desc,$user_id,$morphed_id='',$morphed_type='',$user_added=0) 
     {
-        $currentDate = Carbon::now()->format('Y-m-d');
-        $user=  User::with('wallet')->find($user_id);
-        if($id = $user->wallet->id){
-        $transactionDetils = ['type' => 'in','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>$user_added,'created'=>$currentDate];
-        $transaction = Transactions::create($transactionDetils);
-        $wallet = Wallet::find($id);
-        $wallet->increment('balance', $amount);
+        if($amount){
+            $currentDate = Carbon::now()->format('Y-m-d');
+            $user=  User::with('wallet')->find($user_id);
+            if($id = $user->wallet->id){
+            $transactionDetils = ['type' => 'in','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>$user_added,'created'=>$currentDate];
+            $transaction = Transactions::create($transactionDetils);
+            $wallet = Wallet::find($id);
+            $wallet->increment('balance', $amount);
+            }
+            if (is_null($wallet)) {
+                return null;
+            }
+            // Finally return the updated wallet.
+            return $transaction;
+        }else{
+            return 0 ;
         }
-        if (is_null($wallet)) {
-            return null;
-        }
-        // Finally return the updated wallet.
-        return $transaction;
+
     }
 
     public function decreaseWallet(int $amount,$desc,$user_id,$morphed_id=0,$morphed_type='',$user_added=0) 
     {
+        if($amount){
         $currentDate = Carbon::now()->format('Y-m-d');
         $user=  User::with('wallet')->find($user_id);
         if($id = $user->wallet->id){
         $wallet = Wallet::find($id);
-            $transactionDetils = ['type' => 'out','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>1,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>$user_added,'created'=>$currentDate];
+            $transactionDetils = ['type' => 'out','$wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>1,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>$user_added,'created'=>$currentDate];
             $transaction =Transactions::create($transactionDetils);
             $wallet->decrement('balance', $amount);
 
@@ -301,6 +307,23 @@ class AccountingController extends Controller
         }
         // Finally return the updated wallet.
         return $transaction;
+        }else{
+            return 0 ;
+        }
+    }
+    public function deleteTransactions(Request $request){
+        $transactions = Transactions::find($request->id);
+        $amount=$transactions->amount;
+        $desc="مرتجع دفعة";
+        $wallet = Wallet::find($transactions->wallet_id);
+        
+        if($amount>0){
+            $this->increaseWallet($amount*-1, $desc,$wallet->user_id,$transactions->morphed_id,'App\Models\User',0);
+        }else{
+            $this->decreaseWallet($amount*-1, $desc,$wallet->user_id,$transactions->morphed_id,'App\Models\User',0);
+        }
+        $transactions->delete();
+        return Response::json('ok', 200);    
     }
     
     }
