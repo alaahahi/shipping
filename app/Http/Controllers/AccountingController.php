@@ -297,7 +297,7 @@ class AccountingController extends Controller
         $user=  User::with('wallet')->find($user_id);
         if($id = $user->wallet->id){
         $wallet = Wallet::find($id);
-            $transactionDetils = ['type' => 'out','$wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>1,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>$user_added,'created'=>$currentDate];
+            $transactionDetils = ['type' => 'out','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>1,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>$user_added,'created'=>$currentDate];
             $transaction =Transactions::create($transactionDetils);
             $wallet->decrement('balance', $amount);
 
@@ -314,13 +314,17 @@ class AccountingController extends Controller
     public function deleteTransactions(Request $request){
         $transactions = Transactions::find($request->id);
         $amount=$transactions->amount;
+        if($amount>0){
+            $amount=$amount;
+        }else{
+            $amount=$amount*1;
+        }
         $desc="مرتجع دفعة";
         $wallet = Wallet::find($transactions->wallet_id);
-        
         if($amount>0){
-            $this->increaseWallet($amount*-1, $desc,$wallet->user_id,$transactions->morphed_id,'App\Models\User',0);
+            $this->increaseWallet($amount, $desc,$wallet->user_id,$wallet->user_id,'App\Models\User',0);
         }else{
-            $this->decreaseWallet($amount*-1, $desc,$wallet->user_id,$transactions->morphed_id,'App\Models\User',0);
+            $this->decreaseWallet($amount, $desc,$wallet->user_id,$wallet->user_id,'App\Models\User',0);
         }
         $transactions->delete();
         return Response::json('ok', 200);    
