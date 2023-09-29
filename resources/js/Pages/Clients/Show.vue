@@ -10,7 +10,7 @@ import axios from "axios";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
 import ModalEditCars from "@/Components/ModalEditCar_S.vue";
 import ModalAddCarPayment from "@/Components/ModalAddCarPayment.vue";
-import show from "@/Components/icon/show.vue";
+import print from "@/Components/icon/print.vue";
 import pay from "@/Components/icon/pay.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
@@ -28,7 +28,7 @@ let showModalEditCars = ref(false);
 let showModalDelCar = ref(false);
 let showModalAddCarPayment = ref(false);
 let showErorrAmount = ref(false);
-
+let showTransactions= ref(false);
 
 let total = ref(0);
 let formData = ref({});
@@ -197,9 +197,18 @@ function resetValuse(){
 }
 function showAddPaymentTotal(){
   showPaymentForm.value = true;
+  showTransactions.value=false;
 }
 function hideAddPaymentTotal(){
   showPaymentForm.value = false;
+}
+function showTransactionsDiv(){
+  showTransactions.value=true;
+  showPaymentForm.value = false;
+}
+function hideTransactionsDiv(){
+  showTransactions.value=false;
+  
 }
 function calculateAmount(){
   if(amount.value > laravelData.value?.cars_need_paid){
@@ -426,7 +435,7 @@ function calculateAmount(){
               <InputLabel for="cars_paid" value="مجموع المدفوع بالدولار" />
               <TextInput
                 id="cars_paid"
-                type="num"
+                type="number"
                 class="mt-1 block w-full"
                 :value="laravelData?.cars_paid"
                 disabled
@@ -469,6 +478,24 @@ function calculateAmount(){
                 class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-pink-500 rounded"
                 style="width: 100%">
                 <span>اخفاء دفعة</span>
+              </button>
+            </div>
+            <div className="mb-4  mr-5 print:hidden"   v-if="laravelData?.cars_need_paid">
+              <InputLabel for="pay" value="عرض الدفعات" />
+              <button
+                @click.prevent="showTransactionsDiv()"
+                v-if="!showTransactions"
+                :disabled="isLoading"
+                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-purple-500 rounded"
+                style="width: 100%">
+                <span>عرض الدفعات</span>
+              </button>
+              <button
+                @click.prevent="hideTransactionsDiv()"
+                v-if="showTransactions"
+                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-pink-500 rounded"
+                style="width: 100%">
+                <span>اخفاء الدفعات</span>
               </button>
             </div>
           </div>
@@ -524,7 +551,73 @@ function calculateAmount(){
               </button>
             </div>
           </div>
- 
+          <div class="relative overflow-x-auto shadow-md sm:rounded-lg mt-4 mb-5"  v-if="showTransactions">
+                  <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
+                  <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
+                  <tr  class="bg-rose-500 text-gray-100 rounded-l-lg mb-2 sm:mb-0">
+                    <th className="px-1 py-2 text-base">#</th>
+                    <th className="px-1 py-2 text-base">{{$t('date')}}</th>
+                    <th className="px-1 py-2 text-base">{{$t('description')}}</th>
+                    <th className="px-1 py-2 text-base">{{$t('amount')}}</th>
+                    <th
+                      scope="col"
+                      class="px-1 py-2 text-base print:hidden"
+                      style="width: 250px"
+                    >
+                      {{ $t("execute") }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="text-center px-4 py-2 border dark:border-gray-800 dark:text-gray-200" >
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200"> 
+                    <a  target="_blank"
+                    style="display: inline-flex;"
+                    :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&from=${from}&to=${to}&print=4`"
+                    tabIndex="1"
+                    class="px-4 py-1  text-white  m-1 bg-blue-500 rounded"
+                    >
+                    جميع الدفعات
+                    <print />
+                    </a>
+            
+                     </td>
+                   
+                  </tr>
+                  <template  v-for="user in laravelData.transactions" :key="user.id">
+                  <tr class="text-center" v-if="user.type=='out' && user.amount < 0">
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.id }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.created }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.description }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.amount*-1  }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">  
+                    <a v-if="user.type =='out' && user.amount<0" target="_blank"
+                    style="display: inline-flex;"
+                    :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&from=${from}&to=${to}&print=2&transactions_id=${user.id}`"
+                    tabIndex="1"
+                    class="px-4 py-1  text-white  m-1 bg-green-500 rounded"
+                    >
+                    <print />
+                    </a>
+            
+                    <!-- <button
+                      tabIndex="1"
+                      class="px-1 py-1  text-white mx-1 bg-orange-500 rounded"
+                      @click="openModalDelClient(user)"
+                    >
+                      <trash />
+                    </button> -->
+                  </td>
+                  </tr>
+                  </template>
+         
+                </tbody>
+              </table>
+          </div>
           <div>
             <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
               <table
