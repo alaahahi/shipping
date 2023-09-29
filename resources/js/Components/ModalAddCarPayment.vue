@@ -1,6 +1,10 @@
 <script setup>
 import { ref, computed } from 'vue';
 
+
+import { useToast } from "vue-toastification";
+let toast = useToast();
+
 const props = defineProps({
   show: Boolean,
   company: Array,
@@ -12,8 +16,20 @@ const props = defineProps({
   expenses:Array,
   formData:Object
 });
-let need_pay =  ref(0);
 
+function calculateAmount(){
+  let amount =props.formData.total_s-(props.formData.paid+(props.formData.discount||0))
+if(props.formData.amountPayment > amount){
+  props.formData.amountPayment = amount
+  props.formData.discountPayment = 0
+    toast.info(" المبلغ اكبر من الدين المطلوب"+" "+amount, {
+        timeout: 4000,
+        position: "bottom-right",
+        rtl: true,
+      });
+}
+
+}
 </script>
   <template>
     <Transition name="modal">
@@ -28,7 +44,7 @@ let need_pay =  ref(0);
             </div>
 
             <div class="modal-body">
-              <div class="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-3">
+              <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-4 gap-3 lg:gap-3">
                 <div className="mb-4 mx-5">
                   <label  class="dark:text-gray-200" for="user_id" >{{ $t('totalForCar') }}</label>
                   <input
@@ -60,7 +76,17 @@ let need_pay =  ref(0);
                   id="id"
                   type="text"
                   disabled
-                  :value="formData.total_s-(formData.paid+(formData.amountPayment||0)+(formData.discount||0))"
+                  :value="formData.total_s-(formData.paid+(formData.discount||0))"
+                  class=" mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                   />
+                </div>
+                <div className="mb-4 mx-5">
+                  <label  class="dark:text-gray-200" for="userId">{{ $t('discount') }}</label>
+                  <input
+                  id="id"
+                  type="text"
+                  disabled
+                  v-model="formData.discount" 
                   class=" mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
                    />
                 </div>
@@ -72,6 +98,7 @@ let need_pay =  ref(0);
               <input
                 id="amountPayment"
                 type="number"
+                @input="calculateAmount"
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
                 v-model="formData.amountPayment" />
               </div>
@@ -81,7 +108,7 @@ let need_pay =  ref(0);
                 id="discount"
                 type="number"
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                v-model="formData.discount" />
+                v-model="formData.discountPayment" />
               </div>
               <div className="mb-4 mx-5">
               <label  class="dark:text-gray-200" for="notePayment" >{{ $t('note') }} </label>
@@ -101,7 +128,7 @@ let need_pay =  ref(0);
                     @click="$emit('close');">{{ $t('cancel') }}</button>
                   </div>
                 <div class="basis-1/2 px-4">
-                <button class="modal-default-button py-3  bg-rose-500 rounded col-6"  @click="$emit('a',formData);formData=''" :disabled="!(formData.amountPayment)">{{ $t('yes') }}</button>
+                <button class="modal-default-button py-3  bg-rose-500 rounded col-6"  @click="$emit('a',formData);formData={}" :disabled="!(formData.amountPayment)">{{ $t('yes') }}</button>
                 </div>
 
             </div>

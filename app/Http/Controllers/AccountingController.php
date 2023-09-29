@@ -223,11 +223,11 @@ class AccountingController extends Controller
 
         $this->increaseWallet($amount_o, $desc,$this->mainAccount->id,$this->mainAccount->id,'App\Models\Car',$user_id);
         
-        $this->decreaseWallet($amount_o+$discount, $desc,$client_id,$client_id,'App\Models\Car',$user_id);
+        $transaction = $this->decreaseWallet($amount_o+$discount, $desc,$client_id,$client_id,'App\Models\Car',$user_id);
         if($paided && $discount){
             $carFirst->increment('discount',$discount);
             }
-        return Response::json('ok', 200);    
+        return Response::json($transaction, 200);    
 
         }
         else{

@@ -33,6 +33,6 @@ return [
     'expensesExpDubai'=>' مصاريف دبي بقيمة ',
     'expensesExpErbil'=>' مصاريف أربيل بقيمة ',
     'expensesExpPay'=>' دفعة للمورد بقيمة ',
-    'addPayment'=>' إضافة دفعة بقيمة',
+    'addPayment'=>' دفعة بقيمة',
     'for_car'=>' للسيارة'
 ];

@@ -17,26 +17,28 @@ import edit from "@/Components/icon/edit.vue";
 
 
 import { useToast } from "vue-toastification";
-const toast = useToast();
+let toast = useToast();
 
-const laravelData = ref({});
-const isLoading = ref(0);
-const from = ref(0);
-const to = ref(0);
-const showPaymentForm = ref(false);
+let laravelData = ref({});
+let isLoading = ref(0);
+let from = ref(0);
+let to = ref(0);
+let showPaymentForm = ref(false);
 let showModalEditCars = ref(false);
 let showModalDelCar = ref(false);
 let showModalAddCarPayment = ref(false);
+let showErorrAmount = ref(false);
 
 
-const total = ref(0);
-const formData = ref({});
-const discount= ref(0);
-const note = ref('');
-const amount = ref(0);
+let total = ref(0);
+let formData = ref({});
+let discount= ref(0);
+let note = ref('');
+let amount = ref(0);
+
 let client_Select = ref(0);
-const showReceiveBtn = ref(0);
-const getResults = async (page = 1) => {
+let showReceiveBtn = ref(0);
+let getResults = async (page = 1) => {
   axios
     .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${props.client_id}&from=${from.value}&to=${to.value}`)
     .then((response) => {
@@ -53,7 +55,7 @@ const getResultsSelect = async (page = 1) => {
     .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${client_Select.value}&from=${from.value}&to=${to.value}`)
     .then((response) => {
       laravelData.value = response.data;
-      client_Select = response.data.client.id
+      client_Select.value = response.data.client.id
 
 
     })
@@ -129,7 +131,7 @@ function confirmUpdateCar(V) {
 function confirmAddPayment(V) {
   axios
     .get(
-      `/api/addPaymentCar?car_id=${V.id}&discount=${V.discount??0}&amount=${V.amountPayment ?? 0}&note=${
+      `/api/addPaymentCar?car_id=${V.id}&discount=${V.discountPayment??0}&amount=${V.amountPayment ?? 0}&note=${
         V.notePayment ?? ""
       }`
     )
@@ -140,10 +142,9 @@ function confirmAddPayment(V) {
         position: "bottom-right",
         rtl: true,
       });
-
+      getResultsSelect()
       let transaction=response.data
-
-      window.open(`/api/getIndexAccountsSelas?user_id=${props.client_Select}&print=2&transactions_id=${transaction.id}`, '_blank');
+      window.open(`/api/getIndexAccountsSelas?user_id=${props.client_id}&print=2&transactions_id=${transaction.id}`, '_blank');
     })
     .catch((error) => {
       showModal.value = false;
@@ -172,6 +173,10 @@ function confirmAddPaymentTotal(amount, client_Select,discount,note) {
       isLoading.value=false
       getResultsSelect()
       resetValuse()
+      
+      let transaction=response.data
+
+      window.open(`/api/getIndexAccountsSelas?user_id=${props.client_id}&print=2&transactions_id=${transaction.id}`, '_blank');
     })
     .catch((error) => {
       console.log(error)
@@ -195,6 +200,20 @@ function showAddPaymentTotal(){
 }
 function hideAddPaymentTotal(){
   showPaymentForm.value = false;
+}
+function calculateAmount(){
+  if(amount.value > laravelData.value?.cars_need_paid){
+    showErorrAmount.value = true
+    toast.info(" المبلغ اكبر من الدين المطلوب"+" "+laravelData.value?.cars_need_paid, {
+        timeout: 4000,
+        position: "bottom-right",
+        rtl: true,
+      });
+  }else{
+    showErorrAmount.value = false
+  }
+
+
 }
 </script>
 
@@ -407,7 +426,7 @@ function hideAddPaymentTotal(){
               <InputLabel for="cars_paid" value="مجموع المدفوع بالدولار" />
               <TextInput
                 id="cars_paid"
-                type="text"
+                type="num"
                 class="mt-1 block w-full"
                 :value="laravelData?.cars_paid"
                 disabled
@@ -462,6 +481,7 @@ function hideAddPaymentTotal(){
               <TextInput
                 id="percentage"
                 type="number"
+                @input="calculateAmount"
                 class="mt-1 block w-full"
                 v-model="amount"
               />
@@ -498,8 +518,9 @@ function hideAddPaymentTotal(){
                 class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-green-500 rounded"
                 style="width: 100%"
               >
+                <span v-if="showErorrAmount">يرجى مراجعة المبلغ ل</span>
                 <span v-if="!isLoading">دفع</span>
-                <span v-else>جاري الحفظ...</span>
+                <span v-else>جاري الطباعة...</span>
               </button>
             </div>
           </div>

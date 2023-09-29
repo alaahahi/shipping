@@ -298,7 +298,7 @@ function getDarkModePreference() {
 getResultsCar();
 
 function confirmAddPayment(V) {
-  axios.get(`/api/addPaymentCar?car_id=${V.id}&discount=${V.discount??0}&amount=${V.amountPayment??0}&note=${V.notePayment??''}`)
+  axios.get(`/api/addPaymentCar?car_id=${V.id}&discount=${V.discountPayment??0}&amount=${V.amountPayment??0}&note=${V.notePayment??''}`)
   .then(response => {
     showModalAddCarPayment.value = false;
     toast.success( " تم دفع مبلغ دولار "+V.amountPayment+" بنجاح ", {
