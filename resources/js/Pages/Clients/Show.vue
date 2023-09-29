@@ -20,11 +20,10 @@ import { useToast } from "vue-toastification";
 const toast = useToast();
 
 const laravelData = ref({});
-const client_id = props.client_id;
 const isLoading = ref(0);
 const from = ref(0);
 const to = ref(0);
-
+const showPaymentForm = ref(false);
 let showModalEditCars = ref(false);
 let showModalDelCar = ref(false);
 let showModalAddCarPayment = ref(false);
@@ -33,11 +32,13 @@ let showModalAddCarPayment = ref(false);
 const total = ref(0);
 const formData = ref({});
 const discount= ref(0);
-const client_Select = ref(0);
+const note = ref('');
+const amount = ref(0);
+let client_Select = ref(0);
 const showReceiveBtn = ref(0);
 const getResults = async (page = 1) => {
   axios
-    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${client_id}&from=${from.value}&to=${to.value}`)
+    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${props.client_id}&from=${from.value}&to=${to.value}`)
     .then((response) => {
       laravelData.value = response.data;
       client_Select.value = response.data.client.id
@@ -52,6 +53,7 @@ const getResultsSelect = async (page = 1) => {
     .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${client_Select.value}&from=${from.value}&to=${to.value}`)
     .then((response) => {
       laravelData.value = response.data;
+      client_Select = response.data.client.id
 
 
     })
@@ -71,20 +73,7 @@ const form = useForm();
 
 let showModal = ref(false);
 
-const results = (id) => {
-  if (id == 0) {
-    return "إنتظار تسليم الصندوق";
-  }
-  if (id == 1) {
-    return "تم التسليم";
-  }
-  if (id == 2) {
-    return "مكتمل";
-  }
-};
-function sendToCourt(id) {
-  showModal.value = id;
-}
+
 function method1(id) {
   form.get(route("sentToCourt", id));
   getResults();
@@ -154,7 +143,7 @@ function confirmAddPayment(V) {
 
       let transaction=response.data
 
-      window.open(`/api/getIndexAccountsSelas?user_id=${props.client_id}&print=2&transactions_id=${transaction.id}`, '_blank');
+      window.open(`/api/getIndexAccountsSelas?user_id=${props.client_Select}&print=2&transactions_id=${transaction.id}`, '_blank');
     })
     .catch((error) => {
       showModal.value = false;
@@ -166,10 +155,11 @@ function confirmAddPayment(V) {
       });
     });
 }
-function confirmAddPaymentTotal(amount, client_id,discount) {
+function confirmAddPaymentTotal(amount, client_Select,discount,note) {
+  isLoading.value=true
   axios
     .get(
-      `/api/addPaymentCarTotal?amount=${amount ?? 0}&discount=${discount ?? 0}&client_id=${ client_id ?? 0}`
+      `/api/addPaymentCarTotal?amount=${amount ?? 0}&discount=${discount ?? 0}&note=${note}&client_id=${ client_Select ?? 0}`
     )
     .then((response) => {
       showModalAddCarPayment.value = false;
@@ -178,10 +168,15 @@ function confirmAddPaymentTotal(amount, client_id,discount) {
         position: "bottom-right",
         rtl: true,
       });
-      window.location.reload();
+      showPaymentForm.value = false;
+      isLoading.value=false
+      getResultsSelect()
+      resetValuse()
     })
     .catch((error) => {
+      console.log(error)
       showModal.value = false;
+      isLoading.value=false
 
       toast.error("لم التعديل بنجاح", {
         timeout: 2000,
@@ -189,6 +184,17 @@ function confirmAddPaymentTotal(amount, client_id,discount) {
         rtl: true,
       });
     });
+}
+function resetValuse(){
+      amount.value=0
+      discount.value=0
+      note.value='';
+}
+function showAddPaymentTotal(){
+  showPaymentForm.value = true;
+}
+function hideAddPaymentTotal(){
+  showPaymentForm.value = false;
 }
 </script>
 
@@ -256,9 +262,7 @@ function confirmAddPaymentTotal(amount, client_id,discount) {
       </h2>
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 p-6 dark:bg-gray-900">
         <div class="overflow-hidden shadow-sm sm:rounded-lg">
-          <div
-            class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 lg:gap-1"
-          >
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 lg:gap-1">
             <div class="pr-4">
               <InputLabel
                 class="mb-1"
@@ -276,7 +280,7 @@ function confirmAddPaymentTotal(amount, client_id,discount) {
                 </option>
                 <template v-for="(user, index) in clients" :key="index">
                 <option
-                  v-if="user.wallet.balance > 0 || user.id ==client_id"
+                  v-if="user.wallet.balance > 0 || user.id ==client_Select"
                   :value="user.id">
                   {{ user.name }}
                 </option>
@@ -324,20 +328,18 @@ function confirmAddPaymentTotal(amount, client_id,discount) {
                 class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded"
                 style="width: 100%"
               >
-                <span v-if="!isLoading">فلترة</span>
-                <span v-else>جاري الحفظ...</span>
+                <span>فلترة</span>
               </button>
             </div>
             <div className="mb-4  mr-5 print:hidden">
               <InputLabel for="pay" value="طباعة" />
               <a
-                :href="`/api/getIndexAccountsSelas?user_id=${client_id}&from=${from}&to=${to}&print=1`"
+                :href="`/api/getIndexAccountsSelas?user_id=${client_Select}&from=${from}&to=${to}&print=1`"
                 target="_blank"
                 class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded block text-center"
                 style="width: 100%"
               >
-                <span v-if="!isLoading">طباعة</span>
-                <span v-else>جاري الحفظ...</span>
+                <span>طباعة</span>
               </a>
             </div>
 
@@ -431,39 +433,68 @@ function confirmAddPaymentTotal(amount, client_id,discount) {
                 disabled
               />
             </div>
-            <div className="mb-4  mr-5" v-if="laravelData?.cars_need_paid">
+            <div className="mb-4  mr-5 print:hidden"   v-if="laravelData?.cars_need_paid">
+              <InputLabel for="pay" value="اضافة دفعة" />
+              <button
+                @click.prevent="showAddPaymentTotal()"
+                v-if="!showPaymentForm"
+                :disabled="isLoading"
+                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-green-500 rounded"
+                style="width: 100%">
+                <span>اضافة دفعة</span>
+              </button>
+              <button
+                @click.prevent="hideAddPaymentTotal()"
+                v-if="showPaymentForm"
+                :disabled="isLoading"
+                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-pink-500 rounded"
+                style="width: 100%">
+                <span>اخفاء دفعة</span>
+              </button>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 lg:gap-1" v-if="showPaymentForm">
+            <div className="mb-4  mr-5">
               <InputLabel
                 for="percentage"
                 value=" المبلغ بالدولار المراد دفعه"
               />
               <TextInput
                 id="percentage"
-                type="text"
+                type="number"
                 class="mt-1 block w-full"
-                v-model="total"
+                v-model="amount"
               />
             </div>
-            <div className="mb-4  mr-5" v-if="laravelData?.cars_need_paid">
+            <div className="mb-4  mr-5">
               <InputLabel
                 for="discount"
                 value="الخصم"
               />
               <TextInput
                 id="discount"
-                type="text"
+                type="number"
                 class="mt-1 block w-full"
                 v-model="discount"
               />
             </div>
-          </div>
-          <div
-            class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 lg:gap-1"
-          >
-            <div className="mb-4  mr-5 print:hidden" v-if="total">
+            <div className="mb-4  mr-5">
+              <InputLabel
+                for="discount"
+                value="ملاحظة"
+              />
+              <TextInput
+                id="discount"
+                type="text"
+                class="mt-1 block w-full"
+                v-model="note"
+              />
+            </div>
+            <div className="mb-4  mr-5 print:hidden">
               <InputLabel for="pay" value="تأكيد الدفع" />
               <button
-                @click.prevent="confirmAddPaymentTotal(total, client_id,discount)"
-                :disabled="isLoading || !parseInt(laravelData.totalAmount)"
+                @click.prevent="confirmAddPaymentTotal(amount, client_Select,discount,note)"
+                :disabled="isLoading"
                 class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-green-500 rounded"
                 style="width: 100%"
               >
@@ -472,6 +503,7 @@ function confirmAddPaymentTotal(amount, client_id,discount) {
               </button>
             </div>
           </div>
+ 
           <div>
             <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
               <table

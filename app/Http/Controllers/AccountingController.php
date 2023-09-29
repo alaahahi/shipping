@@ -155,11 +155,17 @@ class AccountingController extends Controller
         $car_id = $_GET['car_id']??0;
         $amount=$_GET['amount']??0;
         $discount = $_GET['discount']??0;
+        $note = $_GET['note'] ?? '';
         $car = Car::find($car_id);
         $car->increment('paid',$amount);
         $car->increment('discount',$discount);
         $wallet = Wallet::where('user_id',$car->client_id)->first();
-        $desc=trans('text.addPayment').' '.$amount.'$ خصم بقيمة'.$discount.' || '.$_GET['note']??'';
+        if($discount){
+            $desc=trans('text.addPayment').' '.$amount.'$ خصم بقيمة'.$discount.' '.$note;
+        }else{
+            $desc=trans('text.addPayment').' '.$amount.' '.$note;
+        }
+
         $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\Car',$user_id);
         $transaction = $this->decreaseWallet($amount+$discount, $desc,$car->client_id,$car_id,'App\Models\Car',$user_id);
         if((($car->paid)+($car->discount))-$car->total_s >= 0){
@@ -209,8 +215,11 @@ class AccountingController extends Controller
 
            
         }
-
-        $desc=trans('text.addPayment').' '.$amount_o.'$ خصم بقيمة'.$discount.' || '.$note.' و '.$carsName;;
+        if($discount){
+            $desc=trans('text.addPayment').' '.$amount_o.'$ خصم بقيمة'.$discount.' '.$note;
+        }else{
+            $desc=trans('text.addPayment').' '.$amount_o.' '.$note;
+        }
 
         $this->increaseWallet($amount_o, $desc,$this->mainAccount->id,$this->mainAccount->id,'App\Models\Car',$user_id);
         
