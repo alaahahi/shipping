@@ -79,7 +79,7 @@
         </thead>
         <tbody>
             @foreach ($clientData['transactions'] as $key=>$data)
-            @if($data->type=='out' && $data->amount < 0 && $data->s_pay == 1)
+            @if($data->type=='out' && $data->amount < 0 && $data->is_pay == 1)
             <tr>
                 <td>{{ $data->id }}</td>
                 <td>{{ $data->created }}</td>
