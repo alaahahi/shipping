@@ -4,7 +4,6 @@ import { Head } from '@inertiajs/inertia-vue3';
 import Modal from "@/Components/Modal.vue";
 import ModalAddCar from "@/Components/ModalAddCars.vue";
 import ModalEditCars from "@/Components/ModalEditCars.vue";
-import ModalAddSale from "@/Components/ModalAddSale.vue";
 import ModalAddExpenses from "@/Components/ModalAddExpenses.vue";
 import ModalAddGenExpenses from "@/Components/ModalAddGenExpenses.vue";
 import ModalAddToBox from "@/Components/ModalAddToBox.vue";
@@ -60,7 +59,6 @@ const saveChangesToBackend = (id,colIndex,newValue) => {
 let searchTerm = ref('');
 
 let showModalCar =  ref(false);
-let showModalCarSale =  ref(false);
 let showModalAddExpenses =  ref(false);
 let showModalAddGenExpenses =  ref(false);
 let showModalToBox =  ref(false);
@@ -89,10 +87,7 @@ function openAddCar(form={}) {
     formData.value=form
     showModalCar.value = true;
 }
-function openSaleCar(form={}) {
-    formData.value=form
-    showModalCarSale.value = true;
-}
+
 function openAddExpenses(form={}) {
     formData.value=form
     showModalAddExpenses.value = true;
@@ -213,16 +208,7 @@ function confirmUpdateCar(V) {
   })
 }
 
-function confirmPayCar(V) {
-  axios.post('/api/payCar',V)
-  .then(response => {
-    showModalCarSale.value = false;
-      window.location.reload();
-  })
-  .catch(error => {
-    console.error(error);
-  })
-}
+
 function confirmExpenses(V) {
   fetch(`/addExpenses?car_id=${V.id}&user_id=${V.user_id}&expenses_id=${V.expenses_id}&expens_amount=${V.expens_amount??0}&note=${V.noteExpenses??''}`)
     .then(() => {
@@ -330,7 +316,6 @@ function confirmAddPayment(V) {
     <Modal
             :data="data"
             :show="showModal ? true : false"
-            :carModel="carModel"
             @a="confirmUpdateCar($event)"
             @close="showModal = false"
             >
@@ -344,7 +329,6 @@ function confirmAddPayment(V) {
             :formData="formData"
             :show="showModalCar ? true : false"
             :client="client"
-            :carModel="carModel"
             @a="confirmCar($event)"
             @close="showModalCar = false"
             >
@@ -355,32 +339,17 @@ function confirmAddPayment(V) {
             :formData="formData"
             :show="showModalEditCars ? true : false"
             :client="client"
-            :carModel="carModel"
             @a="confirmUpdateCar($event)"
             @close="showModalEditCars = false"
             >
         <template #header>
           </template>
     </ModalEditCars>
-    <ModalAddSale
-            :formData="formData"
-            :show="showModalCarSale ? true : false"
-            :company="company"
-            :name="name"
-            :color="color"
-            :carModel="carModel"
-            :client="client"
-            @a="confirmPayCar($event)"
-            @close="showModalCarSale = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddSale>
+
     <ModalAddExpenses
             :formData="formData"
             :expenses="expenses"
             :show="showModalAddExpenses ? true : false"
-            :user="user"
             @a="confirmExpenses($event)"
             @close="showModalAddExpenses = false"
             >
@@ -458,10 +427,11 @@ function confirmAddPayment(V) {
     <AuthenticatedLayout>
       <div class="py-2" v-if="pincode !=19735">
         <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 ">
-            <div class="bg-white overflow-hidden shadow-sm d-flex text-center "  dir="ltr">
-              <VuePincodeInput v-model="pincode" :digits="5" :secure="true" class="justify-center py-5"
+            <div class="overflow-hidden shadow-sm d-flex text-center "  dir="ltr">
+              <VuePincodeInput v-model="pincode" :digits="5" :secure="true" class="justify-center"
+              :autofocus="true"
               success-class="border-2 border-green-400"
-              input-class="rounded-full  text-gray-500 border-2 border-gray-200 shadow"
+              input-class="rounded-full  text-gray-500 border-2 border-gray-200 shadow mx-2  mt-5"
 
               />
           </div>
@@ -713,7 +683,7 @@ function confirmAddPayment(V) {
                                     <Link
                                       style="display:inline-flex;"
                                       className="px-1 py-1  text-white mx-1 bg-blue-500 rounded d-inline-block"
-                                      :href="route('showClients',car.client?.id)">
+                                      :href="route('showClients',car?.client?.id||0)">
                                     <show />
                                     </Link>
 
