@@ -65,6 +65,9 @@ function openModal() {
 }
 function openModalEditCars(form={}){
   formData.value=form
+  if(formData.value.dinar_s==0){
+    formData.value.dinar_s=formData.value.dinar
+  }
   showModalEditCars.value = true;
 }
 function openModalDelCar(form={}) {
