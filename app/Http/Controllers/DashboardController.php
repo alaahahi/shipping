@@ -283,7 +283,6 @@ class DashboardController extends Controller
             'coc_dolar'=> $request->coc_dolar,
             'checkout'=> $request->checkout,
             'total'=> $total_amount,
-            'total_s'=>$expenses,
             'year'=> $request->year,
             'car_color'=> $request->car_color,
             'date'=> $request->date,
@@ -385,7 +384,7 @@ class DashboardController extends Controller
         $shipping_dolar_s=$request->shipping_dolar_s ;
         $coc_dolar_s=$request->coc_dolar_s ;
         $dinar_s=$request->dinar_s ;
-        $expenses=($request->expenses??0);
+        $expenses_s=($request->expenses_s??0);
         $dolar_price_s=$request->dolar_price_s ;
         if($dolar_price_s==0){
             $dolar_price_s=1;
@@ -394,17 +393,10 @@ class DashboardController extends Controller
         }else{
             $dolar_price_s=$dolar_price_s;
         }
-
-        $total_s = (($checkout_s+$shipping_dolar_s+ $coc_dolar_s +(int)($dinar_s / ($dolar_price_s))+$expenses) ??0);
+        $total_s = (($checkout_s+$shipping_dolar_s+ $coc_dolar_s +(int)($dinar_s / ($dolar_price_s))+$expenses_s) ??0);
         $profit=$total_s-$car->total;
-        //$descClient = trans('text.descClient').' '.$total_s.' '.trans('text.for_car').$car->car_type.' '.$car->vin;
-        if($expenses-$car->expenses){
-            $desc = trans('text.editExpenses').' '.$expenses-$car->expenses.' '.trans('text.for_car').$car->car_type.' '.$car->vin;
-            $this->accountingController->decreaseWallet($expenses-$car->expenses, $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
-        }
         $descClient = trans('text.editExpenses').' '.$total_s-$car->total_s.' '.trans('text.for_car').$car->car_type.' '.$car->vin;
         $this->accountingController->increaseWallet($total_s-$car->total_s, $descClient,$car->client_id,$car->id,'App\Models\User');
-
             // Extract the relevant fields from the $request object
             $dataToUpdate = $request->all();
             // If 'purchase_price' and 'paid_amount' are calculated separately, add them to $dataToUpdate

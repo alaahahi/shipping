@@ -322,6 +322,13 @@ function confirmDelClient(V) {
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{ user.wallet ? '$'+user.wallet['balance']:0   }}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2"  style="min-height: 42px;">
                           
+                                        <Link
+                                          style="display:inline-flex;"
+                                          className="px-1 py-1  text-white mx-1 bg-blue-500 rounded d-inline-block"
+                                          :href="route('showClients', user.id)">
+                                        <show />
+                                        </Link>
+
                                         <button
                                           tabIndex="1"
                                           
@@ -331,12 +338,6 @@ function confirmDelClient(V) {
                                         <edit />
                                         </button>
 
-                                        <Link
-                                          style="display:inline-flex;"
-                                          className="px-1 py-1  text-white mx-1 bg-blue-500 rounded d-inline-block"
-                                          :href="route('showClients', user.id)">
-                                        <show />
-                                        </Link>
                                         <button
                                           tabIndex="1"
                                           v-if="user?.wallet['balance'] <= 0"

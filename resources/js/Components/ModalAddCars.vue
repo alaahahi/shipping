@@ -253,7 +253,7 @@ let showErrorVin = ref(false);
                   v-model="formData.checkout"
                 />
               </div>
-              <!-- <div className="mb-4 mx-1">
+              <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="expenses">
                   {{ $t("expenses") }}</label
                 >
@@ -263,7 +263,7 @@ let showErrorVin = ref(false);
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.expenses"
                 />
-              </div> -->
+              </div>
               <!-- <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="paid">
                   {{ $t("paid") }}</label

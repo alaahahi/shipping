@@ -9,8 +9,6 @@ import show from "@/Components/icon/show.vue";
 import pay from "@/Components/icon/pay.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
-
-
 import ModalAddSale from "@/Components/ModalAddSale.vue";
 import ModalAddExpenses from "@/Components/ModalAddExpenses.vue";
 import ModalAddGenExpenses from "@/Components/ModalAddGenExpenses.vue";
@@ -20,33 +18,18 @@ import ModalAddTransfers from "@/Components/ModalAddTransfers.vue";
 import ModalAddCarPayment from "@/Components/ModalAddCarPayment.vue";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
 import ModalEditCars from "@/Components/ModalEditCar_S.vue";
-
-import { TailwindPagination } from "laravel-vue-pagination";
 import { useToast } from "vue-toastification";
 import axios from 'axios';
 import { ref } from 'vue';
 import { useI18n } from "vue-i18n";
 const {t} = useI18n();
-
-
-
 const props = defineProps({
-
   client:Array,
-
 });
-
-
 let data = ref({});
 const toast = useToast();
-
 let showModal = ref(false);
-
-
-
-
 let searchTerm = ref('');
-
 let showModalCar =  ref(false);
 let showModalCarSale =  ref(false);
 let showModalAddExpenses =  ref(false);
@@ -60,13 +43,13 @@ let showModalDelCar =  ref(false);
 let mainAccount= ref(0)
 let allCars= ref(0)
 
-function openModal() {
-  showModal.value = true;
-}
 function openModalEditCars(form={}){
   formData.value=form
   if(formData.value.dinar_s==0){
     formData.value.dinar_s=formData.value.dinar
+  }
+  if(formData.value.expenses_s==0){
+    formData.value.expenses_s=formData.value.expenses
   }
   showModalEditCars.value = true;
 }
@@ -75,22 +58,6 @@ function openModalDelCar(form={}) {
   showModalDelCar.value = true;
 }
 
-function openAddCar(form={}) {
-    formData.value=form
-    showModalCar.value = true;
-}
-function openSaleCar(form={}) {
-    formData.value=form
-    showModalCarSale.value = true;
-}
-function openAddExpenses(form={}) {
-    formData.value=form
-    showModalAddExpenses.value = true;
-}
-function openAddGenExpenses(form={}) {
-    formGenExpenses.value=form
-    showModalAddGenExpenses.value = true;
-}
 function openAddToBox(form={}) {
     formData.value=form
     showModalToBox.value = true;
@@ -98,10 +65,6 @@ function openAddToBox(form={}) {
 function openAddFromBox(form={}) {
     formData.value=form
     showModalFromBox.value = true;
-}
-function openAddTransfers(form={}) {
-    formData.value=form
-    showModalAddTransfers.value = true;
 }
 function openAddCarPayment(form={}) {
     formData.value=form
@@ -322,30 +285,7 @@ function confirmAddPayment(V) {
 
 <template>
     <Head title="Dashboard" />
-    <Modal
-            :data="data"
-            :show="showModal ? true : false"
-            :carModel="carModel"
-            @a="confirmUpdateCar($event)"
-            @close="showModal = false"
-            >
-        <template #header>
-          <h2 class="text-center" style="font-size:20px;">
-            هل متأكد من تعديل البيانات
-          </h2>
-        </template>
-    </Modal>
-    <ModalAddCar
-            :formData="formData"
-            :show="showModalCar ? true : false"
-            :client="client"
-            :carModel="carModel"
-            @a="confirmCar($event)"
-            @close="showModalCar = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddCar>
+  
     <ModalEditCars
             :formData="formData"
             :show="showModalEditCars ? true : false"
@@ -357,41 +297,8 @@ function confirmAddPayment(V) {
         <template #header>
           </template>
     </ModalEditCars>
-    <ModalAddSale
-            :formData="formData"
-            :show="showModalCarSale ? true : false"
-            :company="company"
-            :name="name"
-            :color="color"
-            :carModel="carModel"
-            :client="client"
-            @a="confirmPayCar($event)"
-            @close="showModalCarSale = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddSale>
-    <ModalAddExpenses
-            :formData="formData"
-            :expenses="expenses"
-            :show="showModalAddExpenses ? true : false"
-            :user="user"
-            @a="confirmExpenses($event)"
-            @close="showModalAddExpenses = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddExpenses>
-    <ModalAddGenExpenses
-            :formData="formData"
-            :show="showModalAddGenExpenses ? true : false"
-            :user="user"
-            @a="conGenfirmExpenses($event)"
-            @close="showModalAddGenExpenses = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddGenExpenses>
+
+
     <ModalAddToBox
             :formData="formData"
             :expenses="expenses"
@@ -414,17 +321,7 @@ function confirmAddPayment(V) {
         <template #header>
           </template>
     </ModalSpanFromBox>
-    <ModalAddTransfers
-            :formData="formData"
-            :expenses="expenses"
-            :show="showModalAddTransfers  ? true : false"
-            :user="user"
-            @a="conAddTransfers($event)"
-            @close="showModalAddTransfers = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddTransfers>
+
     <ModalAddCarPayment
             :formData="formData"
             :show="showModalAddCarPayment ? true : false"
@@ -581,15 +478,7 @@ function confirmAddPayment(V) {
                       </div>
                       <div>
                         <div>
-                        <div class="mt-3 text-center" style="direction: ltr;">
-                          <TailwindPagination
-                            :data="car"
-                            @pagination-change-page="getResultsCar"
-                            :limit ="10"
-                            :item-classes="['bg-white','dark:bg-gray-600','text-gray-500','dark:text-gray-300','border-gray-300','dark:border-gray-900','hover:bg-gray-200']"
-                            :activeClasses="[  'bg-rose-50','border-rose-500','text-rose-600',]"
-                          />
-                        </div>
+       
 
                         </div>
                         <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -755,15 +644,7 @@ function confirmAddPayment(V) {
                               </tbody>
                           </table>
                         </div>
-                        <div class="mt-3 text-center" style="direction: ltr;">
-                          <TailwindPagination
-                            :data="car"
-                            @pagination-change-page="getResultsCar"
-                            :limit ="10"
-                            :item-classes="['bg-white','dark:bg-gray-600','text-gray-500','dark:text-gray-300','border-gray-300','dark:border-gray-900','hover:bg-gray-200']"
-                            :activeClasses="[  'bg-rose-50','border-rose-500','text-rose-600',]"
-                          />
-                        </div>
+
                       </div>
                       <div>
                         <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">     

@@ -31,22 +31,26 @@
     </div>
     </div>
     <div class="row p-2 text-center border-top border-bottom" style="font-size: 14px">
-    <div class="col-3"> 
+    <div class="col"> 
     التاجر:
     {{$clientData['client']->name}}
     </div>
-    <div class="col-3">
+    <div class="col">
     موبايل:
     {{$clientData['client']->phone}}
     </div>
-    <div class="col-3">
+    @if($_GET['from'] ??'')
+    <div class="col">
     من تاريخ:
     <?= $_GET['from'] ??'' ?>
     </div>
-    <div class="col-3">
+    @endif
+    @if($_GET['to'] ??'')
+    <div class="col">
         حتى تاريخ:
     <?= $_GET['to'] ??'' ?>
     </div>
+    @endif
   </div>
   <div class="row p-2 text-center border-bottom alert-primary "  style="font-size: 14px">
     <div class="col-3"> 

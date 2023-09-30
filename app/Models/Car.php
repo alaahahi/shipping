@@ -15,10 +15,6 @@ class Car extends Model
     protected $fillable = [
         'id',
         'no',
-        'phone_number',
-        'invoice_number',
-        'paid_amount',
-        'paid_amount_pay',
         'user_id',
         'user_purchase_id',
         'user_accepted',
@@ -33,11 +29,6 @@ class Car extends Model
         'note_pay',
         'client_id',
         'results',
-        'erbil_exp',
-        'erbil_shipping',
-        'dubai_exp',
-        'dubai_shipping',
-        'car_owner',
         'car_type',
         'vin',
         'car_number',
@@ -61,7 +52,8 @@ class Car extends Model
         'shipping_dolar_s',
         'coc_dolar_s',
         'total_s',
-        'discount'
+        'discount',
+        'expenses_s'
     ];
     public function user()
     {
