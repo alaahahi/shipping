@@ -117,6 +117,7 @@ function confirmUpdateCar(V) {
         position: "bottom-right",
         rtl: true,
       });
+      getResultsSelect()
 
     })
     .catch((error) => {
@@ -126,6 +127,8 @@ function confirmUpdateCar(V) {
         position: "bottom-right",
         rtl: true,
       });
+      getResultsSelect()
+
     });
 }
 function confirmAddPayment(V) {
@@ -480,7 +483,7 @@ function calculateAmount(){
                 <span>اخفاء دفعة</span>
               </button>
             </div>
-            <div className="mb-4  mr-5 print:hidden"   v-if="laravelData?.cars_need_paid">
+            <div className="mb-4  mr-5 print:hidden" >
               <InputLabel for="pay" value="عرض الدفعات" />
               <button
                 @click.prevent="showTransactionsDiv()"
@@ -589,7 +592,7 @@ function calculateAmount(){
                    
                   </tr>
                   <template  v-for="user in laravelData.transactions" :key="user.id">
-                  <tr class="text-center" v-if="user.type=='out' && user.amount < 0">
+                  <tr class="text-center" v-if="user.type=='out' && user.amount < 0 && user.is_pay == 1 ">
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.id }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.created }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.description }}</td>

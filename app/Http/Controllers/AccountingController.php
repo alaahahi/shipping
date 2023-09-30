@@ -171,8 +171,8 @@ class AccountingController extends Controller
             $desc=trans('text.addPayment').' '.$amount.' '.$note;
         }
 
-        $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\Car',$user_id);
-        $transaction = $this->decreaseWallet($amount+$discount, $desc,$car->client_id,$car_id,'App\Models\Car',$user_id);
+        $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\Car',1);
+        $transaction = $this->decreaseWallet($amount+$discount, $desc,$car->client_id,$car_id,'App\Models\Car',1);
         if((($car->paid)+($car->discount))-$car->total_s >= 0){
             $car->update(['results'=>2]); 
         }
@@ -226,9 +226,9 @@ class AccountingController extends Controller
             $desc=trans('text.addPayment').' '.$amount_o.' '.$note;
         }
 
-        $this->increaseWallet($amount_o, $desc,$this->mainAccount->id,$this->mainAccount->id,'App\Models\Car',$user_id);
+        $this->increaseWallet($amount_o, $desc,$this->mainAccount->id,$this->mainAccount->id,'App\Models\Car',1);
         
-        $transaction = $this->decreaseWallet($amount_o+$discount, $desc,$client_id,$client_id,'App\Models\Car',$user_id);
+        $transaction = $this->decreaseWallet($amount_o+$discount, $desc,$client_id,$client_id,'App\Models\Car',1);
         if($paided && $discount){
             $carFirst->increment('discount',$discount);
             }
@@ -282,13 +282,13 @@ class AccountingController extends Controller
         return Response::json($new_balance, 200);
 
     }
-    public function increaseWallet(int $amount,$desc,$user_id,$morphed_id='',$morphed_type='',$user_added=0) 
+    public function increaseWallet(int $amount,$desc,$user_id,$morphed_id='',$morphed_type='',$is_pay=0) 
     {
         if($amount){
             $currentDate = Carbon::now()->format('Y-m-d');
             $user=  User::with('wallet')->find($user_id);
             if($id = $user->wallet->id){
-            $transactionDetils = ['type' => 'in','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>$user_added,'created'=>$currentDate];
+            $transactionDetils = ['type' => 'in','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$currentDate];
             $transaction = Transactions::create($transactionDetils);
             $wallet = Wallet::find($id);
             $wallet->increment('balance', $amount);
@@ -304,14 +304,15 @@ class AccountingController extends Controller
 
     }
 
-    public function decreaseWallet(int $amount,$desc,$user_id,$morphed_id=0,$morphed_type='',$user_added=0) 
+    public function decreaseWallet(int $amount,$desc,$user_id,$morphed_id=0,$morphed_type='',$is_pay=0) 
     {
+
         if($amount){
         $currentDate = Carbon::now()->format('Y-m-d');
         $user=  User::with('wallet')->find($user_id);
         if($id = $user->wallet->id){
         $wallet = Wallet::find($id);
-            $transactionDetils = ['type' => 'out','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>1,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>$user_added,'created'=>$currentDate];
+            $transactionDetils = ['type' => 'out','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$currentDate];
             $transaction =Transactions::create($transactionDetils);
             $wallet->decrement('balance', $amount);
 

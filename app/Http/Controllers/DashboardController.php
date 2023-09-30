@@ -293,10 +293,9 @@ class DashboardController extends Controller
             'profit'=>($total_amount*-1)
              ]);
                 if($total_amount){
-                    $desc=trans('text.payCar').' '.$total_amount.trans('text.for_car').' '.$request->vin;
+                    $desc=trans('text.payCar').' '.$request->vin;
                     if($total_amount){
                         $this->accountingController->decreaseWallet(($total_amount),$desc,$this->mainAccount->id,$car->id,'App\Models\Car');
-          
                     }
                 }
 
@@ -335,15 +334,30 @@ class DashboardController extends Controller
 
         $total = (int)(($checkout+$shipping_dolar+ $coc_dolar +(int)($dinar / ($dolar_price))+$expenses) ??0);
         //$descClient = trans('text.descClient').' '.$total.' '.trans('text.for_car').$car->car_type.' '.$car->vin;
-        $descClient = trans('text.addExpenses').' '.($total-$car->total).' '.trans('text.for_car').$car->car_type.' '.$car->vin;
       
             // Extract the relevant fields from the $request object
             $dataToUpdate = $request->all();
 
             // If 'purchase_price' and 'paid_amount' are calculated separately, add them to $dataToUpdate
             $dataToUpdate['total']=$total;
+            if($total >$car->total){
+                $descClient = trans('text.addExpenses').' '.($total-$car->total).' '.trans('text.for_car').$car->car_type.' '.$car->vin;
+                $this->accountingController->decreaseWallet(($total-$car->total), $descClient,$this->mainAccount->id,$car->id,'App\Models\Car');
+            }else{
+                $descClient = 'مرتجع للصندوق مصاريف';
+                $this->accountingController->increaseWallet(($car->total-$total), $descClient,$this->mainAccount->id,$car->id,'App\Models\Car');
 
-            $this->accountingController->decreaseWallet(($total-$car->total), $descClient,$this->mainAccount->id,$car->id,'App\Models\Car');
+            }
+            if($car->paid){
+                if($total >$car->paid){
+                    $dataToUpdate['results'] = 1  ;
+                }elseif($total==$car->paid){
+                    $dataToUpdate['results'] = 2  ;
+                }else{
+                    $dataToUpdate['results'] = 0  ;
+                }
+            }
+
             //$this->accountingController->increaseWallet(($total-$car->total), $descClient,$car->client_id,$car->id,'App\Models\User');
             $car->update($dataToUpdate);
 
@@ -396,6 +410,18 @@ class DashboardController extends Controller
             // If 'purchase_price' and 'paid_amount' are calculated separately, add them to $dataToUpdate
             $dataToUpdate['total_s']=$total_s;
             $dataToUpdate['profit']=$profit;
+
+            if($car->paid){
+                if($total_s >$car->paid){
+                    $dataToUpdate['results'] = 1  ;
+                }elseif($total_s==$car->paid){
+                    $dataToUpdate['results'] = 2  ;
+                }else{
+                    $dataToUpdate['results'] = 0  ;
+                }
+            }
+
+
             // Update the car model
             $car->update($dataToUpdate);
             

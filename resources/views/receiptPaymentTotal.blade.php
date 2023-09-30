@@ -70,8 +70,6 @@
     <table class="table table-sm table-striped table-bordered" style="font-size: 12px">
         <thead>
           <tr>
-            <th scope="col">#</th>
-            
             <th scope="col">رقم الوصل</th>
             <th scope="col">تاريخ</th>
             <th scope="col">ملاحظة</th>
@@ -83,7 +81,6 @@
             @foreach ($clientData['transactions'] as $key=>$data)
             @if($data->type=='out' && $data->amount < 0)
             <tr>
-                <th scope="row">{{$key+1}}</th>
                 <td>{{ $data->id }}</td>
                 <td>{{ $data->created }}</td>
                 <td>{{ $data->description }}</td>
