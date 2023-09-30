@@ -566,7 +566,7 @@ function confirmAddPayment(V) {
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.shipping_dolar_s}}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.coc_dolar_s  }}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.checkout_s}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.expenses}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.expenses_s}}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ (car.total_s).toFixed(0) }}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.paid}}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.discount}}</td>

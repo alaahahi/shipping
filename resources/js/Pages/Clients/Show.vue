@@ -90,7 +90,7 @@ function openModalEditCars(form = {}) {
   if(formData.value.dinar_s==0){
     formData.value.dinar_s=formData.value.dinar
   }
-  
+
   showModalEditCars.value = true;
 }
 
@@ -779,7 +779,7 @@ function calculateAmount(){
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.expenses }}
+                      {{ car.expenses_s }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
