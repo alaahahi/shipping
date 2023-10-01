@@ -18,7 +18,7 @@ $Help = new MyHelp();
     @if($transaction->id == $transactions_id)
         <?php  
         $description =$transaction->description;
-        $amount= ($transaction->amount * -1);
+        $amount= ($transaction->amount * -1)-$transaction->discount;
         $created =$transaction->created_at ;
        ?>
     @endif

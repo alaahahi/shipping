@@ -16,7 +16,8 @@ class Transactions extends Model
         'is_pay',
         'morphed_id',
         'morphed_type',
-        'created'
+        'created',
+        'discount'
     ];
 
     public function wallet()
