@@ -44,6 +44,9 @@ let allCars= ref(0)
 function openModalAddCarContracts(form={}) {
   formData.value=form
 
+  formData.value.prices=100
+  formData.value.price_dinars=50000
+
   showModalAddCarContracts.value = true;
 }
 function openModalEditCarContracts(form={}) {
@@ -505,7 +508,7 @@ function makeCarExit(car){
                           </div> -->
                         </div>
                       </div>
-                      
+
                       <div>
                         <div>
                         <div class="mt-3 text-center" style="direction: ltr;">
@@ -548,8 +551,13 @@ function makeCarExit(car){
                                       <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t('date') }}
                                       </th>
-                
-                                      <th scope="col" class="px-1 py-3 text-base" style="width: 250px;">
+                                      <th scope="col" class="px-1 py-3 text-base">
+                                        مدفوع دولار
+                                      </th>
+                                      <th scope="col" class="px-1 py-3 text-base">
+                                        مدفوع دينار
+                                      </th>
+                                      <th scope="col" class="px-1 py-3 text-base" style="width: 150px;">
                                         {{ $t('execute') }}
                                       </th>
                                   </tr>
@@ -566,6 +574,8 @@ function makeCarExit(car){
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.vin }}</td>
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_number }}</td> 
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.date  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.contract?.paid || 0  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.contract?.paid_dinar  || 0 }}</td>
                                      <td className="border dark:border-gray-800 text-start px-2 py-2">
                                     <!-- <button
                                       tabIndex="1"
@@ -600,7 +610,7 @@ function makeCarExit(car){
                                      <newContracts />
                                     </button>
           
-                                    <button
+                                    <!-- <button
                                       tabIndex="1"
                                       class="px-2 py-1  text-white mx-1 bg-purple-500 rounded"
                                       v-if="car.is_exit == 0"
@@ -615,7 +625,7 @@ function makeCarExit(car){
                                       @click="openSaleCar(car)"
                                     >
                                      <exit />
-                                    </button>
+                                    </button> -->
 
                                        <!-- 
                                     <button

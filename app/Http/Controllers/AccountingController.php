@@ -319,9 +319,9 @@ class AccountingController extends Controller
         $transactionDetils = ['type' => 'out','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$currentDate,'discount'=>$discount,'currency'=>$currency];
         $transaction =Transactions::create($transactionDetils);
         if($currency=='IQD'){
-            $wallet->increment('balance_dinar', $amount);
+            $wallet->decrement('balance_dinar', $amount);
         }else{
-            $wallet->increment('balance', $amount);
+            $wallet->decrement('balance', $amount);
         }
 
         }

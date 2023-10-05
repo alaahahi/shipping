@@ -76,10 +76,6 @@ class Car extends Model
     {
         return $this->belongsTo(Color::class);
     }
-    public function contract()
-    {
-        return $this->hasOne(Contract::class);
-    }
     public function Client()
     {
         return $this->belongsTo(User::class);
@@ -88,7 +84,11 @@ class Car extends Model
     {
         return $this->morphMany(Transactions::class, 'morphed');
     }
-
+    public function contract()
+    {
+        // Define a one-to-one relationship with the Car model
+        return $this->hasOne(Contract::class, 'car_id', 'id');
+    }
     protected $appends = ['image_url'];
 
     /**

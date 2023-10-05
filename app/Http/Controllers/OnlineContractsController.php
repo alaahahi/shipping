@@ -139,7 +139,7 @@ class OnlineContractsController extends Controller
 ;
         $descDebit="دين من عقد السيارة ".$car->car_type.' '.$note;
         if($paid){
-            $contract->increment('paid',$amount);
+            $contract->increment('paid',$paid);
             $this->accountingController->increaseWallet($paid, $descDebit,$this->onlineContracts->id,$car->id,'App\Models\Car');
             $this->accountingController->decreaseWallet($paid, $descDebit,$this->debtOnlineContracts->id,$car->id,'App\Models\Car');
         }
@@ -151,7 +151,7 @@ class OnlineContractsController extends Controller
         }
        
 
-        if(($price-$paid == 0)&&($price_dinar-$paid_dinar == 0)){
+        if(( $contract->price-$paid == 0)&&($contract->price_dinar-$paid_dinar == 0)){
             $car->increment('is_exit');
         }
         return Response::json('ok', 200);    
