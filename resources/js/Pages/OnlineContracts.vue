@@ -610,7 +610,7 @@ function makeCarExit(car){
                                      <newContracts />
                                     </button>
           
-                                    <!-- <button
+                                    <button
                                       tabIndex="1"
                                       class="px-2 py-1  text-white mx-1 bg-purple-500 rounded"
                                       v-if="car.is_exit == 0"
@@ -625,8 +625,7 @@ function makeCarExit(car){
                                       @click="openSaleCar(car)"
                                     >
                                      <exit />
-                                    </button> -->
-
+                                    </button>
                                        <!-- 
                                     <button
                                       tabIndex="1"

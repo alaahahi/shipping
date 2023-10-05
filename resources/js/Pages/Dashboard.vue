@@ -36,7 +36,7 @@ const getResults = async (page = 1) => {
   axios.get(`/getIndexClients?page=${page}&q=debit`)
   .then(response => {
     try {
-      laravelData.value =  response.data.Object.values(data)?.sort((a, b) => {
+      laravelData.value =  Object.values(response.data.data)?.sort((a, b) => {
       // First, sort by wallet.balance in descending order
       const balanceComparison = b.wallet.balance - a.wallet.balance;
 
@@ -312,6 +312,37 @@ function confirmDelCar(V) {
 function getDarkModePreference() {
   const darkModePreference = localStorage.getItem('darkMode');
   return darkModePreference==='true' ?'darkCompact':'compact'; // Convert the string to a boolean
+}
+function changeColor(total){
+
+  if(total >= 30000){
+    return 'bg-red-600  dark:bg-red-600'
+
+  }
+  if(total >= 25000){
+    return 'bg-pink-600  dark:bg-pink-600'
+
+  }
+  if(total >= 20000){
+    return 'bg-purple-600  dark:bg-purple-600'
+  }
+  if(total >= 15000){
+    return 'bg-indigo-600  dark:bg-indigo-600'
+
+  }
+  if(total >= 10000){
+    return 'bg-cyan-600  dark:bg-cyan-600'
+
+  }
+  
+  if(total >= 5000){
+    return 'bg-teal-600  dark:bg-teal-600'
+
+  }
+  if(total >= 0){
+    return 'bg-yellow-600  dark:bg-yellow-600'
+
+  }
 }
 </script>
 
@@ -707,7 +738,7 @@ function getDarkModePreference() {
                               <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{onlineContracts}}</p>
                             </div>
                           </div>
-                          <Link  v-for="(user,i) in laravelData" :key="i" class="flex items-start rounded-xl text-gray-200  dark:text-gray-300  p-4 shadow-lg"  :href="route('showClients', user.id)"  :class="user.car_total_uncomplete?'bg-red-500  dark:bg-red-500':'bg-green-600  dark:bg-green-600'">
+                          <Link  v-for="(user,i) in laravelData" :key="i" class="flex items-start rounded-xl text-gray-200  dark:text-gray-300  p-4 shadow-lg"  :href="route('showClients', user.id)"  :class="changeColor( user.wallet ? user.wallet['balance']:0)">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
