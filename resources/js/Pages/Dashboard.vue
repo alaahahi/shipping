@@ -336,7 +336,7 @@ function changeColor(total){
   }
   
   if(total >= 5000){
-    return 'bg-teal-600  dark:bg-teal-600'
+    return 'bg-teal-500  dark:bg-teal-500'
 
   }
   if(total >= 0){
