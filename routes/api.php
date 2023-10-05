@@ -85,7 +85,8 @@ Route::get('addExpenses',[DashboardController::class, 'addExpenses'])->name('add
 Route::get('addPaymentCar',[AccountingController::class, 'addPaymentCar'])->name('addPaymentCar');
 Route::get('addCarContracts',[OnlineContractsController::class, 'addCarContracts'])->name('addCarContracts');
 Route::get('editCarContracts',[OnlineContractsController::class, 'editCarContracts'])->name('editCarContracts');
-Route::get('makeCarExit',[OnlineContractsController::class, 'makeCarExit'])->name('makeCarExit');;
+Route::get('makeCarExit',[OnlineContractsController::class, 'makeCarExit'])->name('makeCarExit');
+Route::get('unMakeCarExit',[OnlineContractsController::class, 'unMakeCarExit'])->name('unMakeCarExit');
 
 
 Route::get('addPaymentCarTotal',[AccountingController::class, 'addPaymentCarTotal'])->name('addPaymentCarTotal');

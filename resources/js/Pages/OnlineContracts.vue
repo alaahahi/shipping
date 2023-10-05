@@ -131,27 +131,6 @@ function confirmUpdateCar(V) {
   })
 }
 
-function confirmPayCar(V) {
-  axios.post('/api/payCar',V)
-  .then(response => {
-    showModalCarSale.value = false;
-      window.location.reload();
-  })
-  .catch(error => {
-    console.error(error);
-  })
-}
-
-function conAddTransfers(V) {
-  fetch(`/addTransfers?user_id=${V.user_id}&amount=${V.amount??0}&note=${V.note??''}`)
-    .then(() => {
-      showModalAddTransfers.value = false;
-       window.location.reload();
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-}
 
 getResultsCar();
 
@@ -165,7 +144,8 @@ function confirmAddCarContracts(V) {
         rtl: true
 
       });
-    window.location.reload();
+      getResultsCar();
+      getcountTotalInfo()
 
 
   })
@@ -191,7 +171,8 @@ function confirmEditCarContracts(V) {
         rtl: true
 
       });
-    window.location.reload();
+      getResultsCar();
+      getcountTotalInfo()
 
 
   })
@@ -207,8 +188,62 @@ function confirmEditCarContracts(V) {
 
   })
 }
-function makeCarExit(car){
+function makeCarExit(id){
+
+  axios.get(`/api/makeCarExit?car_id=${id}`)
+  .then(response => {
+    showModalEditCarContracts.value = false;
+    toast.success( " تم تعديل خروجية السيارة بنجاح ", {
+        timeout: 3000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+
+      getResultsCar();
+
+  })
+  .catch(error => {
+    showModalEditCarContracts.value = false;
+
+    toast.error("لم التعديل بنجاح", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+
+  })
   
+}
+
+function unMakeCarExit(id){
+
+axios.get(`/api/unMakeCarExit?car_id=${id}`)
+.then(response => {
+  showModalEditCarContracts.value = false;
+  toast.success( " تم تعديل خروجية السيارة بنجاح ", {
+      timeout: 3000,
+      position: "bottom-right",
+      rtl: true
+
+    });
+
+    getResultsCar();
+
+})
+.catch(error => {
+  showModalEditCarContracts.value = false;
+
+  toast.error("لم التعديل بنجاح", {
+      timeout: 2000,
+      position: "bottom-right",
+      rtl: true
+
+    });
+
+})
+
 } 
 </script>
 
@@ -596,7 +631,7 @@ function makeCarExit(car){
                                     <button
                                      v-if="car.contract && (car.contract?.price != car.contract?.paid)"
                                       tabIndex="1"
-                                      class="px-2 py-1  text-white mx-1 bg-red-500 rounded"
+                                      class="px-2 py-1  text-white mx-1 bg-pink-500 rounded"
                                       @click="openModalEditCarContracts(car)"
                                     >
                                       <pay />
@@ -604,7 +639,7 @@ function makeCarExit(car){
                                     <button
                                     v-if="!car.contract"
                                       tabIndex="1"
-                                      class="px-2 py-1  text-white mx-1 bg-green-500 rounded"
+                                      class="px-2 py-1  text-white mx-1 bg-yellow-500 rounded"
                                       @click="openModalAddCarContracts(car)"
                                     >
                                      <newContracts />
@@ -612,9 +647,9 @@ function makeCarExit(car){
           
                                     <button
                                       tabIndex="1"
-                                      class="px-2 py-1  text-white mx-1 bg-purple-500 rounded"
+                                      class="px-2 py-1  text-white mx-1 bg-red-500 rounded"
                                       v-if="car.is_exit == 0"
-                                      @click="makeCarExit(car)"
+                                      @click="makeCarExit(car.id)"
                                     >
                                      <exit />
                                     </button>
@@ -622,7 +657,8 @@ function makeCarExit(car){
                                       tabIndex="1"
                                       class="px-2 py-1  text-white mx-1 bg-green-500 rounded"
                                       v-if="car.is_exit == 1"
-                                      @click="openSaleCar(car)"
+                                      @click="unMakeCarExit(car.id)"
+
                                     >
                                      <exit />
                                     </button>

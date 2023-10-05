@@ -127,6 +127,14 @@ class OnlineContractsController extends Controller
     public function makeCarExit(Request $request){
         $car_id=$request->car_id;
         $car = Car::find($car_id);
+        $car->increment('is_exit');
+        return $car;
+    }
+    public function unMakeCarExit(Request $request){
+        $car_id=$request->car_id;
+        $car = Car::find($car_id);
+        $car->decrement('is_exit');
+        return $car;
     }
     public function editCarContracts(Request $request){
         $paid=$request->paid;
