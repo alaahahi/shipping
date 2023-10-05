@@ -83,21 +83,19 @@ class UserController extends Controller
             if ($q !== 'debit') {
                 $dataQuery =  $dataQuery->where('name', 'like', '%' . $q . '%')->orWhere('phone', 'like', '%' . $q . '%');
             }
-            
-            $paginationLimit = $q !== 'debit' ? 1000 : 1000;
         } else {
-            $paginationLimit = 1000;
         }
         if ($from && $to) {
             $dataQuery->whereBetween('created', [$from, $to]);
-            $paginationLimit = 1000;
         } 
+        $paginationLimit = 1000;
         $data = $dataQuery->paginate($paginationLimit);
 
         $data->getCollection()->transform(function ($user) {
             $user->car_total_uncomplete = Car::where('client_id', $user->id)->whereIn('results', [0, 1])->count();
             $user->car_total_complete = Car::where('client_id', $user->id)->where('results', 2)->count();
-            
+            $user->car_total_un_pay = Car::where('client_id', $user->id)->where('total_s', 0)->count();
+
             if ($user->car_total_uncomplete > 0) {
                 return $user;
             }

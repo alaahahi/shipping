@@ -584,7 +584,7 @@ class DashboardController extends Controller
     public function getIndexCar()
     {
         $user_id =$_GET['user_id'] ?? '';
-        $data =  Car::with('contract')->with('name')->with('client')->with('transactions');
+        $data =  Car::with('contract')->with('name')->with('client');
         $type =$_GET['type'] ?? '';
         if($type){
             $data =    $data->where('results', $type);

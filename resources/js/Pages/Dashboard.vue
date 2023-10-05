@@ -31,9 +31,28 @@ const props = defineProps({
 
 let data = ref({});
 const laravelData = ref({});
+
 const getResults = async (page = 1) => {
-    const response = await fetch(`/getIndexClients?page=${page}&q=debit`);
-    laravelData.value = await response.json();
+  axios.get(`/getIndexClients?page=${page}&q=debit`)
+  .then(response => {
+    try {
+      laravelData.value =  response.data.Object.values(data)?.sort((a, b) => {
+      // First, sort by wallet.balance in descending order
+      const balanceComparison = b.wallet.balance - a.wallet.balance;
+
+      // If wallet.balance is the same, sort by car_total_uncomplete in ascending order
+  
+
+      return balanceComparison;
+    });
+    } catch (error) {
+      laravelData.value =  response.data.data
+    }
+
+  })
+  .catch(error => {
+    console.error(error);
+  })
 }
 getResults();
 
@@ -172,7 +191,6 @@ function confirmCar(V) {
   axios.post('/api/addCars',V)
   .then(response => {
     showModalCar.value = false;
-    getResultsCar()
     getcountTotalInfo()
   })
   .catch(error => {
@@ -295,7 +313,6 @@ function getDarkModePreference() {
   const darkModePreference = localStorage.getItem('darkMode');
   return darkModePreference==='true' ?'darkCompact':'compact'; // Convert the string to a boolean
 }
-getResultsCar();
 </script>
 
 <template>
@@ -690,7 +707,7 @@ getResultsCar();
                               <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{onlineContracts}}</p>
                             </div>
                           </div>
-                          <Link  v-for="user in laravelData.data" :key="user.id" class="flex items-start rounded-xl text-gray-200  dark:text-gray-300  p-4 shadow-lg"  :href="route('showClients', user.id)"  :class="user.car_total_uncomplete?'bg-red-500  dark:bg-red-500':'bg-green-600  dark:bg-green-600'">
+                          <Link  v-for="(user,i) in laravelData" :key="i" class="flex items-start rounded-xl text-gray-200  dark:text-gray-300  p-4 shadow-lg"  :href="route('showClients', user.id)"  :class="user.car_total_uncomplete?'bg-red-500  dark:bg-red-500':'bg-green-600  dark:bg-green-600'">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -698,7 +715,12 @@ getResultsCar();
                             </div>
                             <div class="mr-4">
                               <h2 class="font-semibold">{{ user.name}}</h2>
-                              <p class="mt-2 text-sm text-gray-200  dark:text-gray-200">{{ user.wallet ? '$'+user.wallet['balance']:0  }}</p>
+                              <p class="mt-2 text-sm text-gray-200  dark:text-gray-200">{{ user.wallet ? '$'+user.wallet['balance']:0  }}
+                                <span class="inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
+                                {{ user.car_total_un_pay}}
+                              </span>
+                              </p>
+                            
                             </div>
                           </Link>
 

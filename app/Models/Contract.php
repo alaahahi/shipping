@@ -15,6 +15,8 @@ class Contract extends Model
         'car_id',
         'price',
         'paid',
+        'price_dinar',
+        'paid_dinar',
         'note',
         'created'
     ];

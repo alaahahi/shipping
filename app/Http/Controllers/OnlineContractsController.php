@@ -53,13 +53,14 @@ class OnlineContractsController extends Controller
     $this->outSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-out')->first();
     $this->debtSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-debt')->first();
     $this->onlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts')->first();
+    $this->onlineContractsDinar= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-dinar')->first();
     $this->debtOnlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-debt')->first();
+    $this->debtOnlineContractsDinar= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-debit-dinar')->first();
     $this->howler= User::with('wallet')->where('type_id', $this->userAccount)->where('email','howler')->first();
     $this->shippingCoc= User::with('wallet')->where('type_id', $this->userAccount)->where('email','shipping-coc')->first();
     $this->border= User::with('wallet')->where('type_id', $this->userAccount)->where('email','border')->first();
     $this->iran= User::with('wallet')->where('type_id', $this->userAccount)->where('email','iran')->first();
     $this->dubai= User::with('wallet')->where('type_id', $this->userAccount)->where('email','dubai')->first();
-
     }
 
     /**
@@ -95,23 +96,37 @@ class OnlineContractsController extends Controller
 
     }
     public function addCarContracts(Request $request){
-        $amountTotal=$request->amountTotal;
-        $amountPaid=$request->amountPaid;
+        $price=$request->price;
+        $price_dinar=$request->price_dinar;
+        $paid=$request->paid;
+        $paid_dinar=$request->paid_dinar;
         $note=$request->note;
         $car_id=$request->car_id;
         $car = Car::find($car_id);
-        $data = ['user_id'=>$car->client_id,'car_id'=>$car->id,"price"=>$amountTotal,'paid'=>$amountPaid,'note'=>$note,'created'=>Carbon::now()->format('Y-m-d')];
+        $data = ['user_id'=>$car->client_id,'car_id'=>$car->id,"price"=>$price,"price_dinar"=>$price_dinar,'paid'=>$paid,'paid_dinar'=>$paid_dinar,'note'=>$note,'created'=>Carbon::now()->format('Y-m-d')];
         $contract=Contract::create($data);
         if($contract){
-            $desc="انشاء عقد بقيمة ".$amountTotal." وتم دفع مبلغ".$amountPaid.' '.$note;
-            $descDebit="دين من عقد السيارة ".$car->car_type.' '.$note;;
-            $this->accountingController->increaseWallet($amountPaid, $desc,$this->onlineContracts->id,$car->id,'App\Models\Car');
-            if($amountTotal-$amountPaid > 0){
-                $this->accountingController->increaseWallet($amountTotal-$amountPaid, $descDebit,$this->debtOnlineContracts->id,$car->id,'App\Models\Car');
+            $desc="انشاء عقد بقيمة ".$price." وتم دفع مبلغ".$paid.' '.$note;
+            $descD="انشاء عقد بقيمة ".$price_dinar." وتم دفع مبلغ".$paid_dinar.' '.$note;
+            $descDebit="دين من عقد السيارة ".$car->car_type.' '.$note;
+            $this->accountingController->increaseWallet($paid, $desc,$this->onlineContracts->id,$car->id,'App\Models\Car');
+            $this->accountingController->increaseWallet($paid_dinar, $descD,$this->onlineContractsDinar->id,$car->id,'App\Models\Car');
+            if($price-$paid > 0){
+                $this->accountingController->increaseWallet($price-$paid, $descDebit,$this->debtOnlineContracts->id,$car->id,'App\Models\Car');
+            }
+            if($price_dinar-$paid_dinar > 0){
+            $this->accountingController->increaseWallet($price_dinar-$paid_dinar, $descDebit,$this->debtOnlineContractsDinar->id,$car->id,'App\Models\Car');
+            }
+            if(($price-$paid == 0)&&($price_dinar-$paid_dinar == 0)){
+                $car->increment('is_exit');
             }
         }
         return Response::json('ok', 200);    
 
+    }
+    public function makeCarExit(Request $request){
+        $car_id=$request->car_id;
+        $car = Car::find($car_id);
     }
     public function editCarContracts(Request $request){
         $amount=$request->amountPayment;
@@ -124,7 +139,9 @@ class OnlineContractsController extends Controller
         $descDebit="دين من عقد السيارة ".$car->car_type.' '.$note;;
         $this->accountingController->increaseWallet($amount, $descDebit,$this->onlineContracts->id,$car->id,'App\Models\Car');
         $this->accountingController->decreaseWallet($amount, $descDebit,$this->debtOnlineContracts->id,$car->id,'App\Models\Car');
-
+        if(($price-$paid == 0)&&($price_dinar-$paid_dinar == 0)){
+            $car->increment('is_exit');
+        }
         return Response::json('ok', 200);    
 
     }

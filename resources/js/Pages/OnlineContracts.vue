@@ -9,6 +9,14 @@ import { useToast } from "vue-toastification";
 import axios from 'axios';
 import { ref } from 'vue';
 import { useI18n } from "vue-i18n";
+import show from "@/Components/icon/show.vue";
+import pay from "@/Components/icon/pay.vue";
+import trash from "@/Components/icon/trash.vue";
+import edit from "@/Components/icon/edit.vue";
+import exit from "@/Components/icon/exit.vue";
+import newContracts from "@/Components/icon/new.vue";
+
+
 const {t} = useI18n();
 
 
@@ -140,11 +148,11 @@ function conAddTransfers(V) {
 getResultsCar();
 
 function confirmAddCarContracts(V) {
-  axios.get(`/api/addCarContracts?car_id=${V.id}&amountTotal=${V.amountTotal??0}&amountPaid=${V.amountPaid??0}&note=${V.note??''}`)
+  axios.get(`/api/addCarContracts?car_id=${V.id}&price=${V.prices??0}&price_dinar=${V.price_dinars??0}&paid=${V.paids??0}&paid_dinar=${V.paid_dinars??0}&note=${V.note??''}`)
   .then(response => {
     showModalAddCarContracts.value = false;
-    toast.success( " تم دفع مبلغ دولار "+V.amountPayment+" بنجاح ", {
-        timeout: 3000,
+    toast.success( " تم دفع مبلغ بنجاح ", {
+        timeout: 4000,
         position: "bottom-right",
         rtl: true
 
@@ -191,6 +199,9 @@ function confirmEditCarContracts(V) {
 
   })
 }
+function makeCarExit(car){
+  
+} 
 </script>
 
 <template>
@@ -427,7 +438,7 @@ function confirmEditCarContracts(V) {
                                       class="px-2 py-1  text-white mx-1 bg-red-500 rounded"
                                       @click="openModalEditCarContracts(car)"
                                     >
-                                      {{ $t('complet_pay') }}
+                                      <pay />
                                     </button>
                                     <button
                                     v-if="!car.contract"
@@ -435,25 +446,27 @@ function confirmEditCarContracts(V) {
                                       class="px-2 py-1  text-white mx-1 bg-green-500 rounded"
                                       @click="openModalAddCarContracts(car)"
                                     >
-                                      {{ $t('create_contract') }}
+                                     <newContracts />
                                     </button>
-                                    <button
-                                    v-if="car.contract && (car.contract?.price == car.contract?.paid)"
-                                      tabIndex="1"
-                                      class="px-2 py-1  text-white mx-1 bg-green-500 rounded"
-                                    >
-                                      تم دفع مبلغ  {{ car.contract?.price }}
-                                    </button>
-                                    <!-- 
           
                                     <button
                                       tabIndex="1"
-                                      class="px-4 py-1  text-white mx-1 bg-purple-500 rounded"
-                                      v-if="car.results == 0"
+                                      class="px-2 py-1  text-white mx-1 bg-purple-500 rounded"
+                                      v-if="car.is_exit == 0"
+                                      @click="makeCarExit(car)"
+                                    >
+                                     <exit />
+                                    </button>
+                                    <button
+                                      tabIndex="1"
+                                      class="px-2 py-1  text-white mx-1 bg-green-500 rounded"
+                                      v-if="car.is_exit == 1"
                                       @click="openSaleCar(car)"
                                     >
-                                      {{ $t('sell') }}
+                                     <exit />
                                     </button>
+
+                                       <!-- 
                                     <button
                                       tabIndex="1"
                                       class="px-2 py-1  text-white mx-1 bg-blue-600 rounded"

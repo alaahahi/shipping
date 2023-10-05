@@ -53,7 +53,8 @@ class Car extends Model
         'coc_dolar_s',
         'total_s',
         'discount',
-        'expenses_s'
+        'expenses_s',
+        'is_exit'
     ];
     public function user()
     {
