@@ -112,8 +112,8 @@ class DashboardController extends Controller
         $data = [
         'mainAccount'=>$this->mainAccount->wallet->balance??0,
         'onlineContracts'=>$this->onlineContracts->wallet->balance??0,
-        'onlineContractsDinar'=>$this->debtOnlineContractsDinar->wallet->balance??0,
-        'debtOnlineContractsDinar'=>$this->debtOnlineContractsDinar->wallet->balance??0,
+        'onlineContractsDinar'=>$this->onlineContractsDinar->wallet->balance_dinar??0,
+        'debtOnlineContractsDinar'=>$this->debtOnlineContractsDinar->wallet->balance_dinar??0,
         'howler'=>$this->howler->wallet->balance??0,
         'shippingCoc'=>$this->shippingCoc->wallet->balance??0,
         'border'=>$this->border->wallet->balance??0,
