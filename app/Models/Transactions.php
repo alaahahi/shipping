@@ -16,6 +16,7 @@ class Transactions extends Model
         'is_pay',
         'morphed_id',
         'morphed_type',
+        'currency',
         'created',
         'discount'
     ];

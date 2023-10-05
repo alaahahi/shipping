@@ -282,16 +282,20 @@ class AccountingController extends Controller
         return Response::json($new_balance, 200);
 
     }
-    public function increaseWallet(int $amount,$desc,$user_id,$morphed_id='',$morphed_type='',$is_pay=0,$discount=0) 
+    public function increaseWallet(int $amount,$desc,$user_id,$morphed_id='',$morphed_type='',$is_pay=0,$discount=0,$currency='$') 
     {
         if($amount){
             $currentDate = Carbon::now()->format('Y-m-d');
             $user=  User::with('wallet')->find($user_id);
             if($id = $user->wallet->id){
-            $transactionDetils = ['type' => 'in','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$currentDate,'discount'=>$discount];
+            $transactionDetils = ['type' => 'in','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$currentDate,'discount'=>$discount,'currency'=>$currency];
             $transaction = Transactions::create($transactionDetils);
             $wallet = Wallet::find($id);
-            $wallet->increment('balance', $amount);
+            if($currency=='IQD'){
+                $wallet->increment('balance_dinar', $amount);
+            }else{
+                $wallet->increment('balance', $amount);
+            }
             }
             if (is_null($wallet)) {
                 return null;
@@ -304,7 +308,7 @@ class AccountingController extends Controller
 
     }
 
-    public function decreaseWallet(int $amount,$desc,$user_id,$morphed_id=0,$morphed_type='',$is_pay=0,$discount=0) 
+    public function decreaseWallet(int $amount,$desc,$user_id,$morphed_id=0,$morphed_type='',$is_pay=0,$discount=0,$currency='$') 
     {
 
         if($amount){
@@ -312,9 +316,13 @@ class AccountingController extends Controller
         $user=  User::with('wallet')->find($user_id);
         if($id = $user->wallet->id){
         $wallet = Wallet::find($id);
-            $transactionDetils = ['type' => 'out','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$currentDate,'discount'=>$discount];
-            $transaction =Transactions::create($transactionDetils);
-            $wallet->decrement('balance', $amount);
+        $transactionDetils = ['type' => 'out','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$currentDate,'discount'=>$discount,'currency'=>$currency];
+        $transaction =Transactions::create($transactionDetils);
+        if($currency=='IQD'){
+            $wallet->increment('balance_dinar', $amount);
+        }else{
+            $wallet->increment('balance', $amount);
+        }
 
         }
         if (is_null($wallet)) {

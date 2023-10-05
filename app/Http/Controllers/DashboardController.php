@@ -44,7 +44,9 @@ class DashboardController extends Controller
     $this->outSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-out')->first();
     $this->debtSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-debt')->first();
     $this->onlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts')->first();
+    $this->onlineContractsDinar= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-dinar')->first();
     $this->debtOnlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-debt')->first();
+    $this->debtOnlineContractsDinar= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-debit-dinar')->first();
     $this->howler= User::with('wallet')->where('type_id', $this->userAccount)->where('email','howler')->first();
     $this->shippingCoc= User::with('wallet')->where('type_id', $this->userAccount)->where('email','shipping-coc')->first();
     $this->border= User::with('wallet')->where('type_id', $this->userAccount)->where('email','border')->first();
@@ -110,6 +112,8 @@ class DashboardController extends Controller
         $data = [
         'mainAccount'=>$this->mainAccount->wallet->balance??0,
         'onlineContracts'=>$this->onlineContracts->wallet->balance??0,
+        'onlineContractsDinar'=>$this->debtOnlineContractsDinar->wallet->balance??0,
+        'debtOnlineContractsDinar'=>$this->debtOnlineContractsDinar->wallet->balance??0,
         'howler'=>$this->howler->wallet->balance??0,
         'shippingCoc'=>$this->shippingCoc->wallet->balance??0,
         'border'=>$this->border->wallet->balance??0,

@@ -27,7 +27,7 @@ let need_pay =  ref(0);
             <div class="modal-body">
               <div class="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-3">
                 <div className="mb-4 mx-5">
-                  <label  class="dark:text-gray-200" for="user_id" >{{ $t('totalForCar') }}</label>
+                  <label  class="dark:text-gray-200" for="user_id" >{{ $t('totalForCar') }} بالدولار</label>
                   <input
                   id="id"
                   type="text"
@@ -43,7 +43,7 @@ let need_pay =  ref(0);
                   v-model="formData.contract.price" />
                 </div>
                 <div className="mb-4 mx-5">
-                  <label  class="dark:text-gray-200" for="user_id" >{{ $t('paid_amount') }}</label>
+                  <label  class="dark:text-gray-200" for="user_id" >{{ $t('paid_amount') }}  بالدولار</label>
                   <input
                   id="id"
                   type="text"
@@ -52,7 +52,7 @@ let need_pay =  ref(0);
                   v-model="formData.contract.paid" />
                 </div>
                 <div className="mb-4 mx-5">
-                  <label  class="dark:text-gray-200" for="userId">{{ $t('debtRemaining') }}</label>
+                  <label  class="dark:text-gray-200" for="userId">{{ $t('debtRemaining') }}  بالدولار</label>
                   <input
                   id="id"
                   type="text"
@@ -62,15 +62,59 @@ let need_pay =  ref(0);
                    />
                 </div>
               </div>
+              <div class="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-3">
+                <div className="mb-4 mx-5">
+                  <label  class="dark:text-gray-200" for="user_id" >{{ $t('totalForCar') }} بالدينار</label>
+                  <input
+                  id="id"
+                  type="text"
+                  style="display: none;"
+                  disabled
+                  v-model="formData.id" />
 
+                  <input
+                  id="id"
+                  type="text"
+                  disabled
+                  class=" mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                  v-model="formData.contract.price_dinar" />
+                </div>
+                <div className="mb-4 mx-5">
+                  <label  class="dark:text-gray-200" for="user_id" >{{ $t('paid_amount') }}  بالدينار</label>
+                  <input
+                  id="id"
+                  type="text"
+                  disabled
+                  class=" mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                  v-model="formData.contract.paid_dinar" />
+                </div>
+                <div className="mb-4 mx-5">
+                  <label  class="dark:text-gray-200" for="userId">{{ $t('debtRemaining') }}  بالدينار</label>
+                  <input
+                  id="id"
+                  type="text"
+                  disabled
+                  :value="formData.contract.price_dinar-(formData.contract.paid_dinar)"
+                  class=" mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                   />
+                </div>
+              </div>
               <div>
               <div className="mb-4 mx-5">
-              <label  class="dark:text-gray-200" for="amountPayment" >{{ $t('amount') }}</label>
+              <label  class="dark:text-gray-200" for="amountPayment" >{{ $t('amount') }} بالدولار</label>
               <input
                 id="amountPayment"
                 type="number"
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                v-model="formData.amountPayment" />
+                v-model="formData.paids" />
+              </div>
+              <div className="mb-4 mx-5">
+              <label  class="dark:text-gray-200" for="amountPayment" >{{ $t('amount') }} بالدينار</label>
+              <input
+                id="amountPayment"
+                type="number"
+                class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                v-model="formData.paid_dinars" />
               </div>
               <div className="mb-4 mx-5">
               <label  class="dark:text-gray-200" for="notePayment" >{{ $t('note') }} </label>
