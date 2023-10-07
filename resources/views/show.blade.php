@@ -108,7 +108,7 @@
                 <td>{{$data->checkout_s}}</td>
                 <td>{{$data->coc_dolar_s}}</td>
                 <td>{{$data->shipping_dolar_s}}</td>
-                <td>{{$data->expenses}}</td>
+                <td>{{$data->expenses_s}}</td>
                 <td>{{$data->total_s}}</td>
               </tr>
             @endforeach

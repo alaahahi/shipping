@@ -96,6 +96,7 @@ function openModalEditCars(form = {}) {
 
 function openAddCarPayment(form = {}) {
   formData.value = form;
+  formData.value.notePayment='حساب '+form.car_type+' '+form.year+' '+form.car_color+' رقم شاصى '+form.vin+' بيد '
   showModalAddCarPayment.value = true;
 }
 function confirmDelCar(V) {
@@ -826,31 +827,6 @@ function calculateAmount(){
                       >
                         <pay />
                       </button>
-                                       <!-- 
-                                    <button
-                                      tabIndex="1"
-                                      class="px-2 py-1 text-base text-white mx-1 bg-blue-600 rounded"
-                                      @click="openAddExpenses(car)"
-                                    >
-                                      {{ $t('expenses') }}
-                                    </button>
-                                    <button
-                                      tabIndex="1"
-                                      class="px-2 py-1 text-base text-white mx-1 bg-green-500 rounded"
-                                      v-if="car.results != 0 && (car.pay_price - car.paid_amount_pay == 0)"
-                                      @click="openAddCarPayment(car)"
-                                    >
-                                      {{ $t('view_payments') }}
-                                    </button>
-                                    <button
-                                      tabIndex="1"
-                                      class="px-2 py-1 text-base text-white mx-1 bg-red-700 rounded"
-                                      v-if="car.results == 1 && (car.pay_price - car.paid_amount_pay != 0)"
-                                      @click="openAddCarPayment(car)"
-                                    >
-                                      {{ $t('add_payment') }}
-                                    </button>
-                                    -->
                     </td>
                   </tr>
                 </tbody>

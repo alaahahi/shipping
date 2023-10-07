@@ -237,7 +237,6 @@ let showModal = ref(false);
     </div>
   </AuthenticatedLayout>
 </template>
-
 <style>
 .td {
   max-width: 200px; /* can be 100% ellipsis will happen when contents exceed it */
