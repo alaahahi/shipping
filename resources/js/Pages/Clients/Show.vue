@@ -506,6 +506,32 @@ function calculateAmount(){
                 <span>اخفاء الدفعات</span>
               </button>
             </div>
+            <div className="mb-4  mr-5">
+              <InputLabel
+                for="contract_total"
+                value="العقود المنجزة"
+              />
+              <TextInput
+                id="contract_total"
+                type="text"
+                class="mt-1 block w-full"
+                :value="laravelData.contract_total"
+                disabled
+              />
+            </div>
+            <div className="mb-4  mr-5">
+              <InputLabel
+                for="exit_car_total"
+                value="الخروجيات المنجزة"
+              />
+              <TextInput
+                id="exit_car_total"
+                type="text"
+                class="mt-1 block w-full"
+                :value="laravelData.exit_car_total"
+                disabled
+              />
+            </div>
           </div>
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 lg:gap-1" v-if="showPaymentForm">
             <div className="mb-4  mr-5">

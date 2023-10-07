@@ -4,6 +4,9 @@ import { Head } from '@inertiajs/inertia-vue3';
 import VueTailwindDatepicker from 'vue-tailwind-datepicker'
 import ModalAddCarContracts from "@/Components/ModalAddCarContracts.vue";
 import ModalEditCarContracts from "@/Components/ModalEditCarContracts.vue";
+import ModalAddExitCar from "@/Components/ModalAddExitCar.vue";
+import ModalShowExitCar from "@/Components/ModalShowExitCar.vue";
+
 import { TailwindPagination } from "laravel-vue-pagination";
 import { useToast } from "vue-toastification";
 import axios from 'axios';
@@ -33,13 +36,16 @@ const toast = useToast();
 let searchTerm = ref('');
 let showModalAddCarContracts =  ref(false);
 let showModalEditCarContracts =  ref(false);
+let showModalAddExitCar = ref(false);
+let showModalShowExitCar = ref(false);
 
 let onlineContracts= ref(0)
 let debtOnlineContracts= ref(0)
 
 let onlineContractsDinar = ref(0)
 let debtOnlineContractsDinar = ref(0)
-
+let contarts = ref(0)
+let exitCar = ref(0)
 let allCars= ref(0)
 function openModalAddCarContracts(form={}) {
   formData.value=form
@@ -54,7 +60,16 @@ function openModalEditCarContracts(form={}) {
 
   showModalEditCarContracts.value = true;
 }
+function openModalAddExitCar(form={}) {
+  formData.value=form
+  formData.value.createdExit = getTodayDate()
 
+  showModalAddExitCar.value = true;
+}
+function openModalShowExitCar(form={}) {
+  formData.value=form
+  showModalShowExitCar.value = true;
+}
 const formData = ref({});
 const formGenExpenses = ref({});
 const car = ref([]);
@@ -77,6 +92,8 @@ const getResultsCarSearch = async (q='',page = 1) => {
 const getcountTotalInfo = async () => {
   axios.get('/api/totalInfo')
   .then(response => {
+    contarts.value = response.data.data.contarts;
+    exitCar.value = response.data.data.exitCar;
     onlineContracts.value = response.data.data.onlineContracts;
     onlineContractsDinar.value =response.data.data.onlineContractsDinar
     debtOnlineContractsDinar.value =response.data.data.debtOnlineContractsDinar
@@ -188,13 +205,14 @@ function confirmEditCarContracts(V) {
 
   })
 }
-function makeCarExit(id){
 
-  axios.get(`/api/makeCarExit?car_id=${id}`)
+function confirmAddExitCar(v){
+
+  axios.get(`/api/makeCarExit?car_id=${v.id}&created=${v.createdExit}&phone=${v.phoneExit}&note=${v.noteExit}`)
   .then(response => {
-    showModalEditCarContracts.value = false;
-    toast.success( " تم تعديل خروجية السيارة بنجاح ", {
-        timeout: 3000,
+    showModalAddExitCar.value = false;
+    toast.success( "تم اضافة خروجية للسيارة بنجاح ", {
+        timeout: 5000,
         position: "bottom-right",
         rtl: true
 
@@ -204,7 +222,7 @@ function makeCarExit(id){
 
   })
   .catch(error => {
-    showModalEditCarContracts.value = false;
+    showModalAddExitCar.value = false;
 
     toast.error("لم التعديل بنجاح", {
         timeout: 2000,
@@ -245,6 +263,15 @@ axios.get(`/api/unMakeCarExit?car_id=${id}`)
 })
 
 } 
+
+function getTodayDate() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 </script>
 
 <template>
@@ -269,7 +296,26 @@ axios.get(`/api/unMakeCarExit?car_id=${id}`)
         <template #header>
           </template>
     </ModalEditCarContracts>
-
+    <ModalAddExitCar
+            :formData="formData"
+            :show="showModalAddExitCar ? true : false"
+            :user="user"
+            @a="confirmAddExitCar($event)"
+            @close="showModalAddExitCar = false"
+            >
+        <template #header>
+          </template>
+    </ModalAddExitCar>
+    <ModalShowExitCar
+            :formData="formData"
+            :show="showModalShowExitCar ? true : false"
+            :user="user"
+            @a="confirmAddExitCar($event)"
+            @close="showModalShowExitCar = false"
+            >
+        <template #header>
+          </template>
+    </ModalShowExitCar>
     <AuthenticatedLayout>
         <div class="py-2" v-if="$page.props.auth.user.type_id==1">
         <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 ">
@@ -446,7 +492,7 @@ axios.get(`/api/unMakeCarExit?car_id=${id}`)
                             </div>
                           </div>
 
-                          <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -454,10 +500,26 @@ axios.get(`/api/unMakeCarExit?car_id=${id}`)
                             </div>
                       
                             <div class="mr-4">
-                              <h2 class="font-semibold"> {{ $t('fundIncome') }} </h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ inAccount.wallet?.balance }}</p>
+                              <h2 class="font-semibold"> العقود المنجزة </h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{contarts}}</p>
                             </div>
-                          </div> -->
+                          </div>
+
+                          
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                              </svg>
+                            </div>
+                      
+                            <div class="mr-4">
+                              <h2 class="font-semibold"> العقود المتبقية </h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{allCars-contarts}}</p>
+                            </div>
+                          </div>
+
+                          
                           <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -516,7 +578,32 @@ axios.get(`/api/unMakeCarExit?car_id=${id}`)
                               <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{allCars}}</p>
                             </div>
                           </div>
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                              </svg>
+                            </div>
+                      
+                            <div class="mr-4">
+                              <h2 class="font-semibold">  خروجية السيارات </h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{exitCar}}</p>
+                            </div>
+                          </div>
 
+                          
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                              </svg>
+                            </div>
+                      
+                            <div class="mr-4">
+                              <h2 class="font-semibold">  السيارات  المتبقية </h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{allCars-exitCar}}</p>
+                            </div>
+                          </div>
                           <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -582,15 +669,18 @@ axios.get(`/api/unMakeCarExit?car_id=${id}`)
                                       <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t('car_number') }}
                                       </th>
-                                  
                                       <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t('date') }}
                                       </th>
+                        
                                       <th scope="col" class="px-1 py-3 text-base">
                                         مدفوع دولار
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
                                         مدفوع دينار
+                                      </th>
+                                      <th scope="col" class="px-1 py-3 text-base">
+                                        {{ $t('note') }}
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base" style="width: 150px;">
                                         {{ $t('execute') }}
@@ -608,9 +698,11 @@ axios.get(`/api/unMakeCarExit?car_id=${id}`)
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_color }}</td>
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.vin }}</td>
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_number }}</td> 
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.date  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.contract?.created  }}</td>
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.contract?.paid || 0  }}</td>
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.contract?.paid_dinar  || 0 }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{car.contract?.note  }}</td>
+
                                      <td className="border dark:border-gray-800 text-start px-2 py-2">
                                     <!-- <button
                                       tabIndex="1"
@@ -629,7 +721,7 @@ axios.get(`/api/unMakeCarExit?car_id=${id}`)
                                       {{ $t('delete') }}
                                     </button> -->
                                     <button
-                                     v-if="car.contract && (car.contract?.price != car.contract?.paid)"
+                                     v-if="(car.contract?.price != car.contract?.paid) || (car.contract?.price_dinar != car.contract?.paid_dinar)"
                                       tabIndex="1"
                                       class="px-2 py-1  text-white mx-1 bg-pink-500 rounded"
                                       @click="openModalEditCarContracts(car)"
@@ -648,19 +740,19 @@ axios.get(`/api/unMakeCarExit?car_id=${id}`)
                                     <button
                                       tabIndex="1"
                                       class="px-2 py-1  text-white mx-1 bg-red-500 rounded"
-                                      v-if="car.is_exit == 0"
-                                      @click="makeCarExit(car.id)"
+                                      v-if="!car.is_exit"
+                                      @click="openModalAddExitCar(car)"
                                     >
                                      <exit />
                                     </button>
                                     <button
                                       tabIndex="1"
                                       class="px-2 py-1  text-white mx-1 bg-green-500 rounded"
-                                      v-if="car.is_exit == 1"
-                                      @click="unMakeCarExit(car.id)"
+                                      v-if="car.is_exit"
+                                      @click="openModalShowExitCar(car)"
 
                                     >
-                                     <exit />
+                                     <show />
                                     </button>
                                        <!-- 
                                     <button

@@ -16,6 +16,7 @@ use App\Models\Transactions;
 use App\Models\SystemConfig;
 use App\Models\Name;
 use App\Models\Car;
+use App\Models\ExitCar;
 use App\Models\CarModel;
 use App\Models\Contract;
 use Illuminate\Support\Facades\Crypt;
@@ -105,6 +106,7 @@ class OnlineContractsController extends Controller
         $car = Car::find($car_id);
         $data = ['user_id'=>$car->client_id,'car_id'=>$car->id,"price"=>$price,"price_dinar"=>$price_dinar,'paid'=>$paid,'paid_dinar'=>$paid_dinar,'note'=>$note,'created'=>Carbon::now()->format('Y-m-d')];
         $contract=Contract::create($data);
+        $car->update(['contract_id'=>$contract->id]);
         if($contract){
             $desc="انشاء عقد بقيمة ".$price." وتم دفع مبلغ".$paid.' '.$note;
             $descD="انشاء عقد بقيمة ".$price_dinar." وتم دفع مبلغ".$paid_dinar.' '.$note;
@@ -126,9 +128,15 @@ class OnlineContractsController extends Controller
     }
     public function makeCarExit(Request $request){
         $car_id=$request->car_id;
+        $created=$request->created;
+        $phone=$request->phone ?? 0;
+        $note=$request->note ?? '';
         $car = Car::find($car_id);
-        $car->increment('is_exit');
-        return $car;
+
+        $data=['car_id'=>$car_id,'user_id'=>$car->client_id, 'created'=>$created, 'phone' =>$phone, 'note' =>$note];
+        $exitCar = ExitCar::create($data);
+        $car->update(['is_exit'=>$exitCar->id]);
+        return $exitCar;
     }
     public function unMakeCarExit(Request $request){
         $car_id=$request->car_id;

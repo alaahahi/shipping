@@ -11,6 +11,8 @@ use App\Models\User;
 use App\Models\Car;
 use App\Models\Company;
 use App\Models\Name;
+use App\Models\ExitCar;
+use App\Models\Contract;
 use App\Models\CarModel;
 use App\Models\Color;
 use App\Models\Wallet;
@@ -105,11 +107,15 @@ class DashboardController extends Controller
     public function totalInfo(Request $request)
     {
         $car = Car::all();
+        $contarts = Contract::all()->count();
+        $exitCar = ExitCar::all()->count();
         $sumTotal = $car->sum('total');
         $sumPaid = $car->sum('paid');
         $sumDebit = $car->whereIn('results',[0,1])->sum('total_s');
         $sumProfit = $car->where('results',2)->sum('profit');
         $data = [
+        'contarts'=>$contarts,
+        'exitCar'=>$exitCar,
         'mainAccount'=>$this->mainAccount->wallet->balance??0,
         'onlineContracts'=>$this->onlineContracts->wallet->balance??0,
         'onlineContractsDinar'=>$this->onlineContractsDinar->wallet->balance_dinar??0,
@@ -588,7 +594,7 @@ class DashboardController extends Controller
     public function getIndexCar()
     {
         $user_id =$_GET['user_id'] ?? '';
-        $data =  Car::with('contract')->with('name')->with('client');
+        $data =  Car::with('contract')->with('exitcar')->with('client');
         $type =$_GET['type'] ?? '';
         if($type){
             $data =    $data->where('results', $type);

@@ -54,7 +54,8 @@ class Car extends Model
         'total_s',
         'discount',
         'expenses_s',
-        'is_exit'
+        'is_exit',
+        'contract_id'
     ];
     public function user()
     {
@@ -89,6 +90,12 @@ class Car extends Model
         // Define a one-to-one relationship with the Car model
         return $this->hasOne(Contract::class, 'car_id', 'id');
     }
+    public function exitcar()
+    {
+        // Define a one-to-one relationship with the Car model
+        return $this->hasOne(ExitCar::class, 'car_id', 'id');
+    }
+    
     protected $appends = ['image_url'];
 
     /**

@@ -1,5 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
+import { useToast } from "vue-toastification";
+let toast = useToast();
 
 const props = defineProps({
   show: Boolean,
@@ -12,8 +14,30 @@ const props = defineProps({
   expenses:Array,
   formData:Object
 });
-let need_pay =  ref(0);
+function calculateAmount(){
+  let amount =props.formData.contract.price - props.formData.contract.paid
+if(props.formData.paids > amount){
+  props.formData.paids =amount
+    toast.info(" المبلغ اكبر من الدين المطلوب"+" "+amount, {
+        timeout: 4000,
+        position: "bottom-right",
+        rtl: true,
+      });
+}
 
+}
+function calculateAmountDinars(){
+  let amount =props.formData.contract.price_dinar - props.formData.contract.paid_dinar
+if(props.formData.paid_dinars > amount){
+  props.formData.paid_dinars = amount
+    toast.info(" المبلغ اكبر من الدين المطلوب"+" "+amount, {
+        timeout: 4000,
+        position: "bottom-right",
+        rtl: true,
+      });
+}
+
+}
 </script>
   <template>
     <Transition name="modal">
@@ -29,14 +53,12 @@ let need_pay =  ref(0);
                 <div className="mb-4 mx-5">
                   <label  class="dark:text-gray-200" for="user_id" >{{ $t('totalForCar') }} بالدولار</label>
                   <input
-                  id="id"
                   type="text"
                   style="display: none;"
                   disabled
                   v-model="formData.id" />
 
                   <input
-                  id="id"
                   type="text"
                   disabled
                   class=" mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
@@ -45,7 +67,6 @@ let need_pay =  ref(0);
                 <div className="mb-4 mx-5">
                   <label  class="dark:text-gray-200" for="user_id" >{{ $t('paid_amount') }}  بالدولار</label>
                   <input
-                  id="id"
                   type="text"
                   disabled
                   class=" mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
@@ -54,7 +75,6 @@ let need_pay =  ref(0);
                 <div className="mb-4 mx-5">
                   <label  class="dark:text-gray-200" for="userId">{{ $t('debtRemaining') }}  بالدولار</label>
                   <input
-                  id="id"
                   type="text"
                   disabled
                   :value="formData.contract.price-(formData.contract.paid)"
@@ -66,14 +86,12 @@ let need_pay =  ref(0);
                 <div className="mb-4 mx-5">
                   <label  class="dark:text-gray-200" for="user_id" >{{ $t('totalForCar') }} بالدينار</label>
                   <input
-                  id="id"
                   type="text"
                   style="display: none;"
                   disabled
                   v-model="formData.id" />
 
                   <input
-                  id="id"
                   type="text"
                   disabled
                   class=" mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
@@ -82,7 +100,6 @@ let need_pay =  ref(0);
                 <div className="mb-4 mx-5">
                   <label  class="dark:text-gray-200" for="user_id" >{{ $t('paid_amount') }}  بالدينار</label>
                   <input
-                  id="id"
                   type="text"
                   disabled
                   class=" mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
@@ -91,7 +108,6 @@ let need_pay =  ref(0);
                 <div className="mb-4 mx-5">
                   <label  class="dark:text-gray-200" for="userId">{{ $t('debtRemaining') }}  بالدينار</label>
                   <input
-                  id="id"
                   type="text"
                   disabled
                   :value="formData.contract.price_dinar-(formData.contract.paid_dinar)"
@@ -105,12 +121,14 @@ let need_pay =  ref(0);
               <input
                 id="amountPayment"
                 type="number"
+                @input="calculateAmount"
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
                 v-model="formData.paids" />
               </div>
               <div className="mb-4 mx-5">
               <label  class="dark:text-gray-200" for="amountPayment" >{{ $t('amount') }} بالدينار</label>
               <input
+                @input="calculateAmountDinars"
                 id="amountPayment"
                 type="number"
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "

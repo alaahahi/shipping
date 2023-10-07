@@ -1,7 +1,5 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { useToast } from "vue-toastification";
-let toast = useToast();
 
 const props = defineProps({
   show: Boolean,
@@ -16,30 +14,6 @@ const props = defineProps({
 });
 let need_pay =  ref(0);
 
-function calculateAmount(){
-  let amount =props.formData.prices
-if(props.formData.paids > amount){
-  props.formData.paids = props.formData.prices
-    toast.info(" المبلغ اكبر من الدين المطلوب"+" "+props.formData.prices, {
-        timeout: 4000,
-        position: "bottom-right",
-        rtl: true,
-      });
-}
-
-}
-function calculateAmountDinars(){
-  let amount =props.formData.price_dinars
-if(props.formData.paid_dinars > amount){
-  props.formData.paid_dinars = props.formData.price_dinars
-    toast.info(" المبلغ اكبر من الدين المطلوب"+" "+props.formData.price_dinars, {
-        timeout: 4000,
-        position: "bottom-right",
-        rtl: true,
-      });
-}
-
-}
 </script>
   <template>
     <Transition name="modal">
@@ -47,7 +21,7 @@ if(props.formData.paid_dinars > amount){
         <div class="modal-wrapper ">
           <div class="modal-container dark:bg-gray-900">
             <div class="modal-header text-center py-4">  
-              إضافة عقد الكتروني للسيارة {{ formData.car_type }} {{ formData.year }} {{  formData.car_color }} رقم شانصى {{ formData.vin }}
+             عرض  خروجية   {{ formData.car_type }} {{ formData.year }} {{  formData.car_color }} رقم شانصى {{ formData.vin }}
               <slot name="header"></slot>
             </div>
 
@@ -56,40 +30,20 @@ if(props.formData.paid_dinars > amount){
               <div>
               <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-2">
               <div className="mb-4 mx-5">
-              <label  class="dark:text-gray-200" for="amountTotal" >سعر العقد بالدولار</label>
+              <label  class="dark:text-gray-200" for="amountTotal" >رقم الهاتف</label>
               <input
                 id="amountTotal"
                 type="number"
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                v-model="formData.prices" />
+                v-model="formData.exitcar.phone" />
               </div>
               <div className="mb-4 mx-5">
-              <label  class="dark:text-gray-200" for="amountTotal" >سعر العقد بالدينار</label>
+              <label  class="dark:text-gray-200" for="amountTotal" >تاريخ الخروجية</label>
               <input
                 id="amountTotal"
-                type="number"
+                type="date"
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                v-model="formData.price_dinars" />
-              </div>
-              </div>
-              <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-2">
-              <div className="mb-4 mx-5">
-              <label  class="dark:text-gray-200" for="amountPayment" >المبلغ المدفع بالدولار</label>
-              <input
-                id="amountPayment"
-                type="number"
-                @input="calculateAmount"
-                class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                v-model="formData.paids" />
-              </div>
-              <div className="mb-4 mx-5">
-              <label  class="dark:text-gray-200" for="amountPayment" >المبلغ المدفع بالدينار</label>
-              <input
-                id="amountPayment"
-                type="number"
-                @input="calculateAmountDinars"
-                class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                v-model="formData.paid_dinars" />
+                v-model="formData.exitcar.created" />
               </div>
               </div>
               <div className="mb-4 mx-5">
@@ -98,7 +52,7 @@ if(props.formData.paid_dinars > amount){
                 id="notePayment"
                 type="text"
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                v-model="formData.note" />
+                v-model="formData.exitcar.note" />
               </div>
               </div>
             </div>

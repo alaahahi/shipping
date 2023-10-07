@@ -90,6 +90,10 @@ class AccountingController extends Controller
             $cars_discount=Car::where('client_id',$client->id)->sum('discount');
             $cars_paid=   Car::where('client_id',$client->id)->sum('paid');
             $cars_sum=   Car::where('client_id',$client->id)->sum('total_s');
+            $contract_total=   Car::where('client_id',$client->id)->where('contract_id','!=',0)->count();
+            $exit_car_total=   Car::where('client_id',$client->id)->where('is_exit','!=',0)->count();
+
+            
             $cars_need_paid=$cars_sum-($cars_paid+$cars_discount);
         }
         //$data = $transactions->paginate(10);
@@ -103,6 +107,8 @@ class AccountingController extends Controller
             'car_total_unpaid'=>$car_total_unpaid,
             'car_total_complete'=>$car_total_complete,
             'car_total_uncomplete'=>$car_total_uncomplete,
+            'contract_total'=>$contract_total,
+            'exit_car_total'=>$exit_car_total,
             'cars_sum'=>$cars_sum,
             'cars_paid'=>$cars_paid,
             'cars_discount'=>$cars_discount,
