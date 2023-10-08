@@ -35,7 +35,7 @@ let need_pay =  ref(0);
                 id="amountTotal"
                 type="number"
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                v-model="formData.exitcar.phone" />
+                :value="formData.exitcar?.phone" />
               </div>
               <div className="mb-4 mx-5">
               <label  class="dark:text-gray-200" for="amountTotal" >تاريخ الخروجية</label>
@@ -43,7 +43,7 @@ let need_pay =  ref(0);
                 id="amountTotal"
                 type="date"
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                v-model="formData.exitcar.created" />
+                :value="formData.exitcar?.created" />
               </div>
               </div>
               <div className="mb-4 mx-5">
@@ -52,7 +52,7 @@ let need_pay =  ref(0);
                 id="notePayment"
                 type="text"
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                v-model="formData.exitcar.note" />
+                :value="formData.exitcar?.note" />
               </div>
               </div>
             </div>

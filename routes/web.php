@@ -42,6 +42,8 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('sales',[DashboardController::class,'sales'])->name('sales');
     Route::get('purchases',[DashboardController::class,'purchases'])->name('purchases');
 
+    Route::get('accounting',[AccountingController::class,'index'])->name('accounting');
+
     
     Route::get('getIndex',[UserController::class, 'getIndex'])->name("getIndex");
     Route::get('ban/{id}',[UserController::class, 'ban'])->name("ban");
@@ -159,6 +161,7 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('border',[TransfersController::class, 'border'])->name('border');
     Route::get('coc',[TransfersController::class, 'coc'])->name('coc');
     Route::get('howler',[TransfersController::class, 'howler'])->name('howler');
+    Route::get('getIndexAccounting',[AccountingController::class, 'getIndexAccounting'])->name("getIndexAccounting");
 
     
 

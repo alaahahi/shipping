@@ -62,6 +62,8 @@ class OnlineContractsController extends Controller
     $this->border= User::with('wallet')->where('type_id', $this->userAccount)->where('email','border')->first();
     $this->iran= User::with('wallet')->where('type_id', $this->userAccount)->where('email','iran')->first();
     $this->dubai= User::with('wallet')->where('type_id', $this->userAccount)->where('email','dubai')->first();
+    $this->mainBox= User::with('wallet')->where('type_id', $this->userAccount)->where('email','mainBox@account.com')->first();
+
     }
 
     /**
@@ -108,11 +110,20 @@ class OnlineContractsController extends Controller
         $contract=Contract::create($data);
         $car->update(['contract_id'=>$contract->id]);
         if($contract){
-            $desc="انشاء عقد بقيمة ".$price." وتم دفع مبلغ".$paid.' '.$note;
-            $descD="انشاء عقد بقيمة ".$price_dinar." وتم دفع مبلغ".$paid_dinar.' '.$note;
-            $descDebit="دين من عقد السيارة ".$car->car_type.' '.$note;
-            $this->accountingController->increaseWallet($paid, $desc,$this->onlineContracts->id,$car->id,'App\Models\Car');
-            $this->accountingController->increaseWallet($paid_dinar, $descD,$this->onlineContractsDinar->id,$car->id,'App\Models\Car',0,0,'IQD');
+            $desc="انشاء عقد بقيمة ".$price." وتم دفع مبلغ".$paid.' '.$car->car_type.' رقم الشانص'.$car->vin.' '.$note;
+            $descD="انشاء عقد بقيمة ".$price_dinar." وتم دفع مبلغ".$paid_dinar.' '.$car->car_type.' رقم الشانص'.$car->vin.' '.$note;
+            $descDebit="دين من عقد السيارة ".$car->car_type.' '.' '.$car->car_type.' '.$car->car_type.' رقم الشانص'.$car->vin.' '.$note;
+            if($paid){
+                $tran=$this->accountingController->increaseWallet($paid,$desc,$this->accountingController->mainBox->id,$this->mainBox->id,'App\Models\car',0,0,'$');
+                $this->accountingController->increaseWallet($paid, $desc,$this->onlineContracts->id,$car->id,'App\Models\Car',0,0,'$',0,$tran->id);
+            }
+
+            if($paid_dinar){
+                $tran=$this->accountingController->increaseWallet($paid_dinar,$descD,$this->mainBox->id,$this->mainBox->id,'App\Models\car',0,0,'IQD');
+                $this->accountingController->increaseWallet($paid_dinar, $descD,$this->onlineContractsDinar->id,$car->id,'App\Models\Car',0,0,'IQD',0,$tran->id);
+            }
+        
+
             if($price-$paid > 0){
                 $this->accountingController->increaseWallet($price-$paid, $descDebit,$this->debtOnlineContracts->id,$car->id,'App\Models\Car');
             }
@@ -153,17 +164,20 @@ class OnlineContractsController extends Controller
     
         $contract=Contract::find($car->contract->id);
 ;
-        $descDebit="دين من عقد السيارة ".$car->car_type.' '.$note;
+        $descDebit="دين من عقد السيارة ".$car->car_type.' '.$car->car_type.' رقم الشانص'.$car->vin.' '.$note;
         if($paid){
             $contract->increment('paid',$paid);
-            $this->accountingController->increaseWallet($paid, $descDebit,$this->onlineContracts->id,$car->id,'App\Models\Car');
-            $this->accountingController->decreaseWallet($paid, $descDebit,$this->debtOnlineContracts->id,$car->id,'App\Models\Car');
+            $tran=$this->accountingController->increaseWallet($paid,$descDebit,$this->accountingController->mainBox->id,$this->mainBox->id,'App\Models\car',0,0,'$');
+
+            $this->accountingController->increaseWallet($paid, $descDebit,$this->onlineContracts->id,$car->id,'App\Models\Car',0,0,'$',0,$tran->id);
+            $this->accountingController->decreaseWallet($paid, $descDebit,$this->debtOnlineContracts->id,$car->id,'App\Models\Car',0,0,'$',0,$tran->id);
         }
         if($paid_dinar)
         {
             $contract->increment('paid_dinar',$paid_dinar);
-            $this->accountingController->increaseWallet($paid_dinar, $descDebit,$this->onlineContractsDinar->id,$car->id,'App\Models\Car',0,0,'IQD');
-            $this->accountingController->decreaseWallet($paid_dinar, $descDebit,$this->debtOnlineContractsDinar->id,$car->id,'App\Models\Car',0,0,'IQD');
+            $tran=$this->accountingController->increaseWallet($paid_dinar,$descDebit,$this->accountingController->mainBox->id,$this->mainBox->id,'App\Models\car',0,0,'IQD');
+            $this->accountingController->increaseWallet($paid_dinar, $descDebit,$this->onlineContractsDinar->id,$car->id,'App\Models\Car',0,0,'IQD',0,$tran->id);
+            $this->accountingController->decreaseWallet($paid_dinar, $descDebit,$this->debtOnlineContractsDinar->id,$car->id,'App\Models\Car',0,0,'IQD',0,$tran->id);
         }
        
 

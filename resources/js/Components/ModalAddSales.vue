@@ -2,17 +2,22 @@
 import { ref, watch } from 'vue';
 
 
+
 const props = defineProps({
   show: Boolean,
-  boxes: Array,
+  data: Array,
+  accounts: Array,
 });
 const form = ref({
   user: {
     percentage:0,
   },
   date:getTodayDate(),
+  card:0,
   amount: 0,
-
+  box:0,
+  hospital:0,
+  doctor:0,
 
 });
 function getTodayDate() {
@@ -28,15 +33,35 @@ const restform =()=>{
     percentage:0,
   },
   date:getTodayDate(),
+  card:0,
   amount: 0,
+  box:0,
+  hospital:0,
+  doctor:0,
 
 };
 }
+const calculateAmount = () => {
+  if(form.value.card==1){
+  form.value.amount = 25000;
+  form.value.box = (75000 * form.value.card)-form.value.amount;
+  }else{
+  let cards= (form.value.card)-1
+  form.value.amount = (form.value.user.percentage * cards)+25000;
+  form.value.box = (75000 * form.value.card)-form.value.amount;
+  }
+
+};
+
+const calculateBox = () => {
+  form.value.box = (75000 * form.value.card)-form.value.amount;
+  
+};
 
 
 </script>
   
-  <template>  
+  <template>
     <Transition name="modal">
       <div v-if="show" class="modal-mask ">
         <div class="modal-wrapper ">
@@ -45,7 +70,41 @@ const restform =()=>{
               <slot name="header"></slot>
             </div>
             <div class="modal-body">
+                        <h2 class="text-center pb-5">
+                         وصل قبض
+                        </h2>
                         <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-3">
+
+   
+                        <!-- <div className="mb-4 mx-5">
+                          <label for="user_id" >الحساب</label>
+                          <select
+                            v-model="form.user"
+                            id="user_id"
+                            class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            <option selected disabled>تحديد الحساب</option>
+                            <option v-for="(user, index) in data" :key="index" :value="user">{{ user.name }}</option>
+                          </select>
+                        </div> -->
+                        <div className="mb-4 mx-5">
+                        <label for="card" >المبلغ بالدولار</label>
+                        <input
+                          id="card"
+                          type="number"
+
+                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          v-model="form.amountDollar"   />
+                        </div>
+
+                        <div className="mb-4 mx-5">
+                        <label for="card" >المبلغ بالدينار</label>
+                        <input
+                          id="card"
+                          type="number"
+
+                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          v-model="form.amountDinar"   />
+                        </div>
                         <div className="mb-4 mx-5">
                           <label for="card" >التاريخ</label>
                           <input
@@ -55,60 +114,15 @@ const restform =()=>{
                           v-model="form.date"   />
                         </div>
                         <div className="mb-4 mx-5">
-                          <label for="user_id" >الحساب</label>
-                          <select
-                            v-model="form.user"
-                            id="user_id"
-                            class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                            <option selected disabled>تحديد الحساب</option>
-                            <option v-for="(user, index) in boxes" :key="index" :value="user">{{ user.name }}</option>
-                          </select>
-                        </div>
-                        <div className="mb-4 mx-5">
-                        <label for="balance" >الرصيد الحالي بالدولار</label>
+                        <label for="card" >ملاحظة</label>
                         <input
-                          id="balance"
-                          type="number"
-                          :value="form.user.wallet?.balance"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                            />
-                        </div>
-                        <div className="mb-4 mx-5">
-                        <label for="balance" >الرصيد الحالي بالدينار العراقي</label>
-                        <input
-                          id="balance"
-                          type="number"
-                          :value="form.user.wallet?.balance_dinar"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                            />
-                        </div>
-                        </div>
-                        <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-3">
-                        <div className="mb-4 mx-5">
-                        <label for="amountDollar" >المبلغ بالدولار</label>
-                        <input
-                          id="amountDollar"
-                          type="number"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                          v-model="form.amountDollar" />
-                        </div>
-                        <div className="mb-4 mx-5">
-                        <label for="amountDinar" >المبلغ بالدينار العراقي</label>
-                        <input
-                          id="amountDinar"
-                          type="number"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                          v-model="form.amountDinar" />
-                        </div>
-                        <div className="mb-4 mx-5">
-                        <label for="note" >ملاحظة</label>
-                        <input
-                          id="note"
+                          id="card"
                           type="text"
                           class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                          v-model="form.note" />
+                          v-model="form.amountNote"   />
                         </div>
                         </div>
+
             </div>
   
             <div class="modal-footer my-2">
@@ -118,7 +132,7 @@ const restform =()=>{
                     @click="$emit('close');">تراجع</button>
                   </div>
               <div class="basis-1/2 px-4">
-                <button class="modal-default-button py-3  bg-rose-500 rounded col-6"  @click="$emit('a',form);restform();" :disabled="!form.amountDollar && form.amountDinar">نعم</button>
+                <button class="modal-default-button py-3  bg-rose-500 rounded col-6"  @click="$emit('a',form);restform();" :disabled="!form.amountDollar && !form.amountDinar">نعم</button>
                 </div>
 
             </div>

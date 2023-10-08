@@ -114,3 +114,6 @@ Route::get('companyStoreEdit',[CarConfigController::class, 'index'])->name('comp
 Route::post('companyStoreEdit',[CarConfigController::class, 'storeEdit'])->name('companyStoreEdit');
 
 
+Route::post('salesDebt',[AccountingController::class, 'salesDebt'])->name('salesDebt');
+Route::post('delTransactions',[AccountingController::class, 'delTransactions'])->name('delTransactions');
+Route::post('receiptArrived',[AccountingController::class, 'receiptArrived'])->name('receiptArrived');
