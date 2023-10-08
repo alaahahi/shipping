@@ -24,6 +24,16 @@ $Help = new MyHelp();
     @endif
 @endforeach
 @endif
+<style>
+  @page  
+{ 
+    size: auto;   /* auto is the initial value */ 
+
+    /* this affects the margin in the printer settings */ 
+    margin: 0;  
+    margin-top: 60px
+} 
+</style>
 <body style="direction: rtl;">
 <div class="container mt-2 " style="border: 2px solid">       
 <div class="row" >
@@ -305,7 +315,7 @@ $Help = new MyHelp();
     $(document).ready(function() {
         // Function to open the print dialog
         function openPrintDialog() {
-           // window.print();
+             window.print();
         }
     
         // Call the function to open the print dialog
