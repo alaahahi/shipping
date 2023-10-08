@@ -225,18 +225,31 @@ function delTransactions(id){
                                             وصل قبض
               </button>
               </div>
-              <div class="pt-5  print:hidden">
+
+              <div class="pt-5  hidden">
               <button  v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2|| $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-yellow-500 rounded-md focus:outline-none"
                                             @click="opendebtSales()">
                                              تحويل لحساب 
               </button>
               </div>
+              
               <div class="pt-5  print:hidden">
               <button  v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2|| $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-blue-500 rounded-md focus:outline-none"
                                             @click="openAddExpenses()">
                                              اضافة مصاريف
               </button>
        
+              </div>
+              <div  class="pt-5">
+                <a
+                            class="px-2 mb-12 py-2 mt-1 font-bold text-white bg-pink-500 rounded" style="display: block;text-align: center;"
+                            :href="route('transfers')"
+                            target="_blank"
+                            >
+                            
+                            <span v-if="!isLoading">الأرشيف</span>
+                            <span v-else>جاري الحفظ...</span>
+                          </a>
               </div>
               <div class=" px-4">
                           <div >
@@ -335,18 +348,7 @@ function delTransactions(id){
                                 :value="laravelData?.user?.wallet.balance"
                               />
                 </div>
-                <div className=" mr-5 print:hidden" >
-                            <InputLabel for="pay" value="الأرشيف" />
-                            <a
-                            class="px-2 mb-12 py-2 mt-1 font-bold text-white bg-pink-500 rounded" style="display: block;text-align: center;"
-                            :href="route('transfers')"
-                            target="_blank"
-                            >
-                            
-                            <span v-if="!isLoading">الأرشيف</span>
-                            <span v-else>جاري الحفظ...</span>
-                          </a>
-              </div>
+
             </div>
             <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-3 lg:gap-3 pt-3">
               <div class=" px-4">
