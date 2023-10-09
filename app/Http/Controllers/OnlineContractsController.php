@@ -135,6 +135,8 @@ class OnlineContractsController extends Controller
             if(($price-$paid == 0)&&($price_dinar-$paid_dinar == 0)){
                 $dataExitCar=['car_id'=>$car->id,'user_id'=>$car->client_id, 'created'=>$this->currentDate, 'phone' =>$phone, 'note' =>$note];
                 $exitCar = ExitCar::create($dataExitCar);
+                $car->update(['is_exit'=>$exitCar->id]);
+
             }
         }
         return Response::json('ok', 200);    
@@ -152,12 +154,7 @@ class OnlineContractsController extends Controller
         $car->update(['is_exit'=>$exitCar->id]);
         return $exitCar;
     }
-    public function unMakeCarExit(Request $request){
-        $car_id=$request->car_id;
-        $car = Car::find($car_id);
-        $car->decrement('is_exit');
-        return $car;
-    }
+
     public function editCarContracts(Request $request){
         $paid=$request->paid;
         $paid_dinar=$request->paid_dinar;
@@ -188,6 +185,8 @@ class OnlineContractsController extends Controller
         if(( $contract->price-$paid == 0)&&($contract->price_dinar-$paid_dinar == 0)){
             $dataExitCar=['car_id'=>$car->id,'user_id'=>$car->client_id, 'created'=>$this->currentDate, 'phone' =>$phone, 'note' =>$note];
             $exitCar = ExitCar::create($dataExitCar);
+            $car->update(['is_exit'=>$exitCar->id]);
+
         }
         return Response::json('ok', 200);    
 

@@ -34,6 +34,7 @@ let need_pay =  ref(0);
               <input
                 id="amountTotal"
                 type="number"
+                disabled
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
                 :value="formData.exitcar?.phone" />
               </div>
@@ -42,6 +43,7 @@ let need_pay =  ref(0);
               <input
                 id="amountTotal"
                 type="date"
+                disabled
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
                 :value="formData.exitcar?.created" />
               </div>
@@ -51,6 +53,7 @@ let need_pay =  ref(0);
               <input
                 id="notePayment"
                 type="text"
+                disabled
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
                 :value="formData.exitcar?.note" />
               </div>

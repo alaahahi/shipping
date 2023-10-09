@@ -93,6 +93,14 @@ if(props.formData.paid_dinars > amount){
               </div>
               </div>
               <div className="mb-4 mx-5">
+              <label  class="dark:text-gray-200" for="notePayment" >{{ $t('phone') }} </label>
+              <input
+                id="notePayment"
+                type="text"
+                class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                v-model="formData.phone" />
+              </div>
+              <div className="mb-4 mx-5">
               <label  class="dark:text-gray-200" for="notePayment" >{{ $t('note') }} </label>
               <input
                 id="notePayment"

@@ -152,7 +152,7 @@ function confirmUpdateCar(V) {
 getResultsCar();
 
 function confirmAddCarContracts(V) {
-  axios.get(`/api/addCarContracts?car_id=${V.id}&price=${V.prices??0}&price_dinar=${V.price_dinars??0}&paid=${V.paids??0}&paid_dinar=${V.paid_dinars??0}&note=${V.note??''}`)
+  axios.get(`/api/addCarContracts?car_id=${V.id}&price=${V.prices??0}&price_dinar=${V.price_dinars??0}&paid=${V.paids??0}&paid_dinar=${V.paid_dinars??0}&phone=${V.phone??''}&note=${V.note??''}`)
   .then(response => {
     showModalAddCarContracts.value = false;
     toast.success( " تم دفع مبلغ بنجاح ", {
