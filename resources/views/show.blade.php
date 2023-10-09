@@ -92,6 +92,7 @@
             <th scope="col">نقل</th>
             <th scope="col">مصاريف</th>
             <th scope="col">مجموع</th>
+            <th scope="col">ملاحطة</th>
           </tr>
         </thead>
         <tbody>
@@ -119,6 +120,7 @@
                 <td>{{$data->shipping_dolar_s}}</td>
                 <td>{{$data->expenses_s}}</td>
                 <td>{{$data->total_s}}</td>
+                <td>{{$data->note}}</td>
               </tr>
             @endforeach
         </tbody>
