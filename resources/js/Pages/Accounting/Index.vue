@@ -8,6 +8,8 @@ import ModalAddDebt from "@/Components/ModalAddDebt.vue";
 import ModalAddExpenses from "@/Components/ModalAddExpenses.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
+import ModalAddGenExpenses from "@/Components/ModalAddGenExpenses.vue";
+
 import axios from 'axios';
 import show from "@/Components/icon/show.vue";
 import pay from "@/Components/icon/pay.vue";
@@ -20,6 +22,10 @@ const searchTerm = ref('');
 let showModalAddSales = ref(false);
 let showModaldebtSales = ref(false);
 let showModalAddExpenses = ref(false);
+let showModalAddGenExpenses = ref(false);
+let expenses_type_id = ref(0);
+let formData = ref({});
+
 let isLoading=ref(false);
 let from = ref(0);
 let to = ref(0);
@@ -159,6 +165,22 @@ function delTransactions(id){
     errors.value = error.response.data.errors
   })
 }
+function openAddGenExpenses(v) {
+    expenses_type_id.value=v
+    showModalAddGenExpenses.value = true;
+}
+function conGenfirmExpenses(V) {
+  fetch(`api/GenExpenses?amount=${V.amount??0}&expenses_type_id=${expenses_type_id.value}&factor=${V.factor??1}&note=${V.note??''}`)
+    .then(() => {
+      showModalAddGenExpenses.value = false;
+      window.location.reload();
+
+    })
+    .catch((error) => {
+      
+      console.error(error);
+    });
+}
 </script>
 
 <template>
@@ -169,6 +191,17 @@ function delTransactions(id){
         المحاسبة
       </h2>
     </template>
+    <ModalAddGenExpenses
+            :formData="formData"
+            :show="showModalAddGenExpenses ? true : false"
+            :expenses_type_id="expenses_type_id"
+            :user="user"
+            @a="conGenfirmExpenses($event)"
+            @close="showModalAddGenExpenses = false"
+            >
+        <template #header>
+          </template>
+    </ModalAddGenExpenses>
     <ModalAddSales
             :show="showModalAddSales ? true : false"
             :data="users"
@@ -297,8 +330,55 @@ function delTransactions(id){
               </div>
 
               
-             </div>
-             <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-3 lg:gap-3">
+            </div>
+            <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
+              <div>
+                          <button
+                            type="button"
+                            @click="openAddGenExpenses(1)"
+                            style="min-width:150px;"
+                            className="px-6 mb-12 py-2 font-bold text-white bg-red-500 rounded  w-full">
+                               {{ $t('genExpenses') }}
+                          </button>
+                        </div>
+                        <div>
+                          <button
+                            type="button"
+                            @click="openAddGenExpenses(2)"
+                            style="min-width:150px;"
+                            className="px-6 mb-12 text-center py-2 font-bold text-white bg-blue-600 rounded  w-full">
+                            {{ $t('dubai') }}
+                          </button>
+                        </div>
+                        <div>
+                          <button
+                            type="button"
+                            @click="openAddGenExpenses(3)"
+                            style="min-width:150px;"
+                            className="px-6 mb-12 text-center w-full py-2 font-bold text-white bg-blue-600 rounded">
+                            {{ $t('iran') }}
+                          </button>
+                        </div>
+                       <div>
+                          <button
+                            type="button"
+                            @click="openAddGenExpenses(4)"
+                            style="min-width:150px;"
+                            className="px-6 mb-12 w-full py-2 font-bold text-white bg-indigo-600 rounded">
+                            {{ $t('border') }} 
+                          </button>
+                        </div> 
+                        <div>
+                          <button
+                            type="button"
+                            @click="openAddGenExpenses(5)"
+                            style="min-width:150px;"
+                            className="px-6 mb-12 w-full py-2 font-bold text-white bg-pink-600 rounded">
+                            {{ $t('shipping_coc') }} 
+                          </button>
+                        </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-3 lg:gap-3">
               <div class=" px-4">
                             <div >
                               <InputLabel for="to" value="حساب الصندوق بالدولار" />
@@ -432,7 +512,7 @@ function delTransactions(id){
                   <th className="border px-2 py-1">{{ user.description }}</th>
                   <td className="border px-2 py-1">{{ user.amount+' '+user.currency  }}</td>
                   <td className="border px-2 py-1">
-                    <button class="px-1 py-1 text-white bg-rose-500 rounded-md focus:outline-none" @click="delTransactions(user.id)" >
+                    <button class="px-1 py-1 text-white bg-rose-500 rounded-md focus:outline-none hidden" @click="delTransactions(user.id)" >
                       <trash />
                     </button>
                   </td>

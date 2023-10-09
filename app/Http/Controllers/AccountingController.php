@@ -51,8 +51,15 @@ class AccountingController extends Controller
         $this->transfersAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','transfers@account.com')->first();
         $this->outSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-out')->first();
         $this->debtSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-debt')->first();
-
+        $this->howler= User::with('wallet')->where('type_id', $this->userAccount)->where('email','howler')->first();
+        $this->shippingCoc= User::with('wallet')->where('type_id', $this->userAccount)->where('email','shipping-coc')->first();
+        $this->border= User::with('wallet')->where('type_id', $this->userAccount)->where('email','border')->first();
+        $this->iran= User::with('wallet')->where('type_id', $this->userAccount)->where('email','iran')->first();
+        $this->dubai= User::with('wallet')->where('type_id', $this->userAccount)->where('email','dubai')->first();
+    
         $this->mainBox= User::with('wallet')->where('type_id', $this->userAccount)->where('email','mainBox@account.com')->first();
+
+        $this->currentDate = Carbon::now()->format('Y-m-d');
     }
 
     /**
@@ -314,8 +321,6 @@ class AccountingController extends Controller
     }
     public function addPaymentCar()
     {
-        $currentDate = Carbon::now()->format('Y-m-d');
-
         $user_id = $_GET['user_id']??0;
         $car_id = $_GET['car_id']??0;
         $amount=$_GET['amount']??0;
@@ -326,9 +331,9 @@ class AccountingController extends Controller
         $car->increment('discount',$discount);
         $wallet = Wallet::where('user_id',$car->client_id)->first();
         $desc=trans('text.addPayment').' '.$amount.' '.$car->car_type.' رقم الشانص'.$car->vin.' '.$note;
-        $tran=$this->increaseWallet($amount,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\car',0,0,'$');
-        $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\Car',1,$discount,'$',$currentDate,$tran->id);
-        $transaction=$this->decreaseWallet($amount+$discount, $desc,$car->client_id,$car_id,'App\Models\Car',1,$discount,'$',$currentDate,$tran->id);
+        $tran=$this->increaseWallet($amount,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\Car',0,0,'$');
+        $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\Car',1,$discount,'$',$this->currentDate,$tran->id);
+        $transaction=$this->decreaseWallet($amount+$discount, $desc,$car->client_id,$car_id,'App\Models\Car',1,$discount,'$',$this->currentDate,$tran->id);
         if((($car->paid)+($car->discount))-$car->total_s >= 0){
             $car->update(['results'=>2]); 
         }
@@ -345,7 +350,6 @@ class AccountingController extends Controller
         $discount= $_GET['discount']  ??0;
         $amount  = $_GET['amount']   ??0;
         $paided =false;
-        $currentDate = Carbon::now()->format('Y-m-d');
 
         $cars = Car::where('client_id',$client_id)->where('total_s','!=',0)->whereIn('results',[0, 1]);
         $carFirst = Car::where('client_id',$client_id)->where('total_s','!=',0)->whereIn('results',[0, 1])->first(); 
@@ -383,11 +387,11 @@ class AccountingController extends Controller
         }else{
             $desc=trans('text.addPayment').' '.$amount_o.' '.$note;
         }
-        $tran=$this->increaseWallet($amount_o,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\car',0,0,'$');
+        $tran=$this->increaseWallet($amount_o,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\Car',0,0,'$');
 
-        $this->increaseWallet($amount_o, $desc,$this->mainAccount->id,$this->mainAccount->id,'App\Models\Car',1,$discount,'$',$currentDate,$tran->id);
+        $this->increaseWallet($amount_o, $desc,$this->mainAccount->id,$this->mainAccount->id,'App\Models\Car',1,$discount,'$',$this->currentDate,$tran->id);
 
-        $transaction = $this->decreaseWallet($amount_o+$discount, $desc,$client_id,$client_id,'App\Models\Car',1,$discount,'$',$currentDate,$tran->id);
+        $transaction = $this->decreaseWallet($amount_o+$discount, $desc,$client_id,$client_id,'App\Models\Car',1,$discount,'$',$this->currentDate,$tran->id);
         if($paided && $discount){
             $carFirst->increment('discount',$discount);
             }
@@ -398,6 +402,45 @@ class AccountingController extends Controller
             return Response::json('no cars', 200);    
 
         }
+    }
+    public function GenExpenses (Request $request){
+        $factor=$request->factor ?? 1;
+        $amount=(($request->amount)/ $factor);
+        $expenses = Expenses::create([
+            'factor' => $factor,
+            'amount' => ($request->amount)/ $factor ?? 0,
+            'note' => $request->note ?? '',
+            'expenses_type_id'=>$request->expenses_type_id
+        ]);
+
+        if($expenses->id && $request->expenses_type_id==1){
+            $desc='مصاريف أربيل مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$expenses->reason;
+            $tran=$this->decreaseWallet($amount,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$');
+            $this->increaseWallet($amount, $desc,$this->howler->id,$this->howler->id,'App\Models\User',0,0,'$',$this->currentDate,$tran->id);
+        }
+        if($expenses->id && $request->expenses_type_id==2){
+            $desc='مصاريف دبي مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$expenses->reason;
+            $tran=$this->decreaseWallet($amount,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$');
+            $this->increaseWallet($amount, $desc,$this->dubai->id,$this->dubai->id,'App\Models\User',0,0,'$',$this->currentDate,$tran->id);
+        }
+        if($expenses->id && $request->expenses_type_id==3){
+            $desc='مصاريف ايران مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$expenses->reason;
+            $tran=$this->decreaseWallet($amount,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$');
+            $this->increaseWallet($amount, $desc,$this->iran->id,$this->iran->id,'App\Models\User', 0,0,'$',$this->currentDate,$tran->id);
+        }
+        if($expenses->id && $request->expenses_type_id==4){
+            $desc='مصاريف الحدود مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$expenses->reason;
+            $tran=$this->decreaseWallet($amount,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$');
+            $this->increaseWallet($amount, $desc,$this->border->id,$this->border->id,'App\Models\User', 0,0,'$',$this->currentDate,$tran->id);
+        }
+        if($expenses->id && $request->expenses_type_id==5){
+            $desc='مصاريف شهادة coc مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$expenses->reason;
+            $tran=$this->decreaseWallet($amount,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$');
+            $this->increaseWallet($amount, $desc,$this->shippingCoc->id,$this->shippingCoc->id,'App\Models\User', 0,0,'$',$this->currentDate,$tran->id);
+        }
+
+        return Response::json('ok', 200);    
+
     }
     public function receiveCard(Request $request)
     {
@@ -444,9 +487,8 @@ class AccountingController extends Controller
     public function increaseWallet(int $amount,$desc,$user_id,$morphed_id='',$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0) 
     {
         if($amount){
-            $currentDate = Carbon::now()->format('Y-m-d');
             if($created==0){
-                $created=$currentDate ;
+                $created=$this->currentDate;
             }
             $user=  User::with('wallet')->find($user_id);
             if($id = $user->wallet->id){
@@ -472,16 +514,14 @@ class AccountingController extends Controller
 
     public function decreaseWallet(int $amount,$desc,$user_id,$morphed_id=0,$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0) 
     {
-
         if($amount){
-        $currentDate = Carbon::now()->format('Y-m-d');
         if($created==0){
-            $created=$currentDate ;
+            $created=$this->currentDate;
         }
         $user=  User::with('wallet')->find($user_id);
         if($id = $user->wallet->id){
         $wallet = Wallet::find($id);
-        $transactionDetils = ['type' => 'out','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$currentDate,'discount'=>$discount,'currency'=>$currency,'parent_id'=>$parent_id];
+        $transactionDetils = ['type' => 'out','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$created,'discount'=>$discount,'currency'=>$currency,'parent_id'=>$parent_id];
         $transaction =Transactions::create($transactionDetils);
         if($currency=='IQD'){
             $wallet->decrement('balance_dinar', $amount);
@@ -501,10 +541,9 @@ class AccountingController extends Controller
     }
     public function debtWallet(int $amount,$desc,$user_id,$morphed_id=0,$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0)  
     {
-        $currentDate = Carbon::now()->format('Y-m-d');
 
         if($created==0){
-            $created=$currentDate ;
+            $created=$this->currentDate ;
         }
         $user=  User::with('wallet')->find($user_id);
         if($id = $user->wallet->id){
@@ -514,7 +553,7 @@ class AccountingController extends Controller
         }else{
             $wallet->decrement('balance', $amount);
         }
-            $transactionDetils = ['type' => 'debt','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$currentDate,'discount'=>$discount,'currency'=>$currency,'parent_id'=>$parent_id];
+            $transactionDetils = ['type' => 'debt','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$created,'discount'=>$discount,'currency'=>$currency,'parent_id'=>$parent_id];
 
             $Transactions =Transactions::create($transactionDetils);
          
