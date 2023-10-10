@@ -732,7 +732,7 @@ function calculateAmount(){
                     <th
                       scope="col"
                       class="px-1 py-2 text-base print:hidden"
-                      style="width:150px"
+                      style="width:200px"
                     >
                       {{ $t("execute") }}
                     </th>
