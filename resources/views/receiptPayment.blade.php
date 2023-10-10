@@ -68,7 +68,7 @@ $Help = new MyHelp();
       </div>
       <div class="col-3">
          تاريخ:
-      <?= $created ?>
+      <?= $created ??'' ?>
       </div>
     </div>
 
@@ -207,7 +207,7 @@ $Help = new MyHelp();
         </div>
         <div class="col-3">
            تاريخ:
-        <?= $created ?>
+        <?= $created ??'' ?>
         </div>
       </div>
   

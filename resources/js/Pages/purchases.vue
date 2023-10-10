@@ -22,6 +22,7 @@ import show from "@/Components/icon/show.vue";
 import pay from "@/Components/icon/pay.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
+import TextInput from "@/Components/TextInput.vue";
 
 const {t} = useI18n();
 
@@ -586,7 +587,7 @@ function confirmAddPayment(V) {
                           </div>
                         </div> -->
                       </div>
-                      <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-2 lg:gap-1">
+                      <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-7 gap-2 lg:gap-1">
                         <div>
                           <form class="flex items-center max-w-5xl">
                             <label  class="dark:text-gray-200" for="simple-search"  ></label>
@@ -695,6 +696,49 @@ function confirmAddPayment(V) {
                             className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-green-500 rounded">
                             {{ $t('addCar') }} 
                           </button>
+                        </div>
+                        <div class="px-4">
+                          <div className="mb-4 mx-5">
+                            <InputLabel for="from" :value="$t('from_date')" />
+                            <TextInput
+                              id="from"
+                              type="date"
+                              class="mt-1 block w-full"
+                              v-model="from"
+                            />
+                          </div>
+                        </div>
+                        <div class="px-4">
+                          <div className="mb-4 mx-5">
+                            <InputLabel for="to" :value="$t('to_date')" />
+                            <TextInput
+                              id="to"
+                              type="date"
+                              class="mt-1 block w-full"
+                              v-model="to"
+                            />
+                          </div>
+                        </div>
+                        <div className="mb-4  mr-5 print:hidden">
+                          <InputLabel for="pay" value="فلترة" />
+                          <button
+                            @click.prevent="getResults()"
+                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded"
+                            style="width: 100%"
+                          >
+                            <span>فلترة</span>
+                          </button>
+                        </div>
+                        <div className="mb-4  mr-5 print:hidden">
+                          <InputLabel for="pay" value="طباعة" />
+                          <a
+                            :href="`/api/getIndexAccountsSelas?user_id=${client_Select}&from=${from}&to=${to}&print=1`"
+                            target="_blank"
+                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded block text-center"
+                            style="width: 100%"
+                          >
+                            <span>طباعة</span>
+                          </a>
                         </div>
                         <!-- <div class="text-center">
                           <button
