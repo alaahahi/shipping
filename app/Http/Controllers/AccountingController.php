@@ -228,7 +228,7 @@ class AccountingController extends Controller
         $client = User::with('wallet')->where('id', $user_id)->first();
         if($from && $to ){
             $transactions = Transactions ::where('wallet_id', $client?->wallet?->id)->whereBetween('created', [$from, $to]);
-            $cars = Car::where('client_id',$client->id)->whereBetween('date', [$from, $to]);
+            $cars = Car::with('contract')->with('exitcar')->where('client_id',$client->id)->whereBetween('date', [$from, $to]);
             $car_total = $cars->count();
             $car_total_unpaid =     Car::where('client_id',$client->id)->where('results',0)->whereBetween('date', [$from, $to])->count();
             $car_total_uncomplete = Car::where('client_id',$client->id)->where('results',1)->whereBetween('date', [$from, $to])->count();
@@ -241,7 +241,7 @@ class AccountingController extends Controller
             $cars_need_paid=$cars_sum-($cars_paid+$cars_discount);
         }else{
             $transactions = Transactions ::where('wallet_id', $client?->wallet?->id);
-            $cars = Car::where('client_id',$client->id);
+            $cars =  Car::with('contract')->with('exitcar')->where('client_id',$client->id);
 
             $car_total = $cars->count();
             $car_total_unpaid =     Car::where('client_id',$client->id)->where('results',0)->count();
@@ -353,11 +353,11 @@ class AccountingController extends Controller
         $paided =false;
 
         $cars = Car::where('client_id',$client_id)->where('total_s','!=',0)->whereIn('results',[0, 1]);
-        $carFirst = Car::where('client_id',$client_id)->where('total_s','!=',0)->whereIn('results',[0, 1])->first(); 
+        $carLast = Car::where('client_id',$client_id)->where('total_s','!=',0)->whereIn('results',[0, 1])->latest()->first();
         $needToPay=0;
         $user_id=$_GET['user_id']??0;
         $carsName = '';
-        if($carFirst){
+        if($carLast){
         foreach ($cars->get() as $car) {
             $paided = true;
             $needToPay = $car->total_s - ($car->paid + $car->discount);
@@ -394,7 +394,7 @@ class AccountingController extends Controller
 
         $transaction = $this->decreaseWallet($amount_o+$discount, $desc,$client_id,$client_id,'App\Models\Car',1,$discount,'$',$this->currentDate,$tran->id);
         if($paided && $discount){
-            $carFirst->increment('discount',$discount);
+            $carLast->increment('discount',$discount);
             }
         return Response::json($transaction, 200);    
 

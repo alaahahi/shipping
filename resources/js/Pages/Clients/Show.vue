@@ -14,7 +14,8 @@ import print from "@/Components/icon/print.vue";
 import pay from "@/Components/icon/pay.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
-
+import exit from "@/Components/icon/exit.vue";
+import newContracts from "@/Components/icon/new.vue";
 
 import { useToast } from "vue-toastification";
 let toast = useToast();
@@ -218,18 +219,27 @@ function hideTransactionsDiv(){
   showTransactions.value=false;
   
 }
+function calculateAmountDiscount (){
+  let need_payment = laravelData.value?.cars_need_paid
+  amount.value=need_payment- discount.value
+}
 function calculateAmount(){
-  if(amount.value > laravelData.value?.cars_need_paid){
+  
+  let need_payment = laravelData.value?.cars_need_paid - discount.value
+  
+  if(amount.value > need_payment){
+    amount.value=need_payment
     showErorrAmount.value = true
-    toast.info(" المبلغ اكبر من الدين المطلوب"+" "+laravelData.value?.cars_need_paid, {
+    toast.info(" المبلغ اكبر من الدين المطلوب"+" "+amount.value, {
         timeout: 4000,
         position: "bottom-right",
         rtl: true,
       });
+      
   }else{
+    
     showErorrAmount.value = false
   }
-
 
 }
 </script>
@@ -549,12 +559,15 @@ function calculateAmount(){
             </div>
             <div className="mb-4  mr-5">
               <InputLabel
+              
                 for="discount"
                 value="الخصم"
               />
               <TextInput
                 id="discount"
                 type="number"
+                @input="calculateAmountDiscount"
+
                 class="mt-1 block w-full"
                 v-model="discount"
               />
@@ -852,6 +865,23 @@ function calculateAmount(){
                         @click="openAddCarPayment(car)"
                       >
                         <pay />
+                      </button>
+                      <button
+                                      tabIndex="1"
+                                      class="px-1 py-1  text-white mx-1 bg-green-500 rounded"
+                                      v-if="car.is_exit && !car.contract"
+                                      
+
+                                    >
+                                     <exit />
+                      </button>
+                      <button
+                                    v-if="car.contract"
+                                      tabIndex="1"
+                                      class="px-1 py-1  text-white mx-1 bg-yellow-500 rounded"
+                                      ref=""
+                                    >
+                                     <newContracts />
                       </button>
                     </td>
                   </tr>

@@ -20,7 +20,7 @@ let need_pay =  ref(0);
       <div v-if="show" class="modal-mask ">
         <div class="modal-wrapper ">
           <div class="modal-container dark:bg-gray-900">
-            <div class="modal-header text-center py-4">  
+            <div class="modal-header text-center py-4 dark:text-gray-300">  
               خروجية للسيارة {{ formData.car_type }} {{ formData.year }} {{  formData.car_color }} رقم شانصى {{ formData.vin }}
               <slot name="header"></slot>
             </div>
