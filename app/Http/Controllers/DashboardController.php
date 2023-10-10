@@ -601,11 +601,13 @@ class DashboardController extends Controller
         if($from && $to ){
             $data =  Car::with('contract')->with('exitcar')->with('client')->whereBetween('date', [$from, $to]);
             $resultsDinar=$data->sum('dinar'); 
+            $resultsDollar=$data->sum('total'); 
             $totalCars = $data->count();
 
         }else{
             $data =  Car::with('contract')->with('exitcar')->with('client');
             $resultsDinar=$data->sum('dinar');
+            $resultsDollar=$data->sum('total'); 
             $totalCars = $data->count();
  
         }
@@ -621,6 +623,7 @@ class DashboardController extends Controller
         }
         $data =$data->orderBy('no', 'DESC')->paginate(1000)->toArray();
         $data['resultsDinar'] = $resultsDinar;
+        $data['resultsDollar'] = $resultsDollar;
         $data['totalCars']  =$totalCars;
         return Response::json($data, 200);
     }

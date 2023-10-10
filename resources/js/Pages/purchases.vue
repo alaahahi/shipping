@@ -615,13 +615,13 @@ function confirmAddPayment(V) {
                         <div className="mb-4  mr-2">
                           <InputLabel
                             for="car_total_complete"
-                            value="مجموع  مدفوعات بالدولار"
+                            value="مجموع  التكاليف بالدولار"
                           />
                           <TextInput
                             id="car_total_complete"
                             type="text"
                             class="mt-1 block w-full"
-                            :value="car.resultsDinar"
+                            :value="car.resultsDollar"
                             disabled
                           />
                         </div>
