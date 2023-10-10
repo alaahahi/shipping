@@ -23,6 +23,7 @@ import pay from "@/Components/icon/pay.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
 import TextInput from "@/Components/TextInput.vue";
+import InputLabel from "@/Components/InputLabel.vue";
 
 const {t} = useI18n();
 
@@ -32,8 +33,8 @@ const props = defineProps({client:Array});
 
 let data = ref({});
 let pincode = ref(0);
-
-
+let from = ref('');
+let to = ref('');
 // const columnTypes = ref({ 'date': new Plugin(),'numeric': new NumberColumnType('0,0') });
 const toast = useToast();
 
@@ -128,7 +129,7 @@ const formatter = ref({
   month: 'MM'
 })
 const getResultsCar = async (page = 1,user_id='') => {
-    const response = await fetch(`/getIndexCar?page=${page}&user_id=${user_id}`);
+    const response = await fetch(`/getIndexCar?page=${page}&user_id=${user_id}&from=${from.value}&to=${to.value}`);
     car.value = await response.json();
 }
 const getResultsCarSearch = async (q='',page = 1) => {
@@ -588,6 +589,107 @@ function confirmAddPayment(V) {
                         </div> -->
                       </div>
                       <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-7 gap-2 lg:gap-1">
+                        <div className="mb-4">
+                          <InputLabel for="car_total" value=" مجموع السيارات مع فلتر" />
+                          <TextInput
+                            id="car_total"
+                            type="text"
+                            class="mt-1 block w-full"
+                            :value="car.totalCars"
+                            disabled
+                          />
+                        </div>
+                        <div className="mb-4  mr-2">
+                          <InputLabel
+                            for="car_total_complete"
+                            value="مجموع  مدفوعات بالدينار العراقي"
+                          />
+                          <TextInput
+                            id="car_total_complete"
+                            type="text"
+                            class="mt-1 block w-full"
+                            :value="car.resultsDinar"
+                            disabled
+                          />
+                        </div>
+                        <div className="mb-4  mr-2">
+                          <InputLabel
+                            for="car_total_complete"
+                            value="مجموع  مدفوعات بالدولار"
+                          />
+                          <TextInput
+                            id="car_total_complete"
+                            type="text"
+                            class="mt-1 block w-full"
+                            :value="car.resultsDinar"
+                            disabled
+                          />
+                        </div>
+                        <div class="px-4">
+                          <div className="mb-4">
+                            <InputLabel for="from" :value="$t('from_date')" />
+                            <TextInput
+                              id="from"
+                              type="date"
+                              class="mt-1 block w-full"
+                              v-model="from"
+                            />
+                          </div>
+                        </div>
+                        <div class="px-4">
+                          <div className="mb-4 ">
+                            <InputLabel for="to" :value="$t('to_date')" />
+                            <TextInput
+                              id="to"
+                              type="date"
+                              class="mt-1 block w-full"
+                              v-model="to"
+                            />
+                          </div>
+                        </div>
+                        <div className="mb-4  mr-2 print:hidden">
+                          <InputLabel for="pay" value="فلترة" />
+                          <button
+                            @click.prevent="getResultsCar()"
+                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded"
+                            style="width: 100%"
+                          >
+                            <span>فلترة</span>
+                          </button>
+                        </div>
+                        <div className="mb-4  mr-2  hidden">
+                          <InputLabel for="pay" value="طباعة" />
+                          <a
+                            :href="`/api/getIndexAccountsSelas?user_id=${client_Select}&from=${from}&to=${to}&print=1`"
+                            target="_blank"
+                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded block text-center"
+                            style="width: 100%"
+                          >
+                            <span>طباعة</span>
+                          </a>
+                        </div>
+                     
+                        <!-- <div class="text-center">
+                          <button
+                            type="button"
+                            @click="openAddToBox()"
+                            style="min-width:150px;"
+                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-purple-600 rounded">
+                            {{ $t('addToTheFund') }}  
+                          </button>
+                        </div>
+                        <div  class="text-center">
+                          <button
+                            type="button"
+                            @click="openAddFromBox()"
+                            style="min-width:150px;"
+                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-pink-600 rounded">
+                            {{ $t('withdrawFromTheFund') }}   
+                          </button>
+                        </div> -->
+
+                      </div>
+                      <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-7 gap-2 lg:gap-1">
                         <div>
                           <form class="flex items-center max-w-5xl">
                             <label  class="dark:text-gray-200" for="simple-search"  ></label>
@@ -645,42 +747,7 @@ function confirmAddPayment(V) {
                             </div>
                           </form>
                         </div>
-                        <!-- <div>
-                          <button
-                            type="button"
-                            @click="openAddGenExpenses()"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-red-500 rounded">
-                               {{ $t('genExpenses') }}
-                          </button>
-                        </div> -->
-                        <!-- <div>
-                          <button
-                            type="button"
-                            @click="openAddCar()"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-green-500 rounded">
-                            {{ $t('addCar') }} 
-                          </button>
-                        </div> -->
-                        <!-- <div>
-                          <a
-                            type="button"
-                            :href="route('FormRegistrationCompleted')"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 text-center mx-2 py-2 font-bold text-white bg-blue-600 rounded">
-                            {{ $t('allCars') }}
-                          </a>
-                        </div> -->
-                        <!-- <div>
-                          <button
-                            type="button"
-                            @click="openAddTransfers()"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-indigo-600 rounded">
-                            {{ $t('transfers') }} 
-                          </button>
-                        </div> -->
+                  
                         <div>
                             <select @change="getResultsCar(1,user_id)" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
                               <option value="undefined" disabled> {{ $t("selectCustomer") }}</option>
@@ -697,69 +764,7 @@ function confirmAddPayment(V) {
                             {{ $t('addCar') }} 
                           </button>
                         </div>
-                        <div class="px-4">
-                          <div className="mb-4 mx-5">
-                            <InputLabel for="from" :value="$t('from_date')" />
-                            <TextInput
-                              id="from"
-                              type="date"
-                              class="mt-1 block w-full"
-                              v-model="from"
-                            />
-                          </div>
                         </div>
-                        <div class="px-4">
-                          <div className="mb-4 mx-5">
-                            <InputLabel for="to" :value="$t('to_date')" />
-                            <TextInput
-                              id="to"
-                              type="date"
-                              class="mt-1 block w-full"
-                              v-model="to"
-                            />
-                          </div>
-                        </div>
-                        <div className="mb-4  mr-5 print:hidden">
-                          <InputLabel for="pay" value="فلترة" />
-                          <button
-                            @click.prevent="getResults()"
-                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded"
-                            style="width: 100%"
-                          >
-                            <span>فلترة</span>
-                          </button>
-                        </div>
-                        <div className="mb-4  mr-5 print:hidden">
-                          <InputLabel for="pay" value="طباعة" />
-                          <a
-                            :href="`/api/getIndexAccountsSelas?user_id=${client_Select}&from=${from}&to=${to}&print=1`"
-                            target="_blank"
-                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded block text-center"
-                            style="width: 100%"
-                          >
-                            <span>طباعة</span>
-                          </a>
-                        </div>
-                        <!-- <div class="text-center">
-                          <button
-                            type="button"
-                            @click="openAddToBox()"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-purple-600 rounded">
-                            {{ $t('addToTheFund') }}  
-                          </button>
-                        </div>
-                        <div  class="text-center">
-                          <button
-                            type="button"
-                            @click="openAddFromBox()"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-pink-600 rounded">
-                            {{ $t('withdrawFromTheFund') }}   
-                          </button>
-                        </div> -->
-
-                      </div>
                       <div>
                         <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
                           <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">

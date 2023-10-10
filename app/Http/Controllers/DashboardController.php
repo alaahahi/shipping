@@ -595,6 +595,20 @@ class DashboardController extends Controller
     {
         $user_id =$_GET['user_id'] ?? '';
         $data =  Car::with('contract')->with('exitcar')->with('client');
+        $from =  $_GET['from'] ?? 0;
+        $to =$_GET['to'] ?? 0;
+
+        if($from && $to ){
+            $data =  Car::with('contract')->with('exitcar')->with('client')->whereBetween('date', [$from, $to]);
+            $resultsDinar=$data->sum('dinar'); 
+            $totalCars = $data->count();
+
+        }else{
+            $data =  Car::with('contract')->with('exitcar')->with('client');
+            $resultsDinar=$data->sum('dinar');
+            $totalCars = $data->count();
+ 
+        }
         $type =$_GET['type'] ?? '';
         if($type){
             $data =    $data->where('results', $type);
@@ -606,6 +620,8 @@ class DashboardController extends Controller
             $data =    $data->where('client_id',  $user_id);
         }
         $data =$data->orderBy('no', 'DESC')->paginate(1000)->toArray();
+        $data['resultsDinar'] = $resultsDinar;
+        $data['totalCars']  =$totalCars;
         return Response::json($data, 200);
     }
     public function getIndexCarSearch()
