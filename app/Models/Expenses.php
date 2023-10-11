@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Expenses extends Model
 {
+    public $timestamps = false;
     use HasFactory, SoftDeletes;
     protected $table = 'expenses';
     protected $fillable = [
@@ -20,6 +21,7 @@ class Expenses extends Model
         'note',
         'factor',
         'expenses_type_id',
+        'transaction_id',
         'created_at',
         'updated_at'
     ];

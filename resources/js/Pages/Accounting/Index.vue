@@ -25,7 +25,7 @@ let showModalAddExpenses = ref(false);
 let showModalAddGenExpenses = ref(false);
 let expenses_type_id = ref(0);
 let formData = ref({});
-
+let GenExpenses = ref({});
 let isLoading=ref(false);
 let from = ref(getTodayDate());
 let to = ref(getTodayDate());
@@ -126,19 +126,39 @@ function delTransactions(id){
 }
 function openAddGenExpenses(v) {
     expenses_type_id.value=v
+    getGenfirmExpenses()
     showModalAddGenExpenses.value = true;
 }
-function conGenfirmExpenses(V) {
-  fetch(`api/GenExpenses?amount=${V.amount??0}&expenses_type_id=${expenses_type_id.value}&factor=${V.factor??1}&note=${V.note??''}`)
-    .then(() => {
-      showModalAddGenExpenses.value = false;
-      window.location.reload();
+function getGenfirmExpenses() {
+  axios.get(`/api/getGenExpenses?expenses_type_id=${expenses_type_id.value}`)
+  .then(response => {
+    GenExpenses.value = response.data;
 
-    })
-    .catch((error) => {
-      
-      console.error(error);
-    });
+  })
+  .catch(error => {
+
+    errors.value = error.response.data.errors
+  })
+
+
+}
+
+
+function conGenfirmExpenses(V) {
+  axios.post(`/api/GenExpenses?amount=${V.amount??0}&expenses_type_id=${expenses_type_id.value}&factor=${V.factor??1}&note=${V.note??''}`)
+  .then(response => {
+    getResults();
+    showModalAddGenExpenses.value = false;
+    console.log(response.data);
+    window.open(`/api/getIndexAccountsSelas?user_id=${response.data.morphed_id}&print=3&transactions_id=${response.data.id}`, '_blank');
+    window.location.reload();
+  })
+  .catch(error => {
+
+    errors.value = error.response.data.errors
+  })
+
+
 }
 
 </script>
@@ -155,7 +175,7 @@ function conGenfirmExpenses(V) {
             :formData="formData"
             :show="showModalAddGenExpenses ? true : false"
             :expenses_type_id="expenses_type_id"
-            :user="user"
+            :GenExpenses="GenExpenses"
             @a="conGenfirmExpenses($event)"
             @close="showModalAddGenExpenses = false"
             >

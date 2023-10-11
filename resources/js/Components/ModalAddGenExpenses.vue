@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue';
+import print from "@/Components/icon/print.vue";
 
 const activeTab = ref('add'); // Set the default active tab
 
@@ -15,6 +16,7 @@ const props = defineProps({
   client:Array,
   user:Array,
   expenses:Array,
+  GenExpenses:Array,
   formData:Object
 });
 
@@ -31,18 +33,18 @@ const props = defineProps({
               
               <div class="text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
                   <ul class="flex flex-wrap -mb-px">
-                    <li class="mr-2" @click="activeTab = 'add'">
+                    <li class="mr-2" @click="setActiveTab('add')">
                       <button
-                        class="inline-block p-4 text-blue-600 border-b-2 border-blue-600 rounded-t-lg"
-                        :class="{ 'hover:text-gray-600 hover:border-gray-300': activeTab !== 'add' }"
+                        class="inline-block p-4 border-b-2 border-transparent rounded-t-lg"
+                        :class="activeTab == 'add'?'dark:text-blue-500 dark:border-blue-500' :'hover:text-gray-600 hover:border-gray-300'"
                       >
                         اضافة
                       </button>
                     </li>
-                    <li class="mr-2" @click="activeTab = 'record'">
+                    <li class="mr-2" @click="setActiveTab('record')">
                       <button
                         class="inline-block p-4 border-b-2 border-transparent rounded-t-lg "
-                        :class="{ 'dark:text-blue-500 dark:border-blue-500': activeTab === 'record' }"
+                        :class="activeTab == 'record'? 'dark:text-blue-500 dark:border-blue-500' :'hover:text-gray-600 hover:border-gray-300'"
                       >
                         السجل
                       </button>
@@ -90,14 +92,16 @@ const props = defineProps({
 
                 <div v-else>
                   <h1 class="text-center dark:text-gray-200 mt-4"> سجل الحولات</h1>
-                  <div class="relative overflow-x-auto shadow-md sm:rounded-lg mt-4 mb-5"  v-if="showTransactions">
+                  <div class="relative overflow-x-auto shadow-md sm:rounded-lg mt-4 mb-5" >
                   <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
                   <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
                   <tr  class="bg-rose-500 text-gray-100 rounded-l-lg mb-2 sm:mb-0">
-                    <th className="px-1 py-2 text-base">#</th>
+                    <th className="px-1 py-2 text-base">رقم الوصل</th>
                     <th className="px-1 py-2 text-base">{{$t('date')}}</th>
-                    <th className="px-1 py-2 text-base">{{$t('description')}}</th>
-                    <th className="px-1 py-2 text-base">{{$t('amount')}}</th>
+                    <th className="px-1 py-2 text-base">سعر الصرف</th>
+                    <th className="px-1 py-2 text-base">المبلغ بالدولار</th>
+                    <th className="px-1 py-2 text-base">ملاحظة</th>
+
                     <th
                       scope="col"
                       class="px-1 py-2 text-base print:hidden"
@@ -113,10 +117,10 @@ const props = defineProps({
                     <td></td>
                     <td></td>
                     <td></td>
-                    <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200"> 
+                    <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200" > 
                     <a  target="_blank"
                     style="display: inline-flex;"
-                    :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&from=${from}&to=${to}&print=4`"
+                    :href="`/api/getIndexAccountsSelas?user_id=${GenExpenses[0]?.user_id}&print=5`"
                     tabIndex="1"
                     class="px-4 py-1  text-white  m-1 bg-blue-500 rounded"
                     >
@@ -127,16 +131,17 @@ const props = defineProps({
                      </td>
                    
                   </tr>
-                  <template  v-for="user in laravelData.transactions" :key="user.id">
-                  <tr class="text-center" v-if="user.type=='out' && user.amount < 0 && user.is_pay == 1 ">
-                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.id }}</td>
-                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.created }}</td>
-                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.description }}</td>
-                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.amount*-1  }}</td>
+                  <template  v-for="expense in GenExpenses" :key="expense.id">
+                  <tr class="text-center">
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.id }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense?.created_at?.slice(0, 19).replace('T', ' ') }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.factor }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.amount   }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.reason   }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">  
-                    <a v-if="user.type =='out' && user.amount<0" target="_blank"
+                    <a  target="_blank"
                     style="display: inline-flex;"
-                    :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&from=${from}&to=${to}&print=2&transactions_id=${user.id}`"
+                    :href="`/api/getIndexAccountsSelas?user_id=${expense.user_id}&print=3&transactions_id=${expense.transaction_id}`"
                     tabIndex="1"
                     class="px-4 py-1  text-white  m-1 bg-green-500 rounded"
                     >
@@ -166,7 +171,7 @@ const props = defineProps({
               <div class="flex flex-row">
                 <div class="basis-1/2 px-4"> 
                   <button class="modal-default-button py-3  bg-gray-500 rounded"
-                    @click="$emit('close');">{{ $t('cancel') }}</button>
+                    @click="$emit('close');activeTab = 'add'">{{ $t('cancel') }}</button>
                   </div>
               <div class="basis-1/2 px-4">
                 <button class="modal-default-button py-3  bg-rose-500 rounded col-6"  @click="$emit('a',formData);formData=''" :disabled="!(formData.amount)">{{ $t('yes') }}</button>

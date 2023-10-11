@@ -45,8 +45,7 @@
     {{$clientData['client']->name}}
     </div>
     <div class="col">
-    موبايل:
-    {{$clientData['client']->phone}}
+
     </div>
     @if($_GET['from'] ??'')
     <div class="col">
@@ -64,22 +63,15 @@
   <div class="row p-2 text-center border-bottom alert-primary "  style="font-size: 14px">
     <div class="col-3"> 
     مجموع النهائي:
-    {{$clientData['cars_sum']}}
+    {{$clientData['totalAmount']}}
     </div>
     <div class="col-3">
-    مبلغ مدفوع:
-    {{$clientData['cars_paid']}}
+
     </div>
     <div class="col-3">
-     مبلغ الباقي:
-     {{$clientData['cars_need_paid']}}
+
     </div>
-    @if($clientData['car_total'])
-    <div class="col-3">
-      عدد السيارات:
-    {{$clientData['car_total']}}
-    </div>
-    @endif
+   
   </div>
   <div class="row text-center py-2">
     <table class="table table-sm table-striped table-bordered" style="font-size: 12px">
@@ -87,19 +79,20 @@
           <tr>
             <th scope="col">رقم الوصل</th>
             <th scope="col">تاريخ</th>
-            <th scope="col">ملاحظة</th>
-            <th scope="col">المبلغ</th>
+            <th scope="col">المبلغ بالدولار</th>
+            <th scope="col">البيان</th>
+
             
           </tr>
         </thead>
         <tbody>
             @foreach ($clientData['transactions'] as $key=>$data)
-            @if($data->type=='out' && $data->amount < 0 && $data->is_pay == 1)
+            @if( $data->is_pay == 1)
             <tr>
                 <td>{{ $data->id }}</td>
-                <td>{{ $data->created }}</td>
-                <td>{{ $data->description }}</td>
-                <td>{{ $data->amount*-1  }}</td>
+                <td>{{ $data->created_at }}</td>
+                <td>{{ $data->amount  }}</td>
+                <td>{{ $data->description  }}</td>
             </tr>
             @endif
             @endforeach

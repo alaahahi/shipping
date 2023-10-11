@@ -129,7 +129,11 @@ class AccountingController extends Controller
          return view('receiptPaymentTotal',compact('clientData','config','transactions_id'));
       }
  
- 
+      if($print==5){
+        $config=SystemConfig::first();
+
+        return view('receiptExpensesTotal.blade',compact('clientData','config','transactions_id'));
+     }
      return response()->json($data); 
      }
      public function salesDebt(Request $request)
@@ -293,8 +297,12 @@ class AccountingController extends Controller
          }
          if($print==4){
             $config=SystemConfig::first();
-
             return view('receiptPaymentTotal',compact('clientData','config','transactions_id'));
+         }
+         if($print==5){
+            $config=SystemConfig::first();
+    
+            return view('receiptExpensesTotal',compact('clientData','config','transactions_id'));
          }
         return Response::json($clientData, 200);
     }
@@ -404,43 +412,49 @@ class AccountingController extends Controller
 
         }
     }
+    public function getGenExpenses (Request $request){
+        $expenses = Expenses::where('expenses_type_id',$request->expenses_type_id)->get();
+
+        return Response::json($expenses, 200);    
+
+    }
     public function GenExpenses (Request $request){
         $factor=$request->factor ?? 1;
         $amount=(($request->amount)/ $factor);
+        $expenses_type_id = $request->expenses_type_id;
+        $reason=$request->note ?? '';
+        if($expenses_type_id==1){
+            $user_id=$this->howler->id;
+            $desc='مصاريف أربيل مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$reason;
+        }
+        if($expenses_type_id==2){
+            $user_id=$this->dubai->id;
+            $desc='مصاريف دبي مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$reason;
+        }
+        if($expenses_type_id==3){
+            $desc='مصاريف ايران مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$reason;
+            $user_id=$this->iran->id;
+        }
+        if($expenses_type_id==4){
+            $desc='مصاريف الحدود مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$reason;
+            $user_id=$this->border->id;
+        }
+        if($expenses_type_id==5){
+            $desc='مصاريف شهادة coc مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$reason;
+            $user_id=$this->shippingCoc->id;
+        }
+        $tran=$this->decreaseWallet($amount,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$');
+        $transaction=$this->increaseWallet($amount, $desc,$user_id,$user_id,'App\Models\User',1,0,'$',$this->currentDate,$tran->id);
         $expenses = Expenses::create([
             'factor' => $factor,
             'amount' => ($request->amount)/ $factor ?? 0,
-            'note' => $request->note ?? '',
-            'expenses_type_id'=>$request->expenses_type_id
+            'reason' => $reason,
+            'expenses_type_id'=>$expenses_type_id,
+            'transaction_id' =>  $transaction->id,
+            'user_id' => $user_id
         ]);
 
-        if($expenses->id && $request->expenses_type_id==1){
-            $desc='مصاريف أربيل مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$expenses->reason;
-            $tran=$this->decreaseWallet($amount,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$');
-            $this->increaseWallet($amount, $desc,$this->howler->id,$this->howler->id,'App\Models\User',0,0,'$',$this->currentDate,$tran->id);
-        }
-        if($expenses->id && $request->expenses_type_id==2){
-            $desc='مصاريف دبي مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$expenses->reason;
-            $tran=$this->decreaseWallet($amount,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$');
-            $this->increaseWallet($amount, $desc,$this->dubai->id,$this->dubai->id,'App\Models\User',0,0,'$',$this->currentDate,$tran->id);
-        }
-        if($expenses->id && $request->expenses_type_id==3){
-            $desc='مصاريف ايران مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$expenses->reason;
-            $tran=$this->decreaseWallet($amount,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$');
-            $this->increaseWallet($amount, $desc,$this->iran->id,$this->iran->id,'App\Models\User', 0,0,'$',$this->currentDate,$tran->id);
-        }
-        if($expenses->id && $request->expenses_type_id==4){
-            $desc='مصاريف الحدود مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$expenses->reason;
-            $tran=$this->decreaseWallet($amount,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$');
-            $this->increaseWallet($amount, $desc,$this->border->id,$this->border->id,'App\Models\User', 0,0,'$',$this->currentDate,$tran->id);
-        }
-        if($expenses->id && $request->expenses_type_id==5){
-            $desc='مصاريف شهادة coc مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$expenses->reason;
-            $tran=$this->decreaseWallet($amount,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$');
-            $this->increaseWallet($amount, $desc,$this->shippingCoc->id,$this->shippingCoc->id,'App\Models\User', 0,0,'$',$this->currentDate,$tran->id);
-        }
-
-        return Response::json('ok', 200);    
+        return Response::json($transaction, 200);    
 
     }
     public function receiveCard(Request $request)

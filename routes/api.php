@@ -116,3 +116,4 @@ Route::post('salesDebt',[AccountingController::class, 'salesDebt'])->name('sales
 Route::post('delTransactions',[AccountingController::class, 'delTransactions'])->name('delTransactions');
 Route::post('receiptArrived',[AccountingController::class, 'receiptArrived'])->name('receiptArrived');
 Route::post('GenExpenses',[AccountingController::class, 'GenExpenses'])->name('GenExpenses');
+Route::get('getGenExpenses',[AccountingController::class, 'getGenExpenses'])->name('getGenExpenses');
