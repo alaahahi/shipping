@@ -27,8 +27,8 @@ let expenses_type_id = ref(0);
 let formData = ref({});
 
 let isLoading=ref(false);
-let from = ref(0);
-let to = ref(0);
+let from = ref(getTodayDate());
+let to = ref(getTodayDate());
 const getResults = async (page = 1) => {
   searchTerm.value = '';
   const response = await fetch(`/getIndexAccounting?page=${page}&user_id=${props.boxes[0].id}&from=${from.value}&to=${to.value}`);
@@ -71,53 +71,12 @@ const cancel = async (id) => {
 
 };
 
-const results = (id) => {
-  if(id==0){
-        return 'إنتظار تسليم الصندوق';
-    }
-    if(id==1){
-        return 'تم التسليم';
-    }
-  if (id == 2) {
-    return "مكتمل";
-  }
-};
-function sendToCourt(id) {
-  showModal.value = id;
-}
-function method1(id) {
-  form.get(route("sentToCourt", id));
-  getResults();
-  showModal.value = false;
-}
+ 
+ 
 const errors = ref(0);
-
-const dateValue = ref({
-    startDate: '',
-    endDate: ''
-})
-const countComp = ref()
-const formatter = ref({
-  date: 'D/MM/YYYY',
-  month: 'MM'
-})
-const options = ref({
-  shortcuts: {
-    today: 'اليوم',
-    yesterday: 'البارحة',
-    past: period => period + ' قبل يوم',
-    currentMonth: 'الشهر الحالي',
-    pastMonth: 'الشهر السابق'
-  },
-  footer: {
-    apply: 'Terapkan',
-    cancel: 'Batal'
-  }
-})
-const dDate = (date) => {
-  return date >= new Date() ;
-}
-
+ 
+ 
+ 
 function confirm(V) {
   axios.post('/api/receiptArrived',V)
   .then(response => {
@@ -181,6 +140,7 @@ function conGenfirmExpenses(V) {
       console.error(error);
     });
 }
+
 </script>
 
 <template>
@@ -242,15 +202,15 @@ function conGenfirmExpenses(V) {
         class="p-4 mb-4 bg-red-100 rounded-lg dark:bg-red-200 text-center"
         role="alert"
       >
-        <div class="ml-3 text-sm font-medium text-red-700 dark:text-red-800">
+        <div class="ml-3 font-medium text-red-700 dark:text-red-800">
           {{ $page.props.success }}
         </div>
       </div>
     </div>
     <div class="py-12">
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-          <div class="p-6 bg-white border-b border-gray-200">
+        <div class="overflow-hidden shadow-sm sm:rounded-lg">
+          <div class="p-6 border-b border-gray-200">
             <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
               <div class="pt-5  print:hidden">
               <button style=" width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-rose-500 rounded-md focus:outline-none"
@@ -487,12 +447,12 @@ function conGenfirmExpenses(V) {
               </div>
             </div> -->
 
-            <div class="overflow-x-auto shadow-md">
-              <table class="w-full my-5">
+            <div class="overflow-x-auto shadow-md mt-5">
+              <table class="w-full text-right text-gray-500   dark:text-gray-400 text-center">
                 <thead
-                  class="700 bg-rose-500 text-white text-center rounded-l-lg"
+                  class="text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center"
                 >
-                  <tr class="bg-rose-500 rounded-l-lg mb-2 sm:mb-0">
+                  <tr class="rounded-l-lg mb-2 sm:mb-0">
                     <th className="px-2 py-2">رقم الوصل</th>
                     <th className="px-2 py-2">التاريخ</th>
                     <th className="px-2 py-2">الوصف</th>
@@ -505,13 +465,13 @@ function conGenfirmExpenses(V) {
                   <tr
                     v-for="user in laravelData.transactions"
                     :key="user.id"
-                    class="hover:bg-gray-100 text-center"
+                    class="border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600"
                   >
-                  <td className="border px-2 py-1">{{ user.id }}</td>
-                  <td className="border px-2 py-1">{{ user?.created }}</td>
-                  <th className="border px-2 py-1">{{ user.description }}</th>
-                  <td className="border px-2 py-1">{{ user.amount+' '+user.currency  }}</td>
-                  <td className="border px-2 py-1">
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ user.id }}</td>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ user?.created }}</td>
+                  <th className="border dark:border-gray-800 text-center px-2 py-1">{{ user.description }}</th>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ user.amount+' '+user.currency  }}</td>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">
                     <button class="px-1 py-1 text-white bg-rose-500 rounded-md focus:outline-none hidden" @click="delTransactions(user.id)" >
                       <trash />
                     </button>

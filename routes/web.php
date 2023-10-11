@@ -130,7 +130,6 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('getIndexCar',[DashboardController::class, 'getIndexCar'])->name('getIndexCar');
     Route::get('getIndexCarSearch',[DashboardController::class, 'getIndexCarSearch'])->name('getIndexCarSearch');
 
-    Route::get('GenExpenses',[DashboardController::class, 'GenExpenses'])->name('GenExpenses');
     Route::get('addExpenses',[DashboardController::class, 'addExpenses'])->name('addExpenses');
     Route::get('addPaymentCar',[DashboardController::class, 'addPaymentCar'])->name('addPaymentCar');
 

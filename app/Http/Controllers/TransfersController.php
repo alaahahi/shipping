@@ -117,19 +117,7 @@ class TransfersController extends Controller
         
             return Response::json('ok', 200);    
     }
-    public function GenExpenses (){
-        $expenses = Expenses::create([
-            'user_id' => $_GET['user_id'],
-            'reason' => $_GET['reason'],
-            'amount' => $_GET['amount'],
-            'note' => $_GET['note'],
-        ]);
-        if($expenses->id){
-            $desc=trans('text.genExpenses');
-            $this->accountingController->increaseWallet($expenses->amount, $desc,$this->outAccount->id);
-            $this->accountingController->decreaseWallet($expenses->amount, $desc,$this->mainAccount->id);
-        }
-    }
+
     public function payCar(Request $request)
     {   
         if( $_GET['client_name']){

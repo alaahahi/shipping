@@ -77,7 +77,6 @@ Route::get('totalInfo',[DashboardController::class, 'totalInfo'])->name('totalIn
 
 
 Route::get('getIndexExpenses',[DashboardController::class, 'getIndexExpenses'])->name('getIndexExpenses');
-Route::post('addGenExpenses',[DashboardController::class, 'addGenExpenses']);
 Route::get('showCar',[CarConfigController::class, 'showCar']);
 
 Route::get('addExpenses',[DashboardController::class, 'addExpenses'])->name('addExpenses');
@@ -116,4 +115,4 @@ Route::post('companyStoreEdit',[CarConfigController::class, 'storeEdit'])->name(
 Route::post('salesDebt',[AccountingController::class, 'salesDebt'])->name('salesDebt');
 Route::post('delTransactions',[AccountingController::class, 'delTransactions'])->name('delTransactions');
 Route::post('receiptArrived',[AccountingController::class, 'receiptArrived'])->name('receiptArrived');
-Route::get('GenExpenses',[AccountingController::class, 'GenExpenses'])->name('GenExpenses');
+Route::post('GenExpenses',[AccountingController::class, 'GenExpenses'])->name('GenExpenses');

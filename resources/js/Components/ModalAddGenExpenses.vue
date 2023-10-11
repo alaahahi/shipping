@@ -1,6 +1,11 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 
+const activeTab = ref('add'); // Set the default active tab
+
+const setActiveTab = (tab) => {
+  activeTab.value = tab;
+};
 const props = defineProps({
   show: Boolean,
   company: Array,
@@ -23,38 +28,138 @@ const props = defineProps({
               <slot name="header"></slot>
             </div>
             <div class="modal-body">
-                        <div className="mb-4 mx-5">
-                        <label  class="dark:text-gray-200" for="expens_amount" >{{ $t('amount') }}</label>
-                        <input
-                          id="expens_amount"
-                          type="number"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                          v-model="formData.amount" />
-                        </div>
-                        <div className="mb-4 mx-5">
-                          <label  class="dark:text-gray-200" for="expenses_id">{{ $t('factor') }}</label>
+              
+              <div class="text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
+                  <ul class="flex flex-wrap -mb-px">
+                    <li class="mr-2" @click="activeTab = 'add'">
+                      <button
+                        class="inline-block p-4 text-blue-600 border-b-2 border-blue-600 rounded-t-lg"
+                        :class="{ 'hover:text-gray-600 hover:border-gray-300': activeTab !== 'add' }"
+                      >
+                        اضافة
+                      </button>
+                    </li>
+                    <li class="mr-2" @click="activeTab = 'record'">
+                      <button
+                        class="inline-block p-4 border-b-2 border-transparent rounded-t-lg "
+                        :class="{ 'dark:text-blue-500 dark:border-blue-500': activeTab === 'record' }"
+                      >
+                        السجل
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+
+                <div v-if="activeTab =='add'"> 
+                <div >
+                          <h1 class="text-center dark:text-gray-200 mt-4"> اضافة دفعة</h1>
+                          <div className="mb-4 mx-5">
+                          <label  class="dark:text-gray-200" for="expens_amount" >{{ $t('amount') }}</label>
                           <input
-                          id="note_expens"
-                          type="text"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                          v-model="formData.factor" />
+                            id="expens_amount"
+                            type="number"
+                            class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                            v-model="formData.amount" />
+                          </div>
+                          <div className="mb-4 mx-5">
+                            <label  class="dark:text-gray-200" for="expenses_id">{{ $t('factor') }}</label>
+                            <input
+                            id="note_expens"
+                            type="text"
+                            class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                            v-model="formData.factor" />
+                          </div>
+                          <div className="mb-4 mx-5">
+                          <label  class="dark:text-gray-200" for="expens_amount" >{{ $t('result') }}</label>
+                          <input
+                            id="expens_amount"
+                            type="number"
+                            class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                            :value="(formData.amount / formData.factor).toFixed(1)" />
+                          </div>
+                          <div className="mb-4 mx-5">
+                          <label  class="dark:text-gray-200" for="note" >{{ $t('note') }} </label>
+                          <input
+                            id="note"
+                            type="text"
+                            class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                            v-model="formData.note" />
+                          </div>
                         </div>
-                        <div className="mb-4 mx-5">
-                        <label  class="dark:text-gray-200" for="expens_amount" >{{ $t('result') }}</label>
-                        <input
-                          id="expens_amount"
-                          type="number"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                          :value="(formData.amount / formData.factor).toFixed(1)" />
-                        </div>
-                        <div className="mb-4 mx-5">
-                        <label  class="dark:text-gray-200" for="note" >{{ $t('note') }} </label>
-                        <input
-                          id="note"
-                          type="text"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                          v-model="formData.note" />
-                        </div>
+                </div>
+
+                <div v-else>
+                  <h1 class="text-center dark:text-gray-200 mt-4"> سجل الحولات</h1>
+                  <div class="relative overflow-x-auto shadow-md sm:rounded-lg mt-4 mb-5"  v-if="showTransactions">
+                  <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
+                  <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
+                  <tr  class="bg-rose-500 text-gray-100 rounded-l-lg mb-2 sm:mb-0">
+                    <th className="px-1 py-2 text-base">#</th>
+                    <th className="px-1 py-2 text-base">{{$t('date')}}</th>
+                    <th className="px-1 py-2 text-base">{{$t('description')}}</th>
+                    <th className="px-1 py-2 text-base">{{$t('amount')}}</th>
+                    <th
+                      scope="col"
+                      class="px-1 py-2 text-base print:hidden"
+                      style="width: 250px"
+                    >
+                      {{ $t("execute") }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="text-center px-4 py-2 border dark:border-gray-800 dark:text-gray-200" >
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200"> 
+                    <a  target="_blank"
+                    style="display: inline-flex;"
+                    :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&from=${from}&to=${to}&print=4`"
+                    tabIndex="1"
+                    class="px-4 py-1  text-white  m-1 bg-blue-500 rounded"
+                    >
+                    جميع الدفعات
+                    <print />
+                    </a>
+            
+                     </td>
+                   
+                  </tr>
+                  <template  v-for="user in laravelData.transactions" :key="user.id">
+                  <tr class="text-center" v-if="user.type=='out' && user.amount < 0 && user.is_pay == 1 ">
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.id }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.created }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.description }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.amount*-1  }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">  
+                    <a v-if="user.type =='out' && user.amount<0" target="_blank"
+                    style="display: inline-flex;"
+                    :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&from=${from}&to=${to}&print=2&transactions_id=${user.id}`"
+                    tabIndex="1"
+                    class="px-4 py-1  text-white  m-1 bg-green-500 rounded"
+                    >
+                    <print />
+                    </a>
+            
+                    <!-- <button
+                      tabIndex="1"
+                      class="px-1 py-1  text-white mx-1 bg-orange-500 rounded"
+                      @click="openModalDelClient(user)"
+                    >
+                      <trash />
+                    </button> -->
+                  </td>
+                  </tr>
+                  </template>
+         
+                </tbody>
+              </table>
+          </div>87
+                </div>
+
+
             </div>
   
             <div class="modal-footer my-2">
