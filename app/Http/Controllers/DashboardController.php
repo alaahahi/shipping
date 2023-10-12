@@ -491,12 +491,18 @@ class DashboardController extends Controller
             $data =  Car::with('contract')->with('exitcar')->with('client')->whereBetween('date', [$from, $to])->orderBy('date','DESC');
             $resultsDinar=$data->sum('dinar'); 
             $resultsDollar=$data->sum('total'); 
+            $resultsTotalS=$data->sum('total_s'); 
+            $resultsProfit=$data->sum('profit'); 
+            $resultsPaid=$data->sum('paid'); 
             $totalCars = $data->count();
 
         }else{
             $data =  Car::with('contract')->with('exitcar')->with('client')->orderBy('date','DESC');
             $resultsDinar=$data->sum('dinar');
-            $resultsDollar=$data->sum('total'); 
+            $resultsDollar=$data->sum('total');
+            $resultsTotalS=$data->sum('total_s'); 
+            $resultsProfit=$data->sum('profit'); 
+            $resultsPaid=$data->sum('paid'); 
             $totalCars = $data->count();
  
         }
@@ -509,11 +515,22 @@ class DashboardController extends Controller
         }
         if($user_id){
             $data =    $data->where('client_id',  $user_id);
+            $resultsDinar=$data->sum('dinar');
+            $resultsDollar=$data->sum('total'); 
+            $resultsTotalS=$data->sum('total_s'); 
+            $resultsProfit=$data->sum('profit'); 
+            $resultsPaid=$data->sum('paid'); 
+            $totalCars = $data->count();
         }
         $data =$data->orderBy('no', 'DESC')->paginate(1000)->toArray();
         $data['resultsDinar'] = $resultsDinar;
         $data['resultsDollar'] = $resultsDollar;
         $data['totalCars']  =$totalCars;
+        $data['resultsProfit'] = $resultsProfit;
+        $data['resultsPaid']  =$resultsPaid;
+        $data['resultsTotalS']  =$resultsTotalS;
+ 
+
         return Response::json($data, 200);
     }
     public function getIndexCarSearch()

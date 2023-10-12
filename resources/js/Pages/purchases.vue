@@ -636,6 +636,58 @@ function updateResults(input) {
                             disabled
                           />
                         </div>
+                        <div className="mb-4  mr-2">
+                          <InputLabel
+                            for="car_total_complete"
+                            value="مجموع  المبيعات بالدولار"
+                          />
+                          <TextInput
+                            id="car_total_complete"
+                            type="text"
+                            class="mt-1 block w-full"
+                            :value="updateResults(car.resultsTotalS)"
+                            disabled
+                          />
+                        </div>
+                        <div className="mb-4  mr-2">
+                          <InputLabel
+                            for="car_total_complete"
+                            value="مجموع  الدين بالدولار"
+                          />
+                          <TextInput
+                            id="car_total_complete"
+                            type="text"
+                            class="mt-1 block w-full"
+                            :value="updateResults(car.resultsTotalS-car.resultsPaid)"
+                            disabled
+                          />
+                        </div>
+                        <div className="mb-4  mr-2">
+                          <InputLabel
+                            for="car_total_complete"
+                            value="مجموع  المدفوع بالدولار"
+                          />
+                          <TextInput
+                            id="car_total_complete"
+                            type="text"
+                            class="mt-1 block w-full"
+                            :value="updateResults(car.resultsPaid)"
+                            disabled
+                          />
+                        </div>
+                        <div className="mb-4  mr-2">
+                          <InputLabel
+                            for="car_total_complete"
+                            value="مجموع الربح بالدولار"
+                          />
+                          <TextInput
+                            id="car_total_complete"
+                            type="text"
+                            class="mt-1 block w-full"
+                            :value="updateResults(car.resultsProfit)"
+                            disabled
+                          />
+                        </div>
                         <div class="px-4">
                           <div className="mb-4">
                             <InputLabel for="from" :value="$t('from_date')" />
