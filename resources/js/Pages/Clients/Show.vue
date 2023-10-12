@@ -473,7 +473,7 @@ function calculateAmount(){
               <InputLabel for="cars_need_paid" value="مجموع الدين بالدولار" />
               <TextInput
                 id="cars_need_paid"
-                type="text"
+                type="number"
                 class="mt-1 block w-full"
                 :value="laravelData?.cars_need_paid"
                 disabled

@@ -139,17 +139,32 @@ const dateValue = ref({
     endDate: ''
 })
 const countComp = ref()
-const formatter = ref({
-  date: 'D/MM/YYYY',
-  month: 'MM'
-})
+const searchType = ref('')
 const getResultsCar = async (user_id='',page = 1) => {
     const response = await fetch(`/getIndexCar?page=${page}&user_id=${user_id}`);
     car.value = await response.json();
 }
 const getResultsCarSearch = async (q='',page = 1) => {
-    const response = await fetch(`/getIndexCarSearch?page=${page}&q=${q}`);
-    car.value = await response.json();
+    axios.get(`/getIndexClients?page=${page}&q=${q}`)
+  .then(response => {
+    try {
+      laravelData.value =  Object.values(response.data.data)?.sort((a, b) => {
+      // First, sort by wallet.balance in descending order
+      const balanceComparison = b.wallet.balance - a.wallet.balance;
+
+      // If wallet.balance is the same, sort by car_total_uncomplete in ascending order
+  
+
+      return balanceComparison;
+    });
+    } catch (error) {
+      laravelData.value =  response.data.data
+    }
+
+  })
+  .catch(error => {
+    console.error(error);
+  })
 }
 const options = ref({
   shortcuts: {
@@ -344,6 +359,16 @@ function changeColor(total){
 
   }
 }
+function updateResults(input) {
+  // Ensure the input is a number
+  if (typeof input !== 'number') {
+    // Try converting the input to a number
+    input = parseFloat(input) || 0;
+  }
+  
+  // Use toLocaleString to format the number with commas
+  return input.toLocaleString();
+}
 </script>
 
 <template>
@@ -478,6 +503,67 @@ function changeColor(total){
              
                       </div>
                       <div>
+                        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7"> 
+                          <div>
+                          <form class="flex items-center max-w-5xl">
+                            <label  class="dark:text-gray-200" for="simple-search"  ></label>
+                            <div class="relative w-full">
+                              <div
+                                class="
+                                  absolute
+                                  inset-y-0
+                                  left-0
+                                  flex
+                                  items-center
+                                  pl-3
+                                  pointer-events-none
+                                "
+                              >
+                                <svg
+                                  aria-hidden="true"
+                                  class="w-5 h-5 text-gray-500 dark:text-gray-200 dark:text-gray-400"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    fill-rule="evenodd"
+                                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                                    clip-rule="evenodd"
+                                  ></path>
+                                </svg>
+                              </div>
+                              <input
+                                v-model="searchTerm"
+                                @input="getResultsCarSearch(searchTerm)"
+                                type="text"
+                                id="simple-search"
+                                class="
+                                  bg-gray-50
+                                  border border-gray-300
+                                  text-gray-900 text-sm
+                                  rounded-lg
+                                  focus:ring-blue-500 focus:border-blue-500
+                                  block
+                                  w-full
+                                  pl-10
+                                  p-2.5
+                                  dark:bg-gray-700
+                                  dark:border-gray-600
+                                  dark:placeholder-gray-400
+                                  dark:text-white
+                                  dark:focus:ring-blue-500
+                                  dark:focus:border-blue-500
+                                "
+                                placeholder="بحث"
+                                required
+                              />
+                            </div>
+                          </form>
+                        </div>
+        
+                 
+                        </div>
                         <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">     
                           
                           <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
@@ -488,7 +574,7 @@ function changeColor(total){
                             </div>
                             <div class="mr-4" >
                               <h2 class="font-semibold ">{{ $t('capital') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ mainAccount }}</p>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(mainAccount) }}</p>
                             </div>
                           </div>
                           <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
@@ -624,7 +710,7 @@ function changeColor(total){
                             </div>
                             <div class="mr-4">
                               <h2 class="font-semibold">{{ user.name}}</h2>
-                              <p class="mt-2 text-sm text-gray-200  dark:text-gray-200">{{ user.wallet ? '$'+user.wallet['balance']:0  }}
+                              <p class="mt-2 text-sm text-gray-200  dark:text-gray-200">{{ user.wallet ? '$'+updateResults(user.wallet['balance']):0  }}
                                 <span class="inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
                                 {{ user.car_total_un_pay}}
                               </span>

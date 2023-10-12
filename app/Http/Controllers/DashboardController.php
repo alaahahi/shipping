@@ -483,18 +483,18 @@ class DashboardController extends Controller
     public function getIndexCar()
     {
         $user_id =$_GET['user_id'] ?? '';
-        $data =  Car::with('contract')->with('exitcar')->with('client');
+        //$data =  Car::with('contract')->with('exitcar')->with('client');
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
 
         if($from && $to ){
-            $data =  Car::with('contract')->with('exitcar')->with('client')->whereBetween('date', [$from, $to]);
+            $data =  Car::with('contract')->with('exitcar')->with('client')->whereBetween('date', [$from, $to])->orderBy('date','DESC');
             $resultsDinar=$data->sum('dinar'); 
             $resultsDollar=$data->sum('total'); 
             $totalCars = $data->count();
 
         }else{
-            $data =  Car::with('contract')->with('exitcar')->with('client');
+            $data =  Car::with('contract')->with('exitcar')->with('client')->orderBy('date','DESC');
             $resultsDinar=$data->sum('dinar');
             $resultsDollar=$data->sum('total'); 
             $totalCars = $data->count();

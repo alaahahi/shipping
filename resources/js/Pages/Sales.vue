@@ -413,42 +413,7 @@ function confirmAddPayment(V) {
                             </div>
                           </form>
                         </div>
-                        <!-- <div>
-                          <button
-                            type="button"
-                            @click="openAddGenExpenses()"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-red-500 rounded">
-                               {{ $t('genExpenses') }}
-                          </button>
-                        </div> -->
-                        <!-- <div>
-                          <button
-                            type="button"
-                            @click="openAddCar()"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-green-500 rounded">
-                            {{ $t('addCar') }} 
-                          </button>
-                        </div> -->
-                        <!-- <div>
-                          <a
-                            type="button"
-                            :href="route('FormRegistrationCompleted')"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 text-center mx-2 py-2 font-bold text-white bg-blue-600 rounded">
-                            {{ $t('allCars') }}
-                          </a>
-                        </div> -->
-                        <!-- <div>
-                          <button
-                            type="button"
-                            @click="openAddTransfers()"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-indigo-600 rounded">
-                            {{ $t('transfers') }} 
-                          </button>
-                        </div> -->
+        
                         <div>
                             <select @change="getResultsCar(1,user_id)" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
                               <option value="undefined" disabled> {{ $t("selectCustomer") }}</option>
@@ -486,9 +451,6 @@ function confirmAddPayment(V) {
                           <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
                               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
                                   <tr>
-                                      <th scope="col" class="px-1 py-3 text-base	" >
-                                        {{ $t('no') }}  
-                                      </th>
                                       <th scope="col" class="px-1 py-3 text-base	">
                                         {{ $t('car_owner') }}
                                       </th>
@@ -553,7 +515,6 @@ function confirmAddPayment(V) {
 
 
                                 <tr v-for="car in car.data" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.no }}</td>
                                     <td className="border dark:border-gray-800 text-center  dark:text-gray-200 text-black px-1 py-2 " style="font-weight: bold;font-size: 16px;">{{ car.client?.name }}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_type}}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.year}}</td>

@@ -73,17 +73,26 @@ class UserController extends Controller
     public function getIndexClients()
     {
         $q = $_GET['q'] ?? '';
-        $from =  $_GET['from'] ?? 0;
-        $to =$_GET['to'] ?? 0 ;
-        
+        $from = $_GET['from'] ?? 0;
+        $to = $_GET['to'] ?? 0;
+        $searchType = $_GET['searchType'] ?? '';
+    
         $dataQuery = User::with('userType:id,name', 'wallet')
-        ->where('type_id', $this->userClient);
+            ->where('type_id', $this->userClient);
     
         if ($q) {
             if ($q !== 'debit') {
-                $dataQuery =  $dataQuery->where('name', 'like', '%' . $q . '%')->orWhere('phone', 'like', '%' . $q . '%');
+     
+                    $cars = Car::where('car_number', 'like', '%' . $q . '%')
+                        ->orWhere('vin', 'like', '%' . $q . '%')
+                        ->pluck('client_id');
+          
+                    $dataQuery->where(function ($query) use ($q,$cars) {
+                        $query->where('name', 'like', '%' . $q . '%')
+                            ->orWhere('phone', 'like', '%' . $q . '%')->orWhereIn('id', $cars);
+                    });
+               
             }
-        } else {
         }
         if ($from && $to) {
             $dataQuery->whereBetween('created', [$from, $to]);

@@ -311,6 +311,17 @@ function confirmAddPayment(V) {
 
   })
 }
+
+function updateResults(input) {
+  // Ensure the input is a number
+  if (typeof input !== 'number') {
+    // Try converting the input to a number
+    input = parseFloat(input) || 0;
+  }
+  
+  // Use toLocaleString to format the number with commas
+  return input.toLocaleString();
+}
 </script>
 
 <template>
@@ -455,7 +466,7 @@ function confirmAddPayment(V) {
                           </div>
                           <div class="mr-4" >
                             <h2 class="font-semibold ">{{ $t('capital') }}</h2>
-                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ mainAccount }}</p>
+                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(mainAccount) }}</p>
                           </div>
                         </div>
                         <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
@@ -466,7 +477,7 @@ function confirmAddPayment(V) {
                           </div>
                           <div class="mr-4" >
                             <h2 class="font-semibold ">إجمالي التكاليف </h2>
-                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ sumTotal }}</p>
+                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(sumTotal) }}</p>
                           </div>
                         </div>
                         <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
@@ -477,7 +488,7 @@ function confirmAddPayment(V) {
                           </div>
                           <div class="mr-4" >
                             <h2 class="font-semibold ">إجمالي المدفوعات من الزبائن</h2>
-                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ sumPaid }}</p>
+                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(sumPaid) }}</p>
                           </div>
                         </div>
                         <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
@@ -488,7 +499,7 @@ function confirmAddPayment(V) {
                           </div>
                           <div class="mr-4" >
                             <h2 class="font-semibold ">  صافي الربح</h2>
-                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ sumProfit }}</p>
+                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(sumProfit) }}</p>
                           </div>
                         </div>
 
@@ -501,7 +512,7 @@ function confirmAddPayment(V) {
                           </div>
                           <div class="mr-4">
                             <h2 class="font-semibold"> الدين </h2>
-                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ sumDebit }}</p>
+                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(sumDebit) }}</p>
                           </div>
                         </div>
                         <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
@@ -608,7 +619,7 @@ function confirmAddPayment(V) {
                             id="car_total_complete"
                             type="text"
                             class="mt-1 block w-full"
-                            :value="car.resultsDinar"
+                            :value="updateResults(car.resultsDinar)"
                             disabled
                           />
                         </div>
@@ -621,7 +632,7 @@ function confirmAddPayment(V) {
                             id="car_total_complete"
                             type="text"
                             class="mt-1 block w-full"
-                            :value="car.resultsDollar"
+                            :value="updateResults(car.resultsDollar)"
                             disabled
                           />
                         </div>
@@ -770,9 +781,7 @@ function confirmAddPayment(V) {
                           <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
                               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
                                   <tr>
-                                      <th scope="col" class="px-1 py-3 text-base	" >
-                                        {{ $t('no') }}  
-                                      </th>
+              
                                       <th scope="col" class="px-1 py-3 text-base	">
                                         {{ $t('car_owner') }}
                                       </th>
@@ -837,7 +846,6 @@ function confirmAddPayment(V) {
 
 
                                 <tr v-for="car in car.data" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.no }}</td>
                                     <td className="border dark:border-gray-900 text-center dark:text-gray-200 text-black px-1 py-2 " style="font-weight: bold;font-size: 16px;">{{ car.client?.name }}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_type}}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.year}}</td>

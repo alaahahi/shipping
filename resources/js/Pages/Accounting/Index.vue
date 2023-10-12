@@ -167,9 +167,7 @@ function conGenfirmExpenses(V) {
   <Head title="Dashboard" />
   <AuthenticatedLayout>
     <template #header>
-      <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-        المحاسبة
-      </h2>
+ 
     </template>
     <ModalAddGenExpenses
             :formData="formData"
