@@ -234,6 +234,7 @@ function conGenfirmExpenses(V) {
               <button style=" width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-rose-500 rounded-md focus:outline-none"
                                             @click="openAddSales()">
                                             وصل قبض
+                                            (أضافة)
               </button>
               </div>
 
@@ -247,7 +248,9 @@ function conGenfirmExpenses(V) {
               <div class="pt-5  print:hidden">
               <button  style=" width: 100%; margin-top: 4px;"  v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2|| $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-blue-500 rounded-md focus:outline-none"
                                             @click="openAddExpenses()">
-                                             اضافة مصاريف
+                                             وصل صرف
+                                             (سحب)
+
               </button>
        
               </div>

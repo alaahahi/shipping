@@ -118,7 +118,7 @@ const restform =()=>{
                     @click="$emit('close');">تراجع</button>
                   </div>
               <div class="basis-1/2 px-4">
-                <button class="modal-default-button py-3  bg-rose-500 rounded col-6"  @click="$emit('a',form);restform();" :disabled="!form.amountDollar && form.amountDinar">نعم</button>
+                <button class="modal-default-button py-3  bg-rose-500 rounded col-6"  @click="$emit('a',form);restform();" :disabled="form.amountDollar || form.amountDinar">نعم</button>
                 </div>
 
             </div>
