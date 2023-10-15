@@ -358,9 +358,9 @@ class DashboardController extends Controller
 
             }
             if($car->paid){
-                if($total >$car->paid){
+                if($total >$car->paid+$car->discount){
                     $dataToUpdate['results'] = 1  ;
-                }elseif($total==$car->paid){
+                }elseif($total==$car->paid+$car->discount){
                     $dataToUpdate['results'] = 2  ;
                 }else{
                     $dataToUpdate['results'] = 0  ;
@@ -414,9 +414,9 @@ class DashboardController extends Controller
             $dataToUpdate['profit']=$profit;
 
             if($car->paid){
-                if($total_s >$car->paid){
+                if($total_s >($car->paid+$car->discount)){
                     $dataToUpdate['results'] = 1  ;
-                }elseif($total_s==$car->paid){
+                }elseif($total_s==$car->paid+$car->discount){
                     $dataToUpdate['results'] = 2  ;
                 }else{
                     $dataToUpdate['results'] = 0  ;
