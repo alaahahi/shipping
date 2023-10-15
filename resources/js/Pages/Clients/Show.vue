@@ -399,48 +399,10 @@ function calculateAmount(){
                 disabled
               />
             </div>
+ 
+ 
             <div className="mb-4  mr-5">
-              <InputLabel
-                for="car_total_complete"
-                value="مجموع السيارات مكتمل"
-              />
-              <TextInput
-                id="car_total_complete"
-                type="text"
-                class="mt-1 block w-full"
-                :value="laravelData.car_total_complete"
-                disabled
-              />
-            </div>
-            <div className="mb-4  mr-5">
-              <InputLabel
-                for="car_total_unpaid"
-                value="مجموع السيارات غير مدفوع"
-              />
-              <TextInput
-                id="car_total_unpaid"
-                type="text"
-                class="mt-1 block w-full"
-                :value="laravelData.car_total_unpaid"
-                disabled
-              />
-            </div>
-            <div className="mb-4  mr-5">
-              <InputLabel
-                for="car_total_uncomplete"
-                value=" مجموع السيارات مدفوع وغير مكمل"
-              />
-              <TextInput
-                id="car_total_uncomplete"
-                type="text"
-                class="mt-1 block w-full"
-                :value="laravelData.car_total_uncomplete"
-                disabled
-              />
-            </div>
-
-            <div className="mb-4  mr-5">
-              <InputLabel for="cars_sum" :value="$t('Total_in_dollars')" />
+              <InputLabel for="cars_sum" :value="$t('Total_in_dollars')+' جمرك ' " />
               <TextInput
                 id="cars_sum"
                 type="text"
@@ -450,17 +412,17 @@ function calculateAmount(){
               />
             </div>
             <div className="mb-4  mr-5">
-              <InputLabel for="cars_paid" value="مجموع المدفوع بالدولار" />
+              <InputLabel for="cars_paid" value="مجموع المدفوع  جمرك بالدولار" />
               <TextInput
                 id="cars_paid"
                 type="number"
                 class="mt-1 block w-full"
-                :value="laravelData?.cars_paid"
+                :value="parseFloat(laravelData?.cars_paid)+parseFloat(laravelData?.cars_discount)"
                 disabled
               />
             </div>
             <div className="mb-4  mr-5">
-              <InputLabel for="cars_discount" value="مجموع الخصومات بالدولار" />
+              <InputLabel for="cars_discount" value="مجموع الخصومات  جمرك بالدولار" />
               <TextInput
                 id="cars_discount"
                 type="text"
@@ -470,12 +432,22 @@ function calculateAmount(){
               />
             </div>
             <div className="mb-4  mr-5">
-              <InputLabel for="cars_need_paid" value="مجموع الدين بالدولار" />
+              <InputLabel for="cars_need_paid" value="مجموع الدين جمرك بالدولار" />
               <TextInput
                 id="cars_need_paid"
                 type="number"
                 class="mt-1 block w-full"
                 :value="laravelData?.cars_need_paid"
+                disabled
+              />
+            </div>
+            <div className="mb-4  mr-5">
+              <InputLabel for="cars_need_paid" value="  الرصيد بالدولار" />
+              <TextInput
+                id="cars_need_paid"
+                type="number"
+                class="mt-1 block w-full"
+                :value="laravelData?.client?.wallet?.balance*-1"
                 disabled
               />
             </div>
@@ -539,6 +511,26 @@ function calculateAmount(){
                 type="text"
                 class="mt-1 block w-full"
                 :value="laravelData.exit_car_total"
+                disabled
+              />
+            </div>
+            <div className="mb-4  mr-5">
+              <InputLabel for="cars_paid" value="مجموع الدين عقود بالدولار" />
+              <TextInput
+                id="cars_paid"
+                type="number"
+                class="mt-1 block w-full"
+                :value="laravelData?.contract_total_debit_Dollar"
+                disabled
+              />
+            </div>
+            <div className="mb-4  mr-5">
+              <InputLabel for="cars_paid" value="مجموع الدين عقود بالدينار" />
+              <TextInput
+                id="cars_paid"
+                type="number"
+                class="mt-1 block w-full"
+                :value="laravelData?.contract_total_debit_Dinar"
                 disabled
               />
             </div>

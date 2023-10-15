@@ -54,6 +54,7 @@ class DashboardController extends Controller
     $this->border= User::with('wallet')->where('type_id', $this->userAccount)->where('email','border')->first();
     $this->iran= User::with('wallet')->where('type_id', $this->userAccount)->where('email','iran')->first();
     $this->dubai= User::with('wallet')->where('type_id', $this->userAccount)->where('email','dubai')->first();
+    $this->mainBox= User::with('wallet')->where('type_id', $this->userAccount)->where('email','mainBox@account.com')->first();
 
     }
     public function __invoke(Request $request)
@@ -110,8 +111,10 @@ class DashboardController extends Controller
         $contarts = Contract::all()->count();
         $exitCar = ExitCar::all()->count();
         $sumTotal = $car->sum('total');
-        $sumPaid = $car->sum('paid');
-        $sumDebit = $car->whereIn('results',[0,1])->sum('total_s');
+        $sumTotalS = $car->sum('total_s');
+        $client = User::where('type_id', $this->userClient)->pluck('id');
+        $sumDebit =Wallet::whereIn('user_id', $client)->sum('balance');
+        $sumPaid = $car->sum('paid')+ $car->sum('discount');
         $sumProfit = $car->where('results',2)->sum('profit');
         $data = [
         'contarts'=>$contarts,
@@ -131,7 +134,13 @@ class DashboardController extends Controller
         'sumProfit'=>$sumProfit,
         'debtOnlineContracts'=>$this->debtOnlineContracts->wallet->balance??0,
         'allCars'=>$car->count()??0,
-        'carsInStock'=>$car->where('client_id',null)->count()??0
+        'purchasesCost'=>$sumTotalS??0,
+        'clientPaid'=>$sumPaid??0,
+        'clientDebit'=>$sumTotalS-$sumPaid ?? 0,
+        'mainBoxDollar'=>$this->mainBox->wallet->balance??0,
+        'mainBoxDinar'=>$this->mainBox->wallet->balance_dinar??0,
+
+        
         ];
         return response()->json(['data'=>$data]); 
 
@@ -499,7 +508,8 @@ class DashboardController extends Controller
         }else{
             $data =  Car::with('contract')->with('exitcar')->with('client')->orderBy('date','DESC');
             $resultsDinar=$data->sum('dinar');
-            $resultsDollar=$data->sum('total');
+            $resultsDollar=$data->sum('
+            ');
             $resultsTotalS=$data->sum('total_s'); 
             $resultsProfit=$data->sum('profit'); 
             $resultsPaid=$data->sum('paid'); 

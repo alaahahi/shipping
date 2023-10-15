@@ -1,23 +1,12 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import VueTailwindDatepicker from 'vue-tailwind-datepicker'
-import Modal from "@/Components/Modal.vue";
-import ModalAddCar from "@/Components/ModalAddCars.vue";
-import ModalAddSale from "@/Components/ModalAddSale.vue";
-import ModalAddExpenses from "@/Components/ModalAddExpenses.vue";
-import ModalAddGenExpenses from "@/Components/ModalAddGenExpenses.vue";
-import ModalAddToBox from "@/Components/ModalAddToBox.vue";
-import ModalSpanFromBox from "@/Components/ModalSpanFromBox.vue";
-import ModalAddTransfers from "@/Components/ModalAddTransfers.vue";
-import ModalAddCarPayment from "@/Components/ModalAddCarPayment.vue";
-import ModalDelCar from "@/Components/ModalDelCar.vue";
-import { TailwindPagination } from "laravel-vue-pagination"
-import { Head, Link, useForm } from '@inertiajs/inertia-vue3';
-;
 import { useToast } from "vue-toastification";
 import axios from 'axios';
 import { ref } from 'vue';
 import { useI18n } from "vue-i18n";
+import { Link } from "@inertiajs/inertia-vue3";
+
+
 const {t} = useI18n();
 
 
@@ -68,15 +57,6 @@ let showModal = ref(false);
 
 let searchTerm = ref('');
 
-let showModalCar =  ref(false);
-let showModalCarSale =  ref(false);
-let showModalAddExpenses =  ref(false);
-let showModalAddGenExpenses =  ref(false);
-let showModalToBox =  ref(false);
-let showModalFromBox =  ref(false);
-let showModalAddTransfers =  ref(false);
-let showModalAddCarPayment =  ref(false);
-let showModalDelCar =  ref(false);
 let mainAccount= ref(0)
 let onlineContracts= ref(0)
 let howler= ref(0)
@@ -85,65 +65,23 @@ let border= ref(0)
 let iran= ref(0)
 let dubai= ref(0)
 let debtOnlineContracts= ref(0)
+let onlineContractsDinar= ref(0)
+let debtOnlineContractsDinar= ref(0)
+let purchasesCost = ref(0)
+let clientPaid = ref(0)
+let clientDebit  = ref(0)
+let mainBoxDollar = ref(0)
+let mainBoxDinar = ref(0)
 
 let allCars= ref(0)
 
 function openModal() {
   showModal.value = true;
 }
-
-function openModalDelCar(form={}) {
-  formData.value=form
-  showModalDelCar.value = true;
-}
-
-function openAddCar(form={}) {
-    formData.value=form
-    showModalCar.value = true;
-}
-function openSaleCar(form={}) {
-    formData.value=form
-    showModalCarSale.value = true;
-}
-function openAddExpenses(form={}) {
-    formData.value=form
-    showModalAddExpenses.value = true;
-}
-function openAddGenExpenses(v) {
-    expenses_type_id.value=v
-    showModalAddGenExpenses.value = true;
-}
-function openAddToBox(form={}) {
-    formData.value=form
-    showModalToBox.value = true;
-}
-function openAddFromBox(form={}) {
-    formData.value=form
-    showModalFromBox.value = true;
-}
-function openAddTransfers(form={}) {
-    formData.value=form
-    showModalAddTransfers.value = true;
-}
-function openAddCarPayment(form={}) {
-    formData.value=form
-    showModalAddCarPayment.value = true;
-}
 const formData = ref({});
-const formGenExpenses = ref({});
 const car = ref([]);
 
 
-const dateValue = ref({
-    startDate: '',
-    endDate: ''
-})
-const countComp = ref()
-const searchType = ref('')
-const getResultsCar = async (user_id='',page = 1) => {
-    const response = await fetch(`/getIndexCar?page=${page}&user_id=${user_id}`);
-    car.value = await response.json();
-}
 const getResultsCarSearch = async (q='',page = 1) => {
     axios.get(`/getIndexClients?page=${page}&q=${q}`)
   .then(response => {
@@ -166,22 +104,8 @@ const getResultsCarSearch = async (q='',page = 1) => {
     console.error(error);
   })
 }
-const options = ref({
-  shortcuts: {
-    today: 'اليوم',
-    yesterday: 'البارحة',
-    past: period => period + ' قبل يوم',
-    currentMonth: 'الشهر الحالي',
-    pastMonth: 'الشهر السابق'
-  },
-  footer: {
-    apply: 'Terapkan',
-    cancel: 'Batal'
-  }
-})
-const dDate = (date) => {
-  return date >= new Date() ;
-}
+
+
 const getcountTotalInfo = async () => {
   axios.get('/api/totalInfo')
   .then(response => {
@@ -193,7 +117,15 @@ const getcountTotalInfo = async () => {
     iran.value=  response.data.data.iran
     dubai.value=  response.data.data.dubai
     debtOnlineContracts.value=  response.data.data.debtOnlineContracts
+    onlineContractsDinar.value =response.data.data.onlineContractsDinar
+    debtOnlineContractsDinar.value = response.data.data.debtOnlineContractsDinar
     allCars.value =response.data.data.allCars;
+    purchasesCost.value =response.data.data.purchasesCost
+    clientPaid.value =response.data.data.clientPaid
+    clientDebit.value =response.data.data.clientDebit
+    mainBoxDollar.value =response.data.data.mainBoxDollar
+    mainBoxDinar.value =response.data.data.mainBoxDinar
+
   })
   .catch(error => {
     console.error(error);
@@ -202,132 +134,6 @@ const getcountTotalInfo = async () => {
     
 }
 getcountTotalInfo()
-function confirmCar(V) {
-  axios.post('/api/addCars',V)
-  .then(response => {
-    showModalCar.value = false;
-    getcountTotalInfo()
-  })
-  .catch(error => {
-    console.error(error);
-  })
-}
-function confirmUpdateCar(V) {
-  axios.post('/api/updateCars',V)
-  .then(response => {
-    showModal.value = false;
-    toast.success("تم التعديل بنجاح", {
-        timeout: 2000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-      getcountTotalInfo()
-
-  })
-  .catch(error => {
-    showModal.value = false;
-
-    toast.error("لم التعديل بنجاح", {
-        timeout: 2000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-  })
-}
-
-function confirmPayCar(V) {
-  axios.post('/api/payCar',V)
-  .then(response => {
-    showModalCarSale.value = false;
-      window.location.reload();
-  })
-  .catch(error => {
-    console.error(error);
-  })
-}
-function confirmExpenses(V) {
-  fetch(`/addExpenses?car_id=${V.id}&user_id=${V.user_id}&expenses_id=${V.expenses_id}&expens_amount=${V.expens_amount??0}&note=${V.noteExpenses??''}`)
-    .then(() => {
-      showModalAddExpenses.value = false;
-       window.location.reload();
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-}
-function conGenfirmExpenses(V) {
-  fetch(`/GenExpenses?amount=${V.amount??0}&expenses_type_id=${expenses_type_id.value}&factor=${V.factor??1}&note=${V.note??''}`)
-    .then(() => {
-      showModalAddGenExpenses.value = false;
-      window.location.reload();
-
-    })
-    .catch((error) => {
-      
-      console.error(error);
-    });
-}
-function conAddTransfers(V) {
-  fetch(`/addTransfers?user_id=${V.user_id}&amount=${V.amount??0}&note=${V.note??''}`)
-    .then(() => {
-      showModalAddTransfers.value = false;
-       window.location.reload();
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-}
-function confirmAddToBox(V) {
-  fetch(`/addToBox?amount=${V.amount??0}&note=${V.note??''}`)
-    .then(() => {
-      showModalToBox.value = false;
-      window.location.reload();
-
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-}
-function confirmWithDrawFromBox(V) {
-  fetch(`/withDrawFromBox?amount=${V.amount??0}&note=${V.note??''}`)
-    .then(() => {
-      showModalFromBox.value = false;
-      window.location.reload();
-
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-}
-function confirmAddPayment(V) {
-  fetch(`/addPaymentCar?car_id=${V.id}&user_id=${V.user_id}&amount=${V.amountPayment??0}&note=${V.notePayment??''}`)
-    .then(() => {
-      showModalFromBox.value = false;
-      window.location.reload();
-
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-}
-function confirmDelCar(V) {
-  axios.post('/api/DelCar',V)
-  .then(response => {
-    showModalDelCar.value = false;
-      window.location.reload();
-  })
-  .catch(error => {
-    console.error(error);
-  })
-
-
-}
-function getDarkModePreference() {
-  const darkModePreference = localStorage.getItem('darkMode');
-  return darkModePreference==='true' ?'darkCompact':'compact'; // Convert the string to a boolean
-}
 function changeColor(total){
 
   if(total >= 30000){
@@ -373,121 +179,6 @@ function updateResults(input) {
 
 <template>
     <Head title="Dashboard" />
-    <Modal
-            :data="data"
-            :show="showModal ? true : false"
-            :carModel="carModel"
-            @a="confirmUpdateCar($event)"
-            @close="showModal = false"
-            >
-        <template #header>
-          <h2 class="text-center" style="font-size:20px;">
-            هل متأكد من تعديل البيانات
-          </h2>
-        </template>
-    </Modal>
-    <ModalAddCar
-            :formData="formData"
-            :show="showModalCar ? true : false"
-            :client="client"
-            :carModel="carModel"
-            @a="confirmCar($event)"
-            @close="showModalCar = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddCar>
-    <ModalAddSale
-            :formData="formData"
-            :show="showModalCarSale ? true : false"
-            :company="company"
-            :name="name"
-            :color="color"
-            :carModel="carModel"
-            :client="client"
-            @a="confirmPayCar($event)"
-            @close="showModalCarSale = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddSale>
-    <ModalAddExpenses
-            :formData="formData"
-            :expenses="expenses"
-            :show="showModalAddExpenses ? true : false"
-            :user="user"
-            @a="confirmExpenses($event)"
-            @close="showModalAddExpenses = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddExpenses>
-    <ModalAddGenExpenses
-            :formData="formData"
-            :show="showModalAddGenExpenses ? true : false"
-            :expenses_type_id="expenses_type_id"
-            :user="user"
-            @a="conGenfirmExpenses($event)"
-            @close="showModalAddGenExpenses = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddGenExpenses>
-    <ModalAddToBox
-            :formData="formData"
-            :expenses="expenses"
-            :show="showModalToBox ? true : false"
-            :user="user"
-            @a="confirmAddToBox($event)"
-            @close="showModalToBox = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddToBox>
-    <ModalSpanFromBox
-            :formData="formData"
-            :expenses="expenses"
-            :show="showModalFromBox ? true : false"
-            :user="user"
-            @a="confirmWithDrawFromBox($event)"
-            @close="showModalFromBox = false"
-            >
-        <template #header>
-          </template>
-    </ModalSpanFromBox>
-    <ModalAddTransfers
-            :formData="formData"
-            :expenses="expenses"
-            :show="showModalAddTransfers  ? true : false"
-            :user="user"
-            @a="conAddTransfers($event)"
-            @close="showModalAddTransfers = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddTransfers>
-    <ModalAddCarPayment
-            :formData="formData"
-            :show="showModalAddCarPayment ? true : false"
-            :user="user"
-            @a="confirmAddPayment($event)"
-            @close="showModalAddCarPayment = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddCarPayment>
-
-    <ModalDelCar
-            :show="showModalDelCar ? true : false"
-            :formData="formData"
-            @a="confirmDelCar($event)"
-            @close="showModalDelCar = false"
-            >
-          <template #header>
-          هل متأكد من حذف السيارة
-          ؟
-          </template>
-    </ModalDelCar>
     <AuthenticatedLayout >
         <div class="py-2"  v-if="$page.props.auth.user.type_id==1">
         <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 ">
@@ -577,131 +268,111 @@ function updateResults(input) {
                               <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(mainAccount) }}</p>
                             </div>
                           </div>
-                          <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                 
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
                             </div>
-                      
-                            <div class="mr-4">
-                              <h2 class="font-semibold"> {{ $t('fundIncome') }} </h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ inAccount.wallet?.balance }}</p>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">تكاليف المبيعات</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{  updateResults(purchasesCost) }} دولار</p>
                             </div>
-                          </div> -->
-                          <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                          </div> 
+
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
                             </div>
-                      
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('cash_out') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ outAccount.wallet?.balance }}</p>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">دين التجار</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{  updateResults(clientDebit) }} دولار</p>
+                            </div>
+                          </div>
+
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">مدفوعات التجار</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{  updateResults(clientPaid) }} دولار</p>
+                            </div>
+                          </div>
+
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">الصندوق</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{  updateResults(mainBoxDollar) }} دولار</p>
                             </div>
                           </div>
                           <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
                             </div>
-                      
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('debt_to_fund') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ debtAccount.wallet?.balance }}</p>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">الصندوق</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{  updateResults(mainBoxDinar) }} دينار</p>
                             </div>
                           </div>
                           <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
                             </div>
-                      
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('transfer') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ transfersAccount.wallet?.balance }}</p>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">{{ $t('online_contracts') }}</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(onlineContracts) }} دولار</p>
                             </div>
                           </div>
                           <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
                             </div>
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('total_car_count') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{carCount}}</p>
-                            </div>
-                          </div> -->
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('genExpenses') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{howler}}</p>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">{{ $t('debtOnlineContracts') }}</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(debtOnlineContracts) }} دولار</p>
                             </div>
                           </div>
                           <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
                             </div>
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('dubai') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{dubai}}</p>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">{{ $t('online_contracts') }}</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(onlineContractsDinar) }} دينار</p>
                             </div>
                           </div>
                           <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
                             </div>
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('iran') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{iran}}</p>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">{{ $t('debtOnlineContracts') }}</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(debtOnlineContractsDinar) }} دينار</p>
                             </div>
                           </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('border') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{border}}</p>
-                            </div>
                           </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('shipping_coc') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{shippingCoc}}</p>
-                            </div>
-                          </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('online_contracts') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{onlineContracts}}</p>
-                            </div>
-                          </div>
+                          <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
                           <Link  v-for="(user,i) in laravelData" :key="i" class="flex items-start rounded-xl text-gray-200  dark:text-gray-300  p-4 shadow-lg"  :href="route('showClients', user.id)"  :class="changeColor( user.wallet ? user.wallet['balance']:0)">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

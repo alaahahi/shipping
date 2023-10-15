@@ -29,11 +29,44 @@ let GenExpenses = ref({});
 let isLoading=ref(false);
 let from = ref(getTodayDate());
 let to = ref(getTodayDate());
+let mainAccount= ref(0)
+let onlineContracts= ref(0)
+let howler= ref(0)
+let shippingCoc= ref(0)
+let border= ref(0)
+let iran= ref(0)
+let dubai= ref(0)
+let debtOnlineContracts= ref(0)
+let allCars= ref(0)
+let onlineContractsDinar = ref(0)
+let debtOnlineContractsDinar = ref(0)
 const getResults = async (page = 1) => {
   searchTerm.value = '';
   const response = await fetch(`/getIndexAccounting?page=${page}&user_id=${props.boxes[0].id}&from=${from.value}&to=${to.value}`);
   laravelData.value = await response.json();
 };
+const getcountTotalInfo = async () => {
+  axios.get('/api/totalInfo')
+  .then(response => {
+    mainAccount.value = response.data.data.mainAccount;
+    onlineContracts.value=  response.data.data.onlineContracts
+    howler.value=  response.data.data.howler
+    shippingCoc.value=  response.data.data.shippingCoc
+    border.value=  response.data.data.border
+    iran.value=  response.data.data.iran
+    dubai.value=  response.data.data.dubai
+    debtOnlineContracts.value=  response.data.data.debtOnlineContracts
+    onlineContractsDinar.value =response.data.data.onlineContractsDinar
+    debtOnlineContractsDinar.value = response.data.data.debtOnlineContractsDinar
+    allCars.value =response.data.data.allCars;
+  })
+  .catch(error => {
+    console.error(error);
+  })
+  
+    
+}
+getcountTotalInfo()
 function openAddSales() {
   showModalAddSales.value = true;
 }
@@ -142,7 +175,16 @@ function getGenfirmExpenses() {
 
 
 }
-
+function updateResults(input) {
+  // Ensure the input is a number
+  if (typeof input !== 'number') {
+    // Try converting the input to a number
+    input = parseFloat(input) || 0;
+  }
+  
+  // Use toLocaleString to format the number with commas
+  return input.toLocaleString();
+}
 
 function conGenfirmExpenses(V) {
   axios.post(`/api/GenExpenses?amount=${V.amount??0}&expenses_type_id=${expenses_type_id.value}&factor=${V.factor??1}&note=${V.note??''}`)
@@ -225,10 +267,153 @@ function conGenfirmExpenses(V) {
         </div>
       </div>
     </div>
-    <div class="py-12">
+    <div>
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
         <div class="overflow-hidden shadow-sm sm:rounded-lg">
-          <div class="p-6 border-b border-gray-200">
+          <div class=" border-b border-gray-200">
+            <div class="mt-4  mb-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">     
+                          
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">{{ $t('capital') }}</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(mainAccount) }}</p>
+                            </div>
+                          </div>
+            
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                              </svg>
+                            </div>
+                            <div class="mr-4">
+                              <h2 class="font-semibold">{{ $t('genExpenses') }}</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{howler}}</p>
+                            </div>
+                          </div>
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                              </svg>
+                            </div>
+                            <div class="mr-4">
+                              <h2 class="font-semibold">{{ $t('dubai') }}</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{dubai}}</p>
+                            </div>
+                          </div>
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                              </svg>
+                            </div>
+                            <div class="mr-4">
+                              <h2 class="font-semibold">{{ $t('iran') }}</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{iran}}</p>
+                            </div>
+                          </div>
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                              </svg>
+                            </div>
+                            <div class="mr-4">
+                              <h2 class="font-semibold">{{ $t('border') }}</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{border}}</p>
+                            </div>
+                          </div>
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                              </svg>
+                            </div>
+                            <div class="mr-4">
+                              <h2 class="font-semibold">{{ $t('shipping_coc') }}</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{shippingCoc}}</p>
+                            </div>
+                          </div>
+                         
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">{{ $t('online_contracts') }}</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ onlineContracts }} دولار</p>
+                            </div>
+                          </div>
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">{{ $t('debtOnlineContracts') }}</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ debtOnlineContracts }} دولار</p>
+                            </div>
+                          </div>
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">{{ $t('online_contracts') }}</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ onlineContractsDinar }} دينار</p>
+                            </div>
+                          </div>
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                            <div class="mr-4" >
+                              <h2 class="font-semibold ">{{ $t('debtOnlineContracts') }}</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ debtOnlineContractsDinar }} دينار</p>
+                            </div>
+                          </div>
+
+                           
+                     
+                          <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                              </svg>
+                            </div>
+                      
+                            <div class="mr-4">
+                              <h2 class="font-semibold">{{ $t('supplier_debt') }}</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ debtSupplier.wallet?.balance }}</p>
+                            </div>
+                          </div>
+                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                              </svg>
+                            </div>
+                      
+                            <div class="mr-4">
+                              <h2 class="font-semibold">{{ $t('supplier_payments') }}</h2>
+                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ outSupplier.wallet?.balance }}</p>
+                            </div>
+                          </div> -->
+                        </div>
+
             <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
               <div class="pt-5  print:hidden">
               <button style=" width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-rose-500 rounded-md focus:outline-none"

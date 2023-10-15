@@ -85,11 +85,11 @@ $Help = new MyHelp();
 
       <div class="col-12  p-2  pe-5"> 
          مبلغ قدره :
-         {{ $Help->numberToWords($amount)}}
+         {{ $Help->numberToWords($amount??0)}}
         </div>
         <div class="col-12  p-2  pe-5"> 
           الملاحظات:
-          {{$description}}
+          {{$description??''}}
          </div>
         
         
@@ -102,7 +102,7 @@ $Help = new MyHelp();
      المبلغ:
     </div>
     <div class="col-1 alert-primary border p-2">
-    {{$amount}}
+    {{$amount??0}}
     </div>
     <div class="col-1 alert-primary border p-2">
     USD
@@ -224,11 +224,11 @@ $Help = new MyHelp();
   
         <div class="col-12  p-2  pe-5"> 
            مبلغ قدره :
-           {{  $Help->numberToWords($amount)}}
+           {{  $Help->numberToWords($amount??0)}}
           </div>
           <div class="col-12  p-2  pe-5"> 
             الملاحظات:
-            {{$description}}
+            {{$description??''}}
            </div>
           
           
@@ -241,7 +241,7 @@ $Help = new MyHelp();
        المبلغ:
       </div>
       <div class="col-1 alert-primary border p-2">
-      {{$amount}}
+      {{$amount??0}}
       </div>
       <div class="col-1 alert-primary border p-2">
       USD
