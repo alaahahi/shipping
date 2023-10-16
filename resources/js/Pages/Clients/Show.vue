@@ -220,13 +220,13 @@ function hideTransactionsDiv(){
   
 }
 function calculateAmountDiscount (){
-  let need_payment = laravelData.value?.cars_need_paid
+  let need_payment =  laravelData?.value?.client?.wallet?.balance
   amount.value=need_payment- discount.value
 }
 function calculateAmount(){
   
-  let need_payment = laravelData.value?.cars_need_paid - discount.value
-  
+  let need_payment = laravelData?.value?.client?.wallet?.balance
+  console.log(need_payment)
   if(amount.value > need_payment){
     amount.value=need_payment
     showErorrAmount.value = true
@@ -399,48 +399,10 @@ function calculateAmount(){
                 disabled
               />
             </div>
+ 
+ 
             <div className="mb-4  mr-5">
-              <InputLabel
-                for="car_total_complete"
-                value="مجموع السيارات مكتمل"
-              />
-              <TextInput
-                id="car_total_complete"
-                type="text"
-                class="mt-1 block w-full"
-                :value="laravelData.car_total_complete"
-                disabled
-              />
-            </div>
-            <div className="mb-4  mr-5">
-              <InputLabel
-                for="car_total_unpaid"
-                value="مجموع السيارات غير مدفوع"
-              />
-              <TextInput
-                id="car_total_unpaid"
-                type="text"
-                class="mt-1 block w-full"
-                :value="laravelData.car_total_unpaid"
-                disabled
-              />
-            </div>
-            <div className="mb-4  mr-5">
-              <InputLabel
-                for="car_total_uncomplete"
-                value=" مجموع السيارات مدفوع وغير مكمل"
-              />
-              <TextInput
-                id="car_total_uncomplete"
-                type="text"
-                class="mt-1 block w-full"
-                :value="laravelData.car_total_uncomplete"
-                disabled
-              />
-            </div>
-
-            <div className="mb-4  mr-5">
-              <InputLabel for="cars_sum" :value="$t('Total_in_dollars')" />
+              <InputLabel for="cars_sum" :value="$t('Total_in_dollars')+' جمرك ' " />
               <TextInput
                 id="cars_sum"
                 type="text"
@@ -450,17 +412,17 @@ function calculateAmount(){
               />
             </div>
             <div className="mb-4  mr-5">
-              <InputLabel for="cars_paid" value="مجموع المدفوع بالدولار" />
+              <InputLabel for="cars_paid" value="مجموع المدفوع  جمرك بالدولار" />
               <TextInput
                 id="cars_paid"
                 type="number"
                 class="mt-1 block w-full"
-                :value="laravelData?.cars_paid"
+                :value="parseFloat(laravelData?.cars_paid)+parseFloat(laravelData?.cars_discount)"
                 disabled
               />
             </div>
             <div className="mb-4  mr-5">
-              <InputLabel for="cars_discount" value="مجموع الخصومات بالدولار" />
+              <InputLabel for="cars_discount" value="مجموع الخصومات  جمرك بالدولار" />
               <TextInput
                 id="cars_discount"
                 type="text"
@@ -470,12 +432,22 @@ function calculateAmount(){
               />
             </div>
             <div className="mb-4  mr-5">
-              <InputLabel for="cars_need_paid" value="مجموع الدين بالدولار" />
+              <InputLabel for="cars_need_paid" value="مجموع الدين جمرك بالدولار" />
               <TextInput
                 id="cars_need_paid"
                 type="number"
                 class="mt-1 block w-full"
                 :value="laravelData?.cars_need_paid"
+                disabled
+              />
+            </div>
+            <div className="mb-4  mr-5">
+              <InputLabel for="cars_need_paid" value="  الرصيد بالدولار" />
+              <TextInput
+                id="cars_need_paid"
+                type="number"
+                class="mt-1 block w-full"
+                :value="laravelData?.client?.wallet?.balance*-1"
                 disabled
               />
             </div>
@@ -542,21 +514,28 @@ function calculateAmount(){
                 disabled
               />
             </div>
-          </div>
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 lg:gap-1" v-if="showPaymentForm">
             <div className="mb-4  mr-5">
-              <InputLabel
-                for="percentage"
-                value=" المبلغ بالدولار المراد دفعه"
-              />
+              <InputLabel for="cars_paid" value="مجموع الدين عقود بالدولار" />
               <TextInput
-                id="percentage"
+                id="cars_paid"
                 type="number"
-                @input="calculateAmount"
                 class="mt-1 block w-full"
-                v-model="amount"
+                :value="laravelData?.contract_total_debit_Dollar"
+                disabled
               />
             </div>
+            <div className="mb-4  mr-5">
+              <InputLabel for="cars_paid" value="مجموع الدين عقود بالدينار" />
+              <TextInput
+                id="cars_paid"
+                type="number"
+                class="mt-1 block w-full"
+                :value="laravelData?.contract_total_debit_Dinar"
+                disabled
+              />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 lg:gap-1" v-if="showPaymentForm">
             <div className="mb-4  mr-5">
               <InputLabel
               
@@ -572,6 +551,21 @@ function calculateAmount(){
                 v-model="discount"
               />
             </div>
+            
+            <div className="mb-4  mr-5">
+              <InputLabel
+                for="percentage"
+                value=" المبلغ بالدولار المراد دفعه"
+              />
+              <TextInput
+                id="percentage"
+                type="number"
+                @input="calculateAmount"
+                class="mt-1 block w-full"
+                v-model="amount"
+              />
+            </div>
+
             <div className="mb-4  mr-5">
               <InputLabel
                 for="discount"

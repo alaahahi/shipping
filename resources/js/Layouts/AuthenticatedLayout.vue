@@ -99,7 +99,7 @@ const switchLocale = (locale) => {
                   :href="route('accounting')"
                   :active="route().current('accounting')"
                 >
-                 المحاسية
+                 المحاسبة
                 </NavLink>
               </div>
               <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1">
