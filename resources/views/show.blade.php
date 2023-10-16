@@ -64,11 +64,11 @@
     </div>
     <div class="col-3">
     مبلغ مدفوع:
-    {{$clientData['cars_paid']}}
+    {{$clientData['cars_sum']-$clientData['client']->wallet->balance}}
     </div>
     <div class="col-3">
      مبلغ الباقي:
-     {{$clientData['cars_need_paid']}}
+     {{$clientData['client']->wallet->balance}}
     </div>
     <div class="col-3">
       عدد السيارات:
