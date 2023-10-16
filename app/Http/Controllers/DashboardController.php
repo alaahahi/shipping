@@ -508,8 +508,7 @@ class DashboardController extends Controller
         }else{
             $data =  Car::with('contract')->with('exitcar')->with('client')->orderBy('date','DESC');
             $resultsDinar=$data->sum('dinar');
-            $resultsDollar=$data->sum('
-            ');
+            $resultsDollar=$data->sum('total');
             $resultsTotalS=$data->sum('total_s'); 
             $resultsProfit=$data->sum('profit'); 
             $resultsPaid=$data->sum('paid'); 
