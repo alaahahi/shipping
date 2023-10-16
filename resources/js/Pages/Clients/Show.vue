@@ -417,7 +417,7 @@ function calculateAmount(){
                 id="cars_paid"
                 type="number"
                 class="mt-1 block w-full"
-                :value="parseFloat(laravelData?.cars_paid)+parseFloat(laravelData?.cars_discount)"
+                :value="parseFloat(laravelData?.cars_sum)-(parseFloat(laravelData?.client?.wallet?.balance)+parseFloat(laravelData?.cars_discount))"
                 disabled
               />
             </div>
@@ -437,7 +437,7 @@ function calculateAmount(){
                 id="cars_need_paid"
                 type="number"
                 class="mt-1 block w-full"
-                :value="laravelData?.cars_need_paid"
+                :value="laravelData?.client?.wallet?.balance-laravelData?.contract_total_debit_Dollar"
                 disabled
               />
             </div>
@@ -551,7 +551,7 @@ function calculateAmount(){
                 v-model="discount"
               />
             </div>
-            
+
             <div className="mb-4  mr-5">
               <InputLabel
                 for="percentage"

@@ -516,12 +516,16 @@ class DashboardController extends Controller
  
         }
         $type =$_GET['type'] ?? '';
-        if($type){
+        if($type == 'debitContract'){
+            $data =    $data->whereHas('contract', function ($query) {
+            
+                $query->where('name', 'LIKE', '%' . $term . '%');
+            });
+        }
+        elseif($type){
             $data =    $data->where('results', $type);
         }
-        if($type==0){
-            $data =    $data->where('results', $type);
-        }
+
         if($user_id){
             $data =    $data->where('client_id',  $user_id);
             $resultsDinar=$data->sum('dinar');
