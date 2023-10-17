@@ -9,6 +9,9 @@ import ModalAddExpenses from "@/Components/ModalAddExpenses.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import ModalAddGenExpenses from "@/Components/ModalAddGenExpenses.vue";
+import ModalConvertDollarDinar from "@/Components/ModalConvertDollarDinar.vue";
+import ModalConvertDinarDollar from "@/Components/ModalConvertDinarDollar.vue";
+
 
 import axios from 'axios';
 import show from "@/Components/icon/show.vue";
@@ -23,6 +26,9 @@ let showModalAddSales = ref(false);
 let showModaldebtSales = ref(false);
 let showModalAddExpenses = ref(false);
 let showModalAddGenExpenses = ref(false);
+let showModalConvertDollarDinar = ref(false);
+let showModalConvertDinarDollar = ref(false);
+
 let expenses_type_id = ref(0);
 let formData = ref({});
 let GenExpenses = ref({});
@@ -75,6 +81,12 @@ function opendebtSales() {
 }
 function openAddExpenses(){
   showModalAddExpenses.value = true;
+}
+function openConvertDollarDinar(){
+  showModalConvertDollarDinar.value = true;
+}
+function openConvertDinarDollar(){
+  showModalConvertDinarDollar.value = true;
 }
 getResults();
 
@@ -136,6 +148,31 @@ function confirmdebt(V) {
     errors.value = error.response.data.errors
   })
 }
+function confirmConvertDollarDinar(V) {
+  axios.post('/api/convertDollarDinar',V)
+  .then(response => {
+    getResults();
+    showModalConvertDollarDinar.value=false;
+
+  })
+  .catch(error => {
+
+    errors.value = error.response.data.errors
+  })
+}
+function confirmConvertDinarDollar(V) {
+  axios.post('/api/convertDinarDollar',V)
+  .then(response => {
+    getResults();
+    showModalConvertDinarDollar.value=false;
+
+  })
+  .catch(error => {
+
+    errors.value = error.response.data.errors
+  })
+}
+
 
 
 function getTodayDate() {
@@ -252,10 +289,32 @@ function conGenfirmExpenses(V) {
             @close="showModalAddExpenses = false"
             >
           <template #header>
-            <h3 class="text-center">ادخال مصاريف اليومية</h3>
+            <h3 class="text-center">ادخال مصاريف</h3>
             
            </template>
       </ModalAddExpenses>
+      <ModalConvertDollarDinar 
+            :show="showModalConvertDollarDinar ? true : false"
+            :boxes="boxes"
+            @a="confirmConvertDollarDinar($event)"
+            @close="showModalConvertDollarDinar = false"
+            >
+          <template #header>
+            <h3 class="text-center">تحويل من الدولار للدينار</h3>
+            
+           </template>
+      </ModalConvertDollarDinar>
+      <ModalConvertDinarDollar 
+            :show="showModalConvertDinarDollar ? true : false"
+            :boxes="boxes"
+            @a="confirmConvertDinarDollar ($event)"
+            @close="showModalConvertDinarDollar = false"
+            >
+          <template #header>
+            <h3 class="text-center">تحويل من الدينار للدولار</h3>
+            
+           </template>
+      </ModalConvertDinarDollar>
     <div v-if="$page.props.success">
       <div
         id="alert-2"
@@ -541,6 +600,24 @@ function conGenfirmExpenses(V) {
                             style="min-width:150px;"
                             className="px-6 mb-12 w-full py-2 font-bold text-white bg-pink-600 rounded">
                             {{ $t('shipping_coc') }} 
+                          </button>
+                        </div>
+                        <div>
+                          <button
+                            type="button"
+                            @click="openConvertDollarDinar()"
+                            style="min-width:150px;"
+                            className="px-6 mb-12 w-full py-2 font-bold text-white bg-teal-500 rounded">
+                             تحويل دولار دينار  
+                          </button>
+                        </div>
+                        <div>
+                          <button
+                            type="button"
+                            @click="openConvertDinarDollar()"
+                            style="min-width:150px;"
+                            className="px-6 mb-12 w-full py-2 font-bold text-white bg-yellow-500 rounded">
+                             تحويل دينار دولار  
                           </button>
                         </div>
             </div>

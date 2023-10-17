@@ -463,6 +463,38 @@ class AccountingController extends Controller
         return Response::json($transaction, 200);    
 
     }
+    public function convertDollarDinar(Request $request){
+        $amountDollar =$request->amountDollar;
+        $amountResultDinar =$request->amountResultDinar;
+        $exchangeRate =$request->exchangeRate;
+        $date=$request->date??0;
+        $desc=' تحويل من الصندوق مبلغ بالدولار'.' '.($amountDollar).'  بسعر صرف '.' '.$exchangeRate.' المبلغ المضاف للصندوف بالدينار '.$amountResultDinar;
+        if($amountDollar){
+             $this->decreaseWallet($amountDollar,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$',$date);
+          }
+          if($amountResultDinar)
+          {
+            $transaction=$this->increaseWallet($amountResultDinar,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'IQD',$date);
+          }
+          return Response::json($transaction, 200);    
+
+    }
+    public function convertDinarDollar(Request $request){
+        $amountDinar =$request->amountDinar;
+        $amountResultDollar =$request->amountResultDollar;
+        $exchangeRate =$request->exchangeRate;
+        $date=$request->date??0;
+        $desc=' تحويل من الصندوق مبلغ بالدينار'.' '.($amountDinar).'  بسعر صرف '.' '.$exchangeRate.' المبلغ المضاف للصندوف بالدولار '.$amountResultDollar;
+        if($amountResultDollar){
+             $this->increaseWallet($amountResultDollar,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$',$date);
+          }
+          if($amountDinar)
+          {
+            $transaction=$this->decreaseWallet($amountDinar,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'IQD',$date);
+          }
+          return Response::json($transaction, 200);    
+
+    }
     public function receiveCard(Request $request)
     {
         $authUser = auth()->user();

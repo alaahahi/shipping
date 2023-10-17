@@ -117,3 +117,7 @@ Route::post('delTransactions',[AccountingController::class, 'delTransactions'])-
 Route::post('receiptArrived',[AccountingController::class, 'receiptArrived'])->name('receiptArrived');
 Route::post('GenExpenses',[AccountingController::class, 'GenExpenses'])->name('GenExpenses');
 Route::get('getGenExpenses',[AccountingController::class, 'getGenExpenses'])->name('getGenExpenses');
+
+Route::post('convertDollarDinar',[AccountingController::class, 'convertDollarDinar'])->name('convertDollarDinar');
+Route::post('convertDinarDollar',[AccountingController::class, 'convertDinarDollar'])->name('convertDinarDollar');
+
