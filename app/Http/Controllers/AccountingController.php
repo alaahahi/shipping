@@ -243,6 +243,8 @@ class AccountingController extends Controller
             $cars_sum=   Car::where('client_id',$client->id)->whereBetween('date', [$from, $to])->sum('total_s');
             $contract_total=   Car::where('client_id',$client->id)->whereBetween('date', [$from, $to])->where('contract_id','!=',0)->count();
             $exit_car_total=   Car::where('client_id',$client->id)->whereBetween('date', [$from, $to])->where('is_exit','!=',0)->count();
+            $contract_total_debit_Dollar=($contract->sum('price')-$contract->sum('paid'))??0;
+            $contract_total_debit_Dinar=($contract->sum('price_dinar')-$contract->sum('paid_dinar'))??0;
             $cars_need_paid=$cars_sum-($cars_paid+$cars_discount);
         }else{
             $contract=Contract::where('user_id',$user_id);
