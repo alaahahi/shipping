@@ -49,7 +49,7 @@ Route::get('addTransfers',[TransfersController::class, 'addTransfers'])->name('a
 Route::get('transfers',[TransfersController::class, 'index'])->name('transfers');
 Route::get('getIndexAccountsSelas',[AccountingController::class, 'getIndexAccountsSelas'])->name('getIndexAccountsSelas');
 
-Route::post('deleteTransactions',[AccountingController::class, 'deleteTransactions'])->name('deleteTransactions');
+Route::post('deleteTransactions',[AccountingController::class, 'delTransactions'])->name('deleteTransactions');
 
 
 Route::get('carConfig',[CarConfigController::class, 'index'])->name('carConfig');

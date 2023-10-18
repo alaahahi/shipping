@@ -52,6 +52,10 @@ class AccountingController extends Controller
         $this->transfersAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','transfers@account.com')->first();
         $this->outSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-out')->first();
         $this->debtSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-debt')->first();
+        $this->onlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts')->first();
+        $this->onlineContractsDinar= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-dinar')->first();
+        $this->debtOnlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-debt')->first();
+        $this->debtOnlineContractsDinar= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-debit-dinar')->first();
         $this->howler= User::with('wallet')->where('type_id', $this->userAccount)->where('email','howler')->first();
         $this->shippingCoc= User::with('wallet')->where('type_id', $this->userAccount)->where('email','shipping-coc')->first();
         $this->border= User::with('wallet')->where('type_id', $this->userAccount)->where('email','border')->first();
@@ -176,52 +180,7 @@ class AccountingController extends Controller
        return Response::json($transaction, 200);
    
        }
-      public function delTransactions(Request $request)
-      {
-          $transaction_id = $request->id ?? 0;
-          $originalTransaction = Transactions::find($transaction_id);
-          $wallet_id=$originalTransaction->wallet_id;
-          $wallet=Wallet::find($wallet_id);
-          if (!$originalTransaction) {
-            return response()->json(['message' => 'Transaction not found'], 404);
-            }
-          if($originalTransaction->currency=='$'){
-            $wallet->decrement('balance', $originalTransaction->amount);
-            $all=  Transactions::where('parent_id',$transaction_id)->first();
-            if($all){
-              $wallet_id=$all->wallet_id;
-              $wallet=Wallet::find($wallet_id);
-              $wallet->decrement('balance', $all->amount);
-              $all->delete();
-            }
-          }
-          if($originalTransaction->currency=='IQD'){
-            $wallet->decrement('balance_dinar', $originalTransaction->amount);
-            $all=  Transactions::where('parent_id',$transaction_id)->first();
-            if($all){
-              $wallet_id=$all->wallet_id;
-              $wallet=Wallet::find($wallet_id);
-              $wallet->decrement('balance_dinar', $all->amount);
-              $all->delete();
-            }
-          }
-  
-          // // Create a new transaction for the refund
-          // $refundTransaction = new Transactions();
-          // $refundTransaction->wallet_id = $originalTransaction->wallet_id;
-          // $refundTransaction->morphed_id = $originalTransaction->morphed_id;
-          // $refundTransaction->morphed_type = $originalTransaction->morphed_type;
-          // $refundTransaction->created =$this->currentDatef;
-          // $refundTransaction->type = 'refund'; // Assuming you have a 'refund' transaction type
-          // $refundTransaction->amount = -$originalTransaction->amount; // Make the refund negative
-          // $refundTransaction->description = 'مرتجع حذف حركة';
-          // $refundTransaction->save();
-      
-          // Delete the original transaction
-          $originalTransaction->delete();
-      
-          return response()->json(['message' => 'Transaction deleted and refund created'], 200);
-      }
+
     public function getIndexAccountsSelas()
     { 
         $user_id = $_GET['user_id'] ?? 0;
@@ -472,13 +431,16 @@ class AccountingController extends Controller
         $date=$request->date??0;
         $desc=' تحويل من الصندوق مبلغ بالدولار'.' '.($amountDollar).'  بسعر صرف '.' '.$exchangeRate.' المبلغ المضاف للصندوف بالدينار '.$amountResultDinar;
         if($amountDollar){
-             $this->decreaseWallet($amountDollar,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$',$date);
+            $transactionDollar=$this->decreaseWallet($amountDollar,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$',$date);
           }
           if($amountResultDinar)
           {
-            $transaction=$this->increaseWallet($amountResultDinar,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'IQD',$date);
+            $transactionDinar=$this->increaseWallet($amountResultDinar,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'IQD',$date);
           }
-          return Response::json($transaction, 200);    
+          
+          $transactionDollar->update(['parent_id'=>$transactionDinar->id]);
+          $transactionDinar->update(['parent_id'=>$transactionDollar->id]);
+          return Response::json($transactionDinar, 200);    
 
     }
     public function convertDinarDollar(Request $request){
@@ -488,13 +450,15 @@ class AccountingController extends Controller
         $date=$request->date??0;
         $desc=' تحويل من الصندوق مبلغ بالدينار'.' '.($amountDinar).'  بسعر صرف '.' '.$exchangeRate.' المبلغ المضاف للصندوف بالدولار '.$amountResultDollar;
         if($amountResultDollar){
-             $this->increaseWallet($amountResultDollar,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$',$date);
+            $transactionDollar= $this->increaseWallet($amountResultDollar,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$',$date);
           }
           if($amountDinar)
           {
-            $transaction=$this->decreaseWallet($amountDinar,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'IQD',$date);
+            $transactionDinar= $transaction=$this->decreaseWallet($amountDinar,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'IQD',$date);
           }
-          return Response::json($transaction, 200);    
+          $transactionDollar->update(['parent_id'=>$transactionDinar->id]);
+          $transactionDinar->update(['parent_id'=>$transactionDollar->id]);
+          return Response::json($transactionDinar, 200);    
 
     }
     public function receiveCard(Request $request)
@@ -621,23 +585,122 @@ class AccountingController extends Controller
         return $Transactions;
     }
     
-    public function deleteTransactions(Request $request){
-        $transactions = Transactions::find($request->id);
-        $amount=$transactions->amount;
-        if($amount>0){
-            $amount=$amount;
-        }else{
-            $amount=$amount*1;
+    // public function deleteTransactions(Request $request){
+    //     $transactions = Transactions::find($request->id);
+    //     $amount=$transactions->amount;
+    //     if($amount>0){
+    //         $amount=$amount;
+    //     }else{
+    //         $amount=$amount*1;
+    //     }
+    //     $desc="مرتجع دفعة";
+    //     $wallet = Wallet::find($transactions->wallet_id);
+    //     if($amount>0){
+    //         $this->increaseWallet($amount, $desc,$wallet->user_id,$wallet->user_id,'App\Models\User',0);
+    //     }else{
+    //         $this->decreaseWallet($amount, $desc,$wallet->user_id,$wallet->user_id,'App\Models\User',0);
+    //     }
+    //     $transactions->delete();
+    //     return Response::json('ok', 200);    
+    // }
+    public function delTransactions(Request $request)
+    {
+        $transaction_id = $request->id ?? 0;
+        $originalTransaction = Transactions::find($transaction_id);
+        $wallet_id=$originalTransaction->wallet_id;
+        $refundTransaction = 'مرتجع حذف حركة';
+
+        $wallet=Wallet::find($wallet_id);
+        if (!$originalTransaction) {
+          return response()->json(['message' => 'Transaction not found'], 404);
+          }
+        if($originalTransaction->currency=='$'){
+          $wallet->decrement('balance', $originalTransaction->amount);
+          $all=  Transactions::where('parent_id',$transaction_id)->get();
+
+          $firstTransaction=Transactions::where('parent_id',$transaction_id)->first();
+          if ($all->isNotEmpty()) { // Check if there are records in the collection
+            foreach ($all as $transaction) {
+                if($transaction->currency=='$'){
+                    $wallet_id = $transaction->wallet_id;
+                    $wallet = Wallet::find($wallet_id);
+                    $wallet->decrement('balance', $transaction->amount);
+                    $transaction->delete();
+                }
+                if($transaction->currency=='IQD'){
+                    $wallet_id = $transaction->wallet_id;
+                    $wallet = Wallet::find($wallet_id);
+                    $wallet->decrement('balance_dinar', $transaction->amount);
+                    $transaction->delete();
+                }
+            }
         }
-        $desc="مرتجع دفعة";
-        $wallet = Wallet::find($transactions->wallet_id);
-        if($amount>0){
-            $this->increaseWallet($amount, $desc,$wallet->user_id,$wallet->user_id,'App\Models\User',0);
-        }else{
-            $this->decreaseWallet($amount, $desc,$wallet->user_id,$wallet->user_id,'App\Models\User',0);
         }
-        $transactions->delete();
-        return Response::json('ok', 200);    
-    }
+        if($originalTransaction->currency=='IQD'){
+          $wallet->decrement('balance_dinar', $originalTransaction->amount);
+          $all=  Transactions::where('parent_id',$transaction_id)->get();
+          $firstTransaction=Transactions::where('parent_id',$transaction_id)->first();
+
+          if ($all->isNotEmpty()) { // Check if there are records in the collection
+            foreach ($all as $transaction) {
+                if($transaction->currency=='$'){
+                    $wallet_id = $transaction->wallet_id;
+                    $wallet = Wallet::find($wallet_id);
+                    $wallet->decrement('balance', $transaction->amount);
+                    $transaction->delete();
+                }
+                if($transaction->currency=='IQD'){
+                    $wallet_id = $transaction->wallet_id;
+                    $wallet = Wallet::find($wallet_id);
+                    $wallet->decrement('balance_dinar', $transaction->amount);
+                    $transaction->delete();
+                }
+            }
+        }
+
+        }
+        $walletExpensesIds = [
+            $this->howler->wallet->id,
+            $this->shippingCoc->wallet->id,
+            $this->border->wallet->id,
+            $this->iran->wallet->id,
+            $this->dubai->wallet->id,
+        ];
+        if (in_array($wallet_id, $walletExpensesIds)) {
+            $expenses = Expenses::where('transaction_id',$firstTransaction->id);
+            $expenses->delete();
+        }
+        $walletContractsIds = [
+            $this->onlineContracts->wallet->id,
+            $this->onlineContractsDinar->wallet->id,
+            $this->debtOnlineContracts->wallet->id,
+            $this->debtOnlineContractsDinar->wallet->id
+        ];
+        if (in_array($wallet_id, $walletContractsIds)) {
+            $refundTransaction = 'مرتجع حذف حركة';
+            $contract = Contract::where('car_id',$firstTransaction->morphed_id)->first();
+            if($firstTransaction->currency=='$'){
+                $this->increaseWallet($firstTransaction->amount, $refundTransaction,$this->debtOnlineContracts->id,$firstTransaction->id,'App\Models\Car',0,0,'$',0);
+                $contract->decrement('paid', $firstTransaction->amount);
+            }
+            if($firstTransaction->currency=='IQD'){
+                $this->increaseWallet($firstTransaction->amount, $refundTransaction,$this->debtOnlineContractsDinar->id,$firstTransaction->id,'App\Models\Car',0,0,'IQD',0);
+                $contract->decrement('paid_dinar', $firstTransaction->amount);
+            }
+        }
+        // // Create a new transaction for the refund
+        // $refundTransaction = new Transactions();
+        // $refundTransaction->wallet_id = $originalTransaction->wallet_id;
+        // $refundTransaction->morphed_id = $originalTransaction->morphed_id;
+        // $refundTransaction->morphed_type = $originalTransaction->morphed_type;
+        // $refundTransaction->created =$this->currentDatef;
+        // $refundTransaction->type = 'refund'; // Assuming you have a 'refund' transaction type
+        // $refundTransaction->amount = -$originalTransaction->amount; // Make the refund negative
+        // $refundTransaction->save();
     
+        // Delete the original transaction
+        $originalTransaction->delete();
+    
+        return response()->json(['message' => $all], 200);
+    }
     }

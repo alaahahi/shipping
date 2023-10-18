@@ -116,21 +116,21 @@ class OnlineContractsController extends Controller
             $descD="انشاء عقد بقيمة ".$price_dinar." وتم دفع مبلغ".$paid_dinar.' '.$car->car_type.' رقم الشانص'.$car->vin.' '.$note;
             $descDebit="دين من عقد السيارة ".$car->car_type.' '.' '.$car->car_type.' '.$car->car_type.' رقم الشانص'.$car->vin.' '.$note;
             if($paid){
-                $tran=$this->accountingController->increaseWallet($paid,$desc,$this->accountingController->mainBox->id,$this->mainBox->id,'App\Models\Car',0,0,'$');
-                $this->accountingController->increaseWallet($paid, $desc,$this->onlineContracts->id,$car->id,'App\Models\Car',0,0,'$',0,$tran->id);
+                $tranDollar=$this->accountingController->increaseWallet($paid,$desc,$this->accountingController->mainBox->id,$this->mainBox->id,'App\Models\Car',0,0,'$');
+                $this->accountingController->increaseWallet($paid, $desc,$this->onlineContracts->id,$car->id,'App\Models\Car',0,0,'$',0,$tranDollar->id);
             }
 
             if($paid_dinar){
-                $tran=$this->accountingController->increaseWallet($paid_dinar,$descD,$this->mainBox->id,$this->mainBox->id,'App\Models\Car',0,0,'IQD');
-                $this->accountingController->increaseWallet($paid_dinar, $descD,$this->onlineContractsDinar->id,$car->id,'App\Models\Car',0,0,'IQD',0,$tran->id);
+                $tranDinar=$this->accountingController->increaseWallet($paid_dinar,$descD,$this->mainBox->id,$this->mainBox->id,'App\Models\Car',0,0,'IQD');
+                $this->accountingController->increaseWallet($paid_dinar, $descD,$this->onlineContractsDinar->id,$car->id,'App\Models\Car',0,0,'IQD',0,$tranDinar->id);
             }
         
 
             if($price-$paid > 0){
-                $this->accountingController->increaseWallet($price-$paid, $descDebit,$this->debtOnlineContracts->id,$car->id,'App\Models\Car');
+                $this->accountingController->increaseWallet($price-$paid, $descDebit,$this->debtOnlineContracts->id,$car->id,'App\Models\Car',0,0,'$',0);
             }
             if($price_dinar-$paid_dinar > 0){
-            $this->accountingController->increaseWallet($price_dinar-$paid_dinar, $descDebit,$this->debtOnlineContractsDinar->id,$car->id,'App\Models\Car',0,0,'IQD');
+            $this->accountingController->increaseWallet($price_dinar-$paid_dinar, $descDebit,$this->debtOnlineContractsDinar->id,$car->id,'App\Models\Car',0,0,'IQD',0);
             }
             if(($price-$paid == 0)&&($price_dinar-$paid_dinar == 0)){
                 $dataExitCar=['car_id'=>$car->id,'user_id'=>$car->client_id, 'created'=>$this->currentDate, 'phone' =>$phone, 'note' =>$note];
