@@ -119,6 +119,7 @@ function openAddCarPayment(form={}) {
 const formData = ref({});
 const formGenExpenses = ref({});
 const car = ref([]);
+const carResult = ref([]);
 
 
 const dateValue = ref({
@@ -134,6 +135,7 @@ let resetData = ref(false);
 let user_id = 0;
 let page = 1;
 let q = '';
+let json  =ref({});
 const refresh = () => {
   page = 0;
   car.value.length = 0;
@@ -157,15 +159,15 @@ const getResultsCar = async ($state) => {
       }
     });
 
-    const json = response.data;
+     json.value = response.data;
 
 
-    if (json.data.length < 100){
-      car.value.push(...json.data);
+    if (json.value.data.length < 100){
+      car.value.push(...json.value.data);
       $state.complete();
     } 
     else {
-      car.value.push(...json.data);
+      car.value.push(...json.value.data);
        $state.loaded();
     }
 
@@ -650,7 +652,7 @@ function updateResults(input) {
                             id="car_total"
                             type="text"
                             class="mt-1 block w-full"
-                            :value="car.totalCars"
+                            :value="json?.totalCars"
                             disabled
                           />
                         </div>
@@ -663,7 +665,7 @@ function updateResults(input) {
                             id="car_total_complete"
                             type="text"
                             class="mt-1 block w-full"
-                            :value="updateResults(car.resultsDinar)"
+                            :value="updateResults(json?.resultsDinar)"
                             disabled
                           />
                         </div>
@@ -676,7 +678,7 @@ function updateResults(input) {
                             id="car_total_complete"
                             type="text"
                             class="mt-1 block w-full"
-                            :value="updateResults(car.resultsDollar)"
+                            :value="updateResults(json?.resultsDollar)"
                             disabled
                           />
                         </div>
@@ -689,7 +691,7 @@ function updateResults(input) {
                             id="car_total_complete"
                             type="text"
                             class="mt-1 block w-full"
-                            :value="updateResults(car.resultsTotalS)"
+                            :value="updateResults(json?.resultsTotalS)"
                             disabled
                           />
                         </div>
@@ -702,7 +704,7 @@ function updateResults(input) {
                             id="car_total_complete"
                             type="text"
                             class="mt-1 block w-full"
-                            :value="updateResults(car.resultsTotalS-car.resultsPaid)"
+                            :value="updateResults(json?.resultsTotalS-json?.resultsPaid)"
                             disabled
                           />
                         </div>
@@ -715,7 +717,7 @@ function updateResults(input) {
                             id="car_total_complete"
                             type="text"
                             class="mt-1 block w-full"
-                            :value="updateResults(car.resultsPaid)"
+                            :value="updateResults(json?.resultsPaid)"
                             disabled
                           />
                         </div>
@@ -728,7 +730,7 @@ function updateResults(input) {
                             id="car_total_complete"
                             type="text"
                             class="mt-1 block w-full"
-                            :value="updateResults(car.resultsProfit)"
+                            :value="updateResults(json?.resultsProfit)"
                             disabled
                           />
                         </div>
