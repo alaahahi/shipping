@@ -18,7 +18,8 @@ import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
 import exit from "@/Components/icon/exit.vue";
 import newContracts from "@/Components/icon/new.vue";
-
+import InfiniteLoading from "v3-infinite-loading";
+import "v3-infinite-loading/lib/style.css";
 
 const {t} = useI18n();
 
@@ -80,10 +81,50 @@ const dateValue = ref({
     endDate: ''
 })
 
-const getResultsCar = async (page = 1,user_id='') => {
-    const response = await fetch(`/getIndexCar?page=${page}&user_id=${user_id}`);
-    car.value = await response.json();
-}
+let resetData = ref(false);
+let user_id = 0;
+let page = 1;
+let q = '';
+const refresh = () => {
+  page = 0;
+  car.value.length = 0;
+  resetData.value = !resetData.value;
+
+
+};
+const getResultsCar = async ($state) => {
+  console.log($state)
+  try {
+
+
+    const response = await axios.get(`/getIndexCar`, {
+      params: {
+        limit: 100,
+        page: page,
+        q: q,
+        user_id: user_id
+      }
+    });
+
+    const json = response.data;
+
+
+    if (json.data.length < 100){
+      car.value.push(...json.data);
+      $state.complete();
+    } 
+    else {
+      car.value.push(...json.data);
+       $state.loaded();
+    }
+
+
+    page++;
+  } catch (error) {
+    console.log(error);
+    //$state.error();
+  }
+};
 const getResultsCarSearch = async (q='',page = 1) => {
     const response = await fetch(`/getIndexCarSearch?page=${page}&q=${q}`);
     car.value = await response.json();
@@ -353,8 +394,8 @@ function getTodayDate() {
                                 </svg>
                               </div>
                               <input
-                                v-model="searchTerm"
-                                @input="getResultsCarSearch(searchTerm)"
+                                v-model="q"
+                                @input="refresh()"
                                 type="text"
                                 id="simple-search"
                                 class="
@@ -417,8 +458,8 @@ function getTodayDate() {
                           </button>
                         </div> -->
                         <div>
-                            <select @change="getResultsCar(1,user_id)" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
-                              <option value="undefined" disabled> {{ $t("selectCustomer") }}</option>
+                            <select @change="refresh()" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
+                              <option value="0" disabled> {{ $t("selectCustomer") }}</option>
                               <option value="">{{ $t("allOwners") }}</option>
                               <option v-for="(user, index) in client" :key="index" :value="user.id">{{ user.name }}</option>
                             </select>
@@ -690,7 +731,7 @@ function getTodayDate() {
                               <tbody>
 
 
-                                <tr v-for="car in car.data" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <tr v-for="car in car" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.no }}</td>
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.client?.name }}</td>
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_type}}</td>
@@ -786,15 +827,10 @@ function getTodayDate() {
                               </tbody>
                           </table>
                         </div>
-                        <div class="mt-3 text-center" style="direction: ltr;">
-                          <TailwindPagination
-                            :data="car"
-                            @pagination-change-page="getResultsCar"
-                            :limit ="10"
-                            :item-classes="['bg-white','dark:bg-gray-600','text-gray-500','dark:text-gray-300','border-gray-300','dark:border-gray-900','hover:bg-gray-200']"
-                            :activeClasses="[  'bg-rose-50','border-rose-500','text-rose-600',]"
-                          />
-                        </div>
+                        <div class="spaner">
+                          <InfiniteLoading :car="car" @infinite="getResultsCar" :identifier="resetData" />
+
+                      </div>
                       </div>
 
                       </div>

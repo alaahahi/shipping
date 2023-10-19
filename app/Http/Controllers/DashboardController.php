@@ -492,10 +492,10 @@ class DashboardController extends Controller
     public function getIndexCar()
     {
         $user_id =$_GET['user_id'] ?? '';
-        //$data =  Car::with('contract')->with('exitcar')->with('client');
+        $q = $_GET['q']??'';
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
-
+        $limit =$_GET['limit'] ?? 0;
         if($from && $to ){
             $data =  Car::with('contract')->with('exitcar')->with('client')->whereBetween('date', [$from, $to])->orderBy('date','DESC');
             $resultsDinar=$data->sum('dinar'); 
@@ -519,12 +519,18 @@ class DashboardController extends Controller
         if($type == 'debitContract'){
             $data =    $data->whereHas('contract', function ($query) {
             
-                $query->where('name', 'LIKE', '%' . $term . '%');
+                $query->where('name', 'LIKE', '%' . $q . '%');
             });
         }
         elseif($type){
             $data =    $data->where('results', $type);
         }
+        if($q){
+            $data = $data->orwhere('car_number', 'LIKE','%'.$q.'%')->orwhere('vin', 'LIKE','%'.$q.'%')->orwhere('car_type', 'LIKE','%'.$q.'%')->orWhereHas('client', function ($query) use ($q) {
+                $query->where('name', 'LIKE', '%' . $q . '%');
+            });
+        }
+ 
 
         if($user_id){
             $data =    $data->where('client_id',  $user_id);
@@ -535,7 +541,7 @@ class DashboardController extends Controller
             $resultsPaid=$data->sum('paid'); 
             $totalCars = $data->count();
         }
-        $data =$data->orderBy('no', 'DESC')->paginate(1000)->toArray();
+        $data =$data->orderBy('no', 'DESC')->paginate($limit)->toArray();
         $data['resultsDinar'] = $resultsDinar;
         $data['resultsDollar'] = $resultsDollar;
         $data['totalCars']  =$totalCars;

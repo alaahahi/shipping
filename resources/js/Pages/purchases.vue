@@ -24,6 +24,8 @@ import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
 import TextInput from "@/Components/TextInput.vue";
 import InputLabel from "@/Components/InputLabel.vue";
+import InfiniteLoading from "v3-infinite-loading";
+import "v3-infinite-loading/lib/style.css";
 
 const {t} = useI18n();
 
@@ -128,10 +130,52 @@ const formatter = ref({
   date: 'D/MM/YYYY',
   month: 'MM'
 })
-const getResultsCar = async (page = 1,user_id='') => {
-    const response = await fetch(`/getIndexCar?page=${page}&user_id=${user_id}&from=${from.value}&to=${to.value}`);
-    car.value = await response.json();
-}
+let resetData = ref(false);
+let user_id = 0;
+let page = 1;
+let q = '';
+const refresh = () => {
+  page = 0;
+  car.value.length = 0;
+  resetData.value = !resetData.value;
+
+
+};
+const getResultsCar = async ($state) => {
+  console.log($state)
+  try {
+
+
+    const response = await axios.get(`/getIndexCar`, {
+      params: {
+        limit: 100,
+        page: page,
+        q: q,
+        user_id: user_id,
+        from:from.value,
+        to:to.value
+      }
+    });
+
+    const json = response.data;
+
+
+    if (json.data.length < 100){
+      car.value.push(...json.data);
+      $state.complete();
+    } 
+    else {
+      car.value.push(...json.data);
+       $state.loaded();
+    }
+
+
+    page++;
+  } catch (error) {
+    console.log(error);
+    //$state.error();
+  }
+};
 const getResultsCarSearch = async (q='',page = 1) => {
     const response = await fetch(`/getIndexCarSearch?page=${page}&q=${q}`);
     car.value = await response.json();
@@ -713,7 +757,7 @@ function updateResults(input) {
                         <div className="mb-4  mr-2 print:hidden">
                           <InputLabel for="pay" value="فلترة" />
                           <button
-                            @click.prevent="getResultsCar()"
+                            @click.prevent="refresh()"
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded"
                             style="width: 100%"
                           >
@@ -783,8 +827,8 @@ function updateResults(input) {
                                 </svg>
                               </div>
                               <input
-                                v-model="searchTerm"
-                                @input="getResultsCarSearch(searchTerm)"
+                                v-model="q"
+                                @input="refresh()"
                                 type="text"
                                 id="simple-search"
                                 class="
@@ -812,7 +856,7 @@ function updateResults(input) {
                         </div>
                   
                         <div>
-                            <select @change="getResultsCar(1,user_id)" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
+                            <select @change="refresh()" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
                               <option value="undefined" disabled> {{ $t("selectCustomer") }}</option>
                               <option value="">{{ $t("allOwners") }}</option>
                               <option v-for="(user, index) in client" :key="index" :value="user.id">{{ user.name }}</option>
@@ -897,7 +941,7 @@ function updateResults(input) {
                               <tbody>
 
 
-                                <tr v-for="car in car.data" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <tr v-for="car in car" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
                                     <td className="border dark:border-gray-900 text-center dark:text-gray-200 text-black px-1 py-2 " style="font-weight: bold;font-size: 16px;">{{ car.client?.name }}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_type}}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.year}}</td>
@@ -990,15 +1034,10 @@ function updateResults(input) {
                               </tbody>
                           </table>
                         </div>
-                        <div class="mt-3 text-center" style="direction: ltr;">
-                          <TailwindPagination
-                            :data="car"
-                            @pagination-change-page="getResultsCar"
-                            :limit ="10"
-                            :item-classes="['bg-white','dark:bg-gray-600','text-gray-500','dark:text-gray-300','border-gray-300','dark:border-gray-900','hover:bg-gray-200']"
-                            :activeClasses="[  'bg-rose-50','border-rose-500','text-rose-600',]"
-                          />
-                        </div>
+                        <div class="spaner">
+                          <InfiniteLoading :car="car" @infinite="getResultsCar" :identifier="resetData" />
+
+                      </div>
                       </div>
           
                       </div>

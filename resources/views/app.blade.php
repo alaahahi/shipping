@@ -13,6 +13,11 @@
         @vite('resources/js/app.js')
         @inertiaHead
         <style>
+            .spaner{
+                display: flex;
+                justify-content: center;
+                margin: 25px ;
+            }
             body::-webkit-scrollbar {
                 width: 12px;
                 }
