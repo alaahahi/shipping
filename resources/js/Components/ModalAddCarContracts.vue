@@ -14,7 +14,7 @@ const props = defineProps({
   expenses:Array,
   formData:Object
 });
-let need_pay =  ref(0);
+let disabled =  ref(false);
 
 function calculateAmount(){
   let amount =props.formData.prices
@@ -26,7 +26,16 @@ if(props.formData.paids > amount){
         rtl: true,
       });
 }
-
+if(props.formData.prices>=300){
+  toast.warning(" المبلغ اكبر من الحد الطبيعي بالدولار"+" "+300, {
+        timeout: 10000,
+        position: "bottom-right",
+        rtl: true,
+      })
+      disabled=true
+}else{
+  disabled=false
+}
 }
 function calculateAmountDinars(){
   let amount =props.formData.price_dinars
@@ -38,7 +47,18 @@ if(props.formData.paid_dinars > amount){
         rtl: true,
       });
 }
+if(props.formData.price_dinars>=500000){
+  toast.warning("  المبلغ اكبر من الحد الطبيعي بالدينار"+" "+500000, {
+        timeout: 10000,
+        position: "bottom-right",
+        rtl: true,
+      })
+      disabled=true
 
+}else{
+  disabled=false
+
+}
 }
 </script>
   <template>
@@ -118,7 +138,7 @@ if(props.formData.paid_dinars > amount){
                     @click="$emit('close');">{{ $t('cancel') }}</button>
                   </div>
                 <div class="basis-1/2 px-4">
-                <button class="modal-default-button py-3  bg-rose-500 rounded col-6"  @click="$emit('a',formData);formData=''" >{{ $t('yes') }}</button>
+                <button class="modal-default-button py-3  bg-rose-500 rounded col-6"  @click="$emit('a',formData);formData=''" :disabled="disabled">{{ $t('yes') }}</button>
                 </div>
 
             </div>

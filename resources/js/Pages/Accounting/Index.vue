@@ -749,7 +749,7 @@ function conGenfirmExpenses(V) {
                   <tr v-for="tran in  laravelData.transactions" :key="tran.id" :class="tran.type != 'in' ? 'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
 
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.id }}</td>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran?.created }}</td>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran?.created_at.slice(0, 19).replace("T", "  ") }}</td>
                   <th className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.description }}</th>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.amount+' '+tran.currency  }}</td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
