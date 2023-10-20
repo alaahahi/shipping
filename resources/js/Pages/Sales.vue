@@ -163,7 +163,6 @@ function confirmDelCar(V) {
         rtl: true
 
       });
-    getResultsCar();
     refresh();
   })
   .catch(error => {
@@ -177,7 +176,7 @@ function confirmDelCar(V) {
 function confirmAddPayment(V) {
   axios.get(`/api/addPaymentCar?car_id=${V.id}&discount=${V.discountPayment??0}&amount=${V.amountPayment??0}&note=${V.notePayment??''}`)
   .then(response => {
-    getResultsCar();
+    refresh();
 
     showModalAddCarPayment.value = false;
     toast.success( " تم دفع مبلغ دولار "+V.amountPayment+" بنجاح ", {
@@ -188,7 +187,6 @@ function confirmAddPayment(V) {
       });
       let transaction=response.data
       window.open(`/api/getIndexAccountsSelas?user_id=${V.client.id}&print=2&transactions_id=${transaction.id}`, '_blank');
-      refresh();
 
 
   })

@@ -179,22 +179,7 @@ const getResultsCar = async ($state) => {
   }
 };
 
-const options = ref({
-  shortcuts: {
-    today: 'اليوم',
-    yesterday: 'البارحة',
-    past: period => period + ' قبل يوم',
-    currentMonth: 'الشهر الحالي',
-    pastMonth: 'الشهر السابق'
-  },
-  footer: {
-    apply: 'Terapkan',
-    cancel: 'Batal'
-  }
-})
-const dDate = (date) => {
-  return date >= new Date() ;
-}
+
 const getcountTotalInfo = async () => {
   axios.get('/api/totalInfo')
   .then(response => {

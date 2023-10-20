@@ -95,8 +95,6 @@ const refresh = () => {
 const getResultsCar = async ($state) => {
   console.log($state)
   try {
-
-
     const response = await axios.get(`/getIndexCar`, {
       params: {
         limit: 100,
@@ -125,10 +123,6 @@ const getResultsCar = async ($state) => {
     //$state.error();
   }
 };
-const getResultsCarSearch = async (q='',page = 1) => {
-    const response = await fetch(`/getIndexCarSearch?page=${page}&q=${q}`);
-    car.value = await response.json();
-}
 
 const getcountTotalInfo = async () => {
   axios.get('/api/totalInfo')
@@ -152,7 +146,7 @@ function confirmCar(V) {
   axios.post('/api/addCars',V)
   .then(response => {
     showModalCar.value = false;
-    getResultsCar()
+    refresh()
     getcountTotalInfo()
   })
   .catch(error => {
@@ -173,7 +167,7 @@ function confirmUpdateCar(V) {
       });
 
       getcountTotalInfo()
-      getResultsCar();
+      refresh();
 
   })
   .catch(error => {
@@ -190,7 +184,6 @@ function confirmUpdateCar(V) {
 }
 
 
-getResultsCar();
 
 function confirmAddCarContracts(V) {
   axios.get(`/api/addCarContracts?car_id=${V.id}&price=${V.prices??0}&price_dinar=${V.price_dinars??0}&paid=${V.paids??0}&paid_dinar=${V.paid_dinars??0}&phone=${V.phone??''}&note=${V.note??''}`)
@@ -202,7 +195,7 @@ function confirmAddCarContracts(V) {
         rtl: true
 
       });
-      getResultsCar();
+      refresh();
       getcountTotalInfo()
 
 
@@ -229,7 +222,7 @@ function confirmEditCarContracts(V) {
         rtl: true
 
       });
-      getResultsCar();
+      refresh();
       getcountTotalInfo()
 
 
@@ -259,7 +252,7 @@ function confirmAddExitCar(v){
 
       });
 
-      getResultsCar();
+      refresh();
 
   })
   .catch(error => {
@@ -276,34 +269,7 @@ function confirmAddExitCar(v){
   
 }
 
-function unMakeCarExit(id){
 
-axios.get(`/api/unMakeCarExit?car_id=${id}`)
-.then(response => {
-  showModalEditCarContracts.value = false;
-  toast.success( " تم تعديل خروجية السيارة بنجاح ", {
-      timeout: 3000,
-      position: "bottom-right",
-      rtl: true
-
-    });
-
-    getResultsCar();
-
-})
-.catch(error => {
-  showModalEditCarContracts.value = false;
-
-  toast.error("لم التعديل بنجاح", {
-      timeout: 2000,
-      position: "bottom-right",
-      rtl: true
-
-    });
-
-})
-
-} 
 
 function getTodayDate() {
   const today = new Date();
