@@ -235,9 +235,9 @@ function confirmUpdateCar(V) {
         rtl: true
 
       });
-
-      getcountTotalInfo()
       refresh()
+      getcountTotalInfo()
+      
 
   })
   .catch(error => {
@@ -254,60 +254,6 @@ function confirmUpdateCar(V) {
 }
 
 
-function confirmExpenses(V) {
-  fetch(`/addExpenses?car_id=${V.id}&user_id=${V.user_id}&expenses_id=${V.expenses_id}&expens_amount=${V.expens_amount??0}&note=${V.noteExpenses??''}`)
-    .then(() => {
-      showModalAddExpenses.value = false;
-       window.location.reload();
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-}
-function conGenfirmExpenses(V) {
-  fetch(`/GenExpenses?user_id=${V.user_id}&amount=${V.amount??0}&reason=${V.reason??''}&note=${V.note??''}`)
-    .then(() => {
-      showModalAddGenExpenses.value = false;
-      window.location.reload();
-
-    })
-    .catch((error) => {
-      
-      console.error(error);
-    });
-}
-function conAddTransfers(V) {
-  fetch(`/addTransfers?user_id=${V.user_id}&amount=${V.amount??0}&note=${V.note??''}`)
-    .then(() => {
-      showModalAddTransfers.value = false;
-       window.location.reload();
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-}
-function confirmAddToBox(V) {
-  fetch(`/addToBox?amount=${V.amount??0}&note=${V.note??''}`)
-    .then(() => {
-      showModalToBox.value = false;
-      window.location.reload();
-
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-}
-function confirmWithDrawFromBox(V) {
-  fetch(`/withDrawFromBox?amount=${V.amount??0}&note=${V.note??''}`)
-    .then(() => {
-      showModalFromBox.value = false;
-      window.location.reload();
-
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-}
 
 function confirmDelCar(V) {
   axios.post('/api/DelCar',V)
