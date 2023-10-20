@@ -102,38 +102,8 @@ const getResultsCar = async ($state) => {
   }
 };
 
-// const getResultsCarSearch = async $state => {
-
-//     car.value=[]
-//     try {
-//       const response = await fetch(
-//         "/getIndexCar?limit=50&page=" + pageSearch+"&q="+q+"&user_id="+user_id
-//       );
-//       const json = await response.json();
-//       if (json.data.length < 10) $state.complete();
-//       else {
-//         car.value.push(...json.data);
-//         $state.loaded();
-//       }
-//       pageSearch++;
-//     } catch (error) {
-//       console.log(error);
-//     }
-//   };
-
-const options = ref({
-  shortcuts: {
-    today: 'اليوم',
-    yesterday: 'البارحة',
-    past: period => period + ' قبل يوم',
-    currentMonth: 'الشهر الحالي',
-    pastMonth: 'الشهر السابق'
-  },
-  footer: {
-    apply: 'Terapkan',
-    cancel: 'Batal'
-  }
-})
+ 
+ 
 
 const getcountTotalInfo = async () => {
   axios.get('/api/totalInfo')
@@ -148,17 +118,8 @@ const getcountTotalInfo = async () => {
     
 }
 getcountTotalInfo()
-function confirmCar(V) {
-  axios.post('/api/addCars',V)
-  .then(response => {
-    showModalCar.value = false;
-    getResultsCar()
-    getcountTotalInfo()
-  })
-  .catch(error => {
-    console.error(error);
-  })
-}
+ 
+ 
 function confirmUpdateCar(V) {
   showModalEditCars.value = false;
 
@@ -173,7 +134,7 @@ function confirmUpdateCar(V) {
       });
 
       getcountTotalInfo()
-      getResultsCar();
+      refresh();
 
   })
   .catch(error => {
@@ -189,17 +150,7 @@ function confirmUpdateCar(V) {
   })
 }
 
-function confirmPayCar(V) {
-  axios.post('/api/payCar',V)
-  .then(response => {
-    showModalCarSale.value = false;
-      window.location.reload();
-  })
-  .catch(error => {
-    console.error(error);
-  })
-}
-
+ 
 
 
 function confirmDelCar(V) {
@@ -213,7 +164,7 @@ function confirmDelCar(V) {
 
       });
     getResultsCar();
-  
+    refresh();
   })
   .catch(error => {
     console.error(error);
@@ -237,6 +188,7 @@ function confirmAddPayment(V) {
       });
       let transaction=response.data
       window.open(`/api/getIndexAccountsSelas?user_id=${V.client.id}&print=2&transactions_id=${transaction.id}`, '_blank');
+      refresh();
 
 
   })

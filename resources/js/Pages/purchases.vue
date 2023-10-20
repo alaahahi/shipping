@@ -178,10 +178,7 @@ const getResultsCar = async ($state) => {
     //$state.error();
   }
 };
-const getResultsCarSearch = async (q='',page = 1) => {
-    const response = await fetch(`/getIndexCarSearch?page=${page}&q=${q}`);
-    car.value = await response.json();
-}
+
 const options = ref({
   shortcuts: {
     today: 'اليوم',
@@ -219,7 +216,7 @@ function confirmCar(V) {
   axios.post('/api/addCars',V)
   .then(response => {
     showModalCar.value = false;
-    getResultsCar()
+    refresh()
     getcountTotalInfo()
   })
   .catch(error => {
@@ -240,7 +237,7 @@ function confirmUpdateCar(V) {
       });
 
       getcountTotalInfo()
-      getResultsCar();
+      refresh()
 
   })
   .catch(error => {
@@ -316,7 +313,7 @@ function confirmDelCar(V) {
   axios.post('/api/DelCar',V)
   .then(response => {
     showModalDelCar.value = false;
-    getResultsCar()
+    refresh()
     getcountTotalInfo()
   })
   .catch(error => {
@@ -325,11 +322,7 @@ function confirmDelCar(V) {
 
 
 }
-function getDarkModePreference() {
-  const darkModePreference = localStorage.getItem('darkMode');
-  return darkModePreference==='true' ?'darkCompact':'compact'; // Convert the string to a boolean
-}
-getResultsCar();
+ 
 
 function confirmAddPayment(V) {
   axios.get(`/api/addPaymentCar?car_id=${V.id}&discount=${V.discountPayment??0}&amount=${V.amountPayment??0}&note=${V.notePayment??''}`)
@@ -405,63 +398,10 @@ function updateResults(input) {
           </template>
     </ModalEditCars>
 
-    <ModalAddExpenses
-            :formData="formData"
-            :expenses="expenses"
-            :show="showModalAddExpenses ? true : false"
-            @a="confirmExpenses($event)"
-            @close="showModalAddExpenses = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddExpenses>
-    <ModalAddGenExpenses
-            :formData="formData"
-            :show="showModalAddGenExpenses ? true : false"
-            :user="user"
-            @a="conGenfirmExpenses($event)"
-            @close="showModalAddGenExpenses = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddGenExpenses>
-    <ModalAddToBox
-            :formData="formData"
-            :expenses="expenses"
-            :show="showModalToBox ? true : false"
-            :user="user"
-            @a="confirmAddToBox($event)"
-            @close="showModalToBox = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddToBox>
-    <ModalSpanFromBox
-            :formData="formData"
-            :expenses="expenses"
-            :show="showModalFromBox ? true : false"
-            :user="user"
-            @a="confirmWithDrawFromBox($event)"
-            @close="showModalFromBox = false"
-            >
-        <template #header>
-          </template>
-    </ModalSpanFromBox>
-    <ModalAddTransfers
-            :formData="formData"
-            :expenses="expenses"
-            :show="showModalAddTransfers  ? true : false"
-            :user="user"
-            @a="conAddTransfers($event)"
-            @close="showModalAddTransfers = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddTransfers>
+ 
     <ModalAddCarPayment
             :formData="formData"
             :show="showModalAddCarPayment ? true : false"
-            :user="user"
             @a="confirmAddPayment($event)"
             @close="showModalAddCarPayment = false"
             >
