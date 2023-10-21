@@ -163,7 +163,7 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('howler',[TransfersController::class, 'howler'])->name('howler');
     Route::get('getIndexAccounting',[AccountingController::class, 'getIndexAccounting'])->name("getIndexAccounting");
 
-    Route::get('annual_information',[AnnualController::class, 'annual_information'])->name('annual_information');
+    Route::get('annual_information',[AnnualController::class, 'index'])->name('annual_information');
 
     
 
