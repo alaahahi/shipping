@@ -13,7 +13,7 @@ import ModalDelCar from "@/Components/ModalDelCar.vue";
 import ModalEditCars from "@/Components/ModalEditCar_S.vue";
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
-
+import debounce from 'lodash/debounce';
 import { useToast } from "vue-toastification";
 import axios from 'axios';
 import { ref } from 'vue';
@@ -202,6 +202,9 @@ function confirmAddPayment(V) {
 
   })
 }
+
+const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce delay (in milliseconds) as needed
+
 </script>
 
 <template>
@@ -284,7 +287,7 @@ function confirmAddPayment(V) {
                               </div>
                               <input
                                 v-model="q"
-                                @input="refresh()"
+                                @input="debouncedGetResultsCar"
                                 type="text"
                                 id="simple-search"
                                 class="

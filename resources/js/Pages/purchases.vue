@@ -26,6 +26,8 @@ import TextInput from "@/Components/TextInput.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
+import debounce from 'lodash/debounce';
+
 
 const {t} = useI18n();
 
@@ -292,6 +294,8 @@ function updateResults(input) {
   // Use toLocaleString to format the number with commas
   return input.toLocaleString();
 }
+const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce delay (in milliseconds) as needed
+
 </script>
 
 <template>
@@ -701,7 +705,7 @@ function updateResults(input) {
                               </div>
                               <input
                                 v-model="q"
-                                @input="refresh()"
+                                @input="debouncedGetResultsCar"
                                 type="text"
                                 id="simple-search"
                                 class="

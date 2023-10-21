@@ -11,6 +11,7 @@ use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\TransfersController;
 use App\Http\Controllers\CarConfigController;
 use App\Http\Controllers\OnlineContractsController;
+use App\Http\Controllers\AnnualController;
 use App\Models\SystemConfig;
 
 /*
@@ -161,6 +162,8 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('coc',[TransfersController::class, 'coc'])->name('coc');
     Route::get('howler',[TransfersController::class, 'howler'])->name('howler');
     Route::get('getIndexAccounting',[AccountingController::class, 'getIndexAccounting'])->name("getIndexAccounting");
+
+    Route::get('annual_information',[AnnualController::class, 'annual_information'])->name('annual_information');
 
     
 

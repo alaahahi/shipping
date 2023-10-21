@@ -20,6 +20,7 @@ import exit from "@/Components/icon/exit.vue";
 import newContracts from "@/Components/icon/new.vue";
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
+import debounce from 'lodash/debounce';
 
 const {t} = useI18n();
 
@@ -31,7 +32,6 @@ const props = defineProps({
 });
 
 
-let data = ref({});
 const toast = useToast();
 
 let searchTerm = ref('');
@@ -76,11 +76,6 @@ const formGenExpenses = ref({});
 const car = ref([]);
 
 
-const dateValue = ref({
-    startDate: '',
-    endDate: ''
-})
-
 let resetData = ref(false);
 let user_id = 0;
 let page = 1;
@@ -92,8 +87,10 @@ const refresh = () => {
 
 
 };
+const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce delay (in milliseconds) as needed
+
+
 const getResultsCar = async ($state) => {
-  console.log($state)
   try {
     const response = await axios.get(`/getIndexCar`, {
       params: {
@@ -142,47 +139,8 @@ const getcountTotalInfo = async () => {
     
 }
 getcountTotalInfo()
-function confirmCar(V) {
-  axios.post('/api/addCars',V)
-  .then(response => {
-    showModalCar.value = false;
-    refresh()
-    getcountTotalInfo()
-  })
-  .catch(error => {
-    console.error(error);
-  })
-}
-function confirmUpdateCar(V) {
-  showModalEditCars.value = false;
-
-  axios.post('/api/updateCarsS',V)
-  .then(response => {
-    showModal.value = false;
-    toast.success("تم التعديل بنجاح", {
-        timeout: 2000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-
-      getcountTotalInfo()
-      refresh();
-
-  })
-  .catch(error => {
-    showModal.value = false;
-
-    toast.error("لم التعديل بنجاح", {
-        timeout: 2000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-
-  })
-}
-
+ 
+ 
 
 
 function confirmAddCarContracts(V) {
@@ -361,7 +319,7 @@ function getTodayDate() {
                               </div>
                               <input
                                 v-model="q"
-                                @input="refresh()"
+                                @input="debouncedGetResultsCar"
                                 type="text"
                                 id="simple-search"
                                 class="
@@ -640,16 +598,6 @@ function getTodayDate() {
 
                       <div>
                         <div>
-                        <div class="mt-3 text-center" style="direction: ltr;">
-                          <TailwindPagination
-                            :data="car"
-                            @pagination-change-page="getResultsCar"
-                            :limit ="10"
-                            :item-classes="['bg-white','dark:bg-gray-600','text-gray-500','dark:text-gray-300','border-gray-300','dark:border-gray-900','hover:bg-gray-200']"
-                            :activeClasses="[  'bg-rose-50','border-rose-500','text-rose-600',]"
-                          />
-                        </div>
-
                         </div>
                         <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
                           <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
