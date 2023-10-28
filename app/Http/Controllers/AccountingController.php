@@ -83,15 +83,19 @@ class AccountingController extends Controller
      $from =  $_GET['from'] ?? 0;
      $to =$_GET['to'] ?? 0;
      $print =$_GET['print'] ?? 0;
+     $q= $_GET['q'] ?? 0;
      $transactions_id = $_GET['transactions_id'] ?? 0;
      $user = User::with('wallet')->where('id',$user_id)->first();
      if($from && $to ){
-         $transactions = Transactions ::where('wallet_id', $user->wallet->id)->orderBy('id','desc')->whereBetween('created', [$from, $to]);
+         $transactions = Transactions ::with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('id','desc')->whereBetween('created', [$from, $to]);
  
      }else{
-         $transactions = Transactions ::where('wallet_id', $user->wallet->id)->orderBy('id','desc');
+         $transactions = Transactions ::with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('id','desc');
      }
-     $allTransactions = $transactions->get();
+     if($q){
+        $transactions = Transactions ::where('id', $q)->orWhere('description', 'LIKE','%'.$q.'%');
+     }
+     $allTransactions = $transactions->paginate(100);
  
      $sumAllTransactions = $allTransactions->where('currency','$')->sum('amount');
      $sumDebitTransactions = $allTransactions->where('currency','$')->where('type', 'debt')->sum('amount');
@@ -304,9 +308,9 @@ class AccountingController extends Controller
         $car->increment('discount',$discount);
         $wallet = Wallet::where('user_id',$car->client_id)->first();
         $desc=trans('text.addPayment').' '.$amount.' '.$car->car_type.' رقم الشانص'.$car->vin.' '.$note;
-        $tran=$this->increaseWallet($amount,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\Car',0,0,'$');
-        $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\Car',1,$discount,'$',$this->currentDate,$tran->id);
-        $transaction=$this->decreaseWallet($amount+$discount, $desc,$car->client_id,$car_id,'App\Models\Car',1,$discount,'$',$this->currentDate,$tran->id);
+        $tran=$this->increaseWallet($amount,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$');
+        $this->increaseWallet($amount, $desc,$this->mainAccount->id,$car_id,'App\Models\User',1,$discount,'$',$this->currentDate,$tran->id);
+        $transaction=$this->decreaseWallet($amount+$discount, $desc,$car->client_id,$car_id,'App\Models\User',1,$discount,'$',$this->currentDate,$tran->id);
         if((($car->paid)+($car->discount))-$car->total_s >= 0){
             $car->update(['results'=>2]); 
         }
@@ -367,11 +371,11 @@ class AccountingController extends Controller
         if($amount_o){
             $desc=trans('text.addPayment').' '.$amount_o.' '.$note;
 
-            $tran=$this->increaseWallet($amount_o,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\Car',0,0,'$');
+            $tran=$this->increaseWallet($amount_o,$desc,$this->mainBox->id,$this->mainBox->id,'App\Models\User',0,0,'$');
     
-            $this->increaseWallet($amount_o, $desc,$this->mainAccount->id,$this->mainAccount->id,'App\Models\Car',1,$discount,'$',$this->currentDate,$tran->id);
+            $this->increaseWallet($amount_o, $desc,$this->mainAccount->id,$this->mainAccount->id,'App\Models\User',1,$discount,'$',$this->currentDate,$tran->id);
     
-            $transaction = $this->decreaseWallet((int)$amount_o+(int)$discount, $desc,$client_id,$client_id,'App\Models\Car',1,$discount,'$',$this->currentDate,$tran->id);
+            $transaction = $this->decreaseWallet((int)$amount_o+(int)$discount, $desc,$client_id,$client_id,'App\Models\User',1,$discount,'$',$this->currentDate,$tran->id);
             return Response::json($transaction, 200);    
         }
         return Response::json('ok', 200);    

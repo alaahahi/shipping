@@ -19,8 +19,12 @@ import pay from "@/Components/icon/pay.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
 
+import InfiniteLoading from "v3-infinite-loading";
+import "v3-infinite-loading/lib/style.css";
+import debounce from 'lodash/debounce';
+
+
 const laravelData = ref({});
-const user_id = ref(0);
 const searchTerm = ref('');
 let showModalAddSales = ref(false);
 let showModaldebtSales = ref(false);
@@ -28,7 +32,7 @@ let showModalAddExpenses = ref(false);
 let showModalAddGenExpenses = ref(false);
 let showModalConvertDollarDinar = ref(false);
 let showModalConvertDinarDollar = ref(false);
-
+let transactions= ref([]);
 let expenses_type_id = ref(0);
 let formData = ref({});
 let GenExpenses = ref({});
@@ -46,11 +50,52 @@ let debtOnlineContracts= ref(0)
 let allCars= ref(0)
 let onlineContractsDinar = ref(0)
 let debtOnlineContractsDinar = ref(0)
-const getResults = async (page = 1) => {
-  searchTerm.value = '';
-  const response = await fetch(`/getIndexAccounting?page=${page}&user_id=${props.boxes[0].id}&from=${from.value}&to=${to.value}`);
-  laravelData.value = await response.json();
+let resetData = ref(false);
+let user_id = 0;
+let page = 1;
+let q = '';
+const refresh = () => {
+  page = 0;
+  transactions.value.length = 0;
+  resetData.value = !resetData.value;
+
+
 };
+const debouncedGetResultsCar = debounce(refresh, 500);
+
+const getResults = async ($state) => {
+  try {
+    const response = await axios.get(`/getIndexAccounting`, {
+      params: {
+        limit: 100,
+        page: page,
+        q: q,
+        user_id: props.boxes[0].id,
+        from:from.value,
+        to: to.value
+      }
+    });
+
+    const json = response.data;
+
+
+    if (json.transactions.data.length < 100){
+      transactions.value.push(...json.transactions.data);
+      $state.complete();
+    } 
+    else {
+      transactions.value.push(...json.transactions.data);
+       $state.loaded();
+    }
+
+    laravelData.value = json;
+    page++;
+  } catch (error) {
+    console.log(error);
+    //$state.error();
+  }
+};
+ 
 const getcountTotalInfo = async () => {
   axios.get('/api/totalInfo')
   .then(response => {
@@ -88,7 +133,6 @@ function openConvertDollarDinar(){
 function openConvertDinarDollar(){
   showModalConvertDinarDollar.value = true;
 }
-getResults();
 
 const props = defineProps({
   url: String,
@@ -107,12 +151,12 @@ const form = useForm();
 let showModal = ref(false);
 const come = async (id) => {
   const response = await fetch(`/appointmentCome?id=${id}`);
-      getResults();
+  refresh();
 
 };
 const cancel = async (id) => {
   const response = await fetch(`/appointmentCancel?id=${id}`);
-      getResults();
+  refresh();
 
 };
 
@@ -137,7 +181,7 @@ function confirm(V) {
 function confirmdebt(V) {
   axios.post('/api/salesDebt',V)
   .then(response => {
-    getResults();
+    refresh();
     showModaldebtSales.value=false;
     showModalAddExpenses.value = false;
     window.location.reload();
@@ -151,7 +195,7 @@ function confirmdebt(V) {
 function confirmConvertDollarDinar(V) {
   axios.post('/api/convertDollarDinar',V)
   .then(response => {
-    getResults();
+    refresh();
     showModalConvertDollarDinar.value=false;
 
   })
@@ -163,7 +207,7 @@ function confirmConvertDollarDinar(V) {
 function confirmConvertDinarDollar(V) {
   axios.post('/api/convertDinarDollar',V)
   .then(response => {
-    getResults();
+    refresh();
     showModalConvertDinarDollar.value=false;
 
   })
@@ -185,7 +229,7 @@ function getTodayDate() {
 function delTransactions(id){
   axios.post(`/api/delTransactions?id=${id}`)
   .then(response => {
-    getResults();
+    refresh();
     showModaldebtSales.value=false;
     showModalAddExpenses.value = false;
   })
@@ -226,7 +270,7 @@ function updateResults(input) {
 function conGenfirmExpenses(V) {
   axios.post(`/api/GenExpenses?amount=${V.amount??0}&expenses_type_id=${expenses_type_id.value}&factor=${V.factor??1}&note=${V.note??''}`)
   .then(response => {
-    getResults();
+    refresh();
     showModalAddGenExpenses.value = false;
     console.log(response.data);
     window.open(`/api/getIndexAccountsSelas?user_id=${response.data.morphed_id}&print=3&transactions_id=${response.data.id}`, '_blank');
@@ -535,7 +579,7 @@ function conGenfirmExpenses(V) {
               <div className=" mr-5 print:hidden">
                             <InputLabel for="pay" value="فلترة" />
                             <button
-                            @click.prevent="getResults()"
+                            @click.prevent="refresh()"
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded" style="width: 100%">
                             <span v-if="!isLoading">فلترة</span>
                             <span v-else>جاري الحفظ...</span>
@@ -671,7 +715,16 @@ function conGenfirmExpenses(V) {
                                 :value="laravelData?.user?.wallet.balance"
                               />
                 </div>
-
+                <div class="relative w-full">
+                          <InputLabel for="to" value="بحث رقم الوصل او الوصف" />
+                          <TextInput
+                                id="q"
+                                type="text"
+                                class="mt-1 block w-full"
+                                v-model="q"
+                                @input="debouncedGetResultsCar"                              />
+             
+                </div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-3 lg:gap-3 pt-3">
               <div class=" px-4">
@@ -737,6 +790,7 @@ function conGenfirmExpenses(V) {
                 >
                   <tr class="rounded-l-lg mb-2 sm:mb-0">
                     <th className="px-2 py-2">رقم الوصل</th>
+                    <!-- <th className="px-2 py-2">الحساب</th> -->
                     <th className="px-2 py-2">التاريخ</th>
                     <th className="px-2 py-2">الوصف</th>
                     <th className="px-2 py-2">المبلغ</th>
@@ -746,9 +800,12 @@ function conGenfirmExpenses(V) {
                 </thead>
                 <tbody>
          
-                  <tr v-for="tran in  laravelData.transactions" :key="tran.id" :class="tran.type != 'in' ? 'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
+                  <tr v-for="tran in   transactions" :key="tran.id" :class="tran.type != 'in' ? 'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
 
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.id }}</td>
+                  <!-- <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.morphed?.name }}</td> -->
+
+                  
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran?.created_at.slice(0, 19).replace("T", "  ") }}</td>
                   <th className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.description }}</th>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.amount+' '+tran.currency  }}</td>
@@ -761,13 +818,11 @@ function conGenfirmExpenses(V) {
                 </tbody>
               </table>
             </div>
-            <!-- <div class="mt-3 text-center" style="direction: ltr;">
-              <TailwindPagination
-                :data="laravelData"
-                @pagination-change-page="getResults"
-                :limit ="2"
-              />
-            </div> -->
+            <div class="spaner">
+                          <InfiniteLoading :car="car" @infinite="getResults" :identifier="resetData" />
+
+                      </div>
+
           </div>
         </div>
       </div>

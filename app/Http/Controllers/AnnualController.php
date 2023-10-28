@@ -7,33 +7,22 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Card;
 use App\Models\User;
-use App\Models\Profile;
-use App\Models\UserType;
-use App\Models\Transactions;
-use App\Models\Results;
-use App\Models\DoctorResults;
-use App\Models\SystemConfig;
 use App\Models\Wallet;
+use App\Models\UserType;
 use App\Models\Contract;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
-use App\Models\Massage;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use PDF;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use App\Models\Transfers;
-use App\Models\Car;
-use App\Models\Company;
-use App\Models\Name;
-use App\Models\CarModel;
-use App\Models\Color;
-use App\Models\ExpensesType;
-use App\Models\Expenses;
+use App\Models\Warehouse;
+use App\Models\CarImages;
+
+use File;
 
 
 class AnnualController extends Controller
@@ -43,6 +32,8 @@ class AnnualController extends Controller
         $this->userAdmin =  UserType::where('name', 'admin')->first()->id;
         $this->userSeles =  UserType::where('name', 'seles')->first()->id;
         $this->userClient =  UserType::where('name', 'client')->first()->id;
+        $this->userClientAnnual =  UserType::where('name', 'clientAnnual')->first()->id;
+
         $this->userAccount =  UserType::where('name', 'account')->first()->id;
     
         $this->mainAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','main@account.com')->first();
@@ -74,8 +65,139 @@ class AnnualController extends Controller
      */
     public function index()
     {  
-        $boxes = User::with('wallet')->where('email', 'mainBox@account.com')->get();
-        return Inertia::render('Annual/Index', ['boxes'=>$boxes,'accounts'=>$this->mainAccount]);
+        $clientAnnual = User::where('type_id', $this->userClientAnnual)->get();
+        return Inertia::render('Annual/Index', ['clientAnnual'=>$clientAnnual]);
     }
 
+    public function addCarsAnnual(Request $request)
+    {
+        
+        $client_id =$request->client_id;
+        if( $client_id==0){
+            $client = new User;
+            $client->name = $request->client_name;
+            $client->phone = $request->client_phone;
+            $client->created =$this->currentDate;
+            $client->type_id = $this->userClientAnnual;
+            $client->save();
+            Wallet::create(['user_id' => $client->id,'balance'=>0]);
+            $client_id=$client->id;
+        } 
+        $car=Warehouse::create([
+            'note'=> $request->note??'',
+            'car_owner'=> $request->car_owner,
+            'car_type'=> $request->car_type,
+            'vin'=> $request->vin,
+            'car_number'=> $request->car_number,
+            'year'=> $request->year,
+            'car_color'=> $request->car_color,
+            'date'=> $this->currentDate,
+            'client_id'=>$client_id,
+             ]);
+
+        return Response::json($car, 200);    
+
+    }
+
+    public function getIndexCarAnnual()
+    {
+        $user_id =$_GET['user_id'] ?? '';
+        $q = $_GET['q']??'';
+        $from =  $_GET['from'] ?? 0;
+        $to =$_GET['to'] ?? 0;
+        $limit =$_GET['limit'] ?? 0;
+        if($from && $to ){
+            $data =  Warehouse::with('client')->with('CarImages')->whereBetween('date', [$from, $to])->orderBy('date','DESC');
+
+            $totalCars = $data->count();
+
+        }else{
+            $data =  Warehouse::with('client')->with('CarImages')->orderBy('date','DESC');
+
+            $totalCars = $data->count();
+ 
+        }
+        if($q){
+            $data = $data->orwhere('car_number', 'LIKE','%'.$q.'%')->orwhere('vin', 'LIKE','%'.$q.'%')->orwhere('car_type', 'LIKE','%'.$q.'%')->orWhereHas('client', function ($query) use ($q) {
+                $query->where('name', 'LIKE', '%' . $q . '%');
+            });
+        }
+ 
+
+        if($user_id){
+            $data =    $data->where('client_id',  $user_id);
+
+            $totalCars = $data->count();
+        }
+        $data =$data->orderBy('date', 'DESC')->paginate($limit)->toArray();
+
+        $data['totalCars']  =$totalCars;
+
+
+        return Response::json($data, 200);
+    }
+    public function carsAnnualUpload(Request $request){
+
+
+        $carId= $request->carId;
+
+        $path = public_path('uploads');
+
+        // Create the directory if it doesn't exist
+        if (!file_exists($path)) {
+            mkdir($path, 0777, true);
+        }
+
+        $file = $request->file('image');
+    
+        $name = uniqid() . '_' . trim($file->getClientOriginalName());
+    
+        $file->move($path, $name);
+
+        $carImages =CarImages::create([
+            'name'=>$name,
+            'car_id'=>$carId,
+        ]);
+    
+        return Response::json($carImages, 200);
+
+    }
+
+    public function carsAnnualImageDel(Request $request){
+        $name = $request->name;
+        File::delete(public_path('uploads/'.$name));
+        CarImages::where('name', $name)->delete();
+        return Response::json('deleted is done', 200);
+
+    }
+
+    public function updateCarsAnnual(Request $request){
+        $warehouse= Warehouse::find($request->id)->update(['car_type'=>$request->car_type,
+        'car_color'=>$request->car_color,
+        'year'=>$request->year,
+         'note'=>$request->note,
+          'vin'=>$request->vin,
+          'car_number'=>$request->car_number]);
+        return Response::json($warehouse, 200);
+    }
+    public function delCarsAnnualr(Request $request){
+        $warehouse = Warehouse::with('CarImages')->find($request->id);
+
+        if ($warehouse) {
+            foreach ($warehouse->CarImages as $carImage) {
+                // Delete the image file from the public directory
+                File::delete(public_path('uploads/' . $carImage->name));
+        
+                // Delete the image record from the database
+                $carImage->delete();
+            }
+        
+            // After deleting all associated images, delete the warehouse
+            $warehouse->delete();
+            
+            return response()->json(['message' => 'Warehouse and associated images deleted successfully'], 200);
+        } else {
+            return response()->json(['message' => 'Warehouse not found'], 404);
+        }
+    }
     }

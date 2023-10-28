@@ -17,6 +17,7 @@ use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\TransfersController;
 use App\Http\Controllers\CarConfigController;
 use App\Http\Controllers\OnlineContractsController;
+use App\Http\Controllers\AnnualController;
 
 use App\Models\SystemConfig;
 
@@ -60,6 +61,10 @@ Route::get('addCarModel',[CarConfigController::class, 'storeCarModel'])->name('a
 Route::get('addColor',[CarConfigController::class, 'storeColor'])->name('addColor');
 Route::post('addCar',[DashboardController::class, 'addCar'])->name('addCar');
 Route::post('addCars',[DashboardController::class, 'addCars'])->name('addCars');
+
+Route::post('addCarsAnnual',[AnnualController::class, 'addCarsAnnual'])->name('addCarsAnnual');
+
+
 Route::post('updateCarsS',[DashboardController::class, 'updateCarsS'])->name('updateCarsS');
 Route::post('updateCarsP',[DashboardController::class, 'updateCarsP'])->name('updateCarsP');
 
@@ -74,6 +79,13 @@ Route::get('client',[DashboardController::class, 'client'])->name('client');
 Route::get('getIndexCar',[DashboardController::class, 'getIndexCar'])->name('getIndexCar');
 Route::get('getIndexCarSearch',[DashboardController::class, 'getIndexCarSearch'])->name('getIndexCarSearch');
 Route::get('totalInfo',[DashboardController::class, 'totalInfo'])->name('totalInfo');
+Route::get('getIndexCarAnnual',[AnnualController::class, 'getIndexCarAnnual'])->name('getIndexCarAnnual');
+
+Route::post('carsAnnualUpload',[AnnualController::class, 'carsAnnualUpload'])->name('carsAnnualUpload');
+Route::get('carsAnnualImageDel',[AnnualController::class, 'carsAnnualImageDel'])->name('carsAnnualImageDel');
+Route::post('updateCarsAnnual',[AnnualController::class, 'updateCarsAnnual'])->name('updateCarsAnnual');
+Route::post('delCarsAnnualr',[AnnualController::class, 'delCarsAnnualr'])->name('delCarsAnnualr');
+
 
 
 Route::get('getIndexExpenses',[DashboardController::class, 'getIndexExpenses'])->name('getIndexExpenses');
