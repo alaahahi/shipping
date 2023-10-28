@@ -115,7 +115,7 @@ function removeMedia(removedImage){
                         :is-invalid="errors?.media ? true : false"
                         @change="changeMedia"
                         @initMedia="media"
-                        location="/uploads"
+                        location="/public/uploadsResized"
                         :media="formData.car_images"
                         @add="addMedia"
                         @remove="removeMedia"

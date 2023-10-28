@@ -173,11 +173,11 @@ function confirmCar(V) {
 
 function getImageUrl(name) {
       // Provide the base URL for your images
-      return `/uploadsResized/${name}`;
+      return `/public/uploadsResized/${name}`;
     }
 function getDownloadUrl(name) {
       // Provide the base URL for downloading images
-      return `/uploads/${name}`;
+      return `/public/uploads/${name}`;
     }
 
 </script>
