@@ -18,7 +18,6 @@ class Warehouse extends Model
         'year',
         'note',
         'client_id',
-        'vin',
         'car_number',
     ];
     protected $dates = ['deleted_at'];

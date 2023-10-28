@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use App\Models\Warehouse;
 use App\Models\CarImages;
-
+use Intervention\Image\Facades\Image;
 use File;
 
 
@@ -136,36 +136,54 @@ class AnnualController extends Controller
 
         return Response::json($data, 200);
     }
-    public function carsAnnualUpload(Request $request){
-
-
-        $carId= $request->carId;
-
-        $path = public_path('uploads');
-
-        // Create the directory if it doesn't exist
-        if (!file_exists($path)) {
-            mkdir($path, 0777, true);
+    public function carsAnnualUpload(Request $request)
+    {
+        $carId = $request->carId;
+        $path1 = public_path('uploads');
+        $path2 = public_path('uploadsResized');
+    
+        // Create the directories if they don't exist
+        if (!file_exists($path1)) {
+            mkdir($path1, 0777, true);
         }
-
+        if (!file_exists($path2)) {
+            mkdir($path2, 0777, true);
+        }
+    
         $file = $request->file('image');
     
+        // Generate a unique file name
         $name = uniqid() . '_' . trim($file->getClientOriginalName());
     
-        $file->move($path, $name);
-
-        $carImages =CarImages::create([
-            'name'=>$name,
-            'car_id'=>$carId,
+        // Save the original image to the first directory
+        $file->move($path1, $name);
+    
+        // Load the original image using Intervention Image
+        $image = Image::make(public_path('uploads/' . $name));
+    
+        // Save the resized image to the second directory
+        $image->resize(100, 100, function ($constraint) {
+            $constraint->aspectRatio();
+            $constraint->upsize();
+        });
+    
+        $image->save(public_path('uploadsResized/' . $name));
+    
+        // Create a new record in the database
+        $carImage = CarImages::create([
+            'name' => $name,
+            'car_id' => $carId,
         ]);
     
-        return Response::json($carImages, 200);
-
+        return response()->json($carImage, 200);
     }
-
+    
     public function carsAnnualImageDel(Request $request){
         $name = $request->name;
         File::delete(public_path('uploads/'.$name));
+        File::delete(public_path('uploadsResized/'.$name));
+
+        
         CarImages::where('name', $name)->delete();
         return Response::json('deleted is done', 200);
 
@@ -187,7 +205,8 @@ class AnnualController extends Controller
             foreach ($warehouse->CarImages as $carImage) {
                 // Delete the image file from the public directory
                 File::delete(public_path('uploads/' . $carImage->name));
-        
+                File::delete(public_path('uploadsResized/' . $carImage->name));
+
                 // Delete the image record from the database
                 $carImage->delete();
             }
@@ -198,6 +217,16 @@ class AnnualController extends Controller
             return response()->json(['message' => 'Warehouse and associated images deleted successfully'], 200);
         } else {
             return response()->json(['message' => 'Warehouse not found'], 404);
+        }
+    }
+    public function check_vinAnnual(Request $request){
+        $car_vin = $request->get('car_vin');
+        $car = Warehouse::where('vin',$car_vin)->first();
+        if($car){
+            return response()->json(true); 
+        }else{
+            return response()->json(false); 
+
         }
     }
     }

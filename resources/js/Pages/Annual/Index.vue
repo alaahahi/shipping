@@ -173,20 +173,13 @@ function confirmCar(V) {
 
 function getImageUrl(name) {
       // Provide the base URL for your images
-      return `/uploads/${name}`;
+      return `/uploadsResized/${name}`;
     }
 function getDownloadUrl(name) {
       // Provide the base URL for downloading images
       return `/uploads/${name}`;
     }
-function downloadImage(name) {
-      // Simulate a click event on the corresponding anchor element
-      const link = document.createElement('a');
-      link.href = getDownloadUrl(name);
-      link.download = 'image.jpg'; // Set the desired filename for the downloaded image
-      link.target = '_blank'; // Open in a new tab
-      link.click();
-    }
+
 </script>
 
 <template>
@@ -304,7 +297,7 @@ function downloadImage(name) {
                             <select @change="refresh()" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
                               <option value="0" disabled> {{ $t("selectCustomer") }}</option>
                               <option value="">{{ $t("allOwners") }}</option>
-                              <option v-for="(user, index) in client" :key="index" :value="user.id">{{ user.name }}</option>
+                              <option v-for="(user, index) in clientAnnual" :key="index" :value="user.id">{{ user.name }}</option>
                             </select>
                         </div>
                         <div class="text-center">
@@ -348,9 +341,7 @@ function downloadImage(name) {
                                       <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t('color') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('vin') }}
-                                      </th>
+              
                                       <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t('car_number') }}
                                       </th>
@@ -376,23 +367,21 @@ function downloadImage(name) {
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_type}}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.year}}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_color }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.vin }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_number }}</td> 
-                              
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_number }}</td>                         
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.note }}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.date  }}</td>
 
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">
                                       
-                                      <span
+                                      <a
                                       v-for="(image, index) in car.car_images"
                                       :key="index"
-                                      @click="downloadImage(image.name)"
+                                      :href="getDownloadUrl(image.name)"
                                       style="cursor: pointer;"
                                       target="_blank"
                                     >
                                       <img :src="getImageUrl(image.name)" alt="" class="px-1" style="max-width: 100px;max-height: 50px;display: inline;" />
-                                    </span>
+                                    </a>
 
                                     </td>
                                      <td className="border dark:border-gray-800 text-start px-1 py-2">
@@ -427,116 +416,7 @@ function downloadImage(name) {
 
                       </div>
             
-                      <div>
-                        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">     
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                            <div class="mr-4" >
-                              <h2 class="font-semibold ">{{ $t('capital') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ mainAccount }}</p>
-                            </div>
-                          </div>
-                          <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                      
-                            <div class="mr-4">
-                              <h2 class="font-semibold"> {{ $t('fundIncome') }} </h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ inAccount.wallet?.balance }}</p>
-                            </div>
-                          </div> -->
-                          <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                      
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('cash_out') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ outAccount.wallet?.balance }}</p>
-                            </div>
-                          </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                      
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('debt_to_fund') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ debtAccount.wallet?.balance }}</p>
-                            </div>
-                          </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                      
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('transfer') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ transfersAccount.wallet?.balance }}</p>
-                            </div>
-                          </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('total_car_count') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{carCount}}</p>
-                            </div>
-                          </div> -->
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('all_cars') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{allCars}}</p>
-                            </div>
-                          </div>
- 
-                          <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                      
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('supplier_debt') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ debtSupplier.wallet?.balance }}</p>
-                            </div>
-                          </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                      
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('supplier_payments') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ outSupplier.wallet?.balance }}</p>
-                            </div>
-                          </div> -->
-                        </div>
-                      </div>
+              
                       </div>
                     </div>
                     </div>

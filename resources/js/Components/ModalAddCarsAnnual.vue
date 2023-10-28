@@ -11,52 +11,10 @@ const props = defineProps({
 });
 
 
-function check_vin(v){
-  if(v){
-    axios.get(`/api/check_vin?car_vin=${v}`)
-  .then(response => {
-    showErrorVin.value =  response.data;
-    if(!showErrorVin.value){
-      //VinApi(v)
-    }
-  })
-  .catch(error => {
-    console.error(error);
-  })
-  }else{
-    showErrorVin.value = false;
-  
-  }
-}
-function VinApi (v){
-  props.formData.car_type=''
-    props.formData.year=''
-    axios.get(`https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${v}?format=json`)
-  .then(response => {
-    props.formData.car_type=(response.data.Results[0].Make ? response.data.Results[0].Make:response.data.Results[0].Manufacturer)+' '+response.data.Results[0].Model
-    props.formData.year=response.data.Results[0].ModelYear
 
-  })
-  .catch(error => {
-    console.error(error);
-  })
-}
 let showClient = ref(true);
-let showErrorVin = ref(false);
 
 
-function initMedia(media){
-  console.log(media);
-
-               // this.post.media.list = media
-            }
-function changeMedia(media){
-  console.log(media);
-               // this.post.media.list = media
-            }
-function addMedia(addedImage, addedMedia){
-              //  this.post.media.added = addedMedia
-            }
 function removeMedia(removedImage){
               axios.get('/api/carsAnnualImageDel?name='+removedImage.name)
             .then(response => {
@@ -91,9 +49,9 @@ function removeMedia(removedImage){
               v-if="!formData.id"
             >
               <div class="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="color_id">{{
-                  $t("car_owner")
-                }}</label>
+                <label class="dark:text-gray-200" for="color_id">
+                 صاحب السيارة
+                </label>
                 <div class="relative">
                   <select
                     v-if="!showClient"
@@ -102,7 +60,7 @@ function removeMedia(removedImage){
                     class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   >
                     <option selected disabled>
-                      {{ $t("selectCustomer") }}
+                     تحديد صاحب السيارة
                     </option>
                     <option
                       v-for="(card, index) in client"
@@ -122,7 +80,7 @@ function removeMedia(removedImage){
                     v-if="!showClient"
                     class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-green-500 rounded-tl-lg rounded-bl-lg"
                   >
-                    {{ $t("addCustomer") }}
+                   إضافة صاحب سيارة
                   </button>
                 </div>
                 <div class="relative">
@@ -142,7 +100,8 @@ function removeMedia(removedImage){
                     v-if="showClient"
                     class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-pink-500 rounded-tl-lg rounded-bl-lg"
                   >
-                    {{ $t("selectCustomer") }}
+                  تحديد صاحب السيارة
+
                   </button>
                 </div>
               </div>
@@ -205,24 +164,9 @@ function removeMedia(removedImage){
                 />
               </div>
 
-              <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
-                  {{ $t("vin") }}</label
-                >
-                <input
-                  id="vin"
-                  type="text"
-                  @change="check_vin(formData.vin)"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="formData.vin"
-                />
-                <div class="text-red-700" v-if="showErrorVin">
-                  رقم الشاصي مستخدم
-                </div>
-              </div>
-      
 
-
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2">
             <div className="mb-4 mx-1">
               <label class="dark:text-gray-200" for="note">
                 {{$t("note")}}
@@ -235,7 +179,7 @@ function removeMedia(removedImage){
               />
             </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2">  
+            <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2" v-if="!saveCar">  
                 <button
                   class="modal-default-button py-3 bg-blue-500 rounded col-6"
                   @click=" $emit('a', formData);"
@@ -246,7 +190,7 @@ function removeMedia(removedImage){
             <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2" v-if="saveCar">
               <div class="mb-4">
                 <label class="form-label">الصور</label>
-                <div>
+                <div class="mt-3">
                     <Uploader 
                         :server="'/api/carsAnnualUpload?carId='+saveCar"
                         :is-invalid="errors?.media ? true : false"
