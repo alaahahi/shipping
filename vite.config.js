@@ -3,9 +3,7 @@ import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
-    build: {
-        outDir: 'public', // Set the output directory to the 'public' folder
-      },
+
     plugins: [
         laravel({
             input: 'resources/js/app.js',
