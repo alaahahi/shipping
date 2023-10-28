@@ -66,33 +66,7 @@ const switchLocale = (locale) => {
                   {{ $t("clients") }}
                 </NavLink>
               </div>
-              <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                <NavLink
-                  :href="route('users.index')"
-                  :active="route().current('users.index')"
-                >
-                  {{ $t("users") }}
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                <NavLink
-                  :href="route('FormRegistrationCompleted')"
-                  :active="route().current('FormRegistrationCompleted')"
-                >
-                  {{ $t("allCars") }}
-                </NavLink>
-              </div>
-             
-      
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                <NavLink
-                  :href="route('carConfig')"
-                  :active="route().current('carConfig')"
-                >
-                  {{ $t("carTypes") }}
-                </NavLink>
-              </div>
-        -->
+
 
               <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1">
                 <NavLink
@@ -309,7 +283,6 @@ const switchLocale = (locale) => {
                 {{ $page.props.auth.user.email }}
               </div>
             </div>
-
             <div class="mt-3 space-y-1">
               <ResponsiveNavLink
                 :href="route('dashboard')"
@@ -319,13 +292,40 @@ const switchLocale = (locale) => {
               </ResponsiveNavLink>
 
               <ResponsiveNavLink
-                :href="route('users.index')"
-                :active="route().current('users.index')"
+                :href="route('purchases')"
+                :active="route().current('purchases')"
                 v-if="$page.props.auth.user.type_id == 1"
               >
-                {{ $t("users") }}
+              {{ $t("purchases") }}
               </ResponsiveNavLink>
-
+              <ResponsiveNavLink
+                :href="route('sales')"
+                :active="route().current('sales')"
+                v-if="$page.props.auth.user.type_id == 1"
+              >
+              {{ $t("sales") }}
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
+                :href="route('accounting')"
+                :active="route().current('accounting')"
+                v-if="$page.props.auth.user.type_id == 1"
+              >
+              المحاسبة  
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
+                :href="route('online_contracts')"
+                :active="route().current('online_contracts')"
+                v-if="$page.props.auth.user.type_id == 1"
+              >
+              {{ $t("online_contracts") }}
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
+                :href="route('annual_information')"
+                :active="route().current('annual_information')"
+                v-if="$page.props.auth.user.type_id == 1"
+              >
+              معلومات السنوية
+              </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('logout')"
                 method="post"
