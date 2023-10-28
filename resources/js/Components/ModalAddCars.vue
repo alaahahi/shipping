@@ -46,7 +46,15 @@ function VinApi (v){
 }
 let showClient = ref(false);
 let showErrorVin = ref(false);
-
+let exchangeRateError= ref(false);
+function validateExchangeRate(v) {
+      const input = props.formData.dolar_price;
+      if (/^\d{6}$/.test(input)) {
+        exchangeRateError.value = false;
+      } else {
+        exchangeRateError.value = true;
+      }
+    }
 </script>
   <template>
   <Transition name="modal">
@@ -215,10 +223,14 @@ let showErrorVin = ref(false);
                 >
                 <input
                   id="dolar_price"
+                  @change="validateExchangeRate"
                   type="number"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.dolar_price"
                 />
+                <div v-if="exchangeRateError" class="text-red-500">
+                          مطلوب رقم من 6 خانة فقط
+                </div>
               </div>
               <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="shipping_dolar">

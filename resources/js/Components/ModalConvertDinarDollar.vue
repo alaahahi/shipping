@@ -34,8 +34,17 @@ const restform =()=>{
 
 };
 }
-
+let exchangeRateError= ref(false);
+function validateExchangeRate() {
+      const input = form.value.exchangeRate;
+      if (/^\d{6}$/.test(input)) {
+        exchangeRateError.value = false;
+      } else {
+        exchangeRateError.value = true;
+      }
+    }
 function calculateAmountDollarDinar (){
+  validateExchangeRate()
   if(form.value.amountDinar<=form.value.user.wallet?.balance_dinar){
     form.value.amountResultDollar = form.value.amountDinar/(form.value.exchangeRate/100)
     form.value.newBalanceDinar =form.value.user.wallet?.balance_dinar -form.value.amountDinar
@@ -148,6 +157,9 @@ function calculateAmountDollarDinar (){
                           @input="calculateAmountDollarDinar()"
                           class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.exchangeRate" />
+                          <div v-if="exchangeRateError" class="text-red-500">
+                          مطلوب رقم من 6 خانة فقط
+                          </div>
                         </div>
                         <div className="mb-4 mx-5">
                         <label for="amountDinar" >المبلغ  بالدولار</label>
