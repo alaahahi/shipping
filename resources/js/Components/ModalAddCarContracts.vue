@@ -64,8 +64,8 @@ if(props.formData.price_dinars>=500000){
   <template>
     <Transition name="modal">
       <div v-if="show" class="modal-mask ">
-        <div class="modal-wrapper ">
-          <div class="modal-container dark:bg-gray-900">
+        <div class="modal-wrapper  max-h-[80vh]">
+          <div class="modal-container dark:bg-gray-900 overflow-auto  max-h-[80vh]">
             <div class="modal-header text-center py-4 dark:text-gray-300">  
               إضافة عقد الكتروني للسيارة {{ formData.car_type }} {{ formData.year }} {{  formData.car_color }} رقم شانصى {{ formData.vin }}
               <slot name="header"></slot>

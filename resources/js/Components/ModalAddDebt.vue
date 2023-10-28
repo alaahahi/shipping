@@ -39,7 +39,7 @@ const restform =()=>{
   <template>  
     <Transition name="modal">
       <div v-if="show" class="modal-mask ">
-        <div class="modal-wrapper ">
+        <div class="modal-wrapper  max-h-[80vh]">
           <div class="modal-container">
             <div class="modal-header">
               <slot name="header"></slot>

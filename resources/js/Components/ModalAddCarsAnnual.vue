@@ -33,9 +33,9 @@ function removeMedia(removedImage){
 </script>
   <template>
   <Transition name="modal">
-    <div v-if="show" class="modal-mask">
-      <div class="modal-wrapper">
-        <div class="modal-container dark:bg-gray-900">
+    <div v-if="show" class="modal-mask" >
+      <div class="modal-wrapper  max-h-[80vh]">
+        <div class="modal-container dark:bg-gray-900 overflow-auto  max-h-[80vh]">
           <div class="modal-header">
             <slot name="header">
               <h2 class="text-center dark:text-gray-200">
@@ -43,7 +43,7 @@ function removeMedia(removedImage){
               </h2>
             </slot>
           </div>
-          <div class="modal-body">
+          <div class="modal-body ">
             <div
               class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2"
               v-if="!formData.id"

@@ -34,9 +34,9 @@ if(props.formData.amountPayment > amount){
   <template>
     <Transition name="modal">
       <div v-if="show" class="modal-mask ">
-        <div class="modal-wrapper ">
+        <div class="modal-wrapper  max-h-[80vh]">
 
-          <div class="modal-container dark:bg-gray-900">
+          <div class="modal-container dark:bg-gray-900 overflow-auto  max-h-[80vh]">
             <div class="modal-header">
               <slot name="header">    
                 </slot>
