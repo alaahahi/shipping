@@ -193,7 +193,7 @@ function getDownloadUrl(name) {
             :show="showModalAddCarsAnnual ? true : false"
             :client="clientAnnual"
             @a="confirmCar($event)"
-            @close="showModalAddCarsAnnual = false;refresh()"
+            @close="showModalAddCarsAnnual = false;saveCar=0;refresh()"
             >
         <template #header>
           </template>

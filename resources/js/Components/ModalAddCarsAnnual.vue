@@ -11,7 +11,13 @@ const props = defineProps({
 });
 
 
-
+function getTodayDate() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 let showClient = ref(true);
 
 
@@ -124,7 +130,7 @@ function removeMedia(removedImage){
                 >
                 <input
                   id="car_number"
-                  type="number"
+                  type="text"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.car_number"
                 />
@@ -163,7 +169,17 @@ function removeMedia(removedImage){
                   v-model="formData.car_color"
                 />
               </div>
-
+              <div className="mb-4 mx-1">
+                <label class="dark:text-gray-200" for="pin">
+                  {{ $t("date") }}</label
+                >
+                <input
+                  id="date"
+                  type="date"
+                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  v-model="formData.date"
+                />
+              </div>
 
             </div>
             <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2">
@@ -182,7 +198,10 @@ function removeMedia(removedImage){
             <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2" v-if="!saveCar">  
                 <button
                   class="modal-default-button py-3 bg-blue-500 rounded col-6"
-                  @click=" $emit('a', formData);"
+                  @click="formData.date = formData.date
+                      ? formData.date
+                      : getTodayDate();
+                      $emit('a', formData);"
                   :disabled="(!formData.client_id)&&(!formData.client_name)">
                   حفظ ومتابعة
                 </button>
@@ -210,7 +229,7 @@ function removeMedia(removedImage){
             <div class="flex flex-row  m-auto">
                <button
                   class="modal-default-button py-3 bg-rose-500 rounded col-6"
-                  @click=" $emit('close'); formData = '';">
+                  @click=" $emit('close'); formData = ''">
                   إغلاق
                 </button>
             </div>

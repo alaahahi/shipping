@@ -91,7 +91,7 @@ class AnnualController extends Controller
             'car_number'=> $request->car_number,
             'year'=> $request->year,
             'car_color'=> $request->car_color,
-            'date'=> $this->currentDate,
+            'date'=> $request->date ?? $this->currentDate,
             'client_id'=>$client_id,
              ]);
 
