@@ -161,7 +161,7 @@ class AnnualController extends Controller
         $image = Image::make(public_path('uploads/' . $name));
     
         // Save the resized image to the second directory
-        $image->resize(100, 100, function ($constraint) {
+        $image->resize(50, 50, function ($constraint) {
             $constraint->aspectRatio();
             $constraint->upsize();
         });
