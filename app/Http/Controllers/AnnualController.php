@@ -87,7 +87,6 @@ class AnnualController extends Controller
             'note'=> $request->note??'',
             'car_owner'=> $request->car_owner,
             'car_type'=> $request->car_type,
-            'vin'=> $request->vin,
             'car_number'=> $request->car_number,
             'year'=> $request->year,
             'car_color'=> $request->car_color,
@@ -118,7 +117,7 @@ class AnnualController extends Controller
  
         }
         if($q){
-            $data = $data->orwhere('car_number', 'LIKE','%'.$q.'%')->orwhere('vin', 'LIKE','%'.$q.'%')->orwhere('car_type', 'LIKE','%'.$q.'%')->orWhereHas('client', function ($query) use ($q) {
+            $data = $data->orwhere('car_number', 'LIKE','%'.$q.'%')->orwhere('car_type', 'LIKE','%'.$q.'%')->orWhereHas('client', function ($query) use ($q) {
                 $query->where('name', 'LIKE', '%' . $q . '%');
             });
         }
@@ -194,7 +193,6 @@ class AnnualController extends Controller
         'car_color'=>$request->car_color,
         'year'=>$request->year,
          'note'=>$request->note,
-          'vin'=>$request->vin,
           'car_number'=>$request->car_number]);
         return Response::json($warehouse, 200);
     }
