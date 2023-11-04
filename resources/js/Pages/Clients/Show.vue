@@ -741,9 +741,7 @@ function calculateAmount(){
                       'bg-red-100 dark:bg-red-900': car.results == 0,
                       'bg-red-100 dark:bg-red-900': car.results == 1,
                       'bg-green-100 dark:bg-green-900': car.results == 2,
-                      'bg-yellow-100 dark:bg-yellow-900':car.vin.startsWith(q),
-                      'bg-yellow-100 dark:bg-yellow-900':car.car_number.toString().startsWith(q),
-
+                      'bg-yellow-100 dark:bg-yellow-900':(car.vin.startsWith(q)|| car.car_number.toString().startsWith(q)),
                     }
                     "
                     class="border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600"
