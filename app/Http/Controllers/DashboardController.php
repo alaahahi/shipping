@@ -34,7 +34,7 @@ class DashboardController extends Controller
     $this->accountingController = $accountingController;
     $this->url = env('FRONTEND_URL');
     $this->userAdmin =  UserType::where('name', 'admin')->first()->id;
-    $this->userSeles =  UserType::where('name', 'seles')->first()->id;
+    $this->userErbil =  UserType::where('name', 'erbil')->first()->id;
     $this->userClient =  UserType::where('name', 'client')->first()->id;
     $this->userAccount =  UserType::where('name', 'account')->first()->id;
 
