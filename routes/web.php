@@ -104,22 +104,9 @@ Route::group(['middleware' => ['auth','verified']], function () {
     
     Route::get('/receiveCard', [AccountingController::class, 'receiveCard'])->name('receiveCard');
     Route::get('/paySelse/{id}', [AccountingController::class, 'paySelse'])->name('paySelse');
-
-    // Route::get('hospital',[HospitalController::class, 'index'])->name('hospital');
-    // Route::get('hospitalAdd',[HospitalController::class, 'create'])->name('hospitalAdd');
-    // Route::get('hospitalEdit/{id}',[HospitalController::class, 'edit'])->name('hospitalEdit');
-    // Route::get('hospitalStoreEdit',[HospitalController::class, 'index'])->name('hospitalStoreEdit');
-    // Route::post('hospitalStoreEdit',[HospitalController::class, 'storeEdit'])->name('hospitalStoreEdit');
-    // Route::post('hospital',[HospitalController::class, 'store'])->name('hospital');
-    // Route::get('getIndexAppointment',[HospitalController::class, 'getIndex'])->name("getIndexAppointment");
-    // Route::get('livesearchAppointment', [HospitalController::class, 'livesearchAppointment'])->name('livesearchAppointment');
-    // Route::get('appointmentCome', [HospitalController::class, 'appointmentCome'])->name('appointmentCome');
-    // Route::get('appointmentCancel', [HospitalController::class, 'appointmentCancel'])->name('appointmentCancel');
-
     Route::get('addTransfers',[TransfersController::class, 'addTransfers'])->name('addTransfers');
     Route::get('transfers',[TransfersController::class, 'index'])->name('transfers');
     Route::get('getIndexAccountsSelas',[TransfersController::class, 'getIndexAccountsSelas'])->name('getIndexAccountsSelas');
-
     Route::get('carConfig',[CarConfigController::class, 'index'])->name('carConfig');
     Route::get('addCompany',[CarConfigController::class, 'create'])->name('addCompany');
     Route::post('addCompany',[CarConfigController::class, 'store']);

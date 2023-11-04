@@ -56,10 +56,12 @@ class UserController extends Controller
     }
     public function showClients($id)
     {
+        $q = request()->query('q'); // Access the 'q' query parameter
+
         $clients = User::with('wallet')->where('type_id', $this->userClient)->get();
 
         $client= user::find($id);
-        return Inertia::render('Clients/Show', ['url'=>$this->url,'client'=>$client,'clients'=>$clients,'client_id'=>$id]);
+        return Inertia::render('Clients/Show', ['url'=>$this->url,'client'=>$client,'clients'=>$clients,'client_id'=>$id,'q'=>$q]);
     }
     public function show ()
     {
