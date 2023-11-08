@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Transactions;
 use App\Models\Expenses;
 use App\Helpers\UploadHelper;
+use Illuminate\Support\Facades\Auth;
+
 
 use Carbon\Carbon;
 
@@ -34,7 +36,6 @@ class DashboardController extends Controller
     $this->accountingController = $accountingController;
     $this->url = env('FRONTEND_URL');
     $this->userAdmin =  UserType::where('name', 'admin')->first()->id;
-    $this->userErbil =  UserType::where('name', 'erbil')->first()->id;
     $this->userClient =  UserType::where('name', 'client')->first()->id;
     $this->userAccount =  UserType::where('name', 'account')->first()->id;
 
@@ -60,6 +61,7 @@ class DashboardController extends Controller
     public function __invoke(Request $request)
     {
         $results = null;
+
        // $client = new Client( $this->url, 'masterKey');
        // $results = $client->stats();
         //dd($results);
@@ -68,19 +70,7 @@ class DashboardController extends Controller
     }
     public function index(Request $request)
     {
-        $car = Car::all();
-    
-        $allCars = $car->count();
-        $client = User::where('type_id', $this->userClient)->get();
-        return Inertia::render('Dashboard', ['client'=>$client,
-        'onlineContracts'=>$this->onlineContracts->wallet->balance,
-        'howler'=>$this->howler->wallet->balance,
-        'shippingCoc'=>$this->shippingCoc->wallet->balance,
-        'border'=>$this->border->wallet->balance,
-        'iran'=>$this->iran->wallet->balance,
-        'dubai'=>$this->dubai->wallet->balance,
-        'mainAccount'=>$this->mainAccount->wallet->balance,'allCars'=>$allCars ]);   
-
+        return Inertia::render('Dashboard');   
     }
     public function purchases(Request $request)
     {

@@ -13,7 +13,6 @@ const {t} = useI18n();
 
 const props = defineProps({
 
-  client:Array,
 
 });
 

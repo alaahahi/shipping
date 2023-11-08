@@ -20,13 +20,13 @@ use Illuminate\Validation\Rules;
 use App\Models\Massage;
 use Carbon\Carbon;
 use App\Models\Transactions;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
     public function __construct(){
          $this->url = env('FRONTEND_URL');
          $this->userAdmin =  UserType::where('name', 'admin')->first()->id;
-         $this->userErbil =  UserType::where('name', 'erbil')->first()->id;
          $this->userClient =  UserType::where('name', 'client')->first()->id;
          $this->userAccount =  UserType::where('name', 'account')->first()->id;
 
@@ -78,9 +78,8 @@ class UserController extends Controller
         $from = $_GET['from'] ?? 0;
         $to = $_GET['to'] ?? 0;
         $searchType = $_GET['searchType'] ?? '';
-    
-        $dataQuery = User::with('userType:id,name', 'wallet')
-            ->where('type_id', $this->userClient);
+        $type_id=Auth::user()->type_id;
+        $dataQuery = User::with('userType:id,name', 'wallet')->where('type_id', $this->userClient);
     
         if ($q) {
             if ($q !== 'debit') {
