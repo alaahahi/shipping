@@ -438,7 +438,7 @@ function calculateAmount(){
                 id="cars_need_paid"
                 type="number"
                 class="mt-1 block w-full"
-                :value="laravelData?.client?.wallet?.balance-laravelData?.contract_total_debit_Dollar"
+                :value="laravelData?.client?.wallet?.balance"
                 disabled
               />
             </div>
