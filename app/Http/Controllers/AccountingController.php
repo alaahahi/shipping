@@ -189,7 +189,7 @@ class AccountingController extends Controller
         $user_id = $_GET['user_id'] ?? 0;
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
-        $print =$_GET['showComplatedCars'] ?? 0;
+        $print =$_GET['print'] ?? 0;
         $showComplatedCars=$_GET['showComplatedCars'] ?? 0;
         $transactions_id = $_GET['transactions_id'] ?? 0;
         $client = User::with('wallet')->where('id', $user_id)->first();
