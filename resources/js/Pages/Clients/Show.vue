@@ -288,7 +288,7 @@ function confirmAddCarContracts(V) {
         rtl: true
 
       });
-      refresh();
+      getResultsSelect();
 
 
   })
@@ -314,7 +314,7 @@ function confirmEditCarContracts(V) {
         rtl: true
 
       });
-      refresh();
+      getResultsSelect();
 
 
   })
@@ -343,7 +343,7 @@ function confirmAddExitCar(v){
 
       });
 
-      refresh();
+      getResultsSelect();
 
   })
   .catch(error => {
