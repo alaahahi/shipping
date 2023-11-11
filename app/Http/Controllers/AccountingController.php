@@ -189,7 +189,8 @@ class AccountingController extends Controller
         $user_id = $_GET['user_id'] ?? 0;
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
-        $print =$_GET['print'] ?? 0;
+        $print =$_GET['showComplatedCars'] ?? 0;
+        $showComplatedCars=$_GET['showComplatedCars'] ?? 0;
         $transactions_id = $_GET['transactions_id'] ?? 0;
         $client = User::with('wallet')->where('id', $user_id)->first();
         if($from && $to ){
@@ -227,7 +228,55 @@ class AccountingController extends Controller
         }
         //$data = $transactions->paginate(10);
  
-        // Additional logic to retrieve client data
+
+        if($print==1){
+            if($showComplatedCars==1){
+                $clientData = [
+                    'totalAmount' =>   $transactions->sum('amount'),
+                    'data' => $cars->where('results','!=','2')->get(),
+                    'client'=>$client,
+                    'car_total'=>$cars->where('results','!=','2')->count(),
+                    'car_total_unpaid'=>$car_total_unpaid,
+                    'car_total_complete'=>$car_total_complete,
+                    'car_total_uncomplete'=>$car_total_uncomplete,
+                    'contract_total'=>$contract_total,
+                    'exit_car_total'=>$exit_car_total,
+                    'contract_total_debit_Dollar'=>$contract_total_debit_Dollar,
+                    'contract_total_debit_Dinar'=>$contract_total_debit_Dinar,
+                    'cars_sum'=>$cars_sum,
+                    'cars_paid'=>$cars_paid,
+                    'cars_discount'=>$cars_discount,
+                    'cars_need_paid'=>$cars_need_paid,
+                    'transactions'=>$transactions->get(),
+                    'date'=> Carbon::now()->format('Y-m-d')
+                ];
+            }else{
+                $clientData = [
+                    'totalAmount' =>   $transactions->sum('amount'),
+                    'data' => $cars->get(),
+                    'client'=>$client,
+                    'car_total'=>$car_total,
+                    'car_total_unpaid'=>$car_total_unpaid,
+                    'car_total_complete'=>$car_total_complete,
+                    'car_total_uncomplete'=>$car_total_uncomplete,
+                    'contract_total'=>$contract_total,
+                    'exit_car_total'=>$exit_car_total,
+                    'contract_total_debit_Dollar'=>$contract_total_debit_Dollar,
+                    'contract_total_debit_Dinar'=>$contract_total_debit_Dinar,
+                    'cars_sum'=>$cars_sum,
+                    'cars_paid'=>$cars_paid,
+                    'cars_discount'=>$cars_discount,
+                    'cars_need_paid'=>$cars_need_paid,
+                    'transactions'=>$transactions->get(),
+                    'date'=> Carbon::now()->format('Y-m-d')
+                ];
+            }
+
+            $config=SystemConfig::first();
+
+            return view('show',compact('clientData','config'));
+         }
+                 // Additional logic to retrieve client data
         $clientData = [
             'totalAmount' =>   $transactions->sum('amount'),
             'data' => $cars->get(),
@@ -247,11 +296,7 @@ class AccountingController extends Controller
             'transactions'=>$transactions->get(),
             'date'=> Carbon::now()->format('Y-m-d')
         ];
-        if($print==1){
-            $config=SystemConfig::first();
 
-            return view('show',compact('clientData','config'));
-         }
          if($print==2){
             $config=SystemConfig::first();
 

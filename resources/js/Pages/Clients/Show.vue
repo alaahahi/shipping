@@ -30,7 +30,7 @@ let showModalDelCar = ref(false);
 let showModalAddCarPayment = ref(false);
 let showErorrAmount = ref(false);
 let showTransactions= ref(false);
-
+let showComplatedCars = ref(false);
 let total = ref(0);
 let formData = ref({});
 let discount= ref(0);
@@ -336,14 +336,13 @@ function calculateAmount(){
             </div>
             <div>
               <div className="mb-4  mr-5">
-                <InputLabel for="totalAmount" :value="$t('phoneNumber')" />
-                <TextInput
-                  id="totalAmount"
-                  type="text"
-                  class="mt-1 block w-full"
-                  :value="laravelData.client?.phone"
-                  disabled
-                />
+                <InputLabel for="totalAmount" value="فلترة السيارات المكتملة" />
+                <div class="flex items-center ps-4  rounded-lg border border-gray-300 text-gray-900 mt-1">
+                    <input id="bordered-checkbox-1" type="checkbox" @change="showComplatedCars== true? showComplatedCars=false: showComplatedCars=true" :value="showComplatedCars" :checked="!showComplatedCars" name="bordered-checkbox" class="w-4 h-4 mx-2 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="bordered-checkbox-1" class="w-full pt-3 py-2 mx-4 text-sm  font-medium text-gray-900 dark:text-gray-300"> 
+                      {{showComplatedCars== false?' تم الفلتر':'تم عرض جميع السيارة'}}
+                    </label>
+                </div>
               </div>
             </div>
             <div class="px-4">
@@ -381,7 +380,7 @@ function calculateAmount(){
             <div className="mb-4  mr-5 print:hidden">
               <InputLabel for="pay" value="طباعة" />
               <a
-                :href="`/api/getIndexAccountsSelas?user_id=${client_Select}&from=${from}&to=${to}&print=1`"
+                :href="`/api/getIndexAccountsSelas?user_id=${client_Select}&from=${from}&to=${to}&print=1&showComplatedCars=1`"
                 target="_blank"
                 class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded block text-center"
                 style="width: 100%"
@@ -736,6 +735,7 @@ function calculateAmount(){
                 <tbody>
                   <tr
                     v-for="(car, i) in laravelData.data"
+                    v-show="(car.results == 2 && showComplatedCars)|| car.results!=2"
                     :key="car.id"
                     :class="{
                       'bg-red-100 dark:bg-red-900': car.results == 0,
