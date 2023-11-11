@@ -121,24 +121,6 @@ const getResultsCar = async ($state) => {
   }
 };
 
-const getcountTotalInfo = async () => {
-  axios.get('/api/totalInfo')
-  .then(response => {
-    contarts.value = response.data.data.contarts;
-    exitCar.value = response.data.data.exitCar;
-    onlineContracts.value = response.data.data.onlineContracts;
-    onlineContractsDinar.value =response.data.data.onlineContractsDinar
-    debtOnlineContractsDinar.value =response.data.data.debtOnlineContractsDinar
-    debtOnlineContracts.value = response.data.data.debtOnlineContracts;
-    allCars.value =response.data.data.allCars;
-  })
-  .catch(error => {
-    console.error(error);
-  })
-  
-    
-}
-getcountTotalInfo()
  
  
 
@@ -154,7 +136,6 @@ function confirmAddCarContracts(V) {
 
       });
       refresh();
-      getcountTotalInfo()
 
 
   })
@@ -181,7 +162,6 @@ function confirmEditCarContracts(V) {
 
       });
       refresh();
-      getcountTotalInfo()
 
 
   })
@@ -244,7 +224,6 @@ function getTodayDate() {
     <ModalAddCarContracts
             :formData="formData"
             :show="showModalAddCarContracts ? true : false"
-            :user="user"
             @a="confirmAddCarContracts($event)"
             @close="showModalAddCarContracts = false"
             >
@@ -254,7 +233,6 @@ function getTodayDate() {
     <ModalEditCarContracts
             :formData="formData"
             :show="showModalEditCarContracts ? true : false"
-            :user="user"
             @a="confirmEditCarContracts($event)"
             @close="showModalEditCarContracts = false"
             >
@@ -264,7 +242,6 @@ function getTodayDate() {
     <ModalAddExitCar
             :formData="formData"
             :show="showModalAddExitCar ? true : false"
-            :user="user"
             @a="confirmAddExitCar($event)"
             @close="showModalAddExitCar = false"
             >
@@ -274,7 +251,6 @@ function getTodayDate() {
     <ModalShowExitCar
             :formData="formData"
             :show="showModalShowExitCar ? true : false"
-            :user="user"
             @a="confirmAddExitCar($event)"
             @close="showModalShowExitCar = false"
             >

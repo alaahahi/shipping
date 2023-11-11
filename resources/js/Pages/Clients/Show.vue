@@ -10,11 +10,16 @@ import axios from "axios";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
 import ModalEditCars from "@/Components/ModalEditCar_S.vue";
 import ModalAddCarPayment from "@/Components/ModalAddCarPayment.vue";
+import ModalAddCarContracts from "@/Components/ModalAddCarContracts.vue";
+import ModalEditCarContracts from "@/Components/ModalEditCarContracts.vue";
+import ModalAddExitCar from "@/Components/ModalAddExitCar.vue";
+import ModalShowExitCar from "@/Components/ModalShowExitCar.vue";
 import print from "@/Components/icon/print.vue";
 import pay from "@/Components/icon/pay.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
 import exit from "@/Components/icon/exit.vue";
+import show from "@/Components/icon/show.vue";
 import newContracts from "@/Components/icon/new.vue";
 
 import { useToast } from "vue-toastification";
@@ -31,6 +36,10 @@ let showModalAddCarPayment = ref(false);
 let showErorrAmount = ref(false);
 let showTransactions= ref(false);
 let showComplatedCars = ref(false);
+let showModalAddCarContracts =  ref(false);
+let showModalEditCarContracts =  ref(false);
+let showModalAddExitCar = ref(false);
+let showModalShowExitCar = ref(false);
 let total = ref(0);
 let formData = ref({});
 let discount= ref(0);
@@ -220,6 +229,31 @@ function hideTransactionsDiv(){
   showTransactions.value=false;
   
 }
+
+function openModalAddCarContracts(form={}) {
+  formData.value=form
+
+  formData.value.prices=100
+  formData.value.price_dinars=50000
+
+  showModalAddCarContracts.value = true;
+}
+function openModalEditCarContracts(form={}) {
+  formData.value=form
+
+  showModalEditCarContracts.value = true;
+}
+function openModalAddExitCar(form={}) {
+  formData.value=form
+  formData.value.createdExit = getTodayDate()
+
+  showModalAddExitCar.value = true;
+}
+function openModalShowExitCar(form={}) {
+  formData.value=form
+  showModalShowExitCar.value = true;
+}
+
 function calculateAmountDiscount (){
   let need_payment =  laravelData?.value?.client?.wallet?.balance
   amount.value=need_payment- discount.value
@@ -243,6 +277,98 @@ function calculateAmount(){
   }
 
 }
+
+function confirmAddCarContracts(V) {
+  axios.get(`/api/addCarContracts?car_id=${V.id}&price=${V.prices??0}&price_dinar=${V.price_dinars??0}&paid=${V.paids??0}&paid_dinar=${V.paid_dinars??0}&phone=${V.phone??''}&note=${V.note??''}`)
+  .then(response => {
+    showModalAddCarContracts.value = false;
+    toast.success( " تم دفع مبلغ بنجاح ", {
+        timeout: 4000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+      refresh();
+      getcountTotalInfo()
+
+
+  })
+  .catch(error => {
+    showModalAddCarContracts.value = false;
+
+    toast.error("لم التعديل بنجاح", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+
+  })
+}
+function confirmEditCarContracts(V) {
+  axios.get(`/api/editCarContracts?car_id=${V.id}&paid=${V.paids??0}&paid_dinar=${V.paid_dinars??0}&note=${V.notePayment??''}`)
+  .then(response => {
+    showModalEditCarContracts.value = false;
+    toast.success( " تم دفع مبلغ دولار "+V.amountPayment+" بنجاح ", {
+        timeout: 3000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+      refresh();
+      getcountTotalInfo()
+
+
+  })
+  .catch(error => {
+    showModalEditCarContracts.value = false;
+
+    toast.error("لم التعديل بنجاح", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+
+  })
+}
+
+function confirmAddExitCar(v){
+
+  axios.get(`/api/makeCarExit?car_id=${v.id}&created=${v.createdExit}&phone=${v.phoneExit}&note=${v.noteExit}`)
+  .then(response => {
+    showModalAddExitCar.value = false;
+    toast.success( "تم اضافة خروجية للسيارة بنجاح ", {
+        timeout: 5000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+
+      refresh();
+
+  })
+  .catch(error => {
+    showModalAddExitCar.value = false;
+
+    toast.error("لم التعديل بنجاح", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+
+  })
+  
+}
+
+function getTodayDate() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 </script>
 
 <template>
@@ -255,6 +381,42 @@ function calculateAmount(){
         شركة سلام جلال
       </h2>
     </template>
+    <ModalAddCarContracts
+            :formData="formData"
+            :show="showModalAddCarContracts ? true : false"
+            @a="confirmAddCarContracts($event)"
+            @close="showModalAddCarContracts = false"
+            >
+        <template #header>
+          </template>
+    </ModalAddCarContracts>
+    <ModalEditCarContracts
+            :formData="formData"
+            :show="showModalEditCarContracts ? true : false"
+            @a="confirmEditCarContracts($event)"
+            @close="showModalEditCarContracts = false"
+            >
+        <template #header>
+          </template>
+    </ModalEditCarContracts>
+    <ModalAddExitCar
+            :formData="formData"
+            :show="showModalAddExitCar ? true : false"
+            @a="confirmAddExitCar($event)"
+            @close="showModalAddExitCar = false"
+            >
+        <template #header>
+          </template>
+    </ModalAddExitCar>
+    <ModalShowExitCar
+            :formData="formData"
+            :show="showModalShowExitCar ? true : false"
+            @a="confirmAddExitCar($event)"
+            @close="showModalShowExitCar = false"
+            >
+        <template #header>
+          </template>
+    </ModalShowExitCar>
     <ModalEditCars
       :formData="formData"
       :show="showModalEditCars ? true : false"
@@ -726,7 +888,7 @@ function calculateAmount(){
                     <th
                       scope="col"
                       class="px-1 py-2 text-base print:hidden"
-                      style="width:200px"
+                      style="width:250px"
                     >
                       {{ $t("execute") }}
                     </th>
@@ -862,21 +1024,38 @@ function calculateAmount(){
                         <pay />
                       </button>
                       <button
-                                      tabIndex="1"
-                                      class="px-1 py-1  text-white mx-1 bg-green-500 rounded"
-                                      v-if="car.is_exit && !car.contract"
-                                      
-
-                                    >
-                                     <exit />
+                        v-if="(car.contract?.price != car.contract?.paid) || (car.contract?.price_dinar != car.contract?.paid_dinar)"
+                        tabIndex="1"
+                        class="px-1 py-1  text-white mx-1 bg-pink-500 rounded"
+                        @click="openModalEditCarContracts(car)"
+                      >
+                        <pay />
                       </button>
                       <button
-                                    v-if="car.contract"
-                                      tabIndex="1"
-                                      class="px-1 py-1  text-white mx-1 bg-yellow-500 rounded"
-                                      ref=""
-                                    >
-                                     <newContracts />
+                      v-if="!car.contract"
+                        tabIndex="1"
+                        class="px-1 py-1  text-white mx-1 bg-yellow-500 rounded"
+                        @click="openModalAddCarContracts(car)"
+                      >
+                        <newContracts />
+                      </button>
+
+                      <button
+                        tabIndex="1"
+                        class="px-1 py-1  text-white mx-1 bg-red-500 rounded"
+                        v-if="!car.is_exit"
+                        @click="openModalAddExitCar(car)"
+                      >
+                        <exit />
+                      </button>
+                      <button
+                        tabIndex="1"
+                        class="px-1 py-1  text-white mx-1 bg-blue-500 rounded"
+                        v-if="car.is_exit"
+                        @click="openModalShowExitCar(car)"
+
+                      >
+                        <show />
                       </button>
                     </td>
                   </tr>
