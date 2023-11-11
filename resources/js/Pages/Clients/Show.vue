@@ -289,7 +289,6 @@ function confirmAddCarContracts(V) {
 
       });
       refresh();
-      getcountTotalInfo()
 
 
   })
@@ -316,7 +315,6 @@ function confirmEditCarContracts(V) {
 
       });
       refresh();
-      getcountTotalInfo()
 
 
   })
