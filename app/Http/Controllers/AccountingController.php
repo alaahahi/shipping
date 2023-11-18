@@ -352,7 +352,7 @@ class AccountingController extends Controller
         $car->increment('discount',$discount);
         $wallet = Wallet::where('user_id',$car->client_id)->first();
         $desc=trans('text.addPayment').' '.$amount.' '.$car->car_type.' رقم الشانص'.$car->vin.' '.$note;
-        $tran=$this->increaseWallet($amount,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->where('owner_id',$owner_id)->first()->mainBox->id,'App\Models\User',0,0,'$');
+        $tran=$this->increaseWallet($amount,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'$');
         $this->increaseWallet($amount, $desc,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$car_id,'App\Models\User',1,$discount,'$',$this->currentDate,$tran->id);
         $transaction=$this->decreaseWallet($amount+$discount, $desc,$car->client_id,$car_id,'App\Models\User',1,$discount,'$',$this->currentDate,$tran->id);
         if((($car->paid)+($car->discount))-$car->total_s >= 0){
@@ -435,6 +435,8 @@ class AccountingController extends Controller
 
     }
     public function GenExpenses (Request $request){
+        $owner_id=Auth::user()->owner_id;
+
         $factor=$request->factor ?? 1;
         $amount=(($request->amount)/ $factor);
         $expenses_type_id = $request->expenses_type_id;

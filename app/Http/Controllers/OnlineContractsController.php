@@ -100,7 +100,7 @@ class OnlineContractsController extends Controller
             $descD="انشاء عقد بقيمة ".$price_dinar." وتم دفع مبلغ".$paid_dinar.' '.$car->car_type.' رقم الشانص'.$car->vin.' '.$note;
             $descDebit="دين من عقد السيارة ".$car->car_type.' '.' '.$car->car_type.' '.$car->car_type.' رقم الشانص'.$car->vin.' '.$note;
             if($paid){
-                $tranDollar=$this->accountingController->increaseWallet($paid,$desc,$this->accountingController->mainBox->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\Car',0,0,'$');
+                $tranDollar=$this->accountingController->increaseWallet($paid,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\Car',0,0,'$');
                 $this->accountingController->increaseWallet($paid, $desc,$this->onlineContracts->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car',0,0,'$',0,$tranDollar->id);
             }
 
