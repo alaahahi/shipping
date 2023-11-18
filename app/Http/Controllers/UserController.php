@@ -78,8 +78,8 @@ class UserController extends Controller
         $from = $_GET['from'] ?? 0;
         $to = $_GET['to'] ?? 0;
         $searchType = $_GET['searchType'] ?? '';
-        $type_id=Auth::user()->type_id;
-        $dataQuery = User::with('userType:id,name', 'wallet')->where('type_id', $this->userClient);
+        $owner_id=Auth::user()->owner_id;
+        $dataQuery = User::with('userType:id,name', 'wallet')->where('owner_id',$owner_id)->where('type_id', $this->userClient);
     
         if ($q) {
             if ($q !== 'debit') {

@@ -39,34 +39,29 @@ class DashboardController extends Controller
     $this->userClient =  UserType::where('name', 'client')->first()->id;
     $this->userAccount =  UserType::where('name', 'account')->first()->id;
 
-    $this->mainAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','main@account.com')->first();
-    $this->inAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','in@account.com')->first();
-    $this->outAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','out@account.com')->first();
-    $this->debtAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','debt@account.com')->first();
-    $this->transfersAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','transfers@account.com')->first();
-    $this->outSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-out')->first();
-    $this->debtSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-debt')->first();
-    $this->onlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts')->first();
-    $this->onlineContractsDinar= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-dinar')->first();
-    $this->debtOnlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-debt')->first();
-    $this->debtOnlineContractsDinar= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-debit-dinar')->first();
-    $this->howler= User::with('wallet')->where('type_id', $this->userAccount)->where('email','howler')->first();
-    $this->shippingCoc= User::with('wallet')->where('type_id', $this->userAccount)->where('email','shipping-coc')->first();
-    $this->border= User::with('wallet')->where('type_id', $this->userAccount)->where('email','border')->first();
-    $this->iran= User::with('wallet')->where('type_id', $this->userAccount)->where('email','iran')->first();
-    $this->dubai= User::with('wallet')->where('type_id', $this->userAccount)->where('email','dubai')->first();
-    $this->mainBox= User::with('wallet')->where('type_id', $this->userAccount)->where('email','mainBox@account.com')->first();
+    $this->mainAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','main@account.com');
+    $this->inAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','in@account.com');
+    $this->outAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','out@account.com');
+    $this->debtAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','debt@account.com');
+    $this->transfersAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','transfers@account.com');
+    $this->outSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-out');
+    $this->debtSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-debt');
+    $this->onlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts');
+    $this->onlineContractsDinar= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-dinar');
+    $this->debtOnlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-debt');
+    $this->debtOnlineContractsDinar= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-debit-dinar');
+    $this->howler= User::with('wallet')->where('type_id', $this->userAccount)->where('email','howler');
+    $this->shippingCoc= User::with('wallet')->where('type_id', $this->userAccount)->where('email','shipping-coc');
+    $this->border= User::with('wallet')->where('type_id', $this->userAccount)->where('email','border');
+    $this->iran= User::with('wallet')->where('type_id', $this->userAccount)->where('email','iran');
+    $this->dubai= User::with('wallet')->where('type_id', $this->userAccount)->where('email','dubai');
+    $this->mainBox= User::with('wallet')->where('type_id', $this->userAccount)->where('email','mainBox@account.com');
 
     }
     public function __invoke(Request $request)
     {
         $results = null;
-
-       // $client = new Client( $this->url, 'masterKey');
-       // $results = $client->stats();
-        //dd($results);
         return Inertia::render('dashboard', ['url'=>$this->url]);   
-
     }
     public function index(Request $request)
     {
@@ -74,61 +69,56 @@ class DashboardController extends Controller
     }
     public function purchases(Request $request)
     {
-        $car = Car::all();
-    
+        $owner_id=Auth::user()->owner_id;
+        $car = Car::all()->where('owner_id',$owner_id);
         $allCars = $car->count();
-        $client = User::where('type_id', $this->userClient)->get();
-
-        return Inertia::render('purchases', ['client'=>$client,
-        'mainAccount'=>$this->mainAccount->wallet->balance,'allCars'=>$allCars ]);   
-
+        $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
+        return Inertia::render('purchases', ['client'=>$client ]);   
     }
     public function sales(Request $request)
     {
-        $car = Car::all();
-    
+        $owner_id=Auth::user()->owner_id;
+        $car = Car::all()->where('owner_id',$owner_id);
         $allCars = $car->count();
-
         $client = User::where('type_id', $this->userClient)->get();
-
-        return Inertia::render('Sales', ['client'=>$client,
-        'mainAccount'=>$this->mainAccount->wallet->balance,'allCars'=>$allCars ]);   
-
+        return Inertia::render('Sales', ['client'=>$client ]);   
     }
     public function totalInfo(Request $request)
     {
-        $car = Car::all();
-        $contarts = Contract::all()->count();
-        $exitCar = ExitCar::all()->count();
+        $owner_id=Auth::user()->owner_id;
+        $car = Car::all()->where('owner_id',$owner_id);
+        $contarts = Contract::all()->where('owner_id',$owner_id)->count();
+        $exitCar = ExitCar::all()->where('owner_id',$owner_id)->count();
         $sumTotal = $car->sum('total');
         $sumTotalS = $car->sum('total_s');
-        $client = User::where('type_id', $this->userClient)->pluck('id');
+        $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->pluck('id');
         $sumDebit =Wallet::whereIn('user_id', $client)->sum('balance');
         $sumPaid = $car->sum('paid')+ $car->sum('discount');
         $sumProfit = $car->where('results',2)->sum('profit');
+        
         $data = [
         'contarts'=>$contarts,
         'exitCar'=>$exitCar,
-        'mainAccount'=>$this->mainAccount->wallet->balance??0,
-        'onlineContracts'=>$this->onlineContracts->wallet->balance??0,
-        'onlineContractsDinar'=>$this->onlineContractsDinar->wallet->balance_dinar??0,
-        'debtOnlineContractsDinar'=>$this->debtOnlineContractsDinar->wallet->balance_dinar??0,
-        'howler'=>$this->howler->wallet->balance??0,
-        'shippingCoc'=>$this->shippingCoc->wallet->balance??0,
-        'border'=>$this->border->wallet->balance??0,
-        'iran'=>$this->iran->wallet->balance??0,
-        'dubai'=>$this->dubai->wallet->balance??0,
+        'mainAccount'=>$this->mainAccount->where('owner_id',$owner_id)->first()->wallet->balance??0,
+        'onlineContracts'=>$this->onlineContracts->where('owner_id',$owner_id)->first()->wallet->balance??0,
+        'onlineContractsDinar'=>$this->onlineContractsDinar->where('owner_id',$owner_id)->first()->wallet->balance_dinar??0,
+        'debtOnlineContractsDinar'=>$this->debtOnlineContractsDinar->where('owner_id',$owner_id)->first()->wallet->balance_dinar??0,
+        'howler'=>$this->howler->where('owner_id',$owner_id)->first()->wallet->balance??0,
+        'shippingCoc'=>$this->shippingCoc->where('owner_id',$owner_id)->first()->wallet->balance??0,
+        'border'=>$this->border->where('owner_id',$owner_id)->first()->wallet->balance??0,
+        'iran'=>$this->iran->where('owner_id',$owner_id)->first()->wallet->balance??0,
+        'dubai'=>$this->dubai->where('owner_id',$owner_id)->first()->wallet->balance??0,
         'sumTotal'=>$sumTotal,
         'sumPaid'=>$sumPaid,
         'sumDebit'=>$sumDebit,
         'sumProfit'=>$sumProfit,
-        'debtOnlineContracts'=>$this->debtOnlineContracts->wallet->balance??0,
+        'debtOnlineContracts'=>$this->debtOnlineContracts->where('owner_id',$owner_id)->first()->wallet->balance??0,
         'allCars'=>$car->count()??0,
         'purchasesCost'=>$sumTotalS??0,
         'clientPaid'=>$sumPaid??0,
         'clientDebit'=>$sumTotalS-$sumPaid ?? 0,
-        'mainBoxDollar'=>$this->mainBox->wallet->balance??0,
-        'mainBoxDinar'=>$this->mainBox->wallet->balance_dinar??0,
+        'mainBoxDollar'=>$this->mainBox->where('owner_id',$owner_id)->first()->wallet->balance??0,
+        'mainBoxDinar'=>$this->mainBox->where('owner_id',$owner_id)->first()->wallet->balance_dinar??0,
 
         
         ];
@@ -137,12 +127,15 @@ class DashboardController extends Controller
     }
     public function client(Request $request)
     {
-        $client = User::where('type_id', $this->userClient)->with('wallet')->paginate(10);
+        $owner_id=Auth::user()->owner_id;
+
+        $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->with('wallet')->paginate(10);
         return response()->json($client); 
     }
     public function getcount(Request $request)
     {
-        $profile=  Car::all();
+        $owner_id=Auth::user()->owner_id;
+        $profile=  Car::all()->where('owner_id',$owner_id);
         $start = $request->get('start');
         $end = $request->get('end');
         if($start && $end ){
@@ -155,6 +148,7 @@ class DashboardController extends Controller
     }
     public function addCar(Request $request)
     {
+        $owner_id=Auth::user()->owner_id;
         $car_id=$request->id??0;
         $maxNo = Car::max('no');
         if($car_id){
@@ -188,7 +182,8 @@ class DashboardController extends Controller
             'note'=> $request->note??'',
             'image'=>$images ? json_encode($images):"",
             'user_id'=> $request->user_id??0,
-            'no'=>$no
+            'no'=>$no,
+            'owner_id'=>$owner_id
              ]);
              if($paid_amount){
                 $desc=trans('text.payCar').' '.$purchase_price.trans('text.payDone').$paid_amount;
@@ -242,6 +237,8 @@ class DashboardController extends Controller
     }
     public function addCars(Request $request)
     {
+        $owner_id=Auth::user()->owner_id;
+
         $client_id =$request->client_id;
         $car_id=$request->id??0;
         $maxNo = Car::max('no');
@@ -298,12 +295,13 @@ class DashboardController extends Controller
             'expenses'=> $expenses,
             'client_id'=>$client_id,
             'results'=> $results,
+            'owner_id'=>$owner_id,
             'profit'=>($total_amount*-1)
              ]);
                 if($total_amount){
                     $desc=trans('text.payCar').' '.$request->vin;
                     if($total_amount){
-                        $this->accountingController->decreaseWallet(($total_amount),$desc,$this->mainAccount->id,$car->id,'App\Models\Car');
+                        $this->accountingController->decreaseWallet(($total_amount),$desc,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car');
                     }
                 }
 
@@ -350,10 +348,10 @@ class DashboardController extends Controller
             $dataToUpdate['total']=$total;
             if($total >$car->total){
                 $descClient = trans('text.addExpenses').' '.($total-$car->total).' '.trans('text.for_car').$car->car_type.' '.$car->vin;
-                $this->accountingController->decreaseWallet(($total-$car->total), $descClient,$this->mainAccount->id,$car->id,'App\Models\Car');
+                $this->accountingController->decreaseWallet(($total-$car->total), $descClient,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car');
             }else{
                 $descClient = 'مرتجع للصندوق مصاريف';
-                $this->accountingController->increaseWallet(($car->total-$total), $descClient,$this->mainAccount->id,$car->id,'App\Models\Car');
+                $this->accountingController->increaseWallet(($car->total-$total), $descClient,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car');
 
             }
             if($car->paid){
@@ -468,7 +466,7 @@ class DashboardController extends Controller
                 'results'=>1
                  ]);
                 $desc=trans('text.buyCar').' '.$car->pay_price.trans('text.payDone').$car->paid_amount_pay;
-                $this->accountingController->increaseWallet($car->paid_amount_pay, $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
+                $this->accountingController->increaseWallet($car->paid_amount_pay, $desc,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car');
                 $this->accountingController->increaseWallet($car->paid_amount_pay, $desc,$this->inAccount->id,$car->id,'App\Models\Car');
                 if($pay_price-$paid_amount_pay >= 0){
                     $this->accountingController->increaseWallet($pay_price-$paid_amount_pay, $desc,$this->debtAccount->id,$car->id,'App\Models\Car');
@@ -481,13 +479,15 @@ class DashboardController extends Controller
     }
     public function getIndexCar()
     {
+        $owner_id=Auth::user()->owner_id;
+
         $user_id =$_GET['user_id'] ?? '';
         $q = $_GET['q']??'';
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
         $limit =$_GET['limit'] ?? 0;
         if($from && $to ){
-            $data =  Car::with('contract')->with('exitcar')->with('client')->whereBetween('date', [$from, $to])->orderBy('date','DESC');
+            $data =  Car::with('contract')->with('exitcar')->with('client')->where('owner_id',$owner_id)->whereBetween('date', [$from, $to])->orderBy('date','DESC');
             $resultsDinar=$data->sum('dinar'); 
             $resultsDollar=$data->sum('total'); 
             $resultsTotalS=$data->sum('total_s'); 
@@ -496,7 +496,7 @@ class DashboardController extends Controller
             $totalCars = $data->count();
 
         }else{
-            $data =  Car::with('contract')->with('exitcar')->with('client')->orderBy('date','DESC');
+            $data =  Car::with('contract')->with('exitcar')->with('client')->where('owner_id',$owner_id)->orderBy('date','DESC');
             $resultsDinar=$data->sum('dinar');
             $resultsDollar=$data->sum('total');
             $resultsTotalS=$data->sum('total_s'); 
@@ -544,8 +544,10 @@ class DashboardController extends Controller
     }
     public function getIndexCarSearch()
     {
+        $owner_id=Auth::user()->owner_id;
+
         $term = $_GET['q']??'';
-        $data =  Car::with('contract')->with('exitcar')->with('client')->orwhere('car_number', 'LIKE','%'.$term.'%')->orwhere('vin', 'LIKE','%'.$term.'%')->orwhere('car_type', 'LIKE','%'.$term.'%')->orWhereHas('client', function ($query) use ($term) {
+        $data =  Car::with('contract')->with('exitcar')->with('client')->where('owner_id',$owner_id)->orwhere('car_number', 'LIKE','%'.$term.'%')->orwhere('vin', 'LIKE','%'.$term.'%')->orwhere('car_type', 'LIKE','%'.$term.'%')->orWhereHas('client', function ($query) use ($term) {
             $query->where('name', 'LIKE', '%' . $term . '%');
         });
         $data =$data->orderBy('no', 'DESC')->paginate(100);
@@ -555,14 +557,14 @@ class DashboardController extends Controller
     {
         $user_id = $_GET['user_id']??0;
         $desc=trans('text.addToBox').' '.($_GET['amount']??0).'$'.' || '.$_GET['note']??'';
-        $this->accountingController->increaseWallet(($_GET['amount']??0), $desc,$this->mainAccount->id,$user_id,'App\Models\User',$user_id);
+        $this->accountingController->increaseWallet(($_GET['amount']??0), $desc,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$user_id,'App\Models\User',$user_id);
         return Response::json('ok', 200);    
     }
     public function withDrawFromBox()
     {
         $user_id = $_GET['user_id']??0;
         $desc=trans('text.withDrawFromBox').' '.($_GET['amount']??'').'$'.' || '.$_GET['note']??'';
-        $this->accountingController->decreaseWallet(($_GET['amount']??0), $desc,$this->mainAccount->id,$user_id,'App\Models\User',$user_id);
+        $this->accountingController->decreaseWallet(($_GET['amount']??0), $desc,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$user_id,'App\Models\User',$user_id);
         
         return Response::json('ok', 200);    
     }
@@ -571,7 +573,7 @@ class DashboardController extends Controller
         $car=Car::with('client')->find($request->id);
         $desc=' مرتج حذف سيارة'.$car->total;
         $wallet = Wallet::where('user_id',$car->client_id)->first();
-        $this->accountingController->increaseWallet($car->total, $desc,$this->mainAccount->id,$car->id,'App\Models\Car');
+        $this->accountingController->increaseWallet($car->total, $desc,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car');
         if($car->results == 0 && $car->total_s!=0){
             $trans = $this->accountingController->decreaseWallet($car->total_s , $desc,$car->client->id,$car->id,'App\Models\Car');
         }

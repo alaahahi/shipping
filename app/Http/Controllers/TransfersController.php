@@ -144,7 +144,8 @@ class TransfersController extends Controller
     }
     public function getIndexCar()
     {
-        $data =  Car::with('carmodel')->with('name')->with('color')->with('company')->with('client');
+        $owner_id=Auth::user()->owner_id;
+        $data =  Car::with('carmodel')->where('owner_id',$owner_id)->with('name')->with('color')->with('company')->with('client');
         $type =$_GET['type'] ?? '';
         if($type){
         $data =    $data->where('results', $type);

@@ -21,8 +21,8 @@ use App\Http\Controllers\AnnualController;
 
 use App\Models\SystemConfig;
 
-
-Route::apiResource('upload', UploadController::class);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('upload', UploadController::class);
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {return $request->user();});
 Route::get('/user/{id}', function (Request $request) { return  User::find($request->id)->massage;});
 Route::get('/user/{id}',[UserController::class, 'getMassages']);
@@ -132,4 +132,4 @@ Route::get('getGenExpenses',[AccountingController::class, 'getGenExpenses'])->na
 
 Route::post('convertDollarDinar',[AccountingController::class, 'convertDollarDinar'])->name('convertDollarDinar');
 Route::post('convertDinarDollar',[AccountingController::class, 'convertDinarDollar'])->name('convertDinarDollar');
-
+});

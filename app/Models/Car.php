@@ -55,6 +55,7 @@ class Car extends Model
         'discount',
         'expenses_s',
         'is_exit',
+        'owner_id',
         'contract_id'
     ];
     public function user()
