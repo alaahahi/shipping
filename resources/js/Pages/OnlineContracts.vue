@@ -7,7 +7,6 @@ import ModalEditCarContracts from "@/Components/ModalEditCarContracts.vue";
 import ModalAddExitCar from "@/Components/ModalAddExitCar.vue";
 import ModalShowExitCar from "@/Components/ModalShowExitCar.vue";
 
-import { TailwindPagination } from "laravel-vue-pagination";
 import { useToast } from "vue-toastification";
 import axios from 'axios';
 import { ref } from 'vue';
