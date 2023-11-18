@@ -10,11 +10,8 @@ import { Link } from "@inertiajs/inertia-vue3";
 const {t} = useI18n();
 
 
+const auth = defineProps(['auth']);
 
-const props = defineProps({
-
-
-});
 
 
 let data = ref({});
@@ -117,9 +114,13 @@ const getResultsCarSearch = async (q='',page = 1) => {
   })
 }
 
-
+//
 const getcountTotalInfo = async () => {
-  axios.get('/api/totalInfo')
+  axios.get('/api/totalInfo', {
+    headers: {
+        Authorization: 'Bearer ' + auth.auth.accessToken,
+    },
+})
   .then(response => {
     mainAccount.value = response.data.data.mainAccount;
     onlineContracts.value=  response.data.data.onlineContracts
@@ -191,7 +192,7 @@ function updateResults(input) {
 
 <template>
     <Head title="Dashboard" />
-    <AuthenticatedLayout >
+    <AuthenticatedLayout >{{ $page.props.auth.accessToken }}
         <div class="py-2"  v-if="$page.props.auth.user.type_id==1">
         <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 ">
             <div class="bg-white overflow-hidden shadow-sm ">
