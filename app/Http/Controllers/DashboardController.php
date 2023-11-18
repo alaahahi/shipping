@@ -272,6 +272,7 @@ class DashboardController extends Controller
             $client->phone = $request->client_phone;
             $client->created =Carbon::now()->format('Y-m-d');
             $client->type_id = $this->userClient;
+            $client->owner_id = $owner_id;
             $client->save();
             Wallet::create(['user_id' => $client->id,'balance'=>0]);
             $client_id=$client->id;
