@@ -93,11 +93,11 @@ class AccountingController extends Controller
      $allTransactions = $transactions->paginate(100);
  
      $sumAllTransactions = $allTransactions->where('currency','$')->sum('amount');
-     $sumDebitTransactions = $allTransactions->where('currency','$')->where('type', 'debt')->where('type', 'out')->sum('amount');
+     $sumDebitTransactions = $allTransactions->where('currency','$')->where('type', 'debt')->orWhere('type', 'out')->sum('amount');
      $sumInTransactions = $allTransactions->where('currency','$')->where('type', 'in')->sum('amount');
 
      $sumAllTransactionsDinar = $allTransactions->where('currency','IQD')->sum('amount');
-     $sumDebitTransactionsDinar = $allTransactions->where('currency','IQD')->where('type', 'out')->where('type', 'debt')->sum('amount');
+     $sumDebitTransactionsDinar = $allTransactions->where('currency','IQD')->where('type', 'out')->orWhere('type', 'debt')->sum('amount');
      $sumInTransactionsDinar = $allTransactions->where('currency','IQD')->where('type', 'in')->sum('amount');
 
      
