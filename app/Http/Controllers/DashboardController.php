@@ -571,6 +571,8 @@ class DashboardController extends Controller
     }
 
     public function DelCar(Request $request){
+        $owner_id=Auth::user()->owner_id;
+
         $car=Car::with('client')->find($request->id);
         $desc=' مرتج حذف سيارة'.$car->total;
         $wallet = Wallet::where('user_id',$car->client_id)->first();
