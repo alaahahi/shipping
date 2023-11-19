@@ -658,6 +658,7 @@ class AccountingController extends Controller
     // }
     public function delTransactions(Request $request)
     {
+        $owner_id=Auth::user()->owner_id;
         $transaction_id = $request->id ?? 0;
         $originalTransaction = Transactions::find($transaction_id);
         $wallet_id=$originalTransaction->wallet_id;
