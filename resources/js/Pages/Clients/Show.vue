@@ -24,7 +24,7 @@ import newContracts from "@/Components/icon/new.vue";
 
 import { useToast } from "vue-toastification";
 let toast = useToast();
-
+let sums= ref(0);
 let laravelData = ref({});
 let isLoading = ref(0);
 let from = ref(0);
@@ -59,6 +59,15 @@ let getResults = async (page = 1) => {
       console.error(error);
     });
 };
+function calculateTotalFilteredAmount() {
+  const filteredTransactions = laravelData.value.transactions.filter(user =>
+    user.type === 'out' && user.amount < 0 && user.is_pay === 1
+  );
+
+  const totalAmount = filteredTransactions.reduce((sum, user) => sum + user.amount, 0);
+
+  return {  totalAmount };
+}
 const getResultsSelect = async (page = 1) => {
 
   axios
@@ -815,7 +824,16 @@ function getTodayDate() {
                   </td>
                   </tr>
                   </template>
-         
+                  <tr class="text-center px-4 py-2 border dark:border-gray-800 dark:text-gray-200" >
+                    <td>مجموع الخصومات</td>
+                    <td>{{ laravelData?.cars_discount }}</td>
+                    <td>مجموع الدفعات</td>
+                    <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200"> 
+                      {{ ((calculateTotalFilteredAmount().totalAmount)*-1)}}
+                     </td>
+                     <td>النتاتج : {{ ((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount }}</td>
+
+                  </tr>
                 </tbody>
               </table>
           </div>
