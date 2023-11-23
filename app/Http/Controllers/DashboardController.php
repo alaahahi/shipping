@@ -311,6 +311,8 @@ class DashboardController extends Controller
     }
     public function updateCarsP(Request $request)
     {
+        $owner_id=Auth::user()->owner_id;
+
         $car_id=$request->id??0;
         $maxNo = Car::max('no');
 
@@ -373,6 +375,8 @@ class DashboardController extends Controller
     }
     public function updateCarsS(Request $request)
     {
+        $owner_id=Auth::user()->owner_id;
+
         $car_id=$request->id??0;
 
         $maxNo = Car::max('no');
