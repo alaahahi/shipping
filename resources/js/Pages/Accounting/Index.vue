@@ -11,6 +11,7 @@ import TextInput from "@/Components/TextInput.vue";
 import ModalAddGenExpenses from "@/Components/ModalAddGenExpenses.vue";
 import ModalConvertDollarDinar from "@/Components/ModalConvertDollarDinar.vue";
 import ModalConvertDinarDollar from "@/Components/ModalConvertDinarDollar.vue";
+import ModalDel from "@/Components/ModalDel.vue";
 
 
 import axios from 'axios';
@@ -32,8 +33,10 @@ let showModalAddExpenses = ref(false);
 let showModalAddGenExpenses = ref(false);
 let showModalConvertDollarDinar = ref(false);
 let showModalConvertDinarDollar = ref(false);
+let showModalDel = ref(false);
 let transactions= ref([]);
 let expenses_type_id = ref(0);
+let tranId =ref({});
 let formData = ref({});
 let GenExpenses = ref({});
 let isLoading=ref(false);
@@ -133,6 +136,10 @@ function openConvertDollarDinar(){
 function openConvertDinarDollar(){
   showModalConvertDinarDollar.value = true;
 }
+function openModalDel(tran){
+  tranId.value = tran
+  showModalDel.value = true;
+}
 
 const props = defineProps({
   url: String,
@@ -227,11 +234,10 @@ function getTodayDate() {
   return `${year}-${month}-${day}`;
 }
 function delTransactions(id){
-  axios.post(`/api/delTransactions?id=${id}`)
+  axios.post(`/api/delTransactions?id=${id.id}`)
   .then(response => {
     refresh();
-    showModaldebtSales.value=false;
-    showModalAddExpenses.value = false;
+    showModalDel.value=false;
   })
   .catch(error => {
 
@@ -292,6 +298,21 @@ function conGenfirmExpenses(V) {
     <template #header>
  
     </template>
+    <ModalDel
+            :show="showModalDel ? true : false"
+            :formData="tranId"
+            @a="delTransactions($event)"
+            @close="showModalDel = false"
+            >
+          <template #header>
+            <h2 class=" mb-5 dark:text-white text-center">
+
+          هل متأكد من الحذف 
+          ؟
+          </h2>
+          </template>
+    </ModalDel>
+
     <ModalAddGenExpenses
             :formData="formData"
             :show="showModalAddGenExpenses ? true : false"
@@ -810,7 +831,7 @@ function conGenfirmExpenses(V) {
                   <th className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.description }}</th>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.amount+' '+tran.currency  }}</td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
-                    <button class="px-1 py-1 text-white bg-rose-500 rounded-md focus:outline-none" @click="delTransactions(tran.id)" >
+                    <button class="px-1 py-1 text-white bg-rose-500 rounded-md focus:outline-none" @click="openModalDel(tran)" >
                       <trash />
                     </button>
                   </td>
