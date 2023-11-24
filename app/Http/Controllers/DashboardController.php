@@ -116,7 +116,7 @@ class DashboardController extends Controller
         'allCars'=>$car->count()??0,
         'purchasesCost'=>$sumTotalS??0,
         'clientPaid'=>$sumPaid??0,
-        'clientDebit'=>$sumTotalS-$sumPaid ?? 0,
+        'clientDebit'=>$sumDebit ?? 0,
         'mainBoxDollar'=>$this->mainBox->where('owner_id',$owner_id)->first()->wallet->balance??0,
         'mainBoxDinar'=>$this->mainBox->where('owner_id',$owner_id)->first()->wallet->balance_dinar??0,
 
