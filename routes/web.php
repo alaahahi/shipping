@@ -152,8 +152,9 @@ Route::group(['middleware' => ['auth','verified']], function () {
 
     Route::get('annual_information',[AnnualController::class, 'index'])->name('annual_information');
 
-    
+    Route::get('wallet',[AccountingController::class, 'wallet'])->name("wallet");
 
+    
  });
 
 

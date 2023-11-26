@@ -11,7 +11,7 @@ import axios from 'axios';
 import ModalAddClient from "@/Components/ModalAddClient.vue";
 import ModalEditClient from "@/Components/ModalEditClient.vue";
 import show from "@/Components/icon/show.vue";
-import pay from "@/Components/icon/pay.vue";
+import wallet from "@/Components/icon/wallet.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
 import ModalDelClient from "@/Components/ModalDelCar.vue";
@@ -340,21 +340,21 @@ function confirmDelClient(V) {
 
                                         <button
                                           tabIndex="1"
-                                          v-if="user?.wallet['balance'] <= 0"
+                                          v-if="false"
                                           class="px-1 py-1  text-white mx-1 bg-orange-500 rounded"
                                           @click="openModalDelClient(user)"
                                         >
                                           <trash />
                                         </button>
-                                            
-                                            <!-- <button 
-                                                @click="ban(user.id)"
-                                                tabIndex="-1"
-                                                type="button"
-                                                className="mx-1 px-2 py-1 text-sm text-white bg-orange-500 rounded"
-                                                v-if="!user.is_band && user.email!='admin@admin.com'">
-                                                تقيد
-                                            </button>
+                                        <Link
+                                          style="display:inline-flex;"
+                                          className="px-1 py-1  text-white mx-1 bg-purple-900 rounded d-inline-block"
+                                          :href="route('wallet',{ 'id':user.id})">
+                                        <wallet />
+                                        </Link>
+
+                                
+                                               <!--
                                             <button 
                                                 @click="unban(user.id)"
                                                 tabIndex="-1"

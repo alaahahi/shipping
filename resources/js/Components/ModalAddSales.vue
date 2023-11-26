@@ -9,16 +9,7 @@ const props = defineProps({
   accounts: Array,
 });
 const form = ref({
-  user: {
-    percentage:0,
-  },
   date:getTodayDate(),
-  card:0,
-  amount: 0,
-  box:0,
-  hospital:0,
-  doctor:0,
-
 });
 function getTodayDate() {
   const today = new Date();
@@ -29,35 +20,9 @@ function getTodayDate() {
 }
 const restform =()=>{
   form.value = {
-  user: {
-    percentage:0,
-  },
   date:getTodayDate(),
-  card:0,
-  amount: 0,
-  box:0,
-  hospital:0,
-  doctor:0,
-
 };
 }
-const calculateAmount = () => {
-  if(form.value.card==1){
-  form.value.amount = 25000;
-  form.value.box = (75000 * form.value.card)-form.value.amount;
-  }else{
-  let cards= (form.value.card)-1
-  form.value.amount = (form.value.user.percentage * cards)+25000;
-  form.value.box = (75000 * form.value.card)-form.value.amount;
-  }
-
-};
-
-const calculateBox = () => {
-  form.value.box = (75000 * form.value.card)-form.value.amount;
-  
-};
-
 
 </script>
   
@@ -76,16 +41,7 @@ const calculateBox = () => {
                         <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-3">
 
    
-                        <!-- <div className="mb-4 mx-5">
-                          <label for="user_id" >الحساب</label>
-                          <select
-                            v-model="form.user"
-                            id="user_id"
-                            class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                            <option selected disabled>تحديد الحساب</option>
-                            <option v-for="(user, index) in data" :key="index" :value="user">{{ user.name }}</option>
-                          </select>
-                        </div> -->
+
                         <div className="mb-4 mx-5">
                         <label for="card" >المبلغ بالدولار</label>
                         <input
