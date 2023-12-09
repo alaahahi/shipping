@@ -153,7 +153,7 @@ class OnlineContractsController extends Controller
         $descDebit="دين من عقد السيارة ".$car->car_type.' '.$car->car_type.' رقم الشانص'.$car->vin.' '.$note;
         if($paid){
             $contract->increment('paid',$paid);
-            $tran=$this->accountingController->increaseWallet($paid,$descDebit,$this->accountingController->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->id,'App\Models\Car',0,0,'$');
+            $tran=$this->accountingController->increaseWallet($paid,$descDebit,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\Car',0,0,'$');
 
             $this->accountingController->increaseWallet($paid, $descDebit,$this->onlineContracts->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car',0,0,'$',0,$tran->id);
             $this->accountingController->decreaseWallet($paid, $descDebit,$this->debtOnlineContracts->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car',0,0,'$',0,$tran->id);
@@ -161,7 +161,7 @@ class OnlineContractsController extends Controller
         if($paid_dinar)
         {
             $contract->increment('paid_dinar',$paid_dinar);
-            $tran=$this->accountingController->increaseWallet($paid_dinar,$descDebit,$this->accountingController->where('owner_id',$owner_id)->first()->mainBox->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\Car',0,0,'IQD');
+            $tran=$this->accountingController->increaseWallet($paid_dinar,$descDebit,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\Car',0,0,'IQD');
             $this->accountingController->increaseWallet($paid_dinar, $descDebit,$this->onlineContractsDinar->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car',0,0,'IQD',0,$tran->id);
             $this->accountingController->decreaseWallet($paid_dinar, $descDebit,$this->debtOnlineContractsDinar->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car',0,0,'IQD',0,$tran->id);
         }
