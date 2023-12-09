@@ -281,6 +281,7 @@ function removeMedia(removedImage){
                         location="/storage/posts/media"
                         @init="initMedia"
                         @add="addMedia"
+                        :media="formData.car_images"
                         @remove="removeMedia"
                     />
                 </div>
