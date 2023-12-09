@@ -278,7 +278,7 @@ function removeMedia(removedImage){
                         :server="'/api/carsAnnualUpload?img_type=contract&carId='+formData.id"
                         :is-invalid="errors?.media ? true : false"
                         @change="changeMedia"
-                        location="/storage/posts/media"
+                        location="/public/uploadsResized"
                         @init="initMedia"
                         @add="addMedia"
                         :media="formData.car_images"
