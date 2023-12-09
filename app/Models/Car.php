@@ -98,7 +98,7 @@ class Car extends Model
     }
     public function CarImages()
     {
-        return $this->hasMany(CarImages::class, 'car_id');
+        return $this->hasMany(ContractImg::class, 'car_id');
     }
     protected $appends = ['image_url'];
 

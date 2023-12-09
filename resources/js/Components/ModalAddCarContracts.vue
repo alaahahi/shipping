@@ -19,7 +19,7 @@ const props = defineProps({
 });
 let disabled =  ref(false);
 function removeMedia(removedImage){
-          axios.get('/api/carsAnnualImageDel?name='+removedImage.name)
+          axios.get('/api/carsAnnualImageDel?img_type=contract&name='+removedImage.name)
         .then(response => {
           toast.success("تم  حذف الصورة بنجاح", {
               timeout: 5000,
@@ -152,7 +152,7 @@ if(props.formData.price_dinars>=500000){
                 <label class="form-label">الصور</label>
                 <div class="mt-3">
                     <Uploader 
-                        :server="'/api/carsAnnualUpload?carId='+formData.id"
+                        :server="'/api/carsAnnualUpload?img_type=contract&carId='+formData.id"
                         :is-invalid="errors?.media ? true : false"
                         @change="changeMedia"
                         location="/storage/posts/media"

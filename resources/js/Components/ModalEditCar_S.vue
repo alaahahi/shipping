@@ -39,7 +39,7 @@ function validateExchangeRate(v) {
     }
 
 function removeMedia(removedImage){
-          axios.get('/api/carsAnnualImageDel?name='+removedImage.name)
+          axios.get('/api/carsAnnualImageDel?img_type=contract&name='+removedImage.name)
         .then(response => {
           toast.success("تم  حذف الصورة بنجاح", {
               timeout: 5000,
@@ -275,7 +275,7 @@ function removeMedia(removedImage){
                 <label class="form-label">الصور</label>
                 <div class="mt-3">
                     <Uploader 
-                        :server="'/api/carsAnnualUpload?carId='+formData.id"
+                        :server="'/api/carsAnnualUpload?img_type=contract&carId='+formData.id"
                         :is-invalid="errors?.media ? true : false"
                         @change="changeMedia"
                         location="/storage/posts/media"
