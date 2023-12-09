@@ -140,7 +140,7 @@ class AnnualController extends Controller
         $carId = $request->carId;
         $path1 = public_path('uploads');
         $path2 = public_path('uploadsResized');
-        $img_type=$request->carId??'';
+        $img_type=$request->img_type??'';
     
         // Create the directories if they don't exist
         if (!file_exists($path1)) {
@@ -187,7 +187,7 @@ class AnnualController extends Controller
     }
     public function carsAnnualImageDel(Request $request){
         $name = $request->name;
-        $img_type=$request->carId??'';
+        $img_type=$request->img_type??'';
 
         File::delete(public_path('uploads/'.$name));
         File::delete(public_path('uploadsResized/'.$name));
