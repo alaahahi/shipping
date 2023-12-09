@@ -1095,15 +1095,7 @@ function getDownloadUrl(name) {
 
                     </td>
                     <td  className="border dark:border-gray-800 text-start px-2 py-1 print:hidden">
-                      <a
-                                      v-for="(image, index) in car.car_images"
-                                      :key="index"
-                                      :href="getDownloadUrl(image.name)"
-                                      style="cursor: pointer;"
-                                      target="_blank"
-                                    >
-                                      <img :src="getImageUrl(image.name)" alt="" class="px-1" style="max-width: 80px;max-height: 50px;display: inline;" />
-                                    </a>
+                     
                     </td>
                   </tr>
                 </tbody>
