@@ -1,6 +1,13 @@
 <script setup>
 import { ref, computed } from "vue";
+import axios from 'axios';
 import Uploader  from 'vue-media-upload';
+import { useToast } from "vue-toastification";
+
+const toast = useToast();
+
+
+
 
 const props = defineProps({
   show: Boolean,
@@ -278,10 +285,10 @@ function removeMedia(removedImage){
                         :server="'/api/carsAnnualUpload?img_type=contract&carId='+formData.id"
                         :is-invalid="errors?.media ? true : false"
                         @change="changeMedia"
+                        @initMedia="media"
                         location="/public/uploadsResized"
-                        @init="initMedia"
-                        @add="addMedia"
                         :media="formData.car_images"
+                        @add="addMedia"
                         @remove="removeMedia"
                     />
                 </div>
