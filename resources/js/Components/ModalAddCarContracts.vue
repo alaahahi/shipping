@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useToast } from "vue-toastification";
+import Uploader  from 'vue-media-upload';
+
+
 let toast = useToast();
 
 const props = defineProps({
@@ -15,6 +18,20 @@ const props = defineProps({
   formData:Object
 });
 let disabled =  ref(false);
+function removeMedia(removedImage){
+          axios.get('/api/carsAnnualImageDel?name='+removedImage.name)
+        .then(response => {
+          toast.success("تم  حذف الصورة بنجاح", {
+              timeout: 5000,
+              position: "bottom-right",
+              rtl: true
+
+            });
+        })
+        .catch(error => {
+          console.error(error);
+        })
+}
 
 function calculateAmount(){
   let amount =props.formData.prices
@@ -129,6 +146,24 @@ if(props.formData.price_dinars>=500000){
                 v-model="formData.note" />
               </div>
               </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2">
+              <div class="mb-4">
+                <label class="form-label">الصور</label>
+                <div class="mt-3">
+                    <Uploader 
+                        :server="'/api/carsAnnualUpload?carId='+formData.id"
+                        :is-invalid="errors?.media ? true : false"
+                        @change="changeMedia"
+                        location="/storage/posts/media"
+                        @init="initMedia"
+                        @add="addMedia"
+                        @remove="removeMedia"
+                    />
+                </div>
+                <p v-if="errors?.media" class="text-danger">{{ errors?.media[0] }}</p>
+            </div>
+            </div>
             </div>
   
             <div class="modal-footer my-2">

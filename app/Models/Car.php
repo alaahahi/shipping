@@ -96,7 +96,10 @@ class Car extends Model
         // Define a one-to-one relationship with the Car model
         return $this->hasOne(ExitCar::class, 'car_id', 'id');
     }
-    
+    public function CarImages()
+    {
+        return $this->hasMany(CarImages::class, 'car_id');
+    }
     protected $appends = ['image_url'];
 
     /**

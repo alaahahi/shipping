@@ -376,6 +376,17 @@ function getTodayDate() {
   const day = String(today.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+
+
+function getImageUrl(name) {
+      // Provide the base URL for your images
+      return `/public/uploadsResized/${name}`;
+    }
+function getDownloadUrl(name) {
+      // Provide the base URL for downloading images
+      return `/public/uploads/${name}`;
+    }
+
 </script>
 
 <template>
@@ -908,6 +919,13 @@ function getTodayDate() {
                     >
                       {{ $t("execute") }}
                     </th>
+                    <th
+                      scope="col"
+                      class="px-1 py-2 text-base print:hidden"
+                      style="width:100px"
+                    >
+                      تخزين
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1073,6 +1091,19 @@ function getTodayDate() {
                       >
                         <show />
                       </button>
+
+
+                    </td>
+                    <td  className="border dark:border-gray-800 text-start px-2 py-1 print:hidden">
+                      <a
+                                      v-for="(image, index) in car.car_images"
+                                      :key="index"
+                                      :href="getDownloadUrl(image.name)"
+                                      style="cursor: pointer;"
+                                      target="_blank"
+                                    >
+                                      <img :src="getImageUrl(image.name)" alt="" class="px-1" style="max-width: 80px;max-height: 50px;display: inline;" />
+                                    </a>
                     </td>
                   </tr>
                 </tbody>

@@ -262,7 +262,7 @@ class AccountingController extends Controller
         if($from && $to ){
             $contract=Contract::where('user_id',$user_id)->whereBetween('created', [$from, $to]);
             $transactions = Transactions ::where('wallet_id', $client?->wallet?->id)->whereBetween('created', [$from, $to]);
-            $cars = Car::with('contract')->with('exitcar')->where('client_id',$client->id)->whereBetween('date', [$from, $to]);
+            $cars = Car::with('contract')->with('CarImages')->with('exitcar')->where('client_id',$client->id)->whereBetween('date', [$from, $to]);
             $car_total = $cars->count();
             $car_total_unpaid =     Car::where('client_id',$client->id)->where('results',0)->whereBetween('date', [$from, $to])->count();
             $car_total_uncomplete = Car::where('client_id',$client->id)->where('results',1)->whereBetween('date', [$from, $to])->count();
@@ -278,7 +278,7 @@ class AccountingController extends Controller
         }else{
             $contract=Contract::where('user_id',$user_id);
             $transactions = Transactions ::where('wallet_id', $client?->wallet?->id);
-            $cars =  Car::with('contract')->with('exitcar')->where('client_id',$client->id);
+            $cars =  Car::with('contract')->with('CarImages')->with('exitcar')->where('client_id',$client->id);
             $car_total = $cars->count();
             $car_total_unpaid =     Car::where('client_id',$client->id)->where('results',0)->count();
             $car_total_uncomplete = Car::where('client_id',$client->id)->where('results',1)->count();

@@ -1,11 +1,13 @@
 <script setup>
 import { ref, computed } from "vue";
+import Uploader  from 'vue-media-upload';
 
 const props = defineProps({
   show: Boolean,
   formData: Object,
   client: Array,
 });
+
 function getTodayDate() {
   const today = new Date();
   const year = today.getFullYear();
@@ -35,6 +37,21 @@ function validateExchangeRate(v) {
         exchangeRateError.value = true;
       }
     }
+
+function removeMedia(removedImage){
+          axios.get('/api/carsAnnualImageDel?name='+removedImage.name)
+        .then(response => {
+          toast.success("تم  حذف الصورة بنجاح", {
+              timeout: 5000,
+              position: "bottom-right",
+              rtl: true
+
+            });
+        })
+        .catch(error => {
+          console.error(error);
+        })
+}
 </script>
   <template>
   <Transition name="modal">
@@ -251,7 +268,27 @@ function validateExchangeRate(v) {
           </div>
 
           <div class="modal-footer my-2">
-            <div class="flex flex-row">
+    
+
+            <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2">
+              <div class="mb-4">
+                <label class="form-label">الصور</label>
+                <div class="mt-3">
+                    <Uploader 
+                        :server="'/api/carsAnnualUpload?carId='+formData.id"
+                        :is-invalid="errors?.media ? true : false"
+                        @change="changeMedia"
+                        location="/storage/posts/media"
+                        @init="initMedia"
+                        @add="addMedia"
+                        @remove="removeMedia"
+                    />
+                </div>
+                <p v-if="errors?.media" class="text-danger">{{ errors?.media[0] }}</p>
+            </div>
+             </div>
+
+             <div class="flex flex-row">
               <div class="basis-1/2 px-4">
                 <button
                   class="modal-default-button py-3 bg-gray-500 rounded"
@@ -275,6 +312,7 @@ function validateExchangeRate(v) {
                 </button>
               </div>
             </div>
+
           </div>
         </div>
       </div>
