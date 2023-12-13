@@ -80,25 +80,28 @@ class AccountingController extends Controller
     }
     public function getIndexAccounting(Request $request)
     {
-    $owner_id=Auth::user()->owner_id;
+     $owner_id=Auth::user()->owner_id;
      $user_id = $_GET['user_id'] ?? 0;
      $from =  $_GET['from'] ?? 0;
      $to =$_GET['to'] ?? 0;
      $print =$_GET['print'] ?? 0;
      $q= $_GET['q'] ?? 0;
+     $type = $_GET['type'] ??'';
      $transactions_id = $_GET['transactions_id'] ?? 0;
      $user = User::with('wallet')->where('id',$user_id)->first();
      if($from && $to ){
          $transactions = Transactions ::with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('id','desc')->whereBetween('created', [$from, $to]);
- 
      }else{
          $transactions = Transactions ::with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('id','desc');
      }
      if($q){
         $transactions = Transactions ::where('id', $q)->orWhere('description', 'LIKE','%'.$q.'%');
      }
-     $allTransactions = $transactions->paginate(100);
- 
+     if($type=='wallet'){
+        $allTransactions = $transactions->where('type', 'inUser')->orWhere('type', 'outUser')->paginate(100);
+     }else{
+        $allTransactions = $transactions->paginate(100);
+     }
      $sumAllTransactions = $allTransactions->where('currency','$')->sum('amount');
      $sumDebitTransactions = $allTransactions->where('currency','$')->where('type', 'debt')->sum('amount');
      $sumInTransactions = $allTransactions->where('currency','$')->where('type', 'in')->sum('amount');

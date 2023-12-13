@@ -40,8 +40,8 @@ let tranId =ref({});
 let formData = ref({});
 let GenExpenses = ref({});
 let isLoading=ref(false);
-let from = ref(getTodayDate());
-let to = ref(getTodayDate());
+let from = ref('');
+let to = ref('');
 let mainAccount= ref(0)
 let onlineContracts= ref(0)
 let howler= ref(0)
@@ -75,7 +75,8 @@ const getResults = async ($state) => {
         q: q,
         user_id: props.boxes.id,
         from:from.value,
-        to: to.value
+        to: to.value,
+        type: 'wallet'
       }
     });
 
@@ -493,9 +494,7 @@ function conGenfirmExpenses(V) {
                   <th className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.description }}</th>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.amount+' '+tran.currency  }}</td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
-                    <button class="px-1 py-1 text-white bg-rose-500 rounded-md focus:outline-none" @click="openModalDel(tran)" >
-                      <trash />
-                    </button>
+                 
                   </td>
                   </tr>
                 </tbody>

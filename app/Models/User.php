@@ -26,6 +26,7 @@ class User extends Authenticatable
         'password',
         'type_id',
         'public_key',
+        'owner_id',
         'publickey_receiver',
         'parent_id',
         'is_band',

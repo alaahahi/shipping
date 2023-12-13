@@ -151,6 +151,7 @@ class UserController extends Controller
     }
     public function clientsStore(Request $request)
     {
+        $owner_id=Auth::user()->owner_id;
         Validator::make($request->all(), [
             'name' => 'required|string|max:255',
            ])->validate();
@@ -159,6 +160,7 @@ class UserController extends Controller
                     'name' => $request->name,
                     'type_id' => $this->userClient,
                     'phone' => $request->phone,
+                    'owner_id'=>$owner_id,
                     'created' =>Carbon::now()->format('Y-m-d'),
                 ]);
   
