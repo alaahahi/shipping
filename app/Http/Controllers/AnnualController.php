@@ -105,30 +105,20 @@ class AnnualController extends Controller
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
         $limit =$_GET['limit'] ?? 0;
-        if($from && $to ){
-            $data =  Warehouse::with('client')->with('CarImages')->whereBetween('date', [$from, $to])->orderBy('date','DESC');
-
-            $totalCars = $data->count();
-
-        }else{
-            $data =  Warehouse::with('client')->with('CarImages')->orderBy('date','DESC');
-
-            $totalCars = $data->count();
- 
-        }
+        $data =  Warehouse::with('client')->with('CarImages');
+        $totalCars = $data->count();
         if($q){
             $data = $data->orwhere('car_number', 'LIKE','%'.$q.'%')->orwhere('car_type', 'LIKE','%'.$q.'%')->orWhereHas('client', function ($query) use ($q) {
                 $query->where('name', 'LIKE', '%' . $q . '%');
             });
         }
  
-
         if($user_id){
             $data =    $data->where('client_id',  $user_id);
 
             $totalCars = $data->count();
         }
-        $data =$data->orderBy('date', 'DESC')->paginate($limit)->toArray();
+        $data =$data->paginate($limit)->toArray();
 
         $data['totalCars']  =$totalCars;
 
