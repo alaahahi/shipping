@@ -98,7 +98,7 @@ class AccountingController extends Controller
         $transactions = Transactions ::where('id', $q)->orWhere('description', 'LIKE','%'.$q.'%');
      }
      if($type=='wallet'){
-        $allTransactions = $transactions->where('type', 'inUser')->orWhere('type', 'outUser')->paginate(100);
+        $allTransactions = $transactions->orWhere('type', 'inUser')->orWhere('type', 'outUser')->where('wallet_id', $user->wallet->id)->paginate(100);
      }else{
         $allTransactions = $transactions->paginate(100);
      }
