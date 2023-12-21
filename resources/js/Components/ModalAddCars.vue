@@ -1,12 +1,36 @@
 <script setup>
 import { ref, computed } from "vue";
 import axios from 'axios';
+import { MultiSelect } from "vue-search-select"
+  // Import everythModelSelecting
+import "vue-search-select/dist/VueSearchSelect.css"
 
 const props = defineProps({
   show: Boolean,
   formData: Object,
   client: Array,
 });
+      let searchText= ref('') // If value is falsy, reset searchText & searchItem
+      let items= ref([])
+      let lastSelectItem= ref({})
+
+let option = ref([
+        { value: '1', text: 'aa' + ' - ' + '1' },
+        { value: '2', text: 'ab' + ' - ' + '2' },
+        { value: '3', text: 'bc' + ' - ' + '3' },
+        { value: '4', text: 'cd' + ' - ' + '4' },
+        { value: '5', text: 'de' + ' - ' + '5' },
+        { value: '6', text: 'ef' + ' - ' + '6' },
+        { value: '7', text: 'ef' + ' - ' + '7' },
+        { value: '8', text: 'ef' + ' - ' + '8' },
+        { value: '9', text: 'ef' + ' - ' + '9' },
+        { value: '10', text: 'ef' + ' - ' + '10' },
+        { value: '11', text: 'ef' + ' - ' + '11' },
+        { value: '12', text: 'ef' + ' - ' + '12' },
+        { value: '13', text: 'down case' + ' - ' + 'testcase' },
+        { value: '14', text: 'camel case' + ' - ' + 'testCase' },
+        { value: '15', text: 'Capitalize case' + ' - ' + 'Testcase' }
+      ])
 function getTodayDate() {
   const today = new Date();
   const year = today.getFullYear();
@@ -55,6 +79,11 @@ function validateExchangeRate(v) {
         exchangeRateError.value = true;
       }
     }
+function onSelect (items, lastSelectItem) {
+    items.value = items
+
+    lastSelectItem.value = lastSelectItem
+    }
 </script>
   <template>
   <Transition name="modal">
@@ -69,10 +98,12 @@ function validateExchangeRate(v) {
             </slot>
           </div>
           <div class="modal-body">
+
             <div
               class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2"
               v-if="!formData.id"
             >
+
               <div class="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="color_id">{{
                   $t("car_owner")
@@ -84,6 +115,7 @@ function validateExchangeRate(v) {
                     id="color_id"
                     class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   >
+                
                     <option selected disabled>
                       {{ $t("selectCustomer") }}
                     </option>
@@ -144,6 +176,11 @@ function validateExchangeRate(v) {
             <div
               class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 lg:gap-2"
             >  
+
+  
+
+
+ 
               <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="pin">
                   {{ $t("vin") }}</label

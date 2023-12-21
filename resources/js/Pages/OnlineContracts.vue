@@ -257,7 +257,7 @@ function getTodayDate() {
           </template>
     </ModalShowExitCar>
     <AuthenticatedLayout>
-        <div class="py-2" v-if="$page.props.auth.user.type_id==1">
+        <div class="py-2" v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
         <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 ">
             <div class="bg-white overflow-hidden shadow-sm ">
                 <div class="p-6  dark:bg-gray-900">

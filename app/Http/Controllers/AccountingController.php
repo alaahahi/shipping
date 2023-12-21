@@ -663,7 +663,12 @@ class AccountingController extends Controller
         if($created==0){
             $created=$this->currentDate;
         }
+
         $user=  User::with('wallet')->find($user_id);
+        if(!$user->wallet->id){
+          Wallet::create(['user_id' => $user_id,'balance'=>0]);
+        }
+  
         if($id = $user->wallet->id){
         $wallet = Wallet::find($id);
         $transactionDetils = ['type' => 'out','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$created,'discount'=>$discount,'currency'=>$currency,'parent_id'=>$parent_id];

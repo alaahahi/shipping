@@ -300,7 +300,7 @@ class DashboardController extends Controller
             'profit'=>($total_amount*-1)
              ]);
                 if($total_amount){
-                    $desc=trans('text.payCar').' '.$request->vin;
+                    $desc='اضافة سيارة من المشتريات رقم شانصى '.$request->vin;
                     if($total_amount){
                         $this->accountingController->decreaseWallet(($total_amount),$desc,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car');
                     }

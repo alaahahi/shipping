@@ -540,7 +540,7 @@ function conGenfirmExpenses(V) {
 
             <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
               <div class="pt-5  print:hidden">
-              <button style=" width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-rose-500 rounded-md focus:outline-none"
+              <button style=" width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5|| $page.props.auth.user.type_id==6" className="px-4 py-2 text-white bg-rose-500 rounded-md focus:outline-none"
                                             @click="openAddSales()">
                                             وصل قبض
                                             (أضافة)
@@ -555,7 +555,7 @@ function conGenfirmExpenses(V) {
               </div>
               
               <div class="pt-5  print:hidden">
-              <button  style=" width: 100%; margin-top: 4px;"  v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2|| $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-blue-500 rounded-md focus:outline-none"
+              <button  style=" width: 100%; margin-top: 4px;"  v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2|| $page.props.auth.user.type_id==5|| $page.props.auth.user.type_id==6" className="px-4 py-2 text-white bg-blue-500 rounded-md focus:outline-none"
                                             @click="openAddExpenses()">
                                              وصل صرف
                                              (سحب)
@@ -563,7 +563,7 @@ function conGenfirmExpenses(V) {
               </button>
        
               </div>
-              <div  class="pt-5">
+              <div  class="pt-5"  v-if="$page.props.auth.user.type_id==1">
                 <a
                             class="px-2 mb-12 py-2 mt-1 font-bold text-white bg-pink-500 rounded" style="display: block;text-align: center;"
                             :href="route('transfers')"
@@ -631,7 +631,7 @@ function conGenfirmExpenses(V) {
                                {{ $t('genExpenses') }}
                           </button>
                         </div>
-                        <div>
+                        <div  v-if="$page.props.auth.user.type_id==1">
                           <button
                             type="button"
                             @click="openAddGenExpenses(2)"
@@ -640,7 +640,7 @@ function conGenfirmExpenses(V) {
                             {{ $t('dubai') }}
                           </button>
                         </div>
-                        <div>
+                        <div  v-if="$page.props.auth.user.type_id==1">
                           <button
                             type="button"
                             @click="openAddGenExpenses(3)"
@@ -649,7 +649,7 @@ function conGenfirmExpenses(V) {
                             {{ $t('iran') }}
                           </button>
                         </div>
-                       <div>
+                       <div  v-if="$page.props.auth.user.type_id==1">
                           <button
                             type="button"
                             @click="openAddGenExpenses(4)"
@@ -658,7 +658,7 @@ function conGenfirmExpenses(V) {
                             {{ $t('border') }} 
                           </button>
                         </div> 
-                        <div>
+                        <div  v-if="$page.props.auth.user.type_id==1">
                           <button
                             type="button"
                             @click="openAddGenExpenses(5)"
