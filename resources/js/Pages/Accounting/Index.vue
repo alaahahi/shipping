@@ -9,6 +9,10 @@ import ModalAddExpenses from "@/Components/ModalAddExpenses.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import ModalAddGenExpenses from "@/Components/ModalAddGenExpenses.vue";
+import ModalAddExpensesToMainBransh from "@/Components/ModalAddExpensesToMainBransh.vue";
+import ModalExpensesFromOtherBransh from "@/Components/ModalExpensesFromOtherBransh.vue";
+
+
 import ModalConvertDollarDinar from "@/Components/ModalConvertDollarDinar.vue";
 import ModalConvertDinarDollar from "@/Components/ModalConvertDinarDollar.vue";
 import ModalDel from "@/Components/ModalDel.vue";
@@ -33,6 +37,8 @@ let showModalAddExpenses = ref(false);
 let showModalAddGenExpenses = ref(false);
 let showModalConvertDollarDinar = ref(false);
 let showModalConvertDinarDollar = ref(false);
+let showModalAddExpensesToMainBransh = ref(false);
+let showModalExpensesFromOtherBransh = ref(false);
 let showModalDel = ref(false);
 let transactions= ref([]);
 let expenses_type_id = ref(0);
@@ -129,6 +135,12 @@ function opendebtSales() {
 }
 function openAddExpenses(){
   showModalAddExpenses.value = true;
+}
+function openModalAddExpensesToMainBransh() {
+  showModalAddExpensesToMainBransh.value = true;
+}
+function openModalExpensesFromOtherBransh() {
+  showModalExpensesFromOtherBransh.value = true;
 }
 function openConvertDollarDinar(){
   showModalConvertDollarDinar.value = true;
@@ -324,6 +336,28 @@ function conGenfirmExpenses(V) {
         <template #header>
           </template>
     </ModalAddGenExpenses>
+    <ModalAddExpensesToMainBransh
+            :formData="formData"
+            :show="showModalAddExpensesToMainBransh ? true : false"
+            :expenses_type_id="expenses_type_id"
+            :GenExpenses="GenExpenses"
+            @a="conGenfirmExpenses($event)"
+            @close="showModalAddExpensesToMainBransh = false"
+            >
+        <template #header>
+          </template>
+    </ModalAddExpensesToMainBransh>
+    <ModalExpensesFromOtherBransh
+      :formData="formData"
+            :show="showModalExpensesFromOtherBransh ? true : false"
+            :expenses_type_id="expenses_type_id"
+            :GenExpenses="GenExpenses"
+            @a="conGenfirmExpenses($event)"
+            @close="showModalExpensesFromOtherBransh = false"
+            >
+        <template #header>
+          </template>
+    </ModalExpensesFromOtherBransh>
     <ModalAddSales
             :show="showModalAddSales ? true : false"
             :data="users"
@@ -540,7 +574,7 @@ function conGenfirmExpenses(V) {
 
             <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
               <div class="pt-5  print:hidden">
-              <button style=" width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5|| $page.props.auth.user.type_id==6" className="px-4 py-2 text-white bg-rose-500 rounded-md focus:outline-none"
+              <button style=" width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5|| $page.props.auth.user.type_id==6" className="px-4 py-2 text-white bg-green-500 rounded-md focus:outline-none"
                                             @click="openAddSales()">
                                             وصل قبض
                                             (أضافة)
@@ -555,7 +589,7 @@ function conGenfirmExpenses(V) {
               </div>
               
               <div class="pt-5  print:hidden">
-              <button  style=" width: 100%; margin-top: 4px;"  v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2|| $page.props.auth.user.type_id==5|| $page.props.auth.user.type_id==6" className="px-4 py-2 text-white bg-blue-500 rounded-md focus:outline-none"
+              <button  style=" width: 100%; margin-top: 4px;"  v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2|| $page.props.auth.user.type_id==5|| $page.props.auth.user.type_id==6" className="px-4 py-2 text-white bg-rose-500 rounded-md focus:outline-none"
                                             @click="openAddExpenses()">
                                              وصل صرف
                                              (سحب)
@@ -624,11 +658,20 @@ function conGenfirmExpenses(V) {
             <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
               <div>
                           <button
+                          v-if="$page.props.auth.user.type_id!=6"
                             type="button"
-                            @click="openAddGenExpenses(1)"
+                            @click="openModalExpensesFromOtherBransh(1)"
                             style="min-width:150px;"
                             className="px-6 mb-12 py-2 font-bold text-white bg-red-500 rounded  w-full">
-                               {{ $t('genExpenses') }}
+                              تحويلات كركوك
+                          </button>
+                          <button
+                            v-if="$page.props.auth.user.type_id==6"
+                            type="button"
+                            @click="openModalAddExpensesToMainBransh(1)"
+                            style="min-width:150px;"
+                            className="px-6 mb-12 py-2 font-bold text-white bg-red-500 rounded  w-full">
+                              تحويل لفرع أربيل
                           </button>
                         </div>
                         <div  v-if="$page.props.auth.user.type_id==1">
