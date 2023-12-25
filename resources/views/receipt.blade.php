@@ -25,17 +25,16 @@ $Help = new MyHelp();
 @endforeach
 @endif
 <style>
-  @page  
-{ 
-    size: auto;   /* auto is the initial value */ 
+@page {
+  size: auto; /* auto is the initial value */
 
-    /* this affects the margin in the printer settings */ 
-    margin: 0;  
-    margin-top: 60px
-} 
+  /* this affects the margin in the printer settings */
+  margin: 15px;
+  margin-top: 60px;
+}
 </style>
 <body style="direction: rtl;">
-<div class="container mt-2 " style="border: 2px solid">       
+<div class="container-fluid   mt-2 " style="border: 2px solid">       
 <div class="row" >
     <div class="col-4 text-center py-3">
         <h5 class="pt-3">
@@ -114,12 +113,25 @@ $Help = new MyHelp();
   <div class="row p-2  border-top border-bottom mt-3" style="font-size: 14px">
     <div class="col-6 pe-5"> 
     العنوان:
-    اربيل - مدينة المعارض
+    @if($owner_id??'')
+    @if($owner_id==2)
+    {{$config['address_kik']}}
+    @else
+    {{$config['address_erb']}}
+    @endif
+    @endif
+
     </div>
 
     <div class="col-6 ps-5 text-start">
        Mobile:
-    0770 445 9964
+       @if($owner_id??'')
+       @if($owner_id==2)
+       {{$config['mobile_kik']}}
+       @else
+       {{$config['mobile_erb']}}
+       @endif
+       @endif
     </div>
   </div>
   {{-- <div class="row text-center py-2">
@@ -173,7 +185,7 @@ $Help = new MyHelp();
   </div> --}}
 </div>
 <hr>
-<div class="container mt-2 " style="border: 2px solid">       
+<div class="container-fluid   mt-2 " style="border: 2px solid">       
   <div class="row" >
       <div class="col-4 text-center py-3">
           <h5 class="pt-3">
@@ -253,63 +265,27 @@ $Help = new MyHelp();
     <div class="row p-2  border-top border-bottom mt-3" style="font-size: 14px">
       <div class="col-6 pe-5"> 
       العنوان:
-      اربيل - مدينة المعارض
+      @if($owner_id??'')
+      @if($owner_id==2)
+      {{$config['address_kik']}}
+      @else
+      {{$config['address_erb']}}
+      @endif
+      @endif
+
       </div>
 
       <div class="col-6 ps-5 text-start">
          Mobile:
-      0770 445 9964
+         @if($owner_id??'')
+         @if($owner_id==2)
+         {{$config['mobile_kik']}}
+         @else
+         {{$config['mobile_erb']}}
+         @endif
+         @endif
       </div>
-    </div>
-    {{-- <div class="row text-center py-2">
-      <table class="table table-sm table-striped table-bordered" style="font-size: 12px">
-          <thead>
-            <tr>
-              <th scope="col">#</th>
-              <th scope="col">السيارة</th>
-              <th scope="col">تاريخ</th>
-              <th scope="col">رقم شاسى</th>
-              <th scope="col">رقم كاتى</th>
-              <th scope="col">لون</th>
-              <th scope="col">موديل</th>
-              <th scope="col">كمرك</th>
-              <th scope="col">تخليص</th>
-              <th scope="col">شهادة</th>
-              <th scope="col">نقل</th>
-              <th scope="col">مصاريف</th>
-              <th scope="col">مجموع</th>
-            </tr>
-          </thead>
-          <tbody>
-              @foreach ($clientData['data'] as $key=>$data)
-              <tr>
-                  <th scope="row">{{$key+1}}</th>
-                  <td>{{$data->car_type}}</td>
-                  <td>{{$data->date}}</td>
-                  <td>{{$data->vin}}</td>
-                  <td>{{$data->car_number}}</td>
-                  <td>{{$data->car_color}}</td>
-                  <td>{{$data->year}}</td>
-                  <td>    <?php
-                      $dinar_s = $data->dinar_s;
-                      $dolar_price_s = $data->dolar_price_s ?? 1;
-                  
-                      if ($dolar_price_s != 0) {
-                          echo round(($dinar_s / $dolar_price_s)*100);
-                      } else {
-                          echo 0; // or any other appropriate message
-                      }
-                      ?></td>
-                  <td>{{$data->checkout_s}}</td>
-                  <td>{{$data->coc_dolar_s}}</td>
-                  <td>{{$data->shipping_dolar_s}}</td>
-                  <td>{{$data->expenses}}</td>
-                  <td>{{$data->total_s}}</td>
-                </tr>
-              @endforeach
-          </tbody>
-        </table>  
-    </div> --}}
+    </div> 
   </div>
 <script>
     $(document).ready(function() {

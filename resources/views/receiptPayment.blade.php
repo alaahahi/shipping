@@ -12,14 +12,13 @@ $Help = new MyHelp();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-      @page  
-    { 
-        size: auto;   /* auto is the initial value */ 
-    
-        /* this affects the margin in the printer settings */ 
-        margin: 0;  
-        margin-top: 60px
-    } 
+    @page {
+      size: auto; /* auto is the initial value */
+
+      /* this affects the margin in the printer settings */
+      margin: 15px;
+      margin-top: 60px;
+    }
     </style>
 </head>
 @if($transactions_id)
@@ -34,7 +33,7 @@ $Help = new MyHelp();
 @endforeach
 @endif
 <body style="direction: rtl;">
-<div class="container mt-2 " style="border: 2px solid">       
+<div class="container-fluid mt-2 " style="border: 2px solid">       
 <div class="row" >
     <div class="col-4 text-center py-3">
         <h5 class="pt-3">

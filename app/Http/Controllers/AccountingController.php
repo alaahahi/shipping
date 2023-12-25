@@ -139,7 +139,7 @@ class AccountingController extends Controller
       }
       if($print==2){
          $config=SystemConfig::first();
-         return view('receipt',compact('data','config','transactions_id'));
+         return view('receipt',compact('data','config','transactions_id','owner_id'));
       }
       if($print==3){
          $config=SystemConfig::first();
@@ -372,7 +372,7 @@ class AccountingController extends Controller
          if($print==2){
             $config=SystemConfig::first();
 
-            return view('receipt',compact('clientData','config','transactions_id'));
+            return view('receipt',compact('clientData','config','transactions_id','owner_id'));
          }
          if($print==3){
             $config=SystemConfig::first();
