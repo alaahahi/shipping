@@ -29,7 +29,7 @@ $Help = new MyHelp();
   size: auto; /* auto is the initial value */
 
   /* this affects the margin in the printer settings */
-  margin: 15px;
+  margin: 20px;
   margin-top: 60px;
 }
 </style>
