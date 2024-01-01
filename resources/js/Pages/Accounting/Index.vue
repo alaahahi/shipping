@@ -425,7 +425,7 @@ function conAddExpensesToMainBransh(V){
             @close="showModalConvertDollarDinar = false"
             >
           <template #header>
-            <h3 class="text-center">تحويل من الدولار للدينار</h3>
+            <h3 class="text-center">تحويل من الدولار الى دينار</h3>
             
            </template>
       </ModalConvertDollarDinar>
@@ -436,7 +436,7 @@ function conAddExpensesToMainBransh(V){
             @close="showModalConvertDinarDollar = false"
             >
           <template #header>
-            <h3 class="text-center">تحويل من الدينار للدولار</h3>
+            <h3 class="text-center">تحويل من الدينار الى دولار</h3>
             
            </template>
       </ModalConvertDinarDollar>
@@ -741,7 +741,7 @@ function conAddExpensesToMainBransh(V){
                             @click="openConvertDollarDinar()"
                             style="min-width:150px;"
                             className="px-6 mb-12 w-full py-2 font-bold text-white bg-teal-500 rounded">
-                             تحويل دولار دينار  
+                             تحويل دولار الى دينار  
                           </button>
                         </div>
                         <div>
@@ -750,7 +750,7 @@ function conAddExpensesToMainBransh(V){
                             @click="openConvertDinarDollar()"
                             style="min-width:150px;"
                             className="px-6 mb-12 w-full py-2 font-bold text-white bg-yellow-500 rounded">
-                             تحويل دينار دولار  
+                             تحويل دينار الى دولار  
                           </button>
                         </div>
             </div>
@@ -889,8 +889,12 @@ function conAddExpensesToMainBransh(V){
                 </thead>
                 <tbody>
          
-                  <tr v-for="tran in   transactions" :key="tran.id" :class="tran.type == 'out' || tran.type == 'outUser' ? 'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
-
+                  <tr v-for="tran in transactions" :key="tran.id" 
+                  :class="{
+                    'bg-red-100 dark:bg-red-900': tran.type === 'out' || tran.type === 'outUser'|| tran.type === 'debt',
+                    'bg-green-100 dark:bg-green-900': tran.type === 'in' || tran.type === 'inUser' 
+                  }"
+                  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.id }}</td>
                   <!-- <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.morphed?.name }}</td> -->
 
