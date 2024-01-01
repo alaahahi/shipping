@@ -46,8 +46,12 @@ Route::post('clientsEdit',[UserController::class, 'clientsEdit'])->name('clients
 Route::post('delClient',[UserController::class, 'delClient'])->name('delClient');
 
 
-Route::get('addTransfers',[TransfersController::class, 'addTransfers'])->name('addTransfers');
+Route::post('addTransfers',[TransfersController::class, 'addTransfers'])->name('addTransfers');
 Route::get('transfers',[TransfersController::class, 'index'])->name('transfers');
+Route::post('confirmTransfers',[TransfersController::class, 'confirmTransfers'])->name('confirmTransfers');
+Route::post('cancelTransfers',[TransfersController::class, 'cancelTransfers'])->name('cancelTransfers');
+
+
 Route::get('getIndexAccountsSelas',[AccountingController::class, 'getIndexAccountsSelas'])->name('getIndexAccountsSelas');
 
 Route::post('deleteTransactions',[AccountingController::class, 'delTransactions'])->name('deleteTransactions');

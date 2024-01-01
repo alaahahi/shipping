@@ -9,14 +9,8 @@ const setActiveTab = (tab) => {
 };
 const props = defineProps({
   show: Boolean,
-  company: Array,
-  color:Array,
-  carModel:Array,
-  name:Array,
-  client:Array,
   user:Array,
-  expenses:Array,
-  GenExpenses:Array,
+  allTransfers:Array,
   formData:Object
 });
 
@@ -24,20 +18,19 @@ const props = defineProps({
   <template>
     <Transition name="modal">
       <div v-if="show" class="modal-mask ">
+        
         <div class="modal-wrapper  max-h-[80vh]">
           <div class="modal-container dark:bg-gray-900 overflow-auto  max-h-[80vh]">
             <div class="modal-header">
               <slot name="header"></slot>
             </div>
             <div class="modal-body">
-              
               <div class="text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
                   <ul class="flex flex-wrap -mb-px">
                     <li class="mr-2" @click="setActiveTab('add')">
                       <button
                         class="inline-block p-4 border-b-2 border-transparent rounded-t-lg"
-                        :class="activeTab == 'add'?'dark:text-blue-500 dark:border-blue-500' :'hover:text-gray-600 hover:border-gray-300'"
-                      >
+                        :class="activeTab == 'add'?'dark:text-blue-500 dark:border-blue-500' :'hover:text-gray-600 hover:border-gray-300'">
                         اضافة
                       </button>
                     </li>
@@ -56,28 +49,12 @@ const props = defineProps({
                 <div >
                           <h1 class="text-center dark:text-gray-200 mt-4"> اضافة دفعة</h1>
                           <div className="mb-4 mx-5">
-                          <label  class="dark:text-gray-200" for="expens_amount" >{{ $t('amount') }}</label>
+                          <label  class="dark:text-gray-200" for="expens_amount" >المبلغ بالدولار</label>
                           <input
                             id="expens_amount"
                             type="number"
                             class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
                             v-model="formData.amount" />
-                          </div>
-                          <div className="mb-4 mx-5">
-                            <label  class="dark:text-gray-200" for="expenses_id">{{ $t('factor') }}</label>
-                            <input
-                            id="note_expens"
-                            type="text"
-                            class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                            v-model="formData.factor" />
-                          </div>
-                          <div className="mb-4 mx-5">
-                          <label  class="dark:text-gray-200" for="expens_amount" >{{ $t('result') }}</label>
-                          <input
-                            id="expens_amount"
-                            type="number"
-                            class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                            :value="(formData.amount / formData.factor).toFixed(1)" />
                           </div>
                           <div className="mb-4 mx-5">
                           <label  class="dark:text-gray-200" for="note" >{{ $t('note') }} </label>
@@ -98,64 +75,32 @@ const props = defineProps({
                   <tr  class="bg-rose-500 text-gray-100 rounded-l-lg mb-2 sm:mb-0">
                     <th className="px-1 py-2 text-base">رقم الوصل</th>
                     <th className="px-1 py-2 text-base">{{$t('date')}}</th>
-                    <th className="px-1 py-2 text-base">سعر الصرف</th>
                     <th className="px-1 py-2 text-base">المبلغ بالدولار</th>
+                    <th className="px-1 py-2 text-base">أجور الحولات</th>
+                    <th className="px-1 py-2 text-base">المبلغ بالدولار الصافي</th>
                     <th className="px-1 py-2 text-base">ملاحظة</th>
+                    <th className="px-1 py-2 text-base">الحالة</th>
 
-                    <th
+                    <!-- <th
                       scope="col"
                       class="px-1 py-2 text-base print:hidden"
-                      style="width: 250px"
                     >
-                      {{ $t("execute") }}
-                    </th>
+                      تنفيذ
+                    </th> -->
                   </tr>
                 </thead>
                 <tbody>
-                  <tr class="text-center px-4 py-2 border dark:border-gray-800 dark:text-gray-200" >
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200" > 
-                    <a  target="_blank"
-                    style="display: inline-flex;"
-                    :href="`/api/getIndexAccountsSelas?user_id=${GenExpenses[0]?.user_id}&print=5`"
-                    tabIndex="1"
-                    class="px-4 py-1  text-white  m-1 bg-blue-500 rounded"
-                    >
-                    جميع الدفعات
-                    <print />
-                    </a>
-            
-                     </td>
-                   
-                  </tr>
-                  <template  v-for="expense in GenExpenses" :key="expense.id">
+                  <template  v-for="expense in allTransfers" :key="expense.id">
                   <tr class="text-center">
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.id }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense?.created_at?.slice(0, 19).replace('T', ' ') }}</td>
-                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.factor }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.amount   }}</td>
-                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.reason   }}</td>
-                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">  
-                    <a  target="_blank"
-                    style="display: inline-flex;"
-                    :href="`/api/getIndexAccountsSelas?user_id=${expense.user_id}&print=3&transactions_id=${expense.transaction_id}`"
-                    tabIndex="1"
-                    class="px-4 py-1  text-white  m-1 bg-green-500 rounded"
-                    >
-                    <print />
-                    </a>
-            
-                    <!-- <button
-                      tabIndex="1"
-                      class="px-1 py-1  text-white mx-1 bg-orange-500 rounded"
-                      @click="openModalDelClient(user)"
-                    >
-                      <trash />
-                    </button> -->
-                  </td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.fee   }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.amount-expense.fee   }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.note   }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.stauts   }}</td>
+
+             
                   </tr>
                   </template>
          

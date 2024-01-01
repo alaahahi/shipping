@@ -13,12 +13,19 @@ class Transfers extends Model
     protected $table = 'transfers';
     protected $fillable = [
         'id',
+        'no',
         'user_id',
         'amount',
         'currency',
         'note',
+        'stauts',
+        'sender_id',
+        'receiver_id',
         'created_at',
-        'updated_at'
+        'updated_at',
+        'sender_note',
+        'receiver_note',
+        'fee'
     ];
 
     public function morphed()

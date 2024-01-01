@@ -63,6 +63,8 @@ let resetData = ref(false);
 let user_id = 0;
 let page = 1;
 let q = '';
+let allTransfers=ref([]);
+
 const refresh = () => {
   page = 0;
   transactions.value.length = 0;
@@ -137,9 +139,11 @@ function openAddExpenses(){
   showModalAddExpenses.value = true;
 }
 function openModalAddExpensesToMainBransh() {
+  getTransfers();
   showModalAddExpensesToMainBransh.value = true;
 }
 function openModalExpensesFromOtherBransh() {
+  getTransfers();
   showModalExpensesFromOtherBransh.value = true;
 }
 function openConvertDollarDinar(){
@@ -301,6 +305,28 @@ function conGenfirmExpenses(V) {
 
 
 }
+function getTransfers(){
+  axios.get(`/api/transfers`)
+  .then(response => {
+    allTransfers.value = response.data
+  })
+  .catch(error => {
+
+    errors.value = error.response.data.errors
+  })
+}
+function conAddExpensesToMainBransh(V){
+  axios.post(`/api/addTransfers?amount=${V.amount??0}&sender_note=${V.note??''}`)
+  .then(response => {
+    window.location.reload();
+
+    showModalAddExpensesToMainBransh.value = false;
+  })
+  .catch(error => {
+
+    errors.value = error.response.data.errors
+  })
+}
 
 </script>
 
@@ -340,8 +366,8 @@ function conGenfirmExpenses(V) {
             :formData="formData"
             :show="showModalAddExpensesToMainBransh ? true : false"
             :expenses_type_id="expenses_type_id"
-            :GenExpenses="GenExpenses"
-            @a="conGenfirmExpenses($event)"
+            :allTransfers="allTransfers"
+            @a="conAddExpensesToMainBransh($event)"
             @close="showModalAddExpensesToMainBransh = false"
             >
         <template #header>
@@ -352,9 +378,9 @@ function conGenfirmExpenses(V) {
             :show="showModalExpensesFromOtherBransh ? true : false"
             :expenses_type_id="expenses_type_id"
             :GenExpenses="GenExpenses"
+            :allTransfers="allTransfers"
             @a="conGenfirmExpenses($event)"
-            @close="showModalExpensesFromOtherBransh = false"
-            >
+            @close="showModalExpensesFromOtherBransh = false">
         <template #header>
           </template>
     </ModalExpensesFromOtherBransh>
@@ -430,7 +456,6 @@ function conGenfirmExpenses(V) {
         <div class="overflow-hidden shadow-sm sm:rounded-lg">
           <div class=" border-b border-gray-200">
             <div class="mt-4  mb-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">     
-                          
                           <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -864,7 +889,7 @@ function conGenfirmExpenses(V) {
                 </thead>
                 <tbody>
          
-                  <tr v-for="tran in   transactions" :key="tran.id" :class="tran.type != 'in' || tran.type != 'inUser' ? 'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
+                  <tr v-for="tran in   transactions" :key="tran.id" :class="tran.type == 'out' || tran.type == 'outUser' ? 'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
 
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.id }}</td>
                   <!-- <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.morphed?.name }}</td> -->
