@@ -32,7 +32,8 @@ class User extends Authenticatable
         'is_band',
         'phone',
         'device',
-        'created'
+        'created',
+        'year_date'
     ];
 
     /**

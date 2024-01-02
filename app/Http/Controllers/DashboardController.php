@@ -238,7 +238,7 @@ class DashboardController extends Controller
     public function addCars(Request $request)
     {
         $owner_id=Auth::user()->owner_id;
-
+        $year_date=Carbon::now()->format('Y');
         $client_id =$request->client_id;
         $car_id=$request->id??0;
         $maxNo = Car::max('no');
@@ -273,6 +273,7 @@ class DashboardController extends Controller
             $client->created =Carbon::now()->format('Y-m-d');
             $client->type_id = $this->userClient;
             $client->owner_id = $owner_id;
+            $client->year_date = $year_date;
             $client->save();
             Wallet::create(['user_id' => $client->id,'balance'=>0]);
             $client_id=$client->id;
@@ -291,6 +292,7 @@ class DashboardController extends Controller
             'checkout'=> $request->checkout,
             'total'=> $total_amount,
             'year'=> $request->year,
+            'year_date'=>$year_date,
             'car_color'=> $request->car_color,
             'date'=> $request->date,
             'expenses'=> $expenses,

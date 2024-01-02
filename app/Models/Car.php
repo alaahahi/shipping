@@ -56,7 +56,8 @@ class Car extends Model
         'expenses_s',
         'is_exit',
         'owner_id',
-        'contract_id'
+        'contract_id',
+        'year_date'
     ];
     public function user()
     {

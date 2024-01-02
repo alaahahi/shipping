@@ -151,6 +151,8 @@ class UserController extends Controller
     }
     public function clientsStore(Request $request)
     {
+        $year_date=Carbon::now()->format('Y');
+
         $owner_id=Auth::user()->owner_id;
         Validator::make($request->all(), [
             'name' => 'required|string|max:255',
@@ -160,6 +162,7 @@ class UserController extends Controller
                     'name' => $request->name,
                     'type_id' => $this->userClient,
                     'phone' => $request->phone,
+                    'year_date'=>$year_date,
                     'owner_id'=>$owner_id,
                     'created' =>Carbon::now()->format('Y-m-d'),
                 ]);

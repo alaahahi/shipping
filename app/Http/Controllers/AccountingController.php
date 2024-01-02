@@ -500,14 +500,16 @@ class AccountingController extends Controller
        
     }
     public function getGenExpenses (Request $request){
-        $expenses = Expenses::where('expenses_type_id',$request->expenses_type_id)->get();
+        $year_date=Carbon::now()->format('Y');
+
+        $expenses = Expenses::where('expenses_type_id',$request->expenses_type_id)->where('year_date',$year_date)->get();
 
         return Response::json($expenses, 200);    
 
     }
     public function GenExpenses (Request $request){
         $owner_id=Auth::user()->owner_id;
-
+        $year_date=Carbon::now()->format('Y');
         $factor=$request->factor ?? 1;
         $amount=(($request->amount)/ $factor);
         $expenses_type_id = $request->expenses_type_id;
@@ -538,6 +540,7 @@ class AccountingController extends Controller
             'factor' => $factor,
             'amount' => ($request->amount)/ $factor ?? 0,
             'reason' => $reason,
+            'year_date'=>$year_date,
             'expenses_type_id'=>$expenses_type_id,
             'transaction_id' =>  $transaction->id,
             'user_id' => $user_id

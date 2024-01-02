@@ -171,7 +171,7 @@ $Help = new MyHelp();
   </div> --}}
 </div>
 <hr>
-<div class="container mt-2 " style="border: 2px solid">       
+<div class="container-fluid mt-2 " style="border: 2px solid">       
   <div class="row" >
       <div class="col-4 text-center py-3">
           <h5 class="pt-3">

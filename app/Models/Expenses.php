@@ -23,7 +23,8 @@ class Expenses extends Model
         'expenses_type_id',
         'transaction_id',
         'created_at',
-        'updated_at'
+        'updated_at',
+        'year_date'
     ];
 
     protected $dates = ['deleted_at']; // Define the deleted_at column as a date
