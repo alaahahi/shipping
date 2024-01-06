@@ -343,7 +343,9 @@ function getDownloadUrl(name) {
       // Provide the base URL for downloading images
       return `/public/uploads/${name}`;
     }
-
+function UpdatePage (){
+  refresh();
+}
 
 </script>
 
@@ -370,7 +372,7 @@ function getDownloadUrl(name) {
     <ModalUploader
             :show="showModalUploader ? true : false"
             :formData="tranId"
-            @a="delTransactions($event)"
+            @a="UpdatePage($event)"
             @close="showModalUploader = false"
             >
           <template #header>
