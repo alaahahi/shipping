@@ -32,4 +32,8 @@ class Transactions extends Model
     {
         return $this->morphTo('morphed', 'morphed_type', 'morphed_id');
     }
+    public function TransactionsImages()
+    {
+        return $this->hasMany(TransactionsImages::class, 'transactions_id');
+    }
 }

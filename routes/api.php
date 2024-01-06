@@ -90,7 +90,8 @@ Route::get('carsAnnualImageDel',[AnnualController::class, 'carsAnnualImageDel'])
 Route::post('updateCarsAnnual',[AnnualController::class, 'updateCarsAnnual'])->name('updateCarsAnnual');
 Route::post('delCarsAnnualr',[AnnualController::class, 'delCarsAnnualr'])->name('delCarsAnnualr');
 
-
+Route::post('TransactionsUpload',[AccountingController::class, 'TransactionsUpload'])->name('TransactionsUpload');
+Route::get('TransactionsImageDel',[AccountingController::class, 'TransactionsImageDel'])->name('TransactionsImageDel');
 
 Route::get('getIndexExpenses',[DashboardController::class, 'getIndexExpenses'])->name('getIndexExpenses');
 Route::get('showCar',[CarConfigController::class, 'showCar']);

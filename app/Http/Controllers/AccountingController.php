@@ -34,7 +34,10 @@ use App\Models\CarModel;
 use App\Models\Color;
 use App\Models\ExpensesType;
 use App\Models\Expenses;
-
+use App\Models\TransactionsImages;
+use App\Helpers\UploadHelper;
+use Intervention\Image\Facades\Image;
+use File;
 
 class AccountingController extends Controller
 {
@@ -60,11 +63,59 @@ class AccountingController extends Controller
         $this->currentDate = Carbon::now()->format('Y-m-d');
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return Response
-     */
+    public function TransactionsUpload(Request $request)
+    {
+        $transactionsId = $request->transactionsId;
+        $path1 = public_path('uploads');
+        $path2 = public_path('uploadsResized');
+    
+        // Create the directories if they don't exist
+        if (!file_exists($path1)) {
+            mkdir($path1, 0777, true);
+        }
+        if (!file_exists($path2)) {
+            mkdir($path2, 0777, true);
+        }
+    
+        $file = $request->file('image');
+    
+        // Generate a unique file name
+        $name = uniqid();
+    
+        // Save the original image to the first directory
+        $file->move($path1, $name);
+    
+        // Load the original image using Intervention Image
+        $image = Image::make(public_path('uploads/' . $name));
+    
+        // Save the resized image to the second directory
+        $image->resize(50, 50, function ($constraint) {
+            $constraint->aspectRatio();
+            $constraint->upsize();
+        });
+    
+        $image->save(public_path('uploadsResized/' . $name));
+        // Create a new record in the database
+        $carImage = TransactionsImages::create([
+            'name' => $name,
+            'transactions_id' => $transactionsId,
+        ]);
+
+        return response()->json($carImage, 200);
+    }
+    public function TransactionsImageDel(Request $request){
+        $name = $request->name;
+
+        File::delete(public_path('uploads/'.$name));
+        File::delete(public_path('uploadsResized/'.$name));
+
+        TransactionsImages::where('name', $name)->delete();
+       
+        
+        return Response::json('deleted is done', 200);
+
+    }
+
     public function index()
     {  
         $owner_id=Auth::user()->owner_id;
@@ -90,13 +141,18 @@ class AccountingController extends Controller
      $transactions_id = $_GET['transactions_id'] ?? 0;
      $user = User::with('wallet')->where('id',$user_id)->first();
      if($from && $to ){
-         $transactions = Transactions ::with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('id','desc')->whereBetween('created', [$from, $to]);
+         $transactions = Transactions ::with('TransactionsImages')->with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('id','desc')->whereBetween('created', [$from, $to]);
      }else{
-         $transactions = Transactions ::with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('id','desc');
+         $transactions = Transactions ::with('TransactionsImages')->with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('id','desc');
      }
      if($q){
-        $transactions = Transactions ::where('id', $q)->orWhere('description', 'LIKE','%'.$q.'%');
-     }
+        $transactions = Transactions::with('TransactionsImages')->where('wallet_id', $user->wallet->id)
+        ->where(function ($query) use ($q) {
+            $query->where('id', $q)
+                  ->orWhere('description', 'LIKE', '%' . $q . '%');
+        })
+        ->orderBy('id', 'desc');
+    }
      if($type=='wallet'){
         $allTransactions = $transactions
         ->whereIn('type', ['inUser', 'outUser'])
@@ -823,6 +879,18 @@ class AccountingController extends Controller
 
             }
         }
+         
+        if($originalTransaction){
+            foreach ($originalTransaction->TransactionsImages as $transactionsImage) {
+                // Delete the image file from the public directory
+                File::delete(public_path('uploads/' . $transactionsImage->name));
+                File::delete(public_path('uploadsResized/' . $transactionsImage->name));
+    
+                // Delete the image record from the database
+                $transactionsImage->delete();
+            }
+        }
+ 
         // // Create a new transaction for the refund
         // $refundTransaction = new Transactions();
         // $refundTransaction->wallet_id = $originalTransaction->wallet_id;

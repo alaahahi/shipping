@@ -92,7 +92,19 @@ const switchLocale = (locale) => {
                 >
                   معلومات السنوية
                 </NavLink>
+
+                
               </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1">
+                <NavLink
+                  :href="route('car_expenses')"
+                  :active="route().current('car_expenses')"
+
+                >
+                   مصاريف السيارات
+                </NavLink>
+              </div>
+
               <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                 <NavLink
                   :href="route('dubai')"
@@ -325,6 +337,13 @@ const switchLocale = (locale) => {
                 v-if="$page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6"
               >
               معلومات السنوية
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
+                :href="route('car_expenses')"
+                :active="route().current('car_expenses')"
+                v-if="$page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6"
+              >
+              مصاريف السيارات 
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('logout')"

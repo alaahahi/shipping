@@ -16,11 +16,13 @@ import ModalExpensesFromOtherBransh from "@/Components/ModalExpensesFromOtherBra
 import ModalConvertDollarDinar from "@/Components/ModalConvertDollarDinar.vue";
 import ModalConvertDinarDollar from "@/Components/ModalConvertDinarDollar.vue";
 import ModalDel from "@/Components/ModalDel.vue";
+import ModalUploader from "@/Components/ModalUploader.vue";
+
 
 
 import axios from 'axios';
 import show from "@/Components/icon/show.vue";
-import pay from "@/Components/icon/pay.vue";
+import imags from "@/Components/icon/imags.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
 
@@ -40,6 +42,7 @@ let showModalConvertDinarDollar = ref(false);
 let showModalAddExpensesToMainBransh = ref(false);
 let showModalExpensesFromOtherBransh = ref(false);
 let showModalDel = ref(false);
+let showModalUploader = ref(false);
 let transactions= ref([]);
 let expenses_type_id = ref(0);
 let tranId =ref({});
@@ -155,6 +158,10 @@ function openConvertDinarDollar(){
 function openModalDel(tran){
   tranId.value = tran
   showModalDel.value = true;
+}
+function openModalUploader(tran){
+  tranId.value = tran
+  showModalUploader.value = true;
 }
 
 const props = defineProps({
@@ -328,6 +335,16 @@ function conAddExpensesToMainBransh(V){
   })
 }
 
+function getImageUrl(name) {
+      // Provide the base URL for your images
+      return `/public/uploadsResized/${name}`;
+    }
+function getDownloadUrl(name) {
+      // Provide the base URL for downloading images
+      return `/public/uploads/${name}`;
+    }
+
+
 </script>
 
 <template>
@@ -350,6 +367,20 @@ function conAddExpensesToMainBransh(V){
           </h2>
           </template>
     </ModalDel>
+    <ModalUploader
+            :show="showModalUploader ? true : false"
+            :formData="tranId"
+            @a="delTransactions($event)"
+            @close="showModalUploader = false"
+            >
+          <template #header>
+            <h2 class=" mb-5 dark:text-white text-center">
+
+            تحميل ملفات
+          </h2>
+          </template>
+    </ModalUploader>
+    
 
     <ModalAddGenExpenses
             :formData="formData"
@@ -878,13 +909,18 @@ function conAddExpensesToMainBransh(V){
                   class="text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center"
                 >
                   <tr class="rounded-l-lg mb-2 sm:mb-0">
-                    <th className="px-2 py-2">رقم الوصل</th>
+                    <th className="px-2 py-2" style="width: 100px;">رقم الوصل</th>
                     <!-- <th className="px-2 py-2">الحساب</th> -->
-                    <th className="px-2 py-2">التاريخ</th>
+                    <th className="px-2 py-2" style="width: 180px;">التاريخ</th>
                     <th className="px-2 py-2">الوصف</th>
                     <th className="px-2 py-2">المبلغ</th>
-                    <th className="px-2 py-2">تنفيذ</th>
-
+                    <th className="px-2 py-2" style="width: 100px;">تنفيذ</th>
+                    <th
+                      scope="col"
+                      class="px-1 py-2 text-base print:hidden" style="width: 100px;"
+                    >
+                      تخزين
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -906,16 +942,29 @@ function conAddExpensesToMainBransh(V){
                     <button class="px-1 py-1 text-white bg-rose-500 rounded-md focus:outline-none" @click="openModalDel(tran)" >
                       <trash />
                     </button>
+
+                    <button class="px-1 mx-2 py-1 text-white bg-purple-600 rounded-md focus:outline-none" @click="openModalUploader(tran)" >
+                      <imags />
+                    </button>
+                    
+                  </td>
+                  <td>
+                    <a
+                      v-for="(image, index) in tran.transactions_images"
+                      :key="index"
+                      :href="getDownloadUrl(image.name)"
+                      style="cursor: pointer;"
+                      target="_blank">
+                      <img :src="getImageUrl(image.name)" alt="" class="px-1" style="max-width: 80px;max-height: 50px;display: inline;" />
+                    </a>
                   </td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <div class="spaner">
-                          <InfiniteLoading :car="car" @infinite="getResults" :identifier="resetData" />
-
-                      </div>
-
+                          <InfiniteLoading :transactions="transactions" @infinite="getResults" :identifier="resetData" />
+            </div>
           </div>
         </div>
       </div>
