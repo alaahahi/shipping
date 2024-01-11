@@ -497,7 +497,7 @@ class DashboardController extends Controller
         if($from && $to ){
             
             
-            $data->whereBetween('date', [$from, $to])->where('owner_id', $owner_id);
+            $data->whereBetween('date', [$from, $to]);
             $resultsDinar=$data->sum('dinar'); 
             $resultsDollar=$data->sum('total'); 
             $resultsTotalS=$data->sum('total_s'); 
@@ -524,7 +524,7 @@ class DashboardController extends Controller
         elseif($type){
             $data->where('results', $type);
         }
-        if($q){
+        if($q&&false){
             $data->orwhere('car_number', 'LIKE','%'.$q.'%')->orwhere('vin', 'LIKE','%'.$q.'%')->orwhere('car_type', 'LIKE','%'.$q.'%')->orWhereHas('client', function ($query) use ($q) {
                 $query->where('name', 'LIKE', '%' . $q . '%');
             });
@@ -532,7 +532,7 @@ class DashboardController extends Controller
  
 
         if($user_id){
-            $data->where('client_id', $user_id)->where('owner_id', $owner_id);
+            $data->where('client_id', $user_id);
             $resultsDinar=$data->sum('dinar');
             $resultsDollar=$data->sum('total'); 
             $resultsTotalS=$data->sum('total_s'); 
@@ -540,7 +540,7 @@ class DashboardController extends Controller
             $resultsPaid=$data->sum('paid'); 
             $totalCars = $data->count();
         }
-        $data =$data->where('owner_id', $owner_id)->orderBy('no', 'DESC')->paginate($limit)->toArray();
+        $data =$data->orderBy('no', 'DESC')->paginate($limit)->toArray();
         $data['resultsDinar'] = $resultsDinar;
         $data['resultsDollar'] = $resultsDollar;
         $data['totalCars']  =$totalCars;
