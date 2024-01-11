@@ -58,7 +58,7 @@ const switchLocale = (locale) => {
                   {{ $t("sales") }}
                 </NavLink>
               </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
                 <NavLink
                   :href="route('clients')"
                   :active="route().current('clients')"
