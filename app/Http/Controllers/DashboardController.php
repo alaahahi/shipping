@@ -524,7 +524,7 @@ class DashboardController extends Controller
         elseif($type){
             $data->where('results', $type);
         }
-        if($q&&false){
+        if($q){
             $newdata = $data;
             $newdata->where('car_number', 'LIKE','%'.$q.'%')->orwhere('vin', 'LIKE','%'.$q.'%')->orwhere('car_type', 'LIKE','%'.$q.'%')->orWhereHas('client', function ($query) use ($q) {
                 $query->where('name', 'LIKE', '%' . $q . '%');
