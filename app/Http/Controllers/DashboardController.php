@@ -535,7 +535,7 @@ class DashboardController extends Controller
  
 
         if($user_id){
-            $data =    $data->where('client_id', $user_id);
+            $data->where('client_id', $user_id);
             $resultsDinar=$data->sum('dinar');
             $resultsDollar=$data->sum('total'); 
             $resultsTotalS=$data->sum('total_s'); 
@@ -543,6 +543,7 @@ class DashboardController extends Controller
             $resultsPaid=$data->sum('paid'); 
             $totalCars = $data->count();
         }
+        dd($data->get());
         $data =$data->orderBy('no', 'DESC')->paginate($limit)->toArray();
         $data['resultsDinar'] = $resultsDinar;
         $data['resultsDollar'] = $resultsDollar;
