@@ -493,11 +493,9 @@ class DashboardController extends Controller
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
         $limit =$_GET['limit'] ?? 0;
+        $data = Car::with('contract')->with('exitcar')->with('client')->where('owner_id', $owner_id);
         if($from && $to ){
-            $data = Car::with('contract')->with('exitcar')->with('client')
-            ->where('owner_id', $owner_id)
-            ->whereBetween('date', [$from, $to])
-            ->latest('date');
+            $data->whereBetween('date', [$from, $to]);
             $resultsDinar=$data->sum('dinar'); 
             $resultsDollar=$data->sum('total'); 
             $resultsTotalS=$data->sum('total_s'); 
@@ -505,33 +503,21 @@ class DashboardController extends Controller
             $resultsPaid=$data->sum('paid'); 
             $totalCars = $data->count();
 
-        }else{
-            $data = Car::with('contract', 'exitcar', 'client')
-            ->where('owner_id', $owner_id)
-            ->latest('date');
-            $resultsDinar=$data->sum('dinar');
-            $resultsDollar=$data->sum('total');
-            $resultsTotalS=$data->sum('total_s'); 
-            $resultsProfit=$data->sum('profit'); 
-            $resultsPaid=$data->sum('paid'); 
-            $totalCars = $data->count();
- 
         }
         $type =$_GET['type'] ?? '';
         if($type == 'debitContract'){
-            $data =    $data->whereHas('contract', function ($query) {
+            $data->whereHas('contract', function ($query) {
             
                 $query->where('name', 'LIKE', '%' . $q . '%');
             });
         }
         elseif($type){
-            $data =    $data->where('results', $type);
+            $data->where('results', $type);
         }
         if($q){
             $data->orwhere('car_number', 'LIKE','%'.$q.'%')->orwhere('vin', 'LIKE','%'.$q.'%')->orwhere('car_type', 'LIKE','%'.$q.'%')->orWhereHas('client', function ($query) use ($q) {
                 $query->where('name', 'LIKE', '%' . $q . '%');
             });
-            dd($data);
         }
  
 
