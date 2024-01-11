@@ -533,8 +533,6 @@ class DashboardController extends Controller
                         $subquery->where('name', 'LIKE', '%' . $q . '%');
                     });
             });
-            return Response::json($data->paginate($limit)->toArray(), 200);
-
         }
  
 
