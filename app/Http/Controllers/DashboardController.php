@@ -80,7 +80,7 @@ class DashboardController extends Controller
         $owner_id=Auth::user()->owner_id;
         $car = Car::all()->where('owner_id',$owner_id);
         $allCars = $car->count();
-        $client = User::where('type_id', $this->userClient)->get();
+        $client = User::where('owner_id',$owner_id)->where('type_id', $this->userClient)->get();
         return Inertia::render('Sales', ['client'=>$client ]);   
     }
     public function totalInfo(Request $request)
