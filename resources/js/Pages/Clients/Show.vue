@@ -483,7 +483,7 @@ function getDownloadUrl(name) {
         </div>
       </div>
     </div>
-    <div class="py-4" v-if="$page.props.auth.user.type_id==1">
+    <div class="py-4" v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
       <h2 class="text-center pb-2 dark:text-gray-400">
         {{ $t("sales_bill") }}
       </h2>
