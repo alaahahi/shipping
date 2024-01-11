@@ -495,6 +495,8 @@ class DashboardController extends Controller
         $limit =$_GET['limit'] ?? 0;
         $data = Car::with('contract')->with('exitcar')->with('client')->where('owner_id', $owner_id);
         if($from && $to ){
+            
+            
             $data->whereBetween('date', [$from, $to]);
             $resultsDinar=$data->sum('dinar'); 
             $resultsDollar=$data->sum('total'); 
@@ -503,6 +505,14 @@ class DashboardController extends Controller
             $resultsPaid=$data->sum('paid'); 
             $totalCars = $data->count();
 
+        }else{
+            $resultsDinar=$data->sum('dinar');
+            $resultsDollar=$data->sum('total');
+            $resultsTotalS=$data->sum('total_s'); 
+            $resultsProfit=$data->sum('profit'); 
+            $resultsPaid=$data->sum('paid'); 
+            $totalCars = $data->count();
+ 
         }
         $type =$_GET['type'] ?? '';
         if($type == 'debitContract'){
