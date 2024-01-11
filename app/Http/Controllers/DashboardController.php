@@ -494,7 +494,7 @@ class DashboardController extends Controller
         $to =$_GET['to'] ?? 0;
         $limit =$_GET['limit'] ?? 0;
         if($from && $to ){
-            $data =  Car::with('contract')->with('exitcar')->with('client')->whereBetween('date', [$from, $to])->orderBy('date','DESC');
+            $data =  Car::with('contract')->with('exitcar')->with('client')->where('owner_id',$owner_id)->whereBetween('date', [$from, $to])->orderBy('date','DESC');
             $resultsDinar=$data->sum('dinar'); 
             $resultsDollar=$data->sum('total'); 
             $resultsTotalS=$data->sum('total_s'); 
@@ -503,7 +503,7 @@ class DashboardController extends Controller
             $totalCars = $data->count();
 
         }else{
-            $data =  Car::with('contract')->with('exitcar')->with('client')->orderBy('date','DESC');
+            $data =  Car::with('contract')->with('exitcar')->with('client')->where('owner_id',$owner_id)->orderBy('date','DESC');
             $resultsDinar=$data->sum('dinar');
             $resultsDollar=$data->sum('total');
             $resultsTotalS=$data->sum('total_s'); 
@@ -530,7 +530,6 @@ class DashboardController extends Controller
  
 
         if($user_id){
-            $data =    $data->where('client_id',  $user_id);
             $resultsDinar=$data->sum('dinar');
             $resultsDollar=$data->sum('total'); 
             $resultsTotalS=$data->sum('total_s'); 
@@ -538,7 +537,7 @@ class DashboardController extends Controller
             $resultsPaid=$data->sum('paid'); 
             $totalCars = $data->count();
         }
-        $data =$data->where('owner_id',$owner_id)->orderBy('no', 'DESC')->paginate($limit)->toArray();
+        $data =$data->orderBy('no', 'DESC')->paginate($limit)->toArray();
         $data['resultsDinar'] = $resultsDinar;
         $data['resultsDollar'] = $resultsDollar;
         $data['totalCars']  =$totalCars;
