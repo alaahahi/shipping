@@ -543,7 +543,6 @@ class DashboardController extends Controller
             $resultsPaid=$data->sum('paid'); 
             $totalCars = $data->count();
         }
-        dd($data->get());
         $data =$data->orderBy('no', 'DESC')->paginate($limit)->toArray();
         $data['resultsDinar'] = $resultsDinar;
         $data['resultsDollar'] = $resultsDollar;
