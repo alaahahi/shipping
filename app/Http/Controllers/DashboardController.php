@@ -525,9 +525,12 @@ class DashboardController extends Controller
             $data->where('results', $type);
         }
         if($q&&false){
-            $data->orwhere('car_number', 'LIKE','%'.$q.'%')->orwhere('vin', 'LIKE','%'.$q.'%')->orwhere('car_type', 'LIKE','%'.$q.'%')->orWhereHas('client', function ($query) use ($q) {
+            $newdata = $data;
+            $newdata->orwhere('car_number', 'LIKE','%'.$q.'%')->orwhere('vin', 'LIKE','%'.$q.'%')->orwhere('car_type', 'LIKE','%'.$q.'%')->orWhereHas('client', function ($query) use ($q) {
                 $query->where('name', 'LIKE', '%' . $q . '%');
             });
+            return Response::json($newdata, 200);
+
         }
  
 
