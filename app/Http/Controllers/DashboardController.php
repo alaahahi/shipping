@@ -497,7 +497,7 @@ class DashboardController extends Controller
         if($from && $to ){
             
             
-            $data->whereBetween('date', [$from, $to]);
+            $data->whereBetween('date', [$from, $to])->where('owner_id', $owner_id);
             $resultsDinar=$data->sum('dinar'); 
             $resultsDollar=$data->sum('total'); 
             $resultsTotalS=$data->sum('total_s'); 
@@ -532,7 +532,7 @@ class DashboardController extends Controller
  
 
         if($user_id){
-            $data->where('client_id', $user_id);
+            $data->where('client_id', $user_id)->where('owner_id', $owner_id);
             $resultsDinar=$data->sum('dinar');
             $resultsDollar=$data->sum('total'); 
             $resultsTotalS=$data->sum('total_s'); 
@@ -540,7 +540,7 @@ class DashboardController extends Controller
             $resultsPaid=$data->sum('paid'); 
             $totalCars = $data->count();
         }
-        $data =$data->orderBy('no', 'DESC')->paginate($limit)->toArray();
+        $data =$data->where('owner_id', $owner_id)->orderBy('no', 'DESC')->paginate($limit)->toArray();
         $data['resultsDinar'] = $resultsDinar;
         $data['resultsDollar'] = $resultsDollar;
         $data['totalCars']  =$totalCars;
