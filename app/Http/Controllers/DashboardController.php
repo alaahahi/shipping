@@ -528,7 +528,7 @@ class DashboardController extends Controller
             $data =    $data->where('results', $type);
         }
         if($q){
-            $data = $data->orwhere('car_number', 'LIKE','%'.$q.'%')->orwhere('vin', 'LIKE','%'.$q.'%')->orwhere('car_type', 'LIKE','%'.$q.'%')->orWhereHas('client', function ($query) use ($q) {
+            $data->orwhere('car_number', 'LIKE','%'.$q.'%')->orwhere('vin', 'LIKE','%'.$q.'%')->orwhere('car_type', 'LIKE','%'.$q.'%')->orWhereHas('client', function ($query) use ($q) {
                 $query->where('name', 'LIKE', '%' . $q . '%');
             });
         }
