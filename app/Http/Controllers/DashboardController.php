@@ -535,6 +535,7 @@ class DashboardController extends Controller
  
 
         if($user_id){
+            $data =    $data->where('client_id', $user_id);
             $resultsDinar=$data->sum('dinar');
             $resultsDollar=$data->sum('total'); 
             $resultsTotalS=$data->sum('total_s'); 
