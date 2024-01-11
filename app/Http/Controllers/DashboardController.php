@@ -525,11 +525,15 @@ class DashboardController extends Controller
             $data->where('results', $type);
         }
         if($q){
-            $newdata = $data;
-            $newdata->orwhere('car_number', 'LIKE','%'.$q.'%')->orwhere('vin', 'LIKE','%'.$q.'%')->orwhere('car_type', 'LIKE','%'.$q.'%')->orWhereHas('client', function ($query) use ($q) {
-                $query->where('name', 'LIKE', '%' . $q . '%');
+            $data->where(function ($query) use ($q) {
+                $query->where('car_number', 'LIKE', '%' . $q . '%')
+                    ->orWhere('vin', 'LIKE', '%' . $q . '%')
+                    ->orWhere('car_type', 'LIKE', '%' . $q . '%')
+                    ->orWhereHas('client', function ($subquery) use ($q) {
+                        $subquery->where('name', 'LIKE', '%' . $q . '%');
+                    });
             });
-            return Response::json($newdata->paginate($limit)->toArray(), 200);
+            return Response::json($data->paginate($limit)->toArray(), 200);
 
         }
  
