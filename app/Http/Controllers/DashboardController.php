@@ -493,35 +493,26 @@ class DashboardController extends Controller
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
         $limit =$_GET['limit'] ?? 0;
-        $data = Car::with('contract')->with('exitcar')->with('client')->where('owner_id', $owner_id);
-        if($from && $to ){
-            
-            
-            $data->whereBetween('date', [$from, $to]);
-            $resultsDinar=$data->sum('dinar'); 
-            $resultsDollar=$data->sum('total'); 
-            $resultsTotalS=$data->sum('total_s'); 
-            $resultsProfit=$data->sum('profit'); 
-            $resultsPaid=$data->sum('paid'); 
-            $totalCars = $data->count();
+        $data = Car::with('contract', 'exitcar', 'client')->where('owner_id', $owner_id);
 
-        }else{
-            $resultsDinar=$data->sum('dinar');
-            $resultsDollar=$data->sum('total');
-            $resultsTotalS=$data->sum('total_s'); 
-            $resultsProfit=$data->sum('profit'); 
-            $resultsPaid=$data->sum('paid'); 
-            $totalCars = $data->count();
- 
+        if ($from && $to) {
+            $data->whereBetween('date', [$from, $to]);
         }
-        $type =$_GET['type'] ?? '';
-        if($type == 'debitContract'){
-            $data->whereHas('contract', function ($query) {
-            
+        
+        $resultsDinar = $data->sum('dinar');
+        $resultsDollar = $data->sum('total');
+        $resultsTotalS = $data->sum('total_s');
+        $resultsProfit = $data->sum('profit');
+        $resultsPaid = $data->sum('paid');
+        $totalCars = $data->count();
+        
+        $type = $_GET['type'] ?? '';
+        
+        if ($type == 'debitContract') {
+            $data->whereHas('contract', function ($query) use ($q) {
                 $query->where('name', 'LIKE', '%' . $q . '%');
             });
-        }
-        elseif($type){
+        } elseif ($type) {
             $data->where('results', $type);
         }
         if($q){
