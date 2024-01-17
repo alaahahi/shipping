@@ -1,36 +1,15 @@
 <script setup>
 import { ref, computed } from "vue";
 import axios from 'axios';
-import { MultiSelect } from "vue-search-select"
+import { ModelListSelect } from "vue-search-select"
   // Import everythModelSelecting
 import "vue-search-select/dist/VueSearchSelect.css"
-
 const props = defineProps({
   show: Boolean,
   formData: Object,
   client: Array,
 });
-      let searchText= ref('') // If value is falsy, reset searchText & searchItem
-      let items= ref([])
-      let lastSelectItem= ref({})
-
-let option = ref([
-        { value: '1', text: 'aa' + ' - ' + '1' },
-        { value: '2', text: 'ab' + ' - ' + '2' },
-        { value: '3', text: 'bc' + ' - ' + '3' },
-        { value: '4', text: 'cd' + ' - ' + '4' },
-        { value: '5', text: 'de' + ' - ' + '5' },
-        { value: '6', text: 'ef' + ' - ' + '6' },
-        { value: '7', text: 'ef' + ' - ' + '7' },
-        { value: '8', text: 'ef' + ' - ' + '8' },
-        { value: '9', text: 'ef' + ' - ' + '9' },
-        { value: '10', text: 'ef' + ' - ' + '10' },
-        { value: '11', text: 'ef' + ' - ' + '11' },
-        { value: '12', text: 'ef' + ' - ' + '12' },
-        { value: '13', text: 'down case' + ' - ' + 'testcase' },
-        { value: '14', text: 'camel case' + ' - ' + 'testCase' },
-        { value: '15', text: 'Capitalize case' + ' - ' + 'Testcase' }
-      ])
+    
 function getTodayDate() {
   const today = new Date();
   const year = today.getFullYear();
@@ -109,24 +88,14 @@ function onSelect (items, lastSelectItem) {
                   $t("car_owner")
                 }}</label>
                 <div class="relative">
-                  <select
-                    v-if="!showClient"
-                    v-model="formData.client_id"
-                    id="color_id"
-                    class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                  >
-                
-                    <option selected disabled>
-                      {{ $t("selectCustomer") }}
-                    </option>
-                    <option
-                      v-for="(card, index) in client"
-                      :key="index"
-                      :value="card.id"
-                    >
-                      {{ card.name }}
-                    </option>
-                  </select>
+                <ModelListSelect
+                  v-if="!showClient"
+                  optionValue="id"
+                  optionText="name"
+                  v-model="formData.client_id"
+                  :list="client"
+                  :placeholder="$t('selectCustomer')">
+                </ModelListSelect>
                   <button
                     type="button"
                     @click="
@@ -383,6 +352,17 @@ function onSelect (items, lastSelectItem) {
 </template>
   
   <style>
+  .ui.fluid.search.selection.dropdown{
+    justify-content: revert;
+    display: flex;
+    min-height: 40px;
+  }
+  .ui.dropdown .menu .selected.item{
+    background-color: #e012035d;
+  }
+  .ui.dropdown .menu>.item {
+    text-align: right;
+  }
 .modal-mask {
   position: fixed;
   z-index: 9998;

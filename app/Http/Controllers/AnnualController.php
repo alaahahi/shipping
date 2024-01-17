@@ -191,11 +191,25 @@ class AnnualController extends Controller
 
     }
     public function updateCarsAnnual(Request $request){
-        $warehouse= Warehouse::find($request->id)->update(['car_type'=>$request->car_type,
+        $client_id =$request->client_id;
+        if(!$client_id){
+            $client = new User;
+            $client->name = $request->client_name;
+            $client->phone = $request->client_phone;
+            $client->created =$this->currentDate;
+            $client->type_id = $this->userClientAnnual;
+            $client->save();
+            Wallet::create(['user_id' => $client->id,'balance'=>0]);
+            $client_id=$client->id;
+        } 
+        $warehouse= Warehouse::find($request->id)->update(
+        [
+        'client_id'=>$client_id,
+        'car_type'=>$request->car_type,
         'car_color'=>$request->car_color,
         'year'=>$request->year,
-         'note'=>$request->note,
-          'car_number'=>$request->car_number]);
+        'note'=>$request->note,
+        'car_number'=>$request->car_number]);
         return Response::json($warehouse, 200);
     }
     public function delCarsAnnualr(Request $request){

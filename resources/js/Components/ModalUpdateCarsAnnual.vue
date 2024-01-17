@@ -3,7 +3,8 @@ import { ref, computed } from "vue";
 import axios from 'axios';
 import Uploader  from 'vue-media-upload';
 import { useToast } from "vue-toastification";
-
+import { ModelListSelect } from "vue-search-select"
+import "vue-search-select/dist/VueSearchSelect.css"
 const toast = useToast();
 
 const props = defineProps({
@@ -12,6 +13,7 @@ const props = defineProps({
   client: Array,
   saveCar: Boolean,
 });
+let showClient = ref(false);
 
 
 function removeMedia(removedImage){
@@ -43,7 +45,67 @@ function removeMedia(removedImage){
             </slot>
           </div>
           <div class="modal-body">
-    
+            <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2">
+              <div class="mb-4 mx-1">
+                <label class="dark:text-gray-200" for="color_id">
+                 صاحب السيارة
+                </label>
+                <div class="relative">
+                  <ModelListSelect
+                  v-if="!showClient"
+                  optionValue="id"
+                  optionText="name"
+                  v-model="formData.client_id"
+                  :list="client"
+                  placeholder="تحديد صاحب السيارة">
+                </ModelListSelect>
+                  <button
+                    type="button"
+                    @click="
+                      showClient = true;
+                      formData.client_name = '';
+                      formData.client_id='';
+                    "
+                    v-if="!showClient"
+                    class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-green-500 rounded-tl-lg rounded-bl-lg"
+                  >
+                   إضافة صاحب سيارة
+                  </button>
+                </div>
+                <div class="relative">
+                  <input
+                    id="note"
+                    v-if="showClient"
+                    type="text"
+                    class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                    v-model="formData.client_name"
+                  />
+                  <button
+                    type="button"
+                    @click="
+                      showClient = false;
+                      formData.client = '';
+                    "
+                    v-if="showClient"
+                    class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-pink-500 rounded-tl-lg rounded-bl-lg"
+                  >
+                  تحديد صاحب السيارة
+
+                  </button>
+                </div>
+              </div>
+              <div className="mb-4 mx-1" v-if="showClient">
+                <label class="dark:text-gray-200" for="number">
+                {{ $t("phoneNumber") }}
+              </label>
+                <input
+                  id="number"
+                  type="number"
+                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  v-model="formData.client_phone"
+                />
+              </div>
+            </div>
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 lg:gap-2">  
               <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="car_number">
@@ -145,6 +207,7 @@ function removeMedia(removedImage){
                       : getTodayDate();
                     $emit('a', formData);
                     formData = '';
+                    showClient=false;
                   "
                   :disabled="(!formData.client_id)&&(!formData.client_name)">
                 حفظ المعلومات    
@@ -159,6 +222,18 @@ function removeMedia(removedImage){
 </template>
   
   <style>
+    .ui.fluid.search.selection.dropdown{
+    justify-content: revert;
+    display: flex;
+    min-height: 40px;
+  }
+  .ui.dropdown .menu .selected.item{
+    background-color: #e012035d;
+  }
+  .ui.dropdown .menu>.item {
+    text-align: right;
+  }
+
 .modal-mask {
   position: fixed;
   z-index: 9998;

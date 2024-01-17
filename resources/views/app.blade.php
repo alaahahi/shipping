@@ -74,6 +74,7 @@
                 .rgCell{
                 padding-top: 7px !important;
                 }
+                
         </style>
     </head>
     <body class="font-sans antialiased">
