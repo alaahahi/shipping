@@ -74,7 +74,17 @@
                 .rgCell{
                 padding-top: 7px !important;
                 }
-                
+                    .ui.fluid.search.selection.dropdown{
+                    justify-content: revert;
+                    display: flex;
+                    min-height: 40px;
+                }
+                .ui.dropdown .menu .selected.item{
+                    background-color: #e012035d;
+                }
+                .ui.dropdown .menu>.item {
+                    text-align: right;
+                }
         </style>
     </head>
     <body class="font-sans antialiased">
