@@ -75,15 +75,15 @@
                 padding-top: 7px !important;
                 }
                     .ui.fluid.search.selection.dropdown{
-                    justify-content: revert;
-                    display: flex;
-                    min-height: 40px;
+                    justify-content: revert!important;
+                    display: flex!important;
+                    min-height: 40px!important;
                 }
                 .ui.dropdown .menu .selected.item{
-                    background-color: #e012035d;
+                    background-color: #e012035d !important;
                 }
                 .ui.dropdown .menu>.item {
-                    text-align: right;
+                    text-align: right !important;
                 }
         </style>
     </head>
