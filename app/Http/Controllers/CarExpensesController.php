@@ -58,7 +58,9 @@ class CarExpensesController extends Controller
 
     public function index(Request $request)
     {
-        return Inertia::render('CarExpenses/index');   
+        $owner_id=Auth::user()->owner_id;
+        $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
+        return Inertia::render('CarExpenses/index', ['client'=>$client ]);   
     }
 
     public function addTransfers()

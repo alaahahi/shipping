@@ -1,8 +1,10 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, watch } from "vue";
 import axios from 'axios';
 import Uploader  from 'vue-media-upload';
 import { ModelListSelect } from "vue-search-select"
+import { useToast } from "vue-toastification";
+
 import "vue-search-select/dist/VueSearchSelect.css"
 
 const props = defineProps({
@@ -20,8 +22,25 @@ function getTodayDate() {
   const day = String(today.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
-let showClient = ref(true);
 
+let carsidSelected = ref(0);
+let showClient = ref(true);
+let cars = ref([]);
+watch(carsidSelected, (newValue, oldValue) => {
+  axios.get('/api/getIndexCar', {
+      params: {
+        limit: 1000,
+        user_id: newValue
+      }
+    })
+    .then(response => {
+              cars.value = response.data;
+            })
+    .catch(error => {
+      console.error(error);
+    })
+
+});
 
 function removeMedia(removedImage){
               axios.get('/api/carsAnnualImageDel?name='+removedImage.name)
@@ -59,133 +78,35 @@ function removeMedia(removedImage){
                 </label>
                 <div class="relative">
                   <ModelListSelect
-                  v-if="!showClient"
                   optionValue="id"
                   optionText="name"
-                  v-model="formData.client_id"
+                  v-model="carsidSelected"
                   :list="client"
                   placeholder="تحديد صاحب السيارة">
                 </ModelListSelect>
-                  <button
-                    type="button"
-                    @click="
-                      showClient = true;
-                      formData.client_name = '';
-                      formData.client_id='';
-                    "
-                    v-if="!showClient"
-                    class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-green-500 rounded-tl-lg rounded-bl-lg"
-                  >
-                   إضافة صاحب سيارة
-                  </button>
                 </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2">  
+              <div class="mb-4 mx-1">
+                <label class="dark:text-gray-200" for="color_id">
+                 اختر السيارة
+                </label>
                 <div class="relative">
-                  <input
-                    id="note"
-                    v-if="showClient"
-                    type="text"
-                    class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                    v-model="formData.client_name"
-                  />
-                  <button
-                    type="button"
-                    @click="
-                      showClient = false;
-                      formData.client = '';
-                    "
-                    v-if="showClient"
-                    class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-pink-500 rounded-tl-lg rounded-bl-lg"
-                  >
-                  تحديد صاحب السيارة
-
-                  </button>
+                  <ModelListSelect
+                  optionValue="id"
+                  optionText="car_type"
+                  v-model="formData.carId"
+                  :list="cars"
+                  placeholder=" اختر السيارة">
+                  </ModelListSelect>
                 </div>
-              </div>
-              <div className="mb-4 mx-1" v-if="showClient">
-                <label class="dark:text-gray-200" for="number">
-                {{ $t("phoneNumber") }}
-              </label>
-                <input
-                  id="number"
-                  type="number"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="formData.client_phone"
-                />
-              </div>
-            </div>
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 lg:gap-2">  
-              <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="car_number">
-                  {{ $t("car_number") }}</label
-                >
-                <input
-                  id="car_number"
-                  type="text"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="formData.car_number"
-                />
-              </div>
-
-              <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
-                  {{ $t("car_type") }}</label
-                >
-                <input
-                  id="car_type"
-                  type="text"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="formData.car_type"
-                />
-              </div>
-              <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
-                  {{ $t("year") }}</label
-                >
-                <input
-                  id="year"
-                  type="number"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="formData.year"
-                />
-              </div>
-              <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
-                  {{ $t("color") }}</label
-                >
-                <input
-                  id="car_color"
-                  type="text"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="formData.car_color"
-                />
-              </div>
-              <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
-                  {{ $t("date") }}</label
-                >
-                <input
-                  id="date"
-                  type="date"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="formData.date"
-                />
+            
               </div>
 
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2">
-            <div className="mb-4 mx-1">
-              <label class="dark:text-gray-200" for="note">
-                {{$t("note")}}
-              </label>
-              <input
-                id="note"
-                type="text"
-                class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                v-model="formData.note"
-              />
-            </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2" v-if="!saveCar">  
+            
+            <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2 mt-5" v-if="!saveCar">  
                 <button
                   class="modal-default-button py-3 bg-blue-500 rounded col-6"
                   @click="formData.date = formData.date
@@ -193,7 +114,7 @@ function removeMedia(removedImage){
                       : getTodayDate();
                       $emit('a', formData);"
                   :disabled="(!formData.client_id)&&(!formData.client_name)">
-                  حفظ ومتابعة
+                  إضافة ومتابعة
                 </button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2" v-if="saveCar">

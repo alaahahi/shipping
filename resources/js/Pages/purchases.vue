@@ -359,7 +359,7 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
     </ModalDelCar>
 
     <AuthenticatedLayout >
-      <section  v-if="$page.props.auth.user.type_id==1">
+      <section  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
       <div class="py-2" v-if="pincode !=19735">
         <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 ">
             <div class="overflow-hidden shadow-sm d-flex text-center "  dir="ltr">

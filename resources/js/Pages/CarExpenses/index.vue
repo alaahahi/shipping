@@ -2,11 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/inertia-vue3';
 import VueTailwindDatepicker from 'vue-tailwind-datepicker'
-import ModalAddCarContracts from "@/Components/ModalAddCarContracts.vue";
-import ModalEditCarContracts from "@/Components/ModalEditCarContracts.vue";
-import ModalAddExitCar from "@/Components/ModalAddExitCar.vue";
-import ModalShowExitCar from "@/Components/ModalShowExitCar.vue";
-import ModalAddCar from "@/Components/ModalAddCars.vue";
+import ModalAddCarExpensesFav from "@/Components/ModalAddCarExpensesFav.vue";
 
 import { useToast } from "vue-toastification";
 import axios from 'axios';
@@ -35,47 +31,12 @@ const props = defineProps({
 const toast = useToast();
 
 let searchTerm = ref('');
-let showModalAddCarContracts =  ref(false);
-let showModalEditCarContracts =  ref(false);
-let showModalAddExitCar = ref(false);
-let showModalShowExitCar = ref(false);
-let showModalCar =  ref(false);
+let showModalAddCarExpensesFav =  ref(false);
 
-let onlineContracts= ref(0)
-let debtOnlineContracts= ref(0)
-
-let onlineContractsDinar = ref(0)
-let debtOnlineContractsDinar = ref(0)
-let contarts = ref(0)
-let exitCar = ref(0)
-let allCars= ref(0)
-function openModalAddCarContracts(form={}) {
-  formData.value=form
-
-  formData.value.prices=100
-  formData.value.price_dinars=50000
-
-  showModalAddCarContracts.value = true;
+function openwModalAddCarExpensesFav(form={}) {
+  showModalAddCarExpensesFav.value = true;
 }
-function openModalEditCarContracts(form={}) {
-  formData.value=form
 
-  showModalEditCarContracts.value = true;
-}
-function openModalAddExitCar(form={}) {
-  formData.value=form
-  formData.value.createdExit = getTodayDate()
-
-  showModalAddExitCar.value = true;
-}
-function openModalShowExitCar(form={}) {
-  formData.value=form
-  showModalShowExitCar.value = true;
-}
-function openAddCar(form={}) {
-    formData.value=form
-    showModalCar.value = true;
-}
 
 const formData = ref({});
 const formGenExpenses = ref({});
@@ -128,90 +89,7 @@ const getResultsCar = async ($state) => {
 };
 
  
- 
 
-
-function confirmAddCarContracts(V) {
-  axios.get(`/api/addCarContracts?car_id=${V.id}&price=${V.prices??0}&price_dinar=${V.price_dinars??0}&paid=${V.paids??0}&paid_dinar=${V.paid_dinars??0}&phone=${V.phone??''}&note=${V.note??''}`)
-  .then(response => {
-    showModalAddCarContracts.value = false;
-    toast.success( " تم دفع مبلغ بنجاح ", {
-        timeout: 4000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-      refresh();
-
-
-  })
-  .catch(error => {
-    showModalAddCarContracts.value = false;
-
-    toast.error("لم التعديل بنجاح", {
-        timeout: 2000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-
-  })
-}
-function confirmEditCarContracts(V) {
-  axios.get(`/api/editCarContracts?car_id=${V.id}&paid=${V.paids??0}&paid_dinar=${V.paid_dinars??0}&note=${V.notePayment??''}`)
-  .then(response => {
-    showModalEditCarContracts.value = false;
-    toast.success( " تم دفع مبلغ دولار "+V.amountPayment+" بنجاح ", {
-        timeout: 3000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-      refresh();
-
-
-  })
-  .catch(error => {
-    showModalEditCarContracts.value = false;
-
-    toast.error("لم التعديل بنجاح", {
-        timeout: 2000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-
-  })
-}
-
-function confirmAddExitCar(v){
-
-  axios.get(`/api/makeCarExit?car_id=${v.id}&created=${v.createdExit}&phone=${v.phoneExit}&note=${v.noteExit}`)
-  .then(response => {
-    showModalAddExitCar.value = false;
-    toast.success( "تم اضافة خروجية للسيارة بنجاح ", {
-        timeout: 5000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-
-      refresh();
-
-  })
-  .catch(error => {
-    showModalAddExitCar.value = false;
-
-    toast.error("لم التعديل بنجاح", {
-        timeout: 2000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-
-  })
-  
-}
 function confirmCar(V) {
   axios.post('/api/addCars',V)
   .then(response => {
@@ -237,53 +115,17 @@ function getTodayDate() {
 
 <template>
     <Head title="Dashboard" />
-    <ModalAddCar
+    <ModalAddCarExpensesFav
             :formData="formData"
-            :show="showModalCar ? true : false"
+            :show="showModalAddCarExpensesFav ? true : false"
             :client="client"
             @a="confirmCar($event)"
-            @close="showModalCar = false"
+            @close="showModalAddCarExpensesFav = false"
             >
         <template #header>
           </template>
-    </ModalAddCar>
+    </ModalAddCarExpensesFav>
 
-    <ModalAddCarContracts
-            :formData="formData"
-            :show="showModalAddCarContracts ? true : false"
-            @a="confirmAddCarContracts($event)"
-            @close="showModalAddCarContracts = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddCarContracts>
-    <ModalEditCarContracts
-            :formData="formData"
-            :show="showModalEditCarContracts ? true : false"
-            @a="confirmEditCarContracts($event)"
-            @close="showModalEditCarContracts = false"
-            >
-        <template #header>
-          </template>
-    </ModalEditCarContracts>
-    <ModalAddExitCar
-            :formData="formData"
-            :show="showModalAddExitCar ? true : false"
-            @a="confirmAddExitCar($event)"
-            @close="showModalAddExitCar = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddExitCar>
-    <ModalShowExitCar
-            :formData="formData"
-            :show="showModalShowExitCar ? true : false"
-            @a="confirmAddExitCar($event)"
-            @close="showModalShowExitCar = false"
-            >
-        <template #header>
-          </template>
-    </ModalShowExitCar>
     <AuthenticatedLayout>
         <div class="py-2" v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
         <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 ">
@@ -351,7 +193,7 @@ function getTodayDate() {
                         <div class="text-center">
                             <button
                               type="button"
-                              @click="openAddCar()"
+                              @click="openwModalAddCarExpensesFav()"
                               style="min-width:150px;"
                               className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-green-500 rounded">
                               {{ $t('addCar') }} 
