@@ -22,6 +22,7 @@ use App\Models\Expenses;
 use App\Models\CarExpenses;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Models\SystemConfig;
 
 
 use Carbon\Carbon;
@@ -115,6 +116,18 @@ class CarExpensesController extends Controller
         $car = Car::find($request->id);
         if($car){
           $car_edited =  $car->update(['car_have_expenses'=>3]);
+        }else{
+            return Response::json('car not found', 200);    
+        }
+        return Response::json($car, 200);    
+    }
+    public function getIndexExpensesPrint(Request $request){
+        $data = Car::with('contract', 'exitcar','client','carexpenses.user')->where('id', $request->car_id)->first();
+        if($data){
+
+            $config=SystemConfig::first();
+    
+            return view('receiptCarsExpensesTotal',compact('data','config'));
         }else{
             return Response::json('car not found', 200);    
         }

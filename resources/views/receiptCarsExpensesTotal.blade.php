@@ -41,59 +41,56 @@
     <div class="row p-2 text-center border-top border-bottom" style="font-size: 14px">
     <div class="col"> 
     حساب:
-    {{$clientData['client']->name}}
+    {{$data['client']->name}}
     </div>
     <div class="col">
-
+    موبايل:
+    {{$data['client']->phone}}
     </div>
-    @if($_GET['from'] ??'')
-    <div class="col">
-    من تاريخ:
-    <?= $_GET['from'] ??'' ?>
-    </div>
-    @endif
-    @if($_GET['to'] ??'')
-    <div class="col">
-        حتى تاريخ:
-    <?= $_GET['to'] ??'' ?>
-    </div>
-    @endif
+    
   </div>
   <div class="row p-2 text-center border-bottom alert-primary "  style="font-size: 14px">
-    <div class="col-3"> 
-    مجموع النهائي:
-    {{$clientData['totalAmount']}}
-    </div>
-    <div class="col-3">
+    @php
+      $totalAmountDollar = 0;
+      $totalAmountDinar = 0;
+    @endphp
+    @foreach ($data['carexpenses'] as $key => $expense)
+    @php
+        $totalAmountDollar += $expense->amount_dollar;
+        $totalAmountDinar += $expense->amount_dinar;
 
-    </div>
-    <div class="col-3">
+    @endphp
+@endforeach
 
+
+    <div class="col-6"> 
+     مجموع النهائي بالدولار: 
+    {{$totalAmountDollar??0}}
     </div>
-   
+    <div class="col-6">
+    مجموع النهائي بالدينار:
+    {{$totalAmountDinar??0}}
+    </div>
+    
   </div>
   <div class="row text-center py-2">
     <table class="table table-sm table-striped table-bordered" style="font-size: 12px">
         <thead>
           <tr>
-            <th scope="col">رقم الوصل</th>
             <th scope="col">تاريخ</th>
+            <th scope="col">ملاحظة</th>
             <th scope="col">المبلغ بالدولار</th>
-            <th scope="col">البيان</th>
-
-            
+            <th scope="col">المبلغ بالدينار</th>
           </tr>
         </thead>
         <tbody>
-            @foreach ($clientData['transactions'] as $key=>$data)
-            @if( $data->is_pay == 1)
+            @foreach ($data['carexpenses'] as $key=>$data)
             <tr>
-                <td>{{ $data->id }}</td>
-                <td>{{ $data->created_at }}</td>
-                <td>{{ $data->amount  }}</td>
-                <td>{{ $data->description  }}</td>
+                <td>{{ $data->created }}</td>
+                <td>{{ $data->note }}</td>
+                <td>{{ $data->amount_dollar }}</td>
+                <td>{{ $data->amount_dinar  }}</td>
             </tr>
-            @endif
             @endforeach
         </tbody>
       </table>  

@@ -151,6 +151,7 @@ Route::post('delExpensesCar',[CarExpensesController::class, 'delExpensesCar'])->
 Route::post('confirmArchiveCar',[CarExpensesController::class, 'confirmArchiveCar'])->name('confirmArchiveCar');
 Route::post('confirmArchiveCarBack',[CarExpensesController::class, 'confirmArchiveCarBack'])->name('confirmArchiveCarBack');
 Route::post('confirmDelCarFav',[CarExpensesController::class, 'confirmDelCarFav'])->name('confirmDelCarFav');
+Route::get('getIndexExpensesPrint',[CarExpensesController::class, 'getIndexExpensesPrint'])->name('getIndexExpensesPrint');
 
 
 

@@ -16,6 +16,7 @@ import { useI18n } from "vue-i18n";
 import newContracts from "@/Components/icon/new.vue";
 import show from "@/Components/icon/show.vue";
 import trash from "@/Components/icon/trash.vue";
+import print from "@/Components/icon/print.vue";
 
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
@@ -460,7 +461,7 @@ function confirmDelCarFav(V) {
                                       <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">
                                         مدفوع دينار
                                       </th>
-                                      <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2" style="width: 200px;">
+                                      <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2" style="width: 240px;">
                                         {{ $t('execute') }}
                                       </th>
                                   </tr>
@@ -516,6 +517,15 @@ function confirmDelCarFav(V) {
                                     >
                                       <trash />
                                     </button>
+                                    <a  target="_blank"
+                                      style="display: inline-flex;"
+                                      :href="`/api/getIndexExpensesPrint?car_id=${car.id}`"
+                                      tabIndex="1"
+                                      class="px-2 py-1  text-white  m-1 bg-blue-500 rounded"
+                                      >
+                                      <print />
+                                      </a>
+
                                     </td> 
                                 </tr>
                               </tbody>

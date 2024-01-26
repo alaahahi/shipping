@@ -152,7 +152,7 @@ function openModalDelClient(expense){
                 <div class="text-center">
                   <a  target="_blank"
                     style="display: inline-flex;"
-                    :href="`/api/getIndexAccountsSelas?user_id=${ formData.carexpenses[0]?.user_id}&print=5`"
+                    :href="`/api/getIndexExpensesPrint?car_id=${formData.id}`"
                     tabIndex="1"
                     class="px-4 py-1  text-white  m-1 bg-blue-500 rounded"
                     >
