@@ -442,6 +442,11 @@ class AccountingController extends Controller
     
             return view('receiptExpensesTotal',compact('clientData','config','transactions_id'));
          }
+         if($print==6){
+            $config=SystemConfig::first();
+    
+            return view('receiptCarsExpensesTotal',compact('clientData','config','transactions_id'));
+         }
         return Response::json($clientData, 200);
     }
     public function paySelse(Request $request,$id)

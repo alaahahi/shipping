@@ -98,4 +98,26 @@ class CarExpensesController extends Controller
             return response()->json(['error' => $e->getMessage()], 400);
         }
     }
+    public function confirmArchiveCarBack(Request $request){
+        try {
+            $car = Car::findOrFail($request->id);
+            $car_edited =  $car->update(['car_have_expenses'=>1]);
+            return response()->json('ok', 200);
+        } catch (ModelNotFoundException $e) {
+            // Handle the case where the record is not found
+            return response()->json(['error' => 'Expense not found'], 404);
+        } catch (\Exception $e) {
+            // Handle other exceptions that might occur during deletion
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+    public function confirmDelCarFav(Request $request){
+        $car = Car::find($request->id);
+        if($car){
+          $car_edited =  $car->update(['car_have_expenses'=>3]);
+        }else{
+            return Response::json('car not found', 200);    
+        }
+        return Response::json($car, 200);    
+    }
 }

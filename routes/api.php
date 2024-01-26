@@ -149,6 +149,8 @@ Route::post('addCarFavorite',[CarExpensesController::class, 'addCarFavorite'])->
 Route::post('confirmExpensesCar',[CarExpensesController::class, 'confirmExpensesCar'])->name('confirmExpensesCar');
 Route::post('delExpensesCar',[CarExpensesController::class, 'delExpensesCar'])->name('delExpensesCar');
 Route::post('confirmArchiveCar',[CarExpensesController::class, 'confirmArchiveCar'])->name('confirmArchiveCar');
+Route::post('confirmArchiveCarBack',[CarExpensesController::class, 'confirmArchiveCarBack'])->name('confirmArchiveCarBack');
+Route::post('confirmDelCarFav',[CarExpensesController::class, 'confirmDelCarFav'])->name('confirmDelCarFav');
 
 
 

@@ -5,12 +5,17 @@ import VueTailwindDatepicker from 'vue-tailwind-datepicker'
 import ModalAddCarExpensesFav from "@/Components/ModalAddCarExpensesFav.vue";
 import ModalAddCarExpenses from "@/Components/ModalAddCarExpenses.vue";
 import ModalArchiveCar from "@/Components/ModalArchiveCar.vue";
+import ModalArchiveCarBack from "@/Components/ModalArchiveCarBack.vue";
+import ModalDelCar from "@/Components/ModalDelCar.vue";
+
+
 import { useToast } from "vue-toastification";
 import axios from 'axios';
 import { ref } from 'vue';
 import { useI18n } from "vue-i18n";
 import newContracts from "@/Components/icon/new.vue";
 import show from "@/Components/icon/show.vue";
+import trash from "@/Components/icon/trash.vue";
 
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
@@ -25,6 +30,9 @@ let searchTerm = ref('');
 let showModalAddCarExpensesFav =  ref(false);
 let showModalAddCarExpenses =  ref(false);
 let showModalArchiveCarExpenses=  ref(false);
+let showModalArchiveCarExpensesBack=  ref(false);
+let showModalDelCar = ref(false);
+
 let car = ref([]);
 function openwModalAddCarExpensesFav(form={}) {
   showModalAddCarExpensesFav.value = true;
@@ -37,6 +45,15 @@ function openwshowModalArchiveCarExpenses(form={}) {
   formData.value=form
   showModalArchiveCarExpenses.value = true;
 }
+function openwshowModalArchiveCarExpensesBack(form={}) {
+  formData.value=form
+  showModalArchiveCarExpensesBack.value = true;
+}
+function openModalDelCar(form={}) {
+  formData.value=form
+  showModalDelCar.value = true;
+}
+
 const currentWork = ref(true);
 
 
@@ -146,7 +163,25 @@ function confirmArchiveCar(car){
   axios.post('/api/confirmArchiveCar',car)
   .then(response => {
     showModalAddCarExpenses.value = false;
-    toast.success( "تم إضافة السيارة بنجاح ", {
+    toast.success( "تم نقل السيارة بنجاح ", {
+        timeout: 3000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+      refresh()
+      showModalArchiveCarExpenses.value = false;
+
+  })
+  .catch(error => {
+    console.error(error);
+  })
+}
+function confirmArchiveCarBack(car){
+  axios.post('/api/confirmArchiveCarBack',car)
+  .then(response => {
+    showModalArchiveCarExpensesBack.value = false;
+    toast.success( "تم نقل السيارة بنجاح ", {
         timeout: 3000,
         position: "bottom-right",
         rtl: true
@@ -165,6 +200,27 @@ function swiptab(tab){
   refresh()
 
 }
+
+
+function confirmDelCarFav(V) {
+  axios.post('/api/confirmDelCarFav',V)
+  .then(response => {
+    showModalDelCar.value = false;
+    toast.success("حذف السيارة بنجاح", {
+        timeout: 3000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+    refresh();
+  })
+  .catch(error => {
+    console.error(error);
+  })
+
+
+}
+
 </script>
 
 <template>
@@ -178,7 +234,15 @@ function swiptab(tab){
         <template #header>
           </template>
     </ModalArchiveCar>
-
+    <ModalArchiveCarBack
+            :formData="formData"
+            :show="showModalArchiveCarExpensesBack ? true : false"
+            @a="confirmArchiveCarBack($event)"
+            @close="showModalArchiveCarExpensesBack = false"
+            >
+        <template #header>
+          </template>
+    </ModalArchiveCarBack>
     <ModalAddCarExpensesFav
             :formData="formData"
             :show="showModalAddCarExpensesFav ? true : false"
@@ -199,6 +263,19 @@ function swiptab(tab){
         <template #header>
           </template>
     </ModalAddCarExpenses>
+    <ModalDelCar
+      :show="showModalDelCar ? true : false"
+      :formData="formData"
+      @a="confirmDelCarFav($event)"
+      @close="showModalDelCar = false"
+    >
+      <template #header>
+        <h2 class="mb-5 dark:text-gray-400 text-center">
+          هل متأكد من حذف السيارة ؟
+        </h2>
+      </template>
+    </ModalDelCar>
+
     <AuthenticatedLayout>
         <div class="py-2" v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==7">
           <ul class="sm:px-6 lg:px-8 text-sm font-medium text-center text-gray-500 rounded-lg  flex dark:divide-gray-700 dark:text-gray-400">
@@ -383,7 +460,7 @@ function swiptab(tab){
                                       <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">
                                         مدفوع دينار
                                       </th>
-                                      <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2" style="width: 150px;">
+                                      <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2" style="width: 200px;">
                                         {{ $t('execute') }}
                                       </th>
                                   </tr>
@@ -419,6 +496,25 @@ function swiptab(tab){
                                     <svg class="w-6 h-6 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
                                       <path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M8 8v1h4V8m4 7H4a1 1 0 0 1-1-1V5h14v9a1 1 0 0 1-1 1ZM2 1h16a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1Z"></path>
                                     </svg>
+                                    </button>
+                                    <button
+                                    v-if="!currentWork"
+                                      tabIndex="1"
+                                      class="px-2 py-1  text-white mx-1 bg-pink-600 rounded mt-3 sm:mt-0"
+                                      @click="openwshowModalArchiveCarExpensesBack(car)"
+                                    >
+                                    <svg class="w-6 h-6 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h11m0 0-4-4m4 4-4 4m-5 3H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h3"></path>
+                                    </svg>
+                                    </button>
+                                    <button
+                                    v-if="currentWork"
+                                      tabIndex="1"
+                                      
+                                      class="px-2 py-1  text-white mx-1 bg-orange-500 rounded  mt-3 sm:mt-0"
+                                      @click="openModalDelCar(car)"
+                                    >
+                                      <trash />
                                     </button>
                                     </td> 
                                 </tr>
