@@ -18,6 +18,8 @@ use App\Http\Controllers\TransfersController;
 use App\Http\Controllers\CarConfigController;
 use App\Http\Controllers\OnlineContractsController;
 use App\Http\Controllers\AnnualController;
+use App\Http\Controllers\CarExpensesController;
+
 
 use App\Models\SystemConfig;
 
@@ -141,4 +143,14 @@ Route::get('getGenExpenses',[AccountingController::class, 'getGenExpenses'])->na
 
 Route::post('convertDollarDinar',[AccountingController::class, 'convertDollarDinar'])->name('convertDollarDinar');
 Route::post('convertDinarDollar',[AccountingController::class, 'convertDinarDollar'])->name('convertDinarDollar');
+
+
+Route::post('addCarFavorite',[CarExpensesController::class, 'addCarFavorite'])->name('addCarFavorite');
+Route::post('confirmExpensesCar',[CarExpensesController::class, 'confirmExpensesCar'])->name('confirmExpensesCar');
+Route::post('delExpensesCar',[CarExpensesController::class, 'delExpensesCar'])->name('delExpensesCar');
+Route::post('confirmArchiveCar',[CarExpensesController::class, 'confirmArchiveCar'])->name('confirmArchiveCar');
+
+
+
+
 });

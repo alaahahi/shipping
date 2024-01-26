@@ -3,44 +3,41 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/inertia-vue3';
 import VueTailwindDatepicker from 'vue-tailwind-datepicker'
 import ModalAddCarExpensesFav from "@/Components/ModalAddCarExpensesFav.vue";
-
+import ModalAddCarExpenses from "@/Components/ModalAddCarExpenses.vue";
+import ModalArchiveCar from "@/Components/ModalArchiveCar.vue";
 import { useToast } from "vue-toastification";
 import axios from 'axios';
 import { ref } from 'vue';
 import { useI18n } from "vue-i18n";
-import show from "@/Components/icon/show.vue";
-import pay from "@/Components/icon/pay.vue";
-import trash from "@/Components/icon/trash.vue";
-import edit from "@/Components/icon/edit.vue";
-import exit from "@/Components/icon/exit.vue";
 import newContracts from "@/Components/icon/new.vue";
+import show from "@/Components/icon/show.vue";
+
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
 import debounce from 'lodash/debounce';
-
 const {t} = useI18n();
-
-
 const props = defineProps({
-
   client:Array,
-
 });
-
-
+const formData = ref({});
 const toast = useToast();
-
 let searchTerm = ref('');
 let showModalAddCarExpensesFav =  ref(false);
-
+let showModalAddCarExpenses =  ref(false);
+let showModalArchiveCarExpenses=  ref(false);
+let car = ref([]);
 function openwModalAddCarExpensesFav(form={}) {
   showModalAddCarExpensesFav.value = true;
 }
-
-
-const formData = ref({});
-const formGenExpenses = ref({});
-const car = ref([]);
+function openwshowModalAddCarExpenses(form={}) {
+  formData.value=form
+  showModalAddCarExpenses.value = true;
+}
+function openwshowModalArchiveCarExpenses(form={}) {
+  formData.value=form
+  showModalArchiveCarExpenses.value = true;
+}
+const currentWork = ref(true);
 
 
 let resetData = ref(false);
@@ -51,8 +48,6 @@ const refresh = () => {
   page = 0;
   car.value.length = 0;
   resetData.value = !resetData.value;
-
-
 };
 const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce delay (in milliseconds) as needed
 
@@ -64,7 +59,8 @@ const getResultsCar = async ($state) => {
         limit: 100,
         page: page,
         q: q,
-        user_id: user_id
+        user_id: user_id,
+        car_have_expenses:currentWork.value?1:2
       }
     });
 
@@ -90,12 +86,20 @@ const getResultsCar = async ($state) => {
 
  
 
-function confirmCar(V) {
-  axios.post('/api/addCars',V)
+function confirmExpensesCar(V) { 
+  axios.post('/api/confirmExpensesCar',V)
   .then(response => {
-    showModalCar.value = false;
-    refresh()
-    getcountTotalInfo()
+    showModalAddCarExpenses.value = false;
+    toast.success( "تم إضافة السيارة بنجاح ", {
+        timeout: 3000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+
+
+      refresh()
+
   })
   .catch(error => {
     console.error(error);
@@ -110,11 +114,71 @@ function getTodayDate() {
   const day = String(today.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+function  calculateSum(carexpenses) {
+      // Use reduce to sum up carexpenses.amount_dollar
+      return carexpenses.reduce((sum, expense) => sum + (expense.amount_dollar || 0), 0);
+    }
+function  calculateSumDinar(carexpenses) {
+      // Use reduce to sum up carexpenses.amount_dollar
+      return carexpenses.reduce((sum, expense) => sum + (expense.amount_dinar || 0), 0);
+    }
 
+    function confirmCar (car){
+  axios.post('/api/addCarFavorite',car)
+  .then(response => {
+    showModalAddCarExpenses.value = false;
+    toast.success( "تم إضافة السيارة بنجاح ", {
+        timeout: 3000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+      refresh()
+      showModalAddCarExpensesFav.value = false;
+
+  })
+  .catch(error => {
+    console.error(error);
+  })
+}
+
+function confirmArchiveCar(car){
+  axios.post('/api/confirmArchiveCar',car)
+  .then(response => {
+    showModalAddCarExpenses.value = false;
+    toast.success( "تم إضافة السيارة بنجاح ", {
+        timeout: 3000,
+        position: "bottom-right",
+        rtl: true
+
+      });
+      refresh()
+      showModalArchiveCarExpenses.value = false;
+
+  })
+  .catch(error => {
+    console.error(error);
+  })
+}
+function swiptab(tab){
+  currentWork.value=tab
+  refresh()
+
+}
 </script>
 
 <template>
     <Head title="Dashboard" />
+    <ModalArchiveCar
+            :formData="formData"
+            :show="showModalArchiveCarExpenses ? true : false"
+            @a="confirmArchiveCar($event)"
+            @close="showModalArchiveCarExpenses = false"
+            >
+        <template #header>
+          </template>
+    </ModalArchiveCar>
+
     <ModalAddCarExpensesFav
             :formData="formData"
             :show="showModalAddCarExpensesFav ? true : false"
@@ -125,9 +189,28 @@ function getTodayDate() {
         <template #header>
           </template>
     </ModalAddCarExpensesFav>
-
+    <ModalAddCarExpenses
+            :formData="formData"
+            :show="showModalAddCarExpenses ? true : false"
+            :currentWork="currentWork"
+            @a="confirmExpensesCar($event)"
+            @close="showModalAddCarExpenses = false"
+            >
+        <template #header>
+          </template>
+    </ModalAddCarExpenses>
     <AuthenticatedLayout>
         <div class="py-2" v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
+          <ul class="sm:px-6 lg:px-8 text-sm font-medium text-center text-gray-500 rounded-lg   sm:flex dark:divide-gray-700 dark:text-gray-400">
+            <li class="w-full">
+                <button @click="swiptab(true)" class="inline-block w-full p-4 border-r border-gray-200 dark:border-gray-700 hover:text-gray-700 hover:bg-gray-50 focus:ring-4 focus:ring-blue-300 focus:outline-none  dark:text-white" :class="!currentWork ? 'dark:bg-gray-800 dark:hover:bg-gray-700':'bg-white  dark:bg-gray-900'" >قيد العمل </button>
+            </li>
+            <li class="w-full">
+                <button @click="swiptab(false)" class="inline-block w-full p-4 text-gray-900 bg-gray-100 border-r border-gray-200 dark:border-gray-700 rounded-s-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:text-white" :class="currentWork ? 'dark:bg-gray-800 dark:hover:bg-gray-700':'bg-white  dark:bg-gray-900'" >السيارة المكتملة</button>
+            </li>
+     
+          </ul>
+
         <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 ">
             <div class="bg-white overflow-hidden shadow-sm ">
                 <div class="p-6  dark:bg-gray-900">
@@ -269,45 +352,38 @@ function getTodayDate() {
                       <div>
                         <div>
                         </div>
-                        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-                          <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
-                              <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
-                                  <tr>
-                                      <th scope="col" class="px-1 py-3 text-base	" >
+                        <div class="overflow-x-auto shadow-md sm:rounded-lg mt-4 mb-5">
+                        <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center divide-y divide-gray-200 dark:divide-gray-800">
+                          <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center">
+                            <tr class="bg-emerald-600 text-gray-100">
+                                      <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2	" >
                                         {{ $t('no') }}  
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base	">
+                                      <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2	">
                                         {{ $t('car_owner') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">
                                         {{ $t('car_type') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">
                                         {{ $t('year') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">
                                         {{ $t('color') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">
                                         {{ $t('vin') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">
                                         {{ $t('car_number') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('date') }}
-                                      </th>
-                        
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">
                                         مدفوع دولار
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
+                                      <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">
                                         مدفوع دينار
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('note') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base" style="width: 150px;">
+                                      <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2" style="width: 150px;">
                                         {{ $t('execute') }}
                                       </th>
                                   </tr>
@@ -316,96 +392,34 @@ function getTodayDate() {
 
 
                                 <tr v-for="car in car" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.no }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.client?.name }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_type}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.year}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_color }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.vin }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_number }}</td> 
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.contract?.created  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.contract?.paid || 0  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.contract?.paid_dinar  || 0 }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{car.contract?.note  }}</td>
-
-                                     <td className="border dark:border-gray-800 text-start px-2 py-2">
-                                    <!-- <button
-                                      tabIndex="1"
-                                      
-                                      class="px-2 py-1  text-white mx-1 bg-slate-500 rounded"
-                                      @click="openModalEditCars(car)"
-                                    >
-                                      {{ $t('edit') }}
-                                    </button>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.no }}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.client?.name }}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.car_type}}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.year}}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.car_color }}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.vin }}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.car_number }}</td> 
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ calculateSum(car.carexpenses) }}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ calculateSumDinar(car.carexpenses) }}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">
                                     <button
                                       tabIndex="1"
-                                      
-                                      class="px-2 py-1  text-white mx-1 bg-orange-500 rounded"
-                                      @click="openModalDelCar(car)"
+                                      class="px-2 py-1  text-white mx-1 bg-emerald-500 rounded"
+                                      @click="openwshowModalAddCarExpenses(car)"
                                     >
-                                      {{ $t('delete') }}
-                                    </button> -->
-                                    <button
-                                     v-if="(car.contract?.price != car.contract?.paid) || (car.contract?.price_dinar != car.contract?.paid_dinar)"
-                                      tabIndex="1"
-                                      class="px-2 py-1  text-white mx-1 bg-pink-500 rounded"
-                                      @click="openModalEditCarContracts(car)"
-                                    >
-                                      <pay />
+                                     <newContracts v-if="currentWork" />
+                                     <show v-else />
                                     </button>
                                     <button
-                                    v-if="!car.contract"
+                                    v-if="currentWork"
                                       tabIndex="1"
-                                      class="px-2 py-1  text-white mx-1 bg-yellow-500 rounded"
-                                      @click="openModalAddCarContracts(car)"
+                                      class="px-2 py-1  text-white mx-1 bg-pink-600 rounded"
+                                      @click="openwshowModalArchiveCarExpenses(car)"
                                     >
-                                     <newContracts />
+                                    <svg class="w-6 h-6 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                      <path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M8 8v1h4V8m4 7H4a1 1 0 0 1-1-1V5h14v9a1 1 0 0 1-1 1ZM2 1h16a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1Z"></path>
+                                    </svg>
                                     </button>
-          
-                                    <button
-                                      tabIndex="1"
-                                      class="px-2 py-1  text-white mx-1 bg-red-500 rounded"
-                                      v-if="!car.is_exit"
-                                      @click="openModalAddExitCar(car)"
-                                    >
-                                     <exit />
-                                    </button>
-                                    <button
-                                      tabIndex="1"
-                                      class="px-2 py-1  text-white mx-1 bg-green-500 rounded"
-                                      v-if="car.is_exit"
-                                      @click="openModalShowExitCar(car)"
-
-                                    >
-                                     <show />
-                                    </button>
-                                       <!-- 
-                                    <button
-                                      tabIndex="1"
-                                      class="px-2 py-1  text-white mx-1 bg-blue-600 rounded"
-                                      @click="openAddExpenses(car)"
-                                    >
-                                      {{ $t('expenses') }}
-                                    </button>
-                                    <button
-                                      tabIndex="1"
-                                      class="px-2 py-1  text-white mx-1 bg-green-500 rounded"
-                                      v-if="car.results != 0 && (car.pay_price - car.paid_amount_pay == 0)"
-                                      @click="openAddCarPayment(car)"
-                                    >
-                                      {{ $t('view_payments') }}
-                                    </button>
-                                    <button
-                                      tabIndex="1"
-                                      class="px-2 py-1 text-base text-white mx-1 bg-red-700 rounded"
-                                      v-if="car.results == 1 && (car.pay_price - car.paid_amount_pay != 0)"
-                                      @click="openAddCarPayment(car)"
-                                    >
-                                      {{ $t('add_payment') }}
-                                    </button>
-
-                                    -->
-
                                     </td> 
                                 </tr>
                               </tbody>
@@ -423,117 +437,7 @@ function getTodayDate() {
                 </div>
             </div>
         <div >
-        <!-- <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="p-6  dark:bg-gray-900" style="border-radius: 8px;">
-                  <div class="flex flex-row">
-                                    <div class="basis-1/4">
-                                      <button
-                                        type="button"
-                                        @click="getcountComp()"
-                                        style="width: 70%;"
-                                        className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-rose-500 rounded"
-                                      >
-                                      فلترة
-                                      </button>
-                                    </div>
-                                    <div class="basis-3/4" style="direction: ltr;">
-                                      <vue-tailwind-datepicker overlay :options="options" :disable-date="dDate"  i18n="ar"  as-single use-range v-model="dateValue" />
-                                    </div>
-                  </div>
-                  <div class="flex pt-5 items-center">
-                  <div class="mx-auto container align-middle">
-                        <div class="grid grid-cols-2 gap-2" style="display: flow-root;">
-                          <div class="shadow rounded-lg py-3 px-5 bg-white" >
-                            <div class="flex flex-row justify-between items-center">
-                              <div>
-                                <h6 class="text-2xl">المعاملات المنجزة </h6>
-                                <h4 class="text-black text-4xl font-bold text-rigth">{{countComp}}</h4>
-                              </div>
-                              <div>
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  class="h-12 w-12"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="#14B8A6"
-                                  stroke-width="2"
-                                >
-                                  <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
-                                  />
-                                </svg>
-                              </div>
-                            </div>
-                            <div class="text-left flex flex-row justify-start items-center">
-                              <span class="mr-1">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  class="h-6 w-6"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="#14B8A6"
-                                  stroke-width="2"
-                                >
-                                  <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                                  />
-                                </svg>
-                              </span>
-                             
-                            </div>
-                          </div>
-                          <div class="shadow rounded-lg py-3 px-5 bg-white" v-if="false">
-                            <div class="flex flex-row justify-between items-center">
-                              <div>
-                                <h6 class="text-2xl">Serials viewed</h6>
-                                <h4 class="text-black text-4xl font-bold text-left">41</h4>
-                              </div>
-                              <div>
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  class="h-12 w-12"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="#EF4444"
-                                  stroke-width="2"
-                                >
-                                  <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
-                                  />
-                                </svg>
-                              </div>
-                            </div>
-                            <div class="text-left flex flex-row justify-start items-center">
-                              <span class="mr-1">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  class="h-6 w-6"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="#EF4444"
-                                  stroke-width="{2}"
-                                >
-                                  <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
-                                  />
-                                </svg>
-                              </span>
-                              <p><span class="text-red-500 font-bold">12%</span> in 7 days</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                  </div>
-                </div>
-                    </div> -->
+  
     </div>   
     </AuthenticatedLayout>
 </template>

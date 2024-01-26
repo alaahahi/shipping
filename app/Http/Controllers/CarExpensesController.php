@@ -19,8 +19,9 @@ use App\Models\ExpensesType;
 use Illuminate\Support\Facades\DB;
 use App\Models\Transactions;
 use App\Models\Expenses;
+use App\Models\CarExpenses;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 
 use Carbon\Carbon;
@@ -36,7 +37,6 @@ class CarExpensesController extends Controller
     $this->userAdmin =  UserType::where('name', 'admin')->first()->id;
     $this->userClient =  UserType::where('name', 'client')->first()->id;
     $this->userAccount =  UserType::where('name', 'account')->first()->id;
-
     $this->mainAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','main@account.com');
     $this->inAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','in@account.com');
     $this->outAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','out@account.com');
@@ -63,16 +63,59 @@ class CarExpensesController extends Controller
         return Inertia::render('CarExpenses/index', ['client'=>$client ]);   
     }
 
-    public function addTransfers()
+    public function addCarFavorite(Request $request)
     {
-   
-        return Response::json('ok', 200);    
+        $car = Car::find($request->carId);
+        if($car){
+          $car_edited =  $car->update(['car_have_expenses'=>1]);
+        }else{
+            return Response::json('car not found', 200);    
+        }
+        return Response::json($car, 200);    
     }
-    public function confirmTransfers(Request $request){
-        $owner_id=Auth::user()->owner_id;
+    public function confirmExpensesCar(Request $request){
+        $user=Auth::user();
+        $expenses = new CarExpenses;
+        $expenses->user_id = $user->id;
+        $expenses->owner_id = $user->owner_id;
+        $expenses->car_id = $request->id;
+        $expenses->created =Carbon::now()->format('Y-m-d');
+        $expenses->note = $request->amountNote;
+        $expenses->amount_dinar = $request->amountDinar;
+        $expenses->amount_dollar = $request->amountDollar;
+        $expenses->save();
 
+
+        return Response::json($expenses, 200);    
+
+
+        
     }
-    public function cancelTransfers(Request $request){
-          
+    public function delExpensesCar(Request $request){
+        try {
+            $expenses = CarExpenses::findOrFail($request->id);
+            $expenses->delete();
+    
+            return response()->json('ok', 200);
+        } catch (ModelNotFoundException $e) {
+            // Handle the case where the record is not found
+            return response()->json(['error' => 'Expense not found'], 404);
+        } catch (\Exception $e) {
+            // Handle other exceptions that might occur during deletion
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+    public function confirmArchiveCar(Request $request){
+        try {
+            $car = Car::findOrFail($request->id);
+            $car_edited =  $car->update(['car_have_expenses'=>2]);
+            return response()->json('ok', 200);
+        } catch (ModelNotFoundException $e) {
+            // Handle the case where the record is not found
+            return response()->json(['error' => 'Expense not found'], 404);
+        } catch (\Exception $e) {
+            // Handle other exceptions that might occur during deletion
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
     }
 }

@@ -57,7 +57,8 @@ class Car extends Model
         'is_exit',
         'owner_id',
         'contract_id',
-        'year_date'
+        'year_date',
+        'car_have_expenses'
     ];
     public function user()
     {
@@ -131,4 +132,20 @@ class Car extends Model
         return $imageUrls;
     }
 
+    public function carexpenses()
+    {
+        return $this->hasMany(CarExpenses::class, 'car_id', 'id');
+    }
+
+    public function getSumAmountDollarAttribute()
+    {
+        // Calculate and return the sum of amountDollar for all related expenses
+        return $this->carexpenses->sum('amountDollar');
+    }
+
+    public function getSumAmountDinarAttribute()
+    {
+        // Calculate and return the sum of amountDinar for all related expenses
+        return $this->carexpenses->sum('amountDinar');
+    }
   }

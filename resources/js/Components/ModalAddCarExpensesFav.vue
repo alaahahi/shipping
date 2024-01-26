@@ -30,11 +30,13 @@ watch(carsidSelected, (newValue, oldValue) => {
   axios.get('/api/getIndexCar', {
       params: {
         limit: 1000,
-        user_id: newValue
+        user_id: newValue,
+        car_have_expenses:0
+
       }
     })
     .then(response => {
-              cars.value = response.data;
+              cars.value = response.data.data;
             })
     .catch(error => {
       console.error(error);
@@ -87,7 +89,7 @@ function removeMedia(removedImage){
                 </div>
               </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2">  
+            <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2" v-if="cars[0]">  
               <div class="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="color_id">
                  اختر السيارة
@@ -95,7 +97,7 @@ function removeMedia(removedImage){
                 <div class="relative">
                   <ModelListSelect
                   optionValue="id"
-                  optionText="car_type"
+                  :customText="car => `${car.car_type} - ${car.car_color} -كاتي  ${car.car_number}-شانصى ${car.vin}`"
                   v-model="formData.carId"
                   :list="cars"
                   placeholder=" اختر السيارة">
@@ -109,38 +111,17 @@ function removeMedia(removedImage){
             <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2 mt-5" v-if="!saveCar">  
                 <button
                   class="modal-default-button py-3 bg-blue-500 rounded col-6"
-                  @click="formData.date = formData.date
-                      ? formData.date
-                      : getTodayDate();
-                      $emit('a', formData);"
-                  :disabled="(!formData.client_id)&&(!formData.client_name)">
+                  @click="formData.date = formData.date ? formData.date : getTodayDate(); $emit('a', formData);carsidSelected=0"
+                  :disabled="(!carsidSelected)&&(!formData.carId)">
                   إضافة ومتابعة
                 </button>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2" v-if="saveCar">
-              <div class="mb-4">
-                <label class="form-label">الصور</label>
-                <div class="mt-3">
-                    <Uploader 
-                        :server="'/api/carsAnnualUpload?carId='+saveCar"
-                        :is-invalid="errors?.media ? true : false"
-                        @change="changeMedia"
-                        location="/storage/posts/media"
-                        @init="initMedia"
-                        @add="addMedia"
-                        @remove="removeMedia"
-                    />
-                </div>
-                <p v-if="errors?.media" class="text-danger">{{ errors?.media[0] }}</p>
-            </div>
-             </div>
           </div>
-
           <div class="modal-footer my-2">
             <div class="flex flex-row  m-auto">
                <button
                   class="modal-default-button py-3 bg-rose-500 rounded col-6"
-                  @click=" $emit('close'); formData = ''">
+                  @click=" $emit('close'); carsidSelected = ''">
                   إغلاق
                 </button>
             </div>
