@@ -27,8 +27,10 @@ class UserController extends Controller
     public function __construct(){
          $this->url = env('FRONTEND_URL');
          $this->userAdmin =  UserType::where('name', 'admin')->first()->id;
-         $this->userClient =  UserType::where('name', 'client')->first()->id;
+         $this->selesKirkuk =  UserType::where('name', 'selesKirkuk')->first()->id;
          $this->userAccount =  UserType::where('name', 'account')->first()->id;
+         $this->car_expenses =  UserType::where('name', 'car_expenses')->first()->id;
+         $this->userClient =  UserType::where('name', 'client')->first()->id;
 
     }
 
@@ -39,14 +41,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $cards= Card::all();
-        return Inertia::render('Users/Index', ['url'=>$this->url,'cards'=>$cards]);
-    }
-    public function getSaler()
-    {
-        $data = User::with('userType:id,name','wallet')->where('type_id', $this->userSeles)->paginate(10);
-        return Response::json($data, 200);    
-
+        return Inertia::render('Users/Index');
     }
 
     public function clients()
@@ -57,11 +52,8 @@ class UserController extends Controller
     public function showClients($id)
     {
         $owner_id=Auth::user()->owner_id;
-
-        $q = request()->query('q'); // Access the 'q' query parameter
-
+        $q = request()->query('q');
         $clients = User::with('wallet')->where('owner_id',$owner_id)->where('type_id', $this->userClient)->get();
-
         $client= user::find($id);
         return Inertia::render('Clients/Show', ['url'=>$this->url,'client'=>$client,'clients'=>$clients,'client_id'=>$id,'q'=>$q]);
     }
@@ -71,7 +63,7 @@ class UserController extends Controller
     }
     public function getIndex()
     {
-        $data = User::with('userType:id,name','wallet')->where('type_id', $this->userSeles)->paginate(10);
+        $data = User::with('userType:id,name','wallet')->whereIn('type_id', [$this->selesKirkuk,$this->car_expenses])->paginate(10);
         return Response::json($data, 200);
     }
     public function getIndexClients()
@@ -127,20 +119,16 @@ class UserController extends Controller
     public function create()
     {
         $usersType = UserType::all();
-        $userSeles=$this->userSeles;
-        $userDoctor =  $this->userClient;
-        $userHospital = '';
-        return Inertia::render('Users/Create',['usersType'=>$usersType,'userSeles'=>$userSeles,'userDoctor'=>$userDoctor,'userHospital'=>$userHospital]);
+        return Inertia::render('Users/Create',['usersType'=>$usersType]);
     }
     public function store(Request $request)
     {
         Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:users',
            ])->validate();
-           //$userChief_id =User::where('type_id',  $this->userChief)->first()->id ?? 0 ;
-                $user = User::create([
+        $user = User::create([
                     'name' => $request->name,
-                    'type_id' => $this->userSeles,
+                    'type_id' => $request->userType,
                     'email' => $request->email,
                     'created' =>Carbon::now()->format('Y-m-d'),
                     'password' => Hash::make($request->password),
@@ -157,7 +145,7 @@ class UserController extends Controller
 
         $owner_id=Auth::user()->owner_id;
         Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:users',
            ])->validate();
            //$userChief_id =User::where('type_id',  $this->userChief)->first()->id ?? 0 ;
                 $user = User::create([
@@ -176,7 +164,7 @@ class UserController extends Controller
     public function clientsEdit(Request $request)
     {
         Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:users',
            ])->validate();
            //$userChief_id =User::where('type_id',  $this->userChief)->first()->id ?? 0 ;
                 $user = User::find($request->id)->update([
@@ -231,14 +219,8 @@ class UserController extends Controller
     public function edit(User $User)
     {
         $usersType = UserType::all();
-        $userSeles=$this->userSeles;
-        $userDoctor =  $this->userClient;
-        $userHospital = '';
-       //$coordinators =User::where('type_id', $this->userCoordinator )->get();
-       // $chief =User::where('type_id', $this->userChief )->get();
-        return Inertia::render('Users/Edit', [
-            'user' => $User,'usersType'=>$usersType,'userSeles'=>$userSeles,'userDoctor'=>$userDoctor,'userHospital'=>$userHospital
-        ]);
+        $user = User::find($User->id);
+        return Inertia::render('Users/Edit', ['usersType'=>$usersType,'user'=>$user]);
     }
     
     /**
@@ -249,7 +231,6 @@ class UserController extends Controller
     public function update($id, Request $request)
     {
         $username = User::where('id', $id)->first()->email;
-
         switch ($username) {
             case $request->email:
                 if ($request->password) {
@@ -260,7 +241,6 @@ class UserController extends Controller
                     $user = User::find($id)->update([
                         'name' => $request->name,
                         'password' => Hash::make($request->password),
-                        'type_id' => $request->userType,
                         'percentage' => $request->percentage
                     ]);
                 } else {
@@ -269,7 +249,6 @@ class UserController extends Controller
                     ]);
                     $user = User::find($id)->update([
                         'name' => $request->name,
-                        'type_id' => $request->userType,
                         'percentage' => $request->percentage
                     ]);
                 }
@@ -284,7 +263,6 @@ class UserController extends Controller
                     $user = User::find($id)->update([
                         'name' => $request->name,
                         'email' => $request->email,
-                        'percentage' => $request->percentage
                     ]);
                 } else {
                     $request->validate([
@@ -296,13 +274,12 @@ class UserController extends Controller
                         'name' => $request->name,
                         'email' => $request->email,
                         'password' => Hash::make($request->password),
-                        'percentage' => $request->percentage
                     ]);
                 }
                 break;
         }
         
-        return Inertia::render('clients', ['url'=>$this->url]);
+        return Inertia::render('Users/Index', ['url'=>$this->url]);
 
     }
     
