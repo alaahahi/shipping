@@ -324,7 +324,9 @@ class DashboardController extends Controller
         }else{
             $no = $maxNo + 1;
         }
-        $car=Car::find($car_id);
+        $car=Car::with('client')->find($request->id);
+
+
         if(!isset($no)){
             $no=$car->no;
            
@@ -345,9 +347,24 @@ class DashboardController extends Controller
         }
 
         $total = (int)(($checkout+$shipping_dolar+ $coc_dolar +(int)($dinar / ($dolar_price))+$expenses) ??0);
-        //$descClient = trans('text.descClient').' '.$total.' '.trans('text.for_car').$car->car_type.' '.$car->vin;
-      
-            // Extract the relevant fields from the $request object
+        if($car->client_id == $request->client_id)
+        {
+
+        }else{
+            $desc="نقل السيارة";
+            if($car->results==0){
+                if($car->total_s){
+                    $this->accountingController->decreaseWallet($car->total_s, $desc,$car->client_id,$car->id,'App\Models\User');
+                    $this->accountingController->increaseWallet($car->total_s, $desc,$request->client_id,$car->id,'App\Models\User');
+                }
+            }
+            if($car->results==1){
+                if($car->total_s){
+                    $this->accountingController->decreaseWallet($car->total_s-$car->paid, $desc,$car->client_id,$car->id,'App\Models\User');
+                    $this->accountingController->increaseWallet($car->total_s-$car->paid, $desc,$request->client_id,$car->id,'App\Models\User');
+                }
+            }
+        }
             $dataToUpdate = $request->all();
 
             // If 'purchase_price' and 'paid_amount' are calculated separately, add them to $dataToUpdate
@@ -361,9 +378,9 @@ class DashboardController extends Controller
 
             }
             if($car->paid){
-                if($total >$car->paid+$car->discount){
+                if($total > $car->paid +$car->discount){
                     $dataToUpdate['results'] = 1  ;
-                }elseif($total==$car->paid+$car->discount){
+                }elseif($total == $car->paid+$car->discount){
                     $dataToUpdate['results'] = 2  ;
                 }else{
                     $dataToUpdate['results'] = 0  ;

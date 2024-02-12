@@ -104,6 +104,7 @@ Route::get('addCarContracts',[OnlineContractsController::class, 'addCarContracts
 Route::get('editCarContracts',[OnlineContractsController::class, 'editCarContracts'])->name('editCarContracts');
 Route::get('makeCarExit',[OnlineContractsController::class, 'makeCarExit'])->name('makeCarExit');
 Route::get('unMakeCarExit',[OnlineContractsController::class, 'unMakeCarExit'])->name('unMakeCarExit');
+Route::post('removeContract',[OnlineContractsController::class, 'removeContract'])->name('removeContract');
 
 
 Route::get('addPaymentCarTotal',[AccountingController::class, 'addPaymentCarTotal'])->name('addPaymentCarTotal');

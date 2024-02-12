@@ -6,6 +6,7 @@ import ModalAddCarContracts from "@/Components/ModalAddCarContracts.vue";
 import ModalEditCarContracts from "@/Components/ModalEditCarContracts.vue";
 import ModalAddExitCar from "@/Components/ModalAddExitCar.vue";
 import ModalShowExitCar from "@/Components/ModalShowExitCar.vue";
+import ModalDelCar from "@/Components/ModalDelCar.vue";
 
 import { useToast } from "vue-toastification";
 import axios from 'axios';
@@ -73,7 +74,7 @@ function openModalShowExitCar(form={}) {
 const formData = ref({});
 const formGenExpenses = ref({});
 const car = ref([]);
-
+let showModalDelCar = ref(false);
 
 let resetData = ref(false);
 let user_id = 0;
@@ -205,7 +206,35 @@ function confirmAddExitCar(v){
   })
   
 }
+function confirmDelContract(v){
 
+axios.post(`/api/removeContract`,v)
+.then(response => {
+  showModalAddExitCar.value = false;
+  toast.success( "تم اضافة خروجية للسيارة بنجاح ", {
+      timeout: 5000,
+      position: "bottom-right",
+      rtl: true
+
+    });
+
+    refresh();
+    showModalDelCar.value = false;
+})
+.catch(error => {
+  showModalAddExitCar.value = false;
+
+  toast.error("لم التعديل بنجاح", {
+      timeout: 2000,
+      position: "bottom-right",
+      rtl: true
+
+    });
+    showModalDelCar.value = false;
+
+})
+
+}
 
 
 function getTodayDate() {
@@ -215,11 +244,27 @@ function getTodayDate() {
   const day = String(today.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
-
+function openModalDelCar(form={}) {
+  formData.value=form
+  showModalDelCar.value = true;
+}
 </script>
 
 <template>
     <Head title="Dashboard" />
+    <ModalDelCar
+            :show="showModalDelCar ? true : false"
+            :formData="formData"
+            @a="confirmDelContract($event)"
+            @close="showModalDelCar = false"
+            >
+          <template #header>
+            <h2 class=" mb-5 dark:text-white text-center">
+          هل متأكد من حذف العقد الالكتروني
+          ؟
+        </h2>
+          </template>
+    </ModalDelCar>
     <ModalAddCarContracts
             :formData="formData"
             :show="showModalAddCarContracts ? true : false"
@@ -612,7 +657,7 @@ function getTodayDate() {
                                       <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t('note') }}
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base" style="width: 150px;">
+                                      <th scope="col" class="px-1 py-3 text-base" style="width: 190px;">
                                         {{ $t('execute') }}
                                       </th>
                                   </tr>
@@ -642,14 +687,8 @@ function getTodayDate() {
                                     >
                                       {{ $t('edit') }}
                                     </button>
-                                    <button
-                                      tabIndex="1"
-                                      
-                                      class="px-2 py-1  text-white mx-1 bg-orange-500 rounded"
-                                      @click="openModalDelCar(car)"
-                                    >
-                                      {{ $t('delete') }}
-                                    </button> -->
+                                    -->
+                                 
                                     <button
                                      v-if="(car.contract?.price != car.contract?.paid) || (car.contract?.price_dinar != car.contract?.paid_dinar)"
                                       tabIndex="1"
@@ -684,6 +723,16 @@ function getTodayDate() {
                                     >
                                      <show />
                                     </button>
+
+                                    <button
+                                      tabIndex="1"
+                                      v-if="car.contract"
+                                      class="px-2 py-1  text-white mx-1 bg-orange-500 rounded"
+                                      @click="openModalDelCar(car)"
+                                    >
+                                     <trash />
+                                    </button>
+
                                        <!-- 
                                     <button
                                       tabIndex="1"

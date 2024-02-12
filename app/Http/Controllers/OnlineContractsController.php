@@ -149,7 +149,6 @@ class OnlineContractsController extends Controller
         $phone=$request->phone ?? 0;
 
         $contract=Contract::find($car->contract->id);
-;
         $descDebit="دين من عقد السيارة ".$car->car_type.' '.$car->car_type.' رقم الشانص'.$car->vin.' '.$note;
         if($paid){
             $contract->increment('paid',$paid);
@@ -173,6 +172,32 @@ class OnlineContractsController extends Controller
             $car->update(['is_exit'=>$exitCar->id]);
 
         }
+        return Response::json('ok', 200);    
+
+    }
+
+    public function removeContract(Request $request){
+        $owner_id=Auth::user()->owner_id;
+
+        $car = Car::find($request->id);
+
+        $contract=Contract::find($request->contract_id);
+        $descDebit="مرتجع حذف من عقد السيارة ".$car->car_type.' '.$car->car_type.' رقم الشانص'.$car->vin;
+
+        if($contract->paid){
+            $tran=$this->accountingController->decreaseWallet($contract->paid,$descDebit,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\Car',0,0,'$');
+
+            $this->accountingController->decreaseWallet($contract->paid, $descDebit,$this->onlineContracts->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car',0,0,'$',0,$tran->id);
+
+        }
+        if($contract->paid_dinar){
+            $tran=$this->accountingController->decreaseWallet($contract->paid_dinar,$descDebit,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\Car',0,0,'$');
+
+            $this->accountingController->decreaseWallet($contract->paid_dinar, $descDebit,$this->onlineContracts->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car',0,0,'$',0,$tran->id);
+
+        }
+
+         $contract->delete();
         return Response::json('ok', 200);    
 
     }

@@ -1,5 +1,8 @@
 <script setup>
 import { ref, computed } from "vue";
+import { ModelListSelect } from "vue-search-select"
+  // Import everythModelSelecting
+import "vue-search-select/dist/VueSearchSelect.css"
 
 const props = defineProps({
   show: Boolean,
@@ -56,26 +59,49 @@ function validateExchangeRate(v) {
                 <label class="dark:text-gray-200" for="color_id">{{
                   $t("car_owner")
                 }}</label>
-                <div class="relative">
-                  <select
+                         <div class="relative">
+                <ModelListSelect
+                  v-if="!showClient"
+                  optionValue="id"
+                  optionText="name"
+                  v-model="formData.client_id"
+                  :list="client"
+                  :placeholder="$t('selectCustomer')">
+                </ModelListSelect>
+                  <!-- <button
+                    type="button"
+                    @click="
+                      showClient = true;
+                      formData.client_name = '';
+                      formData.client_id='';
+                    "
                     v-if="!showClient"
-                    v-model="formData.client_id"
-                    id="color_id"
-                    class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    disabled>
-                    <option selected disabled>
-                      {{ $t("selectCustomer") }}
-                    </option>
-                    <option
-                      v-for="(card, index) in client"
-                      :key="index"
-                      :value="card.id"
-                      >
-                      {{ card.name }}
-                    </option>
-                  </select>
-                
+                    class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-green-500 rounded-tl-lg rounded-bl-lg"
+                  >
+                    {{ $t("addCustomer") }}
+                  </button> -->
                 </div>
+                <div class="relative">
+                  <input
+                    id="note"
+                    v-if="showClient"
+                    type="text"
+                    class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                    v-model="formData.client_name"
+                  />
+                  <button
+                    type="button"
+                    @click="
+                      showClient = false;
+                      formData.client = '';
+                    "
+                    v-if="showClient"
+                    class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-pink-500 rounded-tl-lg rounded-bl-lg"
+                  >
+                    {{ $t("selectCustomer") }}
+                  </button>
+                </div>
+ 
          
               </div>
     
@@ -284,6 +310,17 @@ function validateExchangeRate(v) {
 </template>
   
   <style>
+      .ui.fluid.search.selection.dropdown{
+    justify-content: revert;
+    display: flex;
+    min-height: 40px;
+  }
+  .ui.dropdown .menu .selected.item{
+    background-color: #e012035d;
+  }
+  .ui.dropdown .menu>.item {
+    text-align: right;
+  }
 .modal-mask {
   position: fixed;
   z-index: 9998;

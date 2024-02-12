@@ -23,7 +23,7 @@ const switchLocale = (locale) => {
     <div class="min-h-screen bg-gray-100 dark:bg-gray-800">
       <nav class="bg-white border-gray-100 dark:bg-gray-900  print:hidden">
         <!-- Primary Navigation Menu -->
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-8xl mx-auto px-4 sm:px-2  ">
           <div class="flex justify-between h-16">
             <div class="flex">
               <!-- Logo -->
@@ -102,6 +102,24 @@ const switchLocale = (locale) => {
 
                 >
                    مصاريف السيارات
+                </NavLink>
+              </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==8">
+                <NavLink
+                  :href="route('car_contract')"
+                  :active="route().current('car_contract')"
+
+                >
+                    عقود البيع
+                </NavLink>
+              </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==8">
+                <NavLink
+                  :href="route('contract_account')"
+                  :active="route().current('contract_account')"
+
+                >
+                     محاسبة عقود
                 </NavLink>
               </div>
 
@@ -346,6 +364,20 @@ const switchLocale = (locale) => {
               مصاريف السيارات 
               </ResponsiveNavLink>
               <ResponsiveNavLink
+                :href="route('car_contract')"
+                :active="route().current('car_contract')"
+                v-if="$page.props.auth.user.type_id==8"
+              >
+              عقود البيع  
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
+                :href="route('contract_account')"
+                :active="route().current('contract_account')"
+                v-if="$page.props.auth.user.type_id==8"
+              >
+              محاسبة عقود
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
                 :href="route('logout')"
                 method="post"
                 as="button"
@@ -371,3 +403,8 @@ const switchLocale = (locale) => {
     </div>
   </div>
 </template>
+<style>
+.max-w-8xl{
+  max-width: 95rem
+}
+</style>
