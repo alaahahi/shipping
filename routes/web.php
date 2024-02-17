@@ -149,8 +149,10 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('car_expenses',[CarExpensesController::class, 'index'])->name('car_expenses');
     Route::get('car_contract',[CarContractController::class, 'index'])->name('car_contract');
     Route::get('contract_account',[CarContractController::class, 'index'])->name('contract_account');
-    Route::get('new_contract',[CarContractController::class, 'new_contract'])->name('new_contract');
+    Route::get('contract/{id?}', [CarContractController::class, 'contract'])->name('contract');
+    Route::get('contract_print/{id}', [CarContractController::class, 'contract_print'])->name('contract_print');
 
+    
     
     
     Route::get('dubai',[TransfersController::class, 'dubai'])->name('dubai');

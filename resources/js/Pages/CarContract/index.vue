@@ -3,7 +3,10 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/inertia-vue3';
 
 import { Link } from '@inertiajs/inertia-vue3';
+
 import show from "@/Components/icon/show.vue";
+import print from "@/Components/icon/print.vue";
+
 import pay from "@/Components/icon/pay.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
@@ -84,6 +87,7 @@ const getResultsCar = async ($state) => {
     
     const json = response.data;
 
+    allCars.value= response.data.total;
 
     if (json.data.length < 100){
       car.value.push(...json.data);
@@ -141,11 +145,11 @@ function confirmUpdateCar(V) {
  
 
 
-function confirmDelCar(V) {
-  axios.post('/api/DelCar',V)
+function confirmDelCarContract(V) {
+  axios.post('/api/DelCarContract',V)
   .then(response => {
     showModalDelCar.value = false;
-    toast.success("تم التعديل بنجاح وخصم المبلغ من دين الزبون", {
+    toast.success("تم حذف العقد بنجاح", {
         timeout: 3000,
         position: "bottom-right",
         rtl: true
@@ -225,13 +229,13 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
     <ModalDelCar
             :show="showModalDelCar ? true : false"
             :formData="formData"
-            @a="confirmDelCar($event)"
+            @a="confirmDelCarContract($event)"
             @close="showModalDelCar = false"
             >
           <template #header>
-            <h2 class=" mb-5 dark:text-white text-center">
+            <h2 class=" my-5 dark:text-white text-center">
 
-          هل متأكد من حذف السيارة
+          هل متأكد من حذف العقد
           ؟
           </h2>
           </template>
@@ -339,61 +343,49 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
                                   <tr>
                                       <th scope="col" class="px-1 py-3 text-base	">
-                                        {{ $t('car_owner') }}
+                                        البائع
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('car_type') }}
+                                      دين 
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('year') }}
+                                     دين بالدينار
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('color') }}
+                                       السيارة
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('vin') }}
+                                        رقم الشاصي
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('car_number') }}
+                                       لون
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('dinar') }}
+                                        سعر السيارة
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('dolar_price') }}
+                                        المدفوع
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('dolar_custom') }}
+                                        المتبقي
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('note') }}
+                                        بتاريخ
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('shipping_dolar') }}
+                                       المشتري
+                                      </th>
+                                   
+                                      <th scope="col" class="px-1 py-3 text-base">
+                                      دين
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('coc_dolar') }}
+                                      دين بالدينار
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('checkout') }}
+                                       ملاحظة 
                                       </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('expenses') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('total') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('paid') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('discount') }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t('date') }}
-                                      </th>
-                
-                                      <th scope="col" class="px-1 py-3 text-base" style="width: 180px;">
+                                      <th scope="col" class="px-1 py-3 text-base" style="width: 150px;">
                                         {{ $t('execute') }}
                                       </th>
                                   </tr>
@@ -401,34 +393,30 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                               <tbody>
 
                                 <tr v-for="car in car" :key="car.id" :class="car.status == 0 ?'':car.status == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                    <td className="border dark:border-gray-800 text-center  dark:text-gray-200 text-black px-1 py-2 " style="font-weight: bold;font-size: 16px;">{{ car.client?.name }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_type}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.year}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_color }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.vin }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_number }}</td> 
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.dinar_s  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.dolar_price_s}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 "></td> 
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.note }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.shipping_dolar_s}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.coc_dolar_s  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.checkout_s}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.expenses_s}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 "></td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.paid}}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.discount}}</td>
-
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.date  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.name_seller }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.tex_seller-car.tex_seller_paid }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.tex_seller_dinar-car.tex_seller_dinar_paid}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_name}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.vin}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.color }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_price }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_paid }}</td> 
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_price-car.car_paid  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.created}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.name_buyer}}</td> 
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.tex_buyer-car.tex_buyer_paid  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.tex_buyer_dinar-car.tex_buyer_dinar_paid}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.system_note}}</td>
                                      <td className="border dark:border-gray-800 text-start px-1 py-2">
-                                    <button
+                                    <Link
                                       tabIndex="1"
                                       
-                                      class="px-1 py-1  text-white mx-1 bg-slate-500 rounded"
-                                      @click="openModalEditCars(car)"
+                                      class="px-1 py-1  text-white mx-1 bg-slate-500 rounded inline-flex"
+                                      :href="`/contract/${car.id}`"
                                     >
                                      <edit />
-                                    </button>
+                                    </Link>
+
                                     <button
                                       tabIndex="1"
                                       
@@ -437,14 +425,22 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                     >
                                       <trash />
                                     </button>
-                                    <button
+                                    <a
+                                      tabIndex="1"
+                                      class="px-1 py-1  text-white mx-1 bg-blue-600 rounded inline-flex"
+                                      :href="`/contract_print/${car.id}`"
+                                      target="_blank"
+                                    >
+                                     <print />
+                                    </a>
+                                    <!-- <button
                                       v-if="car.total_s != (car.paid+ car.discount)"
                                       tabIndex="1"
                                       class="px-1 py-1  text-white mx-1 bg-green-500 rounded"
                                       @click="openAddCarPayment(car)"
                                     >
                                      <pay />
-                                    </button>
+                                    </button> -->
                                   
                                     <!-- 
           
@@ -456,13 +452,7 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                     >
                                       {{ $t('sell') }}
                                     </button>
-                                    <button
-                                      tabIndex="1"
-                                      class="px-1 py-1  text-white mx-1 bg-blue-600 rounded"
-                                      @click="openAddExpenses(car)"
-                                    >
-                                      {{ $t('expenses') }}
-                                    </button>
+                         
                                     <button
                                       tabIndex="1"
                                       class="px-1 py-1  text-white mx-1 bg-green-500 rounded"
@@ -497,17 +487,7 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
             
                       <div>
                         <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">     
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                            <div class="mr-4" >
-                              <h2 class="font-semibold ">{{ $t('capital') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ mainAccount }}</p>
-                            </div>
-                          </div>
+                       
                           <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -574,7 +554,7 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                               </svg>
                             </div>
                             <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('all_cars') }}</h2>
+                              <h2 class="font-semibold">جميع العقود</h2>
                               <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{allCars}}</p>
                             </div>
                           </div>

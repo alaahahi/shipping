@@ -11,7 +11,7 @@ import InputError from "@/Components/InputError.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import TextInput from "@/Components/TextInput.vue";
-
+import link  from '@inertiajs/inertia-vue3';
 import { useToast } from "vue-toastification";
 import axios from "axios";
 import { ref } from "vue";
@@ -27,6 +27,7 @@ import debounce from "lodash/debounce";
 const { t } = useI18n();
 const props = defineProps({
   client: Array,
+  data:Object
 });
 const formData = ref({});
 const toast = useToast();
@@ -214,7 +215,7 @@ function confirmDelCarFav(V) {
     });
 }
 const profileAdded = ref(0);
-const form = ref({
+const form = props.data ? props.data : {
   name_seller: "",
   phone_seller: "",
   address_seller: "",
@@ -222,7 +223,7 @@ const form = ref({
   phone_buyer: "",
   address_buyer: "",
   tex_seller: 0,
-  tex_seller_dinar:0,
+  tex_seller_dinar: 0,
   tex_buyer: 0,
   tex_buyer_dinar: 0,
   vin: "",
@@ -238,10 +239,13 @@ const form = ref({
   tex_seller_dinar_paid: 0,
   tex_buyer_paid: 0,
   tex_buyer_dinar_paid: 0,
-});
+};
 
 
 const isLoading = ref(false);
+
+
+
 
 const submit = (V) => {
   isLoading.value = true;
@@ -249,31 +253,29 @@ const submit = (V) => {
   .then(response => {
     isLoading.value = false;
     profileAdded.value=true
-    form.value = {
-    name_seller: "",
-    phone_seller: "",
-    address_seller: "",
-    name_buyer: "",
-    phone_buyer: "",
-    address_buyer: "",
-    tex_seller: 0,
-    tex_seller_dinar:0,
-    tex_buyer: 0,
-    tex_buyer_dinar: 0,
-    vin: "",
-    car_name: "",
-    modal: "",
-    color: "",
-    size: "",
-    note: "",
-    system_note: "",
-    car_price: 0,
-    car_paid: 0,
-    tex_seller_paid: 0,
-    tex_seller_dinar_paid: 0,
-    tex_buyer_paid: 0,
-    tex_buyer_dinar_paid: 0,
-  };
+    setTimeout(() => {
+        window.location = '/car_contract';
+      }, 1500);
+  })
+  .catch(error => {
+    isLoading.value = false;
+    console.error(error);
+  })
+};
+
+const submitUpdate = (V) => {
+  isLoading.value = true;
+  axios.post('/api/addCarContract',V)
+  .then(response => {
+    isLoading.value = false;
+    toast.success("تم التعديل بنجاح", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true,
+      });
+      setTimeout(() => {
+        window.location = '/car_contract';
+      }, 1500);
 
   })
   .catch(error => {
@@ -636,14 +638,10 @@ const submit = (V) => {
       </div>
 
       <div className="flex items-center justify-center my-6 ">
-        <Link
-          className="px-6 mx-2 py-2 mb-12 text-white bg-gray-500 rounded-md focus:outline-none rounded"
-          :href="route('formRegistration')"
-        >
-          العودة
-        </Link>
+  
 
         <button
+          v-if="!data"
           @click="submit(form)"
           :disabled="isLoading"
           class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-rose-500 rounded"
@@ -651,6 +649,19 @@ const submit = (V) => {
           <span v-if="!isLoading">حفظ</span>
           <span v-else>جاري الحفظ...</span>
         </button>
+
+        <button 
+          v-if="data"
+          @click="submitUpdate(form)"
+          :disabled="isLoading"
+          class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-rose-500 rounded"
+        >
+          <span v-if="!isLoading">تعديل</span>
+          <span v-else>جاري الحفظ...</span>
+        </button>
+
+        
+        
       </div>
     </form>
   </AuthenticatedLayout>

@@ -157,6 +157,7 @@ Route::get('getIndexExpensesPrint',[CarExpensesController::class, 'getIndexExpen
 
 Route::post('addCarContract',[CarContractController::class, 'addCarContract'])->name('addCarContract');
 Route::get('getIndexContractCar',[CarContractController::class, 'getIndexContractCar'])->name('getIndexContractCar');
+Route::post('DelCarContract',[CarContractController::class, 'DelCarContract'])->name('DelCarContract');
 
 
 

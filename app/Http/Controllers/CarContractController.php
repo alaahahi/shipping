@@ -39,13 +39,24 @@ class CarContractController extends Controller
     $this->userClient =  UserType::where('name', 'client')->first()->id;
     }
 
-    public function new_contract(Request $request)
+    public function contract(Request $request)
     {
+        $id=$request->id;
+        $data = CarContract::find($id);
         $owner_id=Auth::user()->owner_id;
         $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
-        return Inertia::render('CarContract/add', ['client'=>$client ]);   
+        return Inertia::render('CarContract/add', ['client'=>$client,'data'=>$data ]);   
     }
+    public function contract_print(Request $request)
+    {
+        $id=$request->id;
+        $data = CarContract::find($id);
+        $owner_id=Auth::user()->owner_id;
+        $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
+        $config=SystemConfig::first();
 
+        return view('receiptContract',compact('data','config'));
+    }
     public function index(Request $request)
     {
         $owner_id=Auth::user()->owner_id;
@@ -88,8 +99,10 @@ class CarContractController extends Controller
         $contract['year_date']=$year_date;
         $contract['created']=$created;
 
-        $car=CarContract::create($contract);
-
+        $car = CarContract::updateOrCreate(
+            ['id' => $contract['id']], // Search criteria, usually the primary key
+            $contract // Data to be inserted or updated
+        );
 
 
         return Response::json('ok', 200);    
@@ -109,28 +122,34 @@ class CarContractController extends Controller
             $data->whereBetween('date', [$from, $to]);
         }
         
-       
-        
-        
         if($q){
             $data->where(function ($query) use ($q) {
-                $query->where('car_number', 'LIKE', '%' . $q . '%')
+                $query->where('name_seller', 'LIKE', '%' . $q . '%')
                     ->orWhere('vin', 'LIKE', '%' . $q . '%')
-                    ->orWhere('car_type', 'LIKE', '%' . $q . '%')
-                    ->orWhereHas('client', function ($subquery) use ($q) {
-                        $subquery->where('name', 'LIKE', '%' . $q . '%');
-                    });
+                    ->orWhere('car_name', 'LIKE', '%' . $q . '%')
+                    ->orWhere('name_buyer', 'LIKE', '%' . $q . '%');
             });
         }
- 
 
         $data =$data->paginate($limit)->toArray();
-       
-
         return Response::json($data, 200);
     }
     
+    public function DelCarContract(Request $request){
+        try {
+            $expenses = CarContract::findOrFail($request->id);
+            $expenses->delete();
     
+            return response()->json('ok', 200);
+        } catch (ModelNotFoundException $e) {
+            // Handle the case where the record is not found
+            return response()->json(['error' => 'Expense not found'], 404);
+        } catch (\Exception $e) {
+            // Handle other exceptions that might occur during deletion
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
     public function addCarFavorite(Request $request)
     {
         $car = Car::find($request->carId);
@@ -159,20 +178,7 @@ class CarContractController extends Controller
 
         
     }
-    public function delExpensesCar(Request $request){
-        try {
-            $expenses = CarExpenses::findOrFail($request->id);
-            $expenses->delete();
-    
-            return response()->json('ok', 200);
-        } catch (ModelNotFoundException $e) {
-            // Handle the case where the record is not found
-            return response()->json(['error' => 'Expense not found'], 404);
-        } catch (\Exception $e) {
-            // Handle other exceptions that might occur during deletion
-            return response()->json(['error' => $e->getMessage()], 400);
-        }
-    }
+
     public function confirmArchiveCar(Request $request){
         try {
             $car = Car::findOrFail($request->id);
