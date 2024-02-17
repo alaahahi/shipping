@@ -92,7 +92,7 @@ class OnlineContractsController extends Controller
         $note=$request->note;
         $car_id=$request->car_id;
         $car = Car::find($car_id);
-        $data = ['user_id'=>$car->client_id,'car_id'=>$car->id,"price"=>$price,"price_dinar"=>$price_dinar,'paid'=>$paid,'paid_dinar'=>$paid_dinar,'note'=>$note,'created'=>Carbon::now()->format('Y-m-d')];
+        $data = ['user_id'=>$car->client_id,'car_id'=>$car->id,"price"=>$price,"price_dinar"=>$price_dinar,'paid'=>$paid,'paid_dinar'=>$paid_dinar,'note'=>$note,'created'=>Carbon::now()->format('Y-m-d'),'owner_id'=>$owner_id];
         $contract=Contract::create($data);
         $car->update(['contract_id'=>$contract->id]);
         if($contract){
@@ -117,7 +117,7 @@ class OnlineContractsController extends Controller
             $this->accountingController->increaseWallet($price_dinar-$paid_dinar, $descDebit,$this->debtOnlineContractsDinar->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car',0,0,'IQD',0);
             }
             if(($price-$paid == 0)&&($price_dinar-$paid_dinar == 0)){
-                $dataExitCar=['car_id'=>$car->id,'user_id'=>$car->client_id, 'created'=>$this->currentDate, 'phone' =>$phone, 'note' =>$note];
+                $dataExitCar=['car_id'=>$car->id,'user_id'=>$car->client_id, 'created'=>$this->currentDate, 'phone' =>$phone, 'note' =>$note,'owner_id'=>$owner_id];
                 $exitCar = ExitCar::create($dataExitCar);
                 $car->update(['is_exit'=>$exitCar->id]);
 
@@ -133,7 +133,7 @@ class OnlineContractsController extends Controller
         $phone=$request->phone ?? 0;
         $note=$request->note ?? '';
         $car = Car::find($car_id);
-        $data=['car_id'=>$car_id,'user_id'=>$car->client_id, 'created'=>$created, 'phone' =>$phone, 'note' =>$note];
+        $data=['car_id'=>$car_id,'user_id'=>$car->client_id, 'created'=>$created, 'phone' =>$phone, 'note' =>$note,'owner_id'=>$owner_id];
         $exitCar = ExitCar::create($data);
         $car->update(['is_exit'=>$exitCar->id]);
         return $exitCar;
@@ -167,7 +167,7 @@ class OnlineContractsController extends Controller
        
 
         if(( $contract->price-$paid == 0)&&($contract->price_dinar-$paid_dinar == 0)){
-            $dataExitCar=['car_id'=>$car->id,'user_id'=>$car->client_id, 'created'=>$this->currentDate, 'phone' =>$phone, 'note' =>$note];
+            $dataExitCar=['car_id'=>$car->id,'user_id'=>$car->client_id, 'created'=>$this->currentDate, 'phone' =>$phone, 'note' =>$note,'owner_id'=>$owner_id];
             $exitCar = ExitCar::create($dataExitCar);
             $car->update(['is_exit'=>$exitCar->id]);
 

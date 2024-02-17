@@ -15,7 +15,8 @@ class ExitCar extends Model
         'car_id',
         'phone',
         'note',
-        'created'
+        'created',
+        'owner_id'
     ];
 
     

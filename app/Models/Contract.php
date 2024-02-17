@@ -18,7 +18,8 @@ class Contract extends Model
         'price_dinar',
         'paid_dinar',
         'note',
-        'created'
+        'created',
+        'owner_id'
     ];
 
     

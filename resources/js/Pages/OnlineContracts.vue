@@ -48,6 +48,25 @@ let debtOnlineContractsDinar = ref(0)
 let contarts = ref(0)
 let exitCar = ref(0)
 let allCars= ref(0)
+
+const getcountTotalInfo = async () => {
+  axios.get('/api/totalInfo')
+  .then(response => {
+    onlineContracts.value=  response.data.data.onlineContracts
+    debtOnlineContracts.value=  response.data.data.debtOnlineContracts
+    onlineContractsDinar.value =response.data.data.onlineContractsDinar
+    debtOnlineContractsDinar.value = response.data.data.debtOnlineContractsDinar
+    exitCar.value = response.data.data.exitCar
+    contarts.value = response.data.data.contarts
+    allCars.value =response.data.data.allCars;
+  })
+  .catch(error => {
+    console.error(error);
+  })
+  
+    
+}
+getcountTotalInfo()
 function openModalAddCarContracts(form={}) {
   formData.value=form
 
@@ -102,7 +121,6 @@ const getResultsCar = async ($state) => {
     });
 
     const json = response.data;
-
 
     if (json.data.length < 100){
       car.value.push(...json.data);
