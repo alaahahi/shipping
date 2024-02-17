@@ -19,6 +19,7 @@ use App\Http\Controllers\CarConfigController;
 use App\Http\Controllers\OnlineContractsController;
 use App\Http\Controllers\AnnualController;
 use App\Http\Controllers\CarExpensesController;
+use App\Http\Controllers\CarContractController;
 
 
 use App\Models\SystemConfig;
@@ -153,6 +154,9 @@ Route::post('confirmArchiveCar',[CarExpensesController::class, 'confirmArchiveCa
 Route::post('confirmArchiveCarBack',[CarExpensesController::class, 'confirmArchiveCarBack'])->name('confirmArchiveCarBack');
 Route::post('confirmDelCarFav',[CarExpensesController::class, 'confirmDelCarFav'])->name('confirmDelCarFav');
 Route::get('getIndexExpensesPrint',[CarExpensesController::class, 'getIndexExpensesPrint'])->name('getIndexExpensesPrint');
+
+Route::post('addCarContract',[CarContractController::class, 'addCarContract'])->name('addCarContract');
+Route::get('getIndexContractCar',[CarContractController::class, 'getIndexContractCar'])->name('getIndexContractCar');
 
 
 
