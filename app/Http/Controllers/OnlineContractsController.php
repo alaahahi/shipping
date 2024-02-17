@@ -191,9 +191,9 @@ class OnlineContractsController extends Controller
 
         }
         if($contract->paid_dinar){
-            $tran=$this->accountingController->decreaseWallet($contract->paid_dinar,$descDebit,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\Car',0,0,'$');
+            $tran=$this->accountingController->decreaseWallet($contract->paid_dinar,$descDebit,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\Car',0,0,'IQD');
 
-            $this->accountingController->decreaseWallet($contract->paid_dinar, $descDebit,$this->onlineContracts->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car',0,0,'$',0,$tran->id);
+            $this->accountingController->decreaseWallet($contract->paid_dinar, $descDebit,$this->onlineContracts->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car',0,0,'IQD',0,$tran->id);
 
         }
 

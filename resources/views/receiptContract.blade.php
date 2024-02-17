@@ -36,16 +36,25 @@ $Help = new MyHelp();
 
     /* Your additional CSS styles go here */
     /* For example: */
-    .content {
-      width: 100%;
-      height: 100%;
-      padding: 20mm; /* Adjust as needed */
-      box-sizing: border-box;
-    }
+  
   </style>
 <body style="direction: rtl;">
   <img src="/img/bg.jpg" width="100%" />
+  <div class="content">
+    <div class="d-flex justify-content-around"  style="font-size: 11px ; font-weight: 700;">
+      <div class="text-center">
+        <span >
+          الرقم : {{$data['id']}}
+        </span>
 
+      </div>
+      <div class="text-center">
+        <span>
+        التاريخ و الوقت : {{$data['created_at']}}
+      </span>
+      </div>
+    </div>
+  </div>
 
 <script>
     $(document).ready(function() {
