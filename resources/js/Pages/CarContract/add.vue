@@ -637,6 +637,88 @@ const submitUpdate = (V) => {
         </div>
       </div>
 
+
+      <div class="flex">
+        <div class="grow">
+          <div class="pb-3">
+            <div class="mx-auto mx-7">
+              <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 bg-white border-b border-gray-200">
+                  <h5 class="text-center py-4">السيارة البديلة</h5>
+
+                  <div class="flex justify-center">
+                    <div class="basis-1/3">
+                      <div className="mb-4 mx-5">
+                        <InputLabel for="vin_s" value="رقم الشاصى"  />
+                        <TextInput
+                          type="text"
+                          class="mt-1 block w-full"
+                          v-model="form.vin_s"
+                        />
+                      </div>
+                    </div>
+                    <div class="basis-1/3">
+                      <div className="mb-4 mx-5">
+                        <InputLabel for="car_name_s" value="السيارة"  />
+                        <TextInput
+                          type="text"
+                          class="mt-1 block w-full"
+                          v-model="form.car_name_s"
+                        />
+                      </div>
+                    </div>
+                    <div class="basis-1/3">
+                      <div className="mb-4 mx-5">
+                        <InputLabel for="modal_s" value="موديل" />
+                        <TextInput
+                          type="number"
+                          class="mt-1 block w-full"
+                          v-model="form.modal_s"
+                        />
+                      </div>
+                    </div>
+                    <div class="basis-1/3">
+                      <div className="mb-4 mx-5">
+                        <InputLabel for="color_s" value="اللون" />
+                        <TextInput
+                          type="text"
+                          class="mt-1 block w-full"
+                          v-model="form.color_s"
+                        />
+                      </div>
+                    </div>
+                    <div class="basis-1/3">
+                      <div className="mb-4 mx-5">
+                        <InputLabel for="size_s" value="قماره" />
+                        <TextInput
+                          type="text"
+                          class="mt-1 block w-full"
+                          v-model="form.size_s"
+                        />
+                      </div>
+                    </div>
+                    <div class="basis-1/3">
+                      <div className="mb-4 mx-5">
+                        <InputLabel
+                          for="no_s"
+                          value="رقم السيارة او كاتي"
+                         
+                        />
+                        <TextInput
+                          type="text"
+                          class="mt-1 block w-full"
+                          v-model="form.no_s"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="flex items-center justify-center my-6 ">
   
 
