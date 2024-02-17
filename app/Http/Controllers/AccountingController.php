@@ -872,11 +872,15 @@ class AccountingController extends Controller
             $contract = Contract::where('car_id',$firstTransaction->morphed_id)->first();
             if($firstTransaction->currency=='$'){
                 $this->increaseWallet($firstTransaction->amount, $refundTransaction,$this->debtOnlineContracts->where('owner_id',$owner_id)->first()->id,$firstTransaction->id,'App\Models\Car',0,0,'$',0);
-                $contract->delete();
+                if($contract){
+                    $contract->delete();
+                }
             }
             if($firstTransaction->currency=='IQD'){
                 $this->increaseWallet($firstTransaction->amount, $refundTransaction,$this->debtOnlineContractsDinar->where('owner_id',$owner_id)->first()->id,$firstTransaction->id,'App\Models\Car',0,0,'IQD',0);
-                $contract->delete();
+                if($contract){
+                    $contract->delete();
+                }
 
             }
         }
