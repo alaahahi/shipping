@@ -63,7 +63,12 @@ class CarContractController extends Controller
         $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
         return Inertia::render('CarContract/index', ['client'=>$client ]);   
     }
-
+    public function contract_account(Request $request)
+    {
+        $owner_id=Auth::user()->owner_id;
+        $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
+        return Inertia::render('CarContract/account', ['client'=>$client ]);   
+    }
     public function addCarContract(Request $request)
     {
         $contract= $request->all();
@@ -149,81 +154,34 @@ class CarContractController extends Controller
             return response()->json(['error' => $e->getMessage()], 400);
         }
     }
+    public function totalInfoContract(Request $request){
+    $owner_id=Auth::user()->owner_id;
 
-    public function addCarFavorite(Request $request)
-    {
-        $car = Car::find($request->carId);
-        if($car){
-          $car_edited =  $car->update(['car_have_expenses'=>1]);
-        }else{
-            return Response::json('car not found', 200);    
-        }
-        return Response::json($car, 200);    
-    }
-    public function confirmExpensesCar(Request $request){
-        $user=Auth::user();
-        $expenses = new CarExpenses;
-        $expenses->user_id = $user->id;
-        $expenses->owner_id = $user->owner_id;
-        $expenses->car_id = $request->id;
-        $expenses->created =Carbon::now()->format('Y-m-d');
-        $expenses->note = $request->amountNote;
-        $expenses->amount_dinar = $request->amountDinar;
-        $expenses->amount_dollar = $request->amountDollar;
-        $expenses->save();
+    $allContract = CarContract::with('user')->where('owner_id', $owner_id);
 
+    $sumAllContractSeller = $allContract->sum('tex_seller');
+    $sumAllContractSellerPaid = $allContract->sum('tex_seller_paid');
 
-        return Response::json($expenses, 200);    
+    $sumAllContractBuyer = $allContract->sum('tex_buyer');
+    $sumAllContractBuyerPaid = $allContract->sum('tex_buyer_paid');
 
+    $sumAllContractSellerDinar = $allContract->sum('tex_seller_dinar');
+    $sumAllContractSellerPaidDinar = $allContract->sum('tex_seller_dinar_paid');
 
-        
-    }
+    $sumAllContractBuyerDinar = $allContract->sum('tex_buyer_dinar');
+    $sumAllContractBuyerPaidDinar = $allContract->sum('tex_buyer_dinar_paid');
 
-    public function confirmArchiveCar(Request $request){
-        try {
-            $car = Car::findOrFail($request->id);
-            $car_edited =  $car->update(['car_have_expenses'=>2]);
-            return response()->json('ok', 200);
-        } catch (ModelNotFoundException $e) {
-            // Handle the case where the record is not found
-            return response()->json(['error' => 'Expense not found'], 404);
-        } catch (\Exception $e) {
-            // Handle other exceptions that might occur during deletion
-            return response()->json(['error' => $e->getMessage()], 400);
-        }
-    }
-    public function confirmArchiveCarBack(Request $request){
-        try {
-            $car = Car::findOrFail($request->id);
-            $car_edited =  $car->update(['car_have_expenses'=>1]);
-            return response()->json('ok', 200);
-        } catch (ModelNotFoundException $e) {
-            // Handle the case where the record is not found
-            return response()->json(['error' => 'Expense not found'], 404);
-        } catch (\Exception $e) {
-            // Handle other exceptions that might occur during deletion
-            return response()->json(['error' => $e->getMessage()], 400);
-        }
-    }
-    public function confirmDelCarFav(Request $request){
-        $car = Car::find($request->id);
-        if($car){
-          $car_edited =  $car->update(['car_have_expenses'=>3]);
-        }else{
-            return Response::json('car not found', 200);    
-        }
-        return Response::json($car, 200);    
-    }
-    public function getIndexExpensesPrint(Request $request){
-        $data = Car::with('contract', 'exitcar','client','carexpenses.user')->where('id', $request->car_id)->first();
-        if($data){
-
-            $config=SystemConfig::first();
     
-            return view('receiptCarsExpensesTotal',compact('data','config'));
-        }else{
-            return Response::json('car not found', 200);    
-        }
-        return Response::json($car, 200);    
+     // Additional logic to retrieve client data
+     $data = [
+         'contract' => $allContract->count(),
+         'sum_contract' => $sumAllContractSellerPaid+$sumAllContractBuyerPaid,
+         'sum_contract_debit' => ($sumAllContractSeller-$sumAllContractSellerPaid)+($sumAllContractBuyer-$sumAllContractBuyerPaid),
+         'sum_contract_dinar' => $sumAllContractSellerPaidDinar+$sumAllContractBuyerPaidDinar,
+         'sum_contract_debit_dinar' => ($sumAllContractSellerDinar-$sumAllContractSellerPaidDinar)+($sumAllContractBuyerDinar-$sumAllContractBuyerPaidDinar),
+     ];
+
+        return Response::json($data, 200);
+
     }
 }
