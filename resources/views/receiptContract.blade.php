@@ -36,10 +36,12 @@ $Help = new MyHelp();
 
     /* Your additional CSS styles go here */
     /* For example: */
-  
+  b{
+    color:cornflowerblue
+  }
   </style>
 <body style="direction: rtl;">
-  <img src="/img/bg.jpg" width="100%" />
+  <img src="/img/bg.jpg" width="100%" class="p-3" />
   <div class="content">
     <div class="d-flex justify-content-around py-2"  style="font-size: 12px ; font-weight: 700;background-color: #f0f8ff">
       <div class="text-center"  style="width:300px">
@@ -65,14 +67,14 @@ $Help = new MyHelp();
           </span>
 
         </div>
-        <div class="  p-1 " style="width:300px;border: 1px darkslateblue solid;">
-          <div class="py-1">
+        <div class="  p-2 " style="width:300px;border: 1px darkslateblue solid;">
+          <div class="py-2">
             فرۆشیار / البائع : {{$data['name_seller'] ??''}}
           </div>
-          <div class="py-1">
+          <div class="py-2">
             دانیشتوی / الساکن : {{$data['address_seller'] ??''}}
           </div>
-          <div class="py-1">
+          <div class="py-2">
             رقم موبایل : {{$data['phone_seller'] ??''}}
           </div>
         </div>
@@ -86,14 +88,14 @@ $Help = new MyHelp();
 
       </span>
       </div>
-      <div class="  p-1 " style="width:300px;border: 1px darkslateblue solid">
-        <div class="py-1">
+      <div class="  p-2 " style="width:300px;border: 1px darkslateblue solid">
+        <div class="py-2">
           کریار / المشتری : {{$data['name_buyer'] ??''}}
         </div>
-        <div class="py-1">
+        <div class="py-2">
           دانیشتوی / الساکن : {{$data['address_buyer']??''}}
         </div>
-        <div class="py-1">
+        <div class="py-2">
           رقم موبایل : {{$data['phone_buyer'] ??''}}
         </div>
       </div>
@@ -231,46 +233,46 @@ $Help = new MyHelp();
         </div>
         
       </div>
-      <div class="pt-3 " style="color: brown">
+      <div class="pt-2 " style="color: brown;font-size: 11px">
         3
         .
          علی البائع و المشتری تسجیل السیارە حسب قوانین مدیریة المرور العامةمع اجراء معاملة نقل الملکیة
 
       </div>
-      <div class="pt-3 " style="color: brown">
+      <div class="pt-2 " style="color: brown;font-size: 11px">
         4
         .
         علی المشتری فحص السیارة قبل الشراء و نحن غیر مسؤولین بعد توقیع عقد المعرض
 
       </div>
-      <div class="pt-3 " style="color: brown">
+      <div class="pt-2 " style="color: brown;font-size: 11px">
         5
         .
         الطرف الاول مسوول عن کافة أنواع الغرامات قبل موعد الشراء
 
       </div>
-      <div class="pt-3 " style="color: brown">
+      <div class="pt-2 " style="color: brown;font-size: 11px">
         6
         .
         صاحب المعرض غیر المسوول عن السیارة بعد البیع
 
       </div>
-      <div class="pt-3 " style="color: brown">
+      <div class="pt-2 " style="color: brown;font-size: 11px">
         7
         .
         علی المشتري تسجیل السیارة خلال شهر واحد
 
       </div>
-      <div class="pt-3 " style="color: brown">
+      <div class="pt-2 " style="color: brown;font-size: 11px">
         8
         .
-         کتب هذا العقد بثلثة نسخ بتاریخ
-         <b class="px-3">
+         کتب هذا العقد بثالثة نسخ بتاریخ
+         <b class="px-2">
           {{$data['created'] ?? ''}}
         </b>
 
       </div>
-      <div class="pt-3 " style="color: brown">
+      <div class="pt-2 " style="color: brown;font-size: 11px">
         9
         .
         کل عقد غیر مختوم من المعرض یعتبر باطل
