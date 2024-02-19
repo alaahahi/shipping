@@ -15,7 +15,14 @@ $Help = new MyHelp();
 </head>
 
 <style>
+@font-face {
+  font-family: 'Peshang';
+  src: url('/Peshang.ttf') format('truetype');
+}
 
+body {
+  font-family: 'Peshang', sans-serif; /* Use the custom font */
+}
   /* Set page size to A4 (210mm x 297mm) */
   @page {
       size: A4;
@@ -59,43 +66,44 @@ $Help = new MyHelp();
 
     <div class="d-flex justify-content-around  mt-4"  style="font-size: 12px ; font-weight: 700;">
       <div>
-        <div class="text-center  p-1" style="width:300px;border: 1px darkslateblue solid;background-color: #d2cfe7">
+        <div class="text-center  p-1" style="width:300px;border: 1px cornflowerblue solid;background-color: cornflowerblue ;color:#fff">
           <span >
-            لیەنی یەکەم فرۆشیار
+            لایەنی یەکەم فرۆشیار
             -
             الطرف الأول  البائع
           </span>
 
         </div>
-        <div class="  p-2 " style="width:300px;border: 1px darkslateblue solid;">
-          <div class="py-2">
-            فرۆشیار / البائع : {{$data['name_seller'] ??''}}
+        <div class="  p-2 " style="width:300px;border: 1px cornflowerblue solid;">
+          <div class="py-3">
+            فرۆشیار / البائع : <span class="fw-bold" style="font-size:14px;">{{$data['name_seller'] ??''}}</span> 
           </div>
-          <div class="py-2">
+          <div class="py-3">
             دانیشتوی / الساکن : {{$data['address_seller'] ??''}}
           </div>
-          <div class="py-2">
+          <div class="py-3">
             رقم موبایل : {{$data['phone_seller'] ??''}}
           </div>
         </div>
       </div>
       <div>
-      <div class="text-center p-1"   style="width:300px;border: 1px darkslateblue solid;background-color: #d2cfe7">
+      <div class="text-center p-1"   style="width:300px;border: 1px cornflowerblue solid;background-color: cornflowerblue ;color:#fff">
         <span>
-          لیەنی دووەم کریار
+          لایەنی دووەم کریار
           -
           الطرف الثانی المشتری
 
       </span>
       </div>
-      <div class="  p-2 " style="width:300px;border: 1px darkslateblue solid">
-        <div class="py-2">
-          کریار / المشتری : {{$data['name_buyer'] ??''}}
+      <div class="  p-2 " style="width:300px;border: 1px cornflowerblue solid">
+        <div class="py-3">
+          کریار / المشتری : <span  class="fw-bold" style="font-size:14px;"> {{$data['name_buyer'] ??''}}
+            </span>
         </div>
-        <div class="py-2">
+        <div class="py-3">
           دانیشتوی / الساکن : {{$data['address_buyer']??''}}
         </div>
-        <div class="py-2">
+        <div class="py-3">
           رقم موبایل : {{$data['phone_buyer'] ??''}}
         </div>
       </div>
@@ -113,7 +121,7 @@ $Help = new MyHelp();
       <div>
         <div>
         1.
-        فرۆشتنی لیەنی یەکەم بە لیەنی دووەم ئوتومبێلی ژمارە  
+        فرۆشتنی لایەنی یەکەم بە لایەنی دووەم ئوتومبێلی ژمارە  
         (بيع سيارة الطرف الأول إلى سيارة الطرف الثاني رقم)
         :
         <b class="px-3">
@@ -184,7 +192,7 @@ $Help = new MyHelp();
       <div>
         <div class="pt-3">
         2.
-        گۆرینەوەی لیەنی یەکەم ئوتومبێلی ژمارە 
+        گۆرینەوەی لایەنی یەکەم ئوتومبێلی ژمارە 
         (السيارة البديلة)
         :
         <b class="px-3">
@@ -280,7 +288,7 @@ $Help = new MyHelp();
 
       <div class="d-flex justify-content-around  mt-5 pt-2">
         <div>
-          بەلێن و رەزامەندی لیەنی یەکەم 
+          بەلێن و رەزامەندی لایەنی یەکەم 
           فرۆشیار
              (البائع)
         </div>
@@ -288,7 +296,7 @@ $Help = new MyHelp();
           نووسەری پێشانگا
         </div>
         <div>
-          بەلێن و رەزامەندی لیەنی دووەم 
+          بەلێن و رەزامەندی لایەنی دووەم 
           کریار
              (المشتری)
         </div>

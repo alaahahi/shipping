@@ -477,7 +477,9 @@ class AccountingController extends Controller
         $note = $_GET['note'] ?? '';
         $car = Car::find($car_id);
         $car->increment('paid',$amount);
-        $car->increment('discount',$discount);
+        if($discount ?? 0){
+            $car->increment('discount',$discount);
+        }
         $wallet = Wallet::where('user_id',$car->client_id)->first();
         $desc=trans('text.addPayment').' '.$amount.' '.$car->car_type.' رقم الشانص'.$car->vin.' '.$note;
         $tran=$this->increaseWallet($amount,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'$');
@@ -536,10 +538,14 @@ class AccountingController extends Controller
         }
         if($discount){
             $carLast->decrement('paid',$discount);
-            $carLast->increment('discount',$discount);
+            if($discount ?? 0){
+                $car->increment('discount',$discount);
+            }
             }
         }else{
-            $carLast->increment('discount',$discount);
+            if($discount ?? 0){
+                $car->increment('discount',$discount);
+            }
         }
         if($amount_o){
             $desc=trans('text.addPayment').' '.$amount_o.' '.$note;
