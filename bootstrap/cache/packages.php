@@ -91,6 +91,18 @@
       0 => 'Scottlaurent\\Accounting\\Providers\\AccountingServiceProvider',
     ),
   ),
+  'sentry/sentry-laravel' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Sentry\\Laravel\\ServiceProvider',
+      1 => 'Sentry\\Laravel\\Tracing\\ServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'Sentry' => 'Sentry\\Laravel\\Facade',
+    ),
+  ),
   'simplesoftwareio/simple-qrcode' => 
   array (
     'providers' => 
