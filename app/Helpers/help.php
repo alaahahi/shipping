@@ -14,7 +14,6 @@ class help
         if($currency=='IQD'){
             $currency='iqd';
         }
-        return ($currency);
 	    $tafqeetInArabic = Tafqeet::inArabic($number,$currency);
        return $tafqeetInArabic;
     }
