@@ -60,7 +60,7 @@ return [
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-                PDO::MYSQL_ATTR_INIT_COMMAND => "SET time_zone = '+04:00'", // Set the timezone to +03:00 for Iraq
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET time_zone = '+04:00'",
             ]) : [],
         ],
 
