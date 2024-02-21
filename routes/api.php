@@ -23,7 +23,22 @@ use App\Http\Controllers\CarContractController;
 
 
 use App\Models\SystemConfig;
+Route::get('/clear-config-cache', function () {
 
+    
+    //return ;
+
+    Artisan::call('config:cache');
+    Artisan::call('config:clear');
+    Artisan::call('route:clear');
+    Artisan::call('view:clear');
+    Artisan::call('view:clear');
+    Artisan::call('optimize:clear');
+    //Artisan::call('command:cache_most_visited');
+    //$content_controller = new ContentEntityRepository();
+    //$content_controller->log_visit_cache_job([]);
+    return "Configuration cache file removed";
+});
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('upload', UploadController::class);
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {return $request->user();});
