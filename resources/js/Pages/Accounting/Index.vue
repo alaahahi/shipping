@@ -286,16 +286,6 @@ function getGenfirmExpenses() {
 
 
 }
-function updateResults(input) {
-  // Ensure the input is a number
-  if (typeof input !== 'number') {
-    // Try converting the input to a number
-    input = parseFloat(input) || 0;
-  }
-  
-  // Use toLocaleString to format the number with commas
-  return input.toLocaleString();
-}
 
 function conGenfirmExpenses(V) {
   axios.post(`/api/GenExpenses?amount=${V.amount??0}&expenses_type_id=${expenses_type_id.value}&factor=${V.factor??1}&note=${V.note??''}`)
@@ -347,7 +337,16 @@ function getDownloadUrl(name) {
 function UpdatePage (){
   refresh();
 }
-
+function updateResults(input) {
+  // Ensure the input is a number
+  if (typeof input !== 'number') {
+    // Try converting the input to a number
+    input = parseFloat(input) || 0;
+  }
+  
+  // Use toLocaleString to format the number with commas
+  return input.toLocaleString();
+}
 </script>
 
 <template>
@@ -934,7 +933,7 @@ function UpdatePage (){
                   
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran?.created_at.slice(0, 19).replace("T", "  ") }}</td>
                   <th className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.description }}</th>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.amount+' '+tran.currency  }}</td>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ updateResults(tran.amount)+' '+tran.currency  }}</td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
                     <button class="px-1 py-1 text-white bg-rose-500 rounded-md focus:outline-none" @click="openModalDel(tran)" >
                       <trash />
