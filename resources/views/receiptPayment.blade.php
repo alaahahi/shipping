@@ -24,7 +24,8 @@ $Help = new MyHelp();
 @if($transactions_id)
 @foreach($clientData['transactions'] as $transaction)
     @if($transaction->id == $transactions_id)
-        <?php  
+        <?php 
+        $currency = $transaction->currency;
         $description =$transaction->description;
         $amount= ($transaction->amount);
         $created =$transaction->created_at ;
@@ -103,7 +104,7 @@ $Help = new MyHelp();
     {{$amount}}
     </div>
     <div class="col-1 alert-primary border p-2">
-    USD
+      {{$currency}}
     </div>
     <div class="col-8 text-start ps-5">
       اسم وتوقيع المستلم
@@ -242,7 +243,7 @@ $Help = new MyHelp();
       {{$amount}}
       </div>
       <div class="col-1 alert-primary border p-2">
-      USD
+        {{$currency}}
       </div>
       <div class="col-8 text-start ps-5">
         اسم وتوقيع المستلم
