@@ -6,9 +6,15 @@ use Alkoumi\LaravelArabicTafqeet\Tafqeet;
 class help
 {
 
-    public static function numberToWords($number)
+    public static function numberToWords($number,$currency='usd')
     {
-	    $tafqeetInArabic = Tafqeet::inArabic($number,'usd');
+        if($currency=='$'){
+            $currency='usd';
+        }
+        if($currency=='IQD'){
+            $currency='iqd';
+        }
+	    $tafqeetInArabic = Tafqeet::inArabic($number,$currency);
        return $tafqeetInArabic;
     }
     

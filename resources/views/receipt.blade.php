@@ -86,7 +86,7 @@ $Help = new MyHelp();
 
       <div class="col-12  p-2  pe-5"> 
          مبلغ قدره :
-         {{ $Help->numberToWords($amount??0)}}
+         {{ $Help->numberToWords($amount??0,$currency)}}
         </div>
         <div class="col-12  p-2  pe-5"> 
           الملاحظات:
@@ -238,7 +238,7 @@ $Help = new MyHelp();
   
         <div class="col-12  p-2  pe-5"> 
            مبلغ قدره :
-           {{  $Help->numberToWords($amount??0)}}
+           {{  $Help->numberToWords($amount??0,$currency)}}
           </div>
           <div class="col-12  p-2  pe-5"> 
             الملاحظات:
