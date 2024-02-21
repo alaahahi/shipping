@@ -25,6 +25,7 @@ import show from "@/Components/icon/show.vue";
 import imags from "@/Components/icon/imags.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
+import print from "@/Components/icon/print.vue";
 
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
@@ -896,14 +897,7 @@ function UpdatePage (){
                               />
                 </div>
             </div>
-            <!-- <div class="flex flex-row">
-              <div class="basis-1/2 ">
-                <select @change="getResults()" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
-                  <option value="0">الجميع</option>
-                  <option v-for="(user, index) in users" :key="index" :value="user.id">{{ user.name }}</option>
-                </select>
-              </div>
-            </div> -->
+
 
             <div class="overflow-x-auto shadow-md mt-5">
               <table class="w-full text-right text-gray-500   dark:text-gray-400 text-center">
@@ -911,12 +905,13 @@ function UpdatePage (){
                   class="text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center"
                 >
                   <tr class="rounded-l-lg mb-2 sm:mb-0">
-                    <th className="px-2 py-2" style="width: 100px;">رقم الوصل</th>
+                    <th className="px-2 py-2" style="width: 100px;">رقم الوصل
+                    </th>
                     <!-- <th className="px-2 py-2">الحساب</th> -->
                     <th className="px-2 py-2" style="width: 180px;">التاريخ</th>
                     <th className="px-2 py-2">الوصف</th>
                     <th className="px-2 py-2">المبلغ</th>
-                    <th className="px-2 py-2" style="width: 100px;">تنفيذ</th>
+                    <th className="px-2 py-2" style="width: 150px;">تنفيذ</th>
                     <th
                       scope="col"
                       class="px-1 py-2 text-base print:hidden" style="width: 100px;"
@@ -948,7 +943,24 @@ function UpdatePage (){
                     <button class="px-1 mx-2 py-1 text-white bg-purple-600 rounded-md focus:outline-none" @click="openModalUploader(tran)" >
                       <imags />
                     </button>
-                    
+                      <a  target="_blank"
+                      v-if="tran.type === 'out' || tran.type === 'outUser'|| tran.type === 'debt'"
+                      style="display: inline-flex;"
+                      :href="`/api/getIndexAccountsSelas?user_id=${boxes[0].id}&print=2&transactions_id=${tran.id}`"
+                      tabIndex="1"
+                      class="px-1 py-1  text-white  m-1 bg-green-500 rounded"
+                      >
+                      <print class="inline-flex" />
+                      </a>
+                      <a  target="_blank"
+                      v-if="tran.type === 'in' || tran.type === 'inUser' "
+                      style="display: inline-flex;"
+                      :href="`/api/getIndexAccountsSelas?user_id=${boxes[0].id}&print=3&transactions_id=${tran.id}`"
+                      tabIndex="1"
+                      class="px-1 py-1  text-white  m-1 bg-green-500 rounded"
+                      >
+                      <print class="inline-flex" />
+                      </a>
                   </td>
                   <td>
                     <a
