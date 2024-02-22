@@ -50,7 +50,7 @@ body {
 <body style="direction: rtl;">
   <img src="/img/bg.jpg" width="100%" class="p-3" />
   <div class="content">
-    <div class="d-flex justify-content-around py-2"  style="font-size: 12px ; font-weight: 700;background-color: #f0f8ff">
+    <div class="d-flex justify-content-around py-2"  style="font-size: 13px ; font-weight: 700;background-color: #f0f8ff">
       <div class="text-center"  style="width:300px">
         <span >
           الرقم : {{$data['id'] ??''}}
@@ -59,12 +59,12 @@ body {
       </div>
       <div class="text-center"  style="width:300px">
         <span>
-        التاريخ و الوقت : {{$data['created_at'] ??''}}
+        التاريخ  : {{$data['created'] ??''}}
       </span>
       </div>
     </div>
 
-    <div class="d-flex justify-content-around  mt-4"  style="font-size: 12px ; font-weight: 700;">
+    <div class="d-flex justify-content-around  mt-4"  style="font-size: 13px ; font-weight: 700;">
       <div>
         <div class="text-center  p-1" style="width:300px;border: 1px cornflowerblue solid;background-color: cornflowerblue ;color:#fff">
           <span >
@@ -75,13 +75,13 @@ body {
 
         </div>
         <div class="  p-2 " style="width:300px;border: 1px cornflowerblue solid;">
-          <div class="py-3">
+          <div class="py-2">
             فرۆشیار / البائع : <span class="fw-bold" style="font-size:14px;">{{$data['name_seller'] ??''}}</span> 
           </div>
-          <div class="py-3">
+          <div class="py-2">
             دانیشتوی / الساکن : {{$data['address_seller'] ??''}}
           </div>
-          <div class="py-3">
+          <div class="py-2">
             رقم موبایل : {{$data['phone_seller'] ??''}}
           </div>
         </div>
@@ -96,20 +96,20 @@ body {
       </span>
       </div>
       <div class="  p-2 " style="width:300px;border: 1px cornflowerblue solid">
-        <div class="py-3">
+        <div class="py-2">
           کریار / المشتری : <span  class="fw-bold" style="font-size:14px;"> {{$data['name_buyer'] ??''}}
             </span>
         </div>
-        <div class="py-3">
+        <div class="py-2">
           دانیشتوی / الساکن : {{$data['address_buyer']??''}}
         </div>
-        <div class="py-3">
+        <div class="py-2">
           رقم موبایل : {{$data['phone_buyer'] ??''}}
         </div>
       </div>
       </div>
     </div>
-    <div class="py-3 text-danger text-center" style="font-size: 12px">
+    <div class="py-3 text-danger text-center" style="font-size: 13px">
       <div>
         رێکەوتن کرا لە نێوان هەردوو لیەن لە سەر ئەم خالنەی خوارەوه
       </div>
@@ -278,7 +278,12 @@ body {
          <b class="px-2">
           {{$data['created'] ?? ''}}
         </b>
-
+        <span class="px-5">
+          الساعة
+        </span>
+        <b class="px-2">
+          {{ \Carbon\Carbon::parse($data['created_at'])->format('h:i:s A') }}
+        </b>
       </div>
       <div class="pt-2 " style="color: brown;font-size: 11px">
         9
@@ -286,7 +291,7 @@ body {
         کل عقد غیر مختوم من المعرض یعتبر باطل
       </div>
 
-      <div class="d-flex justify-content-around  mt-5 pt-2">
+      <div class="d-flex justify-content-between  mt-5 pt-2">
         <div>
           بەلێن و رەزامەندی لایەنی یەکەم 
           فرۆشیار
@@ -301,18 +306,18 @@ body {
              (المشتری)
         </div>
       </div>
-      <div class="d-flex justify-content-around  mt-4">
-        <div>
+      <div class="d-flex justify-content-between  mt-4">
+        <div class="text-center" style="width: 184px">
           <b>
             {{$data['name_seller'] ??''}}
           </b>
         </div>
-        <div>
+        <div class="text-center" style="width: 184px">
           <b>
             كاتب المعرض
           </b>
         </div>
-        <div>
+        <div class="text-center" style="width: 184px">
           <b>
             {{$data['name_buyer'] ??''}}
           </b>
