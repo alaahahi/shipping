@@ -44,8 +44,17 @@ class CarContractController extends Controller
         $id=$request->id;
         $data = CarContract::find($id);
         $owner_id=Auth::user()->owner_id;
-        $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
-        return Inertia::render('CarContract/add', ['client'=>$client,'data'=>$data ]);   
+        $client1 = CarContract::where('owner_id', $owner_id)
+        ->select('name_seller', DB::raw('MAX(phone_seller) as phone_seller'), DB::raw('MAX(address_seller) as address_seller'))
+        ->groupBy('name_seller')
+        ->get();
+        $client2 = CarContract::where('owner_id', $owner_id)
+        ->select('name_buyer', DB::raw('MAX(phone_buyer) as phone_buyer'), DB::raw('MAX(address_buyer) as address_buyer'))
+        ->groupBy('name_buyer')
+        ->get();
+        
+
+        return Inertia::render('CarContract/add', ['client1'=>$client1,'data'=>$data,'client2'=>$client2 ]);   
     }
     public function contract_print(Request $request)
     {
@@ -104,8 +113,10 @@ class CarContractController extends Controller
         $contract['year_date']=$year_date;
         $contract['created']=$created;
 
+        
+
         $car = CarContract::updateOrCreate(
-            ['id' => $contract['id']], // Search criteria, usually the primary key
+            ['id' => $contract['id']??0], // Search criteria, usually the primary key
             $contract // Data to be inserted or updated
         );
 
@@ -121,7 +132,7 @@ class CarContractController extends Controller
         $to =$_GET['to'] ?? 0;
         $limit =$_GET['limit'] ?? 0;
  
-        $data = CarContract::with('user')->where('owner_id', $owner_id);
+        $data = CarContract::with('user')->where('owner_id', $owner_id)->orderBy('id', 'desc');;
 
         if ($from && $to) {
             $data->whereBetween('date', [$from, $to]);

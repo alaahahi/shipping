@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { Head } from "@inertiajs/inertia-vue3";
+import { Head, Link, useForm } from "@inertiajs/inertia-vue3";
 import VueTailwindDatepicker from "vue-tailwind-datepicker";
 import ModalAddCarExpensesFav from "@/Components/ModalAddCarExpensesFav.vue";
 import ModalAddCarExpenses from "@/Components/ModalAddCarExpenses.vue";
@@ -11,7 +11,6 @@ import InputError from "@/Components/InputError.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import TextInput from "@/Components/TextInput.vue";
-import link  from '@inertiajs/inertia-vue3';
 import { useToast } from "vue-toastification";
 import axios from "axios";
 import { ref } from "vue";
@@ -20,18 +19,25 @@ import newContracts from "@/Components/icon/new.vue";
 import show from "@/Components/icon/show.vue";
 import trash from "@/Components/icon/trash.vue";
 import print from "@/Components/icon/print.vue";
+import { ModelListSelect } from "vue-search-select"
+  // Import everythModelSelecting
+import "vue-search-select/dist/VueSearchSelect.css"
 
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
 import debounce from "lodash/debounce";
 const { t } = useI18n();
 const props = defineProps({
-  client: Array,
+  client1: Array,
+  client2: Array,
   data:Object
 });
 const formData = ref({});
 const toast = useToast();
 let searchTerm = ref("");
+let showClient = ref(false);
+let showClientB = ref(false);
+
 let showModalAddCarExpensesFav = ref(false);
 let showModalAddCarExpenses = ref(false);
 let showModalArchiveCarExpenses = ref(false);
@@ -215,7 +221,8 @@ function confirmDelCarFav(V) {
     });
 }
 const profileAdded = ref(0);
-const form = props.data ? props.data : {
+const form = props.data ? ref(props.data) : ref
+({
   name_seller: "",
   phone_seller: "",
   address_seller: "",
@@ -232,6 +239,7 @@ const form = props.data ? props.data : {
   color: "",
   size: "",
   note: "",
+  no:"",
   system_note: "",
   car_price: 0,
   car_paid: 0,
@@ -239,50 +247,110 @@ const form = props.data ? props.data : {
   tex_seller_dinar_paid: 0,
   tex_buyer_paid: 0,
   tex_buyer_dinar_paid: 0,
-};
+});
 
 
 const isLoading = ref(false);
 
 
 
-
+let isValid = true;
 const submit = (V) => {
   isLoading.value = true;
-  axios.post('/api/addCarContract',V)
-  .then(response => {
-    isLoading.value = false;
-    profileAdded.value=true
+  let missingFields = [];
+
+  if (!form.value.name_seller) missingFields.push('اسم البائع');
+  if (!form.value.name_buyer) missingFields.push('اسم المشتري');
+  if (!form.value.vin) missingFields.push('رقم الشانصى');
+  if (!form.value.car_name) missingFields.push('السيارة');
+  if (!form.value.no) missingFields.push('رقم السيارة او كاتي');
+
+  if (missingFields.length > 0) {
+    // Display an error message for the missing fields
+    toast.info(`يرجى تعبئة الحقول التالية: ${missingFields.join(', ')}`, {
+      timeout: 4000,
+      position: "bottom-right",
+      rtl: true,
+    });
     setTimeout(() => {
-        window.location = '/car_contract';
-      }, 1500);
-  })
-  .catch(error => {
-    isLoading.value = false;
-    console.error(error);
-  })
+      isLoading.value = false;
+
+    }, 1000);
+  } else {
+    axios.post('/api/addCarContract', V)
+      .then(response => {
+        profileAdded.value = true;
+        setTimeout(() => {
+          isLoading.value = false;
+          window.location = '/car_contract';
+        }, 1000);
+      })
+      .catch(error => {
+       
+      toast.error("تأكد من الاتصال بالانترنت - لم يتم الحفظ", {
+          timeout: 2000,
+          position: "bottom-right",
+          rtl: true
+
+        });
+        console.error(error);
+      });
+  }
 };
 
-const submitUpdate = (V) => {
-  isLoading.value = true;
-  axios.post('/api/addCarContract',V)
-  .then(response => {
-    isLoading.value = false;
-    toast.success("تم التعديل بنجاح", {
-        timeout: 2000,
+ 
+const updateSeller = (v) => {
+      const selectedClient = props.client1.find(
+        (client) => client.name_seller ===  v
+      );
+
+      if (selectedClient) {
+        form.value.phone_seller = selectedClient?.phone_seller || 0;
+        form.value.address_seller = selectedClient?.address_seller||0;
+      }
+    }
+const updateBuyer = (v) => {
+      const selectedClient = props.client2.find(
+        (client) => client.name_buyer ===  v
+      );
+      console.log(selectedClient)
+
+      if (selectedClient) {
+        form.value.phone_buyer = selectedClient?.phone_buyer;
+        form.value.address_buyer = selectedClient?.address_buyer;
+      }
+    }
+const validTexSeller = (v) =>{
+  let amount = form.value.tex_seller -v
+if(amount < 0){
+  form.value.tex_seller_paid =0
+  setTimeout(() => {
+    form.value.tex_seller_paid = form.value.tex_seller
+
+  }, 1000);
+    toast.info(" المبلغ اكبر من  دلالى بالدولار"+" "+form.value.tex_seller, {
+        timeout: 4000,
         position: "bottom-right",
         rtl: true,
       });
-      setTimeout(() => {
-        window.location = '/car_contract';
-      }, 1500);
+}
+}
+const validTexSellerDinar = (v) =>{
+  let amount = form.value.tex_seller_dinar -v
+if(amount < 0){
+  form.value.tex_seller_dinar_paid
+  form.value.tex_seller_dinar_paid =0
+  setTimeout(() => {
+    form.value.tex_seller_dinar_paid = form.value.tex_seller_dinar
 
-  })
-  .catch(error => {
-    isLoading.value = false;
-    console.error(error);
-  })
-};
+  }, 1000);
+    toast.info(" المبلغ اكبر من  دلالى بالدينار"+" "+form.value.tex_seller_dinar, {
+        timeout: 4000,
+        position: "bottom-right",
+        rtl: true,
+      });
+}
+}
 </script>
 
 <template>
@@ -312,35 +380,81 @@ const submitUpdate = (V) => {
                   <div className="flex flex-col">
                     <div className="mb-4">
                       <InputLabel for="name" value="الأسم"  :class="{'list-item text-red-600':!form.name_seller}" />
-                      <TextInput
-                        type="text"
-                        class="mt-1 block w-full"
-                        v-model="form.name_seller"
-                       
-                      />
+                      <div class="relative">
+                        <ModelListSelect
+                          v-if="!showClient"
+                          optionValue="name_seller"
+                          optionText="name_seller"
+                          class="mt-1"
+                          v-model="form.name_seller"
+                          :list="client1"
+                          @searchchange="updateSeller(form.name_seller)"
+                          :placeholder="$t('selectCustomer')">
+                        </ModelListSelect>
+                          <button
+                            type="button"
+                            @click="
+                              showClient = true;
+                              form.name_seller = '';
+                              form.phone_seller = '';
+                              form.address_seller = '';
+                            "
+                            v-if="!showClient"
+                            class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-green-500 rounded-tl-lg rounded-bl-lg"
+                          >
+                            بائع جديد
+                          </button>
+                        </div>
+                        <div  v-if="showClient">
+                          <div class="relative" >
+                          <input
+                           
+                            type="text"
+                            class="mt-1  block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                            v-model="form.name_seller"
+                          />
+                          <button
+                            type="button"
+                            @click="
+                              showClient = false;
+                              form.name_seller = '';
+                              form.phone_seller = '';
+                              form.address_seller = '';
+                            "
+                            v-if="showClient"
+                            class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-pink-500 rounded-tl-lg rounded-bl-lg"
+                          >
+                            تحديد بائع
+                          </button>
+                        </div>
+
+  
+                        </div>
                     </div>
+         
                     <div className="mb-4">
-                      <InputLabel for="address_seller" value="العنوان" />
-                      <TextInput
-                        type="text"
-                        class="mt-1 block w-full"
-                        v-model="form.address_seller"
-                      />
-                    </div>
-                    <div className="mb-4">
-                      <InputLabel for="phone_seller" value="رقم الهاتف" />
-                      <TextInput
-                        type="text"
-                        class="mt-1 block w-full"
-                        v-model="form.phone_seller"
-                      />
-                    </div>
+                        <InputLabel for="address_seller" value="العنوان" />
+                        <TextInput
+                          type="text"
+                          class="mt-1 block w-full"
+                          v-model="form.address_seller"
+                        />
+                        </div>
+                        <div className="mb-4">
+                          <InputLabel for="phone_seller" value="رقم الهاتف" />
+                          <TextInput
+                            type="text"
+                            class="mt-1 block w-full"
+                            v-model="form.phone_seller"
+                          />
+                        </div>
                     <div class="flex justify-center">
                       <div className="mb-4 ml-5">
                         <InputLabel for="tex_seller" value="دلالى دولار" />
                         <TextInput
                           type="number"
                           class="mt-1"
+                          @focus="form.tex_seller='100'"
                           v-model="form.tex_seller"
                         />
                       </div>
@@ -349,6 +463,7 @@ const submitUpdate = (V) => {
                         <TextInput
                           type="number"
                           class="mt-1"
+                          @focus="form.tex_seller_dinar='15000'"
                           v-model="form.tex_seller_dinar"
                         />
                       </div>
@@ -359,6 +474,8 @@ const submitUpdate = (V) => {
                         <TextInput
                           type="number"
                           class="mt-1"
+                          @focus="form.tex_seller_paid='100'"
+                          @input="validTexSeller(form.tex_seller_paid)"
                           v-model="form.tex_seller_paid"
                         />
                       </div>
@@ -367,6 +484,8 @@ const submitUpdate = (V) => {
                         <TextInput
                           type="number"
                           class="mt-1"
+                          @focus="form.tex_seller_dinar_paid='150000'"
+                          @input="validTexSellerDinar(form.tex_seller_dinar_paid)"
                           v-model="form.tex_seller_dinar_paid"
                         />
                       </div>
@@ -414,18 +533,60 @@ const submitUpdate = (V) => {
                   <h2 class="text-center text-xl py-2">الطرف الثاني (المشتري)</h2>
 
                   <div className="flex flex-col">
+        
                     <div className="mb-4">
+                      <InputLabel for="name" value="الأسم"  :class="{'list-item text-red-600':!form.name_buyer}" />
+                      <div class="relative">
+                        <ModelListSelect
+                          v-if="!showClientB"
+                          optionValue="name_buyer"
+                          optionText="name_buyer"
+                          class="mt-1"
+                          v-model="form.name_buyer"
+                          :list="client2"
+                          @searchchange="updateBuyer(form.name_buyer)"
+                          :placeholder="$t('selectCustomer')">
+                        </ModelListSelect>
+                          <button
+                            type="button"
+                            @click="
+                              showClientB = true;
+                              form.name_buyer = '';
+                              form.phone_seller = '';
+                              form.address_seller = '';
+                            "
+                            v-if="!showClientB"
+                            class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-green-500 rounded-tl-lg rounded-bl-lg"
+                          >
+                            بائع جديد
+                          </button>
+                        </div>
+                        <div  v-if="showClientB">
+                          <div class="relative" >
+                          <input
+                           
+                            type="text"
+                            class="mt-1  block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                            v-model="form.name_buyer"
+                          />
+                          <button
+                            type="button"
+                            @click="
+                              showClientB = false;
+                              form.name_buyer = '';
+                              form.phone_seller = '';
+                              form.address_seller = '';
+                            "
+                            v-if="showClientB"
+                            class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-pink-500 rounded-tl-lg rounded-bl-lg"
+                          >
+                            تحديد بائع
+                          </button>
+                        </div>
+
   
-                      <InputLabel for="name_buyer" value="الأسم" :class="{'list-item text-red-600':!form.name_buyer}" />
-
-                      <TextInput
-                        type="text"
-                        class="mt-1 block w-full"
-                        v-model="form.name_buyer"
-                      />
-                     
+                        </div>
                     </div>
-
                     <div className="mb-4">
                       <InputLabel for="address_buyer" value="العنوان" />
                       <TextInput
@@ -452,6 +613,7 @@ const submitUpdate = (V) => {
                         <TextInput
                           type="number"
                           class="mt-1"
+                          @focus="form.tex_buyer='100'"
                           v-model="form.tex_buyer"
                         />
                       </div>
@@ -460,6 +622,7 @@ const submitUpdate = (V) => {
                         <TextInput
                           type="number"
                           class="mt-1"
+                          @focus="form.tex_buyer_dinar='150000'"
                           v-model="form.tex_buyer_dinar"
                         />
                       </div>
@@ -470,6 +633,7 @@ const submitUpdate = (V) => {
                         <TextInput
                           type="number"
                           class="mt-1"
+                          @focus="form.tex_buyer_paid='100'"
                           v-model="form.tex_buyer_paid"
                         />
                       </div>
@@ -478,6 +642,7 @@ const submitUpdate = (V) => {
                         <TextInput
                           type="number"
                           class="mt-1"
+                          @focus="form.tex_buyer_dinar_paid='150000'"
                           v-model="form.tex_buyer_dinar_paid"
                         />
                       </div>
@@ -600,6 +765,7 @@ const submitUpdate = (V) => {
                         />
                         <TextInput
                           type="number"
+                          @focus="form.car_price=''"
                           class="mt-1 block w-full"
                           v-model="form.car_price"
                         />
@@ -614,6 +780,7 @@ const submitUpdate = (V) => {
                         <TextInput
                           type="number"
                           class="mt-1 block w-full"
+                          @focus="form.car_paid=form.car_price"
                           v-model="form.car_paid"
                         />
                       </div>
@@ -720,7 +887,14 @@ const submitUpdate = (V) => {
       </div>
 
       <div className="flex items-center justify-center my-6 ">
-  
+     
+     
+        <Link
+          className="px-6 mx-2 py-2 mb-12 text-white bg-gray-500 rounded-md focus:outline-none rounded"
+          :href="route('car_contract')"
+        >
+          العودة
+        </Link>
 
         <button
           v-if="!data"
@@ -734,14 +908,14 @@ const submitUpdate = (V) => {
 
         <button 
           v-if="data"
-          @click="submitUpdate(form)"
+          @click="submit(form)"
           :disabled="isLoading"
           class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-rose-500 rounded"
         >
-          <span v-if="!isLoading">تعديل</span>
+          <span v-if="!isLoading">حفظ التعديلات</span>
           <span v-else>جاري الحفظ...</span>
         </button>
-
+    
         
         
       </div>
