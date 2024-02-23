@@ -12,24 +12,16 @@ const form = ref({
   user: {
     percentage:0,
   },
-  date:getTodayDate(),
   amount: 0,
   exchangeRate:1
 
 });
-function getTodayDate() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
+
 const restform =()=>{
   form.value = {
   user: {
     percentage:0,
   },
-  date:getTodayDate(),
   amount: 0,
 
 };
@@ -45,23 +37,9 @@ function validateExchangeRate() {
     }
 function calculateAmountDollarDinar (){
   validateExchangeRate()
-  if(form.value.amountDinar<=form.value.user.wallet?.balance_dinar){
-    form.value.amountResultDollar = form.value.amountDinar/(form.value.exchangeRate/100)
-    form.value.newBalanceDinar =form.value.user.wallet?.balance_dinar -form.value.amountDinar
-  form.value.newBalanceDollar =form.value.user.wallet?.balance +form.value.amountResultDollar
-  }
-  else{
-    form.value.amountDinar=form.value.user.wallet?.balance_dinar
-    form.value.amountResultDollar = form.value.amountDinar/(form.value.exchangeRate/100)
-  form.value.newBalanceDinar =form.value.user.wallet?.balance_dinar -form.value.amountDinar
-  form.value.newBalanceDollar =form.value.user.wallet?.balance +-form.value.amountResultDollar
-  
-    toast.info(" المبلغ اكبر من  الموجود في الصندوق"+" "+form.value.user.wallet?.balance_dinar, {
-        timeout: 4000,
-        position: "bottom-right",
-        rtl: true,
-      });
-  }
+    form.value.amountResultDollar = Math.floor(form.value.amountDinar/(form.value.exchangeRate/100))
+
+
 
 }
 
@@ -76,80 +54,8 @@ function calculateAmountDollarDinar (){
               <slot name="header"></slot>
             </div>
             <div class="modal-body">
-                        <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-3">
-                        <div className="mb-4 mx-5">
-                          <label for="card" >التاريخ</label>
-                          <input
-                          id="card"
-                          type="date"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                          v-model="form.date"   />
-                        </div>
-                        <div className="mb-4 mx-5">
-                          <label for="user_id" >الحساب</label>
-                          <select
-                            v-model="form.user"
-                            id="user_id"
-                            class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                            <option selected disabled>تحديد الحساب</option>
-                            <option v-for="(user, index) in boxes" :key="index" :value="user">{{ user?.name }}</option>
-                          </select>
-                        </div>
-                        <div className="mb-4 mx-5">
-                        <label for="balance" >الرصيد الحالي بالدولار</label>
-                        <input
-                          id="balance"
-                          type="number"
-                          disabled
-                          :value="form.user.wallet?.balance"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                            />
-                        </div>
-                        <div className="mb-4 mx-5">
-                        <label for="balance" >الرصيد الحالي بالدينار العراقي</label>
-                        <input
-                          id="balance"
-                          type="number"
-                          disabled
-                          :value="form.user.wallet?.balance_dinar"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                            />
-                        </div>
-                        <hr />
-                        <hr />
-
-                        <div className="mb-4 mx-5">
-                        <label for="balance" >الرصيد بعد التحويل بالدولار</label>
-                        <input
-                          id="balance"
-                          type="number"
-                          disabled
-                          :value="form.newBalanceDollar"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                            />
-                        </div>
-                        <div className="mb-4 mx-5">
-                        <label for="balance" >الرصيد  بعد التحويل  بالدينار العراقي</label>
-                        <input
-                          id="balance"
-                          type="number"
-                          disabled
-                          :value="form.newBalanceDinar"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                            />
-                        </div>
-                        </div>
-                        <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-3">
-                        <div className="mb-4 mx-5">
-                        <label for="amountDinar" >المبلغ بالدينار العراقي</label>
-                        <input
-                          id="amountDinar"
-                          type="number"
-                          @input="calculateAmountDollarDinar()"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                          v-model="form.amountDinar" />
-                        </div>
-                        <div className="mb-4 mx-5">
+                        <div>
+                        <div className="my-4 mx-5">
                         <label for="amountDinar" >سعر الصرف 100$</label>
                         <input
                           id="amountDinar"
@@ -161,23 +67,32 @@ function calculateAmountDollarDinar (){
                           مطلوب رقم من 6 خانة فقط
                           </div>
                         </div>
-                        <div className="mb-4 mx-5">
-                        <label for="amountDinar" >المبلغ  بالدولار</label>
+                        
+                        <div className="my-4 mx-5">
+                        <label for="amountDinar" >المبلغ بالدينار العراقي
+                          (المبلغ المسحوب من الصندوق بالدينار العراقي)
+                        </label>
+                        <input
+                          id="amountDinar"
+                          type="number"
+                          @input="calculateAmountDollarDinar()"
+                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          v-model="form.amountDinar" />
+                        </div>
+                  
+                        <div className="mb-y mx-5">
+                        <label for="amountDinar" >المبلغ  بالدولار
+                          (المبلغ المضاف للصندوق بالدولار)
+                        </label>
                         <input
                           id="amountDinar"
                           type="number"
                           class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.amountResultDollar" />
                         </div>
-                        <div className="mb-4 mx-5">
-                        <label for="note" >ملاحظة</label>
-                        <input
-                          id="note"
-                          type="text"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                          v-model="form.note" />
+               
                         </div>
-                        </div>
+        
             </div>
   
             <div class="modal-footer my-2">

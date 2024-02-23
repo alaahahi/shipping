@@ -8,9 +8,7 @@ import ModalAddDebt from "@/Components/ModalAddDebt.vue";
 import ModalAddExpenses from "@/Components/ModalAddExpenses.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
-import ModalAddGenExpenses from "@/Components/ModalAddGenExpenses.vue";
-import ModalAddExpensesToMainBransh from "@/Components/ModalAddExpensesToMainBransh.vue";
-import ModalExpensesFromOtherBransh from "@/Components/ModalExpensesFromOtherBransh.vue";
+
 
 
 import ModalConvertDollarDinar from "@/Components/ModalConvertDollarDinar.vue";
@@ -30,17 +28,15 @@ import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
 import debounce from 'lodash/debounce';
 
-
 const laravelData = ref({});
 const searchTerm = ref('');
 let showModalAddSales = ref(false);
 let showModaldebtSales = ref(false);
-let showModalAddExpenses = ref(false);
-let showModalAddGenExpenses = ref(false);
 let showModalConvertDollarDinar = ref(false);
 let showModalConvertDinarDollar = ref(false);
-let showModalAddExpensesToMainBransh = ref(false);
-let showModalExpensesFromOtherBransh = ref(false);
+let showModalAddExpenses = ref(false);
+
+
 let showModalDel = ref(false);
 let showModalUploader = ref(false);
 let transactions= ref([]);
@@ -49,14 +45,15 @@ let tranId =ref({});
 let formData = ref({});
 let GenExpenses = ref({});
 let isLoading=ref(false);
-let from = ref(getTodayDate());
+let from = ref(getFirstDayOfMonth());
 let to = ref(getTodayDate());
 let allContract= ref(0)
 let sum_contract= ref(0)
 let sum_contract_debit= ref(0)
 let sum_contract_dinar= ref(0)
 let sum_contract_debit_dinar= ref(0)
-
+let sumTransactions= ref(0)
+let sumTransactionsDinar= ref(0)
 let resetData = ref(false);
 let user_id = 0;
 let page = 1;
@@ -72,9 +69,13 @@ const refresh = () => {
 };
 const debouncedGetResultsCar = debounce(refresh, 500);
 
+function openAddExpenses(){
+  showModalAddExpenses.value = true;
+}
+
 const getResults = async ($state) => {
   try {
-    const response = await axios.get(`/getIndexAccounting`, {
+    const response = await axios.get(`/api/getListTransactionsContract`, {
       params: {
         limit: 100,
         page: page,
@@ -87,12 +88,12 @@ const getResults = async ($state) => {
     const json = response.data;
 
 
-    if (json.transactions.data.length < 100){
-      transactions.value.push(...json.transactions.data);
+    if (json.data.length < 100){
+      transactions.value.push(...json.data);
       $state.complete();
     } 
     else {
-      transactions.value.push(...json.transactions.data);
+      transactions.value.push(...json.data);
        $state.loaded();
     }
 
@@ -105,7 +106,7 @@ const getResults = async ($state) => {
 };
  
 const getcountTotalInfo = async () => {
-  axios.get('/api/totalInfoContract')
+  axios.get(`/api/totalInfoContract?from=${from.value}&to=${to.value}`)
   .then(response => {
     allContract.value=response.data.contract
     sum_contract.value=response.data.sum_contract
@@ -115,6 +116,10 @@ const getcountTotalInfo = async () => {
     sum_contract_dinar.value=response.data.sum_contract_dinar
 
     sum_contract_debit_dinar.value=response.data.sum_contract_debit_dinar
+
+    sumTransactions.value = response.data.sumTransactions
+
+    sumTransactionsDinar.value=response.data.sumTransactionsDinar
 
   })
   .catch(error => {
@@ -130,17 +135,9 @@ function openAddSales() {
 function opendebtSales() {
   showModaldebtSales.value = true;
 }
-function openAddExpenses(){
-  showModalAddExpenses.value = true;
-}
-function openModalAddExpensesToMainBransh() {
-  getTransfers();
-  showModalAddExpensesToMainBransh.value = true;
-}
-function openModalExpensesFromOtherBransh() {
-  getTransfers();
-  showModalExpensesFromOtherBransh.value = true;
-}
+
+
+
 function openConvertDollarDinar(){
   showModalConvertDollarDinar.value = true;
 }
@@ -162,25 +159,7 @@ const props = defineProps({
   accounts:Array,
   boxes:Array,
 });
-const search = async (q) => {
-  user_id.value=0;
-  laravelData.value = [];
-  const response = await fetch(`/livesearchAppointment?q=${q}`);
-  laravelData.value = await response.json();
-};
-const form = useForm();
 
-let showModal = ref(false);
-const come = async (id) => {
-  const response = await fetch(`/appointmentCome?id=${id}`);
-  refresh();
-
-};
-const cancel = async (id) => {
-  const response = await fetch(`/appointmentCancel?id=${id}`);
-  refresh();
-
-};
 
  
  
@@ -189,7 +168,7 @@ const errors = ref(0);
  
  
 function confirm(V) {
-  axios.post('/api/receiptArrived',V)
+  axios.post('/api/addToBoxContract',V)
   .then(response => {
     showModalAddSales.value=false;
     //getResults();
@@ -201,9 +180,8 @@ function confirm(V) {
   })
 }
 function confirmdebt(V) {
-  axios.post('/api/salesDebt',V)
+  axios.post('/api/DropFromBoxContract',V)
   .then(response => {
-    refresh();
     showModaldebtSales.value=false;
     showModalAddExpenses.value = false;
     window.location.reload();
@@ -215,8 +193,9 @@ function confirmdebt(V) {
   })
 }
 function confirmConvertDollarDinar(V) {
-  axios.post('/api/convertDollarDinar',V)
+  axios.post('/api/convertDollarDinarContract',V)
   .then(response => {
+    getcountTotalInfo()
     refresh();
     showModalConvertDollarDinar.value=false;
 
@@ -227,8 +206,9 @@ function confirmConvertDollarDinar(V) {
   })
 }
 function confirmConvertDinarDollar(V) {
-  axios.post('/api/convertDinarDollar',V)
+  axios.post('/api/convertDinarDollarContract',V)
   .then(response => {
+    getcountTotalInfo()
     refresh();
     showModalConvertDinarDollar.value=false;
 
@@ -248,10 +228,18 @@ function getTodayDate() {
   const day = String(today.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+function getFirstDayOfMonth() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const firstDayOfMonth = '01'; // Set day to 01 for the first day of the month
+  return `${year}-${month}-${firstDayOfMonth}`;
+}
 function delTransactions(id){
-  axios.post(`/api/delTransactions?id=${id.id}`)
+  axios.post(`/api/delTransactionsContract?id=${id.id}`)
   .then(response => {
     refresh();
+    getcountTotalInfo()
     showModalDel.value=false;
   })
   .catch(error => {
@@ -259,11 +247,7 @@ function delTransactions(id){
     errors.value = error.response.data.errors
   })
 }
-function openAddGenExpenses(v) {
-    expenses_type_id.value=v
-    getGenfirmExpenses()
-    showModalAddGenExpenses.value = true;
-}
+
 function getGenfirmExpenses() {
   axios.get(`/api/getGenExpenses?expenses_type_id=${expenses_type_id.value}`)
   .then(response => {
@@ -288,22 +272,7 @@ function updateResults(input) {
   return input.toLocaleString();
 }
 
-function conGenfirmExpenses(V) {
-  axios.post(`/api/GenExpenses?amount=${V.amount??0}&expenses_type_id=${expenses_type_id.value}&factor=${V.factor??1}&note=${V.note??''}`)
-  .then(response => {
-    refresh();
-    showModalAddGenExpenses.value = false;
-    console.log(response.data);
-    window.open(`/api/getIndexAccountsSelas?user_id=${response.data.morphed_id}&print=3&transactions_id=${response.data.id}`, '_blank');
-    window.location.reload();
-  })
-  .catch(error => {
 
-    errors.value = error.response.data.errors
-  })
-
-
-}
 function getTransfers(){
   axios.get(`/api/transfers`)
   .then(response => {
@@ -376,39 +345,7 @@ function UpdatePage (){
     </ModalUploader>
     
 
-    <ModalAddGenExpenses
-            :formData="formData"
-            :show="showModalAddGenExpenses ? true : false"
-            :expenses_type_id="expenses_type_id"
-            :GenExpenses="GenExpenses"
-            @a="conGenfirmExpenses($event)"
-            @close="showModalAddGenExpenses = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddGenExpenses>
-    <ModalAddExpensesToMainBransh
-            :formData="formData"
-            :show="showModalAddExpensesToMainBransh ? true : false"
-            :expenses_type_id="expenses_type_id"
-            :allTransfers="allTransfers"
-            @a="conAddExpensesToMainBransh($event)"
-            @close="showModalAddExpensesToMainBransh = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddExpensesToMainBransh>
-    <ModalExpensesFromOtherBransh
-      :formData="formData"
-            :show="showModalExpensesFromOtherBransh ? true : false"
-            :expenses_type_id="expenses_type_id"
-            :GenExpenses="GenExpenses"
-            :allTransfers="allTransfers"
-            @a="conGenfirmExpenses($event)"
-            @close="showModalExpensesFromOtherBransh = false">
-        <template #header>
-          </template>
-    </ModalExpensesFromOtherBransh>
+ 
     <ModalAddSales
             :show="showModalAddSales ? true : false"
             :data="users"
@@ -541,7 +478,7 @@ function UpdatePage (){
                           </div>
                         </div>
 
-            <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3" v-if="false">
+            <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3" >
               <div class="pt-5  print:hidden">
               <button style=" width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==8" className="px-4 py-2 text-white bg-green-500 rounded-md focus:outline-none"
                                             @click="openAddSales()">
@@ -594,7 +531,7 @@ function UpdatePage (){
                             <span v-else>جاري الحفظ...</span>
                           </button>
               </div>
-              <div className=" mr-5 print:hidden" >
+              <div className=" mr-5 print:hidden"  v-if="false">
                             <InputLabel for="pay" value="طباعة" />
                             <a
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded" style="display: block;text-align: center;"
@@ -609,7 +546,7 @@ function UpdatePage (){
 
               
             </div>
-            <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3" v-if="false">
+            <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
                         <div  v-if="$page.props.auth.user.type_id==1">
                           <button
                             type="button"
@@ -666,45 +603,6 @@ function UpdatePage (){
                         </div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-3 lg:gap-3">
-              <div class=" px-4">
-                            <div >
-                              <InputLabel for="to" value="حساب الصندوق بالدولار" />
-                              <TextInput
-                                id="to"
-                                type="number"
-                                disabled
-                                class="mt-1 block w-full"
-                                :value="laravelData.sum_transactions"
-                              />
-                            </div>
-              </div>
-
-              <div class=" px-4">
-                            <div >
-                              <InputLabel for="to" value="مسحوبات الصندوق بالدولار" />
-                              <TextInput
-                                id="to"
-                                type="number"
-                                disabled
-                                class="mt-1 block w-full"
-                                :value="laravelData.sum_transactions_debit"
-                              />
-                            </div>
-              </div>
-
-              <div class=" px-4">
-                            <div >
-                              <InputLabel for="to" value="دخل الصندوق بالدولار" />
-                              <TextInput
-                                id="to"
-                                type="number"
-                                disabled
-                                class="mt-1 block w-full"
-                                :value="laravelData.sum_transactions_in"
-                              />
-                            </div>
-              </div>
-
               <div >
                               <InputLabel for="to" value="رصيد الصندوق بالدولار" />
                               <TextInput
@@ -712,7 +610,7 @@ function UpdatePage (){
                                 type="number"
                                 disabled
                                 class="mt-1 block w-full"
-                                :value="laravelData?.user?.wallet.balance"
+                                :value="sumTransactions"
                               />
                 </div>
                 <div class="relative w-full">
@@ -727,42 +625,6 @@ function UpdatePage (){
                 </div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-3 lg:gap-3 pt-3">
-              <div class=" px-4">
-                            <div >
-                              <InputLabel for="to" value="حساب الصندوق بالدينار العراقي" />
-                              <TextInput
-                                id="to"
-                                type="number"
-                                disabled
-                                class="mt-1 block w-full"
-                                :value="laravelData.sum_transactions_dinar"
-                              />
-                            </div>
-              </div>
-              <div class=" px-4">
-                            <div >
-                              <InputLabel for="to" value="مسحوبات الصندوق بالدينار العراقي" />
-                              <TextInput
-                                id="to"
-                                type="number"
-                                disabled
-                                class="mt-1 block w-full"
-                                :value="laravelData.sum_transactions_debit_dinar"
-                              />
-                            </div>
-              </div>
-              <div class=" px-4">
-                            <div >
-                              <InputLabel for="to" value="دخل الصندوق بالدينار العراقي" />
-                              <TextInput
-                                id="to"
-                                type="number"
-                                disabled
-                                class="mt-1 block w-full"
-                                :value="laravelData.sum_transactions_in_dinar"
-                              />
-                            </div>
-              </div>
               <div >
                               <InputLabel for="to" value="رصيد الصندوق بالدينار العراقي" />
                               <TextInput
@@ -770,7 +632,7 @@ function UpdatePage (){
                                 type="number"
                                 disabled
                                 class="mt-1 block w-full"
-                                :value="laravelData?.user?.wallet.balance_dinar"
+                                :value="sumTransactionsDinar"
                               />
                 </div>
             </div>
@@ -795,7 +657,7 @@ function UpdatePage (){
                     <th className="px-2 py-2">الوصف</th>
                     <th className="px-2 py-2">المبلغ</th>
                     <th className="px-2 py-2" style="width: 100px;">تنفيذ</th>
-                    <th
+                    <th v-if="false"
                       scope="col"
                       class="px-1 py-2 text-base print:hidden" style="width: 100px;"
                     >
@@ -823,12 +685,12 @@ function UpdatePage (){
                       <trash />
                     </button>
 
-                    <button class="px-1 mx-2 py-1 text-white bg-purple-600 rounded-md focus:outline-none" @click="openModalUploader(tran)" >
+                    <button class="px-1 mx-2 py-1 text-white bg-purple-600 rounded-md focus:outline-none" v-if="false" @click="openModalUploader(tran)" >
                       <imags />
                     </button>
                     
                   </td>
-                  <td>
+                  <td v-if="false">
                     <a
                       v-for="(image, index) in tran.transactions_images"
                       :key="index"

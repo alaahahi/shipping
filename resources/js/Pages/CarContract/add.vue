@@ -293,6 +293,10 @@ const submit = (V) => {
           rtl: true
 
         });
+        setTimeout(() => {
+      isLoading.value = false;
+
+    }, 1000);
         console.error(error);
       });
   }

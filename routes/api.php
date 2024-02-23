@@ -174,7 +174,12 @@ Route::post('addCarContract',[CarContractController::class, 'addCarContract'])->
 Route::get('getIndexContractCar',[CarContractController::class, 'getIndexContractCar'])->name('getIndexContractCar');
 Route::post('DelCarContract',[CarContractController::class, 'DelCarContract'])->name('DelCarContract');
 Route::get('totalInfoContract',[CarContractController::class, 'totalInfoContract'])->name('totalInfoContract');
-
+Route::get('getListTransactionsContract',[CarContractController::class, 'getListTransactionsContract'])->name('getListTransactionsContract');
+Route::post('addToBoxContract',[CarContractController::class, 'addToBoxContract'])->name('addToBoxContract');
+Route::post('delTransactionsContract',[CarContractController::class, 'delTransactionsContract'])->name('delTransactionsContract');
+Route::post('convertDollarDinarContract',[CarContractController::class, 'convertDollarDinarContract'])->name('convertDollarDinarContract');
+Route::post('convertDinarDollarContract',[CarContractController::class, 'convertDinarDollarContract'])->name('convertDinarDollarContract');
+Route::post('DropFromBoxContract',[CarContractController::class, 'DropFromBoxContract'])->name('DropFromBoxContract');
 
 
 

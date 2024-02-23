@@ -45,44 +45,7 @@ const restform =()=>{
               <slot name="header"></slot>
             </div>
             <div class="modal-body">
-                        <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-3">
-                        <div className="mb-4 mx-5">
-                          <label for="card" >التاريخ</label>
-                          <input
-                          id="card"
-                          type="date"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                          v-model="form.date"   />
-                        </div>
-                        <div className="mb-4 mx-5">
-                          <label for="user_id" >الحساب</label>
-                          <select
-                            v-model="form.user"
-                            id="user_id"
-                            class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                            <option selected disabled>تحديد الحساب</option>
-                            <option v-for="(user, index) in boxes" :key="index" :value="user">{{ user?.name }}</option>
-                          </select>
-                        </div>
-                        <div className="mb-4 mx-5">
-                        <label for="balance" >الرصيد الحالي بالدولار</label>
-                        <input
-                          id="balance"
-                          type="number"
-                          :value="form.user.wallet?.balance"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                            />
-                        </div>
-                        <div className="mb-4 mx-5">
-                        <label for="balance" >الرصيد الحالي بالدينار العراقي</label>
-                        <input
-                          id="balance"
-                          type="number"
-                          :value="form.user.wallet?.balance_dinar"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                            />
-                        </div>
-                        </div>
+               
                         <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-3">
                         <div className="mb-4 mx-5">
                         <label for="amountDollar" >المبلغ بالدولار</label>
@@ -99,6 +62,17 @@ const restform =()=>{
                           type="number"
                           class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.amountDinar" />
+                        </div>
+                       
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-3">
+                        <div className="mb-4 mx-5">
+                          <label for="card" >التاريخ</label>
+                          <input
+                          id="card"
+                          type="date"
+                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          v-model="form.date"   />
                         </div>
                         <div className="mb-4 mx-5">
                         <label for="note" >ملاحظة</label>
