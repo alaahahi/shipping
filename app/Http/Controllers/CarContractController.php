@@ -430,7 +430,10 @@ class CarContractController extends Controller
          if ($originalTransaction->morphed_type === 'App\Models\CarContract') {
              // Get the associated CarContract
              $carContract = $originalTransaction->morphed;
-             $contract = CarContract::find($carContract->id);
+             if($carContract){
+                $contract = CarContract::find($carContract->id);
+
+            
              
              // Determine if the transaction amount relates to the seller or buyer
              $s_amount = $originalTransaction->s_amount;
@@ -452,6 +455,7 @@ class CarContractController extends Controller
                      $contract->decrement('tex_buyer_dinar_paid', $originalTransaction->amount);
                  }
              }
+            }
          }
          
          // Decrement wallet balance based on transaction currency
