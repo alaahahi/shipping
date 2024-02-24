@@ -240,6 +240,12 @@ const form = props.data ? ref(props.data) : ref
   size: "",
   note: "",
   no:"",
+  vin_s: "",
+  car_name_s: "",
+  modal_s: "",
+  color_s: "",
+  size_s: "",
+
   system_note: "",
   car_price: 0,
   car_paid: 0,
@@ -354,6 +360,44 @@ if(amount < 0){
         rtl: true,
       });
 }
+}
+function checkApisVin(vin) {
+    if (vin.length === 17) {
+      VinApi(vin.toUpperCase())
+    } 
+}
+function VinApi (v){
+    axios.get(`https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${v}?format=json`)
+  .then(response => {
+    form.value.car_name=(response.data.Results[0].Make ? response.data.Results[0].Make:response.data.Results[0].Manufacturer)+' '+response.data.Results[0].Model
+    form.value.modal=response.data.Results[0].ModelYear
+    form.value.size=response.data.Results[0].Doors
+    form.value.vin=''
+    form.value.vin=response.data.Results[0].VIN
+    
+  })
+  .catch(error => {
+    console.error(error);
+  })
+}
+
+function checkApisVin1(vin) {
+    if (vin.length === 17) {
+      VinApi1(vin.toUpperCase())
+    } 
+}
+function VinApi1 (v){
+    axios.get(`https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${v}?format=json`)
+  .then(response => {
+    form.value.car_name_s=(response.data.Results[0].Make ? response.data.Results[0].Make:response.data.Results[0].Manufacturer)+' '+response.data.Results[0].Model
+    form.value.modal_s=response.data.Results[0].ModelYear
+    form.value.size_s=response.data.Results[0].Doors
+    form.value.vin_s=response.data.Results[0].VIN
+    
+  })
+  .catch(error => {
+    console.error(error);
+  })
 }
 </script>
 
@@ -700,6 +744,7 @@ if(amount < 0){
                         <InputLabel for="vin" value="رقم الشاصى" :class="{'list-item text-red-600':!form.vin}" />
                         <TextInput
                           type="text"
+                          @input="checkApisVin(form.vin)"
                           class="mt-1 block w-full"
                           v-model="form.vin"
                         />
@@ -823,6 +868,7 @@ if(amount < 0){
                         <InputLabel for="vin_s" value="رقم الشاصى"  />
                         <TextInput
                           type="text"
+                          @input="checkApisVin1(form.vin_s)"
                           class="mt-1 block w-full"
                           v-model="form.vin_s"
                         />
