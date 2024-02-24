@@ -422,8 +422,8 @@ function VinApi1 (v){
         <div class="basis-1/2">
           <div class="py-6">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-              <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
+              <div class="bg-white  dark:bg-gray-900 overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 bg-white dark:bg-gray-900">
                   <h2 class="text-center text-xl py-2">الطرف الاول (البائع)</h2>
                   <div className="flex flex-col">
                     <div className="mb-4">
@@ -433,7 +433,7 @@ function VinApi1 (v){
                           v-if="!showClient"
                           optionValue="name_seller"
                           optionText="name_seller"
-                          class="mt-1"
+                          class="mt-1 "
                           v-model="form.name_seller"
                           :list="client1"
                           @searchchange="updateSeller(form.name_seller)"
@@ -458,7 +458,7 @@ function VinApi1 (v){
                           <input
                            
                             type="text"
-                            class="mt-1  block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                            class="mt-1  block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700  dark:text-gray-200 dark:border-gray-900"
                             v-model="form.name_seller"
                           />
                           <button
@@ -576,8 +576,8 @@ function VinApi1 (v){
         <div class="basis-1/2">
           <div class="py-6">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-              <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
+              <div class="bg-white  dark:bg-gray-900 overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 bg-white  dark:bg-gray-900">
                   <h2 class="text-center text-xl py-2">الطرف الثاني (المشتري)</h2>
 
                   <div className="flex flex-col">
@@ -736,8 +736,8 @@ function VinApi1 (v){
         <div class="grow">
           <div class="pb-3">
             <div class="mx-auto mx-7">
-              <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
+              <div class="bg-white  dark:bg-gray-900 overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 bg-white  dark:bg-gray-900">
                   <div class="flex justify-center">
                     <div class="basis-1/3">
                       <div className="mb-4 mx-5">
@@ -858,8 +858,8 @@ function VinApi1 (v){
         <div class="grow">
           <div class="pb-3">
             <div class="mx-auto mx-7">
-              <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
+              <div class="bg-white  dark:bg-gray-900 overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 bg-white  dark:bg-gray-900">
                   <h5 class="text-center py-4">السيارة البديلة</h5>
 
                   <div class="flex justify-center">
