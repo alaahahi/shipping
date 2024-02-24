@@ -373,8 +373,8 @@ const switchLocale = (locale) => {
               مصاريف السيارات 
               </ResponsiveNavLink>
               <ResponsiveNavLink
-                :href="route('car_contract')"
-                :active="route().current('car_contract')"
+                :href="route('contract')"
+                :active="route().current('contract')"
                 v-if="$page.props.auth.user.type_id==8"
               >
               عقد جديد   

@@ -418,13 +418,12 @@ function VinApi1 (v){
       </div>
     </div>
     <form name="createForm">
-      <div class="flex flex-row">
-        <div class="basis-1/2">
-          <div class="py-6">
+      <div class="flex flex-wrap my-6">
+          <div class="md:w-1/2 w-full">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
               <div class="bg-white  dark:bg-gray-900 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white dark:bg-gray-900">
-                  <h2 class="text-center text-xl py-2">الطرف الاول (البائع)</h2>
+                  <h2 class="text-center text-xl py-2 dark:text-white">الطرف الاول (البائع)</h2>
                   <div className="flex flex-col">
                     <div className="mb-4">
                       <InputLabel for="name" value="الأسم"  :class="{'list-item text-red-600':!form.name_seller}" />
@@ -572,13 +571,11 @@ function VinApi1 (v){
               </div>
             </div>
           </div>
-        </div>
-        <div class="basis-1/2">
-          <div class="py-6">
+          <div class="md:w-1/2 w-full">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
               <div class="bg-white  dark:bg-gray-900 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white  dark:bg-gray-900">
-                  <h2 class="text-center text-xl py-2">الطرف الثاني (المشتري)</h2>
+                  <h2 class="text-center text-xl py-2  dark:text-white">الطرف الثاني (المشتري)</h2>
 
                   <div className="flex flex-col">
         
@@ -730,7 +727,6 @@ function VinApi1 (v){
               </div>
             </div>
           </div>
-        </div>
       </div>
       <div class="flex">
         <div class="grow">
@@ -738,8 +734,8 @@ function VinApi1 (v){
             <div class="mx-auto mx-7">
               <div class="bg-white  dark:bg-gray-900 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white  dark:bg-gray-900">
-                  <div class="flex justify-center">
-                    <div class="basis-1/3">
+                  <div class="flex flex-wrap my-6 justify-center">
+                    <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
                         <InputLabel for="vin" value="رقم الشاصى" :class="{'list-item text-red-600':!form.vin}" />
                         <TextInput
@@ -750,7 +746,7 @@ function VinApi1 (v){
                         />
                       </div>
                     </div>
-                    <div class="basis-1/3">
+                    <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
                         <InputLabel for="car_name" value="السيارة" :class="{'list-item text-red-600':!form.car_name}" />
                         <TextInput
@@ -760,7 +756,7 @@ function VinApi1 (v){
                         />
                       </div>
                     </div>
-                    <div class="basis-1/3">
+                    <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
                         <InputLabel for="modal" value="موديل" />
                         <TextInput
@@ -770,7 +766,7 @@ function VinApi1 (v){
                         />
                       </div>
                     </div>
-                    <div class="basis-1/3">
+                    <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
                         <InputLabel for="color" value="اللون" />
                         <TextInput
@@ -780,7 +776,7 @@ function VinApi1 (v){
                         />
                       </div>
                     </div>
-                    <div class="basis-1/3">
+                    <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
                         <InputLabel for="size" value="قماره" />
                         <TextInput
@@ -790,7 +786,7 @@ function VinApi1 (v){
                         />
                       </div>
                     </div>
-                    <div class="basis-1/3">
+                    <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
                         <InputLabel
                           for="no"
@@ -806,7 +802,7 @@ function VinApi1 (v){
                     </div>
                   </div>
                   <div class="flex justify-center">
-                    <div class="basis-1/3">
+                    <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
                         <InputLabel
                           for="car_price"
@@ -820,7 +816,7 @@ function VinApi1 (v){
                         />
                       </div>
                     </div>
-                    <div class="basis-1/3">
+                    <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
                         <InputLabel
                           for="car_paid"
@@ -834,7 +830,7 @@ function VinApi1 (v){
                         />
                       </div>
                     </div>
-                    <div class="basis-1/3">
+                    <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
                         <InputLabel for="relatives" value="المتبقي بالدولار" />
                         <TextInput
@@ -860,10 +856,10 @@ function VinApi1 (v){
             <div class="mx-auto mx-7">
               <div class="bg-white  dark:bg-gray-900 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white  dark:bg-gray-900">
-                  <h5 class="text-center py-4">السيارة البديلة</h5>
+                  <h5 class="text-center py-4  dark:text-white">السيارة البديلة</h5>
 
-                  <div class="flex justify-center">
-                    <div class="basis-1/3">
+                  <div class="flex flex-wrap justify-center">
+                    <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
                         <InputLabel for="vin_s" value="رقم الشاصى"  />
                         <TextInput
@@ -874,7 +870,7 @@ function VinApi1 (v){
                         />
                       </div>
                     </div>
-                    <div class="basis-1/3">
+                    <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
                         <InputLabel for="car_name_s" value="السيارة"  />
                         <TextInput
@@ -884,7 +880,7 @@ function VinApi1 (v){
                         />
                       </div>
                     </div>
-                    <div class="basis-1/3">
+                    <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
                         <InputLabel for="modal_s" value="موديل" />
                         <TextInput
@@ -894,7 +890,7 @@ function VinApi1 (v){
                         />
                       </div>
                     </div>
-                    <div class="basis-1/3">
+                    <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
                         <InputLabel for="color_s" value="اللون" />
                         <TextInput
@@ -904,7 +900,7 @@ function VinApi1 (v){
                         />
                       </div>
                     </div>
-                    <div class="basis-1/3">
+                    <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
                         <InputLabel for="size_s" value="قماره" />
                         <TextInput
@@ -914,7 +910,7 @@ function VinApi1 (v){
                         />
                       </div>
                     </div>
-                    <div class="basis-1/3">
+                    <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
                         <InputLabel
                           for="no_s"
