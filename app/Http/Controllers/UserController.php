@@ -78,7 +78,7 @@ class UserController extends Controller
 
         $dataQuery = User::with(['userType:id,name', 'wallet'])
             ->where('owner_id', $owner_id)
-            ->where('type_id', $userClien);
+            ->where('type_id', $userClient);
     
         if ($q) {
             if ($q !== 'debit') {
