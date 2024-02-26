@@ -91,29 +91,30 @@ const formData = ref({});
 const car = ref([]);
 
 
-const getResultsCarSearch = async (q='',page = 1) => {
-    axios.get(`/getIndexClients?page=${page}&q=${q}`)
-  .then(response => {
+import { debounce } from 'lodash'; // Import debounce function from Lodash
+
+
+const debouncedGetResultsCarSearch = debounce(async (q = '', page = 1) => {
     try {
-      laravelData.value =  Object.values(response.data.data)?.sort((a, b) => {
-      // First, sort by wallet.balance in descending order
-      const balanceComparison = b.wallet.balance - a.wallet.balance;
+        const response = await axios.get(`/getIndexClients?page=${page}&q=${q}`);
+        laravelData.value = Object.values(response.data.data)?.sort((a, b) => {
+            // First, sort by wallet.balance in descending order
+            const balanceComparison = b.wallet.balance - a.wallet.balance;
 
-      // If wallet.balance is the same, sort by car_total_uncomplete in ascending order
-  
+            // If wallet.balance is the same, sort by car_total_uncomplete in ascending order
+            // Add your additional sorting logic here if needed
 
-      return balanceComparison;
-    });
+            return balanceComparison;
+        });
     } catch (error) {
-      laravelData.value =  response.data.data
+        console.error(error);
     }
+}, 300); // Specify the debounce delay in milliseconds (e.g., 300ms)
 
-  })
-  .catch(error => {
-    console.error(error);
-  })
+// The original function call will now trigger the debounced version
+const getResultsCarSearch = (q = '', page = 1) => {
+    debouncedGetResultsCarSearch(q, page);
 }
-
 //
 const getcountTotalInfo = async () => {
   axios.get('/api/totalInfo', {
