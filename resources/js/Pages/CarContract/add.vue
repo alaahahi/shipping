@@ -501,7 +501,7 @@ function VinApi1 (v){
                         <TextInput
                           type="number"
                           class="mt-1"
-                          @focus="form.tex_seller='100'"
+                          @focus="form.tex_seller=form.tex_seller ? form.tex_seller :'100'"
                           v-model="form.tex_seller"
                         />
                       </div>
@@ -510,7 +510,7 @@ function VinApi1 (v){
                         <TextInput
                           type="number"
                           class="mt-1"
-                          @focus="form.tex_seller_dinar='150000'"
+                          @focus="form.tex_seller_dinar=form.tex_seller_dinar?'form.tex_seller_dinar':'150000'"
                           v-model="form.tex_seller_dinar"
                         />
                       </div>
@@ -658,7 +658,7 @@ function VinApi1 (v){
                         <TextInput
                           type="number"
                           class="mt-1"
-                          @focus="form.tex_buyer='100'"
+                          @focus="form.tex_buyer=form.tex_buyer?form.tex_buyer:'100'"
                           v-model="form.tex_buyer"
                         />
                       </div>
@@ -667,7 +667,7 @@ function VinApi1 (v){
                         <TextInput
                           type="number"
                           class="mt-1"
-                          @focus="form.tex_buyer_dinar='150000'"
+                          @focus="form.tex_buyer_dinar=form.tex_buyer_dinar?form.tex_buyer_dinar:'150000'"
                           v-model="form.tex_buyer_dinar"
                         />
                       </div>
