@@ -510,7 +510,7 @@ function VinApi1 (v){
                         <TextInput
                           type="number"
                           class="mt-1"
-                          @focus="form.tex_seller_dinar='15000'"
+                          @focus="form.tex_seller_dinar='150000'"
                           v-model="form.tex_seller_dinar"
                         />
                       </div>
@@ -521,7 +521,7 @@ function VinApi1 (v){
                         <TextInput
                           type="number"
                           class="mt-1"
-                          @focus="form.tex_seller_paid='100'"
+                          @focus="form.tex_seller_paid=form.tex_seller"
                           @input="validTexSeller(form.tex_seller_paid)"
                           v-model="form.tex_seller_paid"
                         />
@@ -531,7 +531,7 @@ function VinApi1 (v){
                         <TextInput
                           type="number"
                           class="mt-1"
-                          @focus="form.tex_seller_dinar_paid='150000'"
+                          @focus="form.tex_seller_dinar_paid=form.tex_seller_dinar"
                           @input="validTexSellerDinar(form.tex_seller_dinar_paid)"
                           v-model="form.tex_seller_dinar_paid"
                         />
@@ -678,7 +678,7 @@ function VinApi1 (v){
                         <TextInput
                           type="number"
                           class="mt-1"
-                          @focus="form.tex_buyer_paid='100'"
+                          @focus="form.tex_buyer_paid=form.tex_buyer"
                           v-model="form.tex_buyer_paid"
                         />
                       </div>
@@ -687,7 +687,7 @@ function VinApi1 (v){
                         <TextInput
                           type="number"
                           class="mt-1"
-                          @focus="form.tex_buyer_dinar_paid='150000'"
+                          @focus="form.tex_buyer_dinar_paid=form.tex_buyer_dinar"
                           v-model="form.tex_buyer_dinar_paid"
                         />
                       </div>

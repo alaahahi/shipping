@@ -318,7 +318,7 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                         {{ $t("carPrice") }}
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t("remaining") }}
+                                        {{ $t("paid") }}
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t("remaining") }}
