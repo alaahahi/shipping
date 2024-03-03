@@ -36,7 +36,7 @@ const formData = ref({});
 const toast = useToast();
 let searchTerm = ref("");
 let showClient = ref(false);
-let showClientB = ref(false);
+let showClientB = ref(true);
 
 let showModalAddCarExpensesFav = ref(false);
 let showModalAddCarExpenses = ref(false);
