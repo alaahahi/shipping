@@ -11,7 +11,6 @@ import pay from "@/Components/icon/pay.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
 
-import ModalAddCarPayment from "@/Components/ModalAddCarPayment.vue";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
 import ModalEditCars from "@/Components/ModalEditCar_S.vue";
 import InfiniteLoading from "v3-infinite-loading";
@@ -24,13 +23,13 @@ import { useI18n } from "vue-i18n";
 const {t} = useI18n();
 const props = defineProps({
   client:Array,
+  user:String
 });
 
 const toast = useToast();
 let showModal = ref(false);
 let showModalCar =  ref(false);
 let showModalCarSale =  ref(false);
-let showModalAddCarPayment =  ref(false);
 let showModalEditCars=ref(false);
 let showModalDelCar =  ref(false);
 let mainAccount= ref(0)
@@ -52,18 +51,14 @@ function openModalDelCar(form={}) {
 }
 
 
-function openAddCarPayment(form={}) {
-    formData.value=form
-    formData.value.notePayment='حساب '+form.car_type+' '+form.year+' '+form.car_color+' رقم شاصى '+form.vin+' بيد '
-    showModalAddCarPayment.value = true;
-}
+
 const formData = ref({});
 const car = ref([]);
 
 let resetData = ref(false);
 let user_id = 0;
 let page = 1;
-let q = '';
+let q = props.user;
 const refresh = () => {
   page = 0;
   car.value.length = 0;
@@ -165,36 +160,6 @@ function confirmDelCarContract(V) {
 }
 
 
-function confirmAddPayment(V) {
-  axios.get(`/api/addPaymentCar?car_id=${V.id}&discount=${V.discountPayment??0}&amount=${V.amountPayment??0}&note=${V.notePayment??''}`)
-  .then(response => {
-    refresh();
-
-    showModalAddCarPayment.value = false;
-    toast.success( " تم دفع مبلغ دولار "+V.amountPayment+" بنجاح ", {
-        timeout: 3000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-      let transaction=response.data
-      window.open(`/api/getIndexAccountsSelas?user_id=${V.client.id}&print=2&transactions_id=${transaction.id}`, '_blank');
-
-
-  })
-  .catch(error => {
-    showModal.value = false;
-
-    toast.error("لم التعديل بنجاح", {
-        timeout: 2000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-
-  })
-}
-
 const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce delay (in milliseconds) as needed
 
 </script>
@@ -214,17 +179,6 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
     </ModalEditCars>
 
 
-
-
-    <ModalAddCarPayment
-            :formData="formData"
-            :show="showModalAddCarPayment ? true : false"
-            @a="confirmAddPayment($event)"
-            @close="showModalAddCarPayment = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddCarPayment>
 
     <ModalDelCar
             :show="showModalDelCar ? true : false"
@@ -343,47 +297,47 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
                                   <tr>
                                       <th scope="col" class="px-1 py-3 text-base	">
-                                        البائع
+                                        {{ $t("seller") }}
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                      دين 
+                                        {{ $t("debt") }} 
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                     دين بالدينار
+                                        {{ $t("debtInDinars") }} 
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                       السيارة
+                                        {{ $t("car_type") }} 
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        رقم الشاصي
+                                        {{ $t("vin") }} 
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                       لون
+                                        {{ $t("color") }}
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        سعر السيارة
+                                        {{ $t("carPrice") }}
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        المدفوع
+                                        {{ $t("remaining") }}
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        المتبقي
+                                        {{ $t("remaining") }}
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        بتاريخ
+                                        {{ $t("date") }}
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                       المشتري
+                                        {{ $t("Buyer") }}
                                       </th>
                                    
                                       <th scope="col" class="px-1 py-3 text-base">
-                                      دين
+                                        {{ $t("debt") }} 
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                      دين بالدينار
+                                        {{ $t("debtInDinars") }} 
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                       ملاحظة 
+                                        {{ $t("note") }}  
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base" style="width: 150px;">
                                         {{ $t('execute') }}

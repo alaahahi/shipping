@@ -77,7 +77,8 @@ class CarContractController extends Controller
     {
         $owner_id=Auth::user()->owner_id;
         $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
-        return Inertia::render('CarContract/index', ['client'=>$client ]);   
+        $q= $_GET['q'] ?? '';
+         return Inertia::render('CarContract/index', ['client'=>$client,'user'=>$q ]);   
     }
     public function contract_account(Request $request)
     {
@@ -85,6 +86,7 @@ class CarContractController extends Controller
         $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
         return Inertia::render('CarContract/account', ['client'=>$client ]);   
     }
+ 
     public function addCarContract(Request $request)
     {
         $contract= $request->all();
@@ -412,7 +414,6 @@ class CarContractController extends Controller
              return 0 ;
          }
      }
-     
      public function delTransactionsContract(Request $request)
      {
          $owner_id = Auth::user()->owner_id;
@@ -480,8 +481,7 @@ class CarContractController extends Controller
          $originalTransaction->delete();
          
          return response()->json(['message' => 'Transaction and associated records deleted successfully'], 200);
-     }
-     
+     }   
      public function convertDollarDinarContract(Request $request){
         $owner_id=Auth::user()->owner_id;
         $amountDollar =$request->amountDollar;
@@ -524,7 +524,6 @@ class CarContractController extends Controller
 
     public function handlePaymentChange($newPayment, $oldPayment, $currency, $desc, $contractId,$type) {
         $owner_id=Auth::user()->owner_id;
-
         if ($newPayment > $oldPayment) {
             $difference = $newPayment - $oldPayment;
             if($type=='seller'){
@@ -533,14 +532,71 @@ class CarContractController extends Controller
             if($type=='buyer'){
                 $this->increaseWallet($difference, $desc, $this->mainBoxContract->where('owner_id', $owner_id)->first()->id, $contractId, 'App\Models\CarContract', 0, 0, $currency,0,0,'in',0,$newPayment);
             }
-        } elseif ($newPayment < $oldPayment) {
+            } elseif ($newPayment < $oldPayment) {
+
             $difference = $oldPayment - $newPayment;
+
             if($type=='seller'){
-            $this->decreaseWallet($difference, $desc, $this->mainBoxContract->where('owner_id', $owner_id)->first()->id,$contractId, 'App\Models\CarContract', 0, 0, $currency,0,0,'in',$newPayment);
+            $this->decreaseWallet($difference, $desc, $this->mainBoxContract->where('owner_id', $owner_id)->first()->id,$contractId, 'App\Models\CarContract', 0, 0, $currency,0,0,'out',$newPayment);
             }
             if($type=='buyer'){
-                $this->decreaseWallet($difference, $desc, $this->mainBoxContract->where('owner_id', $owner_id)->first()->id,$contractId, 'App\Models\CarContract', 0, 0, $currency,0,0,'in',0,$newPayment);
+                $this->decreaseWallet($difference, $desc, $this->mainBoxContract->where('owner_id', $owner_id)->first()->id,$contractId, 'App\Models\CarContract', 0, 0, $currency,0,0,'out',0,$newPayment);
             }
         }
+    }
+
+    public function getIndexClientsContract()
+    {
+        $q = $_GET['q'] ?? '';
+        $from = $_GET['from'] ?? 0;
+        $to = $_GET['to'] ?? 0;
+        $searchType = $_GET['searchType'] ?? '';
+        $owner_id=Auth::user()->owner_id;
+        $userClient=$this->userClient ?? 0;
+
+        $dataQuery1 = CarContract::where('owner_id', $owner_id)
+        ->select('name_seller', 
+                 DB::raw('MAX(phone_seller) as phone_seller'), 
+                 DB::raw('SUM(tex_seller_dinar) as tex_seller_dinar'), 
+                 DB::raw('SUM(tex_seller) as tex_seller'),
+                 DB::raw('SUM(tex_seller_dinar_paid) as tex_seller_dinar_paid'), 
+                 DB::raw('SUM(tex_seller_paid) as tex_seller_paid'),
+                 )
+        ->groupBy('name_seller')
+        ;
+
+
+        $dataQuery2 = CarContract::where('owner_id', $owner_id)
+        ->select('name_buyer', 
+                 DB::raw('MAX(phone_buyer) as phone_seller'), 
+                 DB::raw('SUM(tex_buyer_dinar) as tex_buyer_dinar'), 
+                 DB::raw('SUM(tex_buyer) as tex_buyer'),
+                 DB::raw('SUM(tex_buyer_dinar_paid) as tex_buyer_dinar_paid'), 
+                 DB::raw('SUM(tex_buyer_paid) as tex_buyer_paid')
+                 )
+        ->groupBy('name_buyer')
+        ;
+    
+        if ($q) {
+            if ($q !== 'debit') {
+            $dataQuery1->where('name_seller', 'like', '%' . $q . '%');
+            $dataQuery2->where('name_buyer', 'like', '%' . $q . '%');
+            }
+        }
+        if ($from && $to) {
+            $dataQuery1->whereBetween('created', [$from, $to]);
+            $dataQuery2->whereBetween('created', [$from, $to]);
+
+        } 
+
+
+        if ($q=='debit') {
+            $dataQuery1->havingRaw('(SUM(tex_seller) - SUM(tex_seller_paid)) > 0 OR (SUM(tex_seller_dinar) - SUM(tex_seller_dinar_paid)) > 0');
+            $dataQuery2->havingRaw('(SUM(tex_buyer) - SUM(tex_buyer_paid)) > 0 OR (SUM(tex_buyer_dinar) - SUM(tex_buyer_dinar_paid)) > 0');
+
+        } 
+        $data1 = $dataQuery1->get();
+        $data2 = $dataQuery2->get();
+        return Response::json(['data1'=>$data1,'data2'=>$data2], 200);
     }
 }

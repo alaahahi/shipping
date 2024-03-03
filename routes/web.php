@@ -55,6 +55,7 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('clients',[UserController::class, 'clients'])->name('clients');
     Route::get('showClients/{id}',[UserController::class, 'showClients'])->name('showClients');
 
+    
     Route::get('getIndexClients',[UserController::class, 'getIndexClients'])->name("getIndexClients");
     Route::get('getIndexClientsSearch',[UserController::class, 'getIndexClients'])->name("getIndexClientsSearch");
 
@@ -152,7 +153,7 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('contract/{id?}', [CarContractController::class, 'contract'])->name('contract');
     Route::get('contract_print/{id}', [CarContractController::class, 'contract_print'])->name('contract_print');
 
-    
+
     
     
     Route::get('dubai',[TransfersController::class, 'dubai'])->name('dubai');

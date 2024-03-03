@@ -110,7 +110,7 @@ const switchLocale = (locale) => {
                   :active="route().current('contract')"
 
                 >
-                    عقد جديد 
+                {{ $t("newContract") }}
                 </NavLink>
               </div>
               <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==8">
@@ -119,7 +119,7 @@ const switchLocale = (locale) => {
                   :active="route().current('car_contract')"
 
                 >
-                    عقود البيع
+                {{ $t("SalesContracts") }}
                 </NavLink>
               </div>
               <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==8">
@@ -128,7 +128,7 @@ const switchLocale = (locale) => {
                   :active="route().current('contract_account')"
 
                 >
-                     محاسبة عقود
+                {{ $t("CompanyExpenses") }}
                 </NavLink>
               </div>
 

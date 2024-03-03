@@ -55,6 +55,8 @@ Route::get('receiveCard',[UserController::class, 'receiveCard']);
 
 Route::get('ackUserMassages/{sender}/{receiver}/{date}',[UserController::class, 'ackUserMassages']);
 
+Route::get('getIndexClients',[UserController::class, 'getIndexClients'])->name("getIndexClients");
+Route::get('getIndexClientsSearch',[UserController::class, 'getIndexClients'])->name("getIndexClientsSearch");
 
 
 Route::get('getSaler',[UserController::class, 'getSaler']);
@@ -180,6 +182,7 @@ Route::post('delTransactionsContract',[CarContractController::class, 'delTransac
 Route::post('convertDollarDinarContract',[CarContractController::class, 'convertDollarDinarContract'])->name('convertDollarDinarContract');
 Route::post('convertDinarDollarContract',[CarContractController::class, 'convertDinarDollarContract'])->name('convertDinarDollarContract');
 Route::post('DropFromBoxContract',[CarContractController::class, 'DropFromBoxContract'])->name('DropFromBoxContract');
+Route::get('getIndexClientsContract',[CarContractController::class, 'getIndexClientsContract'])->name('getIndexClientsContract');
 
 
 
