@@ -340,7 +340,7 @@ function confirmDelClient(V) {
 
                                         <button
                                           tabIndex="1"
-                                          v-if="false"
+                                          v-if="user.car_total_uncomplete==0"
                                           class="px-1 py-1  text-white mx-1 bg-orange-500 rounded"
                                           @click="openModalDelClient(user)"
                                         >

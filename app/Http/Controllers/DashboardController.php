@@ -46,10 +46,7 @@ class DashboardController extends Controller
     $this->transfersAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','transfers@account.com');
     $this->outSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-out');
     $this->debtSupplier= User::with('wallet')->where('type_id', $this->userAccount)->where('email','supplier-debt');
-    $this->onlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts');
-    $this->onlineContractsDinar= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-dinar');
-    $this->debtOnlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-debt');
-    $this->debtOnlineContractsDinar= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-debit-dinar');
+    
     $this->howler= User::with('wallet')->where('type_id', $this->userAccount)->where('email','howler');
     $this->shippingCoc= User::with('wallet')->where('type_id', $this->userAccount)->where('email','shipping-coc');
     $this->border= User::with('wallet')->where('type_id', $this->userAccount)->where('email','border');
@@ -88,7 +85,7 @@ class DashboardController extends Controller
     {
         $owner_id=Auth::user()->owner_id;
         $car = Car::all()->where('owner_id',$owner_id);
-        $contarts = Contract::all()->where('owner_id',$owner_id)->count();
+        $contarts = Contract::all()->where('owner_id',$owner_id);
         $exitCar = ExitCar::all()->where('owner_id',$owner_id)->count();
         $sumTotal = $car->sum('total');
         $sumTotalS = $car->sum('total_s');
@@ -96,14 +93,17 @@ class DashboardController extends Controller
         $sumDebit =Wallet::whereIn('user_id', $client)->sum('balance');
         $sumPaid = $car->sum('paid')+ $car->sum('discount');
         $sumProfit = $car->where('results',2)->sum('profit');
-        
+        $sumContrat = $contarts->sum('paid') ;
+        $sumContratDinar = $contarts->sum('paid_dinar') ;
+        $debtSumContrat = $contarts->sum('price') -$sumContrat;
+        $debtSumContratDinar = $contarts->sum('price_dinar') - $sumContratDinar;
         $data = [
-        'contarts'=>$contarts,
+        'contarts'=>$contarts->count(),
         'exitCar'=>$exitCar,
-        'mainAccount'=>$this->mainAccount->where('owner_id',$owner_id)->first()->wallet->balance??0,
-        'onlineContracts'=>$this->onlineContracts->where('owner_id',$owner_id)->first()->wallet->balance??0,
-        'onlineContractsDinar'=>$this->onlineContractsDinar->where('owner_id',$owner_id)->first()->wallet->balance_dinar??0,
-        'debtOnlineContractsDinar'=>$this->debtOnlineContractsDinar->where('owner_id',$owner_id)->first()->wallet->balance_dinar??0,
+        'mainAccount'=>$sumTotal -$sumPaid ,
+        'onlineContracts'=>$sumContrat,
+        'onlineContractsDinar'=>$sumContratDinar,
+        'debtOnlineContractsDinar'=>$debtSumContratDinar,
         'howler'=>$this->howler->where('owner_id',$owner_id)->first()->wallet->balance??0,
         'shippingCoc'=>$this->shippingCoc->where('owner_id',$owner_id)->first()->wallet->balance??0,
         'border'=>$this->border->where('owner_id',$owner_id)->first()->wallet->balance??0,
@@ -113,7 +113,7 @@ class DashboardController extends Controller
         'sumPaid'=>$sumPaid,
         'sumDebit'=>$sumDebit,
         'sumProfit'=>$sumProfit,
-        'debtOnlineContracts'=>$this->debtOnlineContracts->where('owner_id',$owner_id)->first()->wallet->balance??0,
+        'debtOnlineContracts'=>$debtSumContrat,
         'allCars'=>$car->count()??0,
         'purchasesCost'=>$sumTotalS??0,
         'clientPaid'=>$sumPaid??0,
