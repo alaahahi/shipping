@@ -1,6 +1,6 @@
 {
   "resources/js/app.js": {
-    "file": "assets/app.c611a7a8.js",
+    "file": "assets/app.c06d9028.js",
     "src": "resources/js/app.js",
     "isEntry": true,
     "dynamicImports": [
@@ -46,21 +46,21 @@
     ]
   },
   "resources/js/Pages/Accounting/Index.vue": {
-    "file": "assets/Index.94e277fe.js",
+    "file": "assets/Index.17d04c7b.js",
     "src": "resources/js/Pages/Accounting/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_ModalDel.2260fe0b.js",
-      "_imags.c5025a64.js",
-      "_TextInput.e167e709.js",
-      "_print.db8f18b1.js",
-      "_index.18da28d9.js",
-      "_trash.a8be14a3.js",
-      "_v3-infinite-loading.es.4c26172b.js",
-      "_debounce.064bfde7.js",
-      "_Uploader.83baee86.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_ModalDel.12132e6f.js",
+      "_imags.446809b2.js",
+      "_TextInput.ab720e82.js",
+      "_print.809637f0.js",
+      "_index.1f373116.js",
+      "_trash.f705789d.js",
+      "_v3-infinite-loading.es.9f93aaad.js",
+      "_debounce.fa1ff5c2.js",
+      "_Uploader.82678309.js"
     ],
     "css": [
       "assets/Index.7bea12e8.css",
@@ -70,8 +70,8 @@
       "assets/Uploader.b147d8d4.css"
     ]
   },
-  "_AuthenticatedLayout.6d466eec.js": {
-    "file": "assets/AuthenticatedLayout.6d466eec.js",
+  "_AuthenticatedLayout.c89cfa5c.js": {
+    "file": "assets/AuthenticatedLayout.c89cfa5c.js",
     "imports": [
       "resources/js/app.js"
     ],
@@ -79,63 +79,63 @@
       "assets/AuthenticatedLayout.2de53130.css"
     ]
   },
-  "_ModalDel.2260fe0b.js": {
-    "file": "assets/ModalDel.2260fe0b.js",
+  "_ModalDel.12132e6f.js": {
+    "file": "assets/ModalDel.12132e6f.js",
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js"
+      "_AuthenticatedLayout.c89cfa5c.js"
     ],
     "css": [
       "assets/ModalDel.bdf3906c.css"
     ]
   },
-  "_imags.c5025a64.js": {
-    "file": "assets/imags.c5025a64.js",
+  "_imags.446809b2.js": {
+    "file": "assets/imags.446809b2.js",
     "imports": [
       "resources/js/app.js",
-      "_index.18da28d9.js",
-      "_Uploader.83baee86.js",
-      "_AuthenticatedLayout.6d466eec.js"
+      "_index.1f373116.js",
+      "_Uploader.82678309.js",
+      "_AuthenticatedLayout.c89cfa5c.js"
     ],
     "css": [
       "assets/imags.6b361e01.css",
       "assets/ModalAddExpenses.44266cb8.css"
     ]
   },
-  "_TextInput.e167e709.js": {
-    "file": "assets/TextInput.e167e709.js",
+  "_TextInput.ab720e82.js": {
+    "file": "assets/TextInput.ab720e82.js",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_index.18da28d9.js": {
-    "file": "assets/index.18da28d9.js",
+  "_index.1f373116.js": {
+    "file": "assets/index.1f373116.js",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_trash.a8be14a3.js": {
-    "file": "assets/trash.a8be14a3.js",
+  "_trash.f705789d.js": {
+    "file": "assets/trash.f705789d.js",
     "imports": [
-      "_AuthenticatedLayout.6d466eec.js",
+      "_AuthenticatedLayout.c89cfa5c.js",
       "resources/js/app.js"
     ]
   },
-  "_print.db8f18b1.js": {
-    "file": "assets/print.db8f18b1.js",
+  "_print.809637f0.js": {
+    "file": "assets/print.809637f0.js",
     "imports": [
-      "_AuthenticatedLayout.6d466eec.js",
+      "_AuthenticatedLayout.c89cfa5c.js",
       "resources/js/app.js"
     ]
   },
-  "_v3-infinite-loading.es.4c26172b.js": {
-    "file": "assets/v3-infinite-loading.es.4c26172b.js",
+  "_v3-infinite-loading.es.9f93aaad.js": {
+    "file": "assets/v3-infinite-loading.es.9f93aaad.js",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_debounce.064bfde7.js": {
-    "file": "assets/debounce.064bfde7.js",
+  "_debounce.fa1ff5c2.js": {
+    "file": "assets/debounce.fa1ff5c2.js",
     "imports": [
       "resources/js/app.js"
     ],
@@ -143,29 +143,29 @@
       "assets/debounce.1ff9ffe7.css"
     ]
   },
-  "_Uploader.83baee86.js": {
-    "file": "assets/Uploader.83baee86.js",
+  "_Uploader.82678309.js": {
+    "file": "assets/Uploader.82678309.js",
     "imports": [
-      "_AuthenticatedLayout.6d466eec.js",
+      "_AuthenticatedLayout.c89cfa5c.js",
       "resources/js/app.js",
-      "_index.18da28d9.js"
+      "_index.1f373116.js"
     ],
     "css": [
       "assets/Uploader.b147d8d4.css"
     ]
   },
   "resources/js/Pages/Accounting/Wallet.vue": {
-    "file": "assets/Wallet.cf128e9b.js",
+    "file": "assets/Wallet.be2578a2.js",
     "src": "resources/js/Pages/Accounting/Wallet.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_ModalDel.2260fe0b.js",
-      "_TextInput.e167e709.js",
-      "_index.18da28d9.js",
-      "_v3-infinite-loading.es.4c26172b.js",
-      "_debounce.064bfde7.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_ModalDel.12132e6f.js",
+      "_TextInput.ab720e82.js",
+      "_index.1f373116.js",
+      "_v3-infinite-loading.es.9f93aaad.js",
+      "_debounce.fa1ff5c2.js"
     ],
     "css": [
       "assets/Wallet.3a527582.css",
@@ -174,20 +174,20 @@
     ]
   },
   "resources/js/Pages/Annual/Index.vue": {
-    "file": "assets/Index.14f17bb7.js",
+    "file": "assets/Index.db6f85fe.js",
     "src": "resources/js/Pages/Annual/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_trash.a8be14a3.js",
-      "_edit.c891172a.js",
-      "_index.18da28d9.js",
-      "_Uploader.83baee86.js",
-      "_VueSearchSelect.5c8f68e9.js",
-      "_ModalDelCar.c3ab3cdf.js",
-      "_v3-infinite-loading.es.4c26172b.js",
-      "_debounce.064bfde7.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_trash.f705789d.js",
+      "_edit.a2d06767.js",
+      "_index.1f373116.js",
+      "_Uploader.82678309.js",
+      "_VueSearchSelect.89bebf94.js",
+      "_ModalDelCar.d0ccc975.js",
+      "_v3-infinite-loading.es.9f93aaad.js",
+      "_debounce.fa1ff5c2.js"
     ],
     "css": [
       "assets/Index.0a846f21.css",
@@ -195,25 +195,25 @@
       "assets/ModalDelCar.6b361e01.css"
     ]
   },
-  "_edit.c891172a.js": {
-    "file": "assets/edit.c891172a.js",
+  "_edit.a2d06767.js": {
+    "file": "assets/edit.a2d06767.js",
     "imports": [
-      "_AuthenticatedLayout.6d466eec.js",
+      "_AuthenticatedLayout.c89cfa5c.js",
       "resources/js/app.js"
     ]
   },
-  "_ModalDelCar.c3ab3cdf.js": {
-    "file": "assets/ModalDelCar.c3ab3cdf.js",
+  "_ModalDelCar.d0ccc975.js": {
+    "file": "assets/ModalDelCar.d0ccc975.js",
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js"
+      "_AuthenticatedLayout.c89cfa5c.js"
     ],
     "css": [
       "assets/ModalDelCar.6b361e01.css"
     ]
   },
-  "_VueSearchSelect.5c8f68e9.js": {
-    "file": "assets/VueSearchSelect.5c8f68e9.js",
+  "_VueSearchSelect.89bebf94.js": {
+    "file": "assets/VueSearchSelect.89bebf94.js",
     "imports": [
       "resources/js/app.js"
     ],
@@ -222,59 +222,59 @@
     ]
   },
   "resources/js/Pages/Auth/Login.vue": {
-    "file": "assets/Login.65ac9308.js",
+    "file": "assets/Login.68512aef.js",
     "src": "resources/js/Pages/Auth/Login.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_PrimaryButton.d07710b5.js",
-      "_TextInput.e167e709.js"
+      "_PrimaryButton.ddae6c51.js",
+      "_TextInput.ab720e82.js"
     ]
   },
-  "_PrimaryButton.d07710b5.js": {
-    "file": "assets/PrimaryButton.d07710b5.js",
+  "_PrimaryButton.ddae6c51.js": {
+    "file": "assets/PrimaryButton.ddae6c51.js",
     "imports": [
       "resources/js/app.js"
     ]
   },
   "resources/js/Pages/Auth/Register.vue": {
-    "file": "assets/Register.5f036c03.js",
+    "file": "assets/Register.2993c2bf.js",
     "src": "resources/js/Pages/Auth/Register.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_PrimaryButton.d07710b5.js",
-      "_TextInput.e167e709.js"
+      "_PrimaryButton.ddae6c51.js",
+      "_TextInput.ab720e82.js"
     ]
   },
   "resources/js/Pages/CarConfig/Add.vue": {
-    "file": "assets/Add.5e9ef5e4.js",
+    "file": "assets/Add.3dfda71a.js",
     "src": "resources/js/Pages/CarConfig/Add.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_TextInput.e167e709.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_TextInput.ab720e82.js"
     ]
   },
   "resources/js/Pages/CarConfig/Edit.vue": {
-    "file": "assets/Edit.abf0d6c0.js",
+    "file": "assets/Edit.09bb80c1.js",
     "src": "resources/js/Pages/CarConfig/Edit.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_TextInput.e167e709.js",
-      "_WebCamUI.f3bbc6d4.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_TextInput.ab720e82.js",
+      "_WebCamUI.3d5c6b4b.js"
     ],
     "css": [
       "assets/WebCamUI.78715766.css"
     ]
   },
-  "_WebCamUI.f3bbc6d4.js": {
-    "file": "assets/WebCamUI.f3bbc6d4.js",
+  "_WebCamUI.3d5c6b4b.js": {
+    "file": "assets/WebCamUI.3d5c6b4b.js",
     "imports": [
-      "_AuthenticatedLayout.6d466eec.js",
+      "_AuthenticatedLayout.c89cfa5c.js",
       "resources/js/app.js"
     ],
     "css": [
@@ -282,40 +282,40 @@
     ]
   },
   "resources/js/Pages/CarConfig/Index.vue": {
-    "file": "assets/Index.edca4e73.js",
+    "file": "assets/Index.5f97d58d.js",
     "src": "resources/js/Pages/CarConfig/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_laravel-vue-pagination.es.4336b664.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_laravel-vue-pagination.es.319f0f4e.js"
     ],
     "css": [
       "assets/Index.370aeecd.css",
       "assets/Modal.44266cb8.css"
     ]
   },
-  "_laravel-vue-pagination.es.4336b664.js": {
-    "file": "assets/laravel-vue-pagination.es.4336b664.js",
+  "_laravel-vue-pagination.es.319f0f4e.js": {
+    "file": "assets/laravel-vue-pagination.es.319f0f4e.js",
     "imports": [
       "resources/js/app.js"
     ]
   },
   "resources/js/Pages/CarContract/account.vue": {
-    "file": "assets/account.a5313cfc.js",
+    "file": "assets/account.045c02b6.js",
     "src": "resources/js/Pages/CarContract/account.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_ModalDel.2260fe0b.js",
-      "_imags.c5025a64.js",
-      "_TextInput.e167e709.js",
-      "_index.18da28d9.js",
-      "_trash.a8be14a3.js",
-      "_v3-infinite-loading.es.4c26172b.js",
-      "_debounce.064bfde7.js",
-      "_Uploader.83baee86.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_ModalDel.12132e6f.js",
+      "_imags.446809b2.js",
+      "_TextInput.ab720e82.js",
+      "_index.1f373116.js",
+      "_trash.f705789d.js",
+      "_v3-infinite-loading.es.9f93aaad.js",
+      "_debounce.fa1ff5c2.js",
+      "_Uploader.82678309.js"
     ],
     "css": [
       "assets/account.7a8a3c05.css",
@@ -325,17 +325,17 @@
     ]
   },
   "resources/js/Pages/CarContract/add.vue": {
-    "file": "assets/add.e45d73c5.js",
+    "file": "assets/add.b41222f1.js",
     "src": "resources/js/Pages/CarContract/add.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_vue-tailwind-datepicker.b86fe98e.js",
-      "_index.18da28d9.js",
-      "_VueSearchSelect.5c8f68e9.js",
-      "_TextInput.e167e709.js",
-      "_debounce.064bfde7.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_vue-tailwind-datepicker.6070579e.js",
+      "_index.1f373116.js",
+      "_VueSearchSelect.89bebf94.js",
+      "_TextInput.ab720e82.js",
+      "_debounce.fa1ff5c2.js"
     ],
     "css": [
       "assets/add.38d81f19.css",
@@ -344,8 +344,8 @@
       "assets/ModalDelCar.6b361e01.css"
     ]
   },
-  "_vue-tailwind-datepicker.b86fe98e.js": {
-    "file": "assets/vue-tailwind-datepicker.b86fe98e.js",
+  "_vue-tailwind-datepicker.6070579e.js": {
+    "file": "assets/vue-tailwind-datepicker.6070579e.js",
     "imports": [
       "resources/js/app.js"
     ],
@@ -496,55 +496,55 @@
     ]
   },
   "resources/js/Pages/CarContract/index.vue": {
-    "file": "assets/index.1f8db1a4.js",
+    "file": "assets/index.a9c094c0.js",
     "src": "resources/js/Pages/CarContract/index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_print.db8f18b1.js",
-      "_trash.a8be14a3.js",
-      "_edit.c891172a.js",
-      "_ModalDelCar.c3ab3cdf.js",
-      "_ModalEditCar_S.a9aabae5.js",
-      "_v3-infinite-loading.es.4c26172b.js",
-      "_debounce.064bfde7.js",
-      "_index.18da28d9.js",
-      "_Uploader.83baee86.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_print.809637f0.js",
+      "_trash.f705789d.js",
+      "_edit.a2d06767.js",
+      "_ModalDelCar.d0ccc975.js",
+      "_ModalEditCar_S.35d21de8.js",
+      "_v3-infinite-loading.es.9f93aaad.js",
+      "_debounce.fa1ff5c2.js",
+      "_index.1f373116.js",
+      "_Uploader.82678309.js"
     ],
     "css": [
       "assets/ModalDelCar.6b361e01.css",
       "assets/Uploader.b147d8d4.css"
     ]
   },
-  "_ModalEditCar_S.a9aabae5.js": {
-    "file": "assets/ModalEditCar_S.a9aabae5.js",
+  "_ModalEditCar_S.35d21de8.js": {
+    "file": "assets/ModalEditCar_S.35d21de8.js",
     "imports": [
       "resources/js/app.js",
-      "_index.18da28d9.js",
-      "_Uploader.83baee86.js"
+      "_index.1f373116.js",
+      "_Uploader.82678309.js"
     ],
     "css": [
       "assets/ModalEditCar_S.44266cb8.css"
     ]
   },
   "resources/js/Pages/CarExpenses/index.vue": {
-    "file": "assets/index.78d1e4b6.js",
+    "file": "assets/index.fb5c88a4.js",
     "src": "resources/js/Pages/CarExpenses/index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_vue-tailwind-datepicker.b86fe98e.js",
-      "_index.18da28d9.js",
-      "_VueSearchSelect.5c8f68e9.js",
-      "_print.db8f18b1.js",
-      "_trash.a8be14a3.js",
-      "_ModalDelCar.c3ab3cdf.js",
-      "_new.501246e0.js",
-      "_show.a65961e9.js",
-      "_v3-infinite-loading.es.4c26172b.js",
-      "_debounce.064bfde7.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_vue-tailwind-datepicker.6070579e.js",
+      "_index.1f373116.js",
+      "_VueSearchSelect.89bebf94.js",
+      "_print.809637f0.js",
+      "_trash.f705789d.js",
+      "_ModalDelCar.d0ccc975.js",
+      "_new.d21f8b62.js",
+      "_show.3b0fed45.js",
+      "_v3-infinite-loading.es.9f93aaad.js",
+      "_debounce.fa1ff5c2.js"
     ],
     "css": [
       "assets/Uploader.b147d8d4.css",
@@ -552,34 +552,34 @@
       "assets/ModalDelCar.6b361e01.css"
     ]
   },
-  "_new.501246e0.js": {
-    "file": "assets/new.501246e0.js",
+  "_new.d21f8b62.js": {
+    "file": "assets/new.d21f8b62.js",
     "imports": [
-      "_AuthenticatedLayout.6d466eec.js",
+      "_AuthenticatedLayout.c89cfa5c.js",
       "resources/js/app.js"
     ]
   },
-  "_show.a65961e9.js": {
-    "file": "assets/show.a65961e9.js",
+  "_show.3b0fed45.js": {
+    "file": "assets/show.3b0fed45.js",
     "imports": [
-      "_AuthenticatedLayout.6d466eec.js",
+      "_AuthenticatedLayout.c89cfa5c.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/Pages/Clients/Index.vue": {
-    "file": "assets/Index.fca4b391.js",
+    "file": "assets/Index.fe4979e2.js",
     "src": "resources/js/Pages/Clients/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_laravel-vue-pagination.es.4336b664.js",
-      "_TextInput.e167e709.js",
-      "_index.18da28d9.js",
-      "_show.a65961e9.js",
-      "_trash.a8be14a3.js",
-      "_edit.c891172a.js",
-      "_ModalDelCar.c3ab3cdf.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_laravel-vue-pagination.es.319f0f4e.js",
+      "_TextInput.ab720e82.js",
+      "_index.1f373116.js",
+      "_show.3b0fed45.js",
+      "_trash.f705789d.js",
+      "_edit.a2d06767.js",
+      "_ModalDelCar.d0ccc975.js"
     ],
     "css": [
       "assets/Index.f7575a70.css",
@@ -589,27 +589,27 @@
     ]
   },
   "resources/js/Pages/Clients/Show.vue": {
-    "file": "assets/Show.b13dbb71.js",
+    "file": "assets/Show.09f8dc7b.js",
     "src": "resources/js/Pages/Clients/Show.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_Modal.88ddd10c.js",
-      "_laravel-vue-pagination.es.4336b664.js",
-      "_TextInput.e167e709.js",
-      "_index.18da28d9.js",
-      "_ModalDelCar.c3ab3cdf.js",
-      "_ModalEditCar_S.a9aabae5.js",
-      "_ModalAddCarPayment.363c20d3.js",
-      "_exit.87ff5276.js",
-      "_print.db8f18b1.js",
-      "_pay.efeef854.js",
-      "_trash.a8be14a3.js",
-      "_edit.c891172a.js",
-      "_show.a65961e9.js",
-      "_new.501246e0.js",
-      "_Uploader.83baee86.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_Modal.f8a6e66d.js",
+      "_laravel-vue-pagination.es.319f0f4e.js",
+      "_TextInput.ab720e82.js",
+      "_index.1f373116.js",
+      "_ModalDelCar.d0ccc975.js",
+      "_ModalEditCar_S.35d21de8.js",
+      "_ModalAddCarPayment.b441fde2.js",
+      "_exit.58797d94.js",
+      "_print.809637f0.js",
+      "_pay.6e335d32.js",
+      "_trash.f705789d.js",
+      "_edit.a2d06767.js",
+      "_show.3b0fed45.js",
+      "_new.d21f8b62.js",
+      "_Uploader.82678309.js"
     ],
     "css": [
       "assets/Show.7a8a3c05.css",
@@ -618,18 +618,18 @@
       "assets/Uploader.b147d8d4.css"
     ]
   },
-  "_Modal.88ddd10c.js": {
-    "file": "assets/Modal.88ddd10c.js",
+  "_Modal.f8a6e66d.js": {
+    "file": "assets/Modal.f8a6e66d.js",
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js"
+      "_AuthenticatedLayout.c89cfa5c.js"
     ],
     "css": [
       "assets/Modal.44266cb8.css"
     ]
   },
-  "_ModalAddCarPayment.363c20d3.js": {
-    "file": "assets/ModalAddCarPayment.363c20d3.js",
+  "_ModalAddCarPayment.b441fde2.js": {
+    "file": "assets/ModalAddCarPayment.b441fde2.js",
     "imports": [
       "resources/js/app.js"
     ],
@@ -637,26 +637,26 @@
       "assets/ModalAddCarPayment.44266cb8.css"
     ]
   },
-  "_exit.87ff5276.js": {
-    "file": "assets/exit.87ff5276.js",
+  "_exit.58797d94.js": {
+    "file": "assets/exit.58797d94.js",
     "imports": [
       "resources/js/app.js",
-      "_Uploader.83baee86.js",
-      "_AuthenticatedLayout.6d466eec.js"
+      "_Uploader.82678309.js",
+      "_AuthenticatedLayout.c89cfa5c.js"
     ],
     "css": [
       "assets/exit.f367a6bf.css"
     ]
   },
-  "_pay.efeef854.js": {
-    "file": "assets/pay.efeef854.js",
+  "_pay.6e335d32.js": {
+    "file": "assets/pay.6e335d32.js",
     "imports": [
-      "_AuthenticatedLayout.6d466eec.js",
+      "_AuthenticatedLayout.c89cfa5c.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/Pages/CustomButton.vue": {
-    "file": "assets/CustomButton.d5188711.js",
+    "file": "assets/CustomButton.92d7fa2a.js",
     "src": "resources/js/Pages/CustomButton.vue",
     "isDynamicEntry": true,
     "imports": [
@@ -664,113 +664,113 @@
     ]
   },
   "resources/js/Pages/Dashboard.vue": {
-    "file": "assets/Dashboard.fdd9899f.js",
+    "file": "assets/Dashboard.2e96bf7d.js",
     "src": "resources/js/Pages/Dashboard.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_index.18da28d9.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_index.1f373116.js"
     ],
     "css": [
       "assets/Dashboard.89f91d09.css"
     ]
   },
   "resources/js/Pages/FormRegistration.vue": {
-    "file": "assets/FormRegistration.7f45d2ef.js",
+    "file": "assets/FormRegistration.5ac19f23.js",
     "src": "resources/js/Pages/FormRegistration.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_TextInput.e167e709.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_TextInput.ab720e82.js"
     ],
     "css": [
       "assets/WebCamUI.78715766.css"
     ]
   },
   "resources/js/Pages/FormRegistration/AddDoctorResults.vue": {
-    "file": "assets/AddDoctorResults.dcd29f2f.js",
+    "file": "assets/AddDoctorResults.63137023.js",
     "src": "resources/js/Pages/FormRegistration/AddDoctorResults.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_TextInput.e167e709.js",
-      "_ModaSave.f06d0d56.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_TextInput.ab720e82.js",
+      "_ModaSave.923c3223.js"
     ],
     "css": [
       "assets/AddDoctorResults.9304e077.css"
     ]
   },
-  "_ModaSave.f06d0d56.js": {
-    "file": "assets/ModaSave.f06d0d56.js",
+  "_ModaSave.923c3223.js": {
+    "file": "assets/ModaSave.923c3223.js",
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js"
+      "_AuthenticatedLayout.c89cfa5c.js"
     ],
     "css": [
       "assets/ModaSave.6b361e01.css"
     ]
   },
   "resources/js/Pages/FormRegistration/AddlabResults.vue": {
-    "file": "assets/AddlabResults.4ace01ce.js",
+    "file": "assets/AddlabResults.2e20860d.js",
     "src": "resources/js/Pages/FormRegistration/AddlabResults.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_TextInput.e167e709.js",
-      "_ModaSave.f06d0d56.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_TextInput.ab720e82.js",
+      "_ModaSave.923c3223.js"
     ]
   },
   "resources/js/Pages/FormRegistration/Edit.vue": {
-    "file": "assets/Edit.4efb2814.js",
+    "file": "assets/Edit.2006a726.js",
     "src": "resources/js/Pages/FormRegistration/Edit.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_TextInput.e167e709.js",
-      "_WebCamUI.f3bbc6d4.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_TextInput.ab720e82.js",
+      "_WebCamUI.3d5c6b4b.js"
     ],
     "css": [
       "assets/WebCamUI.78715766.css"
     ]
   },
   "resources/js/Pages/FormRegistration/EditDoctorResults.vue": {
-    "file": "assets/EditDoctorResults.ee09ffc3.js",
+    "file": "assets/EditDoctorResults.71e4b951.js",
     "src": "resources/js/Pages/FormRegistration/EditDoctorResults.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_TextInput.e167e709.js",
-      "_ModaSave.f06d0d56.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_TextInput.ab720e82.js",
+      "_ModaSave.923c3223.js"
     ],
     "css": [
       "assets/EditDoctorResults.9304e077.css"
     ]
   },
   "resources/js/Pages/FormRegistration/EditlabResults.vue": {
-    "file": "assets/EditlabResults.2b5260f4.js",
+    "file": "assets/EditlabResults.edb94975.js",
     "src": "resources/js/Pages/FormRegistration/EditlabResults.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_TextInput.e167e709.js",
-      "_ModaSave.f06d0d56.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_TextInput.ab720e82.js",
+      "_ModaSave.923c3223.js"
     ]
   },
   "resources/js/Pages/FormRegistration/Index.vue": {
-    "file": "assets/Index.29f0289a.js",
+    "file": "assets/Index.c4ca1ed1.js",
     "src": "resources/js/Pages/FormRegistration/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_laravel-vue-pagination.es.4336b664.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_laravel-vue-pagination.es.319f0f4e.js"
     ],
     "css": [
       "assets/Index.7a8a3c05.css",
@@ -778,14 +778,14 @@
     ]
   },
   "resources/js/Pages/FormRegistrationCompleted.vue": {
-    "file": "assets/FormRegistrationCompleted.5a23ed71.js",
+    "file": "assets/FormRegistrationCompleted.5021450e.js",
     "src": "resources/js/Pages/FormRegistrationCompleted.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_Modal.88ddd10c.js",
-      "_laravel-vue-pagination.es.4336b664.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_Modal.f8a6e66d.js",
+      "_laravel-vue-pagination.es.319f0f4e.js"
     ],
     "css": [
       "assets/FormRegistrationCompleted.7a8a3c05.css",
@@ -793,18 +793,18 @@
     ]
   },
   "resources/js/Pages/FormRegistrationCourt.vue": {
-    "file": "assets/FormRegistrationCourt.79b8789e.js",
+    "file": "assets/FormRegistrationCourt.982e9e66.js",
     "src": "resources/js/Pages/FormRegistrationCourt.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_Modal.88ddd10c.js",
-      "_laravel-vue-pagination.es.4336b664.js",
-      "_TextInput.e167e709.js",
-      "_index.18da28d9.js",
-      "_trash.a8be14a3.js",
-      "_ModalDelCar.c3ab3cdf.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_Modal.f8a6e66d.js",
+      "_laravel-vue-pagination.es.319f0f4e.js",
+      "_TextInput.ab720e82.js",
+      "_index.1f373116.js",
+      "_trash.f705789d.js",
+      "_ModalDelCar.d0ccc975.js"
     ],
     "css": [
       "assets/FormRegistrationCourt.7a8a3c05.css",
@@ -813,14 +813,14 @@
     ]
   },
   "resources/js/Pages/FormRegistrationSaved.vue": {
-    "file": "assets/FormRegistrationSaved.93ca97aa.js",
+    "file": "assets/FormRegistrationSaved.d941be55.js",
     "src": "resources/js/Pages/FormRegistrationSaved.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_Modal.88ddd10c.js",
-      "_laravel-vue-pagination.es.4336b664.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_Modal.f8a6e66d.js",
+      "_laravel-vue-pagination.es.319f0f4e.js"
     ],
     "css": [
       "assets/FormRegistrationSaved.7a8a3c05.css",
@@ -828,38 +828,38 @@
     ]
   },
   "resources/js/Pages/Hospital/Add.vue": {
-    "file": "assets/Add.d06a7309.js",
+    "file": "assets/Add.61b1e2ac.js",
     "src": "resources/js/Pages/Hospital/Add.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js"
+      "_AuthenticatedLayout.c89cfa5c.js"
     ],
     "css": [
       "assets/Add.95321a20.css"
     ]
   },
   "resources/js/Pages/Hospital/Edit.vue": {
-    "file": "assets/Edit.9d7818b9.js",
+    "file": "assets/Edit.347239d2.js",
     "src": "resources/js/Pages/Hospital/Edit.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js"
+      "_AuthenticatedLayout.c89cfa5c.js"
     ],
     "css": [
       "assets/Edit.ed2af507.css"
     ]
   },
   "resources/js/Pages/Hospital/Index.vue": {
-    "file": "assets/Index.19fe6c01.js",
+    "file": "assets/Index.116a51a7.js",
     "src": "resources/js/Pages/Hospital/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_Modal.88ddd10c.js",
-      "_laravel-vue-pagination.es.4336b664.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_Modal.f8a6e66d.js",
+      "_laravel-vue-pagination.es.319f0f4e.js"
     ],
     "css": [
       "assets/Index.7a8a3c05.css",
@@ -867,23 +867,23 @@
     ]
   },
   "resources/js/Pages/OnlineContracts.vue": {
-    "file": "assets/OnlineContracts.bee5a60e.js",
+    "file": "assets/OnlineContracts.fa349731.js",
     "src": "resources/js/Pages/OnlineContracts.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_vue-tailwind-datepicker.b86fe98e.js",
-      "_exit.87ff5276.js",
-      "_ModalDelCar.c3ab3cdf.js",
-      "_index.18da28d9.js",
-      "_show.a65961e9.js",
-      "_pay.efeef854.js",
-      "_trash.a8be14a3.js",
-      "_new.501246e0.js",
-      "_v3-infinite-loading.es.4c26172b.js",
-      "_debounce.064bfde7.js",
-      "_Uploader.83baee86.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_vue-tailwind-datepicker.6070579e.js",
+      "_exit.58797d94.js",
+      "_ModalDelCar.d0ccc975.js",
+      "_index.1f373116.js",
+      "_show.3b0fed45.js",
+      "_pay.6e335d32.js",
+      "_trash.f705789d.js",
+      "_new.d21f8b62.js",
+      "_v3-infinite-loading.es.9f93aaad.js",
+      "_debounce.fa1ff5c2.js",
+      "_Uploader.82678309.js"
     ],
     "css": [
       "assets/Uploader.b147d8d4.css",
@@ -891,23 +891,23 @@
     ]
   },
   "resources/js/Pages/Sales.vue": {
-    "file": "assets/Sales.7ed1dca6.js",
+    "file": "assets/Sales.cf7d8b3e.js",
     "src": "resources/js/Pages/Sales.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_show.a65961e9.js",
-      "_pay.efeef854.js",
-      "_trash.a8be14a3.js",
-      "_edit.c891172a.js",
-      "_ModalAddCarPayment.363c20d3.js",
-      "_ModalDelCar.c3ab3cdf.js",
-      "_ModalEditCar_S.a9aabae5.js",
-      "_v3-infinite-loading.es.4c26172b.js",
-      "_debounce.064bfde7.js",
-      "_index.18da28d9.js",
-      "_Uploader.83baee86.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_show.3b0fed45.js",
+      "_pay.6e335d32.js",
+      "_trash.f705789d.js",
+      "_edit.a2d06767.js",
+      "_ModalAddCarPayment.b441fde2.js",
+      "_ModalDelCar.d0ccc975.js",
+      "_ModalEditCar_S.35d21de8.js",
+      "_v3-infinite-loading.es.9f93aaad.js",
+      "_debounce.fa1ff5c2.js",
+      "_index.1f373116.js",
+      "_Uploader.82678309.js"
     ],
     "css": [
       "assets/ModalDelCar.6b361e01.css",
@@ -915,33 +915,33 @@
     ]
   },
   "resources/js/Pages/Users/Create.vue": {
-    "file": "assets/Create.399685fe.js",
+    "file": "assets/Create.24bcea2a.js",
     "src": "resources/js/Pages/Users/Create.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_TextInput.e167e709.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_TextInput.ab720e82.js"
     ]
   },
   "resources/js/Pages/Users/Edit.vue": {
-    "file": "assets/Edit.3bd0cf1d.js",
+    "file": "assets/Edit.2556fac2.js",
     "src": "resources/js/Pages/Users/Edit.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_TextInput.e167e709.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_TextInput.ab720e82.js"
     ]
   },
   "resources/js/Pages/Users/Index.vue": {
-    "file": "assets/Index.6e189d8d.js",
+    "file": "assets/Index.c305fa66.js",
     "src": "resources/js/Pages/Users/Index.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AuthenticatedLayout.6d466eec.js",
+      "_AuthenticatedLayout.c89cfa5c.js",
       "resources/js/app.js",
-      "_laravel-vue-pagination.es.4336b664.js"
+      "_laravel-vue-pagination.es.319f0f4e.js"
     ],
     "css": [
       "assets/Index.6d2eec78.css",
@@ -950,7 +950,7 @@
     ]
   },
   "resources/js/Pages/Welcome.vue": {
-    "file": "assets/Welcome.d27bf263.js",
+    "file": "assets/Welcome.d325551e.js",
     "src": "resources/js/Pages/Welcome.vue",
     "isDynamicEntry": true,
     "imports": [
@@ -958,23 +958,23 @@
     ]
   },
   "resources/js/Pages/purchases.vue": {
-    "file": "assets/purchases.92242ea9.js",
+    "file": "assets/purchases.2eaadfc0.js",
     "src": "resources/js/Pages/purchases.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout.6d466eec.js",
-      "_Modal.88ddd10c.js",
-      "_index.18da28d9.js",
-      "_VueSearchSelect.5c8f68e9.js",
-      "_ModalAddCarPayment.363c20d3.js",
-      "_ModalDelCar.c3ab3cdf.js",
-      "_show.a65961e9.js",
-      "_trash.a8be14a3.js",
-      "_edit.c891172a.js",
-      "_TextInput.e167e709.js",
-      "_v3-infinite-loading.es.4c26172b.js",
-      "_debounce.064bfde7.js"
+      "_AuthenticatedLayout.c89cfa5c.js",
+      "_Modal.f8a6e66d.js",
+      "_index.1f373116.js",
+      "_VueSearchSelect.89bebf94.js",
+      "_ModalAddCarPayment.b441fde2.js",
+      "_ModalDelCar.d0ccc975.js",
+      "_show.3b0fed45.js",
+      "_trash.f705789d.js",
+      "_edit.a2d06767.js",
+      "_TextInput.ab720e82.js",
+      "_v3-infinite-loading.es.9f93aaad.js",
+      "_debounce.fa1ff5c2.js"
     ],
     "css": [
       "assets/purchases.e46bffa3.css",
@@ -985,353 +985,353 @@
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/af.3ebc7951.mjs": {
-    "file": "assets/af.3ebc7951.4ff8f68d.js",
+    "file": "assets/af.3ebc7951.ac6bcbeb.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/af.3ebc7951.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/am.231f11e6.mjs": {
-    "file": "assets/am.231f11e6.efb87de5.js",
+    "file": "assets/am.231f11e6.88ca8430.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/am.231f11e6.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ar-dz.4c159720.mjs": {
-    "file": "assets/ar-dz.4c159720.b3c32f1a.js",
+    "file": "assets/ar-dz.4c159720.68ba446b.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ar-dz.4c159720.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ar-iq.bb074e5e.mjs": {
-    "file": "assets/ar-iq.bb074e5e.59462cdc.js",
+    "file": "assets/ar-iq.bb074e5e.c9e247bb.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ar-iq.bb074e5e.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ar-kw.432247e4.mjs": {
-    "file": "assets/ar-kw.432247e4.d87446f6.js",
+    "file": "assets/ar-kw.432247e4.3689cb10.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ar-kw.432247e4.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ar-ly.0beb436b.mjs": {
-    "file": "assets/ar-ly.0beb436b.b67e6cea.js",
+    "file": "assets/ar-ly.0beb436b.f9f9b923.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ar-ly.0beb436b.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ar-ma.b9e7ab81.mjs": {
-    "file": "assets/ar-ma.b9e7ab81.2360ecf2.js",
+    "file": "assets/ar-ma.b9e7ab81.ec0d039a.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ar-ma.b9e7ab81.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ar-sa.9b335da5.mjs": {
-    "file": "assets/ar-sa.9b335da5.8cc5b87d.js",
+    "file": "assets/ar-sa.9b335da5.590ae920.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ar-sa.9b335da5.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ar-tn.e83bf601.mjs": {
-    "file": "assets/ar-tn.e83bf601.b9c32e2e.js",
+    "file": "assets/ar-tn.e83bf601.6c840595.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ar-tn.e83bf601.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ar.3379cf0c.mjs": {
-    "file": "assets/ar.3379cf0c.2f67cbb4.js",
+    "file": "assets/ar.3379cf0c.7a2134dc.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ar.3379cf0c.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/az.094e4e4c.mjs": {
-    "file": "assets/az.094e4e4c.60849255.js",
+    "file": "assets/az.094e4e4c.f2b5e964.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/az.094e4e4c.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/be.b0ad6f2d.mjs": {
-    "file": "assets/be.b0ad6f2d.670f5ba8.js",
+    "file": "assets/be.b0ad6f2d.4d974a69.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/be.b0ad6f2d.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/bg.bde51f14.mjs": {
-    "file": "assets/bg.bde51f14.c081fc33.js",
+    "file": "assets/bg.bde51f14.2059f1d6.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/bg.bde51f14.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/bi.d2c46fd1.mjs": {
-    "file": "assets/bi.d2c46fd1.dc890d8a.js",
+    "file": "assets/bi.d2c46fd1.e7077732.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/bi.d2c46fd1.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/bm.4e741628.mjs": {
-    "file": "assets/bm.4e741628.9ac13946.js",
+    "file": "assets/bm.4e741628.ca4613df.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/bm.4e741628.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/bn-bd.dd0c34ec.mjs": {
-    "file": "assets/bn-bd.dd0c34ec.cae82e8c.js",
+    "file": "assets/bn-bd.dd0c34ec.0c3a9f74.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/bn-bd.dd0c34ec.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/bn.597d1bc7.mjs": {
-    "file": "assets/bn.597d1bc7.012e67d7.js",
+    "file": "assets/bn.597d1bc7.b8d2ab46.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/bn.597d1bc7.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/bo.96244457.mjs": {
-    "file": "assets/bo.96244457.b9b19a8e.js",
+    "file": "assets/bo.96244457.843f21dc.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/bo.96244457.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/br.7036569b.mjs": {
-    "file": "assets/br.7036569b.919a5fe1.js",
+    "file": "assets/br.7036569b.5e53a06c.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/br.7036569b.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/bs.6d522c18.mjs": {
-    "file": "assets/bs.6d522c18.bd6ec29b.js",
+    "file": "assets/bs.6d522c18.40450330.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/bs.6d522c18.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ca.2c799be7.mjs": {
-    "file": "assets/ca.2c799be7.292a2708.js",
+    "file": "assets/ca.2c799be7.8b8a1c11.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ca.2c799be7.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/cs.7aad1f56.mjs": {
-    "file": "assets/cs.7aad1f56.ddfa6597.js",
+    "file": "assets/cs.7aad1f56.e355c26d.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/cs.7aad1f56.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/cv.5b551267.mjs": {
-    "file": "assets/cv.5b551267.fea37033.js",
+    "file": "assets/cv.5b551267.585adb9b.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/cv.5b551267.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/cy.d6b2b2a9.mjs": {
-    "file": "assets/cy.d6b2b2a9.0da269c3.js",
+    "file": "assets/cy.d6b2b2a9.f338770d.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/cy.d6b2b2a9.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/da.ec949db5.mjs": {
-    "file": "assets/da.ec949db5.6c4763c4.js",
+    "file": "assets/da.ec949db5.2900beab.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/da.ec949db5.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/de-at.6770eecd.mjs": {
-    "file": "assets/de-at.6770eecd.b51e8641.js",
+    "file": "assets/de-at.6770eecd.26cdbb73.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/de-at.6770eecd.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/de-ch.679267e6.mjs": {
-    "file": "assets/de-ch.679267e6.8b1e2b79.js",
+    "file": "assets/de-ch.679267e6.b316a24b.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/de-ch.679267e6.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/de.9a6dbd14.mjs": {
-    "file": "assets/de.9a6dbd14.ea02012b.js",
+    "file": "assets/de.9a6dbd14.7f09f2ca.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/de.9a6dbd14.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/dv.4ceefd70.mjs": {
-    "file": "assets/dv.4ceefd70.9600ba9b.js",
+    "file": "assets/dv.4ceefd70.e773b5b4.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/dv.4ceefd70.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/el.ecc65b75.mjs": {
-    "file": "assets/el.ecc65b75.caa02f01.js",
+    "file": "assets/el.ecc65b75.7695ea75.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/el.ecc65b75.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/en-au.217ac418.mjs": {
-    "file": "assets/en-au.217ac418.78091294.js",
+    "file": "assets/en-au.217ac418.6bc24693.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/en-au.217ac418.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/en-ca.7fefee4d.mjs": {
-    "file": "assets/en-ca.7fefee4d.d4119957.js",
+    "file": "assets/en-ca.7fefee4d.3a75ce0e.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/en-ca.7fefee4d.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/en-gb.ef87f906.mjs": {
-    "file": "assets/en-gb.ef87f906.6a9f9054.js",
+    "file": "assets/en-gb.ef87f906.1c1e2cc8.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/en-gb.ef87f906.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/en-ie.7db92e5a.mjs": {
-    "file": "assets/en-ie.7db92e5a.e6549b95.js",
+    "file": "assets/en-ie.7db92e5a.dc2734a8.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/en-ie.7db92e5a.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/en-il.039800e6.mjs": {
-    "file": "assets/en-il.039800e6.4062cab7.js",
+    "file": "assets/en-il.039800e6.7149d73c.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/en-il.039800e6.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/en-in.980abc02.mjs": {
-    "file": "assets/en-in.980abc02.3b063caa.js",
+    "file": "assets/en-in.980abc02.c820f15e.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/en-in.980abc02.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/en-nz.4bf7bf16.mjs": {
-    "file": "assets/en-nz.4bf7bf16.9cae37b2.js",
+    "file": "assets/en-nz.4bf7bf16.400b7506.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/en-nz.4bf7bf16.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/en-sg.0ca7b455.mjs": {
-    "file": "assets/en-sg.0ca7b455.98722b32.js",
+    "file": "assets/en-sg.0ca7b455.9e000f6e.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/en-sg.0ca7b455.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/en-tt.a9574807.mjs": {
-    "file": "assets/en-tt.a9574807.34765bef.js",
+    "file": "assets/en-tt.a9574807.7129aede.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/en-tt.a9574807.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
@@ -1341,929 +1341,929 @@
     "isDynamicEntry": true
   },
   "node_modules/vue-tailwind-datepicker/dist/eo.585b2b3d.mjs": {
-    "file": "assets/eo.585b2b3d.037e1777.js",
+    "file": "assets/eo.585b2b3d.06acad90.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/eo.585b2b3d.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/es-do.9c1b68b5.mjs": {
-    "file": "assets/es-do.9c1b68b5.03265cc1.js",
+    "file": "assets/es-do.9c1b68b5.c567c7fd.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/es-do.9c1b68b5.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/es-mx.4864a7b6.mjs": {
-    "file": "assets/es-mx.4864a7b6.ef953ef3.js",
+    "file": "assets/es-mx.4864a7b6.3142a21a.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/es-mx.4864a7b6.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/es-pr.d54263b3.mjs": {
-    "file": "assets/es-pr.d54263b3.c364ef9b.js",
+    "file": "assets/es-pr.d54263b3.cde67e5f.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/es-pr.d54263b3.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/es-us.2e716895.mjs": {
-    "file": "assets/es-us.2e716895.1ef55c18.js",
+    "file": "assets/es-us.2e716895.7139ae0a.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/es-us.2e716895.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/es.ef4a2f9d.mjs": {
-    "file": "assets/es.ef4a2f9d.0def066c.js",
+    "file": "assets/es.ef4a2f9d.622c159e.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/es.ef4a2f9d.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/et.28827e13.mjs": {
-    "file": "assets/et.28827e13.ffdea6fb.js",
+    "file": "assets/et.28827e13.a709227d.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/et.28827e13.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/eu.c0e75fea.mjs": {
-    "file": "assets/eu.c0e75fea.9e3731bb.js",
+    "file": "assets/eu.c0e75fea.6db2e391.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/eu.c0e75fea.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/fa.ca32acf5.mjs": {
-    "file": "assets/fa.ca32acf5.45ebe5a9.js",
+    "file": "assets/fa.ca32acf5.a04675be.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/fa.ca32acf5.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/fi.9c0f9a8f.mjs": {
-    "file": "assets/fi.9c0f9a8f.303bc409.js",
+    "file": "assets/fi.9c0f9a8f.df614d4e.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/fi.9c0f9a8f.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/fo.106f3e5c.mjs": {
-    "file": "assets/fo.106f3e5c.9ebc4af6.js",
+    "file": "assets/fo.106f3e5c.4b5d3cd0.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/fo.106f3e5c.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/fr-ca.255647e3.mjs": {
-    "file": "assets/fr-ca.255647e3.72dbaef3.js",
+    "file": "assets/fr-ca.255647e3.d5e3fdc8.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/fr-ca.255647e3.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/fr-ch.00269941.mjs": {
-    "file": "assets/fr-ch.00269941.fbf99696.js",
+    "file": "assets/fr-ch.00269941.ce669097.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/fr-ch.00269941.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/fr.48916d8c.mjs": {
-    "file": "assets/fr.48916d8c.9a8ebdfd.js",
+    "file": "assets/fr.48916d8c.2975e19d.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/fr.48916d8c.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/fy.6c9fa2a4.mjs": {
-    "file": "assets/fy.6c9fa2a4.a22a70d7.js",
+    "file": "assets/fy.6c9fa2a4.63e98fa9.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/fy.6c9fa2a4.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ga.e5c6581f.mjs": {
-    "file": "assets/ga.e5c6581f.fd334b35.js",
+    "file": "assets/ga.e5c6581f.793c8f94.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ga.e5c6581f.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/gd.af0280be.mjs": {
-    "file": "assets/gd.af0280be.4cb79549.js",
+    "file": "assets/gd.af0280be.97638b00.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/gd.af0280be.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/gl.8b0f5686.mjs": {
-    "file": "assets/gl.8b0f5686.4386f1e9.js",
+    "file": "assets/gl.8b0f5686.2d2f7aed.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/gl.8b0f5686.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/gom-latn.92f7c42d.mjs": {
-    "file": "assets/gom-latn.92f7c42d.daa24e5c.js",
+    "file": "assets/gom-latn.92f7c42d.55d47b53.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/gom-latn.92f7c42d.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/gu.3d9ae21a.mjs": {
-    "file": "assets/gu.3d9ae21a.6cbf4714.js",
+    "file": "assets/gu.3d9ae21a.61d10cf4.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/gu.3d9ae21a.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/he.4be84421.mjs": {
-    "file": "assets/he.4be84421.db3922e2.js",
+    "file": "assets/he.4be84421.5a7aa5de.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/he.4be84421.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/hi.59ee62b4.mjs": {
-    "file": "assets/hi.59ee62b4.a99e50b8.js",
+    "file": "assets/hi.59ee62b4.7bdcee99.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/hi.59ee62b4.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/hr.22bfcf13.mjs": {
-    "file": "assets/hr.22bfcf13.e4285672.js",
+    "file": "assets/hr.22bfcf13.2c16bad5.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/hr.22bfcf13.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ht.3d33b6a7.mjs": {
-    "file": "assets/ht.3d33b6a7.60c83aea.js",
+    "file": "assets/ht.3d33b6a7.d99f3053.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ht.3d33b6a7.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/hu.9ae93d2d.mjs": {
-    "file": "assets/hu.9ae93d2d.d8a655a9.js",
+    "file": "assets/hu.9ae93d2d.50782ec3.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/hu.9ae93d2d.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/hy-am.84f5df93.mjs": {
-    "file": "assets/hy-am.84f5df93.345f7852.js",
+    "file": "assets/hy-am.84f5df93.9b3541ff.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/hy-am.84f5df93.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/id.e048f32a.mjs": {
-    "file": "assets/id.e048f32a.b010cfe6.js",
+    "file": "assets/id.e048f32a.22e9c045.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/id.e048f32a.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/is.6ed76d89.mjs": {
-    "file": "assets/is.6ed76d89.0f9177ec.js",
+    "file": "assets/is.6ed76d89.e94bfe59.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/is.6ed76d89.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/it-ch.a4488006.mjs": {
-    "file": "assets/it-ch.a4488006.84b84a24.js",
+    "file": "assets/it-ch.a4488006.9c325f08.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/it-ch.a4488006.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/it.1b7fc2c0.mjs": {
-    "file": "assets/it.1b7fc2c0.e5b3d9c4.js",
+    "file": "assets/it.1b7fc2c0.9401e71c.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/it.1b7fc2c0.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ja.13bb6896.mjs": {
-    "file": "assets/ja.13bb6896.778052e1.js",
+    "file": "assets/ja.13bb6896.8b3b0d5d.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ja.13bb6896.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/jv.0aa3e15e.mjs": {
-    "file": "assets/jv.0aa3e15e.0ee40302.js",
+    "file": "assets/jv.0aa3e15e.7c5b928b.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/jv.0aa3e15e.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ka.9a48f07d.mjs": {
-    "file": "assets/ka.9a48f07d.a112d5f6.js",
+    "file": "assets/ka.9a48f07d.708b3ede.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ka.9a48f07d.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/kk.0f972e04.mjs": {
-    "file": "assets/kk.0f972e04.4144594c.js",
+    "file": "assets/kk.0f972e04.32c72521.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/kk.0f972e04.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/km.56d3178f.mjs": {
-    "file": "assets/km.56d3178f.e721ddf0.js",
+    "file": "assets/km.56d3178f.87ecf215.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/km.56d3178f.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/kn.520b5e30.mjs": {
-    "file": "assets/kn.520b5e30.dcf54291.js",
+    "file": "assets/kn.520b5e30.c91f0b70.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/kn.520b5e30.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ko.964ea373.mjs": {
-    "file": "assets/ko.964ea373.92f0e004.js",
+    "file": "assets/ko.964ea373.62c8b26f.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ko.964ea373.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ku.a04ec0b5.mjs": {
-    "file": "assets/ku.a04ec0b5.07790f2d.js",
+    "file": "assets/ku.a04ec0b5.5a411193.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ku.a04ec0b5.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ky.a89189c5.mjs": {
-    "file": "assets/ky.a89189c5.ad057c70.js",
+    "file": "assets/ky.a89189c5.b9e5ec46.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ky.a89189c5.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/lb.a8706703.mjs": {
-    "file": "assets/lb.a8706703.73afa298.js",
+    "file": "assets/lb.a8706703.47b1bbcb.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/lb.a8706703.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/lo.be6102cd.mjs": {
-    "file": "assets/lo.be6102cd.e70f56cb.js",
+    "file": "assets/lo.be6102cd.2cdf01dc.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/lo.be6102cd.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/lt.4c5f495f.mjs": {
-    "file": "assets/lt.4c5f495f.f2833544.js",
+    "file": "assets/lt.4c5f495f.d3ccbc31.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/lt.4c5f495f.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/lv.a71efa23.mjs": {
-    "file": "assets/lv.a71efa23.f6c04c08.js",
+    "file": "assets/lv.a71efa23.4b613246.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/lv.a71efa23.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/me.21ec4017.mjs": {
-    "file": "assets/me.21ec4017.6aaf505c.js",
+    "file": "assets/me.21ec4017.96f06c01.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/me.21ec4017.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/mi.429b4b2b.mjs": {
-    "file": "assets/mi.429b4b2b.6f5f49fe.js",
+    "file": "assets/mi.429b4b2b.a9afb875.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/mi.429b4b2b.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/mk.28fd0ec5.mjs": {
-    "file": "assets/mk.28fd0ec5.715495e4.js",
+    "file": "assets/mk.28fd0ec5.be96bf65.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/mk.28fd0ec5.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ml.4c72cca8.mjs": {
-    "file": "assets/ml.4c72cca8.00e9e271.js",
+    "file": "assets/ml.4c72cca8.cfa3d9ff.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ml.4c72cca8.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/mn.edbfae78.mjs": {
-    "file": "assets/mn.edbfae78.06ee9b7a.js",
+    "file": "assets/mn.edbfae78.ad9c2b44.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/mn.edbfae78.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/mr.d0deb64b.mjs": {
-    "file": "assets/mr.d0deb64b.ae959dac.js",
+    "file": "assets/mr.d0deb64b.fc5dce1e.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/mr.d0deb64b.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ms-my.9df9198b.mjs": {
-    "file": "assets/ms-my.9df9198b.3aa520e2.js",
+    "file": "assets/ms-my.9df9198b.c6b64c70.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ms-my.9df9198b.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ms.75c6054d.mjs": {
-    "file": "assets/ms.75c6054d.6f67f1e1.js",
+    "file": "assets/ms.75c6054d.87e6f511.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ms.75c6054d.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/mt.91586f69.mjs": {
-    "file": "assets/mt.91586f69.bd669ea7.js",
+    "file": "assets/mt.91586f69.46d63132.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/mt.91586f69.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/my.e3f821ba.mjs": {
-    "file": "assets/my.e3f821ba.1e4e43c2.js",
+    "file": "assets/my.e3f821ba.8b6f6be5.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/my.e3f821ba.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/nb.6587600d.mjs": {
-    "file": "assets/nb.6587600d.0e12a28b.js",
+    "file": "assets/nb.6587600d.57e10d87.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/nb.6587600d.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ne.919eabf4.mjs": {
-    "file": "assets/ne.919eabf4.3e01a9a7.js",
+    "file": "assets/ne.919eabf4.7a175ebe.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ne.919eabf4.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/nl-be.69239929.mjs": {
-    "file": "assets/nl-be.69239929.0eb128bc.js",
+    "file": "assets/nl-be.69239929.033f3468.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/nl-be.69239929.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/nl.9d6a6197.mjs": {
-    "file": "assets/nl.9d6a6197.87fdea29.js",
+    "file": "assets/nl.9d6a6197.d83cdfcc.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/nl.9d6a6197.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/nn.b016409f.mjs": {
-    "file": "assets/nn.b016409f.5b2c8455.js",
+    "file": "assets/nn.b016409f.f9b938be.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/nn.b016409f.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/oc-lnc.b6f16ca8.mjs": {
-    "file": "assets/oc-lnc.b6f16ca8.221e1267.js",
+    "file": "assets/oc-lnc.b6f16ca8.05a8d03d.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/oc-lnc.b6f16ca8.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/pa-in.d269e210.mjs": {
-    "file": "assets/pa-in.d269e210.4e674eb8.js",
+    "file": "assets/pa-in.d269e210.2739f42f.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/pa-in.d269e210.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/pl.c00b297d.mjs": {
-    "file": "assets/pl.c00b297d.896176a1.js",
+    "file": "assets/pl.c00b297d.d7396e1e.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/pl.c00b297d.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/pt-br.009b12dd.mjs": {
-    "file": "assets/pt-br.009b12dd.c5dadc1b.js",
+    "file": "assets/pt-br.009b12dd.f9896e1a.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/pt-br.009b12dd.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/pt.57200cf8.mjs": {
-    "file": "assets/pt.57200cf8.b8a72bb5.js",
+    "file": "assets/pt.57200cf8.1b9ce083.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/pt.57200cf8.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/rn.733374c5.mjs": {
-    "file": "assets/rn.733374c5.ab5a6279.js",
+    "file": "assets/rn.733374c5.1df239c5.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/rn.733374c5.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ro.f1da01c9.mjs": {
-    "file": "assets/ro.f1da01c9.b44ddb55.js",
+    "file": "assets/ro.f1da01c9.4eb7861c.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ro.f1da01c9.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ru.26317655.mjs": {
-    "file": "assets/ru.26317655.f50b5aee.js",
+    "file": "assets/ru.26317655.134a06ba.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ru.26317655.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/rw.aa88c1d1.mjs": {
-    "file": "assets/rw.aa88c1d1.6a027656.js",
+    "file": "assets/rw.aa88c1d1.4b7b41f6.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/rw.aa88c1d1.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/sd.aed40eb5.mjs": {
-    "file": "assets/sd.aed40eb5.6225a7eb.js",
+    "file": "assets/sd.aed40eb5.7a4d3330.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/sd.aed40eb5.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/se.b28704ee.mjs": {
-    "file": "assets/se.b28704ee.69b30dfd.js",
+    "file": "assets/se.b28704ee.a6ff3987.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/se.b28704ee.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/si.bed3ff78.mjs": {
-    "file": "assets/si.bed3ff78.6197f8f8.js",
+    "file": "assets/si.bed3ff78.80c83e7c.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/si.bed3ff78.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/sk.724e75be.mjs": {
-    "file": "assets/sk.724e75be.51e58b1f.js",
+    "file": "assets/sk.724e75be.bd286992.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/sk.724e75be.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/sl.31b83f1d.mjs": {
-    "file": "assets/sl.31b83f1d.be92f249.js",
+    "file": "assets/sl.31b83f1d.f666824a.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/sl.31b83f1d.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/sq.64413af6.mjs": {
-    "file": "assets/sq.64413af6.702509df.js",
+    "file": "assets/sq.64413af6.ed8cd9f2.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/sq.64413af6.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/sr-cyrl.00ac055a.mjs": {
-    "file": "assets/sr-cyrl.00ac055a.812c1938.js",
+    "file": "assets/sr-cyrl.00ac055a.9107ee5f.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/sr-cyrl.00ac055a.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/sr.d84cb8bb.mjs": {
-    "file": "assets/sr.d84cb8bb.74ea201f.js",
+    "file": "assets/sr.d84cb8bb.dc3e1b84.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/sr.d84cb8bb.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ss.3c89f839.mjs": {
-    "file": "assets/ss.3c89f839.556f2376.js",
+    "file": "assets/ss.3c89f839.73b2efe6.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ss.3c89f839.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/sv-fi.23a518bd.mjs": {
-    "file": "assets/sv-fi.23a518bd.077dcd2f.js",
+    "file": "assets/sv-fi.23a518bd.369d0578.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/sv-fi.23a518bd.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/sv.ac074f95.mjs": {
-    "file": "assets/sv.ac074f95.b82af07d.js",
+    "file": "assets/sv.ac074f95.35f17456.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/sv.ac074f95.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/sw.aca094f8.mjs": {
-    "file": "assets/sw.aca094f8.8044da97.js",
+    "file": "assets/sw.aca094f8.0437f47f.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/sw.aca094f8.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ta.ee2b444d.mjs": {
-    "file": "assets/ta.ee2b444d.0e01a580.js",
+    "file": "assets/ta.ee2b444d.d238feb3.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ta.ee2b444d.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/te.dfcd9feb.mjs": {
-    "file": "assets/te.dfcd9feb.1311a1be.js",
+    "file": "assets/te.dfcd9feb.7382df7f.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/te.dfcd9feb.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/tet.0b3259b2.mjs": {
-    "file": "assets/tet.0b3259b2.603fbbc0.js",
+    "file": "assets/tet.0b3259b2.3c60ad15.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/tet.0b3259b2.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/tg.83b255f7.mjs": {
-    "file": "assets/tg.83b255f7.6757b733.js",
+    "file": "assets/tg.83b255f7.a3d08e76.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/tg.83b255f7.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/th.05c11057.mjs": {
-    "file": "assets/th.05c11057.59939980.js",
+    "file": "assets/th.05c11057.44b4ddb7.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/th.05c11057.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/tk.9ead0adc.mjs": {
-    "file": "assets/tk.9ead0adc.e34c92d4.js",
+    "file": "assets/tk.9ead0adc.5f7007d7.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/tk.9ead0adc.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/tl-ph.9417f69e.mjs": {
-    "file": "assets/tl-ph.9417f69e.4f265bc4.js",
+    "file": "assets/tl-ph.9417f69e.15de5c55.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/tl-ph.9417f69e.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/tlh.11ae154a.mjs": {
-    "file": "assets/tlh.11ae154a.077b2628.js",
+    "file": "assets/tlh.11ae154a.c2a35781.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/tlh.11ae154a.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/tr.f1498e89.mjs": {
-    "file": "assets/tr.f1498e89.cf7152cf.js",
+    "file": "assets/tr.f1498e89.b40cce4d.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/tr.f1498e89.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/tzl.9de27909.mjs": {
-    "file": "assets/tzl.9de27909.63af6117.js",
+    "file": "assets/tzl.9de27909.569178ad.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/tzl.9de27909.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/tzm-latn.a8c76130.mjs": {
-    "file": "assets/tzm-latn.a8c76130.f30fdfe3.js",
+    "file": "assets/tzm-latn.a8c76130.e9021bd1.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/tzm-latn.a8c76130.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/tzm.59c6105f.mjs": {
-    "file": "assets/tzm.59c6105f.54cc8b21.js",
+    "file": "assets/tzm.59c6105f.e861dfc9.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/tzm.59c6105f.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ug-cn.991bcaae.mjs": {
-    "file": "assets/ug-cn.991bcaae.595ebba0.js",
+    "file": "assets/ug-cn.991bcaae.ceb279e6.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ug-cn.991bcaae.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/uk.bfb03d12.mjs": {
-    "file": "assets/uk.bfb03d12.422209ce.js",
+    "file": "assets/uk.bfb03d12.1158d782.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/uk.bfb03d12.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/ur.e5da06d7.mjs": {
-    "file": "assets/ur.e5da06d7.f497ec95.js",
+    "file": "assets/ur.e5da06d7.85cb3ab0.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/ur.e5da06d7.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/uz-latn.f92b8600.mjs": {
-    "file": "assets/uz-latn.f92b8600.8ed71ac5.js",
+    "file": "assets/uz-latn.f92b8600.bd2dc9cf.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/uz-latn.f92b8600.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/uz.a91591f9.mjs": {
-    "file": "assets/uz.a91591f9.ab2e92f9.js",
+    "file": "assets/uz.a91591f9.35d66b5a.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/uz.a91591f9.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/vi.145a7e16.mjs": {
-    "file": "assets/vi.145a7e16.d71d046f.js",
+    "file": "assets/vi.145a7e16.c092f168.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/vi.145a7e16.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/x-pseudo.8786e75e.mjs": {
-    "file": "assets/x-pseudo.8786e75e.f12d4c98.js",
+    "file": "assets/x-pseudo.8786e75e.122b894a.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/x-pseudo.8786e75e.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/yo.4af2aa8f.mjs": {
-    "file": "assets/yo.4af2aa8f.3b8d53aa.js",
+    "file": "assets/yo.4af2aa8f.dd0d075d.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/yo.4af2aa8f.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/zh-cn.a2b4915d.mjs": {
-    "file": "assets/zh-cn.a2b4915d.e0d7fd5e.js",
+    "file": "assets/zh-cn.a2b4915d.ab6803f5.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/zh-cn.a2b4915d.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/zh-hk.4b5a9e26.mjs": {
-    "file": "assets/zh-hk.4b5a9e26.946a4bdd.js",
+    "file": "assets/zh-hk.4b5a9e26.cf899c48.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/zh-hk.4b5a9e26.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/zh-tw.cbea4749.mjs": {
-    "file": "assets/zh-tw.cbea4749.7d2e9809.js",
+    "file": "assets/zh-tw.cbea4749.767d25b7.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/zh-tw.cbea4749.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
   "node_modules/vue-tailwind-datepicker/dist/zh.85a86d4a.mjs": {
-    "file": "assets/zh.85a86d4a.faea6e50.js",
+    "file": "assets/zh.85a86d4a.f0c01b09.js",
     "src": "node_modules/vue-tailwind-datepicker/dist/zh.85a86d4a.mjs",
     "isDynamicEntry": true,
     "imports": [
-      "_vue-tailwind-datepicker.b86fe98e.js",
+      "_vue-tailwind-datepicker.6070579e.js",
       "resources/js/app.js"
     ]
   },
@@ -2271,73 +2271,65 @@
     "file": "assets/app.278ec7fe.css",
     "src": "resources/js/app.css"
   },
-  "resources/js/Pages/purchases.css": {
-    "file": "assets/purchases.e46bffa3.css",
-    "src": "resources/js/Pages/purchases.css"
+  "resources/js/Pages/Accounting/Wallet.css": {
+    "file": "assets/Wallet.3a527582.css",
+    "src": "resources/js/Pages/Accounting/Wallet.css"
   },
   "resources/js/Pages/Users/Index.css": {
     "file": "assets/Index.6d2eec78.css",
     "src": "resources/js/Pages/Users/Index.css"
   },
-  "ModalAddExpenses.css": {
-    "file": "assets/ModalAddExpenses.44266cb8.css",
-    "src": "ModalAddExpenses.css"
+  "resources/js/Pages/FormRegistration/EditDoctorResults.css": {
+    "file": "assets/EditDoctorResults.9304e077.css",
+    "src": "resources/js/Pages/FormRegistration/EditDoctorResults.css"
   },
-  "Modal.css": {
-    "file": "assets/Modal.44266cb8.css",
-    "src": "Modal.css"
+  "resources/js/Pages/Clients/Index.css": {
+    "file": "assets/Index.f7575a70.css",
+    "src": "resources/js/Pages/Clients/Index.css"
   },
-  "Uploader.css": {
-    "file": "assets/Uploader.b147d8d4.css",
-    "src": "Uploader.css"
+  "resources/js/Pages/FormRegistrationSaved.css": {
+    "file": "assets/FormRegistrationSaved.7a8a3c05.css",
+    "src": "resources/js/Pages/FormRegistrationSaved.css"
   },
-  "resources/js/Pages/Annual/Index.css": {
-    "file": "assets/Index.0a846f21.css",
-    "src": "resources/js/Pages/Annual/Index.css"
+  "resources/js/Pages/FormRegistration/AddDoctorResults.css": {
+    "file": "assets/AddDoctorResults.9304e077.css",
+    "src": "resources/js/Pages/FormRegistration/AddDoctorResults.css"
   },
-  "resources/js/Pages/Hospital/Index.css": {
-    "file": "assets/Index.7a8a3c05.css",
-    "src": "resources/js/Pages/Hospital/Index.css"
+  "resources/js/Pages/Accounting/Index.css": {
+    "file": "assets/Index.7bea12e8.css",
+    "src": "resources/js/Pages/Accounting/Index.css"
+  },
+  "ModalAddCardUser.css": {
+    "file": "assets/ModalAddCardUser.44266cb8.css",
+    "src": "ModalAddCardUser.css"
+  },
+  "resources/js/Pages/Dashboard.css": {
+    "file": "assets/Dashboard.89f91d09.css",
+    "src": "resources/js/Pages/Dashboard.css"
+  },
+  "resources/js/Pages/Hospital/Add.css": {
+    "file": "assets/Add.95321a20.css",
+    "src": "resources/js/Pages/Hospital/Add.css"
   },
   "resources/js/Pages/CarContract/account.css": {
     "file": "assets/account.7a8a3c05.css",
     "src": "resources/js/Pages/CarContract/account.css"
   },
-  "resources/js/Pages/CarContract/add.css": {
-    "file": "assets/add.38d81f19.css",
-    "src": "resources/js/Pages/CarContract/add.css"
-  },
-  "resources/js/Pages/FormRegistration/EditDoctorResults.css": {
-    "file": "assets/EditDoctorResults.9304e077.css",
-    "src": "resources/js/Pages/FormRegistration/EditDoctorResults.css"
-  },
-  "exit.css": {
-    "file": "assets/exit.f367a6bf.css",
-    "src": "exit.css"
-  },
-  "resources/js/Pages/Hospital/Edit.css": {
-    "file": "assets/Edit.ed2af507.css",
-    "src": "resources/js/Pages/Hospital/Edit.css"
-  },
-  "resources/js/Pages/Clients/Show.css": {
-    "file": "assets/Show.7a8a3c05.css",
-    "src": "resources/js/Pages/Clients/Show.css"
-  },
-  "imags.css": {
-    "file": "assets/imags.6b361e01.css",
-    "src": "imags.css"
-  },
-  "AuthenticatedLayout.css": {
-    "file": "assets/AuthenticatedLayout.2de53130.css",
-    "src": "AuthenticatedLayout.css"
+  "ModalAddExpenses.css": {
+    "file": "assets/ModalAddExpenses.44266cb8.css",
+    "src": "ModalAddExpenses.css"
   },
   "ModalDelCar.css": {
     "file": "assets/ModalDelCar.6b361e01.css",
     "src": "ModalDelCar.css"
   },
-  "resources/js/Pages/Clients/Index.css": {
-    "file": "assets/Index.f7575a70.css",
-    "src": "resources/js/Pages/Clients/Index.css"
+  "AuthenticatedLayout.css": {
+    "file": "assets/AuthenticatedLayout.2de53130.css",
+    "src": "AuthenticatedLayout.css"
+  },
+  "resources/js/Pages/Hospital/Index.css": {
+    "file": "assets/Index.7a8a3c05.css",
+    "src": "resources/js/Pages/Hospital/Index.css"
   },
   "resources/js/Pages/FormRegistrationCompleted.css": {
     "file": "assets/FormRegistrationCompleted.7a8a3c05.css",
@@ -2347,72 +2339,80 @@
     "file": "assets/debounce.1ff9ffe7.css",
     "src": "debounce.css"
   },
-  "ModalAddCardUser.css": {
-    "file": "assets/ModalAddCardUser.44266cb8.css",
-    "src": "ModalAddCardUser.css"
-  },
-  "resources/js/Pages/Accounting/Wallet.css": {
-    "file": "assets/Wallet.3a527582.css",
-    "src": "resources/js/Pages/Accounting/Wallet.css"
-  },
-  "resources/js/Pages/Accounting/Index.css": {
-    "file": "assets/Index.7bea12e8.css",
-    "src": "resources/js/Pages/Accounting/Index.css"
-  },
-  "resources/js/Pages/FormRegistrationCourt.css": {
-    "file": "assets/FormRegistrationCourt.7a8a3c05.css",
-    "src": "resources/js/Pages/FormRegistrationCourt.css"
-  },
-  "ModalDel.css": {
-    "file": "assets/ModalDel.bdf3906c.css",
-    "src": "ModalDel.css"
-  },
-  "ModaSave.css": {
-    "file": "assets/ModaSave.6b361e01.css",
-    "src": "ModaSave.css"
-  },
-  "ModalEditCar_S.css": {
-    "file": "assets/ModalEditCar_S.44266cb8.css",
-    "src": "ModalEditCar_S.css"
-  },
-  "ModalAddCarPayment.css": {
-    "file": "assets/ModalAddCarPayment.44266cb8.css",
-    "src": "ModalAddCarPayment.css"
+  "exit.css": {
+    "file": "assets/exit.f367a6bf.css",
+    "src": "exit.css"
   },
   "ModalAddGenExpenses.css": {
     "file": "assets/ModalAddGenExpenses.44266cb8.css",
     "src": "ModalAddGenExpenses.css"
   },
-  "VueSearchSelect.css": {
-    "file": "assets/VueSearchSelect.aad2bd49.css",
-    "src": "VueSearchSelect.css"
+  "ModalAddCarPayment.css": {
+    "file": "assets/ModalAddCarPayment.44266cb8.css",
+    "src": "ModalAddCarPayment.css"
   },
-  "resources/js/Pages/FormRegistrationSaved.css": {
-    "file": "assets/FormRegistrationSaved.7a8a3c05.css",
-    "src": "resources/js/Pages/FormRegistrationSaved.css"
+  "resources/js/Pages/FormRegistrationCourt.css": {
+    "file": "assets/FormRegistrationCourt.7a8a3c05.css",
+    "src": "resources/js/Pages/FormRegistrationCourt.css"
+  },
+  "ModalEditCar_S.css": {
+    "file": "assets/ModalEditCar_S.44266cb8.css",
+    "src": "ModalEditCar_S.css"
+  },
+  "imags.css": {
+    "file": "assets/imags.6b361e01.css",
+    "src": "imags.css"
+  },
+  "resources/js/Pages/CarContract/add.css": {
+    "file": "assets/add.38d81f19.css",
+    "src": "resources/js/Pages/CarContract/add.css"
+  },
+  "resources/js/Pages/Annual/Index.css": {
+    "file": "assets/Index.0a846f21.css",
+    "src": "resources/js/Pages/Annual/Index.css"
+  },
+  "resources/js/Pages/Clients/Show.css": {
+    "file": "assets/Show.7a8a3c05.css",
+    "src": "resources/js/Pages/Clients/Show.css"
   },
   "WebCamUI.css": {
     "file": "assets/WebCamUI.78715766.css",
     "src": "WebCamUI.css"
   },
-  "resources/js/Pages/FormRegistration/AddDoctorResults.css": {
-    "file": "assets/AddDoctorResults.9304e077.css",
-    "src": "resources/js/Pages/FormRegistration/AddDoctorResults.css"
-  },
-  "resources/js/Pages/Dashboard.css": {
-    "file": "assets/Dashboard.89f91d09.css",
-    "src": "resources/js/Pages/Dashboard.css"
-  },
-  "ModalArchiveCarBack.css": {
-    "file": "assets/ModalArchiveCarBack.3e8c2577.css",
-    "src": "ModalArchiveCarBack.css"
+  "resources/js/Pages/purchases.css": {
+    "file": "assets/purchases.e46bffa3.css",
+    "src": "resources/js/Pages/purchases.css"
   },
   "resources/js/Pages/CarConfig/Index.css": {
     "file": "assets/Index.370aeecd.css",
     "src": "resources/js/Pages/CarConfig/Index.css"
   },
-  "resources/js/Pages/Hospital/Add.css": {
-    "file": "assets/Add.95321a20.css",
-    "src": "resources/js/Pages/Hospital/Add.css"
+  "resources/js/Pages/Hospital/Edit.css": {
+    "file": "assets/Edit.ed2af507.css",
+    "src": "resources/js/Pages/Hospital/Edit.css"
+  },
+  "ModalDel.css": {
+    "file": "assets/ModalDel.bdf3906c.css",
+    "src": "ModalDel.css"
+  },
+  "Uploader.css": {
+    "file": "assets/Uploader.b147d8d4.css",
+    "src": "Uploader.css"
+  },
+  "Modal.css": {
+    "file": "assets/Modal.44266cb8.css",
+    "src": "Modal.css"
+  },
+  "ModaSave.css": {
+    "file": "assets/ModaSave.6b361e01.css",
+    "src": "ModaSave.css"
+  },
+  "VueSearchSelect.css": {
+    "file": "assets/VueSearchSelect.aad2bd49.css",
+    "src": "VueSearchSelect.css"
+  },
+  "ModalArchiveCarBack.css": {
+    "file": "assets/ModalArchiveCarBack.3e8c2577.css",
+    "src": "ModalArchiveCarBack.css"
   }
 }
