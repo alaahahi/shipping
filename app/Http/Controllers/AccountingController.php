@@ -211,7 +211,7 @@ class AccountingController extends Controller
       if($print==5){
         $config=SystemConfig::first();
 
-        return view('receiptExpensesTotal.blade',compact('data','config','transactions_id'));
+        return view('receiptBoxTotal',compact('data','config','transactions_id'));
      }
      return response()->json($data); 
      }
