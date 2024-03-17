@@ -539,12 +539,12 @@ class AccountingController extends Controller
         if($discount){
             $carLast->decrement('paid',$discount);
             if($discount ?? 0){
-                $car->increment('discount',$discount);
+                $carLast->increment('discount',$discount);
             }
             }
         }else{
             if($discount ?? 0){
-                $car->increment('discount',$discount);
+                $carLast->increment('discount',$discount);
             }
         }
         if($amount_o){
