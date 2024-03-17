@@ -842,7 +842,7 @@ function getDownloadUrl(name) {
                     <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200"> 
                       {{ ((calculateTotalFilteredAmount().totalAmount)*-1)}}
                      </td>
-                     <td>النتاتج : {{ ((calculateTotalFilteredAmount().totalAmount)*-1)+parseInt(laravelData?.cars_discount) }}</td>
+                     <td>النتاتج : {{ ((calculateTotalFilteredAmount().totalAmount)*-1)-parseInt(laravelData?.cars_discount) }}</td>
 
                   </tr>
                 </tbody>
