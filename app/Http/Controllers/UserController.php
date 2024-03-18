@@ -27,9 +27,9 @@ class UserController extends Controller
     public function __construct(){
          $this->url = env('FRONTEND_URL');
          $this->userAdmin =  UserType::where('name', 'admin')->first()->id;
-         $this->selesKirkuk =  UserType::where('name', 'selesKirkuk')->first()->id;
+         $this->selesKirkuk =  UserType::where('name', 'selesKirkuk')->first()->id ?? 0;
          $this->userAccount =  UserType::where('name', 'account')->first()->id;
-         $this->car_expenses =  UserType::where('name', 'car_expenses')->first()->id;
+         $this->car_expenses =  UserType::where('name', 'car_expenses')->first()->id ??0;
          $this->userClient =  UserType::where('name', 'client')->first()->id;
 
     }
