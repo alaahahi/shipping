@@ -27,7 +27,6 @@ use Illuminate\Validation\Rules;
 use App\Models\Massage;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use PDF;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Facades\Image;
 

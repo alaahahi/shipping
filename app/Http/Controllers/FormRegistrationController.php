@@ -22,7 +22,6 @@ use Illuminate\Validation\Rules;
 use App\Models\Massage;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use PDF;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Facades\Image;
 
@@ -316,10 +315,7 @@ class FormRegistrationController extends Controller
         $results = Results::where('profile_id',$id)->latest()->first();
         $resultsDoctor = DoctorResults::where('profile_id',$id)->latest()->first();
         $url=$this->url;
-        //return view('PDF',compact('profile','results','resultsDoctor','url'));
-        $pdf = PDF::loadView('PDF',compact('profile','results','resultsDoctor','url','config'));
-        return $pdf->download('pdf.pdf');
-
+      
        
     }
     public function showfile($id)

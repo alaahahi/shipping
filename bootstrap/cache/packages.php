@@ -6,17 +6,6 @@
       0 => 'Alkoumi\\LaravelArabicTafqeet\\LaravelArabicTafqeetServiceProvider',
     ),
   ),
-  'carlos-meneses/laravel-mpdf' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Mccarlosen\\LaravelMpdf\\LaravelMpdfServiceProvider',
-    ),
-    'aliases' => 
-    array (
-      'PDF' => 'Mccarlosen\\LaravelMpdf\\Facades\\LaravelMpdf',
-    ),
-  ),
   'inertiajs/inertia-laravel' => 
   array (
     'providers' => 
