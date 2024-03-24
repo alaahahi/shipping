@@ -39,43 +39,7 @@ const restform =()=>{
               <slot name="header"></slot>
             </div>
             <div class="modal-body">
-                        <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-3">
-                        <div className="mb-4 mx-5">
-                          <label for="card" >التاريخ</label>
-                          <input
-                          id="card"
-                          type="date"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                          v-model="form.date"   />
-                        </div>
-                        <div className="mb-4 mx-5">
-                          <label for="user_id" >الحساب</label>
-                          <input
-                          id="card"
-                          type="text"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                          :value="boxes.name"   />
-                        </div>
-                        <div className="mb-4 mx-5">
-                        <label for="balance" >الرصيد الحالي بالدولار</label>
-                        <input
-                          id="balance"
-                          type="number"
-                          :value="sum_transactions"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                            />
-                        </div>
-                        <div className="mb-4 mx-5">
-                        <label for="balance" >الرصيد الحالي بالدينار العراقي</label>
-                        <input
-                          id="balance"
-                          type="number"
-                          :value="sum_transactions_dinar"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                            />
-                        </div>
-                        </div>
-                        <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-3">
+                        <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-3">
                         <div className="mb-4 mx-5">
                         <label for="amountDollar" >المبلغ بالدولار</label>
                         <input
@@ -99,6 +63,14 @@ const restform =()=>{
                           type="text"
                           class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.note" />
+                        </div>
+                        <div className="mb-4 mx-5">
+                          <label for="card" >التاريخ</label>
+                          <input
+                          id="card"
+                          type="date"
+                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          v-model="form.date"   />
                         </div>
                         </div>
             </div>

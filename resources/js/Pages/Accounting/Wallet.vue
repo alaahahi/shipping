@@ -4,8 +4,7 @@ import Modal from "@/Components/Modal.vue";
 import { Head, Link, useForm } from "@inertiajs/inertia-vue3";
 import { ref } from "vue";
 import ModalAddSales from "@/Components/ModalAddSales.vue";
-import ModalAddDebt from "@/Components/ModalAddDebt.vue";
-import ModalAddExpensesWallet from "@/Components/ModalAddExpensesWallet.vue";
+ import ModalAddExpensesWallet from "@/Components/ModalAddExpensesWallet.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import ModalAddGenExpenses from "@/Components/ModalAddGenExpenses.vue";
@@ -284,15 +283,7 @@ function conGenfirmExpenses(V) {
             
            </template>
       </ModalAddSales>
-      <ModalAddDebt
-            :show="showModaldebtSales ? true : false"
-            @a="confirmdebt($event)"
-            @close="showModaldebtSales = false"
-            >
-          <template #header>
-            
-           </template>
-      </ModalAddDebt>
+ 
       <ModalAddExpensesWallet 
             :show="showModalAddExpensesWallet ? true : false"
             :boxes="boxes"
@@ -343,7 +334,7 @@ function conGenfirmExpenses(V) {
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
         <div class="overflow-hidden shadow-sm sm:rounded-lg">
           <div class=" border-b border-gray-200">
-            <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
               <div class="pt-5  print:hidden">
               <button style=" width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-green-800 rounded-md focus:outline-none"
                                             @click="openAddSales()">
@@ -352,13 +343,6 @@ function conGenfirmExpenses(V) {
               </button>
               </div>
 
-              <div class="pt-5">
-              <button v-if="false" style=" width: 100%; margin-top: 4px;"    className="px-4 py-2 text-white bg-yellow-500 rounded-md focus:outline-none"
-                                            @click="opendebtSales()">
-                                             تحويل لحساب 
-              </button>
-              </div>
-              
               <div class="pt-5  print:hidden">
               <button  style=" width: 100%; margin-top: 4px;"  v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2|| $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-red-800 rounded-md focus:outline-none"
                                             @click="openAddExpenses()">

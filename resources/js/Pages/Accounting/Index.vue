@@ -488,7 +488,7 @@ function updateResults(input) {
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
         <div class="overflow-hidden shadow-sm sm:rounded-lg">
           <div class=" border-b border-gray-200">
-            <div class="mt-4  mb-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">     
+            <div class="mt-4  mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">     
                           <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -603,34 +603,10 @@ function updateResults(input) {
                           </div>
 
                            
-                     
-                          <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                      
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('supplier_debt') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ debtSupplier.wallet?.balance }}</p>
-                            </div>
-                          </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                      
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('supplier_payments') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ outSupplier.wallet?.balance }}</p>
-                            </div>
-                          </div> -->
+      
                         </div>
 
-            <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
               <div class="pt-5  print:hidden">
               <button style=" width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5|| $page.props.auth.user.type_id==6" className="px-4 py-2 text-white bg-green-500 rounded-md focus:outline-none"
                                             @click="openAddSales()">
@@ -655,17 +631,7 @@ function updateResults(input) {
               </button>
        
               </div>
-              <div  class="pt-5"  v-if="$page.props.auth.user.type_id==1">
-                <a
-                            class="px-2 mb-12 py-2 mt-1 font-bold text-white bg-pink-500 rounded" style="display: block;text-align: center;"
-                            :href="route('transfers')"
-                            target="_blank"
-                            >
-                            
-                            <span v-if="!isLoading">الأرشيف</span>
-                            <span v-else>جاري الحفظ...</span>
-                          </a>
-              </div>
+              
               <div class=" px-4">
                           <div >
                               <InputLabel for="from" value="من تاريخ" />
@@ -713,7 +679,7 @@ function updateResults(input) {
 
               
             </div>
-            <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
               <div>
                           <button
                           v-if="$page.props.auth.user.type_id!=6"
@@ -788,46 +754,10 @@ function updateResults(input) {
                         </div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-3 lg:gap-3">
-              <div class=" px-4">
-                            <div >
-                              <InputLabel for="to" value="حساب الصندوق بالدولار" />
-                              <TextInput
-                                id="to"
-                                type="number"
-                                disabled
-                                class="mt-1 block w-full"
-                                :value="laravelData.sum_transactions"
-                              />
-                            </div>
-              </div>
+             
+
 
               <div class=" px-4">
-                            <div >
-                              <InputLabel for="to" value="مسحوبات الصندوق بالدولار" />
-                              <TextInput
-                                id="to"
-                                type="number"
-                                disabled
-                                class="mt-1 block w-full"
-                                :value="laravelData.sum_transactions_debit"
-                              />
-                            </div>
-              </div>
-
-              <div class=" px-4">
-                            <div >
-                              <InputLabel for="to" value="دخل الصندوق بالدولار" />
-                              <TextInput
-                                id="to"
-                                type="number"
-                                disabled
-                                class="mt-1 block w-full"
-                                :value="laravelData.sum_transactions_in"
-                              />
-                            </div>
-              </div>
-
-              <div >
                               <InputLabel for="to" value="رصيد الصندوق بالدولار" />
                               <TextInput
                                 id="to"
@@ -836,56 +766,8 @@ function updateResults(input) {
                                 class="mt-1 block w-full"
                                 :value="laravelData?.user?.wallet.balance"
                               />
-                </div>
-                <div class="relative w-full">
-                          <InputLabel for="to" value="بحث رقم الوصل او الوصف" />
-                          <TextInput
-                                id="q"
-                                type="text"
-                                class="mt-1 block w-full"
-                                v-model="q"
-                                @input="debouncedGetResultsCar"                              />
-             
-                </div>
-            </div>
-            <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-3 lg:gap-3 pt-3">
-              <div class=" px-4">
-                            <div >
-                              <InputLabel for="to" value="حساب الصندوق بالدينار العراقي" />
-                              <TextInput
-                                id="to"
-                                type="number"
-                                disabled
-                                class="mt-1 block w-full"
-                                :value="laravelData.sum_transactions_dinar"
-                              />
-                            </div>
               </div>
               <div class=" px-4">
-                            <div >
-                              <InputLabel for="to" value="مسحوبات الصندوق بالدينار العراقي" />
-                              <TextInput
-                                id="to"
-                                type="number"
-                                disabled
-                                class="mt-1 block w-full"
-                                :value="laravelData.sum_transactions_debit_dinar"
-                              />
-                            </div>
-              </div>
-              <div class=" px-4">
-                            <div >
-                              <InputLabel for="to" value="دخل الصندوق بالدينار العراقي" />
-                              <TextInput
-                                id="to"
-                                type="number"
-                                disabled
-                                class="mt-1 block w-full"
-                                :value="laravelData.sum_transactions_in_dinar"
-                              />
-                            </div>
-              </div>
-              <div >
                               <InputLabel for="to" value="رصيد الصندوق بالدينار العراقي" />
                               <TextInput
                                 id="to"
@@ -894,9 +776,19 @@ function updateResults(input) {
                                 class="mt-1 block w-full"
                                 :value="laravelData?.user?.wallet.balance_dinar"
                               />
-                </div>
+              </div>
+              <div class="relative w-full px-4">
+                          <InputLabel for="to" value="بحث رقم الوصل او الوصف" />
+                          <TextInput
+                                id="q"
+                                type="text"
+                                class="mt-1 block w-full"
+                                v-model="q"
+                                @input="debouncedGetResultsCar"                              />
+             
+              </div>
             </div>
-
+           
 
             <div class="overflow-x-auto shadow-md mt-5">
               <table class="w-full text-right text-gray-500   dark:text-gray-400 text-center">

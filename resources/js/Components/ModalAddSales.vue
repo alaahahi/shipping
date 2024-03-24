@@ -38,7 +38,7 @@ const restform =()=>{
                         <h2 class="text-center pb-5">
                          وصل قبض
                         </h2>
-                        <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-3">
+                        <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-3">
 
    
 
@@ -61,14 +61,7 @@ const restform =()=>{
                           class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.amountDinar"   />
                         </div>
-                        <div className="mb-4 mx-5">
-                          <label for="card" >التاريخ</label>
-                          <input
-                          id="card"
-                          type="date"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                          v-model="form.date"   />
-                        </div>
+                     
                         <div className="mb-4 mx-5">
                         <label for="card" >ملاحظة</label>
                         <input
@@ -77,6 +70,16 @@ const restform =()=>{
                           class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.amountNote"   />
                         </div>
+
+                        <div className="mb-4 mx-5">
+                          <label for="card" >التاريخ</label>
+                          <input
+                          id="card"
+                          type="date"
+                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          v-model="form.date"   />
+                        </div>
+
                         </div>
 
             </div>
