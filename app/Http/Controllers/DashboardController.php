@@ -84,6 +84,18 @@ class DashboardController extends Controller
     public function totalInfo(Request $request)
     {
         $owner_id=Auth::user()->owner_id;
+        $mainBoxId=$this->mainBox->where('owner_id', $owner_id)->first()->wallet->id;
+
+        $transactionIn = (int) Transactions::where('wallet_id', $mainBoxId)
+        ->where('currency', '$')
+        ->whereIn('type', ['in', 'inUserBox'])
+        ->sum('amount');
+
+        $transactionOut =(int) Transactions::where('wallet_id', $mainBoxId)
+        ->where('currency', '$')
+        ->whereIn('type', ['out', 'debt'])
+        ->sum('amount');
+
         $car = Car::all()->where('owner_id',$owner_id);
         $contarts = Contract::all()->where('owner_id',$owner_id);
         $exitCar = ExitCar::all()->where('owner_id',$owner_id)->count();
@@ -120,6 +132,7 @@ class DashboardController extends Controller
         'clientDebit'=>$sumDebit ?? 0,
         'mainBoxDollar'=>$this->mainBox->where('owner_id',$owner_id)->first()->wallet->balance??0,
         'mainBoxDinar'=>$this->mainBox->where('owner_id',$owner_id)->first()->wallet->balance_dinar??0,
+        'mainBoxDollarNew'=>$transactionIn+$transactionOut
 
         
         ];
@@ -362,6 +375,8 @@ class DashboardController extends Controller
                 if($car->total_s){
                     $this->accountingController->decreaseWallet($car->total_s-$car->paid, $desc,$car->client_id,$car->id,'App\Models\User');
                     $this->accountingController->increaseWallet($car->total_s-$car->paid, $desc,$request->client_id,$car->id,'App\Models\User');
+
+                
                 }
             }
         }

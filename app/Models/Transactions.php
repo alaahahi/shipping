@@ -20,8 +20,13 @@ class Transactions extends Model
         'currency',
         'created',
         'discount',
-        'parent_id'
+        'parent_id',
+        'details'
     ];
+    protected $casts = [
+        'details' => 'array',
+    ];
+
     protected $dates = ['deleted_at'];
 
     public function wallet()

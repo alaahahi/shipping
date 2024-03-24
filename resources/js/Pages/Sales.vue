@@ -51,7 +51,7 @@ function openModalDelCar(form={}) {
 
 function openAddCarPayment(form={}) {
     formData.value=form
-    formData.value.notePayment='حساب '+form.car_type+' '+form.year+' '+form.car_color+' رقم شاصى '+form.vin+' بيد '
+    formData.value.notePayment=' بيد '
     showModalAddCarPayment.value = true;
 }
 const formData = ref({});
