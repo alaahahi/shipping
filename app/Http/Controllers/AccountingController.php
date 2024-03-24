@@ -222,7 +222,7 @@ class AccountingController extends Controller
       $amountDinar= $request->amountDinar??0;
       $user_id=$request->id;
       $user=  User::with('wallet')->find($user_id);
-      $desc="وصل قبض مباشر"." ".' قاسه'.' '.$user->name.' '.$note;
+      $desc="وصل سحب مباشر"." ".' قاسه'.' '.$user->name.' '.$note;
       $date= $request->date??0;
       if($amountDollar){
         $transactiond=$this->debtWallet($amountDollar,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'$',$date,0,'outUserBox');
@@ -763,7 +763,7 @@ class AccountingController extends Controller
             return 0 ;
         }
     }
-    public function debtWallet(int $amount,$desc,$user_id,$morphed_id=0,$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0)  
+    public function debtWallet(int $amount,$desc,$user_id,$morphed_id=0,$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0,$type='debt')  
     {
 
         if($created==0){
@@ -777,7 +777,7 @@ class AccountingController extends Controller
         }else{
             $wallet->decrement('balance', $amount);
         }
-            $transactionDetils = ['type' => 'debt','wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$created,'discount'=>$discount,'currency'=>$currency,'parent_id'=>$parent_id];
+            $transactionDetils = ['type' => $type,'wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$created,'discount'=>$discount,'currency'=>$currency,'parent_id'=>$parent_id];
 
             $Transactions =Transactions::create($transactionDetils);
          
@@ -821,7 +821,7 @@ class AccountingController extends Controller
           return response()->json(['message' => 'Transaction not found'], 404);
           }
         if($originalTransaction->currency=='$'){
-            if($originalTransaction->type=='inUserBox')
+            if($originalTransaction->type=='inUserBox' || $originalTransaction->type=='outUserBox')
             {
                 $wallet->decrement('balance', $originalTransaction->amount);
                 $all=  Transactions::where('parent_id',$transaction_id)->get();
@@ -866,7 +866,7 @@ class AccountingController extends Controller
 
         }
         if($originalTransaction->currency=='IQD'){
-            if($originalTransaction->type=='inUserBox')
+            if($originalTransaction->type=='inUserBox'|| $originalTransaction->type=='outUserBox')
             {
                 $wallet->decrement('balance_dinar', $originalTransaction->amount);
                 $all=  Transactions::where('parent_id',$transaction_id)->get();
