@@ -815,8 +815,8 @@ function updateResults(input) {
          
                   <tr v-for="tran in transactions" :key="tran.id" 
                   :class="{
-                    'bg-red-100 dark:bg-red-900': tran.type === 'out' || tran.type === 'outUser'|| tran.type === 'debt',
-                    'bg-green-100 dark:bg-green-900': tran.type === 'in' || tran.type === 'inUser' 
+                    'bg-red-100 dark:bg-red-900': tran.type === 'out' || tran.type === 'outUserBox'|| tran.type === 'outUser'|| tran.type === 'debt',
+                    'bg-green-100 dark:bg-green-900': tran.type === 'in' || tran.type === 'inUser'  || tran.type === 'inUserBox' 
                   }"
                   class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.id }}</td>
