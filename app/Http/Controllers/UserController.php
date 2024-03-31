@@ -21,6 +21,7 @@ use App\Models\Massage;
 use Carbon\Carbon;
 use App\Models\Transactions;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Contract;
 
 class UserController extends Controller
 {
@@ -97,17 +98,14 @@ class UserController extends Controller
         if ($from && $to) {
             $dataQuery->whereBetween('created', [$from, $to]);
         } 
-        $paginationLimit = 1000;
+        $paginationLimit = 100;
         $data = $dataQuery->paginate($paginationLimit);
 
         $data->getCollection()->transform(function ($user) {
             $user->car_total_uncomplete = Car::where('client_id', $user->id)->whereIn('results', [0, 1])->count();
             $user->car_total_complete = Car::where('client_id', $user->id)->where('results', 2)->count();
             $user->car_total_un_pay = Car::where('client_id', $user->id)->where('total_s', 0)->count();
-
-            if ($user->car_total_uncomplete > 0) {
-                return $user;
-            }
+            $user->count_contract = Contract::where('user_id', $user->id)->count();
             
             return $user;
         });

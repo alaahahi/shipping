@@ -15,6 +15,8 @@ import wallet from "@/Components/icon/wallet.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
 import ModalDelClient from "@/Components/ModalDelCar.vue";
+import InfiniteLoading from "v3-infinite-loading";
+import "v3-infinite-loading/lib/style.css";
 
 let showModalEditClient = ref(false);
 let showModalAddClient = ref(false);
@@ -27,31 +29,56 @@ const from = ref(0);
 const to = ref(0);
 const q = ref('');
 const isLoading = ref(0);
-const getResults = async (page = 1) => {
-  axios.get(`/getIndexClients?page=${page}&user_id=${user_id.value}&from=${from.value}&to=${to.value}&q=${q.value}`)
-  .then(response => {
-    try {
-      laravelData.value =  response.data.data?.sort((a, b) => {
-      // First, sort by wallet.balance in descending order
-      const balanceComparison = b.wallet.balance - a.wallet.balance;
 
-      // If wallet.balance is the same, sort by car_total_uncomplete in ascending order
-      if (balanceComparison === 0) {
-        return b.car_total_uncomplete - a.car_total_uncomplete;
+let resetData = ref(false);
+let page = 1;
+let json  =ref({});
+const refresh = () => {
+  page = 0;
+  laravelData.value.length = 0;
+  resetData.value = !resetData.value;
+
+
+};
+const getResultsCar = async ($state) => {
+  console.log($state)
+  try {
+
+
+    const response = await axios.get(`/getIndexClients`, {
+      params: {
+        limit: 100,
+        page: page,
+        q: q.value,
+        user_id: user_id.value,
+        from:from.value,
+        to:to.value
       }
-
-      return balanceComparison;
     });
-    } catch (error) {
-      laravelData.value =  response.data.data
+
+     json.value = response.data;
+
+
+    if (json.value.data.length < 100){
+      laravelData.value.push(...json.value.data);
+      $state.complete();
+    } 
+    else {
+      laravelData.value.push(...json.value.data);
+       $state.loaded();
     }
 
-  })
-  .catch(error => {
-    console.error(error);
-  })
-}
-getResults();
+
+    page++;
+  } catch (error) {
+    console.log(error);
+    //$state.error();
+  }
+};
+
+refresh()
+
+ 
 function openModalAddClient(form = {}) {
   formData.value = form;
   showModalAddClient.value = true;
@@ -174,7 +201,7 @@ function confirmDelClient(V) {
                               </div>
                               <input
                                 v-model="q"
-                                @input="getResults(q)"
+                                @input="refresh()"
                                 type="text"
                                 id="simple-search"
                                 class="
@@ -200,42 +227,7 @@ function confirmDelClient(V) {
                             </div>
                           </form>
                         </div>
-                        <!-- <div>
-                          <button
-                            type="button"
-                            @click="openAddGenExpenses()"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-red-500 rounded">
-                               {{ $t('genExpenses') }}
-                          </button>
-                        </div> -->
-                        <!-- <div>
-                          <button
-                            type="button"
-                            @click="openAddCar()"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-green-500 rounded">
-                            {{ $t('addCar') }} 
-                          </button>
-                        </div> -->
-                        <!-- <div>
-                          <a
-                            type="button"
-                            :href="route('FormRegistrationCompleted')"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 text-center mx-2 py-2 font-bold text-white bg-blue-600 rounded">
-                            {{ $t('allCars') }}
-                          </a>
-                        </div> -->
-                        <!-- <div>
-                          <button
-                            type="button"
-                            @click="openAddTransfers()"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-indigo-600 rounded">
-                            {{ $t('transfers') }} 
-                          </button>
-                        </div> -->
+                      
                         <div>
                           <InputLabel for="from" value="تحديد الفئة" class="mb-1" />
 
@@ -279,7 +271,7 @@ function confirmDelClient(V) {
                         <div className="mb-4  mr-5 print:hidden">
                             <InputLabel for="pay" value="فلترة" />
                             <button
-                            @click.prevent="getResults()"
+                            @click.prevent="refresh()"
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded" style="width: 100%">
                             <span v-if="!isLoading">فلترة</span>
                             <span v-else>جاري الحفظ...</span>
@@ -305,8 +297,10 @@ function confirmDelClient(V) {
                                         <th className="px-1 py-2 text-base">#</th>
                                         <th className="px-1 py-2 text-base">{{ $t('name') }}</th>
                                         <th className="px-1 py-2 text-base">{{ $t('phoneNumber') }}</th>
-                                        <th className="px-1 py-2 text-base">مجموع السيارات غير مكتمل</th>
-                                        <th className="px-1 py-2 text-base">مجموع السيارات مكتمل</th>
+                                        <th className="px-1 py-2 text-base">مجموع السيارات غير مدفوع</th>
+                                        <th className="px-1 py-2 text-base">مجموع السيارات مدفوع</th>
+                                        <th className="px-1 py-2 text-base">العقود الالكترونية المنجزة</th>
+                                        <th className="px-1 py-2 text-base">العقود الالكترونية غير المنجزة</th>
                                         <th className="px-1 py-2 text-base">{{ $t('debt') }}</th>
                                         <th className="px-1 py-2 text-base">{{ $t('execute') }}</th>       
                                     </tr>
@@ -319,6 +313,8 @@ function confirmDelClient(V) {
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.phone}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_total_uncomplete}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_total_complete}}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.count_contract}}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{(user.car_total_uncomplete +user.car_total_complete)- user.count_contract}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{ user.wallet ? '$'+user.wallet['balance']:0   }}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2"  style="min-height: 42px;">
                           
@@ -370,11 +366,9 @@ function confirmDelClient(V) {
                             </table>
                         </div>
                             <div class="mt-3 text-center" style="direction: ltr;">
-                                    <TailwindPagination
-                                    :data="laravelData"
-                                    @pagination-change-page="getResults"
-                                    :limit ="10"
-                                />
+                              <div class="spaner">
+                                <InfiniteLoading :laravelData="laravelData" @infinite="getResultsCar" :identifier="resetData" />
+                              </div>
                             </div>
                         </div>
                     </div>

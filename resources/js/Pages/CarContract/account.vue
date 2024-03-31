@@ -531,11 +531,23 @@ function UpdatePage (){
                             <span v-else>جاري الحفظ...</span>
                           </button>
               </div>
-              <div className=" mr-5 print:hidden"  v-if="false">
-                            <InputLabel for="pay" value="طباعة" />
+              <div className=" mr-5 print:hidden"  >
+                            <InputLabel for="pay" value="تقرير مصاريف" />
                             <a
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded" style="display: block;text-align: center;"
-                            :href="`/getIndexAccounting?user_id=${laravelData?.user?.id}&from=${from}&to=${to}&print=1`"
+                            :href="`api/contract_account_report?type=سحب دفعة &from=${from}&to=${to}&print=1`"
+                            target="_blank"
+                            >
+                            
+                            <span v-if="!isLoading">طباعة</span>
+                            <span v-else>جاري الحفظ...</span>
+                          </a>
+              </div>
+              <div className=" mr-5 print:hidden"  >
+                            <InputLabel for="pay" value="تقرير العقود" />
+                            <a
+                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-blue-500 rounded" style="display: block;text-align: center;"
+                            :href="`api/contract_account_report?type=contract-report&from=${from}&to=${to}&print=2`"
                             target="_blank"
                             >
                             

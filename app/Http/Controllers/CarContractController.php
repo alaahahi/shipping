@@ -599,4 +599,74 @@ class CarContractController extends Controller
         $data2 = $dataQuery2->get();
         return Response::json(['data1'=>$data1,'data2'=>$data2], 200);
     }
+    public function contract_account_report()
+    {
+        $q = $_GET['q'] ?? '';
+        $from = $_GET['from'] ?? 0;
+        $to = $_GET['to'] ?? 0;
+        $type = $_GET['type'] ?? 0;
+        $print = $_GET['print'] ?? 0;
+        $searchType = $_GET['searchType'] ?? '';
+        $owner_id=Auth::user()->owner_id;
+        $userClient=$this->userClient ?? 0;
+
+        $dataQuery1 = CarContract::where('owner_id', $owner_id)
+        ->select('name_seller', 
+                 DB::raw('MAX(phone_seller) as phone_seller'), 
+                 DB::raw('SUM(tex_seller_dinar) as tex_seller_dinar'), 
+                 DB::raw('SUM(tex_seller) as tex_seller'),
+                 DB::raw('SUM(tex_seller_dinar_paid) as tex_seller_dinar_paid'), 
+                 DB::raw('SUM(tex_seller_paid) as tex_seller_paid'),
+                 )
+        ->groupBy('name_seller');
+
+
+        $dataQuery2 = CarContract::where('owner_id', $owner_id)
+        ->select('name_buyer', 
+                 DB::raw('MAX(phone_buyer) as phone_seller'), 
+                 DB::raw('SUM(tex_buyer_dinar) as tex_buyer_dinar'), 
+                 DB::raw('SUM(tex_buyer) as tex_buyer'),
+                 DB::raw('SUM(tex_buyer_dinar_paid) as tex_buyer_dinar_paid'), 
+                 DB::raw('SUM(tex_buyer_paid) as tex_buyer_paid')
+                 )
+        ->groupBy('name_buyer')
+        ;
+    
+        if ($q) {
+            if ($q !== 'debit') {
+            $dataQuery1->where('name_seller', 'like', '%' . $q . '%');
+            $dataQuery2->where('name_buyer', 'like', '%' . $q . '%');
+            }
+        }
+        if ($from && $to) {
+            $dataQuery1->whereBetween('created', [$from, $to]);
+            $dataQuery2->whereBetween('created', [$from, $to]);
+
+        } 
+
+
+        if ($q=='debit') {
+            $dataQuery1->havingRaw('(SUM(tex_seller) - SUM(tex_seller_paid)) > 0 OR (SUM(tex_seller_dinar) - SUM(tex_seller_dinar_paid)) > 0');
+            $dataQuery2->havingRaw('(SUM(tex_buyer) - SUM(tex_buyer_paid)) > 0 OR (SUM(tex_buyer_dinar) - SUM(tex_buyer_dinar_paid)) > 0');
+
+        } 
+        $data1 = $dataQuery1->get();
+        $data2 = $dataQuery2->get();
+        if($print==1){
+            $data = TransactionsContract::whereBetween('created', [$from, $to])->where('description', 'like', "%$type%")->get();
+            $totalDollar = TransactionsContract::whereBetween('created', [$from, $to])->where('currency', '$')->where('description', 'like', "%$type%")->sum('amount');
+            $totalDinar = TransactionsContract::whereBetween('created', [$from, $to])->where('currency', 'IQD')->where('description', 'like', "%$type%")->sum('amount');
+
+            $config=SystemConfig::first();
+            return view('Contract.receiptExpensesContractTotal',compact('data','config','totalDollar','totalDinar'));
+        }
+        if($print==2){
+            $data =  CarContract::where('owner_id', $owner_id)->get();
+          
+            $config=SystemConfig::first();
+            return view('Contract.reportContractTotal',compact('data','config'));
+        }
+
+        return Response::json(['data1'=>$data1,'data2'=>$data2], 200);
+    }
 }

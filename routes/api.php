@@ -183,6 +183,8 @@ Route::post('convertDollarDinarContract',[CarContractController::class, 'convert
 Route::post('convertDinarDollarContract',[CarContractController::class, 'convertDinarDollarContract'])->name('convertDinarDollarContract');
 Route::post('DropFromBoxContract',[CarContractController::class, 'DropFromBoxContract'])->name('DropFromBoxContract');
 Route::get('getIndexClientsContract',[CarContractController::class, 'getIndexClientsContract'])->name('getIndexClientsContract');
+Route::get('contract_account_report',[CarContractController::class, 'contract_account_report'])->name('contract_account_report');
+
 
 
 
