@@ -64,7 +64,7 @@ const refresh = () => {
   page = 0;
   transactions.value.length = 0;
   resetData.value = !resetData.value;
-
+  
 
 };
 const debouncedGetResultsCar = debounce(refresh, 500);
@@ -525,7 +525,7 @@ function UpdatePage (){
               <div className=" mr-5 print:hidden">
                             <InputLabel for="pay" value="فلترة" />
                             <button
-                            @click.prevent="refresh()"
+                            @click.prevent="refresh();getcountTotalInfo()"
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded" style="width: 100%">
                             <span v-if="!isLoading">فلترة</span>
                             <span v-else>جاري الحفظ...</span>

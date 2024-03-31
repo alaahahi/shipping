@@ -235,12 +235,13 @@ class CarContractController extends Controller
 
 
 
-        $from = 0;
-        $to =0;
+        $from =  $_GET['from'] ?? 0;
+        $to =$_GET['to'] ?? 0;
 
         if ($from && $to) {
             $allContract->whereBetween('created', [$from, $to]);
         }
+
         
         $sumAllContractSeller = $allContract->sum('tex_seller');
         $sumAllContractSellerPaid = $allContract->sum('tex_seller_paid');
@@ -255,6 +256,11 @@ class CarContractController extends Controller
         $sumAllContractBuyerPaidDinar = $allContract->sum('tex_buyer_dinar_paid');
 
         $data = TransactionsContract::orderBy('id', 'desc');
+
+        if ($from && $to) {
+            $data->whereBetween('created', [$from, $to]); ;
+        }
+
         $dataIn = clone $data;
         $dataOut = clone $data;
         $dataInDinar = clone $data;
@@ -661,7 +667,7 @@ class CarContractController extends Controller
             return view('Contract.receiptExpensesContractTotal',compact('data','config','totalDollar','totalDinar'));
         }
         if($print==2){
-            $data =  CarContract::where('owner_id', $owner_id)->get();
+            $data =  CarContract::where('owner_id', $owner_id)->whereBetween('created', [$from, $to])->get();
           
             $config=SystemConfig::first();
             return view('Contract.reportContractTotal',compact('data','config'));

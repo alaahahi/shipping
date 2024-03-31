@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/inertia-vue3';
 
 import { Link } from '@inertiajs/inertia-vue3';
+import TextInput from "@/Components/TextInput.vue";
 
 import show from "@/Components/icon/show.vue";
 import print from "@/Components/icon/print.vue";
@@ -34,21 +35,10 @@ let showModalEditCars=ref(false);
 let showModalDelCar =  ref(false);
 let mainAccount= ref(0)
 let allCars= ref(0)
+let from = ref(getFirstDayOfMonth());
+let to = ref(getTodayDate());
 
-function openModalEditCars(form={}){
-  formData.value=form
-  if(formData.value.dinar_s==0){
-    formData.value.dinar_s=formData.value.dinar
-  }
-  if(formData.value.expenses_s==0){
-    formData.value.expenses_s=formData.value.expenses
-  }
-  showModalEditCars.value = true;
-}
-function openModalDelCar(form={}) {
-  formData.value=form
-  showModalDelCar.value = true;
-}
+
 
 
 
@@ -76,6 +66,8 @@ const getResultsCar = async ($state) => {
         limit: 100,
         page: page,
         q: q,
+        from: from.value,
+        to: to.value,
         user_id: user_id
       }
     });
@@ -162,6 +154,21 @@ function confirmDelCarContract(V) {
 
 const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce delay (in milliseconds) as needed
 
+function getTodayDate() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+function getFirstDayOfMonth() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const firstDayOfMonth = '01'; // Set day to 01 for the first day of the month
+  return `${year}-${month}-${firstDayOfMonth}`;
+}
+
 </script>
 
 <template>
@@ -203,7 +210,7 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                     <div class="flex flex-col">
                       <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-2 lg:gap-1">
                         <div>
-                          <form class="flex items-center max-w-5xl">
+                          <form class="flex items-center max-w-5xl mt-1">
                             <label  class="dark:text-gray-200" for="simple-search"  ></label>
                             <div class="relative w-full">
                               <div
@@ -260,32 +267,52 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                           </form>
                         </div>
         
-                        <!-- <div>
-                            <select @change="refresh()" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
-                              <option value="0" disabled> {{ $t("selectCustomer") }}</option>
-                              <option value="">{{ $t("allOwners") }}</option>
-                              <option v-for="(user, index) in client" :key="index" :value="user.id">{{ user.name }}</option>
-                            </select>
-                        </div> -->
-                        <!-- <div class="text-center">
-                          <button
-                            type="button"
-                            @click="openAddToBox()"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-purple-600 rounded">
-                            {{ $t('addToTheFund') }}  
+                        <div class=" px-4">
+                          <div >
+                              <InputLabel for="from" value="من تاريخ" />
+                              <TextInput
+                                id="from"
+                                type="date"
+                                class="mt-1 block w-full"
+                                v-model="from"
+                                
+                              />
+                            </div>
+                          </div>
+                          <div class=" px-4">
+                                        <div >
+                                          <InputLabel for="to" value="حتى تاريخ" />
+                                          <TextInput
+                                            id="to"
+                                            type="date"
+                                            class="mt-1 block w-full"
+                                            v-model="to"
+                                          />
+                                        </div>
+                          </div>
+                          <div className=" mr-5 print:hidden">
+                            <InputLabel for="pay" value="فلترة" />
+                            <button
+                            @click.prevent="refresh();getcountTotalInfo()"
+                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded" style="width: 100%">
+                            <span v-if="!isLoading">فلترة</span>
+                            <span v-else>جاري الحفظ...</span>
                           </button>
-                        </div>
-                        <div  class="text-center">
-                          <button
-                            type="button"
-                            @click="openAddFromBox()"
-                            style="min-width:150px;"
-                            className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-pink-600 rounded">
-                            {{ $t('withdrawFromTheFund') }}   
-                          </button>
-                        </div> -->
+                          </div>
+                          <div className=" mr-5 print:hidden"  >
+                                        <InputLabel for="pay" value="تقرير العقود" />
+                                        <a
+                                        class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-blue-500 rounded" style="display: block;text-align: center;"
+                                        :href="`api/contract_account_report?type=contract-report&from=${from}&to=${to}&print=2`"
+                                        target="_blank"
+                                        >
+                                        
+                                        <span v-if="!isLoading">طباعة</span>
+                                        <span v-else>جاري الحفظ...</span>
+                                      </a>
+                          </div>
 
+      
                       </div>
                       <div>
                         <div>
