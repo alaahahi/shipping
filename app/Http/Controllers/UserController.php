@@ -97,8 +97,13 @@ class UserController extends Controller
         }
         if ($from && $to) {
             $dataQuery->whereBetween('created', [$from, $to]);
-        } 
-        $paginationLimit = 100;
+        }
+        if ($q) {
+            $paginationLimit = 10000;
+        }
+        else{
+            $paginationLimit = 100;
+        }
         $data = $dataQuery->paginate($paginationLimit);
 
         $data->getCollection()->transform(function ($user) {
