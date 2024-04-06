@@ -383,7 +383,7 @@ function updateResults(input) {
                           </div>
                           </div>
                           <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
-                          <Link @dblclick="sendWhatsAppMessage(user.phone)"  v-for="(user,i) in laravelData" :key="i" class="flex items-start rounded-xl text-gray-200  dark:text-gray-300  p-4 shadow-lg"  :href="route('showClients', { id: user.id, q: searchTerm })"  :class="changeColor( user.wallet ? user.wallet['balance']:0)">
+                          <Link @dblclick="sendWhatsAppMessage(user.phone)"  v-for="(user,i) in laravelData" :key="i" class="flex items-start rounded-xl text-gray-200  dark:text-gray-300  p-4 shadow-lg"  :href="route('showClients', { id: user.id, q: searchTerm })"  :class="changeColor(user.balance)">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -391,7 +391,7 @@ function updateResults(input) {
                             </div>
                             <div class="mr-4">
                               <h2 class="font-semibold">{{ user.name}}</h2>
-                              <p class="mt-2 text-sm text-gray-200  dark:text-gray-200">{{ user.wallet ? '$'+updateResults(user.wallet['balance']):0  }}
+                              <p class="mt-2 text-sm text-gray-200  dark:text-gray-200">{{ '$'+updateResults(user.balance) }}
                                 <span class="inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
                                 {{ user.car_total_un_pay}}
                               </span>
@@ -501,7 +501,7 @@ function updateResults(input) {
                         </div>
                           <h2 class="my-3 dark:text-white">دين البائع</h2>
                           <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
-                          <Link @dblclick="sendWhatsAppMessage(user.phone)"  v-for="(user,i) in laravelData1" :key="i" class="flex items-start rounded-xl text-gray-200  dark:text-gray-300  p-4 shadow-lg"  :href="route('car_contract', {   q:  user.name_seller })"   :class="changeColor( user.wallet ? user.wallet['balance']:0)">
+                          <Link @dblclick="sendWhatsAppMessage(user.phone)"  v-for="(user,i) in laravelData1" :key="i" class="flex items-start rounded-xl text-gray-200  dark:text-gray-300  p-4 shadow-lg"  :href="route('car_contract', {   q:  user.name_seller })"   :class="changeColor(user.balance)">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -520,7 +520,7 @@ function updateResults(input) {
                         </div>
                         <h2 class="my-3 dark:text-white">دين المشتري</h2>
                           <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
-                          <Link @dblclick="sendWhatsAppMessage(user.phone)"  v-for="(user,i) in laravelData2" :key="i" class="flex items-start rounded-xl text-gray-200  dark:text-gray-300  p-4 shadow-lg"  :href="route('car_contract', {q:  user.name_buyer })"   :class="changeColor( user.wallet ? user.wallet['balance']:0)">
+                          <Link @dblclick="sendWhatsAppMessage(user.phone)"  v-for="(user,i) in laravelData2" :key="i" class="flex items-start rounded-xl text-gray-200  dark:text-gray-300  p-4 shadow-lg"  :href="route('car_contract', {q:  user.name_buyer })"   :class="changeColor(user.balance)">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />

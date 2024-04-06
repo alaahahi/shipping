@@ -22,6 +22,7 @@ use Carbon\Carbon;
 use App\Models\Transactions;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Contract;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -69,59 +70,54 @@ class UserController extends Controller
     }
     public function getIndexClients()
     {
-        $q = $_GET['q'] ?? '';
-        $from = $_GET['from'] ?? 0;
-        $to = $_GET['to'] ?? 0;
-        $searchType = $_GET['searchType'] ?? '';
-        $owner_id=Auth::user()->owner_id;
-        $userClient=$this->userClient ?? 0;
-        // Ensure $owner_id and $this->userClient are defined and have values
+        $q = request()->input('q', '');
+        $from = request()->input('from', 0);
+        $to = request()->input('to', 0);
+        $owner_id = Auth::user()->owner_id;
+        $userClient = $this->userClient ?? 0;
 
-        $dataQuery = User::with(['userType:id,name', 'wallet'])
-            ->where('owner_id', $owner_id)
-            ->where('type_id', $userClient);
+        $query = DB::table('users')
+        ->leftJoin('car', 'users.id', '=', 'car.client_id')
+        ->leftJoin('contract', 'users.id', '=', 'contract.user_id')
+        ->select('users.id', 'users.name', 'users.phone', 'users.created_at')
+        ->selectRaw('(SELECT COUNT(contract.id) FROM contract WHERE contract.user_id = users.id) AS contract_count')
+        ->selectRaw('(SELECT COUNT(car.id) FROM car WHERE car.client_id = users.id) AS car_count')
+        ->selectRaw('(SELECT COUNT(car.id) FROM car WHERE car.client_id = users.id && car.results = 2) AS car_count_completed')
+        ->selectRaw('(SELECT COUNT(car.id) FROM car WHERE car.total_s = 0) AS car_total_un_pay')
+
+        ->selectSub(function ($query) {
+            $query->select('balance')->from('wallets')->whereColumn('user_id', 'users.id')->limit(1);
+        }, 'balance')
+        ->where('users.owner_id', $owner_id)
+        ->where('users.type_id', $userClient)
+        ->orderBy('balance', 'desc');
+
+        if ($q && $q !== 'debit') {
+            $query->where(function ($subQuery) use ($q) {
+                $subQuery->where('users.name', 'like', '%' . $q . '%')
+                    ->orWhere('users.phone', 'like', '%' . $q . '%')
+                    ->orWhere('car.car_number', 'like', '%' . $q . '%')
+                    ->orWhere('car.vin', 'like', '%' . $q . '%');
+            });
+        }
     
-        if ($q) {
-            if ($q !== 'debit') {
-     
-                    $cars = Car::where('car_number', 'like', '%' . $q . '%')
-                        ->orWhere('vin', 'like', '%' . $q . '%')
-                        ->pluck('client_id');
-          
-                    $dataQuery->where(function ($query) use ($q,$cars) {
-                        $query->where('name', 'like', '%' . $q . '%')
-                            ->orWhere('phone', 'like', '%' . $q . '%')->orWhereIn('id', $cars);
-                    });
-               
-            }
-        }
         if ($from && $to) {
-            $dataQuery->whereBetween('created', [$from, $to]);
+            $query->whereBetween('users.created_at', [$from, $to]);
         }
-        if ($q) {
-            $paginationLimit = 10000;
-        }
-        else{
-            $paginationLimit = 100;
-        }
-        $data = $dataQuery->paginate($paginationLimit);
-
-        $data->getCollection()->transform(function ($user) {
-            $user->car_total_uncomplete = Car::where('client_id', $user->id)->whereIn('results', [0, 1])->count();
-            $user->car_total_complete = Car::where('client_id', $user->id)->where('results', 2)->count();
-            $user->car_total_un_pay = Car::where('client_id', $user->id)->where('total_s', 0)->count();
-            $user->count_contract = Contract::where('user_id', $user->id)->count();
-            
-            return $user;
-        });
-        
-        // Filter the collection to keep only users with car_total_uncomplete > 0
+    
         if ($q === 'debit') {
-            $data->setCollection($data->getCollection()->filter(function ($user) {
-                return $user->car_total_uncomplete > 0;
-            }));
+            $data = $query->groupBy('users.id', 'users.name', 'users.phone', 'users.created_at')
+                ->havingRaw('SUM(IF(car.results IN (0, 1), 1, 0)) > 0')
+                ->get();
+            return response()->json(['data' => $data], 200);
+        } else {
+            $paginationLimit = 100;
+            $data = $query->groupBy('users.id', 'users.name', 'users.phone', 'users.created_at')->paginate($paginationLimit);
+            return response()->json($data, 200);
         }
-        return Response::json($data, 200);
+        
+    
+        return response()->json($data, 200);
     }
 
     public function create()

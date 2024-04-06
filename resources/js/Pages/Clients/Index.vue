@@ -17,6 +17,7 @@ import edit from "@/Components/icon/edit.vue";
 import ModalDelClient from "@/Components/ModalDelCar.vue";
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
+import debounce from 'lodash/debounce';
 
 let showModalEditClient = ref(false);
 let showModalAddClient = ref(false);
@@ -34,18 +35,17 @@ let resetData = ref(false);
 let page = 1;
 let json  =ref({});
 const refresh = () => {
-  page = 0;
+  page = 1;
   laravelData.value.length = 0;
   resetData.value = !resetData.value;
 
 
 };
 const getResultsCar = async ($state) => {
-  console.log($state)
   try {
 
 
-    const response = await axios.get(`/getIndexClients`, {
+    const response = await axios.get(`api/getIndexClients`, {
       params: {
         limit: 100,
         page: page,
@@ -72,7 +72,6 @@ const getResultsCar = async ($state) => {
     page++;
   } catch (error) {
     console.log(error);
-    //$state.error();
   }
 };
 
@@ -113,7 +112,7 @@ function confirmDelClient(V) {
   axios.post('/api/delClient',V)
   .then(response => {
     showModalDelClient.value = false;
-    getResults();
+    refresh()
 
   })
   .catch(error => {
@@ -122,6 +121,9 @@ function confirmDelClient(V) {
 
 
 }
+
+const debouncedGetResultsCar = debounce(refresh,500);
+
 </script>
 
 <template>
@@ -201,7 +203,7 @@ function confirmDelClient(V) {
                               </div>
                               <input
                                 v-model="q"
-                                @input="refresh()"
+                                @input="debouncedGetResultsCar"
                                 type="text"
                                 id="simple-search"
                                 class="
@@ -279,12 +281,11 @@ function confirmDelClient(V) {
                         </div>
                         <div className="mb-4  mr-5 print:hidden" >
                             <InputLabel for="pay" value="طباعة" />
-                            <button
-                            @click.prevent="confirmAddPaymentTotal(total,client_id)"
-                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded" style="width: 100%">
-                            <span v-if="!isLoading">طباعة</span>
-                            <span v-else>جاري الحفظ...</span>
-                          </button>
+                            <a
+                            :href="`api/getIndexClients?from=${from}&to=${to}&print=1`"
+                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded d-block" style="width: 100%;display: block;text-align: center;">
+                            <span>طباعة</span>
+                          </a>
                         </div>
 
                       </div>
@@ -307,15 +308,16 @@ function confirmDelClient(V) {
                                 </thead>
                                 <tbody class="flex-1 sm:flex-none dark:bg-gray-700 dark:text-gray-200">
                                 
-                                    <tr v-for="(user,i) in laravelData" :key="user.id"  class="border-b border-white dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600 "  :class="user.car_total_uncomplete <= 0 ?'bg-green-100 dark:bg-green-900':'bg-red-100 dark:bg-red-900'" >
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{i}}</td>
+                                    <tr v-for="(user,i) in laravelData" :key="user?.id"  class="border-b border-white dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600 "  :class="user.car_count-user.car_count_completed <= 0 ?'bg-green-100 dark:bg-green-900':'bg-red-100 dark:bg-red-900'"  >
+                                     <template v-if="user?.id">
+                                      <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{i}}</td>
                                         <td className="border border-white dark:border-gray-800 text-center  dark:text-gray-200 text-black px-1 py-2 " style="font-weight: bold;font-size: 16px;">{{user.name}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.phone}}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_total_uncomplete}}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_total_complete}}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.count_contract}}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{(user.car_total_uncomplete +user.car_total_complete)- user.count_contract}}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{ user.wallet ? '$'+user.wallet['balance']:0   }}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count-user.car_count_completed}}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count_completed}}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.contract_count}}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count-user.contract_count}}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.balance}} $</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2"  style="min-height: 42px;">
                           
                                         <Link
@@ -349,18 +351,9 @@ function confirmDelClient(V) {
                                         <wallet />
                                         </Link>
 
-                                
-                                               <!--
-                                            <button 
-                                                @click="unban(user.id)"
-                                                tabIndex="-1"
-                                                type="button"
-                                                className="mx-1 px-2 py-1 text-sm text-white bg-orange-500 rounded"
-                                                v-if="user.is_band && user.email!='admin@admin.com'">
-                                                إلغاء التقيد 
-                                            </button> -->
-           
+    
                                         </td>
+                                     </template>
                                     </tr>
                                 </tbody>
                             </table>

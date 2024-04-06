@@ -347,6 +347,8 @@ function updateResults(input) {
   // Use toLocaleString to format the number with commas
   return input.toLocaleString();
 }
+
+
 </script>
 
 <template>
@@ -508,7 +510,7 @@ function updateResults(input) {
                               </svg>
                             </div>
                             <div class="mr-4">
-                              <h2 class="font-semibold">{{ $t('genExpenses') }}</h2>
+                              <h2 class="font-semibold">تحويلات كركوك</h2>
                               <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{howler}}</p>
                             </div>
                           </div>
@@ -655,7 +657,7 @@ function updateResults(input) {
                               />
                             </div>
               </div>
-              <div className=" mr-5 print:hidden">
+              <div class=" mr-5 print:hidden">
                             <InputLabel for="pay" value="فلترة" />
                             <button
                             @click.prevent="refresh()"
@@ -664,7 +666,7 @@ function updateResults(input) {
                             <span v-else>جاري الحفظ...</span>
                           </button>
               </div>
-              <div className=" mr-5 print:hidden" >
+              <div class=" mr-5 print:hidden" >
                             <InputLabel for="pay" value="طباعة" />
                             <a
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded" style="display: block;text-align: center;"
@@ -675,6 +677,18 @@ function updateResults(input) {
                             <span v-if="!isLoading">طباعة</span>
                             <span v-else>جاري الحفظ...</span>
                           </a>
+              </div>
+
+              <div class="mr-5">
+                <InputLabel for="to" value="مصاريف" />
+                          <Link
+                          v-if="$page.props.auth.user.type_id!=6"
+                            type="button"
+                           href="/wallet?id=588"
+                            style="min-width:150px;"
+                            class="px-6 mb-12 py-2 font-bold text-white bg-red-500 rounded  w-full mt-1 text-center">
+                              مصاريف الشركة
+                          </Link>
               </div>
 
               
