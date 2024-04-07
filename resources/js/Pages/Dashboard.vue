@@ -104,6 +104,9 @@ import { debounce } from 'lodash'; // Import debounce function from Lodash
 
 
 const debouncedGetResultsCarSearch = debounce(async (q = '', page = 1) => {
+  if(!q){
+    q='debit'
+  }
     try {
         const response = await axios.get(`api/${selectUser(userType.value)}?page=${page}&q=${q}`);
         laravelData.value = response.data.data
