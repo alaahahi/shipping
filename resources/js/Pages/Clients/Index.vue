@@ -47,7 +47,7 @@ const getResultsCar = async ($state) => {
 
     const response = await axios.get(`api/getIndexClients`, {
       params: {
-        limit: 100,
+        limit: 25,
         page: page,
         q: q.value,
         user_id: user_id.value,
@@ -59,7 +59,7 @@ const getResultsCar = async ($state) => {
      json.value = response.data;
 
 
-    if (json.value.data.length < 100){
+    if (json.value.data.length < 25){
       laravelData.value.push(...json.value.data);
       $state.complete();
     } 
@@ -233,7 +233,7 @@ const debouncedGetResultsCar = debounce(refresh,500);
                         <div>
                           <InputLabel for="from" value="تحديد الفئة" class="mb-1" />
 
-                            <select @change="getResults()" v-model="q" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
+                            <select @change="refresh()" v-model="q" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
                               <option value="0">{{ $t("allOwners") }}</option>
                               <option value="debit">يوجد دين</option>
                             </select>

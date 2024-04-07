@@ -75,28 +75,41 @@ class UserController extends Controller
         $to = request()->input('to', 0);
         $owner_id = Auth::user()->owner_id;
         $userClient = $this->userClient ?? 0;
-
+    
         $query = DB::table('users')
-        ->leftJoin('car', 'users.id', '=', 'car.client_id')
-        ->leftJoin('contract', 'users.id', '=', 'contract.user_id')
-        ->select('users.id', 'users.name', 'users.phone', 'users.created_at')
-        ->selectRaw('(SELECT COUNT(contract.id) FROM contract WHERE contract.user_id = users.id) AS contract_count')
-        ->selectRaw('(SELECT COUNT(car.id) FROM car WHERE car.client_id = users.id) AS car_count')
-        ->selectRaw('(SELECT COUNT(car.id) FROM car WHERE car.client_id = users.id && car.results = 2) AS car_count_completed')
-        ->selectRaw('(SELECT COUNT(car.id) FROM car WHERE car.client_id = users.id && car.total_s = 0) AS car_total_un_pay')
-        ->selectSub(function ($query) {
-            $query->select('balance')->from('wallets')->whereColumn('user_id', 'users.id')->limit(1);
-        }, 'balance')
-        ->where('users.owner_id', $owner_id)
-        ->where('users.type_id', $userClient)
-        ->orderBy('balance', 'desc');
-
+            ->select('users.id', 'users.name', 'users.phone', 'users.created_at')
+            ->selectRaw('(SELECT COUNT(id) FROM contract WHERE user_id = users.id) AS contract_count')
+            ->selectSub(function ($subquery) {
+                $subquery->selectRaw('COUNT(id)')
+                    ->from('car')
+                    ->whereColumn('car.client_id', 'users.id');
+            }, 'car_count')
+            ->selectSub(function ($subquery) {
+                $subquery->selectRaw('COUNT(id)')
+                    ->from('car')
+                    ->whereColumn('car.client_id', 'users.id')
+                    ->where('results', 2);
+            }, 'car_count_completed')
+            ->selectSub(function ($subquery) {
+                $subquery->selectRaw('COUNT(id)')
+                    ->from('car')
+                    ->whereColumn('car.client_id', 'users.id')
+                    ->where('total_s', 0);
+            }, 'car_total_un_pay')
+            ->selectSub(function ($subquery) {
+                $subquery->select('balance')
+                    ->from('wallets')
+                    ->whereColumn('user_id', 'users.id')
+                    ->limit(1);
+            }, 'balance')
+            ->where('users.owner_id', $owner_id)
+            ->where('users.type_id', $userClient)
+            ->orderBy('balance','desc');
+    
         if ($q && $q !== 'debit') {
             $query->where(function ($subQuery) use ($q) {
                 $subQuery->where('users.name', 'like', '%' . $q . '%')
-                    ->orWhere('users.phone', 'like', '%' . $q . '%')
-                    ->orWhere('car.car_number', 'like', '%' . $q . '%')
-                    ->orWhere('car.vin', 'like', '%' . $q . '%');
+                    ->orWhere('users.phone', 'like', '%' . $q . '%');
             });
         }
     
@@ -105,20 +118,14 @@ class UserController extends Controller
         }
     
         if ($q === 'debit') {
-            $data = $query->groupBy('users.id', 'users.name', 'users.phone', 'users.created_at')
-                ->havingRaw('SUM(IF(car.results IN (0, 1), 1, 0)) > 0')
-                ->get();
+            $data = $query->havingRaw('balance > 0')->get();
             return response()->json(['data' => $data], 200);
         } else {
-            $paginationLimit = 100;
-            $data = $query->groupBy('users.id', 'users.name', 'users.phone', 'users.created_at')->paginate($paginationLimit);
+            $paginationLimit = 25;
+            $data = $query->paginate($paginationLimit);
             return response()->json($data, 200);
         }
-        
-    
-        return response()->json($data, 200);
     }
-
     public function create()
     {
         $usersType = UserType::all();
