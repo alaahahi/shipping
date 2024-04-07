@@ -30,15 +30,7 @@ const getResults = async (page = 1) => {
   .then(response => {
     if(userType.value==1 || userType.value==6){
       try {
-      laravelData.value =  Object.values(response.data.data)?.sort((a, b) => {
-      // First, sort by wallet.balance in descending order
-      const balanceComparison = b.wallet.balance - a.wallet.balance;
-
-      // If wallet.balance is the same, sort by car_total_uncomplete in ascending order
-  
-
-      return balanceComparison;
-    });
+      laravelData.value =  response.data.data
     } catch (error) {
       laravelData.value =  response.data.data
 
@@ -114,15 +106,7 @@ import { debounce } from 'lodash'; // Import debounce function from Lodash
 const debouncedGetResultsCarSearch = debounce(async (q = '', page = 1) => {
     try {
         const response = await axios.get(`api/${selectUser(userType.value)}?page=${page}&q=${q}`);
-        laravelData.value = Object.values(response.data.data)?.sort((a, b) => {
-            // First, sort by wallet.balance in descending order
-            const balanceComparison = b.wallet.balance - a.wallet.balance;
-
-            // If wallet.balance is the same, sort by car_total_uncomplete in ascending order
-            // Add your additional sorting logic here if needed
-
-            return balanceComparison;
-        });
+        laravelData.value = response.data.data
     } catch (error) {
         console.error(error);
     }
