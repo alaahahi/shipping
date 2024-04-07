@@ -77,69 +77,63 @@ class UserController extends Controller
         $userClient = $this->userClient ?? 0;
         $page =request()->input('page', '');
         $query = DB::table('users')
-            ->select('users.id', 'users.name', 'users.phone', 'users.created_at')
-            ->selectRaw('(SELECT COUNT(id) FROM contract WHERE user_id = users.id) AS contract_count')
-            ->selectSub(function ($subquery) {
-                $subquery->selectRaw('COUNT(id)')
-                    ->from('car')
-                    ->whereColumn('car.client_id', 'users.id');
-            }, 'car_count')
-            ->selectSub(function ($subquery) {
-                $subquery->selectRaw('COUNT(id)')
-                    ->from('car')
-                    ->whereColumn('car.client_id', 'users.id')
-                    ->where('results', 2);
-            }, 'car_count_completed')
-            ->selectSub(function ($subquery) {
-                $subquery->selectRaw('COUNT(id)')
-                    ->from('car')
-                    ->whereColumn('car.client_id', 'users.id')
-                    ->where('total_s', 0);
-            }, 'car_total_un_pay')
-            ->selectSub(function ($subquery) {
-                $subquery->select('balance')
-                    ->from('wallets')
-                    ->whereColumn('user_id', 'users.id')
-                    ->limit(1);
-            }, 'balance')
-            ->where('users.owner_id', $owner_id)
-            ->where('users.type_id', $userClient)
-            ->orderBy('balance','desc');
+        ->select('users.id', 'users.name', 'users.phone', 'users.created_at')
+        ->selectRaw('(SELECT COUNT(id) FROM contract WHERE user_id = users.id) AS contract_count')
+        ->selectSub(function ($subquery) {
+            $subquery->selectRaw('COUNT(id)')
+                ->from('car')
+                ->whereColumn('car.client_id', 'users.id');
+        }, 'car_count')
+        ->selectSub(function ($subquery) {
+            $subquery->selectRaw('COUNT(id)')
+                ->from('car')
+                ->whereColumn('car.client_id', 'users.id')
+                ->where('car.results', 2);
+        }, 'car_count_completed')
+        ->selectSub(function ($subquery) {
+            $subquery->selectRaw('COUNT(id)')
+                ->from('car')
+                ->whereColumn('car.client_id', 'users.id')
+                ->where('car.total_s', 0);
+        }, 'car_total_un_pay')
+        ->selectSub(function ($subquery) {
+            $subquery->select('balance')
+                ->from('wallets')
+                ->whereColumn('user_id', 'users.id')
+                ->limit(1);
+        }, 'balance')
+        ->leftJoin('car', 'users.id', '=', 'car.client_id')
+        ->where('users.owner_id', $owner_id)
+        ->where('users.type_id', $userClient)
+        ->orderBy('balance', 'desc');
     
-        if ($q && $q !== 'debit') {
-            $query->where(function ($subQuery) use ($q) {
-                $subQuery->where('users.name', 'like', '%' . $q . '%')
+    if ($q && $q !== 'debit') {
+        $query->where(function ($subQuery) use ($q) {
+            $subQuery->where('users.name', 'like', '%' . $q . '%')
                 ->orWhere('users.phone', 'like', '%' . $q . '%')
-                ->orWhere('car.vin', 'like', '%' . $q . '%')
-                ->orWhere('car.car_number', 'like', '%' . $q . '%');
-            });
-        }
-    
-        if ($from && $to) {
-            $query->whereBetween('users.created_at', [$from, $to]);
-        }
-    
-        if ($q == 'debit') {
-            if($page==1){
-                $query->where(function ($subQuery) use ($q) {
-                    $subQuery->where('users.name', 'like', '%' . $q . '%')
-                        ->orWhere('users.phone', 'like', '%' . $q . '%')
-                        ->orWhere('car.vin', 'like', '%' . $q . '%')
+                ->orWhere(function ($carQuery) use ($q) {
+                    $carQuery->where('car.vin', 'like', '%' . $q . '%')
                         ->orWhere('car.car_number', 'like', '%' . $q . '%');
                 });
-
-                $data = $query->havingRaw('balance > 0')->get();
-                return response()->json(['data' => $data], 200);
-            }else{
-                return response()->json(['data' => []], 200);
-
-            }
-            
+        });
+    }
+    
+    if ($from && $to) {
+        $query->whereBetween('users.created_at', [$from, $to]);
+    }
+    
+    if ($q === 'debit') {
+        if ($page == 1) {
+            $data = $query->havingRaw('balance > 0')->get();
+            return response()->json(['data' => $data], 200);
         } else {
-            $paginationLimit = 25;
-            $data = $query->paginate($paginationLimit);
-            return response()->json($data, 200);
+            return response()->json(['data' => []], 200);
         }
+    } else {
+        $paginationLimit = 25;
+        $data = $query->paginate($paginationLimit);
+        return response()->json($data, 200);
+    }
     }
     public function create()
     {
