@@ -77,35 +77,34 @@ class UserController extends Controller
         $userClient = $this->userClient ?? 0;
         $page =request()->input('page', '');
         $query = DB::table('users')
-        ->select('users.id', 'users.name', 'users.phone', 'users.created_at')
-        ->selectRaw('(SELECT COUNT(id) FROM contract WHERE user_id = users.id) AS contract_count')
-        ->selectSub(function ($subquery) {
-            $subquery->selectRaw('COUNT(id)')
-                ->from('car')
-                ->whereColumn('car.client_id', 'users.id');
-        }, 'car_count')
-        ->selectSub(function ($subquery) {
-            $subquery->selectRaw('COUNT(id)')
-                ->from('car')
-                ->whereColumn('car.client_id', 'users.id')
-                ->where('car.results', 2);
-        }, 'car_count_completed')
-        ->selectSub(function ($subquery) {
-            $subquery->selectRaw('COUNT(id)')
-                ->from('car')
-                ->whereColumn('car.client_id', 'users.id')
-                ->where('car.total_s', 0);
-        }, 'car_total_un_pay')
-        ->selectSub(function ($subquery) {
-            $subquery->select('balance')
-                ->from('wallets')
-                ->whereColumn('user_id', 'users.id')
-                ->limit(1);
-        }, 'balance')
-        ->leftJoin('car', 'users.id', '=', 'car.client_id')
-        ->where('users.owner_id', $owner_id)
-        ->where('users.type_id', $userClient)
-        ->orderBy('balance', 'desc');
+            ->select('users.id', 'users.name', 'users.phone', 'users.created_at')
+            ->selectRaw('(SELECT COUNT(id) FROM contract WHERE user_id = users.id) AS contract_count')
+            ->selectSub(function ($subquery) {
+                $subquery->selectRaw('COUNT(id)')
+                    ->from('car')
+                    ->whereColumn('car.client_id', 'users.id');
+            }, 'car_count')
+            ->selectSub(function ($subquery) {
+                $subquery->selectRaw('COUNT(id)')
+                    ->from('car')
+                    ->whereColumn('car.client_id', 'users.id')
+                    ->where('results', 2);
+            }, 'car_count_completed')
+            ->selectSub(function ($subquery) {
+                $subquery->selectRaw('COUNT(id)')
+                    ->from('car')
+                    ->whereColumn('car.client_id', 'users.id')
+                    ->where('total_s', 0);
+            }, 'car_total_un_pay')
+            ->selectSub(function ($subquery) {
+                $subquery->select('balance')
+                    ->from('wallets')
+                    ->whereColumn('user_id', 'users.id')
+                    ->limit(1);
+            }, 'balance')
+            ->where('users.owner_id', $owner_id)
+            ->where('users.type_id', $userClient)
+            ->orderBy('balance','desc');
     
         if ($q && $q !== 'debit') {
             $query->where(function ($subQuery) use ($q) {
