@@ -117,16 +117,9 @@ class UserController extends Controller
             $query->whereBetween('users.created_at', [$from, $to]);
         }
     
-        if ($q === 'debit') {
-            $paginationLimit = 25;
-            $currentPage = request()->input('page', 1);
-            $data = new LengthAwarePaginator(
-                $data->forPage($currentPage, $paginationLimit),
-                $data->count(),
-                $paginationLimit,
-                $currentPage,
-                ['path' => request()->url(), 'query' => request()->query()]
-            );
+        if ($q == 'debit') {
+            $data = $query->havingRaw('balance > 0')->get();
+            return response()->json(['data' => $data], 200);
         } else {
             $paginationLimit = 25;
             $data = $query->paginate($paginationLimit);
