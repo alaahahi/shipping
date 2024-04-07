@@ -308,7 +308,7 @@ const debouncedGetResultsCar = debounce(refresh,500);
                                 </thead>
                                 <tbody class="flex-1 sm:flex-none dark:bg-gray-700 dark:text-gray-200">
                                 
-                                    <tr v-for="(user,i) in laravelData" :key="user?.id"  class="border-b border-white dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600 "  :class="user.car_count-user.car_count_completed <= 0 ?'bg-green-100 dark:bg-green-900':'bg-red-100 dark:bg-red-900'"  >
+                                    <tr v-for="(user,i) in laravelData" :key="user?.id"  class="border-b border-white dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600 "  :class="user.balance <= 0 ?'bg-green-100 dark:bg-green-900':'bg-red-100 dark:bg-red-900'"  >
                                      <template v-if="user?.id">
                                       <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{i}}</td>
                                         <td className="border border-white dark:border-gray-800 text-center  dark:text-gray-200 text-black px-1 py-2 " style="font-weight: bold;font-size: 16px;">{{user.name}}</td>
