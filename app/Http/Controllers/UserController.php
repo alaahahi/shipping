@@ -118,8 +118,11 @@ class UserController extends Controller
         }
     
         if ($q == 'debit') {
-            $data = $query->havingRaw('balance > 0')->get();
-            return response()->json(['data' => $data], 200);
+            if($page==1){
+                $data = $query->havingRaw('balance > 0')->get();
+                return response()->json(['data' => $data], 200);
+            }
+            
         } else {
             $paginationLimit = 25;
             $data = $query->paginate($paginationLimit);
