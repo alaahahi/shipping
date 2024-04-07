@@ -75,7 +75,7 @@ class UserController extends Controller
         $to = request()->input('to', 0);
         $owner_id = Auth::user()->owner_id;
         $userClient = $this->userClient ?? 0;
-    
+        $page =request()->input('page', '');
         $query = DB::table('users')
             ->select('users.id', 'users.name', 'users.phone', 'users.created_at')
             ->selectRaw('(SELECT COUNT(id) FROM contract WHERE user_id = users.id) AS contract_count')
@@ -121,6 +121,9 @@ class UserController extends Controller
             if($page==1){
                 $data = $query->havingRaw('balance > 0')->get();
                 return response()->json(['data' => $data], 200);
+            }else{
+                return response()->json(['data' => []], 200);
+
             }
             
         } else {
