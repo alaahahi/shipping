@@ -46,8 +46,12 @@ body {
     color:cornflowerblue
   }
   </style>
-<body style="direction: rtl;">
+<body style="direction: rtl;"> 
+  @if($config['second_title_ar']=='عين دبي')
+  <img src="/img/bg1.jpg" width="100%" class="p-2 pb-0" />
+  @else
   <img src="/img/bg.jpg" width="100%" class="p-3" />
+  @endif
   <div class="content">
     <div class="d-flex justify-content-around py-2"  style="font-size: 13px ; font-weight: 700;background-color: #f0f8ff">
       <div class="text-center"  style="width:300px">
@@ -63,7 +67,7 @@ body {
       </div>
     </div>
 
-    <div class="d-flex justify-content-around  mt-4"  style="font-size: 13px ; font-weight: 700;">
+    <div class="d-flex justify-content-around  mt-1"  style="font-size: 13px ; font-weight: 700;">
       <div>
         <div class="text-center  p-1" style="width:300px;border: 1px cornflowerblue solid;background-color: cornflowerblue ;color:#fff">
           <span >
@@ -108,7 +112,7 @@ body {
       </div>
       </div>
     </div>
-    <div class="py-3 text-danger text-center" style="font-size: 13px">
+    <div class="py-1 text-danger text-center" style="font-size: 13px">
       <div>
         رێکەوتن کرا لە نێوان هەردوو لیەن لە سەر ئەم خالنەی خوارەوه
       </div>
@@ -243,7 +247,7 @@ body {
       <div class="pt-2 " style="color: brown;font-size: 11px">
         3
         .
-         علی البائع و المشتری تسجیل السیارە حسب قوانین مدیریة المرور العامةمع اجراء معاملة نقل الملکیة
+         علی البائع و المشتری تسجیل السیارة حسب قوانین مدیریة المرور العامة مع إجراء معاملة نقل الملکیة
 
       </div>
       <div class="pt-2 " style="color: brown;font-size: 11px">
@@ -255,13 +259,13 @@ body {
       <div class="pt-2 " style="color: brown;font-size: 11px">
         5
         .
-        الطرف الاول مسوول عن کافة أنواع الغرامات قبل موعد الشراء
+        الطرف الاول مسؤول عن کافة أنواع الغرامات قبل موعد الشراء
 
       </div>
       <div class="pt-2 " style="color: brown;font-size: 11px">
         6
         .
-        صاحب المعرض غیر المسوول عن السیارة بعد البیع
+        صاحب المعرض غیر مسؤول عن السیارة بعد البیع
 
       </div>
       <div class="pt-2 " style="color: brown;font-size: 11px">
