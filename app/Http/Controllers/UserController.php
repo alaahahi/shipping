@@ -109,7 +109,9 @@ class UserController extends Controller
         if ($q && $q !== 'debit') {
             $query->where(function ($subQuery) use ($q) {
                 $subQuery->where('users.name', 'like', '%' . $q . '%')
-                    ->orWhere('users.phone', 'like', '%' . $q . '%');
+                ->orWhere('users.phone', 'like', '%' . $q . '%')
+                ->orWhere('car.vin', 'like', '%' . $q . '%')
+                ->orWhere('car.car_number', 'like', '%' . $q . '%');
             });
         }
     
@@ -119,6 +121,13 @@ class UserController extends Controller
     
         if ($q == 'debit') {
             if($page==1){
+                $query->where(function ($subQuery) use ($q) {
+                    $subQuery->where('users.name', 'like', '%' . $q . '%')
+                        ->orWhere('users.phone', 'like', '%' . $q . '%')
+                        ->orWhere('car.vin', 'like', '%' . $q . '%')
+                        ->orWhere('car.car_number', 'like', '%' . $q . '%');
+                });
+
                 $data = $query->havingRaw('balance > 0')->get();
                 return response()->json(['data' => $data], 200);
             }else{
