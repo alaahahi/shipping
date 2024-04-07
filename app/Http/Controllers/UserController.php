@@ -107,33 +107,44 @@ class UserController extends Controller
         ->where('users.type_id', $userClient)
         ->orderBy('balance', 'desc');
     
-    if ($q && $q !== 'debit') {
-        $query->where(function ($subQuery) use ($q) {
-            $subQuery->where('users.name', 'like', '%' . $q . '%')
-                ->orWhere('users.phone', 'like', '%' . $q . '%')
-                ->orWhere(function ($carQuery) use ($q) {
-                    $carQuery->where('car.vin', 'like', '%' . $q . '%')
-                        ->orWhere('car.car_number', 'like', '%' . $q . '%');
-                });
-        });
-    }
-    
-    if ($from && $to) {
-        $query->whereBetween('users.created_at', [$from, $to]);
-    }
-    
-    if ($q === 'debit') {
-        if ($page == 1) {
-            $data = $query->havingRaw('balance > 0')->get();
-            return response()->json(['data' => $data], 200);
-        } else {
-            return response()->json(['data' => []], 200);
+        if ($q && $q !== 'debit') {
+            $query->where(function ($subQuery) use ($q) {
+                $subQuery->where('users.name', 'like', '%' . $q . '%')
+                    ->orWhere('users.phone', 'like', '%' . $q . '%')
+                    ->orWhere(function ($carQuery) use ($q) {
+                        $carQuery->where('car.vin', 'like', '%' . $q . '%')
+                            ->orWhere('car.car_number', 'like', '%' . $q . '%');
+                    });;
+            });
         }
-    } else {
-        $paginationLimit = 25;
-        $data = $query->paginate($paginationLimit);
-        return response()->json($data, 200);
-    }
+    
+        if ($from && $to) {
+            $query->whereBetween('users.created_at', [$from, $to]);
+        }
+    
+        if ($q == 'debit') {
+            if($page==1){
+                $query->where(function ($subQuery) use ($q) {
+                    $subQuery->where('users.name', 'like', '%' . $q . '%')
+                        ->orWhere('users.phone', 'like', '%' . $q . '%')
+                        ->orWhere(function ($carQuery) use ($q) {
+                            $carQuery->where('car.vin', 'like', '%' . $q . '%')
+                                ->orWhere('car.car_number', 'like', '%' . $q . '%');
+                        });;
+                });
+
+                $data = $query->havingRaw('balance > 0')->get();
+                return response()->json(['data' => $data], 200);
+            }else{
+                return response()->json(['data' => []], 200);
+
+            }
+            
+        } else {
+            $paginationLimit = 25;
+            $data = $query->paginate($paginationLimit);
+            return response()->json($data, 200);
+        }
     }
     public function create()
     {
