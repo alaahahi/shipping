@@ -83,8 +83,7 @@ class UserController extends Controller
         ->selectRaw('(SELECT COUNT(contract.id) FROM contract WHERE contract.user_id = users.id) AS contract_count')
         ->selectRaw('(SELECT COUNT(car.id) FROM car WHERE car.client_id = users.id) AS car_count')
         ->selectRaw('(SELECT COUNT(car.id) FROM car WHERE car.client_id = users.id && car.results = 2) AS car_count_completed')
-        ->selectRaw('(SELECT COUNT(car.id) FROM car WHERE car.total_s = 0) AS car_total_un_pay')
-
+        ->selectRaw('(SELECT COUNT(car.id) FROM car WHERE car.client_id = users.id && car.total_s = 0) AS car_total_un_pay')
         ->selectSub(function ($query) {
             $query->select('balance')->from('wallets')->whereColumn('user_id', 'users.id')->limit(1);
         }, 'balance')
