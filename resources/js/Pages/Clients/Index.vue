@@ -2,7 +2,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Modal from '@/Components/Modal.vue';
 import { Head, Link, useForm } from '@inertiajs/inertia-vue3';
-import { ref } from 'vue';
 import { TailwindPagination } from 'laravel-vue-pagination';
 import ModalAddCardUser from "@/Components/ModalAddCardUser.vue";
 import InputLabel from "@/Components/InputLabel.vue";
@@ -17,11 +16,13 @@ import edit from "@/Components/icon/edit.vue";
 import ModalDelClient from "@/Components/ModalDelCar.vue";
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
-import debounce from 'lodash/debounce';
 
 let showModalEditClient = ref(false);
 let showModalAddClient = ref(false);
 let showModalDelClient = ref(false);
+
+import { ref, watch } from 'vue'; // Import ref and watch from Vue
+import debounce from 'lodash/debounce'; // Import debounce function from Lodash
 
 const laravelData = ref([]);
 let formData = ref({});
@@ -30,52 +31,79 @@ const from = ref(0);
 const to = ref(0);
 const q = ref('');
 const isLoading = ref(0);
-
 let resetData = ref(false);
 let page = 1;
-let json  =ref({});
+let json = ref({});
+let  controller = new AbortController(); // Create a new AbortController
+
+
 const refresh = () => {
   page = 1;
   laravelData.value.length = 0;
   resetData.value = !resetData.value;
-
-
 };
+
 const getResultsCar = async ($state) => {
   try {
-
-
     const response = await axios.get(`api/getIndexClients`, {
       params: {
         limit: 25,
         page: page,
         q: q.value,
         user_id: user_id.value,
-        from:from.value,
-        to:to.value
-      }
+        from: from.value,
+        to: to.value
+      },
+      signal: controller.signal // Pass the signal to abort the request if needed
     });
 
-     json.value = response.data;
+    json.value = response.data;
 
-
-    if (json.value.data.length < 25){
+    if (json.value.data.length < 25) {
       laravelData.value.push(...json.value.data);
       $state.complete();
-    } 
-    else {
+    } else {
       laravelData.value.push(...json.value.data);
-       $state.loaded();
+      $state.loaded();
     }
-
 
     page++;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 };
 
-refresh()
+// Function to abort the ongoing request
+const abortRequest = () => {
+  if (controller) {
+    controller.abort(); // Abort previous request if it exists
+  }
+  controller = new AbortController(); // Create a new AbortController
+};
+
+// Watch for changes in q, user_id, from, and to
+watch([q, user_id, from, to], () => {
+  abortRequest(); // Abort previous request
+  debouncedGetResultsCar(); // Call debounced function to fetch new results
+});
+
+// Watch for changes in isLoading
+watch(isLoading, (newVal) => {
+  if (newVal === 1) {
+    // Handle loading state
+    console.log('Loading data...');
+  } else {
+    // Handle loaded state
+    console.log('Data loaded');
+  }
+});
+
+const debouncedGetResultsCar = debounce(() => {
+  isLoading.value = 1; // Set isLoading to 1 to indicate loading
+  refresh(); // 
+}, 500);
+
+// Example usage:
 
  
 function openModalAddClient(form = {}) {
@@ -122,14 +150,12 @@ function confirmDelClient(V) {
 
 }
 
-const debouncedGetResultsCar = debounce(refresh,500);
 
 </script>
 
 <template>
     <Head title="Dashboard" />
     <AuthenticatedLayout>
-  
       <ModalEditClient
             :show="showModalAddClient"
             :formData="formData"
@@ -322,6 +348,7 @@ const debouncedGetResultsCar = debounce(refresh,500);
                           
                                         <Link
                                           style="display:inline-flex;"
+                                          v-if="user.car_count"
                                           className="px-1 py-1  text-white mx-1 bg-blue-500 rounded d-inline-block"
                                           :href="route('showClients', user.id)">
                                         <show />
