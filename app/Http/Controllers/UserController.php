@@ -79,26 +79,22 @@ class UserController extends Controller
         $query = DB::table('users')
             ->select('users.id', 'users.name', 'users.phone', 'users.created_at')
             ->selectRaw('(SELECT COUNT(id) FROM contract WHERE user_id = users.id) AS contract_count')
-            ->leftJoin('car', 'users.id', '=', 'car.client_id') // Join car table here
             ->selectSub(function ($subquery) use ($userClient) {
                 $subquery->selectRaw('COUNT(id)')
                     ->from('car')
-                    ->whereColumn('car.client_id', 'users.id')
-                    ->where('car.client_id', $userClient); // Add condition here
+                    ->whereColumn('car.client_id', 'users.id'); // Add condition here
             }, 'car_count')
             ->selectSub(function ($subquery) use ($userClient) {
                 $subquery->selectRaw('COUNT(id)')
                     ->from('car')
                     ->whereColumn('car.client_id', 'users.id')
-                    ->where('car.results', 2)
-                    ->where('car.client_id', $userClient); // Add condition here
+                    ->where('car.results', 2); // Add condition here
             }, 'car_count_completed')
             ->selectSub(function ($subquery) use ($userClient) {
                 $subquery->selectRaw('COUNT(id)')
                     ->from('car')
                     ->whereColumn('car.client_id', 'users.id')
-                    ->where('car.total_s', 0)
-                    ->where('car.client_id', $userClient); // Add condition here
+                    ->where('car.total_s', 0); // Add condition here
             }, 'car_total_un_pay')
             ->selectSub(function ($subquery) {
                 $subquery->select('balance')
@@ -108,21 +104,21 @@ class UserController extends Controller
             }, 'balance')
             ->where('users.owner_id', $owner_id)
             ->where('users.type_id', $userClient)
-            ->groupBy('users.id', 'users.name', 'users.phone', 'users.created_at') // Group by users
 
             ->orderBy('balance', 'desc');
     
-        if ($q && $q !== 'debit') {
-            $query->where(function ($subQuery) use ($q) {
-                $subQuery->where('users.name', 'like', '%' . $q . '%')
-                    ->orWhere('users.phone', 'like', '%' . $q . '%');
-            });
-    
-            $query->orWhere(function ($subQuery) use ($q) {
-                $subQuery->where('car.vin', 'like', '%' . $q . '%') // Search using VIN
-                    ->orWhere('car.car_number', 'like', '%' . $q . '%'); // Search using car number
-            });
-        }
+            if ($q && $q !== 'debit') {
+                $query->leftJoin('car', 'users.id', '=', 'car.client_id')
+                    ->where(function ($subQuery) use ($q) {
+                        $subQuery->where('users.name', 'like', '%' . $q . '%')
+                            ->orWhere('users.phone', 'like', '%' . $q . '%')
+                            ->orWhere(function ($carQuery) use ($q) {
+                                $carQuery->where('car.vin', 'like', '%' . $q . '%') // Search using VIN
+                                    ->orWhere('car.car_number', 'like', '%' . $q . '%'); // Search using car number
+                            });
+                    });
+                $query->groupBy('users.id', 'users.name', 'users.phone', 'users.created_at');
+            }
     
         if ($from && $to) {
             $query->whereBetween('users.created_at', [$from, $to]);

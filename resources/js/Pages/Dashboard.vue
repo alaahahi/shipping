@@ -113,7 +113,7 @@ const debouncedGetResultsCarSearch = debounce(async (q = '', page = 1) => {
     } catch (error) {
         console.error(error);
     }
-}, 300); // Specify the debounce delay in milliseconds (e.g., 300ms)
+}, 500); // Specify the debounce delay in milliseconds (e.g., 300ms)
 
 // The original function call will now trigger the debounced version
 const getResultsCarSearch = (q = '', page = 1) => {

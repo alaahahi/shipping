@@ -298,10 +298,10 @@ const debouncedGetResultsCar = debounce(refresh,500);
                                         <th className="px-1 py-2 text-base">#</th>
                                         <th className="px-1 py-2 text-base">{{ $t('name') }}</th>
                                         <th className="px-1 py-2 text-base">{{ $t('phoneNumber') }}</th>
-                                        <!-- <th className="px-1 py-2 text-base">مجموع السيارات غير مدفوع</th>
+                                        <th className="px-1 py-2 text-base">مجموع السيارات غير مدفوع</th>
                                         <th className="px-1 py-2 text-base">مجموع السيارات مدفوع</th>
                                         <th className="px-1 py-2 text-base">العقود الالكترونية المنجزة</th>
-                                        <th className="px-1 py-2 text-base">العقود الالكترونية غير المنجزة</th> -->
+                                        <th className="px-1 py-2 text-base">العقود الالكترونية غير المنجزة</th>
                                         <th className="px-1 py-2 text-base">{{ $t('debt') }}</th>
                                         <th className="px-1 py-2 text-base">{{ $t('execute') }}</th>       
                                     </tr>
@@ -313,10 +313,10 @@ const debouncedGetResultsCar = debounce(refresh,500);
                                       <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{i}}</td>
                                         <td className="border border-white dark:border-gray-800 text-center  dark:text-gray-200 text-black px-1 py-2 " style="font-weight: bold;font-size: 16px;">{{user.name}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.phone}}</td>
-                                        <!-- <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count-user.car_count_completed}}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count-user.car_count_completed}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count_completed}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.contract_count}}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count-user.contract_count}}</td> -->
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count-user.contract_count}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.balance}} $</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2"  style="min-height: 42px;">
                           
