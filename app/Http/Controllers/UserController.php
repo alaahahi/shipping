@@ -10,6 +10,7 @@ use App\Models\Wallet;
 use App\Models\User;
 use App\Models\Card;
 use App\Models\Car;
+use App\Models\SystemConfig;
 
 use App\Models\UserType;
 use Illuminate\Support\Facades\Crypt;
@@ -70,12 +71,16 @@ class UserController extends Controller
     }
     public function getIndexClients()
     {
+
         $q = request()->input('q', '');
         $from = request()->input('from', 0);
         $to = request()->input('to', 0);
         $owner_id = Auth::user()->owner_id;
         $userClient = $this->userClient ?? 0;
         $page = request()->input('page', '');
+        $print = request()->input('print', 0);
+
+
         $query = DB::table('users')
             ->select('users.id', 'users.name', 'users.phone', 'users.created_at')
             ->selectRaw('(SELECT COUNT(id) FROM contract WHERE user_id = users.id) AS contract_count')
@@ -123,7 +128,19 @@ class UserController extends Controller
         if ($from && $to) {
             $query->whereBetween('users.created_at', [$from, $to]);
         }
-    
+        if($print==1)
+        {
+            $config=SystemConfig::first();
+
+            if($q=='debit'){
+                $data = $query->havingRaw('balance > 0')->get();
+            }else{
+                $data = $query->get();
+            }
+            $data=$data->toArray();
+            return view('reportClients',compact('data','config','owner_id'));
+
+        }
         if ($q == 'debit') {
             if ($page == 1) {
                 $data = $query->havingRaw('balance > 0')->get();

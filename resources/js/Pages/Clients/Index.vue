@@ -259,7 +259,7 @@ function confirmDelClient(V) {
                         <div>
                           <InputLabel for="from" value="تحديد الفئة" class="mb-1" />
 
-                            <select @change="refresh()" v-model="q" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
+                            <select  v-model="q" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
                               <option value="0">{{ $t("allOwners") }}</option>
                               <option value="debit">يوجد دين</option>
                             </select>
@@ -296,19 +296,12 @@ function confirmDelClient(V) {
                               />
                             </div>
                         </div>
-                        <div className="mb-4  mr-5 print:hidden">
-                            <InputLabel for="pay" value="فلترة" />
-                            <button
-                            @click.prevent="refresh()"
-                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded" style="width: 100%">
-                            <span v-if="!isLoading">فلترة</span>
-                            <span v-else>جاري الحفظ...</span>
-                          </button>
-                        </div>
+                      
                         <div className="mb-4  mr-5 print:hidden" >
                             <InputLabel for="pay" value="طباعة" />
                             <a
-                            :href="`api/getIndexClients?from=${from}&to=${to}&print=1`"
+                            target="_blank"
+                            :href="`api/getIndexClients?from=${from}&to=${to}&print=1&q=${q}`"
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded d-block" style="width: 100%;display: block;text-align: center;">
                             <span>طباعة</span>
                           </a>
@@ -324,8 +317,10 @@ function confirmDelClient(V) {
                                         <th className="px-1 py-2 text-base">#</th>
                                         <th className="px-1 py-2 text-base">{{ $t('name') }}</th>
                                         <th className="px-1 py-2 text-base">{{ $t('phoneNumber') }}</th>
-                                        <th className="px-1 py-2 text-base">مجموع السيارات غير مدفوع</th>
-                                        <th className="px-1 py-2 text-base">مجموع السيارات مدفوع</th>
+                                        <th className="px-1 py-2 text-base">السيارات</th>
+
+                                        <th className="px-1 py-2 text-base"> السيارات غير مدفوع</th>
+                                        <th className="px-1 py-2 text-base"> السيارات مدفوع</th>
                                         <th className="px-1 py-2 text-base">العقود الالكترونية المنجزة</th>
                                         <th className="px-1 py-2 text-base">العقود الالكترونية غير المنجزة</th>
                                         <th className="px-1 py-2 text-base">{{ $t('debt') }}</th>
@@ -339,6 +334,8 @@ function confirmDelClient(V) {
                                       <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{i}}</td>
                                         <td className="border border-white dark:border-gray-800 text-center  dark:text-gray-200 text-black px-1 py-2 " style="font-weight: bold;font-size: 16px;">{{user.name}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.phone}}</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count}}</td>
+
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count-user.car_count_completed}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count_completed}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.contract_count}}</td>
