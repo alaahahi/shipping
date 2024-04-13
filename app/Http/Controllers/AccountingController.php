@@ -37,6 +37,9 @@ use App\Models\TransactionsImages;
 use App\Helpers\UploadHelper;
 use Intervention\Image\Facades\Image;
 use File;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\ImportInfo;
+use App\Exports\ExportInfo;
 
 class AccountingController extends Controller
 {
@@ -315,6 +318,8 @@ class AccountingController extends Controller
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
         $print =$_GET['print'] ?? 0;
+        $printExcel=$_GET['printExcel'] ?? 0;
+
         $showComplatedCars=$_GET['showComplatedCars'] ?? 0;
         $transactions_id = $_GET['transactions_id'] ?? 0;
         $client = User::with('wallet')->where('id', $user_id)->first();
@@ -399,7 +404,13 @@ class AccountingController extends Controller
 
             $config=SystemConfig::first();
 
-            return view('show',compact('clientData','config'));
+            if($printExcel){
+                return Excel::download(new ExportInfo($user_id,$showComplatedCars), $client->name.'.xlsx');
+            }else{
+                return view('show',compact('clientData','config'));
+            }
+
+
          }
                  // Additional logic to retrieve client data
         $clientData = [

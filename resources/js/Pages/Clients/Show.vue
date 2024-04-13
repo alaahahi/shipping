@@ -568,7 +568,17 @@ function getDownloadUrl(name) {
                 <span>طباعة</span>
               </a>
             </div>
-
+            <div className="mb-4  mr-5 print:hidden">
+              <InputLabel for="pay" value="طباعة" />
+              <a
+                :href="`/api/getIndexAccountsSelas?user_id=${client_Select}&from=${from}&to=${to}&print=1&printExcel=1&showComplatedCars=${ showComplatedCars ? 0:1}`"
+                target="_blank"
+                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-green-500 rounded block text-center"
+                style="width: 100%"
+              >
+                <span>Excel</span>
+              </a>
+            </div>
             <div className="mb-4  mr-5">
               <InputLabel for="car_total" value="مجموع السيارات" />
               <TextInput
