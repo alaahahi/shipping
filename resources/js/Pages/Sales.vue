@@ -204,7 +204,14 @@ function confirmAddPayment(V) {
 }
 
 const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce delay (in milliseconds) as needed
-
+function getImageUrl(name) {
+      // Provide the base URL for your images
+      return `/public/uploadsResized/${name}`;
+    }
+function getDownloadUrl(name) {
+      // Provide the base URL for downloading images
+      return `/public/uploads/${name}`;
+    }
 </script>
 
 <template>
@@ -408,6 +415,7 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                       <th scope="col" class="px-1 py-3 text-base" style="width: 180px;">
                                         {{ $t('execute') }}
                                       </th>
+                                      <th class="px-1 py-3 text-base">تخزين</th>
                                   </tr>
                               </thead>
                               <tbody>
@@ -500,7 +508,20 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
 
                                     -->
 
-                                    </td> 
+                                    </td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">
+                                      
+                                      <a
+                                      v-for="(image, index) in car.car_images"
+                                      :key="index"
+                                      :href="getDownloadUrl(image.name)"
+                                      style="cursor: pointer;"
+                                      target="_blank"
+                                    >
+                                      <img :src="getImageUrl(image.name)" alt="" class="px-1" style="max-width: 100px;max-height: 50px;display: inline;" />
+                                    </a>
+
+                                    </td>
                                 </tr>
                               </tbody>
                           </table>
