@@ -780,7 +780,7 @@ function VinApi1 (v){
                       <div className="mb-4 mx-5">
                         <InputLabel for="size" value="قماره" />
                         <TextInput
-                          type="text"
+                          type="number"
                           class="mt-1 block w-full"
                           v-model="form.size"
                         />
@@ -904,7 +904,7 @@ function VinApi1 (v){
                       <div className="mb-4 mx-5">
                         <InputLabel for="size_s" value="قماره" />
                         <TextInput
-                          type="text"
+                          type="number"
                           class="mt-1 block w-full"
                           v-model="form.size_s"
                         />

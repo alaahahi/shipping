@@ -31,7 +31,6 @@ const toast = useToast();
 let showModal = ref(false);
 let showModalCar =  ref(false);
 let showModalCarSale =  ref(false);
-let showModalEditCars=ref(false);
 let showModalDelCar =  ref(false);
 let mainAccount= ref(0)
 let allCars= ref(0)
@@ -100,8 +99,7 @@ const getResultsCar = async ($state) => {
  
  
 function confirmUpdateCar(V) {
-  showModalEditCars.value = false;
-
+ 
   axios.post('/api/updateCarsS',V)
   .then(response => {
     showModal.value = false;
@@ -168,23 +166,16 @@ function getFirstDayOfMonth() {
   const firstDayOfMonth = '01'; // Set day to 01 for the first day of the month
   return `${year}-${month}-${firstDayOfMonth}`;
 }
-
+function openModalDelCar (v){
+  formData.value=v
+  showModalDelCar.value = true;
+}
 </script>
 
 <template>
     <Head title="Dashboard" />
   
-    <ModalEditCars
-            :formData="formData"
-            :show="showModalEditCars ? true : false"
-            :client="client"
-            @a="confirmUpdateCar($event)"
-            @close="showModalEditCars = false"
-            >
-        <template #header>
-          </template>
-    </ModalEditCars>
-
+   
 
 
     <ModalDelCar
