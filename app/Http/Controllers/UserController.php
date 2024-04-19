@@ -8,8 +8,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Wallet;
 use App\Models\User;
-use App\Models\Card;
-use App\Models\Car;
+ use App\Models\Car;
 use App\Models\SystemConfig;
 
 use App\Models\UserType;
@@ -49,8 +48,7 @@ class UserController extends Controller
 
     public function clients()
     {
-        $cards= Card::all();
-        return Inertia::render('Clients/Index', ['url'=>$this->url,'cards'=>$cards]);
+        return Inertia::render('Clients/Index', ['url'=>$this->url]);
     }
     public function showClients($id)
     {

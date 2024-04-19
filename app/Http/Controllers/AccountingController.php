@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\App;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\Card;
 use App\Models\User;
 use App\Models\Profile;
 use App\Models\UserType;
@@ -681,8 +680,6 @@ class AccountingController extends Controller
         $profile = Profile::find($profile_id);
 
         $wallet = Wallet::where('user_id', $profile->user_id)->first();
-
-        $card = Card::find($profile->card_id);
 
         $user = User::find($profile->user_id);
 

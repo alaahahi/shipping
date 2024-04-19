@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\App;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\Card;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\UserType;
