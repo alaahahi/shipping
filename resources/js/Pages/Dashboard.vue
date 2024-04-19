@@ -2,7 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { useToast } from "vue-toastification";
 import axios from 'axios';
-import { ref } from 'vue';
+import { ref, watch } from 'vue'; // Import ref and watch from Vue
 import { useI18n } from "vue-i18n";
 import { Link } from "@inertiajs/inertia-vue3";
 
@@ -24,6 +24,7 @@ let data = ref({});
 const laravelData = ref({});
 const laravelData1 = ref({});
 const laravelData2 = ref({});
+let  controller = new AbortController(); // Create a new AbortController
 
 const getResults = async (page = 1) => {
   axios.get(`api/${selectUser(userType.value)}?page=${page}&q=debit`)
@@ -108,14 +109,14 @@ const debouncedGetResultsCarSearch = debounce(async (q = '', page = 1) => {
     q='debit'
   }
     try {
-        const response = await axios.get(`api/${selectUser(userType.value)}?page=${page}&q=${q}`);
+        const response = await axios.get(`api/${selectUser(userType.value)}?page=${page}&q=${q}`,{      signal: controller.signal // Pass the signal to abort the request if needed
+});
         laravelData.value = response.data.data
     } catch (error) {
         console.error(error);
     }
-}, 500); // Specify the debounce delay in milliseconds (e.g., 300ms)
+}, 300); 
 
-// The original function call will now trigger the debounced version
 const getResultsCarSearch = (q = '', page = 1) => {
     debouncedGetResultsCarSearch(q, page);
 }
@@ -151,6 +152,18 @@ const getcountTotalInfo = async () => {
   
     
 }
+const abortRequest = () => {
+  if (controller) {
+    controller.abort(); // Abort previous request if it exists
+  }
+  controller = new AbortController(); // Create a new AbortController
+};
+
+watch([searchTerm], () => {
+  abortRequest(); // Abort previous request
+  debouncedGetResultsCarSearch(); // Call debounced function to fetch new results
+});
+
 getcountTotalInfo()
 function changeColor(total){
 
