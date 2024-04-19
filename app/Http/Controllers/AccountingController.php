@@ -498,8 +498,8 @@ class AccountingController extends Controller
         $wallet = Wallet::where('user_id',$car->client_id)->first();
         $desc=trans('text.addPayment').' '.$amount.' '.$car->car_type.' رقم الشانص'.' '.$car->vin.' رقم الكاتي'.$car->car_number.' '.$note;
         $tran=$this->increaseWallet($amount,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'$',0,0,'in',$details);
-        $this->increaseWallet($amount, $desc,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$car_id,'App\Models\User',1,$discount,'$',$this->currentDate,$tran->id,'in',$details);
-        $transaction=$this->decreaseWallet($amount+$discount, $desc,$car->client_id,$car_id,'App\Models\User',1,$discount,'$',$this->currentDate,$tran->id,'out',$details);
+        $this->increaseWallet($amount, $desc,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$car_id,'App\Models\User',1,$discount??0,'$',$this->currentDate,$tran->id,'in',$details);
+        $transaction=$this->decreaseWallet($amount+$discount, $desc,$car->client_id,$car_id,'App\Models\User',1,$discount??0,'$',$this->currentDate,$tran->id,'out',$details);
 
         $car->increment('paid',$amount);
         if($discount ?? 0){
@@ -722,7 +722,7 @@ class AccountingController extends Controller
             }
             $user=  User::with('wallet')->find($user_id);
             if($id = $user->wallet->id){
-            $transactionDetils = ['type' => $type,'wallet_id'=>$id,'description'=>$desc,'amount'=>$amount,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$created,'discount'=>$discount,'currency'=>$currency,'parent_id'=>$parent_id,'details'=>$details];
+            $transactionDetils = ['type' => $type,'wallet_id'=>$id,'description'=>$desc,'amount'=>$amount,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$created,'discount'=>$discount??0,'currency'=>$currency,'parent_id'=>$parent_id,'details'=>$details];
             $transaction = Transactions::create($transactionDetils);
             $wallet = Wallet::find($id);
             if($currency=='IQD'){
@@ -756,7 +756,7 @@ class AccountingController extends Controller
   
         if($id = $user->wallet->id){
         $wallet = Wallet::find($id);
-        $transactionDetils = ['type' => $type,'wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$created,'discount'=>$discount,'currency'=>$currency,'parent_id'=>$parent_id,'details'=>$details];
+        $transactionDetils = ['type' => $type,'wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$created,'discount'=>$discount??0,'currency'=>$currency,'parent_id'=>$parent_id,'details'=>$details];
         $transaction =Transactions::create($transactionDetils);
         if($currency=='IQD'){
             $wallet->decrement('balance_dinar', $amount);
@@ -788,7 +788,7 @@ class AccountingController extends Controller
         }else{
             $wallet->decrement('balance', $amount);
         }
-            $transactionDetils = ['type' => $type,'wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$created,'discount'=>$discount,'currency'=>$currency,'parent_id'=>$parent_id];
+            $transactionDetils = ['type' => $type,'wallet_id'=>$id,'description'=>$desc,'amount'=>$amount*-1,'is_pay'=>$is_pay,'morphed_id'=>$morphed_id,'morphed_type'=>$morphed_type,'user_added'=>0,'created'=>$created,'discount'=>$discount??0,'currency'=>$currency,'parent_id'=>$parent_id];
 
             $Transactions =Transactions::create($transactionDetils);
          
@@ -800,25 +800,7 @@ class AccountingController extends Controller
         // Finally return the updated wallet.
         return $Transactions;
     }
-    
-    // public function deleteTransactions(Request $request){
-    //     $transactions = Transactions::find($request->id);
-    //     $amount=$transactions->amount;
-    //     if($amount>0){
-    //         $amount=$amount;
-    //     }else{
-    //         $amount=$amount*1;
-    //     }
-    //     $desc="مرتجع دفعة";
-    //     $wallet = Wallet::find($transactions->wallet_id);
-    //     if($amount>0){
-    //         $this->increaseWallet($amount, $desc,$wallet->user_id,$wallet->user_id,'App\Models\User',0);
-    //     }else{
-    //         $this->decreaseWallet($amount, $desc,$wallet->user_id,$wallet->user_id,'App\Models\User',0);
-    //     }
-    //     $transactions->delete();
-    //     return Response::json('ok', 200);    
-    // }
+ 
     public function delTransactions(Request $request)
     {
         $owner_id=Auth::user()->owner_id;

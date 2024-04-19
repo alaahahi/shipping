@@ -157,9 +157,12 @@ function confirmUpdateCar(V) {
     });
 }
 function confirmAddPayment(V) {
+  if(!V.discountPayment){
+    V.discountPayment=0
+  }
   axios
     .get(
-      `/api/addPaymentCar?car_id=${V.id}&discount=${V.discountPayment??0}&amount=${V.amountPayment ?? 0}&note=${
+      `/api/addPaymentCar?car_id=${V.id}&discount=${V.discountPayment}&amount=${V.amountPayment ?? 0}&note=${
         V.notePayment ?? ""
       }`
     )

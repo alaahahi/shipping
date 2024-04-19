@@ -25,12 +25,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\SystemConfig;
 use App\Models\CarContract;
 use App\Models\TransactionsContract;
-
-
-
-
 use Carbon\Carbon;
-
 use Inertia\Inertia;
 
 class CarContractController extends Controller
@@ -40,9 +35,7 @@ class CarContractController extends Controller
     $this->accountingController = $accountingController;
     $this->userClient =  UserType::where('name', 'client')->first()->id;
     $this->userAccount =  UserType::where('name', 'account')->first()->id;
-
     $this->mainBoxContract= User::with('wallet')->where('type_id', $this->userAccount)->where('email','mainBoxContract@account.com');
-
     $this->currentDate = Carbon::now()->format('Y-m-d');
     }
 
@@ -59,8 +52,6 @@ class CarContractController extends Controller
         ->select('name_buyer', DB::raw('MAX(phone_buyer) as phone_buyer'), DB::raw('MAX(address_buyer) as address_buyer'))
         ->groupBy('name_buyer')
         ->get();
-        
-
         return Inertia::render('CarContract/add', ['client1'=>$client1,'data'=>$data,'client2'=>$client2 ]);   
     }
     public function contract_print(Request $request)
@@ -70,7 +61,6 @@ class CarContractController extends Controller
         $owner_id=Auth::user()->owner_id;
         $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
         $config=SystemConfig::first();
-
         return view('receiptContract',compact('data','config'));
     }
     public function index(Request $request)
@@ -78,7 +68,7 @@ class CarContractController extends Controller
         $owner_id=Auth::user()->owner_id;
         $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
         $q= $_GET['q'] ?? '';
-         return Inertia::render('CarContract/index', ['client'=>$client,'user'=>$q ]);   
+        return Inertia::render('CarContract/index', ['client'=>$client,'user'=>$q ]);
     }
     public function contract_account(Request $request)
     {
