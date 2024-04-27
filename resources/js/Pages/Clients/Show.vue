@@ -624,27 +624,18 @@ function getDownloadUrl(name) {
                 disabled
               />
             </div>
-            <div className="mb-4  mr-5">
-              <InputLabel for="cars_need_paid" value="مجموع الدين جمرك بالدولار" />
-              <TextInput
-                id="cars_need_paid"
-                type="number"
-                class="mt-1 block w-full"
-                :value="laravelData?.client?.wallet?.balance"
-                disabled
-              />
-            </div>
+           
             <div className="mb-4  mr-5">
               <InputLabel for="cars_need_paid" value="  الرصيد بالدولار" />
               <TextInput
                 id="cars_need_paid"
                 type="number"
                 class="mt-1 block w-full"
-                :value="laravelData?.client?.wallet?.balance*-1"
+                :value="((calculateTotalFilteredAmount().totalAmount)*-1)-(laravelData?.cars_sum)"
                 disabled
               />
             </div>
-            <div className="mb-4  mr-5 print:hidden"   v-if="laravelData?.cars_need_paid">
+            <div className="mb-4  mr-5 print:hidden"   v-if="((calculateTotalFilteredAmount().totalAmount)*-1)-(laravelData?.cars_sum) !=0">
               <InputLabel for="pay" value="اضافة دفعة" />
               <button
                 @click.prevent="showAddPaymentTotal()"

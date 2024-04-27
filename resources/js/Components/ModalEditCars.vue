@@ -55,7 +55,7 @@ function validateExchangeRate(v) {
             <div
               class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2"
             >
-              <div class="mb-4 mx-1">
+              <div class="mb-4 mx-1" v-if="formData.results==0">
                 <label class="dark:text-gray-200" for="color_id">{{
                   $t("car_owner")
                 }}</label>
