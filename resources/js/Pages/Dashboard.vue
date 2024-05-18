@@ -55,6 +55,7 @@ let expenses_type_id = ref(0);
 
 const toast = useToast();
 
+const selectedUserIds = ref([]);
 
 let showModal = ref(false);
 
@@ -84,6 +85,8 @@ const sendWhatsAppMessageArray = async (array) => {
       try {
         const response = await axios.get(url);
         console.log(`Message sent to ${phoneNumber}:`, response.data);
+       selectedUserIds = ref([]);
+
       } catch (error) {
         console.error(`Error sending message to ${phoneNumber}:`, error);
       }
@@ -117,7 +120,6 @@ function openModal() {
 const formData = ref({});
 const car = ref([]);
 
-const selectedUserIds = ref([]);
 
 
 const handleCheckboxChange = (userId) => {
