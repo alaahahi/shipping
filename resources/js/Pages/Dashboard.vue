@@ -55,7 +55,7 @@ let expenses_type_id = ref(0);
 
 const toast = useToast();
 
-const selectedUserIds = ref([]);
+let selectedUserIds = ref([]);
 
 let showModal = ref(false);
 
@@ -83,13 +83,23 @@ const sendWhatsAppMessageArray = async (array) => {
     if (phoneNumber) {
       const url = `${baseUrl}?recipient=+964${phoneNumber}&apikey=${apiKey}&text=${encodeURIComponent(textMessage)}&json=yes`;
       try {
-        const response = await axios.get(url);
-        console.log(`Message sent to ${phoneNumber}:`, response.data);
-       selectedUserIds = ref([]);
+        let response = await axios.get(url);
+        console.log(`Message sent to ${phoneNumber}:`, response);
+        toast.success("تم  الارسال بنجاح", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true,
+      });
+      
 
       } catch (error) {
-        console.error(`Error sending message to ${phoneNumber}:`, error);
-        selectedUserIds = ref([]);
+        console.log(selectedUserIds)
+        toast.success("تم  الارسال بنجاح", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true,
+      });
+        console.log(`Error sending message to ${phoneNumber}:`, error);
 
       }
     }
