@@ -81,7 +81,7 @@ const sendWhatsAppMessageArray = async (array) => {
 
   for (const phoneNumber of phoneNumbers) {
     if (phoneNumber) {
-      const url = `${baseUrl}?recipient=+964${phoneNumber}&apikey=${apiKey}&text=${encodeURIComponent(textMessage)}`;
+      const url = `${baseUrl}?recipient=+964${phoneNumber}&apikey=${apiKey}&text=${encodeURIComponent(textMessage)}&json=yes`;
       try {
         const response = await axios.get(url);
         console.log(`Message sent to ${phoneNumber}:`, response.data);
@@ -89,6 +89,8 @@ const sendWhatsAppMessageArray = async (array) => {
 
       } catch (error) {
         console.error(`Error sending message to ${phoneNumber}:`, error);
+        selectedUserIds = ref([]);
+
       }
     }
   }
