@@ -72,10 +72,27 @@ function sendWhatsAppMessage(phoneNumber) {
 
 }
 
+const sendWhatsAppMessageArray = async (array) => {
+  const phoneNumbers = array;
+  const baseUrl = 'https://api.textmebot.com/send.php';
+  const apiKey = 'fPmrAn1df3ph';
+  const textMessage = 'السلام عليكم: شركة سلام جلال ايوب - أربيل ,يرجى الأخذ بالعلم تسديد المبلغ المستحق عليكم في أقرب وقت ممكن. شكرا لتعاونكم  ..........   سڵاوی خواتان لێبێت: کۆمپانیای سلام جلال ايوب - تکایە ئاگاداربن بە زووترین کات ئەو بڕە پارەیەی کە قەرزارن بیدەن. سوپاس بۆ هەماهەنگیت';
 
+  for (const phoneNumber of phoneNumbers) {
+    if (phoneNumber) {
+      const url = `${baseUrl}?recipient=+964${phoneNumber}&apikey=${apiKey}&text=${encodeURIComponent(textMessage)}`;
+      try {
+        const response = await axios.get(url);
+        console.log(`Message sent to ${phoneNumber}:`, response.data);
+      } catch (error) {
+        console.error(`Error sending message to ${phoneNumber}:`, error);
+      }
+    }
+  }
+};
 
+ 
 let searchTerm = ref('');
-
 let mainAccount= ref(0)
 let onlineContracts= ref(0)
 let howler= ref(0)
@@ -100,6 +117,18 @@ function openModal() {
 const formData = ref({});
 const car = ref([]);
 
+const selectedUserIds = ref([]);
+
+
+const handleCheckboxChange = (userId) => {
+  const index = selectedUserIds.value.indexOf(userId);
+  if (index > -1) {
+    selectedUserIds.value.splice(index, 1);
+  } else {
+    selectedUserIds.value.push(userId);
+  }
+  console.log(selectedUserIds.value);
+};
 
 import { debounce } from 'lodash'; // Import debounce function from Lodash
 
@@ -381,24 +410,38 @@ function updateResults(input) {
                               <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(debtOnlineContractsDinar) }} دينار</p>
                             </div>
                           </div>
+                          <button @click="sendWhatsAppMessageArray(selectedUserIds)" v-if="selectedUserIds.length" type="button" class="text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 shadow-lg shadow-green-500/50 dark:shadow-lg dark:shadow-green-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">
+                            
+                            ارسال رسالة تذكير
+                          
+                            <span class="inline-flex items-center justify-center w-4 h-4 ms-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
+                            {{selectedUserIds.length}}
+                            </span>
+                          </button>
+
+
                           </div>
                           <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
-                          <Link @dblclick="sendWhatsAppMessage(user.phone)"  v-for="(user,i) in laravelData" :key="i" class="flex items-start rounded-xl text-gray-200  dark:text-gray-300  p-4 shadow-lg"  :href="route('showClients', { id: user.id, q: searchTerm })"  :class="changeColor(user.balance)">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ user.name}}</h2>
-                              <p class="mt-2 text-sm text-gray-200  dark:text-gray-200">{{ '$'+updateResults(user.balance) }}
+            
+                          
+                          <div v-for="(user,i) in laravelData" :key="i">
+                            <input type="checkbox" :id="'e'+user.id" :value="user.phone" class="hidden peer" @change="handleCheckboxChange(user.phone)">
+                            <label :for="'e'+user.id" class="inline-flex items-center justify-between w-full     border-4 border-gray-200  cursor-pointer  dark:border-gray-700 peer-checked:border-rose-700   dark:peer-checked:text-gray-300 peer-checked:text-gray-600" style="border-radius: 4rem;">
+                            <div   class="flex items-start  text-gray-200  dark:text-gray-300  p-4 shadow-lg w-full" style="border-radius: 4rem;"    :class="changeColor(user.balance)">
+                          
+                            <div  :href="route('showClients', { id: user.id, q: searchTerm })" class="mr-4">
+                              <Link :href="route('showClients', { id: user.id, q: searchTerm })" style="display: block;" class="font-semibold">{{ user.name}}</Link>
+                              <Link :href="route('showClients', { id: user.id, q: searchTerm })" style="display: block;" class="mt-2 text-sm text-gray-200  dark:text-gray-200">{{ '$'+updateResults(user.balance) }}
                                 <span class="inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
                                 {{ user.car_total_un_pay}}
                               </span>
-                              </p>
-                            
+                              </Link>
                             </div>
-                          </Link>
+                            </div>
+                         
+                            </label>
+                          </div>
+    
 
 
                           <!-- <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
@@ -528,5 +571,7 @@ body {
   scrollbar-color: #888 #f1f1f1;
 }
 
-
+.border-4 {
+    border-width: 6px;
+}
 </style>
