@@ -442,8 +442,15 @@ function updateResults(input) {
                             <input type="checkbox" :id="'e'+user.id" :value="user.phone" class="hidden peer" @change="handleCheckboxChange(user.phone)">
                             <label :for="'e'+user.id" class="inline-flex items-center justify-between w-full     border-4 border-gray-200  cursor-pointer  dark:border-gray-700 peer-checked:border-rose-700   dark:peer-checked:text-gray-300 peer-checked:text-gray-600" style="border-radius: 4rem;">
                             <div   class="flex items-start  text-gray-200  dark:text-gray-300  p-4 shadow-lg w-full" style="border-radius: 4rem;"    :class="changeColor(user.balance)">
-                          
-                            <div  :href="route('showClients', { id: user.id, q: searchTerm })" class="mr-4">
+                            <div   class="mr-4"  v-if="selectedUserIds.length">
+                            <div   style="display: block;" class="font-semibold">{{ user.name}}</div>
+                              <div   style="display: block;" class="mt-2 text-sm text-gray-200  dark:text-gray-200">{{ '$'+updateResults(user.balance) }}
+                                <span class="inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
+                                {{ user.car_total_un_pay}}
+                              </span>
+                              </div>
+                            </div>
+                            <div   class="mr-4"  v-if="!selectedUserIds.length">
                               <Link :href="route('showClients', { id: user.id, q: searchTerm })" style="display: block;" class="font-semibold">{{ user.name}}</Link>
                               <Link :href="route('showClients', { id: user.id, q: searchTerm })" style="display: block;" class="mt-2 text-sm text-gray-200  dark:text-gray-200">{{ '$'+updateResults(user.balance) }}
                                 <span class="inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
