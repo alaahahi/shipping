@@ -101,7 +101,7 @@ const sendWhatsAppMessageArray = async (array) => {
           rtl: true,
         });
       }
-      await delay(1000); // Wait for 1 second before sending the next message
+      await delay(5000); // Wait for 1 second before sending the next message
     }
   }
 };
