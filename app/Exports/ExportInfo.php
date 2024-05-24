@@ -71,7 +71,12 @@ class ExportInfo implements FromCollection, WithHeadings
         $collection = new Collection();
         foreach ($cars as $car) {
             $car['results'] = $this->formatResults($car['results']);
-            $car['resultsdinar'] =(int)(($car['dinar_s'])/(($car['dolar_price_s'])/100));
+            if ($car['dolar_price_s'] != 0) {
+                $car['resultsdinar'] = (int)(($car['dinar_s']) / (($car['dolar_price_s']) / 100));
+            } else {
+                // Handle the case where dolar_price_s is zero, set resultsdinar to a default value
+                $car['resultsdinar'] = 0; // or some other appropriate value or handling
+            }
             $collection->push($car->toArray());
         }
 
