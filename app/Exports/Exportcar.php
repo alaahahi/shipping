@@ -35,6 +35,7 @@ class ExportCar implements FromCollection, WithHeadings
                     'car_number',
                     'car_color',
                     'dinar_s',
+                    'date'
                 ])->get();
             }else{
                 $cars = Car::whereBetween('date', [$this->from, $this->to])->
@@ -44,6 +45,7 @@ class ExportCar implements FromCollection, WithHeadings
                     'car_number',
                     'car_color',
                     'dinar_s',
+                    'date'
                 ])->get();
             }
         } 
@@ -71,20 +73,9 @@ class ExportCar implements FromCollection, WithHeadings
             'رقم كاتي',
             'اللون',
             'كمرك بالدينار',
+            'بتاريخ',
             'تسلسل'
         ];
     }
 
-    private function formatResults($value)
-    {
-        switch ($value) {
-            case 0:
-                return 'غير مدفوع';
-            case 1:
-            case 2:
-                return 'مدفوع';
-            default:
-                return '';
-        }
-    }
 }
