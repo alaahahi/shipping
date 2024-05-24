@@ -23,11 +23,11 @@ use App\Models\Transactions;
 use App\Models\Expenses;
 use App\Helpers\UploadHelper;
 use Illuminate\Support\Facades\Auth;
-
-
+use App\Exports\Exportcar;
 use Carbon\Carbon;
-
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Models\SystemConfig;
 
 class DashboardController extends Controller
 {
@@ -526,6 +526,8 @@ class DashboardController extends Controller
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
         $limit =$_GET['limit'] ?? 0;
+        $printExcel=$_GET['printExcel'] ?? 0;
+
         if($car_have_expenses||$car_have_expenses==1){
             $data = Car::with('contract','CarImages', 'exitcar','client','carexpenses.user')->where('owner_id', $owner_id)->where('car_have_expenses', $car_have_expenses);
             
@@ -581,7 +583,15 @@ class DashboardController extends Controller
         $data['resultsProfit'] = $resultsProfit;
         $data['resultsPaid']  =$resultsPaid;
         $data['resultsTotalS']  =$resultsTotalS;
- 
+
+
+        $config=SystemConfig::first();
+
+        if($printExcel){
+            return Excel::download(new Exportcar($from,$to), $from.' '.$to.'.xlsx');
+        }
+
+        //else{    return view('show',compact('clientData','config'));}
 
         return Response::json($data, 200);
     }
