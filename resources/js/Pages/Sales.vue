@@ -344,7 +344,7 @@ function getDownloadUrl(name) {
                 <div className="mb-4  mr-5 print:hidden">
                   <InputLabel for="pay" value="طباعة" />
                   <a
-                    :href="`/api/getIndexCar?user_id=${client_Select}&from=${from}&to=${to}&print=1&printExcel=1`"
+                    :href="`/api/getIndexCar?user_id=${user_id}&from=${from}&to=${to}&print=1&printExcel=1`"
                     target="_blank"
                     class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-green-500 rounded block text-center"
                     style="width: 100%"
@@ -352,11 +352,11 @@ function getDownloadUrl(name) {
                     <span>Excel</span>
                   </a>
                 </div>
-                <div className="mb-4  mr-5 print:hidden">
+                <div className="mb-4  mr-5 print:hidden" v-if="user_id">
                   <InputLabel for="pay" value="طباعة" />
                   <a
                     target="_blank"
-                    :href="`api/getIndexClients?from=${from}&to=${to}&print=1&q=${q}`"
+                    :href="`api/getIndexAccountsSelas?user_id=${user_id}&from=${from}&to=${to}&print=1&showComplatedCars=0`"
                     class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded d-block"
                     style="width: 100%; display: block; text-align: center"
                   >

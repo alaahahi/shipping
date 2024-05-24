@@ -588,7 +588,7 @@ class DashboardController extends Controller
         $config=SystemConfig::first();
 
         if($printExcel){
-            return Excel::download(new Exportcar($from,$to), $from.' '.$to.'.xlsx');
+            return Excel::download(new Exportcar($from,$to,$user_id), $from.' '.$to.'.xlsx');
         }
 
         //else{    return view('show',compact('clientData','config'));}

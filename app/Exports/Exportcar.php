@@ -12,11 +12,13 @@ class ExportCar implements FromCollection, WithHeadings
 {
     protected $from;
     protected $to;
-    
-    public function __construct($from,$to)
+    protected $user_id;
+
+    public function __construct($from,$to,$user_id)
     {
         $this->from = $from;
         $this->to=$to;
+        $this->user_id=$user_id;
     }
 
 
@@ -25,16 +27,26 @@ class ExportCar implements FromCollection, WithHeadings
         
         // Fetch data from the database using the Car model
         if($this->from && $this->to){
-            $cars = Car::whereBetween('date', [$this->from, $this->to])->
-            select([
-                'car_type',
-                'vin',
-                'car_number',
-                'car_color',
-                'dinar_s',
-            ])->get();
+            if($this->user_id){
+                $cars = Car::where('client_id',$this->user_id)->whereBetween('date', [$this->from, $this->to])->
+                select([
+                    'car_type',
+                    'vin',
+                    'car_number',
+                    'car_color',
+                    'dinar_s',
+                ])->get();
+            }else{
+                $cars = Car::whereBetween('date', [$this->from, $this->to])->
+                select([
+                    'car_type',
+                    'vin',
+                    'car_number',
+                    'car_color',
+                    'dinar_s',
+                ])->get();
+            }
         } 
-     
 
         // Transform the fetched data into a collection
         $collection = new Collection();
