@@ -73,38 +73,57 @@ function sendWhatsAppMessage(phoneNumber) {
 
 }
 
-const sendWhatsAppMessageArray = async (array) => {
-  const phoneNumbers = array;
-  const baseUrl = 'https://api.textmebot.com/send.php';
-  const apiKey = 'fPmrAn1df3ph';
-  const textMessage = 'السلام عليكم: شركة سلام جلال ايوب - أربيل ,يرجى الأخذ بالعلم تسديد المبلغ المستحق عليكم في أقرب وقت ممكن. شكرا لتعاونكم  ..........   سڵاوی خواتان لێبێت: کۆمپانیای سلام جلال ايوب - تکایە ئاگاداربن بە زووترین کات ئەو بڕە پارەیەی کە قەرزارن بیدەن. سوپاس بۆ هەماهەنگیت';
-  
-  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  const sendWhatsAppMessageArray = (array) => {
+    const phoneNumbers = array;
+    const baseUrl = 'https://api.textmebot.com/send.php';
+    const apiKey = 'fPmrAn1df3ph';
+    const textMessage = 'السلام عليكم: شركة سلام جلال ايوب - أربيل ,يرجى الأخذ بالعلم تسديد المبلغ المستحق عليكم في أقرب وقت ممكن. شكرا لتعاونكم  ..........   سڵاوی خواتان لێبێت: کۆمپانیای سلام جلال ايوب - تکایە ئاگاداربن بە زووترین کات ئەو بڕە پارەیەی کە قەرزارن بیدەن. سوپاس بۆ هەماهەنگیت';
+    
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-  for (let i = 0; i < phoneNumbers.length; i++) {
-    const phoneNumber = phoneNumbers[i];
-    if (phoneNumber) {
-      const url = `${baseUrl}?recipient=+964${phoneNumber}&apikey=${apiKey}&text=${encodeURIComponent(textMessage)}&json=yes`;
-      try {
-        let response = await axios.get(url);
-        console.log(`Message sent to ${phoneNumber}:`, response);
-        toast.success("تم  الارسال بنجاح", {
-          timeout: 2000,
-          position: "bottom-right",
-          rtl: true,
-        });
-      } catch (error) {
-        console.log(`Error sending message to ${phoneNumber}:`, error);
-        toast.error("خطأ في الارسال", {
-          timeout: 2000,
-          position: "bottom-right",
-          rtl: true,
+    let promise = Promise.resolve(); // Start with a resolved promise
+
+    phoneNumbers.forEach((phoneNumber) => {
+      if (phoneNumber) {
+        promise = promise.then(() => {
+          const url = `${baseUrl}?recipient=+964${phoneNumber}&apikey=${apiKey}&text=${encodeURIComponent(textMessage)}&json=yes`;
+          return axios.get(url)
+          
+            .then(() => {
+              if (index !== -1) {
+                phoneNumbers.splice(index, 1);
+              }
+              toast.success("تم الارسال بنجاح", {
+                timeout: 2000,
+                position: "bottom-right",
+                rtl: true,
+              });
+     
+            })
+            .catch((error) => {
+              const index = phoneNumbers.indexOf(phoneNumber);
+              if (index !== -1) {
+                phoneNumbers.splice(index, 1);
+              }
+              if (error.code === 'ERR_NETWORK') {
+                toast.success("تم الارسال بنجاح", {
+                timeout: 2000,
+                position: "bottom-right",
+                rtl: true,
+              });
+              } else {
+                toast.error("خطأ في الارسال", {
+                  timeout: 2000,
+                  position: "bottom-right",
+                  rtl: true,
+                });
+              }
+            })
+            .then(() => delay(5000)); // Wait for 5 seconds before sending the next message
         });
       }
-      await delay(5000); // Wait for 1 second before sending the next message
-    }
-  }
-};
+    });
+  };
  
 let searchTerm = ref('');
 let mainAccount= ref(0)
