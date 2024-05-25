@@ -34,6 +34,7 @@ class ExportCar implements FromCollection, WithHeadings
                     'vin',
                     'car_number',
                     'car_color',
+                    'year',
                     'dinar_s',
                     'date'
                 ])->get();
@@ -44,6 +45,7 @@ class ExportCar implements FromCollection, WithHeadings
                     'vin',
                     'car_number',
                     'car_color',
+                    'year',
                     'dinar_s',
                     'date'
                 ])->get();
@@ -72,6 +74,7 @@ class ExportCar implements FromCollection, WithHeadings
             'الشانصى',
             'رقم كاتي',
             'اللون',
+            'سنة',
             'كمرك بالدينار',
             'بتاريخ',
             'تسلسل'
