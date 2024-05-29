@@ -267,6 +267,10 @@ class CarContractController extends Controller
         // Additional logic to retrieve client data
         $data = [
             'contract' => $allContract->count(),
+            'sumTransactionsIn'=>$sumTransactionsIn,
+            'sumTransactionsOut'=>$sumTransactionsOut,
+            'sumTransactionsDinarIn'=>$sumTransactionsDinarIn,
+            'sumTransactionsDinarOut'=>$sumTransactionsDinarOut,
             'sum_contract' => $sumAllContractSellerPaid+$sumAllContractBuyerPaid,
             'sum_contract_debit' => ($sumAllContractSeller-$sumAllContractSellerPaid)+($sumAllContractBuyer-$sumAllContractBuyerPaid),
             'sum_contract_dinar' => $sumAllContractSellerPaidDinar+$sumAllContractBuyerPaidDinar,
