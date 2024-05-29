@@ -314,6 +314,9 @@ function openModalDelCar (v){
                           <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
                               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
                                   <tr>
+                                    <th scope="col" class="px-1 py-3 text-base	">
+                                        no
+                                      </th>
                                       <th scope="col" class="px-1 py-3 text-base	">
                                         {{ $t("seller") }}
                                       </th>
@@ -364,7 +367,9 @@ function openModalDelCar (v){
                               </thead>
                               <tbody>
 
-                                <tr v-for="car in car" :key="car.id" :class="car.status == 0 ?'':car.status == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <tr v-for="(car,index) in car" :key="car.id" :class="car.status == 0 ?'':car.status == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                  <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ index+1 }}</td>
+
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.name_seller }}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.tex_seller-car.tex_seller_paid }}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.tex_seller_dinar-car.tex_seller_dinar_paid}}</td>
