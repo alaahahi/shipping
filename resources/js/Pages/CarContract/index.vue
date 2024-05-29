@@ -358,6 +358,9 @@ function openModalDelCar (v){
                                         {{ $t("debtInDinars") }} 
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
+                                      واصل دولار
+                                      </th>
+                                      <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t("note") }}  
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base" style="width: 150px;">
@@ -384,6 +387,7 @@ function openModalDelCar (v){
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.tex_buyer-car.tex_buyer_paid  }}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.tex_buyer_dinar-car.tex_buyer_dinar_paid}}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.system_note}}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.tex_seller_paid + car.tex_buyer_paid }}</td>
                                      <td className="border dark:border-gray-800 text-start px-1 py-2">
                                     <Link
                                       tabIndex="1"
