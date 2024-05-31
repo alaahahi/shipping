@@ -345,9 +345,6 @@ function openModalDelCar (v){
                                         {{ $t("remaining") }}
                                       </th>
                                       <th scope="col" class="px-1 py-3 text-base">
-                                        {{ $t("date") }}
-                                      </th>
-                                      <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t("Buyer") }}
                                       </th>
                                    
@@ -389,7 +386,6 @@ function openModalDelCar (v){
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_price }}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_paid }}</td> 
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_price-car.car_paid  }}</td>
-                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.created}}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.name_buyer}}</td> 
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.tex_buyer-car.tex_buyer_paid  }}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.tex_buyer_dinar-car.tex_buyer_dinar_paid}}</td>
