@@ -114,6 +114,7 @@ class CarContractController extends Controller
         $oldContract=CarContract::find($contract['id']??0);
   
         if ($oldContract) {
+            $contract['created']=$oldContract->created;
             // Logic for update scenario
             $desc = 'تم تعديل عقد بيع للسيارة ' . ($contract['car_name']) . ' البائع ' . ($contract['name_seller'] ?? 0) . ' دفع مبلغ ' . ($contract['tex_seller_paid'] ?? 0) . ' و المشتري ' . ($contract['tex_buyer_paid'] ?? 0) . ' دفع مبلغ ' . ($contract['name_buyer'] ?? 0);
     
