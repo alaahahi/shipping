@@ -103,7 +103,7 @@ class CarContractController extends Controller
         }
 
         // Check if all fields are 0
-        if ($status == 2 && $tex_seller == 0 && $tex_seller_dinar == 0 && $tex_buyer == 0 && $tex_buyer_dinar == 0 && $tex_seller_paid == 0 && $tex_seller_dinar_paid == 0 && $tex_buyer_paid == 0 && $tex_buyer_dinar_paid == 0) {
+        if ( $tex_seller_paid == 0 && $tex_seller_dinar_paid == 0 && $tex_buyer_paid == 0 && $tex_buyer_dinar_paid == 0) {
             $status = 0; // Set status to 0 if all fields are 0
         }
         $contract['status']=$status;
@@ -116,7 +116,7 @@ class CarContractController extends Controller
         if ($oldContract) {
             $contract['created']=$oldContract->created;
             // Logic for update scenario
-            $desc = 'تم تعديل عقد بيع للسيارة ' . ($contract['car_name']) . ' البائع ' . ($contract['name_seller'] ?? 0) . ' دفع مبلغ ' . ($contract['tex_seller_paid'] ?? 0) . ' و المشتري ' . ($contract['tex_buyer_paid'] ?? 0) . ' دفع مبلغ ' . ($contract['name_buyer'] ?? 0);
+            $desc = 'تم تعديل عقد بيع للسيارة ' . ($contract['car_name']) . ' البائع ' . ($contract['name_seller'] ?? 0) . ' دفع مبلغ ' . ($contract['tex_seller_paid'] ?? 0) . ' و المشتري ' . ($contract['tex_buyer_paid'] ?? 0) . ' دفع مبلغ ' . ($contract['name_buyer'] ?? 0).' رقم'. ($contract['vin']);
     
             // Handle changes in payments for dollar
             $this->handlePaymentChange($contract['tex_seller_paid'], $oldContract['tex_seller_paid'], '$', $desc, $contract['id'],'seller');
@@ -135,7 +135,7 @@ class CarContractController extends Controller
         );
         if(!$oldContract) {
             // Logic for new entry scenario
-            $desc = ' عقد بيع للسيارة ' . ($contract['car_name']) . ' البائع ' . ($contract['name_seller'] ?? 0) . ' دفع مبلغ ' . ($contract['tex_seller_paid'] ?? 0) . ' و المشتري ' . ($contract['tex_buyer_paid'] ?? 0) . ' دفع مبلغ ' . ($contract['name_buyer'] ?? 0);
+            $desc = ' عقد بيع للسيارة ' . ($contract['car_name']) . ' البائع ' . ($contract['name_seller'] ?? 0) . ' دفع مبلغ ' . ($contract['tex_seller_paid'] ?? 0) . ' و المشتري ' . ($contract['tex_buyer_paid'] ?? 0) . ' دفع مبلغ ' . ($contract['name_buyer'] ?? 0) .' رقم'. ($contract['vin']);
         
             // Handle payments for dollar
             if (($contract['tex_seller_paid'] ?? 0) || ($contract['tex_buyer_paid'] ?? 0)) {
