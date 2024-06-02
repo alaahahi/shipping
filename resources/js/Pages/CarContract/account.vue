@@ -61,7 +61,7 @@ let q = '';
 let allTransfers=ref([]);
 
 const refresh = () => {
-  page = 0;
+  page = 1;
   transactions.value.length = 0;
   resetData.value = !resetData.value;
   
