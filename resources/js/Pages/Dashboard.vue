@@ -76,7 +76,7 @@ function sendWhatsAppMessage(phoneNumber) {
   const sendWhatsAppMessageArray = (array) => {
     const phoneNumbers = array;
     const baseUrl = 'https://api.textmebot.com/send.php';
-    const apiKey = '1A49kqzrrPcq';
+    const apiKey = 'sqJ4udAZPMr9';
     const textMessage = 'السلام عليكم: شركة سلام جلال ايوب - أربيل ,يرجى الأخذ بالعلم تسديد المبلغ المستحق عليكم في أقرب وقت ممكن. شكرا لتعاونكم  ..........   سڵاوی خواتان لێبێت: کۆمپانیای سلام جلال ايوب - تکایە ئاگاداربن بە زووترین کات ئەو بڕە پارەیەی کە قەرزارن بیدەن. سوپاس بۆ هەماهەنگیت';
     
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
