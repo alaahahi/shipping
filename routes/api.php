@@ -94,7 +94,8 @@ Route::post('updateCarsP',[DashboardController::class, 'updateCarsP'])->name('up
 
 Route::get('/getcount', [DashboardController::class, 'getcount'])->name('getcount');
 
-
+Route::post('DelPayFromBalanceCar',[AccountingController::class, 'DelPayFromBalanceCar'])->name('DelPayFromBalanceCar');
+Route::post('AddPayFromBalanceCar',[AccountingController::class, 'AddPayFromBalanceCar'])->name('AddPayFromBalanceCar');
 
 Route::post('payCar',[DashboardController::class, 'payCar'])->name('payCar');
 Route::post('DelCar',[DashboardController::class, 'DelCar'])->name('DelCar');

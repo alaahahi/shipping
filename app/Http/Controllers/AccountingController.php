@@ -582,6 +582,34 @@ class AccountingController extends Controller
 
        
     }
+
+    public function AddPayFromBalanceCar (Request $request){
+
+        $balance = $request->balance;
+        $car_id = $request->id;
+        $car = Car::find($car_id);
+        $shoudPaid = $car->total_s-$car->paid-$car->discount;
+ 
+        if ($balance >= $shoudPaid) {
+            // Deduct the amount and update 'paid' for this car
+             $car->update(['paid' => $car->total_s-$car->discount,'results' =>2]);
+        } else {
+            if($balance <= $shoudPaid){
+                $car->update(['paid' => $balance ,'results' =>1]);
+              }
+        } 
+        return Response::json($car, 200);    
+
+
+    }
+    public function DelPayFromBalanceCar (Request $request){
+        $car_id = $request->id;
+        $car = Car::find($car_id);
+        $car->update(['paid' => 0 ,'results' =>0]);
+        return Response::json($car, 200);    
+
+    }
+    
     public function getGenExpenses (Request $request){
         $year_date=Carbon::now()->format('Y');
 
