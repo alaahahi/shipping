@@ -971,6 +971,12 @@ function getDownloadUrl(name) {
                     <th scope="col" class="px-1 py-2 text-base print:hidden">
                       {{ $t("note") }}
                     </th>
+                    <th scope="col" class="px-1 py-2 text-base print:hidden">
+                     جمرك منفست 
+                    </th>
+                    <th scope="col" class="px-1 py-2 text-base print:hidden">
+                     خصم مباشر 
+                    </th>
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("shipping_dolar") }}
                     </th>
@@ -1082,6 +1088,16 @@ function getDownloadUrl(name) {
                       className="border dark:border-gray-800 text-center px-2 py-1 print:hidden"
                     >
                       {{ car.note }}
+                    </td>
+                    <td
+                      className="border dark:border-gray-800 text-center px-2 py-1 print:hidden"
+                    >
+                      {{ ((car.dinar_s/130000)*100)?.toFixed(0)||0 }}
+                    </td>
+                    <td
+                      className="border dark:border-gray-800 text-center px-2 py-1 print:hidden"
+                    >
+                      {{ (((car.dinar_s/130000)*100)?.toFixed(0)||0)-(((car.dinar_s/car.dolar_price_s)*100)?.toFixed(0)||0) }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
