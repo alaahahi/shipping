@@ -990,6 +990,9 @@ function getDownloadUrl(name) {
                       {{ $t("expenses") }}
                     </th>
                     <th scope="col" class="px-1 py-2 text-base">
+                      نقل بري
+                    </th>
+                    <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("total") }}
                     </th>
                     <th scope="col" class="px-1 py-2 text-base">
@@ -1118,6 +1121,11 @@ function getDownloadUrl(name) {
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
                       {{ car.expenses_s }}
+                    </td>
+                    <td
+                      className="border dark:border-gray-800 text-center px-2 py-1"
+                    >
+                      {{ car.land_shipping }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
