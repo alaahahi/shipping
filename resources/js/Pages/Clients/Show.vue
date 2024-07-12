@@ -81,7 +81,7 @@ function openModalDelPayFromBalanceCar(form = {}) {
 }
 
 function confirmAddPayFromBalanceCar(V) {
-  V.balance  =(((calculateTotalFilteredAmount().totalAmount)*-1)-(laravelData.value?.cars_paid))
+  V.balance  =(((calculateTotalFilteredAmount().totalAmount)*-1)-(laravelData.value?.cars_paid))-(laravelData.value?.cars_discount)
    axios
     .post("/api/AddPayFromBalanceCar", V)
     .then((response) => {
@@ -741,14 +741,14 @@ function getDownloadUrl(name) {
               </button>
             </div>
 
-            <div className="mb-4  mr-5"   v-if="(((calculateTotalFilteredAmount().totalAmount)*-1)-(laravelData?.cars_paid)) != 0">
+            <div className="mb-4  mr-5"   v-if="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)) != 0">
               <InputLabel for="cars_need_paid" value="الرصيد غير موزع بالدولار" />
               <TextInput
                 id="cars_need_paid"
                 type="number"
                 class="mt-1 block w-full"
                
-                :value="(((calculateTotalFilteredAmount().totalAmount)*-1)-(laravelData?.cars_paid))"
+                :value="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid))"
               />
             </div>
 
@@ -1211,14 +1211,14 @@ function getDownloadUrl(name) {
                     </td>
                     <td  className="border dark:border-gray-800 text-start px-2 py-1 print:hidden">
                       <a
-                                      v-for="(image, index) in car.car_images"
-                                      :key="index"
-                                      :href="getDownloadUrl(image.name)"
-                                      style="cursor: pointer;"
-                                      target="_blank"
-                                    >
-                                      <img :src="getImageUrl(image.name)" alt="" class="px-1" style="max-width: 80px;max-height: 50px;display: inline;" />
-                                    </a>
+                        v-for="(image, index) in car.car_images"
+                        :key="index"
+                        :href="getDownloadUrl(image.name)"
+                        style="cursor: pointer;"
+                        target="_blank"
+                      >
+                        <img :src="getImageUrl(image.name)" alt="" class="px-1" style="max-width: 80px;max-height: 50px;display: inline;" />
+                      </a>
                     </td>
 
                     
@@ -1229,7 +1229,7 @@ function getDownloadUrl(name) {
                         tabIndex="1"
                         style="min-width: 100px;"
                         class="px-1 py-1  text-white mx-1 bg-green-500 rounded"
-                        v-if="(((calculateTotalFilteredAmount().totalAmount)*-1)-(laravelData?.cars_paid)) != 0"
+                        v-if="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)) != 0"
                         @click="openModalAddPayFromBalanceCar(car)"
                       >
                         دفع من الرصيد
@@ -1237,7 +1237,7 @@ function getDownloadUrl(name) {
                       <button
                         tabIndex="1"
                         style="min-width: 100px;"
-                        v-if="(((calculateTotalFilteredAmount().totalAmount)*-1)-(laravelData?.cars_sum)) != 0 && car.paid"
+                        v-if="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_sum)) != 0 && car.paid"
                         class="px-1 py-1 mt-1 text-white mx-1 bg-red-500 rounded"
                         @click="openModalDelPayFromBalanceCar(car)"
                       >
