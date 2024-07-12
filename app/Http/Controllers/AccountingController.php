@@ -39,6 +39,8 @@ use File;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ImportInfo;
 use App\Exports\ExportInfo;
+use App\Exports\ExportAccount;
+
 
 class AccountingController extends Controller
 {
@@ -159,7 +161,10 @@ class AccountingController extends Controller
         ->whereIn('type', ['inUser', 'outUser'])
         ->where('wallet_id', $user->wallet->id)
         ->paginate(100);
-         }else{
+         }elseif($type=='printExcel'){
+            $allTransactions = $transactions->paginate(100);
+        }
+         else{
         $allTransactions = $transactions->paginate(100);
      }
      $sumAllTransactions = $allTransactions->where('currency','$')->sum('amount');
@@ -194,25 +199,31 @@ class AccountingController extends Controller
          $config=SystemConfig::first();
          return view('receiptPaymentTotal',compact('data','config'));
       }
-      if($print==2){
+      elseif($print==2){
          $config=SystemConfig::first();
          return view('receipt',compact('data','config','transactions_id','owner_id'));
       }
-      if($print==3){
+      elseif($print==3){
          $config=SystemConfig::first();
  
          return view('receiptPayment',compact('data','config','transactions_id'));
       }
-      if($print==4){
+      elseif($print==4){
          $config=SystemConfig::first();
  
          return view('receiptPaymentTotal',compact('data','config','transactions_id'));
       }
- 
-      if($print==5){
+      elseif($print==5){
         $config=SystemConfig::first();
 
         return view('receiptBoxTotal',compact('data','config','transactions_id'));
+     }
+     elseif($print==6){
+        $config=SystemConfig::first();
+      
+        return Excel::download(new ExportAccount($from,$to,$user->wallet->id), $from.' '.$to.'.xlsx');
+
+        return view('receiptPaymentTotal',compact('data','config','transactions_id'));
      }
      return response()->json($data); 
      }
@@ -496,9 +507,9 @@ class AccountingController extends Controller
  
         $wallet = Wallet::where('user_id',$car->client_id)->first();
         $desc=trans('text.addPayment').' '.$amount.' '.$car->car_type.' رقم الشانص'.' '.$car->vin.' رقم الكاتي'.$car->car_number.' '.$note;
-        $tran=$this->increaseWallet($amount,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'$',0,0,'in',$details);
-        $this->increaseWallet($amount, $desc,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$car_id,'App\Models\User',1,$discount??0,'$',$this->currentDate,$tran->id,'in',$details);
-        $transaction=$this->decreaseWallet($amount+$discount, $desc,$car->client_id,$car_id,'App\Models\User',1,$discount??0,'$',$this->currentDate,$tran->id,'out',$details);
+        $tran=$this->increaseWallet($amount,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$car->client_id,'App\Models\User',0,0,'$',0,0,'in',$details);
+        $this->increaseWallet($amount, $desc,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$car_id,'App\Models\Car',1,$discount??0,'$',$this->currentDate,$tran->id,'in',$details);
+        $transaction=$this->decreaseWallet($amount+$discount, $desc,$car->client_id,$car_id,'App\Models\Car',1,$discount??0,'$',$this->currentDate,$tran->id,'out',$details);
 
         $car->increment('paid',$amount);
         if($discount ?? 0){
@@ -570,9 +581,9 @@ class AccountingController extends Controller
         if($amount_o){
             $desc=trans('text.addPayment').' '.$amount_o.' '.$note;
 
-            $tran=$this->increaseWallet($amount_o,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'$');
+            $tran=$this->increaseWallet($amount_o,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$client_id,'App\Models\User',0,0,'$');
     
-            $this->increaseWallet($amount_o, $desc,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$this->mainAccount->where('owner_id',$owner_id)->first()->id,'App\Models\User',1,$discount,'$',$this->currentDate,$tran->id);
+            $this->increaseWallet($amount_o, $desc,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$client_id,'App\Models\User',1,$discount,'$',$this->currentDate,$tran->id);
     
             $transaction = $this->decreaseWallet((int)$amount_o+(int)$discount, $desc,$client_id,$client_id,'App\Models\User',1,$discount,'$',$this->currentDate,$tran->id);
             return Response::json($transaction, 200);    

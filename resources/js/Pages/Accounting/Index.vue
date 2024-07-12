@@ -670,7 +670,7 @@ function updateResults(input) {
                             <InputLabel for="pay" value="طباعة" />
                             <a
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded" style="display: block;text-align: center;"
-                            :href="`/getIndexAccounting?user_id=${laravelData?.user?.id}&from=${from}&to=${to}&print=5`"
+                            :href="`/getIndexAccounting?user_id=${laravelData?.user?.id}&from=${from}&to=${to}&print=6`"
                             target="_blank"
                             >
                             
@@ -810,7 +810,7 @@ function updateResults(input) {
                   class="text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center"
                 >
                   <tr class="rounded-l-lg mb-2 sm:mb-0">
-                    <th className="px-2 py-2" style="width: 100px;">رقم الوصل
+                    <th className="px-2 py-2" style="width: 200px;">حساب
                     </th>
                     <!-- <th className="px-2 py-2">الحساب</th> -->
                     <th className="px-2 py-2" style="width: 180px;">التاريخ</th>
@@ -833,7 +833,7 @@ function updateResults(input) {
                     'bg-green-100 dark:bg-green-900': tran.type === 'in' || tran.type === 'inUser'  || tran.type === 'inUserBox' 
                   }"
                   class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.id }}</td>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.morphed.name }}</td>
                   <!-- <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.morphed?.name }}</td> -->
 
                   
