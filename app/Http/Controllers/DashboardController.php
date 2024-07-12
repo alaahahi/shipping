@@ -58,11 +58,16 @@ class DashboardController extends Controller
     public function __invoke(Request $request)
     {
         $results = null;
-        return Inertia::render('dashboard', ['url'=>$this->url]);   
+        $config=SystemConfig::first();
+        $apiKey =$config->api_key;
+        return Inertia::render('dashboard', ['apiKey'=>$apiKey]);   
     }
     public function index(Request $request)
     {
-        return Inertia::render('Dashboard');   
+        $config=SystemConfig::first();
+        $apiKey =$config->api_key;
+
+        return Inertia::render('Dashboard', ['apiKey'=>$apiKey]);   
     }
     public function purchases(Request $request)
     {

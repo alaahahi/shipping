@@ -40,7 +40,6 @@ Route::get('/', function () {
 });
 
 Route::group(['middleware' => ['auth','verified']], function () {
-    Route::get('/dashboard', function () {return Inertia::render('Dashboard');})->middleware(['auth', 'verified'])->name('dashboard');
 
     Route::get('dashboard',[DashboardController::class,'index'])->middleware(['auth', 'verified'])->name('dashboard');
     Route::get('sales',[DashboardController::class,'sales'])->name('sales');

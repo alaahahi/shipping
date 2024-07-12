@@ -6,10 +6,14 @@ import { ref, watch } from 'vue'; // Import ref and watch from Vue
 import { useI18n } from "vue-i18n";
 import { Link } from "@inertiajs/inertia-vue3";
 
-const auth = defineProps(['auth']);
+const props = defineProps({
+  auth: Object,
+  apiKey: String
+});
 
 const {t} = useI18n();
-let userType = ref(auth.auth.user.type_id)
+let userType = ref(props.auth.user.type_id)
+
 function selectUser(v){
   if(v==1 || v==6){
     return 'getIndexClients'
@@ -20,6 +24,7 @@ function selectUser(v){
 }
 
 let data = ref({});
+ 
 
 const laravelData = ref({});
 const laravelData1 = ref({});
@@ -76,7 +81,7 @@ function sendWhatsAppMessage(phoneNumber) {
   const sendWhatsAppMessageArray = (array) => {
     const phoneNumbers = array;
     const baseUrl = 'https://api.textmebot.com/send.php';
-    const apiKey = 'nuk2mK9brpDx';
+    const apiKey = props.apiKey;
     const textMessage = 'السلام عليكم: شركة سلام جلال ايوب - أربيل ,يرجى الأخذ بالعلم تسديد المبلغ المستحق عليكم في أقرب وقت ممكن. شكرا لتعاونكم  ..........   سڵاوی خواتان لێبێت: کۆمپانیای سلام جلال ايوب - تکایە ئاگاداربن بە زووترین کات ئەو بڕە پارەیەی کە قەرزارن بیدەن. سوپاس بۆ هەماهەنگیت';
     
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -185,7 +190,7 @@ const getResultsCarSearch = (q = '', page = 1) => {
 const getcountTotalInfo = async () => {
   axios.get('/api/totalInfo', {
     headers: {
-        Authorization: 'Bearer ' + auth.auth.accessToken,
+        Authorization: 'Bearer ' + props.auth.accessToken,
     },
 })
   .then(response => {
