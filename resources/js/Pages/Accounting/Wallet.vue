@@ -388,7 +388,7 @@ function conGenfirmExpenses(V) {
                             <InputLabel for="pay" value="طباعة" />
                             <a
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded" style="display: block;text-align: center;"
-                            :href="`/getIndexAccounting?user_id=${laravelData?.user?.id}&from=${from}&to=${to}&print=1`"
+                            :href="`/getIndexAccounting?user_id=${laravelData?.user?.id}&from=${from}&to=${to}&print=6`"
                             target="_blank"
                             >
                             
