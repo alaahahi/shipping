@@ -247,6 +247,10 @@ function changeColor(total){
     return 'bg-cyan-600  dark:bg-cyan-600'
 
   }
+  if(total >= 5000){
+    return 'bg-blue-800  dark:bg-blue-800'
+
+  }
   
   if(total >= 1000){
     return 'bg-teal-500  dark:bg-teal-500'
