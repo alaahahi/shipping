@@ -90,6 +90,7 @@
             <th scope="col">شهادة</th>
             <th scope="col">نقل</th>
             <th scope="col">مصاريف</th>
+            <th scope="col">نقل بري</th>
             <th scope="col">مجموع</th>
             <th scope="col">ملاحطة</th>
           </tr>
@@ -118,6 +119,7 @@
                 <td>{{$data->coc_dolar_s}}</td>
                 <td>{{$data->shipping_dolar_s}}</td>
                 <td>{{$data->expenses_s}}</td>
+                <td>{{$data->land_shipping}}</td>
                 <td>{{$data->total_s}}</td>
                 <td>{{$data->note}}</td>
               </tr>
