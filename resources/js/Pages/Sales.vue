@@ -22,6 +22,7 @@ import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 const props = defineProps({
   client: Array,
+  config:Array
 });
 
 const toast = useToast();
@@ -41,6 +42,21 @@ function openModalEditCars(form = {}) {
   }
   if (formData.value.expenses_s == 0) {
     formData.value.expenses_s = formData.value.expenses;
+  }
+  if (formData.value.dolar_price_s == 0) {
+    formData.value.dolar_price_s =     props.config[0].dolar_price;
+  }
+  if (formData.value.shipping_dolar_s == 0) {
+    formData.value.shipping_dolar_s =   props.config[0].shipping_dolar;
+  }
+  if (formData.value.coc_dolar_s == 0) {
+    formData.value.coc_dolar_s =  props.config[0].coc_dolar;
+  }
+  if (formData.value.checkout_s == 0) {
+    formData.value.checkout_s = props.config[0].checkout;
+  }
+  if (formData.value.land_shipping == 0) {
+    formData.value.land_shipping = props.config[0].land_shipping;
   }
   showModalEditCars.value = true;
 }

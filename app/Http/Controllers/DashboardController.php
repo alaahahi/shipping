@@ -75,8 +75,8 @@ class DashboardController extends Controller
         $car = Car::all()->where('owner_id',$owner_id);
         $allCars = $car->count();
         $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
-        
-        return Inertia::render('purchases', ['client'=>$client ]);   
+        $config=SystemConfig::first()->default_price_p;
+        return Inertia::render('purchases', ['client'=>$client,'config'=>$config]);   
     }
     public function sales(Request $request)
     {
@@ -84,7 +84,9 @@ class DashboardController extends Controller
         $car = Car::all()->where('owner_id',$owner_id);
         $allCars = $car->count();
         $client = User::where('owner_id',$owner_id)->where('type_id', $this->userClient)->get();
-        return Inertia::render('Sales', ['client'=>$client ]);   
+        $config=SystemConfig::first()->default_price_s;
+
+        return Inertia::render('Sales', ['client'=>$client ,'config'=>$config]);   
     }
     public function totalInfo(Request $request)
     {

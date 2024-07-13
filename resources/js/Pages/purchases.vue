@@ -32,7 +32,7 @@ import debounce from 'lodash/debounce';
 const {t} = useI18n();
 
 
-const props = defineProps({client:Array});
+const props = defineProps({client:Array,config:Array});
 
 
 let data = ref({});
@@ -91,6 +91,13 @@ function openModalDelCar(form={}) {
 
 function openAddCar(form={}) {
     formData.value=form
+    formData.value.dolar_price= props.config[0].dolar_price;
+    formData.value.shipping_dolar= props.config[0].shipping_dolar;
+    formData.value.coc_dolar= props.config[0].coc_dolar;
+    formData.value.checkout= props.config[0].checkout;
+    formData.value.land_shipping= props.config[0].land_shipping;
+
+    
     showModalCar.value = true;
 }
 
@@ -837,7 +844,7 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.coc_dolar  }}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.checkout}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.expenses}}</td>
-                                      <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.land_shipping}}</td>
+                                      <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.purchases}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ (car.total).toFixed(0)  }}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.paid}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ (car.total_s-car.total).toFixed(0) }}</td>
