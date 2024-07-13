@@ -370,6 +370,8 @@ class DashboardController extends Controller
         }
 
         $total = (int)(($checkout+$shipping_dolar+ $coc_dolar +(int)($dinar / ($dolar_price))+$expenses+$land_shipping) ??0);
+        $profit=$car->total_s-$total;
+
         if($car->client_id == $request->client_id)
         {
 
@@ -394,6 +396,8 @@ class DashboardController extends Controller
 
             // If 'purchase_price' and 'paid_amount' are calculated separately, add them to $dataToUpdate
             $dataToUpdate['total']=$total;
+            $dataToUpdate['profit']=$profit;
+            
             if($total >$car->total){
                 $descClient = trans('text.addExpenses').' '.($total-$car->total).' '.trans('text.for_car').$car->car_type.' '.$car->vin;
                 $this->accountingController->decreaseWallet(($total-$car->total), $descClient,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$car->id,'App\Models\Car');
