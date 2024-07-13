@@ -96,6 +96,7 @@ function openAddCar(form={}) {
     formData.value.coc_dolar= props.config[0].coc_dolar;
     formData.value.checkout= props.config[0].checkout;
     formData.value.land_shipping= props.config[0].land_shipping;
+    formData.value.days= props.config[0].days;
 
     
     showModalCar.value = true;
