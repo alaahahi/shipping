@@ -833,8 +833,7 @@ function updateResults(input) {
                     'bg-green-100 dark:bg-green-900': tran.type === 'in' || tran.type === 'inUser'  || tran.type === 'inUserBox' 
                   }"
                   class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.morphed.name }}</td>
-                  <!-- <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.morphed?.name }}</td> -->
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.morphed?.name }}</td>
 
                   
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran?.created_at.slice(0, 19).replace("T", "  ") }}</td>
