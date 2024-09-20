@@ -992,6 +992,9 @@ function getDownloadUrl(name) {
                     <th scope="col" class="px-1 py-2 text-base">
                       نقل بري
                     </th>
+
+                    <th scope="col" class="px-1 py-2 text-base">نقل وتخليص دينار</th>
+
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("total") }}
                     </th>
@@ -1130,6 +1133,11 @@ function getDownloadUrl(name) {
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
+                      {{ car.land_shipping_dinar_s }}
+                    </td>
+                    <td
+                      className="border dark:border-gray-800 text-center px-2 py-1"
+                    >
                       {{ car.total_s.toFixed(0) }}
                     </td>
                     <td
@@ -1207,7 +1215,15 @@ function getDownloadUrl(name) {
                         <show />
                       </button>
 
-
+                      <a  target="_blank"
+                   
+                      style="display: inline-flex;"
+                      :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&print=6&car_id=${car.id}`"
+                      tabIndex="1"
+                      class="px-1 py-1  text-white  m-1 bg-gray-900 rounded"
+                      >
+                      <print class="inline-flex" />
+                      </a>
                     </td>
                     <td  className="border dark:border-gray-800 text-start px-2 py-1 print:hidden">
                       <a

@@ -23,6 +23,7 @@ use App\Models\Transactions;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Contract;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class UserController extends Controller
 {
@@ -69,7 +70,6 @@ class UserController extends Controller
     }
     public function getIndexClients()
     {
-
         $q = request()->input('q', '');
         $from = request()->input('from', 0);
         $to = request()->input('to', 0);
@@ -77,81 +77,102 @@ class UserController extends Controller
         $userClient = $this->userClient ?? 0;
         $page = request()->input('page', '');
         $print = request()->input('print', 0);
-
-
-        $query = DB::table('users')
-            ->select('users.id', 'users.name', 'users.phone', 'users.created_at')
-            ->selectRaw('(SELECT COUNT(id) FROM contract WHERE user_id = users.id) AS contract_count')
-            ->selectSub(function ($subquery) use ($userClient) {
-                $subquery->selectRaw('COUNT(id)')
-                    ->from('car')
-                    ->whereColumn('car.client_id', 'users.id'); // Add condition here
-            }, 'car_count')
-            ->selectSub(function ($subquery) use ($userClient) {
-                $subquery->selectRaw('COUNT(id)')
-                    ->from('car')
-                    ->whereColumn('car.client_id', 'users.id')
-                    ->where('car.results', 2); // Add condition here
-            }, 'car_count_completed')
-            ->selectSub(function ($subquery) use ($userClient) {
-                $subquery->selectRaw('COUNT(id)')
-                    ->from('car')
-                    ->whereColumn('car.client_id', 'users.id')
-                    ->where('car.total_s', 0); // Add condition here
-            }, 'car_total_un_pay')
-            ->selectSub(function ($subquery) {
-                $subquery->select('balance')
-                    ->from('wallets')
-                    ->whereColumn('user_id', 'users.id')
-                    ->limit(1);
-            }, 'balance')
-            ->where('users.owner_id', $owner_id)
-            ->where('users.type_id', $userClient)
-
-            ->orderBy('balance', 'desc');
     
+        // تحديد مفتاح الكاش بناءً على قيمة $q
+        $cacheKey = !empty($q) ? 'users_query_' . md5($q . $owner_id . $userClient . $from . $to . $page) : null;
+        $cacheDuration = 60; // مدة الكاش بالدقائق (على سبيل المثال 60 دقيقة)
+    
+        // استخدام الكاش إذا كان هناك قيمة في $q، خلاف ذلك، تنفيذ الاستعلام مباشرة
+        $query = Cache::remember($cacheKey, $cacheDuration, function () use ($owner_id, $userClient, $q, $from, $to) {
+            $query = DB::table('users')
+                ->select('users.id', 'users.name', 'users.phone', 'users.created_at')
+                ->selectRaw('(SELECT COUNT(id) FROM contract WHERE user_id = users.id) AS contract_count')
+                ->selectSub(function ($subquery) use ($userClient) {
+                    $subquery->selectRaw('COUNT(id)')
+                        ->from('car')
+                        ->whereColumn('car.client_id', 'users.id');
+                }, 'car_count')
+                ->selectSub(function ($subquery) use ($userClient) {
+                    $subquery->selectRaw('COUNT(id)')
+                        ->from('car')
+                        ->whereColumn('car.client_id', 'users.id')
+                        ->where('car.results', 2);
+                }, 'car_count_completed')
+                ->selectSub(function ($subquery) use ($userClient) {
+                    $subquery->selectRaw('COUNT(id)')
+                        ->from('car')
+                        ->whereColumn('car.client_id', 'users.id')
+                        ->where('car.total_s', 0);
+                }, 'car_total_un_pay')
+                ->selectSub(function ($subquery) {
+                    $subquery->select('balance')
+                        ->from('wallets')
+                        ->whereColumn('user_id', 'users.id')
+                        ->limit(1);
+                }, 'balance')
+                ->where('users.owner_id', $owner_id)
+                ->where('users.type_id', $userClient)
+                ->orderBy('balance', 'desc');
+            
+    
+            // إضافة الفلترة بناءً على البحث
             if ($q && $q !== 'debit') {
                 $query->leftJoin('car', 'users.id', '=', 'car.client_id')
                     ->where(function ($subQuery) use ($q) {
                         $subQuery->where('users.name', 'like', '%' . $q . '%')
                             ->orWhere('users.phone', 'like', '%' . $q . '%')
                             ->orWhere(function ($carQuery) use ($q) {
-                                $carQuery->where('car.vin', 'like', '%' . $q . '%') // Search using VIN
-                                    ->orWhere('car.car_number', 'like', '%' . $q . '%'); // Search using car number
+                                $carQuery->where('car.vin', 'like', '%' . $q . '%') // البحث باستخدام VIN
+                                    ->orWhere('car.car_number', 'like', '%' . $q . '%'); // البحث باستخدام رقم السيارة
                             });
                     });
                 $query->groupBy('users.id', 'users.name', 'users.phone', 'users.created_at');
             }
     
-        if ($from && $to) {
-            $query->whereBetween('users.created_at', [$from, $to]);
-        }
-        if($print==1)
-        {
-            $config=SystemConfig::first();
-
-            if($q=='debit'){
-                $data = $query->havingRaw('balance > 0')->get();
-            }else{
-                $data = $query->get();
+            // الفلترة بناءً على التواريخ
+            if ($from && $to) {
+                $query->whereBetween('users.created_at', [$from, $to]);
             }
-            $data=$data->toArray();
-            return view('reportClients',compact('data','config','owner_id'));
-
+    
+            return $query->get()->toArray(); // إعادة البيانات كمصفوفة قابلة للتخزين في الكاش
+        });
+    
+        // التحقق من وضع الطباعة
+        if ($print == 1) {
+            $config = SystemConfig::first();
+    
+            // معالجة البيانات عند الطباعة
+            if (!empty($q)) {
+                $data = collect($query)->filter(function ($item) {
+                    return $item->balance > 0;
+                });
+            } else {
+                $data = $query;
+            }
+    
+            return view('reportClients', compact('data', 'config', 'owner_id'));
         }
+    
+        // التحقق من فلترة "debit"
         if ($q == 'debit') {
             if ($page == 1) {
-                $data = $query->havingRaw('balance > 0')->get();
+                $data = collect($query)->filter(function ($item) {
+                    return $item->balance > 0;
+                });
                 return response()->json(['data' => $data], 200);
             } else {
                 return response()->json(['data' => []], 200);
             }
         } else {
             $paginationLimit = 25;
-            $data = $query->paginate($paginationLimit);
-            return response()->json($data, 200);
+            $currentPage = $page ?: 1;
+            $data = collect($query)->forPage($currentPage, $paginationLimit);
+            return response()->json(['data' => $data], 200);
         }
     }
+    
+    
+    
     
     public function create()
     {

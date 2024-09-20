@@ -52,11 +52,14 @@ function openModalEditCars(form = {}) {
   if (formData.value.coc_dolar_s == 0) {
     formData.value.coc_dolar_s =  props.config[0].coc_dolar;
   }
-  if (formData.value.checkout_s == 0) {
+  if (formData.value.checkout_s == 0 && (formData.value.land_shipping_dinar_s == 0 || formData.value.land_shipping_dinar_s == null)) {
     formData.value.checkout_s = props.config[0].checkout;
   }
-  if (formData.value.land_shipping == 0) {
+  if (formData.value.land_shipping == 0 && (formData.value.land_shipping_dinar_s == 0 || formData.value.land_shipping_dinar_s == null)) {
     formData.value.land_shipping = props.config[0].land_shipping;
+  }  
+  if (formData.value.land_shipping_dinar_s == 0 || formData.value.land_shipping_dinar_s == null) {
+    formData.value.land_shipping_dinar_s = props.config[0].land_shipping_dinar_s;
   }
   showModalEditCars.value = true;
 }
@@ -436,6 +439,9 @@ function getDownloadUrl(name) {
                             نقل بري
                         </th>
                         <th scope="col" class="px-1 py-3 text-base">
+                          نقل وتخليص دينار
+                        </th>
+                        <th scope="col" class="px-1 py-3 text-base">
                           {{ $t("total") }}
                         </th>
                         <th scope="col" class="px-1 py-3 text-base">
@@ -550,6 +556,11 @@ function getDownloadUrl(name) {
                           className="border dark:border-gray-800 text-center px-1 py-2 "
                         >
                           {{ car.land_shipping }}
+                        </td>
+                        <td
+                          className="border dark:border-gray-800 text-center px-1 py-2 "
+                        >
+                          {{ car?.land_shipping_dinar_s }}
                         </td>
                         <td
                           className="border dark:border-gray-800 text-center px-1 py-2 "

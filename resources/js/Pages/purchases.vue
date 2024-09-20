@@ -96,9 +96,9 @@ function openAddCar(form={}) {
     formData.value.coc_dolar= props.config[0].coc_dolar;
     formData.value.checkout= props.config[0].checkout;
     formData.value.land_shipping= props.config[0].land_shipping;
+    formData.value.land_shipping_dinar= props.config[0].land_shipping_dinar;
     formData.value.days= props.config[0].days;
 
-    
     showModalCar.value = true;
 }
 
@@ -810,6 +810,9 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                           نقل بري
                                         </th>
                                         <th scope="col" class="px-1 py-3 text-base">
+                                          نقل وتخليص دينار
+                                        </th>
+                                        <th scope="col" class="px-1 py-3 text-base">
                                           {{ $t('total') }}
                                         </th>
                                         <th scope="col" class="px-1 py-3 text-base">
@@ -846,6 +849,7 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.checkout}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.expenses}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.land_shipping}}</td>
+                                      <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.land_shipping_dinar}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ (car.total).toFixed(0)  }}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.paid}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ (car.total_s-car.total).toFixed(0) }}</td>

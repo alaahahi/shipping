@@ -47,20 +47,34 @@
     موبايل:
     {{$clientData['client']->phone}}
     </div>
+    @if($_GET['from'] ?? '')
     <div class="col-3">
     من تاريخ:
     <?= $_GET['from'] ??'' ?>
     </div>
+    @endif
+    @if($_GET['to'] ?? '')
     <div class="col-3">
         حتى تاريخ:
     <?= $_GET['to'] ??'' ?>
     </div>
+    @endif
   </div>
   <div class="row p-2 text-center border-bottom alert-primary "  style="font-size: 14px">
     <div class="col-3"> 
     مجموع النهائي:
     {{$clientData['cars_sum']}}
     </div>
+    @if(($clientData['print'] ?? 0)==6 )
+    <div class="col-3">
+      مبلغ مدفوع:
+      {{$clientData['cars_paid']}}
+      </div>
+      <div class="col-3">
+       مبلغ الباقي:
+       {{$clientData['cars_sum'] - $clientData['cars_paid']}}
+      </div>
+    @else
     <div class="col-3">
     مبلغ مدفوع:
     {{$clientData['cars_sum']-$clientData['client']->wallet->balance}}
@@ -69,6 +83,7 @@
      مبلغ الباقي:
      {{$clientData['client']->wallet->balance}}
     </div>
+    @endif
     <div class="col-3">
       عدد السيارات:
     {{$clientData['car_total']}}
@@ -91,6 +106,8 @@
             <th scope="col">نقل</th>
             <th scope="col">مصاريف</th>
             <th scope="col">نقل بري</th>
+            <th scope="col">نقل وتخليص دينار</th>
+
             <th scope="col">مجموع</th>
             <th scope="col">ملاحطة</th>
           </tr>
@@ -120,6 +137,7 @@
                 <td>{{$data->shipping_dolar_s}}</td>
                 <td>{{$data->expenses_s}}</td>
                 <td>{{$data->land_shipping}}</td>
+                <td>{{$data->land_shipping_dinar}}</td>
                 <td>{{$data->total_s}}</td>
                 <td>{{$data->note}}</td>
               </tr>

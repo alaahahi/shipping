@@ -51,7 +51,9 @@ class Car extends Model
         'contract_id',
         'year_date',
         'car_have_expenses',
-        'land_shipping'
+        'land_shipping',
+        'land_shipping_dinar',
+        'land_shipping_dinar_s'
     ];
     public function user()
     {

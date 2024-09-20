@@ -328,6 +328,7 @@ class AccountingController extends Controller
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
         $print =$_GET['print'] ?? 0;
+        $car_id = $_GET['car_id'] ?? 0;
         $printExcel=$_GET['printExcel'] ?? 0;
 
         $showComplatedCars=$_GET['showComplatedCars'] ?? 0;
@@ -366,6 +367,7 @@ class AccountingController extends Controller
             $contract_total_debit_Dinar=($contract->sum('price_dinar')-$contract->sum('paid_dinar'))??0;
             $cars_need_paid=$cars_sum-($cars_paid+$cars_discount);
         }
+
         //$data = $transactions->paginate(10);
  
 
@@ -422,6 +424,32 @@ class AccountingController extends Controller
 
 
          }
+
+         if($print==6){
+            $config=SystemConfig::first();
+            $clientData = [
+                'totalAmount' =>   $transactions->sum('amount'),
+                'data' => $cars->where('id',$car_id)->get(),
+                'client'=>$client,
+                'car_total'=>$cars->where('id',$car_id)->count(),
+                'car_total_unpaid'=>$car_total_unpaid,
+                'car_total_complete'=>$car_total_complete,
+                'car_total_uncomplete'=>$car_total_uncomplete,
+                'contract_total'=>$contract_total,
+                'exit_car_total'=>$exit_car_total,
+                'contract_total_debit_Dollar'=>$contract_total_debit_Dollar,
+                'contract_total_debit_Dinar'=>$contract_total_debit_Dinar,
+                'cars_sum'=> $cars->where('id',$car_id)->first()->total_s,
+                'cars_paid'=> $cars->where('id',$car_id)->first()->paid,
+                'cars_discount'=>$cars->where('id',$car_id)->first()->discount,
+                'cars_need_paid'=>$cars->where('id',$car_id)->first()->total_s - $cars->where('id',$car_id)->first()->paid,
+                'transactions'=>$transactions->get(),
+                'date'=> Carbon::now()->format('Y-m-d'),
+                'print'=> 6
+            ];
+            return view('show',compact('clientData','config'));
+         }
+
                  // Additional logic to retrieve client data
         $clientData = [
             'totalAmount' =>   $transactions->sum('amount'),
@@ -448,6 +476,8 @@ class AccountingController extends Controller
 
             return view('receipt',compact('clientData','config','transactions_id','owner_id'));
          }
+   
+         
          if($print==3){
             $config=SystemConfig::first();
 
