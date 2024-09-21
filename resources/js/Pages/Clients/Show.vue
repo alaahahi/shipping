@@ -1128,13 +1128,9 @@ function getDownloadUrl(name) {
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.land_shipping }}
+                      {{ car.land_shipping_s }}
                     </td>
-                    <td
-                      className="border dark:border-gray-800 text-center px-2 py-1"
-                    >
-                      {{ car.land_shipping_dinar_s }}
-                    </td>
+                    
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >

@@ -136,8 +136,7 @@
                 <td>{{$data->coc_dolar_s}}</td>
                 <td>{{$data->shipping_dolar_s}}</td>
                 <td>{{$data->expenses_s}}</td>
-                <td>{{$data->land_shipping}}</td>
-                <td>{{$data->land_shipping_dinar}}</td>
+                <td>{{$data->land_shipping_s}}</td>
                 <td>{{$data->total_s}}</td>
                 <td>{{$data->note}}</td>
               </tr>

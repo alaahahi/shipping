@@ -452,7 +452,7 @@ class DashboardController extends Controller
         $shipping_dolar_s=$request->shipping_dolar_s ;
         $coc_dolar_s=$request->coc_dolar_s ;
         $dinar_s=$request->dinar_s ;
-        $land_shipping=$request->land_shipping;
+        $land_shipping_s=$request->land_shipping_s;
         $land_shipping_dinar_s=$request->land_shipping_dinar_s;
         $expenses_s=($request->expenses_s??0);
         $dolar_price_s=$request->dolar_price_s ;
@@ -463,7 +463,7 @@ class DashboardController extends Controller
         }else{
             $dolar_price_s=$dolar_price_s;
         }
-        $total_s = (($checkout_s+$shipping_dolar_s+ $coc_dolar_s +(int)($dinar_s / ($dolar_price_s))+(int)($land_shipping_dinar_s / ($dolar_price_s))+$expenses_s+$land_shipping) ??0);
+        $total_s = (($checkout_s+$shipping_dolar_s+ $coc_dolar_s +(int)($dinar_s / ($dolar_price_s))+(int)($land_shipping_dinar_s / ($dolar_price_s))+$expenses_s+$land_shipping_s) ??0);
         $profit=$total_s-$car->total;
         $descClient = trans('text.editExpenses').' '.$total_s-$car->total_s.' '.trans('text.for_car').$car->car_type.' '.$car->vin;
         $this->accountingController->increaseWallet($total_s-$car->total_s, $descClient,$car->client_id,$car->id,'App\Models\User');

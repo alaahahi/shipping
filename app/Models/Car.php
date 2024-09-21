@@ -52,6 +52,7 @@ class Car extends Model
         'year_date',
         'car_have_expenses',
         'land_shipping',
+        'land_shipping_s',
         'land_shipping_dinar',
         'land_shipping_dinar_s'
     ];
