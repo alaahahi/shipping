@@ -993,7 +993,6 @@ function getDownloadUrl(name) {
                       نقل بري
                     </th>
 
-                    <th scope="col" class="px-1 py-2 text-base">نقل وتخليص دينار</th>
 
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("total") }}
