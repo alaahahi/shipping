@@ -106,7 +106,6 @@
             <th scope="col">نقل</th>
             <th scope="col">مصاريف</th>
             <th scope="col">نقل بري</th>
-            <th scope="col">نقل وتخليص دينار</th>
 
             <th scope="col">مجموع</th>
             <th scope="col">ملاحطة</th>
