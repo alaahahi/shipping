@@ -80,7 +80,7 @@ class UserController extends Controller
     
         // تحديد مفتاح الكاش بناءً على قيمة $q
         $cacheKey = !empty($q) ? 'users_query_' . md5($q . $owner_id . $userClient . $from . $to . $page) : null;
-        $cacheDuration = 60; // مدة الكاش بالدقائق (على سبيل المثال 60 دقيقة)
+        $cacheDuration = 600; // مدة الكاش بالدقائق (على سبيل المثال 60 دقيقة)
     
         // استخدام الكاش إذا كان هناك قيمة في $q، خلاف ذلك، تنفيذ الاستعلام مباشرة
         $query = Cache::remember($cacheKey, $cacheDuration, function () use ($owner_id, $userClient, $q, $from, $to) {
