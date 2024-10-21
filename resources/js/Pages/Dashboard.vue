@@ -27,6 +27,8 @@ let data = ref({});
  
 
 const laravelData = ref({});
+const laravelDataO = ref({});
+
 const laravelData1 = ref({});
 const laravelData2 = ref({});
 let  controller = new AbortController(); // Create a new AbortController
@@ -48,11 +50,12 @@ const getResults = async (page = 1) => {
   }
 
 
-
+  laravelDataO.value =laravelData.value
   })
   .catch(error => {
     console.error(error);
   })
+  
 }
 getResults();
 
@@ -131,6 +134,9 @@ function sendWhatsAppMessage(phoneNumber) {
   };
  
 let searchTerm = ref('');
+let searchQuery = ref('');
+
+
 let mainAccount= ref(0)
 let onlineContracts= ref(0)
 let howler= ref(0)
@@ -184,7 +190,8 @@ const debouncedGetResultsCarSearch = debounce(async (q = '', page = 1) => {
 }, 300); 
 
 const getResultsCarSearch = (q = '', page = 1) => {
-    debouncedGetResultsCarSearch(q, page);
+  searchQuery.value=''
+  debouncedGetResultsCarSearch(q, page);
 }
 //
 const getcountTotalInfo = async () => {
@@ -280,6 +287,13 @@ function updateResults(input) {
   // Use toLocaleString to format the number with commas
   return input.toLocaleString();
 }
+
+function getResultsCarSearchLocal () {
+  searchTerm.value = ''
+  laravelData.value = laravelDataO.value.filter(item =>
+    item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+};
 </script>
 
 <template>
@@ -357,7 +371,33 @@ function updateResults(input) {
                             </div>
                           </form>
                         </div>
-        
+                        <div class="relative w-full">
+                     
+                              <input
+                               v-model="searchQuery" placeholder="بحث بالاسم فقط"
+                                @input="getResultsCarSearchLocal(searchQuery)"
+                                type="text"
+                                id="simple-search"
+                                class="
+                                  bg-gray-50
+                                  border border-gray-300
+                                  text-gray-900 text-sm
+                                  rounded-lg
+                                  focus:ring-blue-500 focus:border-blue-500
+                                  block
+                                  w-full
+                                  pl-10
+                                  p-2.5
+                                  dark:bg-gray-700
+                                  dark:border-gray-600
+                                  dark:placeholder-gray-400
+                                  dark:text-white
+                                  dark:focus:ring-blue-500
+                                  dark:focus:border-blue-500
+                                "
+                                required
+                              />
+                            </div>
                  
                         </div>
                         <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">     
