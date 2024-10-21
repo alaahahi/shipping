@@ -152,7 +152,6 @@ class UserController extends Controller
     
             return view('reportClients', compact('data', 'config', 'owner_id'));
         }
-    
         // التحقق من فلترة "debit"
         if ($q == 'debit') {
             if ($page == 1) {
@@ -166,7 +165,12 @@ class UserController extends Controller
         } else {
             $paginationLimit = 25;
             $currentPage = $page ?: 1;
-            $data = collect($query)->forPage($currentPage, $paginationLimit);
+            $data = collect($query)->forPage($currentPage , $paginationLimit);
+            $flattenedData = [];
+            foreach ($data as $item) {
+                $flattenedData[] = $item; // reset() gets the first element of an array
+            }
+            $data = $flattenedData;
             return response()->json(['data' => $data], 200);
         }
     }
