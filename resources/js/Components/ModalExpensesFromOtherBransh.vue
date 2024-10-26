@@ -91,7 +91,7 @@ function cancelTransfers(tran){
                             class="mt-3 mx-3 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
                             v-model="expense.receiver"
                             />
-                    <div class="flex items-center py-3" v-if="expense.inputValue">
+                    <div class="flex items-center py-3" >
                       <svg class="flex-shrink-0 w-4 h-4 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
                       </svg>
@@ -102,7 +102,7 @@ function cancelTransfers(tran){
                         دولار
                       </h3>
                     </div>
-                    <div class="flex mt-5" v-if="expense.inputValue">
+                    <div class="flex mt-5" >
                       <button @click="confirmTransfers(expense)" type="button" class="mx-2 text-white bg-yellow-800 hover:bg-yellow-900 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-xs px-3 py-1.5 me-2 text-center inline-flex items-center dark:bg-yellow-300 dark:text-gray-800 dark:hover:bg-yellow-400 dark:focus:ring-yellow-800">
                        تأكيد الحوالات
                       </button >
@@ -168,7 +168,7 @@ function cancelTransfers(tran){
                     @click="$emit('close');activeTab = 'add'">{{ $t('cancel') }}</button>
                   </div>
               <div class="basis-1/2 px-4">
-                <button class="modal-default-button py-3  bg-rose-500 rounded col-6"  @click="$emit('a',formData);formData=''" >{{ $t('yes') }}</button>
+                <button class="modal-default-button py-3  bg-rose-500 rounded col-6"  @click="$emit('close');" >{{ $t('yes') }}</button>
                 </div>
 
             </div>
