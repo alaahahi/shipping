@@ -666,6 +666,7 @@ class AccountingController extends Controller
         $amount=(($request->amount)/ $factor);
         $expenses_type_id = $request->expenses_type_id;
         $reason=$request->note ?? '';
+        $desc='';
         if($expenses_type_id==1){
             $user_id=$this->howler->id;
             $desc='مصاريف أربيل مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$reason;
