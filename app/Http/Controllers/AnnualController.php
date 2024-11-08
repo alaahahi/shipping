@@ -82,7 +82,7 @@ class AnnualController extends Controller
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
         $limit =$_GET['limit'] ?? 0;
-        $data =  Warehouse::with('client')->with('CarImages');
+        $data =  Warehouse::with('client')->with('CarImages')->orderBy('created_at', 'desc');
         $totalCars = $data->count();
         if($q){
             $data = $data->orwhere('car_number', 'LIKE','%'.$q.'%')->orwhere('car_type', 'LIKE','%'.$q.'%')->orWhereHas('client', function ($query) use ($q) {
