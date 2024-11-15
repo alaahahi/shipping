@@ -686,7 +686,7 @@ class CarContractController extends Controller
         $noteDriving = $request->get('noteDriving', '');
         $vinDriving = $request->get('vinDriving', '');
         $yearDriving = $request->get('yearDriving', '');
-        $clientIdDriving = $request->get('clientTdDriving', '');
+        $clientIdDriving = $request->get('clientIdDriving', 0);
         
         // Insert into the database
         $doc = Driving::create([
