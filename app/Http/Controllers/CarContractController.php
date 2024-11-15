@@ -690,7 +690,7 @@ class CarContractController extends Controller
         
         // Insert into the database
         $doc = Driving::create([
-            'client_id' => Auth::user()->id,
+            'client_id' => $clientIdDriving,
             'user_id' => Auth::user()->id,
             'owner_id' => $owner_id,
             'color' => $car_colorDriving, // Assuming your table has this column
