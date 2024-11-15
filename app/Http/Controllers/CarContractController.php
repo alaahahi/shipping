@@ -714,13 +714,12 @@ class CarContractController extends Controller
 
 
         $id = $request->get('doc_id', '');
-        $owner_id=Auth::user()->owner_id;
 
         // Insert into the database
         $doc = Driving::find($id);
 
         $config=SystemConfig::first();
         
-        return view('documents.driving',compact('doc','config','owner_id'));
+        return view('documents.driving',compact('doc','config'));
     }
 }

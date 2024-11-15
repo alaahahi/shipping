@@ -122,8 +122,8 @@ $Help = new MyHelp();
     <div class="row p-2  mt-5" style="font-size: 14px">
       <div class="col-6 pe-5"> 
       العنوان:
-      @if($owner_id??'')
-      @if($owner_id==2)
+      @if($doc['owner_id']??'')
+      @if($$doc['owner_id']==2)
       {{$config['address_kik']}}
       @else
       {{$config['address_erb']}}
@@ -134,8 +134,8 @@ $Help = new MyHelp();
 
       <div class="col-6 ps-5 text-start">
          Mobile:
-         @if($owner_id??'')
-         @if($owner_id==2)
+         @if($$doc['owner_id']??'')
+         @if($$doc['owner_id']==2)
          {{$config['mobile_kik']}}
          @else
          {{$config['mobile_erb']}}
