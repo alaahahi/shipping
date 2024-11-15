@@ -103,9 +103,20 @@ $Help = new MyHelp();
  
 
     <!-- Footer Section -->
-    <div class="pt-4 pb-5  text-start"  style="margin: 0 40px">
+    <div class="row pt-4 pb-5 "  style="margin: 0 40px">
+     
+      <div class="col-6 px-5">
+        <div style="width: 110px">
+          <div style="color: #fff;text-align: center;font-size: 5px">
+              {!! QrCode::size(100)->generate(url('').'/makeDrivingDocumentPdf?doc_id='.$doc['id']); !!}
+          </div>
+        </div>
+      </div>
+      <div class="col-6  text-start">
         <p class="px-5">سلام جلال ايوب</p>
         <p style="padding: 0 58px">{{$doc['created']}} </p>
+      </div>
+        
     </div>
 
     <div class="row p-2  mt-5" style="font-size: 14px">

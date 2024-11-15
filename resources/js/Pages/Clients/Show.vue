@@ -441,7 +441,9 @@ function confirmAddDriving(v){
 
 axios.post(`/api/makeDrivingDocument`,v)
 .then(response => {
-  window.open(`/api/makeDrivingDocumentPdf?doc_id=${response.data.id}`, '_blank');
+  showModalShowDriving.value = false;
+
+  window.open(`/makeDrivingDocumentPdf?doc_id=${response.data.id}`, '_blank');
 })
 .catch(error => {
   showModalShowDriving.value = false;
