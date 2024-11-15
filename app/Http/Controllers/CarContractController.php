@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\Car;
 use App\Models\Company;
 use App\Models\Name;
+use App\Models\Driving;
 use App\Models\CarModel;
 use App\Models\Color;
 use App\Models\Wallet;
@@ -669,5 +670,57 @@ class CarContractController extends Controller
         }
 
         return Response::json(['data1'=>$data1,'data2'=>$data2], 200);
+    }
+    public function makeDrivingDocument(Request $request)
+    {
+
+        $owner_id = Auth::user()->owner_id;
+        $year_date=Carbon::now()->format('Y');
+
+        // Retrieve values from the request or provide defaults
+        $car_colorDriving = $request->get('car_colorDriving', '');
+        $car_numberDriving = $request->get('car_numberDriving', '');
+        $car_typeDriving = $request->get('car_typeDriving', '');
+        $createdDriving = $request->get('createdDriving', '');
+        $nameDriving = $request->get('nameDriving', '');
+        $noteDriving = $request->get('noteDriving', '');
+        $vinDriving = $request->get('vinDriving', '');
+        $yearDriving = $request->get('yearDriving', '');
+        $clientIdDriving = $request->get('clientTdDriving', '');
+        
+        // Insert into the database
+        $doc = Driving::create([
+            'client_id' => Auth::user()->id,
+            'user_id' => Auth::user()->id,
+            'owner_id' => $owner_id,
+            'color' => $car_colorDriving, // Assuming your table has this column
+            'car_number' => $car_numberDriving,
+            'car_type' => $car_typeDriving,
+            'created' => $createdDriving,
+            'name' => $nameDriving,
+            'note' => $noteDriving,
+            'vin' => $vinDriving, // Add column if needed
+            'year' => $yearDriving,
+            'year_date' => $year_date
+        ]);
+
+
+        return Response::json($doc, 200);    
+
+    }
+
+    public function makeDrivingDocumentPdf(Request $request)
+    {
+
+
+        $id = $request->get('doc_id', '');
+        $owner_id=Auth::user()->owner_id;
+
+        // Insert into the database
+        $doc = Driving::find($id);
+
+        $config=SystemConfig::first();
+        
+        return view('documents.driving',compact('doc','config','owner_id'));
     }
 }

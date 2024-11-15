@@ -186,6 +186,9 @@ Route::post('DropFromBoxContract',[CarContractController::class, 'DropFromBoxCon
 Route::get('getIndexClientsContract',[CarContractController::class, 'getIndexClientsContract'])->name('getIndexClientsContract');
 Route::get('contract_account_report',[CarContractController::class, 'contract_account_report'])->name('contract_account_report');
 
+Route::post('makeDrivingDocument',[CarContractController::class, 'makeDrivingDocument'])->name('makeDrivingDocument');
+Route::get('makeDrivingDocumentPdf',[CarContractController::class, 'makeDrivingDocumentPdf'])->name('makeDrivingDocumentPdf');
+
 
 
 

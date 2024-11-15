@@ -14,12 +14,17 @@ import ModalAddCarContracts from "@/Components/ModalAddCarContracts.vue";
 import ModalEditCarContracts from "@/Components/ModalEditCarContracts.vue";
 import ModalAddExitCar from "@/Components/ModalAddExitCar.vue";
 import ModalShowExitCar from "@/Components/ModalShowExitCar.vue";
+import ModalShowDriving from "@/Components/ModalShowDriving.vue";
+
+
 import print from "@/Components/icon/print.vue";
 import pay from "@/Components/icon/pay.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
 import exit from "@/Components/icon/exit.vue";
 import show from "@/Components/icon/show.vue";
+import document from "@/Components/icon/document.vue";
+
 import newContracts from "@/Components/icon/new.vue";
 
 import { useToast } from "vue-toastification";
@@ -40,8 +45,11 @@ let showModalAddCarContracts =  ref(false);
 let showModalEditCarContracts =  ref(false);
 let showModalAddExitCar = ref(false);
 let showModalShowExitCar = ref(false);
+let showModalShowDriving = ref(false);
 let total = ref(0);
 let formData = ref({});
+let formDriving = ref({});
+
 let discount= ref(0);
 let note = ref('');
 let amount = ref(0);
@@ -63,11 +71,22 @@ let getResults = async (page = 1) => {
     });
 };
 function calculateTotalFilteredAmount() {
-  const filteredTransactions = laravelData.value.transactions.filter(user =>
+  let filteredTransactions ='';
+  let totalAmount ='';
+  try {
+    filteredTransactions = laravelData.value.transactions.filter(user =>
     user.type === 'out' && user.amount < 0 && user.is_pay === 1
   );
 
-  const totalAmount = filteredTransactions.reduce((sum, user) => sum + user.amount, 0);
+  } catch (error) {
+
+  }
+  try {
+    totalAmount = filteredTransactions.reduce((sum, user) => sum + user.amount, 0);
+
+  } catch (error) {
+
+  }
 
   return {  totalAmount };
 }
@@ -287,7 +306,7 @@ function openModalAddCarContracts(form={}) {
   showModalAddCarContracts.value = true;
 }
 function openModalEditCarContracts(form={}) {
-  formData.value=form
+  formData.value=formshowModalShowExitCar
 
   showModalEditCarContracts.value = true;
 }
@@ -299,9 +318,20 @@ function openModalAddExitCar(form={}) {
 }
 function openModalShowExitCar(form={}) {
   formData.value=form
-  showModalShowExitCar.value = true;
+  .value = true;
 }
-
+function openModalShowDriving(form={}) {
+  formDriving.value.car_typeDriving = form.car_type
+  formDriving.value.yearDriving = form.year
+  formDriving.value.car_colorDriving= form.car_color
+  formDriving.value.vinDriving= form.vin
+  formDriving.value.nameDriving= props.client.name
+  formDriving.value.clientIdDriving= props.client_id
+  formDriving.value.car_numberDriving= form.car_number
+  formDriving.value.createdDriving=  getTodayDate()
+  formDriving.value.noteDriving= `انا كارزان سرهنك محمد (وكيل عام سلام جلال ايوب ) (مدير مفوض شركة سلام جلال ايوب) قد خولت السيد(name) بقيادة السيارة ذات المواصفات ادناه له حق  نقلها  من محافظة الى محافظة اخرى ودفع الرسوم والغرمات بيع وشراء القبض الثمن.`;
+  showModalShowDriving.value = true;
+}
 function calculateAmountDiscount (){
   let need_payment =  laravelData?.value?.client?.wallet?.balance
   amount.value=need_payment- discount.value
@@ -407,7 +437,25 @@ function confirmAddExitCar(v){
   })
   
 }
+function confirmAddDriving(v){
 
+axios.post(`/api/makeDrivingDocument`,v)
+.then(response => {
+  window.open(`/api/makeDrivingDocumentPdf?doc_id=${response.data.id}`, '_blank');
+})
+.catch(error => {
+  showModalShowDriving.value = false;
+
+  toast.error("لم التعديل بنجاح", {
+      timeout: 2000,
+      position: "bottom-right",
+      rtl: true
+
+    });
+
+})
+
+}
 function getTodayDate() {
   const today = new Date();
   const year = today.getFullYear();
@@ -506,6 +554,16 @@ function getDownloadUrl(name) {
         <template #header>
           </template>
     </ModalShowExitCar>
+    <ModalShowDriving
+            :formDriving="formDriving"
+            :show="showModalShowDriving ? true : false"
+            @a="confirmAddDriving($event)"
+            @close="showModalShowDriving = false"
+            
+            >
+        <template #header>
+          </template>
+    </ModalShowDriving>
     <ModalEditCars
       :formData="formData"
       :show="showModalEditCars ? true : false"
@@ -1209,7 +1267,14 @@ function getDownloadUrl(name) {
                       >
                         <show />
                       </button>
+                      <button
+                        tabIndex="1"
+                        class="px-1 py-1  text-white mx-1 bg-violet-500 rounded"
+                        @click="openModalShowDriving(car)"
 
+                      >
+                        <document />
+                      </button>
                       <a  target="_blank"
                    
                       style="display: inline-flex;"
