@@ -443,7 +443,7 @@ axios.post(`/api/makeDrivingDocument`,v)
 .then(response => {
   showModalShowDriving.value = false;
 
-  window.open(`/makeDrivingDocumentPdf?doc_id=${response.data.id}`, '_blank');
+  window.open(`/api/makeDrivingDocumentPdf?doc_id=${response.data.id}`, '_blank');
 })
 .catch(error => {
   showModalShowDriving.value = false;
