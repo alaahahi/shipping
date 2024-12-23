@@ -108,6 +108,7 @@
             <th>رقم</th>
             <th scope="col">البائع</th>
             <th scope="col">المشتري</th>
+            <th scope="col">هاتف</th>
             <th scope="col">السيارة</th>
             <th scope="col">السعر</th>
             <th scope="col">موديل</th>
@@ -131,6 +132,7 @@
                 <td>{{$key+1}}</td>
                 <td>{{$data->name_seller}}</td>
                 <td>{{$data->name_buyer}}</td>
+                <td>{{$data->phone_buyer}}</td>
                 <td>{{$data->car_name}}</td>
                 <td>{{$data->car_price}}</td>
                 <td>{{$data->modal}}</td>
