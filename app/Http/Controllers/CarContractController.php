@@ -664,7 +664,10 @@ class CarContractController extends Controller
         }
         if($print==2){
             if($q){
-                $data =  CarContract::where('owner_id', $owner_id)->whereBetween('created', [$from, $to])->where('name_seller', 'like', '%' . $q . '%')->get();
+                $data = CarContract::where('owner_id', $owner_id)
+                ->whereBetween('created', [$from, $to])
+                ->where('name_seller', 'like', '%' . $q . '%')
+                ->get();
             }else{
                 $data =  CarContract::where('owner_id', $owner_id)->whereBetween('created', [$from, $to])->get();
             }
