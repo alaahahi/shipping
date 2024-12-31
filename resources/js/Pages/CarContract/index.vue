@@ -247,7 +247,7 @@ function openModalDelCar(v) {
                   <a
                     class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-blue-500 rounded"
                     style="display: block; text-align: center"
-                    :href="`api/contract_account_report?type=contract-report&from=${from}&to=${to}&print=2`"
+                    :href="`api/contract_account_report?type=contract-report&from=${from}&to=${to}&print=2&q=${q}`"
                     target="_blank"
                   >
                     <span v-if="!isLoading">طباعة</span>
