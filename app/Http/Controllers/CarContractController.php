@@ -663,8 +663,12 @@ class CarContractController extends Controller
             return view('Contract.receiptExpensesContractTotal',compact('data','config','totalDollar','totalDinar'));
         }
         if($print==2){
-            $data =  CarContract::where('owner_id', $owner_id)->whereBetween('created', [$from, $to])->get();
-          
+            if($q){
+                $data =  CarContract::where('owner_id', $owner_id)->whereBetween('created', [$from, $to])->where('name_seller', 'like', '%' . $q . '%')->get();
+            }else{
+                $data =  CarContract::where('owner_id', $owner_id)->whereBetween('created', [$from, $to])->get();
+            }
+            
             $config=SystemConfig::first();
             return view('Contract.reportContractTotal',compact('data','config'));
         }
