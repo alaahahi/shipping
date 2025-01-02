@@ -15,6 +15,7 @@ class ContractImg extends Model
         'id',
         'name',
         'car_id',
+        'year',
         'created_at',
         'updated_at'
     ];
