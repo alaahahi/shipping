@@ -171,9 +171,13 @@ function confirmCar(V) {
   })
 }
 
-function getImageUrl(name) {
-      // Provide the base URL for your images
-      return `/public/uploadsResized/${name}`;
+function getImageUrl(name,year) {
+      if(year == 2024){
+        return `https://shippingkirkuk.intellijapp.com/public/uploadsResized/${name}`;
+      }else{
+        return `/public/uploadsResized/${name}`;
+
+      }
     }
 function getDownloadUrl(name) {
       // Provide the base URL for downloading images
@@ -380,7 +384,7 @@ function getDownloadUrl(name) {
                                       style="cursor: pointer;"
                                       target="_blank"
                                     >
-                                      <img :src="getImageUrl(image.name)" alt="" class="px-1" style="max-width: 100px;max-height: 50px;display: inline;" />
+                                      <img :src="getImageUrl(image.name,image.year)" alt="" class="px-1" style="max-width: 100px;max-height: 50px;display: inline;" />
                                     </a>
 
                                     </td>
