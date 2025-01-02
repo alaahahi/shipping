@@ -14,6 +14,7 @@ class CarImages extends Model
     protected $fillable = [
         'id',
         'name',
+        'year',
         'car_id',
         'created_at',
         'updated_at'
