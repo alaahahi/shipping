@@ -109,7 +109,7 @@ class AnnualController extends Controller
         $path2 = public_path('uploadsResized');
         $img_type=$request->img_type??'';
         $year=Carbon::now()->format('Y');
-        return $year;
+
         // Create the directories if they don't exist
         if (!file_exists($path1)) {
             mkdir($path1, 0777, true);
