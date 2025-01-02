@@ -108,7 +108,8 @@ class AnnualController extends Controller
         $path1 = public_path('uploads');
         $path2 = public_path('uploadsResized');
         $img_type=$request->img_type??'';
-    
+        $year=Carbon::now()->format('Y');
+
         // Create the directories if they don't exist
         if (!file_exists($path1)) {
             mkdir($path1, 0777, true);
@@ -140,12 +141,14 @@ class AnnualController extends Controller
         $carImage = ContractImg::create([
             'name' => $name,
             'car_id' => $carId,
+            'year' => $year,
         ]);
         }else{
         // Create a new record in the database
         $carImage = CarImages::create([
             'name' => $name,
             'car_id' => $carId,
+            'year' => $year,
         ]);
     
         }
