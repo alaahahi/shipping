@@ -179,9 +179,15 @@ function getImageUrl(name,year) {
 
       }
     }
-function getDownloadUrl(name) {
+function getDownloadUrl(name,year) {
+  if(year == 2024){
+        return `https://shippingkirkuk.intellijapp.com/public/uploads/${name}`;
+      }else{
+        return `/public/uploads/${name}`;
+
+      }
+
       // Provide the base URL for downloading images
-      return `/public/uploads/${name}`;
     }
 
 </script>
@@ -380,7 +386,7 @@ function getDownloadUrl(name) {
                                       <a
                                       v-for="(image, index) in car.car_images"
                                       :key="index"
-                                      :href="getDownloadUrl(image.name)"
+                                      :href="getDownloadUrl(image.name,image.year)"
                                       style="cursor: pointer;"
                                       target="_blank"
                                     >
