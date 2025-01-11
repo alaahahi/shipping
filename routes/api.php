@@ -193,3 +193,4 @@ Route::get('makeDrivingDocumentPdf',[CarContractController::class, 'makeDrivingD
 
 
 });
+Route::get('checkClientBalance',[AccountingController::class, 'checkClientBalance'])->name('checkClientBalance');

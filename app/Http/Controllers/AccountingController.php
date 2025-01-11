@@ -741,6 +741,21 @@ class AccountingController extends Controller
           return Response::json($transactionDinar, 200);    
 
     }
+    public function checkClientBalance(Request $request)
+    {
+        $userId= $request->userId;
+        $currentBalance= $request->currentBalance;
+        $user = User::with('wallet')->where('id',$userId)->first();
+        $systemBalance=$user->wallet->balance;
+        if($systemBalance==$currentBalance){
+            return Response::json('balance is good', 200);
+        }else{
+            $wallet = Wallet::find($user->wallet->id);
+            $wallet->update(['balance' => $currentBalance]);
+            return Response::json('balance updated systemBalance '.$systemBalance,201);
+        }
+        return Response::json('balance is good',200);
+    }
     public function receiveCard(Request $request)
     {
         $authUser = auth()->user();

@@ -2,7 +2,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
 import { Head, Link, useForm } from "@inertiajs/inertia-vue3";
-import { ref } from "vue";
+import { onMounted, ref } from 'vue';
 import { TailwindPagination } from "laravel-vue-pagination";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
@@ -28,6 +28,7 @@ import document from "@/Components/icon/document.vue";
 import newContracts from "@/Components/icon/new.vue";
 
 import { useToast } from "vue-toastification";
+import { create } from "lodash";
 let toast = useToast();
 let sums= ref(0);
 let laravelData = ref({});
@@ -65,6 +66,7 @@ let getResults = async (page = 1) => {
     .then((response) => {
       laravelData.value = response.data;
       client_Select.value = response.data.client.id
+      checkClientBalance(response.data.cars_sum)
     })
     .catch((error) => {
       console.error(error);
@@ -87,7 +89,6 @@ function calculateTotalFilteredAmount() {
   } catch (error) {
 
   }
-
   return {  totalAmount };
 }
 function openModalAddPayFromBalanceCar(form = {}) {
@@ -437,6 +438,31 @@ function confirmAddExitCar(v){
   })
   
 }
+
+function checkClientBalance(v){
+    axios.get(`/api/checkClientBalance?userId=${props.client_id}&currentBalance=${v+calculateTotalFilteredAmount().totalAmount}`)
+    .then(response => {
+      console.log(response)
+      if(response.status==201){
+        toast.success( "تم مراجعة الحساب بنجاح  "+ response.data, {
+            timeout: 5000,
+            position: "bottom-right",
+            rtl: true
+
+          });
+      }
+    })
+    .catch(error => {
+      toast.error( "لم يتم اعادة فحص الحساب  بنجاح ", {
+            timeout: 5000,
+            position: "bottom-right",
+            rtl: true
+
+          });
+
+    })
+}
+
 function confirmAddDriving(v){
 
 axios.post(`/api/makeDrivingDocument`,v)
