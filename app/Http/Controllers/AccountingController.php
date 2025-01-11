@@ -752,7 +752,7 @@ class AccountingController extends Controller
         }else{
             $wallet = Wallet::find($user->wallet->id);
             $wallet->update(['balance' => $currentBalance]);
-            return Response::json('balance updated systemBalance '.$systemBalance,201);
+            return Response::json($systemBalance,201);
         }
         return Response::json('balance is good',200);
     }
