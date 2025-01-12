@@ -336,7 +336,11 @@ const searchVINs = async () => {
                           <ul>
                             <li v-for="(vin, index) in noResultsVINs" :key="index">
                               <p class="text-sm text-gray-300 mb-2">
-                                <span class="font-bold">رقم الشاصي:</span> {{ vin }}
+                                <span class="font-bold">
+                                  {{ index+1 }}--
+                                  رقم الشاصي:
+
+                                </span> {{ vin }}
                               </p>
                             </li>
                           </ul>
