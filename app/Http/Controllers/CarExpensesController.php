@@ -36,14 +36,60 @@ class CarExpensesController extends Controller
     $this->accountingController = $accountingController;
     $this->userClient =  UserType::where('name', 'client')->first()->id;
     }
-
+    public function searchVINs(Request $request)
+    {
+            $vins = $request->input('vins');
+            $results = [];
+            foreach ($vins as $vin) {
+                // استخراج الأرقام بعد آخر حرف باستخدام التعبير النمطي
+                preg_match('/[A-Z]+(\d+)$/i', $vin, $matches);
+            
+                // التحقق من وجود أرقام بعد آخر حرف
+                $lastNumbers = $matches[1] ?? null;
+            
+                if ($lastNumbers) {
+                    // البحث التدريجي عن النتائج
+                    $cars = [];
+                    while (strlen($lastNumbers) >= 5) {
+                        $cars = Car::with('client')->where('vin', 'like', '%' . $lastNumbers)->get();
+            
+                        if ($cars->isNotEmpty()) {
+                            break; // إذا تم العثور على نتائج، توقف عن البحث
+                        }
+            
+                        // حذف رقم واحد من اليمين
+                        $lastNumbers = substr($lastNumbers, 0, -1);
+                    }
+            
+                    // إضافة النتائج مع رقم الشاصي
+                    $results[] = [
+                        'vin' => $vin,
+                        'message' => $cars->isEmpty() ? 'لا توجد نتائج لهذا الرقم' : 'تم العثور على نتائج',
+                        'cars' => $cars
+                    ];
+                } else {
+                    // إذا لم يتم العثور على أرقام بعد آخر حرف، أضف رقم الشاصي مع رسالة
+                    $results[] = [
+                        'vin' => $vin,
+                        'message' => 'لا توجد أرقام في رقم الشاصي',
+                        'cars' => [] // مصفوفة فارغة للسيارات
+                    ];
+                }
+            }
+            return response()->json($results);
+    }
     public function index(Request $request)
     {
         $owner_id=Auth::user()->owner_id;
         $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
         return Inertia::render('CarExpenses/index', ['client'=>$client ]);   
     }
-
+    public function car_check(Request $request)
+    {
+        $owner_id=Auth::user()->owner_id;
+        $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
+        return Inertia::render('CarCheck/index', ['client'=>$client ]);   
+    }
     public function addCarFavorite(Request $request)
     {
         $car = Car::find($request->carId);

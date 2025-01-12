@@ -189,8 +189,9 @@ Route::get('contract_account_report',[CarContractController::class, 'contract_ac
 Route::post('makeDrivingDocument',[CarContractController::class, 'makeDrivingDocument'])->name('makeDrivingDocument');
 Route::get('makeDrivingDocumentPdf',[CarContractController::class, 'makeDrivingDocumentPdf'])->name('makeDrivingDocumentPdf');
 
+Route::get('checkClientBalance',[AccountingController::class, 'checkClientBalance'])->name('checkClientBalance');
 
+Route::post('search-vins', [CarExpensesController::class, 'searchVINs'])->name('search-vins');
 
 
 });
-Route::get('checkClientBalance',[AccountingController::class, 'checkClientBalance'])->name('checkClientBalance');
