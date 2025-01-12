@@ -240,6 +240,14 @@ const searchVINs = async () => {
     console.error('خطأ في البحث:', error);
   }
 };
+function getImageUrl(name) {
+  // Provide the base URL for your images
+  return `/public/uploadsResized/${name}`;
+}
+function getDownloadUrl(name) {
+  // Provide the base URL for downloading images
+  return `/public/uploads/${name}`;
+}
 </script>
 
 <template>
@@ -375,6 +383,8 @@ const searchVINs = async () => {
                                     <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t('car_number') }}</th>
                                     <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t("note") }}</th>
                                     <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">فرع</th>
+                                    <th class="px-1 py-3 text-base">تخزين</th>
+
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -393,6 +403,25 @@ const searchVINs = async () => {
                                     <td class="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.note }}</td>
                                     <td class="px-3 py-2 sm:px-4 sm:py-2 text-center">
                                       {{ car.owner_id == 1 ? 'اربيل' : 'كركوك' }}
+                                    </td>
+                                    <td  className="border dark:border-gray-800 text-center px-1 py-2 ">
+                                      <a
+                                        v-for="(image, index) in car.car_images"
+                                        :key="index"
+                                        :href="getDownloadUrl(image.name)"
+                                        style="cursor: pointer"
+                                        target="_blank">
+                                        <img
+                                          :src="getImageUrl(image.name)"
+                                          alt=""
+                                          class="px-1"
+                                          style="
+                                            max-width: 100px;
+                                            max-height: 50px;
+                                            display: inline;
+                                          "
+                                        />
+                                      </a>
                                     </td>
                                   </tr>
                                 </tbody>
