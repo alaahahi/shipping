@@ -53,7 +53,7 @@ class CarExpensesController extends Controller
                     // البحث التدريجي عن النتائج
                     $cars = [];
                     while (strlen($lastNumbers) >= 5) {
-                        $cars = Car::with('client')->with('CarImages')->where('vin', 'like', '%' . $lastNumbers)->get();
+                        $cars = Car::with('client')->where('vin', 'like', '%' . $lastNumbers)->get();
 
                         if ($cars->isNotEmpty()) {
                             break; // إذا تم العثور على نتائج، توقف عن البحث
