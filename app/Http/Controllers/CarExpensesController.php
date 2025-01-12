@@ -40,33 +40,40 @@ class CarExpensesController extends Controller
     {
             $vins = $request->input('vins');
             $results = [];
+            $noResultsVINs = []; // مصفوفة جديدة للأرقام التي ليس لها نتائج
+
             foreach ($vins as $vin) {
                 // استخراج الأرقام بعد آخر حرف باستخدام التعبير النمطي
                 preg_match('/[A-Z]+(\d+)$/i', $vin, $matches);
-            
+
                 // التحقق من وجود أرقام بعد آخر حرف
                 $lastNumbers = $matches[1] ?? null;
-            
+
                 if ($lastNumbers) {
                     // البحث التدريجي عن النتائج
                     $cars = [];
                     while (strlen($lastNumbers) >= 5) {
                         $cars = Car::with('client')->where('vin', 'like', '%' . $lastNumbers)->get();
-            
+
                         if ($cars->isNotEmpty()) {
                             break; // إذا تم العثور على نتائج، توقف عن البحث
                         }
-            
+
                         // حذف رقم واحد من اليمين
                         $lastNumbers = substr($lastNumbers, 0, -1);
                     }
-            
+
                     // إضافة النتائج مع رقم الشاصي
                     $results[] = [
                         'vin' => $vin,
                         'message' => $cars->isEmpty() ? 'لا توجد نتائج لهذا الرقم' : 'تم العثور على نتائج',
                         'cars' => $cars
                     ];
+
+                    // إضافة VIN إلى قائمة الأرقام التي ليس لها نتائج
+                    if ($cars->isEmpty()) {
+                        $noResultsVINs[] = $vin;
+                    }
                 } else {
                     // إذا لم يتم العثور على أرقام بعد آخر حرف، أضف رقم الشاصي مع رسالة
                     $results[] = [
@@ -74,9 +81,15 @@ class CarExpensesController extends Controller
                         'message' => 'لا توجد أرقام في رقم الشاصي',
                         'cars' => [] // مصفوفة فارغة للسيارات
                     ];
+
+                    // إضافة VIN إلى قائمة الأرقام التي ليس لها نتائج
+                    $noResultsVINs[] = $vin;
                 }
             }
-            return response()->json($results);
+            return response()->json([
+                'results' => $results,
+                'noResultsVINs' => $noResultsVINs,  // إعادة المصفوفة للأرقام التي ليس لها نتائج
+            ]);
     }
     public function index(Request $request)
     {

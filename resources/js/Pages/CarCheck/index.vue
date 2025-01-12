@@ -224,7 +224,7 @@ function confirmDelCarFav(V) {
 }
 const vinInput = ref('');
 const results = ref([]); // مصفوفة النتائج
-
+const noResultsVINs = ref([]);
 const searchVINs = async () => {
   loading.value=true;
   // تقسيم الأكواد من textarea إلى قائمة
@@ -232,7 +232,9 @@ const searchVINs = async () => {
 
   try {
     const response = await axios.post('/api/search-vins', { vins: vinList });
-    results.value = response.data; // استقبال النتائج كمصفوفة من المصفوفات
+    results.value = response.data.results ; // استقبال النتائج كمصفوفة من المصفوفات
+    noResultsVINs.value = response.data.noResultsVINs ; // استقبال النتائج كمصفوفة من المصفوفات
+     
     loading.value=false;
   } catch (error) {
     console.error('خطأ في البحث:', error);
@@ -328,6 +330,18 @@ const searchVINs = async () => {
                         </div>
 
                         <h3 class="text-center h3 py-3">النتائج</h3>
+                        <!-- عرض الأرقام التي ليس لها نتائج -->
+                        <div v-if="noResultsVINs.length">
+                          <h3 class="mt-8 text-lg font-semibold text-red-500">الأرقام التي ليس لها نتائج:</h3>
+                          <ul>
+                            <li v-for="(vin, index) in noResultsVINs" :key="index">
+                              <p class="text-sm text-gray-300 mb-2">
+                                <span class="font-bold">رقم الشاصي:</span> {{ vin }}
+                              </p>
+                            </li>
+                          </ul>
+                        </div>
+
                         <div v-if="results.length">
                           <div v-for="(resultSet, index) in results" :key="index">
                             <h4 class="text-lg font-semibold text-gray-100">بحث {{ index + 1 }}</h4>
@@ -401,20 +415,3 @@ const searchVINs = async () => {
     </div>   
     </AuthenticatedLayout>
 </template>
-<style>
-/* تنسيق لـ loader (اختياري) */
-.loader {
-  border: 4px solid #f3f3f3;
-  border-radius: 50%;
-  border-top: 4px solid #3498db;
-  width: 24px;
-  height: 24px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-</style>
