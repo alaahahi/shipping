@@ -119,7 +119,7 @@ class UserController extends Controller
                 $query->leftJoin('car', 'users.id', '=', 'car.client_id')
                     ->where(function ($subQuery) use ($q) {
                         $subQuery->where('users.name', 'like', '%' . $q . '%')
-                            ->orWhere('users.phone', 'like', '%' . $q . '%')
+                            //->orWhere('users.phone', 'like', '%' . $q . '%')
                             ->orWhere(function ($carQuery) use ($q) {
                                 $carQuery->where('car.vin', 'like', '%' . $q . '%') // البحث باستخدام VIN
                                     ->orWhere('car.car_number', 'like', '%' . $q . '%'); // البحث باستخدام رقم السيارة
