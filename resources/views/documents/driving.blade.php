@@ -6,7 +6,7 @@ $Help = new MyHelp();
 <!DOCTYPE html>
 <html>
 <head>
-    <title>شركة سلام جلال أيوب</title>
+    <title>شركة نور البصرة أيوب</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
@@ -113,7 +113,7 @@ $Help = new MyHelp();
         </div>
       </div>
       <div class="col-sm-6  text-start">
-        <p class="px-5">سلام جلال ايوب</p>
+        <p class="px-5">سلام جلال  </p>
         <p style="padding: 0 58px">{{$doc['created']}} </p>
       </div>
         
