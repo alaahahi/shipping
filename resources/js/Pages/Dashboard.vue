@@ -70,7 +70,7 @@ let showModal = ref(false);
 function sendWhatsAppMessage(phoneNumber) {
   if(phoneNumber){
     phoneNumber= '964'+phoneNumber;
-    const message = 'السلام عليكم: شركة نور البصرة   - أربيل ,يرجى الأخذ بالعلم تسديد المبلغ المستحق عليكم في أقرب وقت ممكن. شكرا لتعاونكم  ..........   سڵاوی خواتان لێبێت: کۆمپانیای سلام جلال   - تکایە ئاگاداربن بە زووترین کات ئەو بڕە پارەیەی کە قەرزارن بیدەن. سوپاس بۆ هەماهەنگیت';
+    const message = 'السلام عليكم: شركة سلام جلال ايوب - أربيل ,يرجى الأخذ بالعلم تسديد المبلغ المستحق عليكم في أقرب وقت ممكن. شكرا لتعاونكم  ..........   سڵاوی خواتان لێبێت: کۆمپانیای سلام جلال ايوب - تکایە ئاگاداربن بە زووترین کات ئەو بڕە پارەیەی کە قەرزارن بیدەن. سوپاس بۆ هەماهەنگیت';
 
     // Construct the WhatsApp message URL
     const whatsappURL = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
@@ -85,7 +85,7 @@ function sendWhatsAppMessage(phoneNumber) {
     const phoneNumbers = array;
     const baseUrl = 'https://api.textmebot.com/send.php';
     const apiKey = props.apiKey;
-    const textMessage = 'السلام عليكم: شركة نور البصرة   - أربيل ,يرجى الأخذ بالعلم تسديد المبلغ المستحق عليكم في أقرب وقت ممكن. شكرا لتعاونكم  ..........   سڵاوی خواتان لێبێت: کۆمپانیای سلام جلال   - تکایە ئاگاداربن بە زووترین کات ئەو بڕە پارەیەی کە قەرزارن بیدەن. سوپاس بۆ هەماهەنگیت';
+    const textMessage = 'السلام عليكم: شركة سلام جلال ايوب - أربيل ,يرجى الأخذ بالعلم تسديد المبلغ المستحق عليكم في أقرب وقت ممكن. شكرا لتعاونكم  ..........   سڵاوی خواتان لێبێت: کۆمپانیای سلام جلال ايوب - تکایە ئاگاداربن بە زووترین کات ئەو بڕە پارەیەی کە قەرزارن بیدەن. سوپاس بۆ هەماهەنگیت';
     
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 

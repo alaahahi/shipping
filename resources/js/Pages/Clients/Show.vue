@@ -330,7 +330,7 @@ function openModalShowDriving(form={}) {
   formDriving.value.clientIdDriving= client_Select.value
   formDriving.value.car_numberDriving= form.car_number
   formDriving.value.createdDriving=  getTodayDate()
-  formDriving.value.noteDriving= `انا كارزان سرهنك محمد (وكيل عام سلام جلال   ) (مدير مفوض شركة نور البصرة  ) قد خولت السيد(name) بقيادة السيارة ذات المواصفات ادناه له حق  نقلها  من محافظة الى محافظة اخرى ودفع الرسوم والغرمات بيع وشراء القبض الثمن.`;
+  formDriving.value.noteDriving= `انا كارزان سرهنك محمد (وكيل عام سلام جلال ايوب ) (مدير مفوض شركة سلام جلال ايوب) قد خولت السيد(name) بقيادة السيارة ذات المواصفات ادناه له حق  نقلها  من محافظة الى محافظة اخرى ودفع الرسوم والغرمات بيع وشراء القبض الثمن.`;
   showModalShowDriving.value = true;
 }
 function calculateAmountDiscount (){
@@ -511,7 +511,7 @@ function getDownloadUrl(name) {
       <h2
         class="font-semibold text-xl dark:text-gray-400 text-gray-800 leading-tight"
       >
-      شركة نور البصرة
+        شركة سلام جلال
       </h2>
     </template>
     <ModalAddCarContracts
