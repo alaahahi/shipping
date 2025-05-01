@@ -330,7 +330,7 @@ function openModalShowDriving(form={}) {
   formDriving.value.clientIdDriving= client_Select.value
   formDriving.value.car_numberDriving= form.car_number
   formDriving.value.createdDriving=  getTodayDate()
-  formDriving.value.noteDriving= `انا كارزان سرهنك محمد (وكيل عام سلام جلال   ) (مدير مفوض شركة نور البصرة  ) قد خولت السيد(name) بقيادة السيارة ذات المواصفات ادناه له حق  نقلها  من محافظة الى محافظة اخرى ودفع الرسوم والغرمات بيع وشراء القبض الثمن.`;
+  formDriving.value.noteDriving= `انا علي محمد كريم (مدير مفوض شركة نور بصرة ) قد خولت السيد(name) بقيادة السيارة ذات المواصفات ادناه له حق  نقلها  من محافظة الى محافظة اخرى ودفع الرسوم والغرمات بيع وشراء القبض الثمن.`;
   showModalShowDriving.value = true;
 }
 function calculateAmountDiscount (){
