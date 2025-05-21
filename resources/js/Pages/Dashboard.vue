@@ -451,50 +451,8 @@ function getResultsCarSearchLocal () {
                               <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{  updateResults(mainBoxDinar) }} دينار</p>
                             </div>
                           </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                            <div class="mr-4" >
-                              <h2 class="font-semibold ">{{ $t('online_contracts') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(onlineContracts) }} دولار</p>
-                            </div>
-                          </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                            <div class="mr-4" >
-                              <h2 class="font-semibold ">{{ $t('debtOnlineContracts') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(debtOnlineContracts) }} دولار</p>
-                            </div>
-                          </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                            <div class="mr-4" >
-                              <h2 class="font-semibold ">{{ $t('online_contracts') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(onlineContractsDinar) }} دينار</p>
-                            </div>
-                          </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                            <div class="mr-4" >
-                              <h2 class="font-semibold ">{{ $t('debtOnlineContracts') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(debtOnlineContractsDinar) }} دينار</p>
-                            </div>
-                          </div>
+                         
+                      
                           <button @click="sendWhatsAppMessageArray(selectedUserIds)" v-if="selectedUserIds.length" type="button" class="text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 shadow-lg shadow-green-500/50 dark:shadow-lg dark:shadow-green-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">
                             
                             ارسال رسالة تذكير

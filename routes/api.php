@@ -40,7 +40,8 @@ Route::get('/clear-config-cache', function () {
     return "Configuration cache file removed";
 });
 Route::middleware('auth:sanctum')->group(function () {
-    Route::apiResource('upload', UploadController::class);
+Route::get('refreshCache',[DashboardController::class, 'refreshCache'])->name('refreshCache');
+Route::apiResource('upload', UploadController::class);
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {return $request->user();});
 Route::get('/user/{id}', function (Request $request) { return  User::find($request->id)->massage;});
 Route::get('/user/{id}',[UserController::class, 'getMassages']);

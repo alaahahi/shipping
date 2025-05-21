@@ -40,29 +40,18 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ImportInfo;
 use App\Exports\ExportInfo;
 use App\Exports\ExportAccount;
+use App\Services\AccountingCacheService;
 
 
 class AccountingController extends Controller
 {
-    public function __construct(){
+    protected $accounting;  
+    protected $url;
+    protected $currentDate;
+    
+    public function __construct(AccountingCacheService $accounting){
         $this->url = env('FRONTEND_URL');
-        $this->userAdmin =  UserType::where('name', 'admin')->first()->id;
-        $this->userClient =  UserType::where('name', 'client')->first()->id;
-        $this->userAccount =  UserType::where('name', 'account')->first()->id;
-    
-        $this->mainAccount= User::with('wallet')->where('type_id', $this->userAccount)->where('email','main@account.com');
-        $this->onlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts');
-        $this->onlineContractsDinar= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-dinar');
-        $this->debtOnlineContracts= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-debt');
-        $this->debtOnlineContractsDinar= User::with('wallet')->where('type_id', $this->userAccount)->where('email','online-contracts-debit-dinar');
-        $this->howler= User::with('wallet')->where('type_id', $this->userAccount)->where('email','howler')->first();
-        $this->shippingCoc= User::with('wallet')->where('type_id', $this->userAccount)->where('email','shipping-coc')->first();
-        $this->border= User::with('wallet')->where('type_id', $this->userAccount)->where('email','border')->first();
-        $this->iran= User::with('wallet')->where('type_id', $this->userAccount)->where('email','iran')->first();
-        $this->dubai= User::with('wallet')->where('type_id', $this->userAccount)->where('email','dubai')->first();
-    
-        $this->mainBox= User::with('wallet')->where('type_id', $this->userAccount)->where('email','mainBox@account.com');
-
+        $this->accounting = $accounting;
         $this->currentDate = Carbon::now()->format('Y-m-d');
     }
 
@@ -123,14 +112,14 @@ class AccountingController extends Controller
     {  
         $owner_id=Auth::user()->owner_id;
         $boxes = User::with('wallet')->where('owner_id',$owner_id)->where('email', 'mainBox@account.com')->get();
-        return Inertia::render('Accounting/Index', ['boxes'=>$boxes,'accounts'=>$this->mainAccount->where('owner_id',$owner_id)->first()]);
+        return Inertia::render('Accounting/Index', ['boxes'=>$boxes,'accounts'=>$this->accounting->mainAccount()]);
     }
     public function wallet(Request $request)
     {  
         $id= $request->id;
         $owner_id=Auth::user()->owner_id;
         $boxes = User::with('wallet')->where('owner_id',$owner_id)->where('id',$id)->first();
-        return Inertia::render('Accounting/Wallet', ['boxes'=>$boxes,'accounts'=>$this->mainAccount->where('owner_id',$owner_id)->first()]);
+        return Inertia::render('Accounting/Wallet', ['boxes'=>$boxes,'accounts'=>$this->accounting->mainAccount()]);
     }
     public function getIndexAccounting(Request $request)
     {
@@ -238,13 +227,13 @@ class AccountingController extends Controller
       $desc="وصل سحب مباشر"." ".' قاسه'.' '.$user->name.' '.$note;
       $date= $request->date??0;
       if($amountDollar){
-        $transactiond=$this->debtWallet($amountDollar,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$user_id,'App\Models\User',0,0,'$',$date,0,'outUserBox');
+        $transactiond=$this->debtWallet($amountDollar,$desc,$this->accounting->mainBox()->id,$user_id,'App\Models\User',0,0,'$',$date,0,'outUserBox');
         $transactionDetilsd = ['type' => 'outUser','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDollar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'$','parent_id'=>$transactiond->id];
         $transaction = Transactions::create($transactionDetilsd);
       }
       if($amountDinar)
       {
-        $transactionq=$this->debtWallet($amountDinar,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$user_id,'App\Models\User',0,0,'IQD',$date,0,'outUserBox');
+        $transactionq=$this->debtWallet($amountDinar,$desc,$this->accounting->mainBox()->id,$user_id,'App\Models\User',0,0,'IQD',$date,0,'outUserBox');
         $transactionDetilsq = ['type' => 'outUser','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDinar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'IQD','parent_id'=>$transactionq->id];
         $transaction = Transactions::create($transactionDetilsq);
       }
@@ -262,11 +251,11 @@ class AccountingController extends Controller
       $desc=" سحب دفعة  ".' '.$note;
       $date= $request->date??0;
       if($amountDollar){
-        $transaction=$this->debtWallet($amountDollar,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'$',$date);
+        $transaction=$this->debtWallet($amountDollar,$desc,$this->accounting->mainBox()->id,$this->accounting->mainBox()->id,'App\Models\User',0,0,'$',$date);
       }
       if($amountDinar)
       {
-        $transaction=$this->debtWallet($amountDinar,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'IQD',$date);
+        $transaction=$this->debtWallet($amountDinar,$desc,$this->accounting->mainBox()->id,$this->accounting->mainBox()->id,'App\Models\User',0,0,'IQD',$date);
 
       }
 
@@ -283,11 +272,11 @@ class AccountingController extends Controller
        $desc="وصل قبض مباشر"." ".' '.$note;
        $date= $request->date??0;
        if($amountDollar){
-        $transaction=$this->increaseWallet($amountDollar,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'$',$date);
+        $transaction=$this->increaseWallet($amountDollar,$desc,$this->accounting->mainBox()->id,$this->accounting->mainBox()->id,'App\Models\User',0,0,'$',$date);
        }
        if($amountDinar){
 
-        $transaction=$this->increaseWallet($amountDinar,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'IQD',$date);
+        $transaction=$this->increaseWallet($amountDinar,$desc,$this->accounting->mainBox()->id,$this->accounting->mainBox()->id,'App\Models\User',0,0,'IQD',$date);
        }
 
        return Response::json($transaction, 200);
@@ -307,12 +296,12 @@ class AccountingController extends Controller
         $date= $request->date??0;
             
         if($amountDollar){
-            $transactiond=$this->increaseWallet($amountDollar,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$user_id,'App\Models\User',0,0,'$',$date,0,'inUserBox');
+            $transactiond=$this->increaseWallet($amountDollar,$desc,$this->accounting->mainBox()->id,$user_id,'App\Models\User',0,0,'$',$date,0,'inUserBox');
             $transactionDetilsd = ['type' => 'inUser','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDollar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'$','parent_id'=>$transactiond->id];
             $transaction = Transactions::create($transactionDetilsd);
         }
         if($amountDinar){
-            $transactionq=$this->increaseWallet($amountDinar,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$user_id,'App\Models\User',0,0,'IQD',$date,0,'inUserBox');
+            $transactionq=$this->increaseWallet($amountDinar,$desc,$this->accounting->mainBox()->id,$user_id,'App\Models\User',0,0,'IQD',$date,0,'inUserBox');
             $transactionDetilsq = ['type' => 'inUser','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDinar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'IQD','parent_id'=>$transactionq->id];
             $transaction = Transactions::create($transactionDetilsq);
 
@@ -536,9 +525,9 @@ class AccountingController extends Controller
         ]];
  
         $wallet = Wallet::where('user_id',$car->client_id)->first();
-        $desc=trans('text.addPayment').' '.$amount.' '.$car->car_type.' رقم الشانص'.' '.$car->vin.' رقم الكاتي'.$car->car_number.' '.$note;
-        $tran=$this->increaseWallet($amount,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$car->client_id,'App\Models\User',0,0,'$',0,0,'in',$details);
-        $this->increaseWallet($amount, $desc,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$car_id,'App\Models\Car',1,$discount??0,'$',$this->currentDate,$tran->id,'in',$details);
+        $desc=trans('text.addPayment').' '.$amount.' '.$car->car_type.' رقم الشانص'.' '.$car->vin.' '.$note;
+        $tran=$this->increaseWallet($amount,$desc,$this->accounting->mainBox()->id,$car->client_id,'App\Models\User',0,0,'$',0,0,'in',$details);
+        $this->increaseWallet($amount, $desc,$this->accounting->mainAccount()->id,$car_id,'App\Models\Car',1,$discount??0,'$',$this->currentDate,$tran->id,'in',$details);
         $transaction=$this->decreaseWallet($amount+$discount, $desc,$car->client_id,$car_id,'App\Models\Car',1,$discount??0,'$',$this->currentDate,$tran->id,'out',$details);
 
         $car->increment('paid',$amount);
@@ -611,9 +600,9 @@ class AccountingController extends Controller
         if($amount_o){
             $desc=trans('text.addPayment').' '.$amount_o.' '.$note;
 
-            $tran=$this->increaseWallet($amount_o,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$client_id,'App\Models\User',0,0,'$');
+            $tran=$this->increaseWallet($amount_o,$desc,$this->accounting->mainBox()->id,$client_id,'App\Models\User',0,0,'$');
     
-            $this->increaseWallet($amount_o, $desc,$this->mainAccount->where('owner_id',$owner_id)->first()->id,$client_id,'App\Models\User',1,$discount,'$',$this->currentDate,$tran->id);
+            $this->increaseWallet($amount_o, $desc,$this->accounting->mainAccount()->id,$client_id,'App\Models\User',1,$discount,'$',$this->currentDate,$tran->id);
     
             $transaction = $this->decreaseWallet((int)$amount_o+(int)$discount, $desc,$client_id,$client_id,'App\Models\User',1,$discount,'$',$this->currentDate,$tran->id);
             return Response::json($transaction, 200);    
@@ -668,26 +657,26 @@ class AccountingController extends Controller
         $reason=$request->note ?? '';
         $desc='';
         if($expenses_type_id==1){
-            $user_id=$this->howler->id;
+            $user_id=$this->accounting->howler()->id;
             $desc='مصاريف أربيل مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$reason;
         }
         if($expenses_type_id==2){
-            $user_id=$this->dubai->id;
+            $user_id=$this->accounting->dubai()->id;
             $desc='مصاريف دبي مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$reason;
         }
         if($expenses_type_id==3){
             $desc='مصاريف ايران مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$reason;
-            $user_id=$this->iran->id;
+            $user_id=$this->accounting->iran()->id;
         }
         if($expenses_type_id==4){
             $desc='مصاريف الحدود مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$reason;
-            $user_id=$this->border->id;
+            $user_id=$this->accounting->border()->id;
         }
         if($expenses_type_id==5){
             $desc='مصاريف شهادة coc مبلغ '.' '.($request->amount).'بسعر صرف'.' '.$factor.' '.$reason;
-            $user_id=$this->shippingCoc->id;
+            $user_id=$this->accounting->shippingCoc()->id;
         }
-        $tran=$this->decreaseWallet($amount,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'$');
+        $tran=$this->decreaseWallet($amount,$desc,$this->accounting->mainBox()->id,$this->accounting->mainBox()->id,'App\Models\User',0,0,'$');
         $transaction=$this->increaseWallet($amount, $desc,$user_id,$user_id,'App\Models\User',1,0,'$',$this->currentDate,$tran->id);
         $expenses = Expenses::create([
             'factor' => $factor,
@@ -710,11 +699,11 @@ class AccountingController extends Controller
         $date=$request->date??0;
         $desc=' تحويل من الصندوق مبلغ بالدولار'.' '.($amountDollar).'  بسعر صرف '.' '.$exchangeRate.' المبلغ المضاف للصندوف بالدينار '.$amountResultDinar;
         if($amountDollar){
-            $transactionDollar=$this->decreaseWallet($amountDollar,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'$',$date);
+            $transactionDollar=$this->decreaseWallet($amountDollar,$desc,$this->accounting->mainBox()->id,$this->accounting->mainBox()->id,'App\Models\User',0,0,'$',$date);
           }
           if($amountResultDinar)
           {
-            $transactionDinar=$this->increaseWallet($amountResultDinar,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'IQD',$date);
+            $transactionDinar=$this->increaseWallet($amountResultDinar,$desc,$this->accounting->mainBox()->id,$this->accounting->mainBox()->id,'App\Models\User',0,0,'IQD',$date);
           }
           
           $transactionDollar->update(['parent_id'=>$transactionDinar->id]);
@@ -730,11 +719,11 @@ class AccountingController extends Controller
         $date=$request->date??0;
         $desc=' تحويل من الصندوق مبلغ بالدينار'.' '.($amountDinar).'  بسعر صرف '.' '.$exchangeRate.' المبلغ المضاف للصندوف بالدولار '.$amountResultDollar;
         if($amountResultDollar){
-            $transactionDollar= $this->increaseWallet($amountResultDollar,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'$',$date);
+            $transactionDollar= $this->increaseWallet($amountResultDollar,$desc,$this->accounting->mainBox()->id,$this->accounting->mainBox()->id,'App\Models\User',0,0,'$',$date);
           }
           if($amountDinar)
           {
-            $transactionDinar= $transaction=$this->decreaseWallet($amountDinar,$desc,$this->mainBox->where('owner_id',$owner_id)->first()->id,$this->mainBox->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'IQD',$date);
+            $transactionDinar= $transaction=$this->decreaseWallet($amountDinar,$desc,$this->accounting->mainBox()->id,$this->accounting->mainBox()->id,'App\Models\User',0,0,'IQD',$date);
           }
           $transactionDollar->update(['parent_id'=>$transactionDinar->id]);
           $transactionDinar->update(['parent_id'=>$transactionDollar->id]);
@@ -987,33 +976,33 @@ class AccountingController extends Controller
 
         }
         $walletExpensesIds = [
-            $this->howler->wallet->id,
-            $this->shippingCoc->wallet->id,
-            $this->border->wallet->id,
-            $this->iran->wallet->id,
-            $this->dubai->wallet->id,
+            $this->accounting->howler()->wallet->id,
+            $this->accounting->shippingCoc()->wallet->id,
+            $this->accounting->border()->wallet->id,
+            $this->accounting->iran()->wallet->id,
+            $this->accounting->dubai()->wallet->id,
         ];
         if (in_array($wallet_id, $walletExpensesIds)) {
             $expenses = Expenses::where('transaction_id',$firstTransaction->id);
             $expenses->delete();
         }
         $walletContractsIds = [
-            $this->onlineContracts->where('owner_id',$owner_id)->first()->wallet->id,
-            $this->onlineContractsDinar->where('owner_id',$owner_id)->first()->wallet->id,
-            $this->debtOnlineContracts->where('owner_id',$owner_id)->first()->wallet->id,
-            $this->debtOnlineContractsDinar->where('owner_id',$owner_id)->first()->wallet->id
+            $this->accounting->onlineContracts()->wallet->id,
+            $this->accounting->onlineContractsDinar()->wallet->id,
+            $this->accounting->debtOnlineContracts()->wallet->id,
+            $this->accounting->debtOnlineContractsDinar()->wallet->id
         ];
         if (in_array($wallet_id, $walletContractsIds)) {
             $refundTransaction = 'مرتجع حذف حركة';
             $contract = Contract::where('car_id',$firstTransaction->morphed_id)->first();
             if($firstTransaction->currency=='$'){
-                $this->increaseWallet($firstTransaction->amount, $refundTransaction,$this->debtOnlineContracts->where('owner_id',$owner_id)->first()->id,$firstTransaction->id,'App\Models\Car',0,0,'$',0);
+                $this->increaseWallet($firstTransaction->amount, $refundTransaction,$this->accounting->debtOnlineContracts()->id,$firstTransaction->id,'App\Models\Car',0,0,'$',0);
                 if($contract){
                     $contract->delete();
                 }
             }
             if($firstTransaction->currency=='IQD'){
-                $this->increaseWallet($firstTransaction->amount, $refundTransaction,$this->debtOnlineContractsDinar->where('owner_id',$owner_id)->first()->id,$firstTransaction->id,'App\Models\Car',0,0,'IQD',0);
+                $this->increaseWallet($firstTransaction->amount, $refundTransaction,$this->accounting->debtOnlineContractsDinar()->id,$firstTransaction->id,'App\Models\Car',0,0,'IQD',0);
                 if($contract){
                     $contract->delete();
                 }

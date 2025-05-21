@@ -24,17 +24,15 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Contract;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use App\Services\AccountingCacheService;
 
 class UserController extends Controller
 {
-    public function __construct(){
+    protected $accounting;
+    protected $url;
+     public function __construct(AccountingCacheService $accounting){
          $this->url = env('FRONTEND_URL');
-         $this->userAdmin =  UserType::where('name', 'admin')->first()->id;
-         $this->selesKirkuk =  UserType::where('name', 'selesKirkuk')->first()->id ?? 0;
-         $this->userAccount =  UserType::where('name', 'account')->first()->id;
-         $this->car_expenses =  UserType::where('name', 'car_expenses')->first()->id ??0;
-         $this->userClient =  UserType::where('name', 'client')->first()->id;
-
+         $this->accounting = $accounting;
     }
 
     /**
@@ -65,7 +63,7 @@ class UserController extends Controller
     }
     public function getIndex()
     {
-        $data = User::with('userType:id,name','wallet')->whereIn('type_id', [$this->selesKirkuk,$this->car_expenses])->paginate(10);
+        $data = User::with('userType:id,name','wallet')->whereIn('type_id', [$this->accounting->userSelesKirkuk(),$this->accounting->userCarExpenses()])->paginate(10);
         return Response::json($data, 200);
     }
     public function getIndexClients()
@@ -74,7 +72,7 @@ class UserController extends Controller
         $from = request()->input('from', 0);
         $to = request()->input('to', 0);
         $owner_id = Auth::user()->owner_id;
-        $userClient = $this->userClient ?? 0;
+        $userClient = $this->accounting->userClient() ?? 0;
         $page = request()->input('page', '');
         $print = request()->input('print', 0);
         // تحديد مفتاح الكاش بناءً على قيمة $q

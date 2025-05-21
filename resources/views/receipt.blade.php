@@ -144,7 +144,6 @@ $Help = new MyHelp();
             <th scope="col">السيارة</th>
             <th scope="col">تاريخ</th>
             <th scope="col">رقم شاسى</th>
-            <th scope="col">رقم كاتى</th>
             <th scope="col">لون</th>
             <th scope="col">موديل</th>
             <th scope="col">كمرك</th>
@@ -162,7 +161,6 @@ $Help = new MyHelp();
                 <td>{{$data->car_type}}</td>
                 <td>{{$data->date}}</td>
                 <td>{{$data->vin}}</td>
-                <td>{{$data->car_number}}</td>
                 <td>{{$data->car_color}}</td>
                 <td>{{$data->year}}</td>
                 <td>    <?php
