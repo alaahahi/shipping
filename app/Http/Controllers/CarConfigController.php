@@ -32,6 +32,7 @@ use Intervention\Image\Facades\Image;
 
 
 
+
 class CarConfigController extends Controller
 {
     public function __construct(){
