@@ -149,9 +149,9 @@ class AccountingController extends Controller
         $allTransactions = $transactions
         ->whereIn('type', ['inUser', 'outUser'])
         ->where('wallet_id', $user->wallet->id)
-        ->paginate(100);
+        ->paginate(1000);
          }elseif($type=='printExcel'){
-            $allTransactions = $transactions->paginate(100);
+            $allTransactions = $transactions->paginate(1000);
         }
          else{
         $allTransactions = $transactions->paginate(100);
