@@ -20,11 +20,11 @@ use Illuminate\Validation\Rules;
 use App\Models\Massage;
 use Carbon\Carbon;
 use App\Models\Transactions;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Contract;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Services\AccountingCacheService;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -33,6 +33,7 @@ class UserController extends Controller
      public function __construct(AccountingCacheService $accounting){
          $this->url = env('FRONTEND_URL');
          $this->accounting = $accounting;
+
     }
 
     /**
@@ -40,25 +41,30 @@ class UserController extends Controller
      *
      * @return Response
      */
+    
     public function index()
-    {
+    {         
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         return Inertia::render('Users/Index');
     }
 
     public function clients()
     {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         return Inertia::render('Clients/Index', ['url'=>$this->url]);
     }
     public function showClients($id)
     {
         $owner_id=Auth::user()->owner_id;
         $q = request()->query('q');
-        $clients = User::with('wallet')->where('owner_id',$owner_id)->where('type_id', $this->userClient)->get();
+        $clients = User::with('wallet')->where('owner_id',$owner_id)->where('type_id', $this->accounting->userClient())->get();
         $client= user::find($id);
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         return Inertia::render('Clients/Show', ['url'=>$this->url,'client'=>$client,'clients'=>$clients,'client_id'=>$id,'q'=>$q]);
     }
     public function show ()
     {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         return Inertia::render('Users/Index', ['url'=>$this->url]);
     }
     public function getIndex()
@@ -178,6 +184,8 @@ class UserController extends Controller
     public function create()
     {
         $usersType = UserType::all();
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
+
         return Inertia::render('Users/Create',['usersType'=>$usersType]);
     }
     public function store(Request $request)
@@ -195,7 +203,8 @@ class UserController extends Controller
                 ]);
   
                 Wallet::create(['user_id' => $user->id]);
-     
+                $this->accounting->loadAccounts(Auth::user()->owner_id);
+
         return Inertia::render('Users/Index', ['url'=>$this->url]);
     }
     public function clientsStore(Request $request)
@@ -209,7 +218,7 @@ class UserController extends Controller
            //$userChief_id =User::where('type_id',  $this->userChief)->first()->id ?? 0 ;
                 $user = User::create([
                     'name' => $request->name,
-                    'type_id' => $this->userClient,
+                    'type_id' => $this->accounting->userClient(),
                     'phone' => $request->phone,
                     'year_date'=>$year_date,
                     'owner_id'=>$owner_id,
@@ -279,6 +288,7 @@ class UserController extends Controller
     {
         $usersType = UserType::all();
         $user = User::find($User->id);
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         return Inertia::render('Users/Edit', ['usersType'=>$usersType,'user'=>$user]);
     }
     
@@ -337,7 +347,8 @@ class UserController extends Controller
                 }
                 break;
         }
-        
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
+
         return Inertia::render('Users/Index', ['url'=>$this->url]);
 
     }
@@ -353,17 +364,22 @@ class UserController extends Controller
      
        // User::where('parent_id',$id)->update(['parent_id' =>null]);
         User::find($id)->delete();
-     
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
+
         return Inertia::render('Users/Index', ['url'=>$this->url]); 
     }
     public function ban($id)
     {
         User::find($id)->update(['is_band' => 1]);
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
+
         return Inertia::render('Users/Index', ['url'=>$this->url]); 
     }
     public function unban($id)
     {
         User::find($id)->update(['is_band' => 0]);
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
+
         return Inertia::render('Users/Index', ['url'=>$this->url]); 
     }
     public function login(LoginRequest $request)

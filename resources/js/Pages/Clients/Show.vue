@@ -35,6 +35,7 @@ let laravelData = ref({});
 let isLoading = ref(0);
 let from = ref(0);
 let to = ref(0);
+let indexs=1;
 let showPaymentForm = ref(false);
 let showModalEditCars = ref(false);
 let showModalDelCar = ref(false);
@@ -981,6 +982,7 @@ function getDownloadUrl(name) {
                   </tr>
                   <template  v-for="user in laravelData.transactions" :key="user.id">
                   <tr class="text-center" v-if="user.type=='out' && user.amount < 0 && user.is_pay == 1 ">
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ indexs++ }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.id }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.created }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.description }}</td>

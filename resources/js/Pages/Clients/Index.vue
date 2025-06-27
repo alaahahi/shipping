@@ -117,7 +117,8 @@ function openModalEditClient(form = {}) {
 function confirmAddClient(V) {
   axios.post('/api/clientsStore',V)
   .then(response => {
-      window.location.reload();
+    refresh();
+    showModalAddClient.value = false;
   })
   .catch(error => {
     console.error(error);
@@ -126,7 +127,8 @@ function confirmAddClient(V) {
 function confirmEditClient(V) {
   axios.post('/api/clientsEdit',V)
   .then(response => {
-      window.location.reload();
+    refresh();
+    showModalEditClient.value = false;
   })
   .catch(error => {
     console.error(error);
@@ -184,7 +186,6 @@ function confirmDelClient(V) {
     <ModalEditClient
             :show="showModalEditClient"
             :formData="formData"
-
             @a="confirmEditClient($event)"
             @close="showModalEditClient = false"
             >

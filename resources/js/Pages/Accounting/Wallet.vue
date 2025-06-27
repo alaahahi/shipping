@@ -69,7 +69,7 @@ const getResults = async ($state) => {
   try {
     const response = await axios.get(`/getIndexAccounting`, {
       params: {
-        limit: 100,
+        limit: 1000,
         page: page,
         q: q,
         user_id: props.boxes.id,
@@ -82,7 +82,7 @@ const getResults = async ($state) => {
     const json = response.data;
 
 
-    if (json.transactions.data.length < 100){
+    if (json.transactions.data.length < 1000){
       transactions.value.push(...json.transactions.data);
       $state.complete();
     } 
@@ -316,7 +316,6 @@ function conGenfirmExpenses(V) {
             >
           <template #header>
             <h3 class="text-center">تحويل من الدينار للدولار</h3>
-            
            </template>
       </ModalConvertDinarDollar>
     <div v-if="$page.props.success">
@@ -461,7 +460,8 @@ function conGenfirmExpenses(V) {
                     <!-- <th className="px-2 py-2">الحساب</th> -->
                     <th className="px-2 py-2">التاريخ</th>
                     <th className="px-2 py-2">الوصف</th>
-                    <th className="px-2 py-2">المبلغ</th>
+                    <th className="px-2 py-2">ايداع</th>
+                    <th className="px-2 py-2">سحب</th>
                     <th className="px-2 py-2">تنفيذ</th>
 
                   </tr>
@@ -476,7 +476,8 @@ function conGenfirmExpenses(V) {
                   
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran?.created_at.slice(0, 19).replace("T", "  ") }}</td>
                   <th className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.description }}</th>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.amount+' '+tran.currency  }}</td>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.type == 'inUser' ? tran.amount+' '+tran.currency : '' }}</td>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.type == 'outUser' ? tran.amount+' '+tran.currency : '' }}</td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
                  
                   </td>

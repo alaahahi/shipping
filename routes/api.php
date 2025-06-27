@@ -20,6 +20,30 @@ use App\Http\Controllers\OnlineContractsController;
 use App\Http\Controllers\AnnualController;
 use App\Http\Controllers\CarExpensesController;
 use App\Http\Controllers\CarContractController;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
+use Illuminate\Cache\FileStore;
+use Illuminate\Filesystem\Filesystem;
+
+
+Route::get('/debug-owner-cache/{ownerId}', function ($ownerId) {
+    $keys = [
+        'main_account', 'in_account', 'out_account', 'debt_account',
+        'transfers_account', 'out_supplier', 'debt_supplier',
+        'howler', 'shipping_coc', 'border', 'iran', 'dubai', 'main_box',
+        'online_contracts', 'online_contracts_dinar',
+        'debt_online_contracts', 'debt_online_contracts_dinar'
+    ];
+
+    $results = [];
+
+    foreach ($keys as $key) {
+        $fullKey = "account_{$ownerId}_{$key}";
+        $results[$fullKey] = Cache::get($fullKey, 'غير موجود');
+    }
+
+    return response()->json($results);
+});
 
 
 use App\Models\SystemConfig;
@@ -39,8 +63,9 @@ Route::get('/clear-config-cache', function () {
     //$content_controller->log_visit_cache_job([]);
     return "Configuration cache file removed";
 });
-Route::middleware('auth:sanctum')->group(function () {
 Route::get('refreshCache',[DashboardController::class, 'refreshCache'])->name('refreshCache');
+Route::get('loadAccounts',[DashboardController::class, 'loadAccounts'])->name('loadAccounts');
+Route::middleware('auth:sanctum')->group(function () {
 Route::apiResource('upload', UploadController::class);
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {return $request->user();});
 Route::get('/user/{id}', function (Request $request) { return  User::find($request->id)->massage;});

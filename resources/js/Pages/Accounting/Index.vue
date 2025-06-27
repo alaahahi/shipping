@@ -815,7 +815,8 @@ function updateResults(input) {
                     <!-- <th className="px-2 py-2">الحساب</th> -->
                     <th className="px-2 py-2" style="width: 180px;">التاريخ</th>
                     <th className="px-2 py-2">الوصف</th>
-                    <th className="px-2 py-2">المبلغ</th>
+                    <th className="px-2 py-2">ايداع</th>
+                    <th className="px-2 py-2">سحب</th>
                     <th className="px-2 py-2" style="width: 150px;">تنفيذ</th>
                     <th
                       scope="col"
@@ -838,7 +839,8 @@ function updateResults(input) {
                   
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran?.created_at.slice(0, 19).replace("T", "  ") }}</td>
                   <th className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.description }}</th>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ updateResults(tran.amount)+' '+tran.currency  }}</td>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.type == 'inUser'|| tran.type == 'in'|| tran.type == 'inUserBox' ? updateResults(tran.amount)+' '+tran.currency : '' }}</td>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.type == 'outUser'|| tran.type == 'out'|| tran.type == 'debt' || tran.type == 'outUserBox' ? updateResults(tran.amount)+' '+tran.currency : '' }}</td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
                     <button class="px-1 py-1 text-white bg-rose-500 rounded-md focus:outline-none" @click="openModalDel(tran)" >
                       <trash />

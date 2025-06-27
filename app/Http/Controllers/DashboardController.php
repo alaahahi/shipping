@@ -22,13 +22,13 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Transactions;
 use App\Models\Expenses;
 use App\Helpers\UploadHelper;
-use Illuminate\Support\Facades\Auth;
 use App\Exports\Exportcar;
 use Carbon\Carbon;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\SystemConfig;
 use App\Services\AccountingCacheService;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -42,9 +42,10 @@ class DashboardController extends Controller
     $this->accountingController = $accountingController;
     $this->url = env('FRONTEND_URL');
     $this->accounting = $accounting;
-    $this->currentDate = Carbon::now()->format('Y-m-d');
+     $this->currentDate = Carbon::now()->format('Y-m-d');
 
     }
+     
     public function __invoke(Request $request)
     {
         $results = null;
@@ -54,12 +55,14 @@ class DashboardController extends Controller
     }
     public function refreshCache()
     {
-         $this->accounting->refresh();
+         $this->accounting->refreshIfNeeded();
 
         return response()->json(['message' => 'تم تحديث الكاش بنجاح']);
     }
+ 
     public function index(Request $request)
-    {
+    { 
+         $this->accounting->loadAccounts(Auth::user()->owner_id);
         $config=SystemConfig::first();
         $apiKey =$config->api_key;
 
@@ -70,7 +73,14 @@ class DashboardController extends Controller
         $owner_id=Auth::user()->owner_id;
         $car = Car::all()->where('owner_id',$owner_id);
         $allCars = $car->count();
-        $client = User::where('type_id', $this->accounting->userClient())->where('owner_id',$owner_id)->get();
+        $client = User::where('type_id', $this->accounting->userClient())
+        ->where('owner_id', $owner_id)
+        ->get()
+        ->map(function ($user) {
+            $user->name = "{$user->name}  {$user->phone}";
+            return $user;
+        });
+    
         $config=SystemConfig::first()->default_price_p;
         return Inertia::render('purchases', ['client'=>$client,'config'=>$config]);   
     }
@@ -79,7 +89,13 @@ class DashboardController extends Controller
         $owner_id=Auth::user()->owner_id;
         $car = Car::all()->where('owner_id',$owner_id);
         $allCars = $car->count();
-        $client = User::where('owner_id',$owner_id)->where('type_id', $this->accounting->userClient())->get();
+        $client = User::where('type_id', $this->accounting->userClient())
+        ->where('owner_id', $owner_id)
+        ->get()
+        ->map(function ($user) {
+            $user->name = "{$user->name}  {$user->phone}";
+            return $user;
+        });
         $config=SystemConfig::first()->default_price_s;
 
         return Inertia::render('Sales', ['client'=>$client ,'config'=>$config]);   

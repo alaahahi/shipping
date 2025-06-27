@@ -11,24 +11,33 @@ class AccountingCacheService
 {
     public function __construct()
     {
-        $this->refreshIfNeeded();
-    }
+        $this->loadUserTypes();
+     }
 
     protected function loadUserTypes()
     {
-        Cache::rememberForever('user_type_admin', fn () => UserType::where('name', 'admin')->first()?->id);
-        Cache::rememberForever('user_type_client', fn () => UserType::where('name', 'client')->first()?->id);
-        Cache::rememberForever('user_type_account', fn () => UserType::where('name', 'account')->first()?->id);
-        Cache::rememberForever('user_type_seles_kirkuk', fn () => UserType::where('name', 'selesKirkuk')->first()?->id);
-        Cache::rememberForever('user_type_car_expenses', fn () => UserType::where('name', 'car_expenses')->first()?->id);
+        if(Cache::get('user_type_admin')===null){
+            Cache::rememberForever('user_type_admin', fn () => UserType::where('name', 'admin')->first()?->id);
+            Cache::rememberForever('user_type_client', fn () => UserType::where('name', 'client')->first()?->id);
+            Cache::rememberForever('user_type_account', fn () => UserType::where('name', 'account')->first()?->id);
+            Cache::rememberForever('user_type_seles_kirkuk', fn () => UserType::where('name', 'selesKirkuk')->first()?->id);
+            Cache::rememberForever('user_type_car_expenses', fn () => UserType::where('name', 'car_expenses')->first()?->id);
+        }
+    
     }
 
-    protected function loadAccounts()
+    public function loadAccounts($ownerId)
     {
         $accountId = Cache::get('user_type_account');
-        $ownerId = Auth::user()->owner_id ?? 0;
-
-        $accounts = [
+        if(Cache::get('owner_id')===null){
+            Cache::rememberForever('owner_id', fn () => $ownerId);
+        }else{
+        if(Cache::get('owner_id')!== $ownerId){
+            Cache::forget('owner_id');
+            Cache::rememberForever('owner_id', fn () => $ownerId);
+        }
+        }
+          $accounts = [
             'main_account'      => 'main@account.com',
             'in_account'        => 'in@account.com',
             'out_account'       => 'out@account.com',
@@ -42,17 +51,16 @@ class AccountingCacheService
             'iran'              => 'iran',
             'dubai'             => 'dubai',
             'main_box'          => 'mainBox@account.com',
-            'onlineContracts' => 'online-contracts',
-            'onlineContractsDinar' => 'online-contracts-dinar',
-            'debtOnlineContracts' => 'online-contracts-debt', 
-            'debtOnlineContractsDinar' => 'online-contracts-debit-dinar',
+            'online_contracts' => 'online-contracts',
+            'online_contracts_dinar' => 'online-contracts-dinar',
+            'debt_online_contracts' => 'online-contracts-debt', 
+            'debt_online_contracts_dinar' => 'online-contracts-debit-dinar',
             
         ];
-
+  
         foreach ($accounts as $key => $email) {
             Cache::rememberForever("account_{$ownerId}_$key", function () use ($accountId, $ownerId, $email) {
                 return User::with('wallet')
-                    ->where('type_id', $accountId)
                     ->where('owner_id', $ownerId)
                     ->where('email', $email)
                     ->first();
@@ -72,7 +80,7 @@ class AccountingCacheService
 
     public function getAccount($key)
     {
-        $ownerId = Auth::user()->owner_id ?? 0;
+        $ownerId = Cache::get('owner_id');
         return Cache::get("account_{$ownerId}_$key");
     }
 
@@ -90,10 +98,10 @@ class AccountingCacheService
     public function iran()             { return $this->getAccount('iran'); }
     public function dubai()            { return $this->getAccount('dubai'); }
     public function mainBox()          { return $this->getAccount('main_box'); }
-    public function onlineContracts()  { return $this->getAccount('onlineContracts'); }
-    public function onlineContractsDinar()  { return $this->getAccount('onlineContractsDinar'); }
-    public function debtOnlineContracts()  { return $this->getAccount('debtOnlineContracts'); }
-    public function debtOnlineContractsDinar()  { return $this->getAccount('debtOnlineContractsDinar'); }
+    public function onlineContracts()  { return $this->getAccount('online_contracts'); }
+    public function onlineContractsDinar()  { return $this->getAccount('online_contracts_dinar'); }
+    public function debtOnlineContracts()  { return $this->getAccount('debt_online_contracts'); }
+    public function debtOnlineContractsDinar()  { return $this->getAccount('debt_online_contracts_dinar'); }
 
 
     public function refresh()
@@ -105,8 +113,8 @@ class AccountingCacheService
         Cache::forget('user_type_car_expenses');
 
 
-        $ownerId = Auth::user()->owner_id ?? 0;
-
+        $ownerId = Cache::get('owner_id');
+ 
         foreach ([
             'main_account', 'in_account', 'out_account', 'debt_account',
             'transfers_account', 'out_supplier', 'debt_supplier',
@@ -115,19 +123,16 @@ class AccountingCacheService
         ] as $key) {
             Cache::forget("account_{$ownerId}_$key");
         }
-
-        Cache::forget('account_owner_id');
-
-        $this->loadUserTypes();
-        $this->loadAccounts();
-        return response()->json(['message' => 'تم تحديث الكاش بنجاح']);
+         Cache::forget('account_owner_id');
+         $this->loadUserTypes();
+         return response()->json(['message' => ' 1 تم تحديث الكاش بنجاح']);
     }
 
     public function refreshIfNeeded()
     {
-        $currentOwnerId = Auth::user()->owner_id ?? 0;
+        $this->refresh();
+         $currentOwnerId = Cache::get('owner_id');
         $cachedOwnerId = Cache::get('account_owner_id');
-
         if ($currentOwnerId !== $cachedOwnerId) {
             $this->refresh();
         }

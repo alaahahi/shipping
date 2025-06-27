@@ -385,7 +385,7 @@ class CarConfigController extends Controller
         $car_vin = $request->get('car_vin');
         $car = Car::where('vin',$car_vin)->first();
         if($car){
-            return response()->json(true); 
+            return response()->json($car); 
         }else{
             return response()->json(false); 
 

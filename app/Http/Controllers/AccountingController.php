@@ -21,7 +21,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use App\Models\Massage;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use App\Models\Transfers;
@@ -41,6 +40,7 @@ use App\Imports\ImportInfo;
 use App\Exports\ExportInfo;
 use App\Exports\ExportAccount;
 use App\Services\AccountingCacheService;
+use Illuminate\Support\Facades\Auth;
 
 
 class AccountingController extends Controller
@@ -49,9 +49,11 @@ class AccountingController extends Controller
     protected $url;
     protected $currentDate;
     
+
     public function __construct(AccountingCacheService $accounting){
-        $this->url = env('FRONTEND_URL');
         $this->accounting = $accounting;
+
+         $this->url = env('FRONTEND_URL');
         $this->currentDate = Carbon::now()->format('Y-m-d');
     }
 
@@ -112,6 +114,8 @@ class AccountingController extends Controller
     {  
         $owner_id=Auth::user()->owner_id;
         $boxes = User::with('wallet')->where('owner_id',$owner_id)->where('email', 'mainBox@account.com')->get();
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
+
         return Inertia::render('Accounting/Index', ['boxes'=>$boxes,'accounts'=>$this->accounting->mainAccount()]);
     }
     public function wallet(Request $request)
@@ -119,6 +123,8 @@ class AccountingController extends Controller
         $id= $request->id;
         $owner_id=Auth::user()->owner_id;
         $boxes = User::with('wallet')->where('owner_id',$owner_id)->where('id',$id)->first();
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
+
         return Inertia::render('Accounting/Wallet', ['boxes'=>$boxes,'accounts'=>$this->accounting->mainAccount()]);
     }
     public function getIndexAccounting(Request $request)
@@ -889,18 +895,18 @@ class AccountingController extends Controller
             {
                 $wallet->decrement('balance', $originalTransaction->amount);
                 $all=  Transactions::where('parent_id',$transaction_id)->get();
-      
+ 
                 $firstTransaction=Transactions::where('parent_id',$transaction_id)->first();
-                if ($all->isNotEmpty()) { // Check if there are records in the collection
+                 if ($all->isNotEmpty()) { // Check if there are records in the collection
                   foreach ($all as $transaction) {
                       if($transaction->currency=='$'){
                           $wallet_id = $transaction->wallet_id;
-                          $wallet = Wallet::find($wallet_id);
+                           $wallet = Wallet::find($wallet_id);
                           $transaction->delete();
                       }
                       if($transaction->currency=='IQD'){
                           $wallet_id = $transaction->wallet_id;
-                          $wallet = Wallet::find($wallet_id);
+                           $wallet = Wallet::find($wallet_id);
                           $transaction->delete();
                       }
                   }
