@@ -103,8 +103,9 @@ class DashboardController extends Controller
     public function totalInfo(Request $request)
     {
          $owner_id=Auth::user()->owner_id;
-          $mainBoxId=$this->accounting->mainBox()->wallet->id;
-
+         $this->accounting->loadAccounts($owner_id);
+        $mainBoxId=$this->accounting->mainBox()->wallet->id;
+       
         $transactionIn = (int) Transactions::where('wallet_id', $mainBoxId)
         ->where('currency', '$')
         ->whereIn('type', ['in', 'inUserBox'])
@@ -119,8 +120,8 @@ class DashboardController extends Controller
 
         $sumTotal = $car->sum('total');
         $sumTotalS = $car->sum('total_s');
-        $client = User::where('type_id', $this->accounting->userClient())->pluck('id');
-        $sumDebit =Wallet::whereIn('user_id', $client)->sum('balance');
+        $client = User::where('type_id', $this->accounting->userClient())->where('owner_id',$owner_id)->pluck('id');
+         $sumDebit =Wallet::whereIn('user_id', $client)->sum('balance');
         $sumPaid = $car->sum('paid')+ $car->sum('discount');
         $sumProfit = $car->where('results',2)->sum('profit');
 
