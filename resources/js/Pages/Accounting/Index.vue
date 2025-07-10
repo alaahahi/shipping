@@ -661,7 +661,7 @@ function updateResults(input) {
                             <InputLabel for="pay" value="فلترة" />
                             <button
                             @click.prevent="refresh()"
-                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded" style="width: 100%">
+                            class="px-6 mb-6 py-2 mt-1 font-bold text-white bg-gray-500 rounded" style="width: 100%">
                             <span v-if="!isLoading">فلترة</span>
                             <span v-else>جاري الحفظ...</span>
                           </button>
@@ -669,7 +669,7 @@ function updateResults(input) {
               <div class=" mr-5 print:hidden" >
                             <InputLabel for="pay" value="طباعة" />
                             <a
-                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded" style="display: block;text-align: center;"
+                            class="px-6 mb-6 py-2 mt-1 font-bold text-white bg-orange-500 rounded" style="display: block;text-align: center;"
                             :href="`/getIndexAccounting?user_id=${laravelData?.user?.id}&from=${from}&to=${to}&print=6`"
                             target="_blank"
                             >
@@ -682,11 +682,11 @@ function updateResults(input) {
               <div class="mr-5">
                 <InputLabel for="to" value="مصاريف" />
                           <Link
-                          v-if="$page.props.auth.user.type_id!=6"
+                          v-if="$page.props.auth.user.owner_id==1"
                             type="button"
                            href="/wallet?id=588"
                             style="min-width:150px;"
-                            class="px-6 mb-12 py-2 font-bold text-white bg-red-500 rounded  w-full mt-1 text-center">
+                            class="px-6 mb-6 py-2 font-bold text-white bg-red-500 rounded  w-full mt-1 text-center">
                               مصاريف الشركة
                           </Link>
               </div>
@@ -696,11 +696,11 @@ function updateResults(input) {
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
               <div>
                           <button
-                          v-if="$page.props.auth.user.type_id!=6"
+                          v-if="$page.props.auth.user.owner_id==1"
                             type="button"
                             @click="openModalExpensesFromOtherBransh(1)"
                             style="min-width:150px;"
-                            className="px-6 mb-12 py-2 font-bold text-white bg-red-500 rounded  w-full">
+                            className="px-6 mb-6 py-2 font-bold text-white bg-red-500 rounded  w-full">
                               تحويلات كركوك
                           </button>
                           <button
@@ -708,7 +708,7 @@ function updateResults(input) {
                             type="button"
                             @click="openModalAddExpensesToMainBransh(1)"
                             style="min-width:150px;"
-                            className="px-6 mb-12 py-2 font-bold text-white bg-red-500 rounded  w-full">
+                            className="px-6 mb-6 py-2 font-bold text-white bg-red-500 rounded  w-full">
                               تحويل لفرع أربيل
                           </button>
                         </div>
@@ -717,7 +717,7 @@ function updateResults(input) {
                             type="button"
                             @click="openAddGenExpenses(2)"
                             style="min-width:150px;"
-                            className="px-6 mb-12 text-center py-2 font-bold text-white bg-blue-600 rounded  w-full">
+                            className="px-6 mb-6 text-center py-2 font-bold text-white bg-blue-600 rounded  w-full">
                             {{ $t('dubai') }}
                           </button>
                         </div>
@@ -726,7 +726,7 @@ function updateResults(input) {
                             type="button"
                             @click="openAddGenExpenses(3)"
                             style="min-width:150px;"
-                            className="px-6 mb-12 text-center w-full py-2 font-bold text-white bg-blue-600 rounded">
+                            className="px-6 mb-6 text-center w-full py-2 font-bold text-white bg-blue-600 rounded">
                             {{ $t('iran') }}
                           </button>
                         </div>
@@ -735,7 +735,7 @@ function updateResults(input) {
                             type="button"
                             @click="openAddGenExpenses(4)"
                             style="min-width:150px;"
-                            className="px-6 mb-12 w-full py-2 font-bold text-white bg-indigo-600 rounded">
+                            className="px-6 mb-6 w-full py-2 font-bold text-white bg-indigo-600 rounded">
                             {{ $t('border') }} 
                           </button>
                         </div> 
@@ -744,7 +744,7 @@ function updateResults(input) {
                             type="button"
                             @click="openAddGenExpenses(5)"
                             style="min-width:150px;"
-                            className="px-6 mb-12 w-full py-2 font-bold text-white bg-pink-600 rounded">
+                            className="px-6 mb-6 w-full py-2 font-bold text-white bg-pink-600 rounded">
                             {{ $t('shipping_coc') }} 
                           </button>
                         </div>
@@ -753,7 +753,7 @@ function updateResults(input) {
                             type="button"
                             @click="openConvertDollarDinar()"
                             style="min-width:150px;"
-                            className="px-6 mb-12 w-full py-2 font-bold text-white bg-teal-500 rounded">
+                            className="px-6 mb-6 w-full py-2 font-bold text-white bg-teal-500 rounded">
                              تحويل دولار الى دينار  
                           </button>
                         </div>
@@ -762,10 +762,82 @@ function updateResults(input) {
                             type="button"
                             @click="openConvertDinarDollar()"
                             style="min-width:150px;"
-                            className="px-6 mb-12 w-full py-2 font-bold text-white bg-yellow-500 rounded">
+                            className="px-6 mb-6 w-full py-2 font-bold text-white bg-yellow-500 rounded">
                              تحويل دينار الى دولار  
                           </button>
                         </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
+            <div>
+                           <Link
+                          v-if="$page.props.auth.user.owner_id==1"
+                            type="button"
+                          href="/wallet?id=2625"
+                            style="min-width:150px;"
+                            class="px-6 mb-6 py-2 font-bold text-white bg-orange-300 rounded  w-full mt-1 text-center">
+                                مروان
+                          </Link>
+              </div>
+              <div>
+                           <Link
+                          v-if="$page.props.auth.user.owner_id==1"
+                            type="button"
+                          href="/wallet?id=2692"
+                            style="min-width:150px;"
+                            class="px-6 mb-6 py-2 font-bold text-white bg-orange-400 rounded  w-full mt-1 text-center">
+                               شركة رزكه
+                          </Link>
+              </div>
+              <div>
+                           <Link
+                          v-if="$page.props.auth.user.owner_id==1"
+                            type="button"
+                          href="/wallet?id=2436"
+                            style="min-width:150px;"
+                            class="px-6 mb-6 py-2 font-bold text-white bg-orange-500 rounded  w-full mt-1 text-center">
+                               نقل محمد كيانبور
+                          </Link>
+              </div>
+              <div>
+                           <Link
+                          v-if="$page.props.auth.user.owner_id==1"
+                            type="button"
+                          href="/wallet?id=589"
+                            style="min-width:150px;"
+                            class="px-6 mb-6 py-2 font-bold text-white bg-orange-600 rounded  w-full mt-1 text-center">
+                               كارزان تسجيل سيارات
+                          </Link>
+              </div>
+              <div>
+                           <Link
+                          v-if="$page.props.auth.user.owner_id==1"
+                            type="button"
+                          href="/wallet?id=1333"
+                            style="min-width:150px;"
+                            class="px-6 mb-6 py-2 font-bold text-white bg-orange-700 rounded  w-full mt-1 text-center">
+                               ابو عباس كركوك
+                          </Link>
+              </div>
+              <div>
+                           <Link
+                          v-if="$page.props.auth.user.owner_id==1"
+                            type="button"
+                          href="/wallet?id=238"
+                            style="min-width:150px;"
+                            class="px-6 mb-6 py-2 font-bold text-white bg-orange-800 rounded  w-full mt-1 text-center">
+                              مام سلام
+                          </Link>
+              </div>
+              <div>
+                           <Link
+                          v-if="$page.props.auth.user.owner_id==1"
+                            type="button"
+                          href="/wallet?id=1719"
+                            style="min-width:150px;"
+                            class="px-6 mb-6 py-2 font-bold text-white bg-orange-900 rounded  w-full mt-1 text-center">
+                               رواتب الشركة
+                          </Link>
+              </div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-3 lg:gap-3">
              
@@ -802,8 +874,7 @@ function updateResults(input) {
              
               </div>
             </div>
-           
-
+         
             <div class="overflow-x-auto shadow-md mt-5">
               <table class="w-full text-right text-gray-500   dark:text-gray-400 text-center">
                 <thead
