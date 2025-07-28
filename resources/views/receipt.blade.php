@@ -13,18 +13,19 @@ $Help = new MyHelp();
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 </head>
-@if($transactions_id)
-@foreach($clientData['transactions'] as $transaction)
-    @if($transaction->id == $transactions_id)
-    
-        <?php  
-        $currency = $transaction->currency;
-        $description =$transaction->description;
-        $amount= ($transaction->amount * -1)-$transaction->discount;
-        $created =$transaction->created_at ;
-       ?>
-    @endif
-@endforeach
+@if($transaction)
+
+
+  <?php  
+  $currency = $transaction->currency;
+  $description =$transaction->description;
+  $amount= ($transaction->amount)-$transaction->discount;
+  if($amount<0){
+    $amount= $amount * -1;
+  }
+  $created =$transaction->created_at ;
+  ?>
+
 @endif
 <style>
 @page {
@@ -86,7 +87,7 @@ $Help = new MyHelp();
 
       <div class="col-12  p-2  pe-5"> 
          مبلغ قدره :
-         {{ $Help->numberToWords($amount??0,$currency)}}
+         {{ $Help->numberToWords($amount??0,($currency??'$'))}}
         </div>
         <div class="col-12  p-2  pe-5"> 
           الملاحظات:
@@ -236,7 +237,7 @@ $Help = new MyHelp();
   
         <div class="col-12  p-2  pe-5"> 
            مبلغ قدره :
-           {{  $Help->numberToWords($amount??0,$currency)}}
+           {{  $Help->numberToWords($amount??0,($currency??'$'))}}
           </div>
           <div class="col-12  p-2  pe-5"> 
             الملاحظات:

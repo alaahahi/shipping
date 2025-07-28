@@ -921,7 +921,7 @@ function updateResults(input) {
                       <imags />
                     </button>
                       <a  target="_blank"
-                      v-if="tran.type === 'out' || tran.type === 'outUser'|| tran.type === 'debt'"
+                      v-if="tran.type === 'out' || tran.type === 'outUser'|| tran.type === 'debt'" 
                       style="display: inline-flex;"
                       :href="`/api/getIndexAccountsSelas?user_id=${boxes[0].id}&print=2&transactions_id=${tran.id}`"
                       tabIndex="1"
@@ -938,7 +938,25 @@ function updateResults(input) {
                       >
                       <print class="inline-flex" />
                       </a>
-                  </td>
+                      <a  target="_blank"
+                      v-if=" tran.type === 'inUserBox'"
+                      style="display: inline-flex;"
+                      :href="`/api/getIndexAccountsSelas?user_id=${tran.morphed_id}&print=3&transactions_id=${tran.id}`"
+                      tabIndex="1"
+                      class="px-1 py-1  text-white  m-1 bg-green-500 rounded"
+                      >
+                      <print class="inline-flex" />
+                      </a>
+                      <a  target="_blank"
+                      v-if=" tran.type === 'outUserBox'"
+                      style="display: inline-flex;"
+                      :href="`/api/getIndexAccountsSelas?user_id=${tran.morphed_id}&print=2&transactions_id=${tran.id}`"
+                      tabIndex="1"
+                      class="px-1 py-1  text-white  m-1 bg-green-500 rounded"
+                      >
+                      <print class="inline-flex" />
+                      </a>
+                   </td>
                   <td>
                     <a
                       v-for="(image, index) in tran.transactions_images"

@@ -468,15 +468,16 @@ class AccountingController extends Controller
 
          if($print==2){
             $config=SystemConfig::first();
+            $transaction = Transactions ::find($transactions_id);
 
-            return view('receipt',compact('clientData','config','transactions_id','owner_id'));
+            return view('receipt',compact('clientData','config','transactions_id','owner_id','transaction'));
          }
    
          
          if($print==3){
             $config=SystemConfig::first();
-
-            return view('receiptPayment',compact('clientData','config','transactions_id'));
+            $transaction = Transactions ::find($transactions_id);
+            return view('receiptPayment',compact('clientData','config','transactions_id','transaction'));
          }
          if($print==4){
             $config=SystemConfig::first();

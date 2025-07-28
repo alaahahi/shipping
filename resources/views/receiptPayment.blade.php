@@ -21,17 +21,19 @@ $Help = new MyHelp();
     }
     </style>
 </head>
-@if($transactions_id)
-@foreach($clientData['transactions'] as $transaction)
-    @if($transaction->id == $transactions_id)
-        <?php 
-        $currency = $transaction->currency;
-        $description =$transaction->description;
-        $amount= ($transaction->amount);
-        $created =$transaction->created_at ;
-       ?>
-    @endif
-@endforeach
+@if($transaction)
+
+
+  <?php  
+  $currency = $transaction->currency;
+  $description =$transaction->description;
+  $amount= ($transaction->amount)-$transaction->discount;
+  if($amount<0){
+    $amount= $amount * -1;
+  }
+  $created =$transaction->created_at ;
+  ?>
+
 @endif
 <body style="direction: rtl;">
 <div class="container-fluid mt-2 " style="border: 2px solid">       
@@ -84,11 +86,11 @@ $Help = new MyHelp();
 
       <div class="col-12  p-2  pe-5"> 
          مبلغ قدره :
-         {{ $Help->numberToWords($amount??0,$currency)}}
+         {{ $Help->numberToWords($amount??0,($currency??'$'))}}
         </div>
         <div class="col-12  p-2  pe-5"> 
           الملاحظات:
-          {{$description}}
+          {{$description??''}}
          </div>
         
         
@@ -101,10 +103,10 @@ $Help = new MyHelp();
      المبلغ:
     </div>
     <div class="col-1 alert-primary border p-2">
-    {{$amount}}
+    {{$amount ?? 0}}
     </div>
     <div class="col-1 alert-primary border p-2">
-      {{$currency}}
+      {{$currency ?? '$'}}
     </div>
     <div class="col-8 text-start ps-5">
       اسم وتوقيع المستلم
@@ -221,11 +223,11 @@ $Help = new MyHelp();
   
         <div class="col-12  p-2  pe-5"> 
            مبلغ قدره :
-           {{  $Help->numberToWords($amount??0,$currency)}}
+           {{  $Help->numberToWords($amount??0,($currency??'$'))}}
           </div>
           <div class="col-12  p-2  pe-5"> 
             الملاحظات:
-            {{$description}}
+            {{$description ??''}}
            </div>
           
           
@@ -238,10 +240,10 @@ $Help = new MyHelp();
        المبلغ:
       </div>
       <div class="col-1 alert-primary border p-2">
-      {{$amount}}
+      {{$amount ?? 0}}
       </div>
       <div class="col-1 alert-primary border p-2">
-        {{$currency}}
+        {{$currency ?? '$'}}
       </div>
       <div class="col-8 text-start ps-5">
         اسم وتوقيع المستلم
