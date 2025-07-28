@@ -70,6 +70,7 @@ class DashboardController extends Controller
     }
     public function purchases(Request $request)
     {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         $owner_id=Auth::user()->owner_id;
         $car = Car::all()->where('owner_id',$owner_id);
         $allCars = $car->count();
@@ -86,6 +87,7 @@ class DashboardController extends Controller
     }
     public function sales(Request $request)
     {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         $owner_id=Auth::user()->owner_id;
         $car = Car::all()->where('owner_id',$owner_id);
         $allCars = $car->count();
@@ -124,7 +126,7 @@ class DashboardController extends Controller
          $sumDebit =Wallet::whereIn('user_id', $client)->sum('balance');
         $sumPaid = $car->sum('paid')+ $car->sum('discount');
         $sumProfit = $car->where('results',2)->sum('profit');
-
+        
         $data = [
         'mainAccount'=>$sumTotal -$sumPaid ,
         

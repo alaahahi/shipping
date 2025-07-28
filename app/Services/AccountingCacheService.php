@@ -59,7 +59,7 @@ class AccountingCacheService
         ];
   
         foreach ($accounts as $key => $email) {
-            Cache::rememberForever("account_{$ownerId}_$key", function () use ($accountId, $ownerId, $email) {
+        Cache::remember("account_{$ownerId}_$key", now()->addMinutes(60), function () use ($accountId, $ownerId, $email) {
                 return User::with('wallet')
                     ->where('owner_id', $ownerId)
                     ->where('email', $email)
