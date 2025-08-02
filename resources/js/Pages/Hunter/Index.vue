@@ -350,6 +350,9 @@ function getDownloadUrl(name,year) {
                                       <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t('note') }}
                                       </th>
+                                          <th scope="col" class="px-1 py-3 text-base">
+                                        الحالة
+                                      </th>
                                       <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t('date') }}
                                       </th>
