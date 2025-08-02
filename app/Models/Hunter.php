@@ -32,9 +32,9 @@ class Hunter extends Model
     {
         return $this->belongsTo(User::class);
     }
-    public function CarImages()
+    public function CarImagesHunter()
     {
-        return $this->hasMany(CarImages::class, 'car_id');
+        return $this->hasMany(CarImagesHunter::class, 'car_id');
     }
 
 }

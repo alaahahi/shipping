@@ -8,7 +8,7 @@ use Inertia\Inertia;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\UserType;
-use App\Models\Contract;
+use App\Models\CarImagesHunter;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
@@ -18,8 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use App\Models\Hunter;
-use App\Models\ContractImg;
-
+ 
 
 use Intervention\Image\Facades\Image;
 use File;
@@ -70,7 +69,7 @@ class HunterController extends Controller
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
         $limit =$_GET['limit'] ?? 0;
-        $data =  Hunter::with('client')->with('CarImages')->orderBy('created_at', 'desc');
+        $data =  Hunter::with('client')->with('CarImagesHunter')->orderBy('created_at', 'desc');
         $totalCars = $data->count();
         if($q){
             $data = $data->orwhere('vin', 'LIKE','%'.$q.'%')->orwhere('car_type', 'LIKE','%'.$q.'%')->orWhereHas('client', function ($query) use ($q) {
@@ -120,22 +119,13 @@ class HunterController extends Controller
         });
     
         $image->save(public_path('uploadsResized/' . $name));
-        if($img_type){
         // Create a new record in the database
-        $carImage = ContractImg::create([
+        $carImage = CarImagesHunter::create([
             'name' => $name,
             'car_id' => $carId,
             'year' => $year,
         ]);
-        }else{
-        // Create a new record in the database
-        $carImage = CarImages::create([
-            'name' => $name,
-            'car_id' => $carId,
-            'year' => $year,
-        ]);
-    
-        }
+        
 
         return response()->json($carImage, 200);
     }
@@ -145,11 +135,8 @@ class HunterController extends Controller
 
         File::delete(public_path('uploads/'.$name));
         File::delete(public_path('uploadsResized/'.$name));
-        if($img_type){
-            ContractImg::where('name', $name)->delete();
-        }else{
-            CarImages::where('name', $name)->delete();
-        }
+        CarImagesHunter::where('name', $name)->delete();
+    
         
         return Response::json('deleted is done', 200);
 
@@ -162,13 +149,13 @@ class HunterController extends Controller
         'car_color'=>$request->car_color,
         'year'=>$request->year,
         'note'=>$request->note,
-        'price_p'=> $request->price_p,
+         'price_p'=> $request->price_p,
         'price_s'=> $request->price_s,
         'vin'=>$request->vin]);
         return Response::json($hunter, 200);
     }
     public function delCarsHunterr(Request $request){
-        $hunter = Hunter::with('CarImages')->find($request->id);
+        $hunter = Hunter::with('CarImagesHunter')->find($request->id);
 
         if ($hunter) {
             foreach ($hunter->CarImages as $carImage) {

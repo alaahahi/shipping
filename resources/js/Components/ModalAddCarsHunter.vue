@@ -24,7 +24,7 @@ let showClient = ref(true);
 
 
 function removeMedia(removedImage){
-              axios.get('/api/carsAnnualImageDel?name='+removedImage.name)
+              axios.get('/api/carsHunterImageDel?name='+removedImage.name)
             .then(response => {
               toast.success("تم  حذف الصورة بنجاح", {
                   timeout: 5000,
@@ -163,7 +163,7 @@ function removeMedia(removedImage){
                 <label class="form-label">الصور</label>
                 <div class="mt-3">
                     <Uploader 
-                        :server="'/api/carsAnnualUpload?carId='+saveCar"
+                        :server="'/api/carsHunterUpload?carId='+saveCar"
                         :is-invalid="errors?.media ? true : false"
                         @change="changeMedia"
                         location="/storage/posts/media"
