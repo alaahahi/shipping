@@ -386,7 +386,9 @@ class CarConfigController extends Controller
         $car_vin = $request->get('car_vin');
         $car = Car::where('vin',$car_vin)->first();
         $hunter = Hunter::where('vin',$car_vin)->where('status',1)->first();
-        $hunter->update(['status'=>2]);
+        if($hunter){
+                    $hunter->update(['status'=>2]);
+        }
         if($car){
             return response()->json($car); 
         }elseif($hunter)
