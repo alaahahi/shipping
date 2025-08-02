@@ -158,7 +158,7 @@ class HunterController extends Controller
         $hunter = Hunter::with('CarImagesHunter')->find($request->id);
 
         if ($hunter) {
-            foreach ($hunter->CarImages as $carImage) {
+            foreach ($hunter->CarImagesHunter as $carImage) {
                 // Delete the image file from the public directory
                 File::delete(public_path('uploads/' . $carImage->name));
                 File::delete(public_path('uploadsResized/' . $carImage->name));
