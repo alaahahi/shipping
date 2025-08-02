@@ -155,7 +155,7 @@ function getTodayDate() {
                     formData = '';
                     showClient=false;
                   "
-                  :disabled="(!formData.client_id)&&(!formData.client_name)">
+                  :disabled="(!formData.vin)">
                 حفظ المعلومات    
                 </button>
               </div>
