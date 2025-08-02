@@ -301,13 +301,7 @@ function getDownloadUrl(name,year) {
                           </form>
                         </div>
         
-                        <div>
-                            <select @change="refresh()" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
-                              <option value="0" disabled> {{ $t("selectCustomer") }}</option>
-                              <option value="">{{ $t("allOwners") }}</option>
-                              <option v-for="(user, index) in clientHunter" :key="index" :value="user.id">{{ user.name }}</option>
-                            </select>
-                        </div>
+                    
                         <div class="text-center">
                           <button
                             type="button"

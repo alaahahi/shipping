@@ -140,7 +140,15 @@ const switchLocale = (locale) => {
                 {{ $t("CompanyExpenses") }}
                 </NavLink>
               </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.owner_id==1">
+                <NavLink
+                  :href="route('hunter')"
+                  :active="route().current('hunter')"
 
+                >
+                عاطل
+                </NavLink>
+              </div>
               <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                 <NavLink
                   :href="route('dubai')"
@@ -402,6 +410,14 @@ const switchLocale = (locale) => {
               >
               محاسبة عقود
               </ResponsiveNavLink>
+              <ResponsiveNavLink
+                :href="route('hunter')"
+                :active="route().current('hunter')"
+                v-if="$page.props.auth.user.type_id==8"
+              >
+              عاطل 
+              </ResponsiveNavLink>
+
               <ResponsiveNavLink
                 :href="route('logout')"
                 method="post"
