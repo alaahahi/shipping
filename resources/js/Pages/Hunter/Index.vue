@@ -376,7 +376,7 @@ function getDownloadUrl(name,year) {
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">
                                       
                                       <a
-                                      v-for="(image, index) in car.car_images"
+                                      v-for="(image, index) in car.car_images_hunter"
                                       :key="index"
                                       :href="getDownloadUrl(image.name,image.year)"
                                       style="cursor: pointer;"

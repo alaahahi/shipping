@@ -124,7 +124,7 @@ function getTodayDate() {
                         @change="changeMedia"
                         @initMedia="media"
                         location="/public/uploadsResized"
-                        :media="formData.car_images"
+                        :media="formData.car_images_hunter"
                         @add="addMedia"
                         @remove="removeMedia"
                     />
