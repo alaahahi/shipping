@@ -27,7 +27,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Facades\Image;
-
+use App\Models\Hunter;
+use App\Models\CarImages;
 
 
 
@@ -384,8 +385,13 @@ class CarConfigController extends Controller
     public function check_vin (Request $request){
         $car_vin = $request->get('car_vin');
         $car = Car::where('vin',$car_vin)->first();
+        $hunter = Hunter::where('vin',$car_vin)->where('status',1)->first();
+        $hunter->update(['status'=>2]);
         if($car){
             return response()->json($car); 
+        }elseif($hunter)
+        {
+            return response()->json($hunter); 
         }else{
             return response()->json(false); 
 

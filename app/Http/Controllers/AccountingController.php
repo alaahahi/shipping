@@ -224,6 +224,7 @@ class AccountingController extends Controller
      }
      public function salesDebtUser(Request $request)
      {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
       $owner_id=Auth::user()->owner_id;
       $note= $request->note??'';
       $amountDollar= $request->amountDollar??0;
@@ -248,6 +249,7 @@ class AccountingController extends Controller
       }
      public function salesDebt(Request $request)
      {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
       $owner_id=Auth::user()->owner_id;
       $user_id= $request->user['id']??0;
       $note= $request->note??'';
@@ -271,6 +273,7 @@ class AccountingController extends Controller
       }
       public function receiptArrived(Request $request)
       {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
        $owner_id=Auth::user()->owner_id;
        $note= $request->amountNote??'';
        $amountDollar= $request->amountDollar??0;
@@ -290,6 +293,7 @@ class AccountingController extends Controller
        }
        public function receiptArrivedUser(Request $request)
        {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         $owner_id=Auth::user()->owner_id;
         $note= $request->amountNote??'';
         $user_id=$request->id;
@@ -318,6 +322,7 @@ class AccountingController extends Controller
         }
     public function getIndexAccountsSelas()
     { 
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         $owner_id=Auth::user()->owner_id;
         $user_id = $_GET['user_id'] ?? 0;
         $from =  $_GET['from'] ?? 0;
@@ -493,6 +498,8 @@ class AccountingController extends Controller
     }
     public function paySelse(Request $request,$id)
     {
+
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         try {
             DB::beginTransaction();
             // Perform your database operations with Eloquent
@@ -515,6 +522,7 @@ class AccountingController extends Controller
     }
     public function addPaymentCar()
     {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         $owner_id=Auth::user()->owner_id;
         $user_id = $_GET['user_id']??0;
         $car_id = $_GET['car_id']??0;
@@ -552,6 +560,7 @@ class AccountingController extends Controller
     }
     public function addPaymentCarTotal()
     {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         $owner_id=Auth::user()->owner_id;
         $client_id  = $_GET['client_id']  ??0;
         $amount_o  = $_GET['amount']  ??0;
@@ -699,6 +708,7 @@ class AccountingController extends Controller
 
     }
     public function convertDollarDinar(Request $request){
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         $owner_id=Auth::user()->owner_id;
         $amountDollar =$request->amountDollar;
         $amountResultDinar =$request->amountResultDinar;
@@ -719,6 +729,7 @@ class AccountingController extends Controller
 
     }
     public function convertDinarDollar(Request $request){
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         $owner_id=Auth::user()->owner_id;
         $amountDinar =$request->amountDinar;
         $amountResultDollar =$request->amountResultDollar;
@@ -739,6 +750,7 @@ class AccountingController extends Controller
     }
     public function checkClientBalance(Request $request)
     {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         $userId= $request->userId;
         $currentBalance= $request->currentBalance;
         $user = User::with('wallet')->where('id',$userId)->first();
@@ -752,48 +764,10 @@ class AccountingController extends Controller
         }
         return Response::json('balance is good',200);
     }
-    public function receiveCard(Request $request)
-    {
-        $authUser = auth()->user();
 
-        $profile_id = $_GET['id'] ?? 0;
-
-        $profile = Profile::find($profile_id);
-
-        $wallet = Wallet::where('user_id', $profile->user_id)->first();
-
-        $user = User::find($profile->user_id);
-
-        $old_card = $wallet->card; 
-
-        $old_balance = $wallet->balance;
-
-        $card_price = $card->price;
-
-        $percentage = $user->percentage;
-
-        $new_balance =  $old_balance + $percentage;
-
-        try {
-            DB::beginTransaction();
-
-            $profile->update(['results'=>1,'user_accepted'=>$authUser->id]);
-            $this->increaseWallet($percentage,' نسبة على البطاقة رقم '.$profile?->card_number,$user->id);
-            $wallet->update(['card' => $old_card-1,'balance'=>$new_balance]);
-
-            DB::commit();
-
-        } catch (\Exception $e) {
-
-            DB::rollBack();
-
-        }
-
-        return Response::json($new_balance, 200);
-
-    }
     public function increaseWallet(int $amount,$desc,$user_id,$morphed_id='',$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0,$type='in',$details=[]) 
     {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         if($amount){
             if($created==0){
                 $created=$this->currentDate;
@@ -822,6 +796,7 @@ class AccountingController extends Controller
 
     public function decreaseWallet(int $amount,$desc,$user_id,$morphed_id=0,$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0,$type='out',$details=[]) 
     {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         if($amount){
         if($created==0){
             $created=$this->currentDate;
@@ -854,7 +829,7 @@ class AccountingController extends Controller
     }
     public function debtWallet(int $amount,$desc,$user_id,$morphed_id=0,$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0,$type='debt')  
     {
-
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         if($created==0){
             $created=$this->currentDate ;
         }
@@ -881,6 +856,7 @@ class AccountingController extends Controller
  
     public function delTransactions(Request $request)
     {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
         $owner_id=Auth::user()->owner_id;
         $transaction_id = $request->id ?? 0;
         $originalTransaction = Transactions::find($transaction_id);

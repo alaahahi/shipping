@@ -17,6 +17,7 @@ use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\TransfersController;
 use App\Http\Controllers\CarConfigController;
 use App\Http\Controllers\OnlineContractsController;
+use App\Http\Controllers\HunterController;
 use App\Http\Controllers\AnnualController;
 use App\Http\Controllers\CarExpensesController;
 use App\Http\Controllers\CarContractController;
@@ -112,7 +113,7 @@ Route::get('addColor',[CarConfigController::class, 'storeColor'])->name('addColo
 Route::post('addCar',[DashboardController::class, 'addCar'])->name('addCar');
 Route::post('addCars',[DashboardController::class, 'addCars'])->name('addCars');
 
-Route::post('addCarsAnnual',[AnnualController::class, 'addCarsAnnual'])->name('addCarsAnnual');
+Route::post('addCarsHunter',[HunterController::class, 'addCarsHunter'])->name('addCarsHunter');
 
 
 Route::post('updateCarsS',[DashboardController::class, 'updateCarsS'])->name('updateCarsS');
@@ -130,12 +131,21 @@ Route::get('client',[DashboardController::class, 'client'])->name('client');
 Route::get('getIndexCar',[DashboardController::class, 'getIndexCar'])->name('getIndexCar');
 Route::get('getIndexCarSearch',[DashboardController::class, 'getIndexCarSearch'])->name('getIndexCarSearch');
 Route::get('totalInfo',[DashboardController::class, 'totalInfo'])->name('totalInfo');
+
+
 Route::get('getIndexCarAnnual',[AnnualController::class, 'getIndexCarAnnual'])->name('getIndexCarAnnual');
 
 Route::post('carsAnnualUpload',[AnnualController::class, 'carsAnnualUpload'])->name('carsAnnualUpload');
 Route::get('carsAnnualImageDel',[AnnualController::class, 'carsAnnualImageDel'])->name('carsAnnualImageDel');
 Route::post('updateCarsAnnual',[AnnualController::class, 'updateCarsAnnual'])->name('updateCarsAnnual');
 Route::post('delCarsAnnualr',[AnnualController::class, 'delCarsAnnualr'])->name('delCarsAnnualr');
+
+Route::get('getIndexCarHunter',[HunterController::class, 'getIndexCarHunter'])->name('getIndexCarHunter');
+
+Route::post('carsHunterUpload',[HunterController::class, 'carsHunterUpload'])->name('carsHunterUpload');
+Route::get('carsHunterImageDel',[HunterController::class, 'carsHunterImageDel'])->name('carsHunterImageDel');
+Route::post('updateCarsHunter',[HunterController::class, 'updateCarsHunter'])->name('updateCarsHunter');
+Route::post('delCarsHunterr',[HunterController::class, 'delCarsHunterr'])->name('delCarsHunterr'); 
 
 Route::post('TransactionsUpload',[AccountingController::class, 'TransactionsUpload'])->name('TransactionsUpload');
 Route::get('TransactionsImageDel',[AccountingController::class, 'TransactionsImageDel'])->name('TransactionsImageDel');

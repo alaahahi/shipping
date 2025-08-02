@@ -14,6 +14,8 @@ use App\Http\Controllers\OnlineContractsController;
 use App\Http\Controllers\AnnualController;
 use App\Http\Controllers\CarExpensesController;
 use App\Http\Controllers\CarContractController;
+use App\Http\Controllers\HunterController;
+
 
 use App\Models\SystemConfig;
 
@@ -165,6 +167,7 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('getIndexAccounting',[AccountingController::class, 'getIndexAccounting'])->name("getIndexAccounting");
 
     Route::get('annual_information',[AnnualController::class, 'index'])->name('annual_information');
+    Route::get('hunter',[HunterController::class, 'index'])->name('hunter');
 
     Route::get('wallet',[AccountingController::class, 'wallet'])->name("wallet");
 

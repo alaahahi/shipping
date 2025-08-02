@@ -167,11 +167,21 @@ function onSelect (items, lastSelectItem) {
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.vin"
                 />
-                <div class="text-red-700" v-if="showErrorVin">
-                  رقم الشاصي مستخدم -{{ showErrorVin.car_type  }}-{{ showErrorVin.year }}-بتاريخ 
-                  <br>
-                  {{ showErrorVin.date }}
-                </div>
+         <div class="text-red-700" v-if="showErrorVin.client_id">
+            رقم الشاصي مستخدم - {{ showErrorVin.car_type }} - {{ showErrorVin.year }} - بتاريخ 
+            <br>
+            {{ showErrorVin.date }}
+          </div>
+
+          <div class="text-red-700" v-else-if="showErrorVin.price_s">
+            رقم الشاصي عاطل - {{ showErrorVin.car_type }} - {{ showErrorVin.year }} 
+            <br>
+            سعر المشتريات {{ showErrorVin.price_p }}
+            و سعر المبيعات {{ showErrorVin.price_s }}
+            -
+            بتاريخ
+            {{ showErrorVin.date }}
+          </div>
               </div>
               <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="pin">
