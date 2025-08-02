@@ -371,6 +371,7 @@ function getDownloadUrl(name,year) {
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_color }}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.vin }}</td>                         
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.note }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.status== 1 ? 'لم يتم الربط' : 'تم الربط' }}</td>
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.date  }}</td>
 
                                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">
