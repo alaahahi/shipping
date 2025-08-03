@@ -115,6 +115,7 @@ Route::post('addCars',[DashboardController::class, 'addCars'])->name('addCars');
 
 Route::post('addCarsHunter',[HunterController::class, 'addCarsHunter'])->name('addCarsHunter');
 
+Route::post('addCarsAnnual',[AnnualController::class, 'addCarsAnnual'])->name('addCarsAnnual');
 
 Route::post('updateCarsS',[DashboardController::class, 'updateCarsS'])->name('updateCarsS');
 Route::post('updateCarsP',[DashboardController::class, 'updateCarsP'])->name('updateCarsP');
