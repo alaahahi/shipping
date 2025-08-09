@@ -667,16 +667,15 @@ function updateResults(input) {
                           </button>
               </div>
               <div class=" mr-5 print:hidden" >
-                            <InputLabel for="pay" value="طباعة" />
-                            <a
-                            class="px-6 mb-6 py-2 mt-1 font-bold text-white bg-orange-500 rounded" style="display: block;text-align: center;"
-                            :href="`/getIndexAccounting?user_id=${laravelData?.user?.id}&from=${from}&to=${to}&print=6`"
-                            target="_blank"
-                            >
-                            
-                            <span v-if="!isLoading">طباعة</span>
-                            <span v-else>جاري الحفظ...</span>
-                          </a>
+                            <InputLabel for="pay" value="قاسه" />
+                           <Link
+                          v-if="$page.props.auth.user.owner_id==1"
+                            type="button"
+                          href="/wallet?id=2756"
+                            style="min-width:150px;"
+                            class="px-6 mb-6 py-2 font-bold text-white bg-orange-800 rounded  w-full mt-1 text-center">
+                               حولات حاجى عمران
+                          </Link>
               </div>
 
               <div class="mr-5">
