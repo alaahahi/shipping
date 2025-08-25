@@ -147,7 +147,7 @@ class DashboardController extends Controller
             ->sum('amount');
 
         $transactionOutTodayDollar = (int) $transactionsTodayDollar->clone()
-            ->whereIn('type', ['out', 'debt'])
+            ->whereIn('type', ['out', 'debt', 'outUserBox'])
             ->sum('amount');
 
         $transactionInTodayDinar = (int) $transactionsTodayDinar->clone()
@@ -155,7 +155,7 @@ class DashboardController extends Controller
             ->sum('amount');
 
         $transactionOutTodayDinar = (int) $transactionsTodayDinar->clone()
-            ->whereIn('type', ['out', 'debt'])
+            ->whereIn('type', ['out', 'debt', 'outUserBox'])
             ->sum('amount');
         
         $data = [
