@@ -136,7 +136,7 @@ class DashboardController extends Controller
         });
 
           $transactionsTodayDinar = Transactions::where('wallet_id', $mainBoxId)
-        ->where('currency', '$')
+        ->where('currency', 'IQD')
         ->when($from && $to, function ($q) use ($from, $to) {
             $q->whereBetween('created', [$from, $to]);
         });
