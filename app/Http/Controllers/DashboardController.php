@@ -104,8 +104,10 @@ class DashboardController extends Controller
     }
     public function totalInfo(Request $request)
     {
-         $owner_id=Auth::user()->owner_id;
-         $this->accounting->loadAccounts($owner_id);
+        $owner_id=Auth::user()->owner_id;
+        $this->accounting->loadAccounts($owner_id);
+        $from =  $_GET['from'] ?? Carbon::now()->format('Y-m-d');
+        $to =$_GET['to'] ?? Carbon::now()->format('Y-m-d');
         $mainBoxId=$this->accounting->mainBox()->wallet->id;
        
         $transactionIn = (int) Transactions::where('wallet_id', $mainBoxId)
@@ -123,9 +125,38 @@ class DashboardController extends Controller
         $sumTotal = $car->sum('total');
         $sumTotalS = $car->sum('total_s');
         $client = User::where('type_id', $this->accounting->userClient())->where('owner_id',$owner_id)->pluck('id');
-         $sumDebit =Wallet::whereIn('user_id', $client)->sum('balance');
+        $sumDebit =Wallet::whereIn('user_id', $client)->sum('balance');
         $sumPaid = $car->sum('paid')+ $car->sum('discount');
         $sumProfit = $car->where('results',2)->sum('profit');
+
+         $transactionsTodayDollar = Transactions::where('wallet_id', $mainBoxId)
+        ->where('currency', '$')
+        ->when($from && $to, function ($q) use ($from, $to) {
+            $q->whereBetween('created', [$from, $to]);
+        });
+
+          $transactionsTodayDinar = Transactions::where('wallet_id', $mainBoxId)
+        ->where('currency', '$')
+        ->when($from && $to, function ($q) use ($from, $to) {
+            $q->whereBetween('created', [$from, $to]);
+        });
+
+
+        $transactionInTodayDollar = (int) $transactionsTodayDollar->clone()
+            ->whereIn('type', ['in', 'inUserBox'])
+            ->sum('amount');
+
+        $transactionOutTodayDollar = (int) $transactionsTodayDollar->clone()
+            ->whereIn('type', ['out', 'debt'])
+            ->sum('amount');
+
+        $transactionInTodayDinar = (int) $transactionsTodayDinar->clone()
+            ->whereIn('type', ['in', 'inUserBox'])
+            ->sum('amount');
+
+        $transactionOutTodayDinar = (int) $transactionsTodayDinar->clone()
+            ->whereIn('type', ['out', 'debt'])
+            ->sum('amount');
         
         $data = [
         'mainAccount'=>$sumTotal -$sumPaid ,
@@ -145,7 +176,11 @@ class DashboardController extends Controller
         'clientDebit'=>$sumDebit ?? 0,
         'mainBoxDollar'=>$this->accounting->mainBox()->wallet->balance??0,
         'mainBoxDinar' =>$this->accounting->mainBox()->wallet->balance_dinar??0,
-        'mainBoxDollarNew'=>$transactionIn+$transactionOut
+        'mainBoxDollarNew'=>$transactionIn+$transactionOut,
+        'transactionInTodayDollar' => $transactionInTodayDollar,
+        'transactionOutTodayDollar' => $transactionOutTodayDollar,
+        'transactionInTodayDinar' => $transactionInTodayDinar,
+        'transactionOutTodayDinar' => $transactionOutTodayDinar,
 
         
         ];
