@@ -61,6 +61,10 @@ let iran= ref(0)
 let dubai= ref(0)
 let debtOnlineContracts= ref(0)
 let allCars= ref(0)
+let transactionInTodayDollar = ref(0)
+let transactionInTodayDinar = ref(0)
+let transactionOutTodayDollar = ref(0)
+let transactionOutTodayDinar = ref(0)
 let onlineContractsDinar = ref(0)
 let debtOnlineContractsDinar = ref(0)
 let resetData = ref(false);
@@ -125,6 +129,11 @@ const getcountTotalInfo = async () => {
     onlineContractsDinar.value =response.data.data.onlineContractsDinar
     debtOnlineContractsDinar.value = response.data.data.debtOnlineContractsDinar
     allCars.value =response.data.data.allCars;
+    transactionInTodayDollar.value = response.data.data.transactionInTodayDollar
+    transactionOutTodayDollar.value = response.data.data.transactionOutTodayDollar
+    transactionInTodayDinar.value = response.data.data.transactionInTodayDinar
+    transactionOutTodayDinar.value = response.data.data.transactionOutTodayDinar
+
   })
   .catch(error => {
     console.error(error);
@@ -838,7 +847,7 @@ function updateResults(input) {
                           </Link>
               </div>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-3 lg:gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3 lg:gap-3">
              
 
 
@@ -872,6 +881,39 @@ function updateResults(input) {
                                 @input="debouncedGetResultsCar"                              />
              
               </div>
+               <div class="relative w-full px-4">
+                          <table class="w-full border border-gray-300 text-center text-sm">
+                            <thead class="bg-gray-100">
+                              <tr>
+                                <th class="border p-2">العملة</th>
+                                <th class="border p-2">الدخل</th>
+                                <th class="border p-2">الخروج</th>
+                                <th class="border p-2">الفرق</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <!-- دولار -->
+                              <tr>
+                                <td class="border p-2 font-bold text-blue-600">دولار</td>
+                                <td class="border p-2 text-green-600">{{updateResults(transactionInTodayDollar)}}</td>
+                                <td class="border p-2 text-red-600">{{updateResults(transactionOutTodayDollar)}}</td>
+                                <td class="border p-2 font-semibold">
+                                  <span :class="(transactionInTodayDollar - transactionOutTodayDollar) > 0 ? 'text-green-600' : 'text-red-600'" >{{updateResults(transactionInTodayDollar - transactionOutTodayDollar)}}</span>
+                                </td>
+                              </tr>
+                              <!-- دينار -->
+                              <tr>
+                                <td class="border p-2 font-bold text-blue-600">دينار</td>
+                                <td class="border p-2 text-green-600">{{updateResults(transactionInTodayDinar)}}</td>
+                                <td class="border p-2 text-red-600">{{updateResults(transactionOutTodayDinar)}}</td>
+                                <td class="border p-2 font-semibold">
+                                  <span :class="(transactionInTodayDinar - transactionOutTodayDinar) > 0 ? 'text-green-600' : 'text-red-600'">{{updateResults(transactionInTodayDinar - transactionOutTodayDinar)}}</span>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+
             </div>
          
             <div class="overflow-x-auto shadow-md mt-5">
