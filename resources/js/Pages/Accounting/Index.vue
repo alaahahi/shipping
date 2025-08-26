@@ -898,7 +898,7 @@ function updateResults(input) {
                                 <td class="border p-2 text-green-600">{{updateResults(transactionInTodayDollar)}}</td>
                                 <td class="border p-2 text-red-600">{{updateResults(transactionOutTodayDollar)}}</td>
                                 <td class="border p-2 font-semibold">
-                                  <span :class="(transactionInTodayDollar - transactionOutTodayDollar) > 0 ? 'text-green-600' : 'text-red-600'" >{{updateResults(transactionInTodayDollar - transactionOutTodayDollar)}}</span>
+                                  <span :class="(transactionInTodayDollar + transactionOutTodayDollar) > 0 ? 'text-green-600' : 'text-red-600'" >{{updateResults(transactionInTodayDollar + transactionOutTodayDollar)}}</span>
                                 </td>
                               </tr>
                               <!-- دينار -->
@@ -907,7 +907,7 @@ function updateResults(input) {
                                 <td class="border p-2 text-green-600">{{updateResults(transactionInTodayDinar)}}</td>
                                 <td class="border p-2 text-red-600">{{updateResults(transactionOutTodayDinar)}}</td>
                                 <td class="border p-2 font-semibold">
-                                  <span :class="(transactionInTodayDinar - transactionOutTodayDinar) > 0 ? 'text-green-600' : 'text-red-600'">{{updateResults(transactionInTodayDinar - transactionOutTodayDinar)}}</span>
+                                  <span :class="(transactionInTodayDinar + transactionOutTodayDinar) > 0 ? 'text-green-600' : 'text-red-600'">{{updateResults(transactionInTodayDinar + transactionOutTodayDinar)}}</span>
                                 </td>
                               </tr>
                             </tbody>
