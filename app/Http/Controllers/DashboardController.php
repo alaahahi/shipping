@@ -582,91 +582,104 @@ class DashboardController extends Controller
     }
     public function getIndexCar(Request $request)
     {
-        $owner_id=Auth::user()->owner_id;
+        $owner_id = Auth::user()->owner_id;
         $car_have_expenses = $request->car_have_expenses ?? '';
-        $user_id =$_GET['user_id'] ?? '';
-        $q = $_GET['q']??'';
-        $from =  $_GET['from'] ?? 0;
-        $to =$_GET['to'] ?? 0;
-        $limit =$_GET['limit'] ?? 0;
-        $printExcel=$_GET['printExcel'] ?? 0;
+        $user_id = $request->get('user_id') ?? '';
+        $q = $request->get('q') ?? '';
+        $from = $request->get('from') ?? 0;
+        $to = $request->get('to') ?? 0;
+        $limit = $request->get('limit') ?? 15;
+        $printExcel = $request->get('printExcel') ?? 0;
 
-        if($car_have_expenses||$car_have_expenses==1){
-            $data = Car::with('contract','CarImages', 'exitcar','client','carexpenses.user')->where('owner_id', $owner_id)->where('car_have_expenses', $car_have_expenses);
-            
-        }else{
-            $data = Car::with('contract','CarImages', 'exitcar', 'client')->where('owner_id', $owner_id);
+        // بناء الاستعلام الأساسي مع تحسين الأداء
+        $baseQuery = Car::query()->where('owner_id', $owner_id);
+        
+        // إضافة فلاتر إضافية
+        if ($car_have_expenses || $car_have_expenses == 1) {
+            $baseQuery->where('car_have_expenses', $car_have_expenses);
         }
-
+        
         if ($from && $to) {
-            $data->whereBetween('date', [$from, $to]);
+            $baseQuery->whereBetween('date', [$from, $to]);
         }
         
-        $resultsDinar = $data->sum('dinar');
-        $resultsDollar = $data->sum('total');
-        $resultsTotalS = $data->sum('total_s');
-        $resultsProfit = $data->sum('profit');
-        $resultsPaid = $data->sum('paid');
-        $totalCars = $data->count();
-        
-        $type = $_GET['type'] ?? '';
-        
-        if ($type == 'debitContract') {
-            $data->whereHas('contract', function ($query) use ($q) {
-                $query->where('name', 'LIKE', '%' . $q . '%');
-            });
-        } elseif ($type) {
-            $data->where('results', $type);
+        if ($user_id) {
+            $baseQuery->where('client_id', $user_id);
         }
-        if($q){
-            $data->where(function ($query) use ($q) {
+        
+        // تطبيق البحث النصي المحسن
+        if ($q) {
+            $baseQuery->where(function ($query) use ($q) {
                 $query->where('car_number', 'LIKE', '%' . $q . '%')
-                    ->orWhere('vin', 'LIKE', '%' . $q . '%')
-                    ->orWhere('car_type', 'LIKE', '%' . $q . '%')
-                    ->orWhereHas('client', function ($subquery) use ($q) {
-                        $subquery->where('name', 'LIKE', '%' . $q . '%');
-                    });
+                      ->orWhere('vin', 'LIKE', '%' . $q . '%')
+                      ->orWhere('car_type', 'LIKE', '%' . $q . '%')
+                      ->orWhereHas('client', function ($subquery) use ($q) {
+                          $subquery->where('name', 'LIKE', '%' . $q . '%');
+                      });
             });
         }
- 
-
-        if($user_id){
-            $data->where('client_id', $user_id);
-            $resultsDinar=$data->sum('dinar');
-            $resultsDollar=$data->sum('total'); 
-            $resultsTotalS=$data->sum('total_s'); 
-            $resultsProfit=$data->sum('profit'); 
-            $resultsPaid=$data->sum('paid'); 
-            $totalCars = $data->count();
-        }
-        $data =$data->orderBy('no', 'DESC')->paginate($limit)->toArray();
+        
+        // حساب الإحصائيات بعد تطبيق الفلاتر (تحسين مهم)
+        $resultsDinar = $baseQuery->sum('dinar');
+        $resultsDollar = $baseQuery->sum('total');
+        $resultsTotalS = $baseQuery->sum('total_s');
+        $resultsProfit = $baseQuery->sum('profit');
+        $resultsPaid = $baseQuery->sum('paid');
+        $totalCars = $baseQuery->count();
+        
+        // جلب البيانات مع العلاقات المطلوبة فقط
+        $data = $baseQuery->with(['client:id,name', 'contract:id,name'])
+                         ->orderBy('no', 'DESC')
+                         ->paginate($limit)
+                         ->toArray();
+        
+        // إضافة الإحصائيات
         $data['resultsDinar'] = $resultsDinar;
         $data['resultsDollar'] = $resultsDollar;
-        $data['totalCars']  =$totalCars;
+        $data['totalCars'] = $totalCars;
         $data['resultsProfit'] = $resultsProfit;
-        $data['resultsPaid']  =$resultsPaid;
-        $data['resultsTotalS']  =$resultsTotalS;
+        $data['resultsPaid'] = $resultsPaid;
+        $data['resultsTotalS'] = $resultsTotalS;
 
+        $config = SystemConfig::first();
 
-        $config=SystemConfig::first();
-
-        if($printExcel){
-            return Excel::download(new Exportcar($from,$to,$user_id,$owner_id), $from.' '.$to.'.xlsx');
+        if ($printExcel) {
+            return Excel::download(new Exportcar($from, $to, $user_id, $owner_id), $from . ' ' . $to . '.xlsx');
         }
-
-        //else{    return view('show',compact('clientData','config'));}
 
         return Response::json($data, 200);
     }
     public function getIndexCarSearch()
     {
-        $owner_id=Auth::user()->owner_id;
-
-        $term = $_GET['q']??'';
-        $data =  Car::with('contract')->with('exitcar')->with('client')->where('owner_id',$owner_id)->orwhere('car_number', 'LIKE','%'.$term.'%')->orwhere('vin', 'LIKE','%'.$term.'%')->orwhere('car_type', 'LIKE','%'.$term.'%')->orWhereHas('client', function ($query) use ($term) {
-            $query->where('name', 'LIKE', '%' . $term . '%');
+        $owner_id = Auth::user()->owner_id;
+        $term = $_GET['q'] ?? '';
+        
+        // إذا كان البحث فارغ، إرجاع مصفوفة فارغة
+        if (empty($term)) {
+            return Response::json(['data' => [], 'total' => 0], 200);
+        }
+        
+        // بناء الاستعلام المحسن
+        $query = Car::query()
+            ->select(['id', 'vin', 'car_number', 'car_type', 'client_id', 'no', 'created_at', 'total', 'total_s', 'results'])
+            ->where('owner_id', $owner_id);
+        
+        // استخدام البحث المحسن مع فهارس
+        $query->where(function ($q) use ($term) {
+            $q->where('vin', 'LIKE', $term . '%')  // البحث من البداية أفضل للأداء
+              ->orWhere('car_number', 'LIKE', $term . '%')
+              ->orWhere('car_type', 'LIKE', '%' . $term . '%')
+              ->orWhereHas('client', function ($subquery) use ($term) {
+                  $subquery->where('name', 'LIKE', '%' . $term . '%');
+              });
         });
-        $data =$data->orderBy('no', 'DESC')->paginate(100);
+        
+        // تحميل العلاقة المطلوبة فقط وتحسين الأداء
+        $data = $query->with(['client:id,name'])
+                     ->orderBy('no', 'DESC')
+                     ->limit(50) // تحديد حد أقصى للنتائج لتحسين الأداء
+                     ->get();
+        
         return Response::json($data, 200);
     }
     public function addToBox()
