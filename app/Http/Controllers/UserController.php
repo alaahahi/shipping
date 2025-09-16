@@ -79,103 +79,99 @@ class UserController extends Controller
         $to = request()->input('to', 0);
         $owner_id = Auth::user()->owner_id;
         $userClient = $this->accounting->userClient() ?? 0;
-        $page = request()->input('page', '');
+        $page = request()->input('page', 1);
         $print = request()->input('print', 0);
-        // تحديد مفتاح الكاش بناءً على قيمة $q
-        $cacheKey = 'users_query_' . md5($q . $owner_id . $userClient . $from . $to . $page) ;
-        $cacheDuration = 600; // مدة الكاش بالدقائق (على سبيل المثال 60 دقيقة)
+        
+        // تحسين مفتاح الكاش
+        $cacheKey = 'clients_optimized_' . md5($q . $owner_id . $userClient . $from . $to . $page);
+        $cacheDuration = 300; // تقليل مدة الكاش إلى 5 دقائق لضمان البيانات الحديثة
 
-        // استخدام الكاش إذا كان هناك قيمة في $q، خلاف ذلك، تنفيذ الاستعلام مباشرة
+        // استخدام الكاش مع تحسين الاستعلام
         $query = Cache::remember($cacheKey, $cacheDuration, function () use ($owner_id, $userClient, $q, $from, $to) {
-            $query = DB::table('users')
-                ->select('users.id', 'users.name', 'users.phone', 'users.created_at')
-                ->selectRaw('(SELECT COUNT(id) FROM contract WHERE user_id = users.id) AS contract_count')
-                ->selectSub(function ($subquery) use ($userClient) {
-                    $subquery->selectRaw('COUNT(id)')
-                        ->from('car')
-                        ->whereColumn('car.client_id', 'users.id');
-                }, 'car_count')
-                ->selectSub(function ($subquery) use ($userClient) {
-                    $subquery->selectRaw('COUNT(id)')
-                        ->from('car')
-                        ->whereColumn('car.client_id', 'users.id')
-                        ->where('car.results', 2);
-                }, 'car_count_completed')
-                ->selectSub(function ($subquery) use ($userClient) {
-                    $subquery->selectRaw('COUNT(id)')
-                        ->from('car')
-                        ->whereColumn('car.client_id', 'users.id')
-                        ->where('car.total_s', 0);
-                }, 'car_total_un_pay')
-                ->selectSub(function ($subquery) {
-                    $subquery->select('balance')
-                        ->from('wallets')
-                        ->whereColumn('user_id', 'users.id')
-                        ->limit(1);
-                }, 'balance')
+            // بناء الاستعلام الأساسي المحسن
+            $baseQuery = DB::table('users')
+                ->select([
+                    'users.id', 
+                    'users.name', 
+                    'users.phone', 
+                    'users.created_at'
+                ])
                 ->where('users.owner_id', $owner_id)
-                ->where('users.type_id', $userClient)
-                ->orderBy('balance', 'desc');
+                ->where('users.type_id', $userClient);
             
-    
-            // إضافة الفلترة بناءً على البحث
+            // إضافة الإحصائيات باستخدام JOIN بدلاً من subqueries لتحسين الأداء
+            $baseQuery->leftJoin('wallets', 'users.id', '=', 'wallets.user_id')
+                     ->leftJoin('car', 'users.id', '=', 'car.client_id')
+                     ->leftJoin('contract', 'users.id', '=', 'contract.user_id')
+                     ->selectRaw('COALESCE(wallets.balance, 0) as balance')
+                     ->selectRaw('COUNT(DISTINCT car.id) as car_count')
+                     ->selectRaw('COUNT(DISTINCT CASE WHEN car.results = 2 THEN car.id END) as car_count_completed')
+                     ->selectRaw('COUNT(DISTINCT CASE WHEN car.total_s = 0 THEN car.id END) as car_total_un_pay')
+                     ->selectRaw('COUNT(DISTINCT contract.id) as contract_count')
+                     ->groupBy('users.id', 'users.name', 'users.phone', 'users.created_at', 'wallets.balance');
+            
+            // تطبيق البحث المحسن
             if ($q && $q !== 'debit') {
-                $query->leftJoin('car', 'users.id', '=', 'car.client_id')
-                    ->where(function ($subQuery) use ($q) {
-                        $subQuery->where('users.name', 'like', '%' . $q . '%')
-                            //->orWhere('users.phone', 'like', '%' . $q . '%')
-                            ->orWhere(function ($carQuery) use ($q) {
-                                $carQuery->where('car.vin', 'like', '%' . $q . '%') // البحث باستخدام VIN
-                                    ->orWhere('car.car_number', 'like', '%' . $q . '%'); // البحث باستخدام رقم السيارة
-                            });
-                    });
-                $query->groupBy('users.id', 'users.name', 'users.phone', 'users.created_at');
+                $baseQuery->where(function ($query) use ($q) {
+                    $query->where('users.name', 'LIKE', '%' . $q . '%')
+                          ->orWhere('car.vin', 'LIKE', '%' . $q . '%')
+                          ->orWhere('car.car_number', 'LIKE', '%' . $q . '%');
+                });
             }
-    
-            // الفلترة بناءً على التواريخ
+            
+            // تطبيق فلترة التاريخ
             if ($from && $to) {
-                $query->whereBetween('users.created_at', [$from, $to]);
+                $baseQuery->whereBetween('users.created_at', [$from, $to]);
             }
-    
-            return $query->get()->toArray(); // إعادة البيانات كمصفوفة قابلة للتخزين في الكاش
+            
+            // ترتيب النتائج
+            $baseQuery->orderBy('balance', 'desc');
+            
+            return $baseQuery->get();
         });
-    
-        // التحقق من وضع الطباعة
+        
+        // معالجة النتائج للطباعة
         if ($print == 1) {
             $config = SystemConfig::first();
-    
-            // معالجة البيانات عند الطباعة
-            if (!empty($q)) {
-                $data = collect($query)->filter(function ($item) {
+            
+            $data = $q === 'debit' 
+                ? collect($query)->filter(function ($item) {
                     return $item->balance > 0;
-                });
-            } else {
-                $data = $query;
-            }
-    
+                })
+                : $query;
+            
             return view('reportClients', compact('data', 'config', 'owner_id'));
         }
-        // التحقق من فلترة "debit"
-        if ($q == 'debit') {
-            if ($page == 1) {
-                $data = collect($query)->filter(function ($item) {
-                    return $item->balance > 0;
-                });
-                return response()->json(['data' => $data], 200);
-            } else {
-                return response()->json(['data' => []], 200);
-            }
-        } else {
-            $paginationLimit = 25;
-            $currentPage = $page ?: 1;
-            $data = collect($query)->forPage($currentPage , $paginationLimit);
-            $flattenedData = [];
-            foreach ($data as $item) {
-                $flattenedData[] = $item; // reset() gets the first element of an array
-            }
-            $data = $flattenedData;
+        
+        // معالجة النتائج للعرض العادي
+        if ($q === 'debit') {
+            $data = collect($query)->filter(function ($item) {
+                return $item->balance > 0;
+            });
+            
             return response()->json(['data' => $data], 200);
         }
+        
+        // تطبيق التصفح مع تحسين الأداء
+        $paginationLimit = 25;
+        $currentPage = max(1, (int)$page);
+        $totalItems = count($query);
+        $totalPages = ceil($totalItems / $paginationLimit);
+        
+        $paginatedData = collect($query)
+            ->forPage($currentPage, $paginationLimit)
+            ->values()
+            ->toArray();
+        
+        return response()->json([
+            'data' => $paginatedData,
+            'pagination' => [
+                'current_page' => $currentPage,
+                'total_pages' => $totalPages,
+                'total_items' => $totalItems,
+                'per_page' => $paginationLimit
+            ]
+        ], 200);
     }
     
     
