@@ -318,12 +318,6 @@ function confirmDelClient(V) {
                                         <th className="px-1 py-2 text-base">#</th>
                                         <th className="px-1 py-2 text-base">{{ $t('name') }}</th>
                                         <th className="px-1 py-2 text-base">{{ $t('phoneNumber') }}</th>
-                                        <th className="px-1 py-2 text-base">السيارات</th>
-
-                                        <th className="px-1 py-2 text-base"> السيارات غير مدفوع</th>
-                                        <th className="px-1 py-2 text-base"> السيارات مدفوع</th>
-                                        <th className="px-1 py-2 text-base">العقود الالكترونية المنجزة</th>
-                                        <th className="px-1 py-2 text-base">العقود الالكترونية غير المنجزة</th>
                                         <th className="px-1 py-2 text-base">{{ $t('debt') }}</th>
                                         <th className="px-1 py-2 text-base">{{ $t('execute') }}</th>       
                                     </tr>
@@ -335,18 +329,11 @@ function confirmDelClient(V) {
                                       <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{i}}</td>
                                         <td className="border border-white dark:border-gray-800 text-center  dark:text-gray-200 text-black px-1 py-2 " style="font-weight: bold;font-size: 16px;">{{user.name}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.phone}}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count}}</td>
-
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count-user.car_count_completed}}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count_completed}}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.contract_count}}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count-user.contract_count}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.balance}} $</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2"  style="min-height: 42px;">
                           
                                         <Link
                                           style="display:inline-flex;"
-                                          v-if="user.car_count"
                                           className="px-1 py-1  text-white mx-1 bg-blue-500 rounded d-inline-block"
                                           :href="route('showClients', user.id)">
                                         <show />

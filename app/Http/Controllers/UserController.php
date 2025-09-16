@@ -82,13 +82,13 @@ class UserController extends Controller
         $page = request()->input('page', 1);
         $print = request()->input('print', 0);
         
-        // تحسين مفتاح الكاش
-        $cacheKey = 'clients_optimized_' . md5($q . $owner_id . $userClient . $from . $to . $page);
-        $cacheDuration = 300; // تقليل مدة الكاش إلى 5 دقائق لضمان البيانات الحديثة
+        // تحسين مفتاح الكاش - إزالة الصفحة من المفتاح لتجنب التكرار
+        $cacheKey = 'clients_fast_' . md5($q . $owner_id . $userClient . $from . $to);
+        $cacheDuration = 600; // زيادة مدة الكاش إلى 10 دقائق
 
-        // استخدام الكاش مع تحسين الاستعلام
+        // استخدام الكاش مع استعلام محسن
         $query = Cache::remember($cacheKey, $cacheDuration, function () use ($owner_id, $userClient, $q, $from, $to) {
-            // بناء الاستعلام الأساسي المحسن
+            // بناء استعلام أساسي بسيط وسريع
             $baseQuery = DB::table('users')
                 ->select([
                     'users.id', 
@@ -99,23 +99,24 @@ class UserController extends Controller
                 ->where('users.owner_id', $owner_id)
                 ->where('users.type_id', $userClient);
             
-            // إضافة الإحصائيات باستخدام JOIN بدلاً من subqueries لتحسين الأداء
-            $baseQuery->leftJoin('wallets', 'users.id', '=', 'wallets.user_id')
-                     ->leftJoin('car', 'users.id', '=', 'car.client_id')
-                     ->leftJoin('contract', 'users.id', '=', 'contract.user_id')
-                     ->selectRaw('COALESCE(wallets.balance, 0) as balance')
-                     ->selectRaw('COUNT(DISTINCT car.id) as car_count')
-                     ->selectRaw('COUNT(DISTINCT CASE WHEN car.results = 2 THEN car.id END) as car_count_completed')
-                     ->selectRaw('COUNT(DISTINCT CASE WHEN car.total_s = 0 THEN car.id END) as car_total_un_pay')
-                     ->selectRaw('COUNT(DISTINCT contract.id) as contract_count')
-                     ->groupBy('users.id', 'users.name', 'users.phone', 'users.created_at', 'wallets.balance');
+            // إضافة الرصيد فقط - أسرع استعلام ممكن
+            $baseQuery->addSelect([
+                DB::raw('(SELECT COALESCE(balance, 0) FROM wallets WHERE user_id = users.id LIMIT 1) as balance')
+            ]);
             
-            // تطبيق البحث المحسن
+            // تطبيق البحث المحسن - فقط عند الحاجة
             if ($q && $q !== 'debit') {
                 $baseQuery->where(function ($query) use ($q) {
                     $query->where('users.name', 'LIKE', '%' . $q . '%')
-                          ->orWhere('car.vin', 'LIKE', '%' . $q . '%')
-                          ->orWhere('car.car_number', 'LIKE', '%' . $q . '%');
+                          ->orWhereExists(function ($subQuery) use ($q) {
+                              $subQuery->select(DB::raw(1))
+                                      ->from('car')
+                                      ->whereColumn('car.client_id', 'users.id')
+                                      ->where(function ($carQuery) use ($q) {
+                                          $carQuery->where('car.vin', 'LIKE', '%' . $q . '%')
+                                                  ->orWhere('car.car_number', 'LIKE', '%' . $q . '%');
+                                      });
+                          });
                 });
             }
             
@@ -125,7 +126,7 @@ class UserController extends Controller
             }
             
             // ترتيب النتائج
-            $baseQuery->orderBy('balance', 'desc');
+            $baseQuery->orderByRaw('(SELECT COALESCE(balance, 0) FROM wallets WHERE user_id = users.id LIMIT 1) DESC');
             
             return $baseQuery->get();
         });
@@ -152,26 +153,16 @@ class UserController extends Controller
             return response()->json(['data' => $data], 200);
         }
         
-        // تطبيق التصفح مع تحسين الأداء
+        // تطبيق التصفح السريع
         $paginationLimit = 25;
         $currentPage = max(1, (int)$page);
-        $totalItems = count($query);
-        $totalPages = ceil($totalItems / $paginationLimit);
         
         $paginatedData = collect($query)
             ->forPage($currentPage, $paginationLimit)
             ->values()
             ->toArray();
         
-        return response()->json([
-            'data' => $paginatedData,
-            'pagination' => [
-                'current_page' => $currentPage,
-                'total_pages' => $totalPages,
-                'total_items' => $totalItems,
-                'per_page' => $paginationLimit
-            ]
-        ], 200);
+        return response()->json(['data' => $paginatedData], 200);
     }
     
     
