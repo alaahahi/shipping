@@ -628,7 +628,7 @@ class DashboardController extends Controller
         $totalCars = $baseQuery->count();
         
         // جلب البيانات مع العلاقات المطلوبة فقط
-        $data = $baseQuery->with(['client:id,name', 'contract:id,name'])
+        $data = $baseQuery->with(['client:id,name'])
                          ->orderBy('no', 'DESC')
                          ->paginate($limit)
                          ->toArray();
