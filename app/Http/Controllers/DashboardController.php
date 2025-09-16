@@ -591,7 +591,7 @@ class DashboardController extends Controller
         $get_image = $request->get('get_image') ?? 0;
         $limit = $request->get('limit') ?? 15;
         $printExcel = $request->get('printExcel') ?? 0;
-
+        $online_contract = $request->get('online_contract') ?? 0;
         // بناء الاستعلام الأساسي مع تحسين الأداء
         $baseQuery = Car::query()->where('owner_id', $owner_id);
         
@@ -634,7 +634,13 @@ class DashboardController extends Controller
                              ->orderBy('no', 'DESC')
                              ->paginate($limit)
                              ->toArray();
-        } else {
+        } else if($online_contract){
+            $data = $baseQuery->with(['client:id,name', 'contract','exitcar'])
+                             ->orderBy('no', 'DESC')
+                             ->paginate($limit)
+                             ->toArray();
+        }
+        else {
             // جلب البيانات بدون الصور (أسرع للأداء)
             $data = $baseQuery->with(['client:id,name'])
                              ->orderBy('no', 'DESC')

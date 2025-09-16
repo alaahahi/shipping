@@ -116,7 +116,8 @@ const getResultsCar = async ($state) => {
         limit: 100,
         page: page,
         q: q,
-        user_id: user_id
+        user_id: user_id,
+        online_contract: 1
       }
     });
 
