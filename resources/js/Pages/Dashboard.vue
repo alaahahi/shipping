@@ -473,17 +473,13 @@ function getResultsCarSearchLocal () {
                             <div   class="mr-4"  v-if="selectedUserIds.length">
                             <div   style="display: block;" class="font-semibold">{{ user.name}}</div>
                               <div   style="display: block;" class="mt-2 text-sm text-gray-200  dark:text-gray-200">{{ '$'+updateResults(user.balance) }}
-                                <span class="inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
-                                {{ user.car_total_un_pay}}
-                              </span>
+                              
                               </div>
                             </div>
                             <div   class="mr-4"  v-if="!selectedUserIds.length">
                               <Link :href="route('showClients', { id: user.id, q: searchTerm })" style="display: block;" class="font-semibold">{{ user.name}}</Link>
                               <Link :href="route('showClients', { id: user.id, q: searchTerm })" style="display: block;" class="mt-2 text-sm text-gray-200  dark:text-gray-200">{{ '$'+updateResults(user.balance) }}
-                                <span class="inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
-                                {{ user.car_total_un_pay}}
-                              </span>
+                               
                               </Link>
                             </div>
                             </div>
