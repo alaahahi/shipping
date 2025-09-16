@@ -588,6 +588,7 @@ class DashboardController extends Controller
         $q = $request->get('q') ?? '';
         $from = $request->get('from') ?? 0;
         $to = $request->get('to') ?? 0;
+        $get_image = $request->get('get_image') ?? 0;
         $limit = $request->get('limit') ?? 15;
         $printExcel = $request->get('printExcel') ?? 0;
 
@@ -626,12 +627,21 @@ class DashboardController extends Controller
         $resultsProfit = $baseQuery->sum('profit');
         $resultsPaid = $baseQuery->sum('paid');
         $totalCars = $baseQuery->count();
-        
         // جلب البيانات مع العلاقات المطلوبة فقط
-        $data = $baseQuery->with(['client:id,name'])
-                         ->orderBy('no', 'DESC')
-                         ->paginate($limit)
-                         ->toArray();
+        if($get_image){
+            // جلب البيانات مع الصور (أبطأ لكن يحتوي على الصور)
+            $data = $baseQuery->with(['client:id,name', 'CarImages'])
+                             ->orderBy('no', 'DESC')
+                             ->paginate($limit)
+                             ->toArray();
+        } else {
+            // جلب البيانات بدون الصور (أسرع للأداء)
+            $data = $baseQuery->with(['client:id,name'])
+                             ->orderBy('no', 'DESC')
+                             ->paginate($limit)
+                             ->toArray();
+        }
+     
         
         // إضافة الإحصائيات
         $data['resultsDinar'] = $resultsDinar;

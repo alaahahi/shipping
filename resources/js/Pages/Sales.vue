@@ -96,6 +96,7 @@ const getResultsCar = async ($state) => {
         user_id: user_id,
         from: from.value,
         to: to.value,
+        get_image: 1,
       },
     });
 
