@@ -232,7 +232,7 @@ function confirmAddPayment(V) {
       });
       getResultsSelect()
       let transaction=response.data
-      window.open(`/api/getIndexAccountsSelas?user_id=${props?.client_id}&print=2&transactions_id=${transaction.id}`, '_blank');
+      window.open(`/api/getIndexAccountsSelas?user_id=${props.client_id}&print=2&transactions_id=${transaction.id}`, '_blank');
     })
     .catch((error) => {
       showModal.value = false;
