@@ -161,6 +161,9 @@ Route::get('editCarContracts',[OnlineContractsController::class, 'editCarContrac
 Route::get('makeCarExit',[OnlineContractsController::class, 'makeCarExit'])->name('makeCarExit');
 Route::get('unMakeCarExit',[OnlineContractsController::class, 'unMakeCarExit'])->name('unMakeCarExit');
 Route::post('removeContract',[OnlineContractsController::class, 'removeContract'])->name('removeContract');
+Route::get('onlineContractsTotalInfo',[OnlineContractsController::class, 'totalInfo'])->name('onlineContractsTotalInfo');
+Route::get('getCarsOverYear',[OnlineContractsController::class, 'getCarsOverYear'])->name('getCarsOverYear');
+Route::get('getCarsNextMonth',[OnlineContractsController::class, 'getCarsNextMonth'])->name('getCarsNextMonth');
 
 
 Route::get('addPaymentCarTotal',[AccountingController::class, 'addPaymentCarTotal'])->name('addPaymentCarTotal');
