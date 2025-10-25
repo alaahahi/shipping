@@ -63,7 +63,7 @@ let showModalDelPayFromBalanceCar = ref(false);
 
 let getResults = async (page = 1) => {
   axios
-    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${props?.client_id}&from=${from.value}&to=${to.value}`)
+    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${props.client_id}&from=${from.value}&to=${to.value}`)
     .then((response) => {
       laravelData.value = response.data;
       client_Select.value = response.data.client.id
@@ -264,7 +264,7 @@ function confirmAddPaymentTotal(amount, client_Select,discount,note) {
       
       let transaction=response.data
 
-      window.open(`/api/getIndexAccountsSelas?user_id=${props?.client_id}&print=2&transactions_id=${transaction.id}`, '_blank');
+      window.open(`/api/getIndexAccountsSelas?user_id=${props.client_id}&print=2&transactions_id=${transaction.id}`, '_blank');
     })
     .catch((error) => {
       console.log(error)
@@ -441,7 +441,7 @@ function confirmAddExitCar(v){
 }
 
 function checkClientBalance(v){
-    axios.get(`/api/checkClientBalance?userId=${props?.client_id}&currentBalance=${v+calculateTotalFilteredAmount().totalAmount}`)
+    axios.get(`/api/checkClientBalance?userId=${props.client_id}&currentBalance=${v+calculateTotalFilteredAmount().totalAmount}`)
     .then(response => {
       console.log(response)
       if(response.status==201){
