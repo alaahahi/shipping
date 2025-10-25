@@ -2,7 +2,8 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
 import { Head, Link, useForm } from "@inertiajs/inertia-vue3";
-import { onMounted, ref } from 'vue';
+import { Inertia } from "@inertiajs/inertia";
+import { onMounted, ref, watch } from 'vue';
 import { TailwindPagination } from "laravel-vue-pagination";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
@@ -61,7 +62,7 @@ let showReceiveBtn = ref(0);
 let showModalAddPayFromBalanceCar = ref(false);
 let showModalDelPayFromBalanceCar = ref(false);
 
-// تعريف props في البداية قبل استخدامها
+// يجب تعريف props قبل استخدامها في أي مكان
 const props = defineProps({
   url: String,
   clients: Array,
@@ -116,7 +117,7 @@ function confirmAddPayFromBalanceCar(V) {
     .post("/api/AddPayFromBalanceCar", V)
     .then((response) => {
       showModalAddPayFromBalanceCar.value = false;
-      window.location.reload();
+      getResultsSelect();
     })
     .catch((error) => {
       console.error(error);
@@ -127,7 +128,7 @@ function confirmDelPayFromBalanceCar(V) {
     .post("/api/DelPayFromBalanceCar", V)
     .then((response) => {
       showModalDelPayFromBalanceCar.value = false;
-      window.location.reload();
+      getResultsSelect();
     })
     .catch((error) => {
       console.error(error);
@@ -148,7 +149,28 @@ const getResultsSelect = async (page = 1) => {
       console.error(error);
     });
 };
-getResults();
+
+// استدعاء getResults عند تحميل الصفحة
+onMounted(() => {
+  getResults();
+});
+
+// مراقبة تغييرات client_id عند التنقل بين الصفحات
+watch(() => props.client_id, (newValue, oldValue) => {
+  if (newValue && newValue !== oldValue) {
+    // إعادة تعيين القيم عند التنقل لعميل جديد
+    from.value = 0;
+    to.value = 0;
+    showPaymentForm.value = false;
+    showTransactions.value = false;
+    showComplatedCars.value = false;
+    amount.value = 0;
+    discount.value = 0;
+    note.value = '';
+    indexs = 1; // إعادة تعيين العداد
+    getResults();
+  }
+}, { immediate: false });
 
 const form = useForm();
 
@@ -183,10 +205,20 @@ function confirmDelCar(V) {
     .post("/api/DelCar", V)
     .then((response) => {
       showModalDelCar.value = false;
-      window.location.reload();
+      toast.success("تم حذف السيارة بنجاح", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true,
+      });
+      getResultsSelect();
     })
     .catch((error) => {
       console.error(error);
+      toast.error("فشل حذف السيارة", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true,
+      });
     });
 }
 function confirmUpdateCar(V) {
@@ -982,7 +1014,7 @@ function getDownloadUrl(name) {
                      </td>
                    
                   </tr>
-                  <template  v-for="user in laravelData.transactions" :key="user.id">
+                  <template  v-for="user in (laravelData?.transactions || [])" :key="user.id">
                   <tr class="text-center" v-if="user.type=='out' && user.amount < 0 && user.is_pay == 1 ">
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ indexs++ }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.id }}</td>
@@ -1122,14 +1154,14 @@ function getDownloadUrl(name) {
                 </thead>
                 <tbody>
                   <tr
-                    v-for="(car, i) in laravelData.data"
+                    v-for="(car, i) in (laravelData?.data || [])"
                     v-show="(car.results == 2 && showComplatedCars)|| car.results!=2"
                     :key="car.id"
                     :class="{
                       'bg-red-100 dark:bg-red-900': car.results == 0,
                       'bg-red-100 dark:bg-red-900': car.results == 1,
                       'bg-green-100 dark:bg-green-900': car.results == 2,
-                      'bg-yellow-100 dark:bg-yellow-900':(car.vin.startsWith(q)|| ( car.car_number ? car.car_number.toString().startsWith(q) : '')),
+                      'bg-yellow-100 dark:bg-yellow-900':(props.q && (car.vin.startsWith(props.q) || (car.car_number ? car.car_number.toString().startsWith(props.q) : false))),
                     }
                     "
                     class="border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600"

@@ -8,6 +8,7 @@ import ResponsiveNavLink from "@/Components/ResponsiveNavLink.vue";
 import { Link } from "@inertiajs/inertia-vue3";
 import { useI18n } from "vue-i18n";
 import DarkModeToggle from '@/Components/DarkToggle.vue';
+import SyncStatusBar from '@/Components/SyncStatusBar.vue';
 
 const showingNavigationDropdown = ref(false);
 const i18n = useI18n();
@@ -20,6 +21,9 @@ const switchLocale = (locale) => {
 
 <template>
   <div>
+    <!-- شريط حالة المزامنة -->
+    <SyncStatusBar />
+    
     <div class="min-h-screen bg-gray-100 dark:bg-gray-800">
       <nav class="bg-white border-gray-100 dark:bg-gray-900  print:hidden">
         <!-- Primary Navigation Menu -->
@@ -76,6 +80,27 @@ const switchLocale = (locale) => {
                  المحاسبة
                 </NavLink>
               </div>
+              
+              <!-- صفحة مراقبة المزامنة -->
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
+                <NavLink
+                  :href="route('sync.monitor')"
+                  :active="route().current('sync.monitor')"
+                >
+                  🔄 المزامنة
+                </NavLink>
+              </div>
+              
+              <!-- صفحة البحث Offline -->
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
+                <NavLink
+                  :href="route('offline.car.search')"
+                  :active="route().current('offline.car.search')"
+                >
+                  🔍 بحث Offline
+                </NavLink>
+              </div>
+              
               <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
                 <NavLink
                   :href="route('online_contracts')"
@@ -368,6 +393,25 @@ const switchLocale = (locale) => {
               >
               المحاسبة  
               </ResponsiveNavLink>
+              
+              <!-- صفحة مراقبة المزامنة للهواتف -->
+              <ResponsiveNavLink
+                :href="route('sync.monitor')"
+                :active="route().current('sync.monitor')"
+                v-if="$page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6"
+              >
+              🔄 المزامنة
+              </ResponsiveNavLink>
+              
+              <!-- صفحة البحث Offline للهواتف -->
+              <ResponsiveNavLink
+                :href="route('offline.car.search')"
+                :active="route().current('offline.car.search')"
+                v-if="$page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6"
+              >
+              🔍 بحث Offline
+              </ResponsiveNavLink>
+              
               <ResponsiveNavLink
                 :href="route('online_contracts')"
                 :active="route().current('online_contracts')"

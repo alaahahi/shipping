@@ -48,6 +48,16 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('purchases',[DashboardController::class,'purchases'])->name('purchases');
 
     Route::get('accounting',[AccountingController::class,'index'])->name('accounting');
+    
+    // صفحة مراقبة المزامنة
+    Route::get('sync-monitor', function () {
+        return Inertia::render('SyncMonitor');
+    })->name('sync.monitor');
+    
+    // صفحة البحث Offline
+    Route::get('offline-car-search', function () {
+        return Inertia::render('OfflineCarSearch');
+    })->name('offline.car.search');
 
     
     Route::get('getIndex',[UserController::class, 'getIndex'])->name("getIndex");
