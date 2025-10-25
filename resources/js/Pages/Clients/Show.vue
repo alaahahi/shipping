@@ -61,6 +61,15 @@ let showReceiveBtn = ref(0);
 let showModalAddPayFromBalanceCar = ref(false);
 let showModalDelPayFromBalanceCar = ref(false);
 
+// تعريف props في البداية قبل استخدامها
+const props = defineProps({
+  url: String,
+  clients: Array,
+  client_id: String,
+  client: Object,
+  q:String
+});
+
 let getResults = async (page = 1) => {
   axios
     .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${props.client_id}&from=${from.value}&to=${to.value}`)
@@ -140,13 +149,6 @@ const getResultsSelect = async (page = 1) => {
     });
 };
 getResults();
-const props = defineProps({
-  url: String,
-  clients: Array,
-  client_id: String,
-  client: Object,
-  q:String
-});
 
 const form = useForm();
 
