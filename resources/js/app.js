@@ -90,7 +90,7 @@ axios.interceptors.response.use(
 // تسجيل Service Worker (فقط في الإنتاج)
 // في localhost/127.0.0.1 يُعطّل لتجنب مشاكل الكاش أثناء التطوير
 const isLocalDevelopment = window.location.hostname === 'localhost' || 
-                          window.location.hostname === '127.0.0.1' ||
+                          
                           window.location.hostname.includes('local');
 
 if (import.meta.env.PROD && !isLocalDevelopment) {
