@@ -17,8 +17,8 @@ import { registerServiceWorker } from './utils/registerServiceWorker';
 import db from './utils/db';
 import api from './utils/api';
 
-// استيراد نظام القفل للطلبات الحساسة
-import { lockSensitiveRequest, createRequestKey, isSensitiveRequest } from './utils/requestLock';
+// استيراد دالة التحقق من الطلبات الحساسة
+import { isSensitiveRequest } from './utils/requestLock';
 
 const appName = window.document.getElementsByTagName('title')[0]?.innerText || 'Laravel';
 import en from './lang/en.json';
@@ -38,106 +38,78 @@ const i18n = createI18n({
 // إنشاء Pinia Store
 const pinia = createPinia();
 
-// تهيئة قاعدة البيانات المحلية
+// تهيئة قاعدة البيانات المحلية (في الخلفية)
 db.init().then(() => {
     console.log('✅ قاعدة البيانات المحلية جاهزة');
 }).catch(err => {
-    console.error('❌ فشل تهيئة قاعدة البيانات:', err);
+    console.warn('⚠️ قاعدة البيانات المحلية غير متاحة:', err);
+    // التطبيق يعمل حتى لو فشلت قاعدة البيانات المحلية
 });
 
-// 🔴 نظام حماية الطلبات الحساسة (خط أحمر)
-// يمنع تكرار أي طلب حساس تماماً
-
-// Request Interceptor - قبل إرسال الطلب
+// 🔴 نظام حماية الطلبات الحساسة (خط أحمر) - مبسط
+// Request Interceptor - فقط للتتبع والحماية
 axios.interceptors.request.use(
     (config) => {
         const url = config.url || '';
-        const method = config.method || 'get';
         
-        // إضافة timestamp فريد لمنع الكاش
+        // تأكد من وجود headers
+        config.headers = config.headers || {};
+        
+        // إضافة timestamp فريد لمنع الكاش للطلبات الحساسة
         if (isSensitiveRequest(url)) {
             config.params = config.params || {};
             config.params._t = Date.now();
-            
-            // إضافة علامة للطلب الحساس
             config.headers['X-Sensitive-Request'] = 'true';
-            
-            console.log('🔒 طلب حساس:', method.toUpperCase(), url);
         }
         
         return config;
     },
     (error) => {
+        console.error('❌ خطأ في الطلب:', error);
         return Promise.reject(error);
     }
 );
 
-// Response Interceptor - بعد استلام الرد
+// Response Interceptor - معالجة الأخطاء
 axios.interceptors.response.use(
     (response) => {
         return response;
     },
     (error) => {
-        const url = error.config?.url || '';
-        
-        if (isSensitiveRequest(url)) {
-            console.error('❌ فشل طلب حساس:', url, error.message);
+        // معالجة Network Errors
+        if (!error.response) {
+            console.error('❌ Network Error - لا يوجد رد من الخادم');
+        } else {
+            console.error('❌ خطأ في الرد:', error.response.status, error.response.data);
         }
         
         return Promise.reject(error);
     }
 );
 
-// الاحتفاظ بالمرجع الأصلي
-const originalPost = axios.post;
-const originalPut = axios.put;
-const originalPatch = axios.patch;
-const originalDelete = axios.delete;
+// تسجيل Service Worker (فقط في الإنتاج)
+// في localhost/127.0.0.1 يُعطّل لتجنب مشاكل الكاش أثناء التطوير
+const isLocalDevelopment = window.location.hostname === 'localhost' || 
+                          window.location.hostname === '127.0.0.1' ||
+                          window.location.hostname.includes('local');
 
-// تغليف الطلبات الحساسة بنظام القفل
-axios.post = function(url, data, config) {
-    if (isSensitiveRequest(url)) {
-        const key = createRequestKey('POST', url, data);
-        return lockSensitiveRequest(key, () => originalPost.call(this, url, data, config));
-    }
-    return originalPost.call(this, url, data, config);
-};
-
-axios.put = function(url, data, config) {
-    if (isSensitiveRequest(url)) {
-        const key = createRequestKey('PUT', url, data);
-        return lockSensitiveRequest(key, () => originalPut.call(this, url, data, config));
-    }
-    return originalPut.call(this, url, data, config);
-};
-
-axios.patch = function(url, data, config) {
-    if (isSensitiveRequest(url)) {
-        const key = createRequestKey('PATCH', url, data);
-        return lockSensitiveRequest(key, () => originalPatch.call(this, url, data, config));
-    }
-    return originalPatch.call(this, url, data, config);
-};
-
-axios.delete = function(url, config) {
-    if (isSensitiveRequest(url)) {
-        const key = createRequestKey('DELETE', url);
-        return lockSensitiveRequest(key, () => originalDelete.call(this, url, config));
-    }
-    return originalDelete.call(this, url, config);
-};
-
-// تسجيل Service Worker (في التطوير والإنتاج)
-// يعمل الآن في كل الأوضاع لاختبار offline mode
-registerServiceWorker().then(() => {
-    console.log('✅ Service Worker جاهز');
-}).catch(err => {
-    console.error('❌ فشل تسجيل Service Worker:', err);
-});
+if (import.meta.env.PROD && !isLocalDevelopment) {
+    registerServiceWorker().then(() => {
+        console.log('✅ Service Worker جاهز (الإنتاج)');
+    }).catch(err => {
+        console.error('❌ فشل تسجيل Service Worker:', err);
+    });
+} else {
+    console.log('🔧 وضع التطوير على', window.location.hostname, '- Service Worker معطل');
+}
 
 // إعدادات Inertia للتنقل السلس (SPA mode)
 Inertia.on('start', (event) => {
     console.log('🚀 Inertia navigation started');
+});
+
+Inertia.on('progress', (event) => {
+    // console.log('Progress:', event.detail.progress);
 });
 
 Inertia.on('finish', (event) => {
@@ -158,11 +130,15 @@ Inertia.on('error', (errors) => {
     console.error('❌ Inertia navigation error:', errors);
 });
 
+Inertia.on('exception', (event) => {
+    console.error('💥 Inertia exception:', event.detail);
+});
+
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
-    setup({ el, app, props, plugin }) {
-        const vueApp = createApp({ render: () => h(app, props) })
+    setup({ el, App, props, plugin }) {
+        const vueApp = createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(pinia)
             .use(i18n)

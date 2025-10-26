@@ -26,7 +26,33 @@ import "vue-search-select/dist/VueSearchSelect.css"
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
 import debounce from "lodash/debounce";
+
+// 🔥 نظام Offline للعقود - احترافي
+import { useOfflineContracts } from '@/composables/useOfflineContracts';
+import OfflineContractsStatus from '@/Components/OfflineContractsStatus.vue';
+import OfflineContractsModal from '@/Components/OfflineContractsModal.vue';
+
 const { t } = useI18n();
+
+// تفعيل نظام Offline
+const {
+  isOnline,
+  isSyncing,
+  pendingCount,
+  lastSyncFormatted,
+  syncErrors,
+  stats,
+  saveContract,
+  getOfflineContracts,
+  deleteOfflineContract,
+  retryFailedContract,
+  syncAllContracts,
+  exportContractsAsJSON,
+  importContractsFromJSON
+} = useOfflineContracts();
+
+// عرض modal التفاصيل
+const showOfflineContractsModal = ref(false);
 const props = defineProps({
   client1: Array,
   client2: Array,
@@ -261,7 +287,9 @@ const isLoading = ref(false);
 
 
 let isValid = true;
-const submit = (V) => {
+
+// 🔥 دالة الحفظ الجديدة - تعمل Online و Offline
+const submit = async (V) => {
   isLoading.value = true;
   let missingFields = [];
 
@@ -278,34 +306,92 @@ const submit = (V) => {
       position: "bottom-right",
       rtl: true,
     });
-    setTimeout(() => {
-      isLoading.value = false;
+    isLoading.value = false;
+    return;
+  }
 
-    }, 1000);
-  } else {
-    axios.post('/api/addCarContract', V)
-      .then(response => {
-        profileAdded.value = true;
+  try {
+    // 🚀 استخدام نظام Offline الذكي
+    const result = await saveContract(V);
+
+    if (result.success) {
+      profileAdded.value = true;
+
+      if (result.online) {
+        // تم الحفظ online مباشرة
+        toast.success('✅ تم حفظ العقد بنجاح', {
+          timeout: 3000,
+          position: 'bottom-right',
+          rtl: true
+        });
+
         setTimeout(() => {
           isLoading.value = false;
           window.location = '/car_contract';
         }, 1000);
-      })
-      .catch(error => {
-       
-      toast.error("تأكد من الاتصال بالانترنت - لم يتم الحفظ", {
-          timeout: 2000,
-          position: "bottom-right",
+      } else {
+        // تم الحفظ offline
+        toast.warning(`⚠️ تم الحفظ محلياً - سيتم الإرسال عند الاتصال بالإنترنت
+        
+العقود المعلقة: ${pendingCount.value}`, {
+          timeout: 5000,
+          position: 'bottom-right',
           rtl: true
-
         });
-        setTimeout(() => {
-      isLoading.value = false;
 
-    }, 1000);
-        console.error(error);
-      });
+        // إعادة تعيين النموذج للسماح بإدخال عقد جديد
+        setTimeout(() => {
+          isLoading.value = false;
+          resetForm();
+        }, 1500);
+      }
+    }
+  } catch (error) {
+    console.error('❌ خطأ في حفظ العقد:', error);
+    
+    toast.error(error.message || 'حدث خطأ أثناء الحفظ', {
+      timeout: 3000,
+      position: 'bottom-right',
+      rtl: true
+    });
+    
+    isLoading.value = false;
   }
+};
+
+// إعادة تعيين النموذج
+const resetForm = () => {
+  form.value = {
+    name_seller: "",
+    phone_seller: "",
+    address_seller: "",
+    name_buyer: "",
+    phone_buyer: "",
+    address_buyer: "",
+    tex_seller: 0,
+    tex_seller_dinar: 0,
+    tex_buyer: 0,
+    tex_buyer_dinar: 0,
+    vin: "",
+    car_name: "",
+    modal: "",
+    color: "",
+    size: "",
+    note: "",
+    no:"",
+    vin_s: "",
+    car_name_s: "",
+    modal_s: "",
+    color_s: "",
+    size_s: "",
+    system_note: "",
+    car_price: 0,
+    car_paid: 0,
+    tex_seller_paid: 0,
+    tex_seller_dinar_paid: 0,
+    tex_buyer_paid: 0,
+    tex_buyer_dinar_paid: 0,
+  };
 };
 
  
@@ -966,6 +1052,35 @@ function VinApi1 (v){
         
       </div>
     </form>
+
+    <!-- 🔥 شريط حالة Offline -->
+    <OfflineContractsStatus
+      :isOnline="isOnline"
+      :isSyncing="isSyncing"
+      :pendingCount="pendingCount"
+      :lastSyncFormatted="lastSyncFormatted"
+      :syncErrors="syncErrors"
+      :stats="stats"
+      @sync="syncAllContracts"
+      @view-details="showOfflineContractsModal = true"
+    />
+
+    <!-- 🔥 Modal تفاصيل العقود المحفوظة -->
+    <OfflineContractsModal
+      :show="showOfflineContractsModal"
+      :isOnline="isOnline"
+      :isSyncing="isSyncing"
+      :contracts="getOfflineContracts()"
+      :stats="stats"
+      :lastSyncFormatted="lastSyncFormatted"
+      :syncErrors="syncErrors"
+      @close="showOfflineContractsModal = false"
+      @sync-all="syncAllContracts"
+      @retry="retryFailedContract"
+      @delete="deleteOfflineContract"
+      @export="exportContractsAsJSON"
+      @import="importContractsFromJSON"
+    />
   </AuthenticatedLayout>
 </template>
 <style scoped>
