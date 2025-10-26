@@ -135,8 +135,28 @@ registerServiceWorker().then(() => {
     console.error('❌ فشل تسجيل Service Worker:', err);
 });
 
-// تعطيل Inertia SPA navigation - استخدام full page reload
-// هذا يضمن عمل وضع offline بشكل صحيح مع تحديث كامل للصفحة
+// إعدادات Inertia للتنقل السلس (SPA mode)
+Inertia.on('start', (event) => {
+    console.log('🚀 Inertia navigation started');
+});
+
+Inertia.on('finish', (event) => {
+    console.log('✅ Inertia navigation finished');
+    // التمرير للأعلى عند الانتهاء من التنقل
+    window.scrollTo(0, 0);
+});
+
+Inertia.on('navigate', (event) => {
+    console.log('📄 Navigated to:', event.detail.page.url);
+});
+
+Inertia.on('success', (event) => {
+    console.log('✅ Inertia success - page updated');
+});
+
+Inertia.on('error', (errors) => {
+    console.error('❌ Inertia navigation error:', errors);
+});
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -158,8 +178,12 @@ createInertiaApp({
     },
 });
 
-// تم تعطيل InertiaProgress لأننا نستخدم full page reload
-// InertiaProgress.init({ color: '#f00' });
+InertiaProgress.init({ 
+    color: '#f00',
+    showSpinner: true,
+    delay: 250,
+    includeCSS: true
+});
 
 // مراقبة حالة الاتصال وإظهار إشعارات
 let wasOffline = false;

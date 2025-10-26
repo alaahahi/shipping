@@ -2,7 +2,8 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
 import { Head, Link, useForm } from "@inertiajs/inertia-vue3";
-import { ref } from 'vue';
+import { Inertia } from "@inertiajs/inertia";
+import { onMounted, ref, watch } from 'vue';
 import { TailwindPagination } from "laravel-vue-pagination";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
@@ -149,8 +150,27 @@ const getResultsSelect = async (page = 1) => {
     });
 };
 
-// استدعاء getResults مباشرة عند تحميل الصفحة (full page reload)
-getResults();
+// استدعاء getResults عند تحميل الصفحة
+onMounted(() => {
+  getResults();
+});
+
+// مراقبة تغييرات client_id عند التنقل بين الصفحات
+watch(() => props.client_id, (newValue, oldValue) => {
+  if (newValue && newValue !== oldValue) {
+    // إعادة تعيين القيم عند التنقل لعميل جديد
+    from.value = 0;
+    to.value = 0;
+    showPaymentForm.value = false;
+    showTransactions.value = false;
+    showComplatedCars.value = false;
+    amount.value = 0;
+    discount.value = 0;
+    note.value = '';
+    indexs = 1;
+    getResults();
+  }
+}, { immediate: false });
 
 const form = useForm();
 

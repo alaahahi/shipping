@@ -332,12 +332,12 @@ function confirmDelClient(V) {
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.balance}} $</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2"  style="min-height: 42px;">
                           
-                                        <a
+                                        <Link
                                           style="display:inline-flex;"
                                           className="px-1 py-1  text-white mx-1 bg-blue-500 rounded d-inline-block"
                                           :href="route('showClients', user.id)">
                                         <show />
-                                        </a>
+                                        </Link>
 
                                         <button
                                           tabIndex="1"

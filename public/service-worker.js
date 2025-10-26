@@ -8,7 +8,7 @@
  * - فقط GET requests للصفحات والأصول الثابتة تمر عبر SW للكاش
  */
 
-const CACHE_VERSION = 'v2.0.0'; // نظام حماية شامل للطلبات الحساسة
+const CACHE_VERSION = 'v2.1.0'; // إصلاح Inertia SPA - عدم اعتراض X-Inertia requests
 const CACHE_NAME = `shipping-system-${CACHE_VERSION}`;
 
 // مدة الانتظار القصوى للطلبات (3 ثوان للاستجابة السريعة)
@@ -94,6 +94,13 @@ self.addEventListener('fetch', (event) => {
     // تجاهل الطلبات من نطاقات خارجية
     if (url.origin !== location.origin) {
         return;
+    }
+
+    // 🔴 تجاهل طلبات Inertia (XHR with X-Inertia header) - مهم جداً!
+    // Inertia يحتاج الرد الطازج من الخادم دائماً
+    if (request.headers.get('X-Inertia')) {
+        console.log('⚡ Inertia request - تمرير مباشر:', url.pathname);
+        return; // لا نعترض أبداً
     }
 
     // 🔴 خط أحمر: عدم اعتراض الطلبات الحساسة أبداً
