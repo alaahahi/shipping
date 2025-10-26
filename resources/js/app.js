@@ -3,6 +3,7 @@ import '../css/app.css';
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/inertia-vue3';
 import { InertiaProgress } from '@inertiajs/progress';
+import { Inertia } from '@inertiajs/inertia';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy/dist/vue.m';
 import { createI18n } from 'vue-i18n';
@@ -15,6 +16,9 @@ import axios from 'axios';
 import { registerServiceWorker } from './utils/registerServiceWorker';
 import db from './utils/db';
 import api from './utils/api';
+
+// استيراد نظام القفل للطلبات الحساسة
+import { lockSensitiveRequest, createRequestKey, isSensitiveRequest } from './utils/requestLock';
 
 const appName = window.document.getElementsByTagName('title')[0]?.innerText || 'Laravel';
 import en from './lang/en.json';
@@ -41,69 +45,98 @@ db.init().then(() => {
     console.error('❌ فشل تهيئة قاعدة البيانات:', err);
 });
 
-// تحسين axios للعمل مع API Wrapper تلقائياً
-// Interceptor للطلبات - يستخدم API Wrapper إذا كان متاحاً
-const originalGet = axios.get;
+// 🔴 نظام حماية الطلبات الحساسة (خط أحمر)
+// يمنع تكرار أي طلب حساس تماماً
+
+// Request Interceptor - قبل إرسال الطلب
+axios.interceptors.request.use(
+    (config) => {
+        const url = config.url || '';
+        const method = config.method || 'get';
+        
+        // إضافة timestamp فريد لمنع الكاش
+        if (isSensitiveRequest(url)) {
+            config.params = config.params || {};
+            config.params._t = Date.now();
+            
+            // إضافة علامة للطلب الحساس
+            config.headers['X-Sensitive-Request'] = 'true';
+            
+            console.log('🔒 طلب حساس:', method.toUpperCase(), url);
+        }
+        
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Response Interceptor - بعد استلام الرد
+axios.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    (error) => {
+        const url = error.config?.url || '';
+        
+        if (isSensitiveRequest(url)) {
+            console.error('❌ فشل طلب حساس:', url, error.message);
+        }
+        
+        return Promise.reject(error);
+    }
+);
+
+// الاحتفاظ بالمرجع الأصلي
 const originalPost = axios.post;
 const originalPut = axios.put;
+const originalPatch = axios.patch;
 const originalDelete = axios.delete;
 
-axios.get = async function(url, config = {}) {
-    if (window.$api && !config.skipWrapper) {
-        try {
-            const response = await window.$api.get(url, { ...config, cache: true });
-            return { data: response.data, status: response.status || 200, fromCache: response.fromCache };
-        } catch (error) {
-            return originalGet.call(this, url, config);
-        }
-    }
-    return originalGet.call(this, url, config);
-};
-
-axios.post = async function(url, data, config = {}) {
-    if (window.$api && !config.skipWrapper) {
-        try {
-            const response = await window.$api.post(url, data, config);
-            return { data: response.data, status: response.status || 200, queued: response.queued };
-        } catch (error) {
-            return originalPost.call(this, url, data, config);
-        }
+// تغليف الطلبات الحساسة بنظام القفل
+axios.post = function(url, data, config) {
+    if (isSensitiveRequest(url)) {
+        const key = createRequestKey('POST', url, data);
+        return lockSensitiveRequest(key, () => originalPost.call(this, url, data, config));
     }
     return originalPost.call(this, url, data, config);
 };
 
-axios.put = async function(url, data, config = {}) {
-    if (window.$api && !config.skipWrapper) {
-        try {
-            const response = await window.$api.put(url, data, config);
-            return { data: response.data, status: response.status || 200 };
-        } catch (error) {
-            return originalPut.call(this, url, data, config);
-        }
+axios.put = function(url, data, config) {
+    if (isSensitiveRequest(url)) {
+        const key = createRequestKey('PUT', url, data);
+        return lockSensitiveRequest(key, () => originalPut.call(this, url, data, config));
     }
     return originalPut.call(this, url, data, config);
 };
 
-axios.delete = async function(url, config = {}) {
-    if (window.$api && !config.skipWrapper) {
-        try {
-            const response = await window.$api.delete(url, config);
-            return { data: response.data, status: response.status || 200 };
-        } catch (error) {
-            return originalDelete.call(this, url, config);
-        }
+axios.patch = function(url, data, config) {
+    if (isSensitiveRequest(url)) {
+        const key = createRequestKey('PATCH', url, data);
+        return lockSensitiveRequest(key, () => originalPatch.call(this, url, data, config));
+    }
+    return originalPatch.call(this, url, data, config);
+};
+
+axios.delete = function(url, config) {
+    if (isSensitiveRequest(url)) {
+        const key = createRequestKey('DELETE', url);
+        return lockSensitiveRequest(key, () => originalDelete.call(this, url, config));
     }
     return originalDelete.call(this, url, config);
 };
 
-// تسجيل Service Worker
-if (import.meta.env.PROD) {
-    registerServiceWorker().then(() => {
-        console.log('✅ Service Worker جاهز');
-    }).catch(err => {
-        console.error('❌ فشل تسجيل Service Worker:', err);
-    });
-}
+// تسجيل Service Worker (في التطوير والإنتاج)
+// يعمل الآن في كل الأوضاع لاختبار offline mode
+registerServiceWorker().then(() => {
+    console.log('✅ Service Worker جاهز');
+}).catch(err => {
+    console.error('❌ فشل تسجيل Service Worker:', err);
+});
+
+// تعطيل Inertia SPA navigation - استخدام full page reload
+// هذا يضمن عمل وضع offline بشكل صحيح مع تحديث كامل للصفحة
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -125,7 +158,8 @@ createInertiaApp({
     },
 });
 
-InertiaProgress.init({ color: '#f00' });
+// تم تعطيل InertiaProgress لأننا نستخدم full page reload
+// InertiaProgress.init({ color: '#f00' });
 
 // مراقبة حالة الاتصال وإظهار إشعارات
 let wasOffline = false;

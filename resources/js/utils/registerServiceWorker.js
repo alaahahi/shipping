@@ -13,10 +13,16 @@ export async function registerServiceWorker() {
     try {
         // تسجيل Service Worker
         const registration = await navigator.serviceWorker.register('/service-worker.js', {
-            scope: '/'
+            scope: '/',
+            updateViaCache: 'none' // عدم استخدام cache للـ service worker نفسه
         });
 
         console.log('✅ Service Worker مسجل بنجاح:', registration.scope);
+        
+        // تفعيل Service Worker الجديد فوراً إذا كان في انتظار
+        if (registration.waiting) {
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
 
         // مراقبة التحديثات
         registration.addEventListener('updatefound', () => {

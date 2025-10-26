@@ -1,10 +1,21 @@
 /**
  * Service Worker للعمل Offline
  * يحفظ الأصول الثابتة ويوفر تجربة أفضل عند فقدان الاتصال
+ * 
+ * 🔴 خط أحمر: جميع الطلبات الحساسة لا تمر عبر Service Worker
+ * - POST, PUT, DELETE, PATCH: لا تُعترض أبداً
+ * - Accounting, Payments, Transactions: لا تُعترض أبداً
+ * - فقط GET requests للصفحات والأصول الثابتة تمر عبر SW للكاش
  */
 
-const CACHE_VERSION = 'v1.0.0';
+const CACHE_VERSION = 'v2.0.0'; // نظام حماية شامل للطلبات الحساسة
 const CACHE_NAME = `shipping-system-${CACHE_VERSION}`;
+
+// مدة الانتظار القصوى للطلبات (3 ثوان للاستجابة السريعة)
+const FETCH_TIMEOUT = 3000;
+
+// تتبع الطلبات الجارية لمنع التكرار
+const pendingRequests = new Map();
 
 // الملفات المهمة التي يجب حفظها
 const STATIC_ASSETS = [
@@ -49,6 +60,32 @@ self.addEventListener('activate', (event) => {
     );
 });
 
+// قائمة المسارات الحساسة التي لا يجب اعتراضها أبداً (خط أحمر)
+const SENSITIVE_PATHS = [
+    '/api/addPaymentCar',
+    '/api/addPaymentCarTotal',
+    '/api/AddPayFromBalanceCar',
+    '/api/DelPayFromBalanceCar',
+    '/api/updateCarsS',
+    '/api/DelCar',
+    '/api/addCarContracts',
+    '/api/editCarContracts',
+    '/api/makeCarExit',
+    '/api/makeDrivingDocument',
+    '/api/checkClientBalance',
+    'accounting',
+    'salesDebt',
+    'transaction',
+    'payment',
+    'wallet'
+];
+
+// التحقق من كون المسار حساس
+function isSensitivePath(url) {
+    const pathname = url.pathname.toLowerCase();
+    return SENSITIVE_PATHS.some(path => pathname.includes(path.toLowerCase()));
+}
+
 // استراتيجية Cache
 self.addEventListener('fetch', (event) => {
     const { request } = event;
@@ -59,14 +96,68 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // استراتيجية مختلفة حسب نوع الطلب
+    // 🔴 خط أحمر: عدم اعتراض الطلبات الحساسة أبداً
+    // اتركها تمر مباشرة للخادم بدون أي تدخل
+    if (isSensitivePath(url) || request.method !== 'GET') {
+        // لا نعترض، ندع المتصفح يتعامل معها مباشرة
+        return;
+    }
+
+    // فقط الـ GET requests غير الحساسة تمر عبر Service Worker
     if (request.method === 'GET') {
         event.respondWith(handleGetRequest(request));
-    } else {
-        // POST, PUT, DELETE - محاولة الإرسال للسيرفر
-        event.respondWith(handleMutationRequest(request));
     }
 });
+
+/**
+ * منع تكرار الطلبات
+ * إذا كان نفس الطلب قيد التنفيذ، ننتظره بدلاً من إنشاء طلب جديد
+ */
+async function getDedupedRequest(requestKey, fetchFn) {
+    // إذا كان الطلب قيد التنفيذ، نرجع نفس الـ Promise
+    if (pendingRequests.has(requestKey)) {
+        console.log('⏳ طلب مكرر تم منعه:', requestKey);
+        return pendingRequests.get(requestKey);
+    }
+
+    // إنشاء طلب جديد
+    const promise = fetchFn()
+        .finally(() => {
+            // إزالة الطلب من القائمة بعد انتهائه
+            pendingRequests.delete(requestKey);
+        });
+
+    // حفظ الطلب في القائمة
+    pendingRequests.set(requestKey, promise);
+
+    return promise;
+}
+
+/**
+ * Fetch مع timeout
+ * يلغي الطلب إذا استغرق وقتاً طويلاً
+ */
+async function fetchWithTimeout(request, timeout = FETCH_TIMEOUT) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    try {
+        const response = await fetch(request, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        return response;
+    } catch (error) {
+        clearTimeout(timeoutId);
+        
+        // إذا كان الخطأ بسبب الإلغاء، نرمي خطأ timeout
+        if (error.name === 'AbortError') {
+            throw new Error('Request timeout');
+        }
+        
+        throw error;
+    }
+}
 
 /**
  * معالجة طلبات GET
@@ -94,13 +185,14 @@ async function handleGetRequest(request) {
  */
 async function handleMutationRequest(request) {
     try {
-        // محاولة الإرسال للسيرفر
+        // محاولة الإرسال للسيرفر مباشرة (بدون timeout في online mode)
         const response = await fetch(request.clone());
+        // console.log('✅ طلب تعديل نجح:', request.url);
         return response;
     } catch (error) {
-        console.error('❌ فشل الطلب:', error);
+        console.warn('⚠️ فشل طلب التعديل (offline):', request.url);
         
-        // إرجاع استجابة مخصصة
+        // إرجاع استجابة مخصصة تشير إلى أن الطلب في queue
         return new Response(
             JSON.stringify({
                 queued: true,
@@ -116,54 +208,68 @@ async function handleMutationRequest(request) {
 }
 
 /**
- * استراتيجية Cache First
+ * استراتيجية Cache First (محسّنة)
  * يفضل Cache، ثم Network
  */
 async function cacheFirst(request) {
     const cached = await caches.match(request);
     
     if (cached) {
-        console.log('📦 من الـ Cache:', request.url);
+        // إرجاع من الكاش مباشرة، وتحديث في الخلفية
+        fetch(request).then(response => {
+            if (response.ok) {
+                caches.open(CACHE_NAME).then(cache => {
+                    cache.put(request, response);
+                });
+            }
+        }).catch(() => {
+            // تجاهل الأخطاء في التحديث الخلفي
+        });
+        
         return cached;
     }
     
+    // إذا لم يكن في الكاش، جلب من الشبكة
     try {
         const response = await fetch(request);
         
         if (response.ok) {
             const cache = await caches.open(CACHE_NAME);
-            cache.put(request, response.clone());
+            cache.put(request, response.clone()).catch(() => {});
         }
         
         return response;
     } catch (error) {
-        console.error('❌ فشل الطلب:', error);
+        // console.warn('⚠️ فشل تحميل الأصل (offline):', request.url);
         return new Response('Offline', { status: 503 });
     }
 }
 
 /**
- * استراتيجية Network First
+ * استراتيجية Network First (محسّنة)
  * يفضل Network، ثم Cache
  */
 async function networkFirst(request) {
     try {
+        // محاولة الطلب من الشبكة مباشرة (بدون timeout في online mode للسرعة)
         const response = await fetch(request);
         
-        // احفظ في Cache للمرات القادمة
+        // احفظ في Cache للمرات القادمة فقط إذا كان الطلب ناجحاً
         if (response.ok && request.method === 'GET') {
+            // الحفظ في الخلفية بدون انتظار (أسرع)
             const cache = await caches.open(CACHE_NAME);
-            cache.put(request, response.clone());
+            cache.put(request, response.clone()).catch(() => {
+                // تجاهل أخطاء الحفظ في الكاش
+            });
         }
         
         return response;
     } catch (error) {
-        console.warn('⚠️ فشل الطلب من الشبكة، محاولة القراءة من Cache');
-        
+        // فقط في حالة offline نستخدم Cache
         const cached = await caches.match(request);
         
         if (cached) {
-            console.log('📦 من الـ Cache:', request.url);
+            console.log('📦 من الـ Cache (offline):', request.url);
             return cached;
         }
         
@@ -251,6 +357,16 @@ self.addEventListener('notificationclick', (event) => {
     event.waitUntil(
         clients.openWindow(event.notification.data.url || '/')
     );
+});
+
+/**
+ * معالجة الرسائل من الصفحة
+ */
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        console.log('⏭️ تخطي الانتظار وتفعيل Service Worker الجديد');
+        self.skipWaiting();
+    }
 });
 
 console.log('🚀 Service Worker جاهز!');
