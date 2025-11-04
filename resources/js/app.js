@@ -35,32 +35,63 @@ createInertiaApp({
 
 InertiaProgress.init({ color: '#f00' });
 
-// 🚀 PWA: تسجيل Service Worker
+// 🚀 PWA: تسجيل Service Worker - نسخة محسّنة
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js', {
-            updateViaCache: 'none' // لا تخزن SW نفسه
-        })
-        .then(registration => {
-            console.log('✅ Service Worker registered:', registration.scope);
+    window.addEventListener('load', async () => {
+        try {
+            // إلغاء تسجيل جميع SW القديمة
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let registration of registrations) {
+                await registration.unregister();
+            }
+            console.log('🗑️ Old Service Workers unregistered');
             
-            // التحقق من التحديثات
+            // تسجيل SW جديد
+            const registration = await navigator.serviceWorker.register('/sw.js', {
+                updateViaCache: 'none', // لا تخزن SW نفسه في cache
+                scope: '/' // نطاق التطبيق كامل
+            });
+            
+            console.log('✅ Service Worker v2.0 registered:', registration.scope);
+            
+            // التحقق من التحديثات كل 60 ثانية
+            setInterval(() => {
+                registration.update();
+            }, 60000);
+            
+            // معالجة التحديثات
             registration.addEventListener('updatefound', () => {
                 const newWorker = registration.installing;
                 console.log('🔄 New Service Worker found!');
                 
                 newWorker.addEventListener('statechange', () => {
                     if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        console.log('✅ New version available! Refreshing...');
-                        // يمكنك هنا إظهار toast للمستخدم
-                        window.location.reload();
+                        console.log('✅ New version available!');
+                        // إرسال رسالة للـ SW الجديد لتفعيله فوراً
+                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                        
+                        // إعادة تحميل الصفحة بعد 1 ثانية
+                        setTimeout(() => {
+                            console.log('🔄 Reloading page for SW update...');
+                            window.location.reload();
+                        }, 1000);
                     }
                 });
             });
-        })
-        .catch(error => {
+            
+            // عند تفعيل SW جديد
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    refreshing = true;
+                    console.log('🔄 SW controller changed, reloading...');
+                    window.location.reload();
+                }
+            });
+            
+        } catch (error) {
             console.error('❌ Service Worker registration failed:', error);
-        });
+        }
     });
 }
 

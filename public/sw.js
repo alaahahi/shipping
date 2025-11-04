@@ -1,25 +1,26 @@
-// Service Worker - المرحلة 1: Cache الأساسي
-// الهدف: التطبيق يفتح حتى بدون نت
+// Service Worker - تحديث مُحسّن للـ SPA
+// الهدف: عدم التدخل في Inertia + دعم offline
 
-const CACHE_NAME = 'shipping-v1.0.0';
+const CACHE_NAME = 'shipping-v2.0.0'; // ⬆️ تحديث الإصدار لتفعيل التحديث
 const ASSETS_TO_CACHE = [
   '/',
-  '/build/assets/app.css',
-  '/build/assets/app.js'
+  '/offline.html'
 ];
 
 // تثبيت Service Worker
 self.addEventListener('install', (event) => {
-  console.log('✅ Service Worker: Installing...');
+  console.log('✅ SW v2.0: Installing...');
   
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('📦 Caching app assets...');
-        return cache.addAll(ASSETS_TO_CACHE);
+        console.log('📦 Caching essential assets...');
+        return cache.addAll(ASSETS_TO_CACHE).catch(err => {
+          console.log('⚠️ Some assets failed to cache, continuing anyway');
+        });
       })
       .then(() => {
-        console.log('✅ App assets cached successfully!');
+        console.log('✅ SW installed!');
         return self.skipWaiting(); // تفعيل فوري
       })
   );
@@ -27,7 +28,7 @@ self.addEventListener('install', (event) => {
 
 // تفعيل Service Worker
 self.addEventListener('activate', (event) => {
-  console.log('✅ Service Worker: Activating...');
+  console.log('✅ SW v2.0: Activating...');
   
   event.waitUntil(
     // مسح الـ caches القديمة
@@ -41,61 +42,71 @@ self.addEventListener('activate', (event) => {
           })
       );
     }).then(() => {
-      console.log('✅ Service Worker activated!');
-      return self.clients.claim(); // التحكم الفوري
+      console.log('✅ SW v2.0 activated and claimed all clients!');
+      return self.clients.claim(); // التحكم الفوري بجميع الصفحات
     })
   );
 });
 
-// التعامل مع الطلبات
+// 🎯 التعامل مع الطلبات - الحل الصحيح
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
   
-  // ✅ استراتيجية: Network First, Cache Fallback
-  // جرب الشبكة أولاً، إذا فشلت استخدم الـ cache
-  
-  // تجاهل الطلبات الخارجية
+  // ❌ تجاهل تماماً: الطلبات الخارجية
   if (url.origin !== location.origin) {
     return;
   }
   
-  // تجاهل Inertia XHR requests (للتنقل)
-  if (request.headers.get('X-Inertia')) {
-    console.log('🔄 Inertia request - passing through:', url.pathname);
-    return; // دعها تمر بشكل طبيعي
+  // ❌ تجاهل تماماً: طلبات POST/PUT/DELETE
+  if (request.method !== 'GET') {
+    return;
   }
   
-  // تجاهل API requests الحساسة
+  // ❌ تجاهل تماماً: طلبات Inertia (التنقل في SPA)
+  if (request.headers.get('X-Inertia') || request.headers.get('X-Inertia-Version')) {
+    return; // دع Inertia يتعامل معها بشكل طبيعي
+  }
+  
+  // ❌ تجاهل تماماً: API endpoints
+  if (url.pathname.startsWith('/api/') || 
+      url.pathname.includes('logout') || 
+      url.pathname.includes('login')) {
+    return;
+  }
+  
+  // ✅ فقط للملفات الثابتة: استخدم Network First strategy
   if (
-    request.method !== 'GET' || 
-    url.pathname.startsWith('/api/') ||
-    url.pathname.includes('addCarContract') ||
-    url.pathname.includes('logout') ||
-    url.pathname.includes('login')
+    url.pathname.startsWith('/build/') ||
+    url.pathname.startsWith('/icons/') ||
+    url.pathname.startsWith('/img/') ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('.png') ||
+    url.pathname.endsWith('.jpg') ||
+    url.pathname.endsWith('.svg') ||
+    url.pathname.endsWith('.woff') ||
+    url.pathname.endsWith('.woff2')
   ) {
-    console.log('🔒 Sensitive request - passing through:', url.pathname);
-    return; // دعها تمر بشكل طبيعي
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          // حفظ في cache فقط إذا نجح
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // fallback للـ cache
+          return caches.match(request);
+        })
+    );
   }
-  
-  event.respondWith(
-    fetch(request)
-      .then(response => {
-        // إذا نجح الطلب، احفظ في الـ cache
-        if (response && response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(request, responseClone);
-          });
-        }
-        return response;
-      })
-      .catch(() => {
-        // إذا فشل (offline)، استخدم الـ cache
-        console.log('📦 Serving from cache:', url.pathname);
-        return caches.match(request);
-      })
-  );
+  // لكل شيء آخر: دعه يمر بشكل طبيعي (no caching للصفحات الرئيسية)
 });
 
 // رسالة لتحديث Service Worker

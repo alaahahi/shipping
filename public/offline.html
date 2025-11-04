@@ -3,239 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لا يوجد اتصال - نظام الشحن</title>
+    <title>غير متصل</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            color: #fff;
+            direction: rtl;
         }
-
-        .offline-container {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        
+        .container {
             text-align: center;
+            padding: 2rem;
             max-width: 500px;
-            animation: slideUp 0.5s ease-out;
         }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
+        
         .icon {
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            animation: pulse 2s ease-in-out infinite;
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
         }
-
+        
         @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.05);
-            }
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
         }
-
-        .icon svg {
-            width: 60px;
-            height: 60px;
-            fill: white;
-        }
-
+        
         h1 {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 28px;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
         }
-
+        
         p {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 16px;
-            line-height: 1.6;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
         }
-
-        .status {
-            background: #f0f0f0;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .status-indicator {
+        
+        .btn {
             display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #ff4444;
-            margin-left: 8px;
-            animation: blink 1.5s ease-in-out infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.3;
-            }
-        }
-
-        .status-indicator.online {
-            background: #00C851;
-            animation: none;
-        }
-
-        .btn-retry {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            border-radius: 10px;
-            font-size: 16px;
+            padding: 12px 30px;
+            background: #fff;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 50px;
             font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-
-        .btn-retry:hover {
+        
+        .btn:hover {
             transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
         }
-
-        .btn-retry:active {
-            transform: translateY(0);
-        }
-
-        .info {
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 1px solid #eee;
-        }
-
-        .info-item {
-            margin: 10px 0;
-            color: #888;
-            font-size: 14px;
-        }
-
-        .loading {
+        
+        .status {
+            margin-top: 2rem;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        
+        .online {
+            color: #4ade80;
+        }
+        
+        .offline {
+            color: #f87171;
         }
     </style>
 </head>
 <body>
-    <div class="offline-container">
-        <div class="icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10s10-4.48,10-10S17.52,2,12,2z M13,17h-2v-2h2V17z M13,13h-2V7h2V13z"/>
-            </svg>
-        </div>
-
-        <h1>لا يوجد اتصال بالإنترنت</h1>
-        <p>عذراً، يبدو أنك غير متصل بالإنترنت. تحقق من اتصالك وحاول مرة أخرى.</p>
-
+    <div class="container">
+        <div class="icon">📡</div>
+        <h1>أنت غير متصل بالإنترنت</h1>
+        <p>لا يوجد اتصال بالشبكة. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.</p>
+        
+        <a href="/" class="btn" onclick="window.location.reload(); return false;">
+            🔄 المحاولة مرة أخرى
+        </a>
+        
         <div class="status">
-            <span class="status-indicator" id="statusIndicator"></span>
-            <span id="statusText">غير متصل</span>
-        </div>
-
-        <button class="btn-retry" onclick="retryConnection()">
-            <span id="btnText">إعادة المحاولة</span>
-        </button>
-
-        <div class="info">
-            <div class="info-item">
-                ✅ لا تقلق، بياناتك محفوظة محلياً
-            </div>
-            <div class="info-item">
-                🔄 سيتم مزامنة التغييرات تلقائياً عند عودة الاتصال
-            </div>
+            <span id="status" class="offline">⚫ غير متصل</span>
         </div>
     </div>
-
+    
     <script>
         // مراقبة حالة الاتصال
-        function updateConnectionStatus() {
-            const indicator = document.getElementById('statusIndicator');
-            const statusText = document.getElementById('statusText');
-            
+        const statusEl = document.getElementById('status');
+        
+        function updateStatus() {
             if (navigator.onLine) {
-                indicator.classList.add('online');
-                statusText.textContent = 'متصل';
-                
-                // إعادة التوجيه تلقائياً
+                statusEl.innerHTML = '🟢 متصل';
+                statusEl.className = 'online';
+                // إعادة تحميل تلقائي عند عودة الاتصال
                 setTimeout(() => {
                     window.location.href = '/';
                 }, 1000);
             } else {
-                indicator.classList.remove('online');
-                statusText.textContent = 'غير متصل';
+                statusEl.innerHTML = '⚫ غير متصل';
+                statusEl.className = 'offline';
             }
         }
-
-        function retryConnection() {
-            const btnText = document.getElementById('btnText');
-            btnText.innerHTML = '<span class="loading"></span>';
-            
-            // محاولة تحميل صورة صغيرة للتحقق من الاتصال
-            const img = new Image();
-            img.onload = function() {
-                window.location.href = '/';
-            };
-            img.onerror = function() {
-                btnText.textContent = 'إعادة المحاولة';
-                updateConnectionStatus();
-            };
-            
-            // إضافة timestamp لتجنب الـ cache
-            img.src = '/img/logo.jpg?' + Date.now();
-        }
-
-        // مراقبة التغييرات
-        window.addEventListener('online', updateConnectionStatus);
-        window.addEventListener('offline', updateConnectionStatus);
-
-        // تحديث عند التحميل
-        updateConnectionStatus();
+        
+        window.addEventListener('online', updateStatus);
+        window.addEventListener('offline', updateStatus);
+        updateStatus();
     </script>
 </body>
 </html>
-
