@@ -165,6 +165,11 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('contract_account',[CarContractController::class, 'contract_account'])->name('contract_account');
     Route::get('contract/{id?}', [CarContractController::class, 'contract'])->name('contract');
     Route::get('contract_print/{id}', [CarContractController::class, 'contract_print'])->name('contract_print');
+    
+    // 🖨️ طباعة العقود المحفوظة offline
+    Route::get('print-offline-contract', function () {
+        return view('receiptContractOffline');
+    })->name('print.offline.contract');
 
 
     

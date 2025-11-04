@@ -4,6 +4,24 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        
+        <!-- PWA Meta Tags -->
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="الشحن">
+        <meta name="application-name" content="الشحن">
+        <meta name="theme-color" content="#4f46e5">
+        <meta name="description" content="نظام إدارة الشحن والعقود - يعمل بدون إنترنت">
+        
+        <!-- Manifest -->
+        <link rel="manifest" href="/manifest.json">
+        
+        <!-- Icons -->
+        <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
+        <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png">
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+        
         <title inertia>Car Sale</title>
         <link rel="stylesheet" href="https://fonts.bunny.net/css2?family=Nunito:wght@400;600;700&display=swap">
         <script type="module" src="https://cdn.jsdelivr.net/npm/@duetds/date-picker@1.3.0/dist/duet/duet.esm.js"></script>
