@@ -602,15 +602,14 @@ const mergedData = computed(() => {
         const isVisible = (car.results == 2 && showComplatedCars.value) || car.results != 2;
         
         if (isVisible) {
-          // السيارة تزيد الرصيد: (المجموع - الخصم - المدفوع)
+          // السيارة تزيد الرصيد: (المجموع - الخصم) فقط - بدون طرح المدفوع
           const total = Number(car.total_s) || 0;
           const discount = Number(car.discount) || 0;
-          const paid = Number(car.paid) || 0;
-          balance += (total - discount - paid); // الرصيد = الإجمالي - الخصم - المدفوع
-          totalSum += (total - discount - paid); // المجموع التراكمي
+          balance += (total - discount); // الرصيد = الإجمالي - الخصم فقط
+          totalSum += (total - discount); // المجموع التراكمي
         }
       } else if (item.type === 'payment') {
-        // الدفعة قيمتها سالبة أصلاً، نجمعها مباشرة
+        // الدفعة قيمتها سالبة أصلاً، نجمعها مباشرة (الدفعات تنزل الرصيد)
         const paymentAmount = Number(item.data.amount) || 0;
         balance += paymentAmount; // نجمع (السالب ينزل الرصيد تلقائياً)
         totalSum += paymentAmount; // المجموع التراكمي
