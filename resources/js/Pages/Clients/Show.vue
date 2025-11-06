@@ -645,6 +645,38 @@ function getDownloadUrl(name) {
       return `/public/uploads/${name}`;
     }
 
+const showCompletedCarsComputed = computed(() => showComplatedCars.value || showPaymentsInTable.value);
+
+const distributedBalance = computed(() => {
+  try {
+    const paymentsTotal = Number(calculateTotalFilteredAmount().totalAmount || 0);
+    const carsDiscount = Number(laravelData.value?.cars_discount || 0);
+    const carsPaid = Number(laravelData.value?.cars_paid || 0);
+    return (paymentsTotal * -1 - carsDiscount) - carsPaid;
+  } catch (error) {
+    return 0;
+  }
+});
+
+const finalNetBalance = computed(() => {
+  try {
+    const walletBalance = Number(laravelData.value?.client?.wallet?.balance || 0);
+    return distributedBalance.value - walletBalance;
+  } catch (error) {
+    return distributedBalance.value;
+  }
+});
+
+let previousCompletedState = false;
+watch(showPaymentsInTable, (newVal) => {
+  if (newVal) {
+    previousCompletedState = showComplatedCars.value;
+    showComplatedCars.value = true;
+  } else {
+    showComplatedCars.value = previousCompletedState;
+  }
+});
+
 </script>
 
 <template>
@@ -999,14 +1031,14 @@ function getDownloadUrl(name) {
               </button>
             </div>
 
-            <div className="mb-4  mr-5"   v-if="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)) != 0">
+            <div className="mb-4  mr-5"   v-if="distributedBalance != 0">
               <InputLabel for="cars_need_paid" value="الرصيد غير موزع بالدولار" />
               <TextInput
                 id="cars_need_paid"
                 type="number"
                 class="mt-1 block w-full"
                
-                :value="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid))"
+                :value="distributedBalance"
               />
             </div>
 
@@ -1526,7 +1558,7 @@ function getDownloadUrl(name) {
                         tabIndex="1"
                         style="min-width: 100px;"
                         class="px-1 py-1  text-white mx-1 bg-green-500 rounded"
-                        v-if="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)) != 0"
+                        v-if="distributedBalance != 0"
                         @click="openModalAddPayFromBalanceCar(item.data)"
                       >
                         دفع من الرصيد
@@ -1606,7 +1638,7 @@ function getDownloadUrl(name) {
                   
                   <!-- صف الرصيد غير الموزع في آخر الجدول -->
                   <tr 
-                    v-if="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)) != 0"
+                    v-if="distributedBalance != 0"
                     class="bg-gradient-to-r from-yellow-100 to-amber-100 dark:from-yellow-900/30 dark:to-amber-900/30 border-t-4 border-amber-500"
                   >
                     <!-- 1. no -->
@@ -1625,7 +1657,7 @@ function getDownloadUrl(name) {
                     <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
                     <!-- 21. الرصيد -->
                     <td className="border dark:border-gray-800 text-center px-2 py-3 font-bold text-xl bg-amber-200 dark:bg-amber-800 text-amber-900 dark:text-amber-100">
-                      {{ ((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)).toFixed(0) }}
+                      {{ distributedBalance.toFixed(0) }}
                     </td>
                     <!-- 22. date -->
                     <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
@@ -1635,7 +1667,7 @@ function getDownloadUrl(name) {
                   
                   <!-- صف صافي الدين (الرصيد التراكمي - الرصيد غير الموزع) -->
                   <tr 
-                    v-if="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)) != 0"
+                    v-if="distributedBalance != 0"
                     class="bg-gradient-to-r from-green-200 to-emerald-200 dark:from-green-900/40 dark:to-emerald-900/40 border-t-4 border-green-600"
                   >
                     <!-- 1. no -->
@@ -1654,7 +1686,7 @@ function getDownloadUrl(name) {
                     <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
                     <!-- 21. صافي الدين -->
                     <td className="border dark:border-gray-800 text-center px-2 py-3 font-bold text-2xl bg-green-300 dark:bg-green-700 text-green-900 dark:text-green-100">
-                      {{ (((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)) - (mergedData.length > 0 ? mergedData[mergedData.length - 1].totalSum : 0)).toFixed(0) }}
+                      {{ finalNetBalance.toFixed(0) }}
                     </td>
                     <!-- 22. date -->
                     <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
