@@ -1250,11 +1250,8 @@ function getDownloadUrl(name) {
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("discount") }}
                     </th>
-                    <th scope="col" class="px-1 py-2 text-base bg-gradient-to-r from-orange-500 to-red-500 text-white dark:from-orange-600 dark:to-red-600">
-                      الرصيد
-                    </th>
                     <th scope="col" class="px-1 py-2 text-base bg-gradient-to-r from-blue-500 to-indigo-500 text-white dark:from-blue-600 dark:to-indigo-600">
-                      المجموع
+                      الرصيد
                     </th>
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("date") }}
@@ -1398,14 +1395,9 @@ function getDownloadUrl(name) {
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1 font-bold"
                       :class="{
-                        'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200': item.balance > 0,
-                        'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': item.balance <= 0
+                        'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': item.totalSum > 0,
+                        'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': item.totalSum <= 0
                       }"
-                    >
-                      {{ item.balance?.toFixed(0) || 0 }}
-                    </td>
-                    <td
-                      className="border dark:border-gray-800 text-center px-2 py-1 font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200"
                     >
                       {{ item.totalSum?.toFixed(0) || 0 }}
                     </td>
@@ -1564,19 +1556,13 @@ function getDownloadUrl(name) {
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-base"
                       :class="{
-                        'bg-purple-600 text-white dark:bg-purple-700': item.balance > 0,
-                        'bg-green-600 text-white dark:bg-green-700': item.balance <= 0
+                        'bg-purple-600 text-white dark:bg-purple-700': item.totalSum > 0,
+                        'bg-green-600 text-white dark:bg-green-700': item.totalSum <= 0
                       }"
-                    >
-                      {{ item.balance?.toFixed(0) || 0 }}
-                    </td>
-                    <!-- 22. المجموع -->
-                    <td
-                      className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-base bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200"
                     >
                       {{ item.totalSum?.toFixed(0) || 0 }}
                     </td>
-                    <!-- 23. date -->
+                    <!-- 22. date -->
                     <td className="border dark:border-gray-800 text-center px-2 py-2 text-sm">
                       📅 {{ item.data.created }}
                     </td>
@@ -1621,13 +1607,9 @@ function getDownloadUrl(name) {
                     <td className="border dark:border-gray-800 text-center px-2 py-3 font-bold text-xl bg-amber-200 dark:bg-amber-800 text-amber-900 dark:text-amber-100">
                       {{ ((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)).toFixed(0) }}
                     </td>
-                    <!-- 22. المجموع -->
-                    <td className="border dark:border-gray-800 text-center px-2 py-3 font-bold text-xl bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100">
-                      {{ ((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)).toFixed(0) }}
-                    </td>
-                    <!-- 23. date -->
+                    <!-- 22. date -->
                     <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
-                    <!-- 24-26. الأعمدة الأخرى -->
+                    <!-- 23-25. الأعمدة الأخرى -->
                     <td colspan="3" className="border dark:border-gray-800 text-center px-2 py-3 print:hidden"></td>
                   </tr>
                 </tbody>
