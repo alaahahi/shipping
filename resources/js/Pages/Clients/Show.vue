@@ -589,7 +589,7 @@ const mergedData = computed(() => {
     // ترتيب حسب التاريخ (الأقدم أولاً)
     allItems.sort((a, b) => a.date - b.date);
     
-    // حساب الرصيد المتصل
+    // حساب الرصيد المتصل (الدين المتبقي)
     let balance = 0;
     const merged = [];
     
@@ -601,9 +601,14 @@ const mergedData = computed(() => {
         const isVisible = (car.results == 2 && showComplatedCars.value) || car.results != 2;
         
         if (isVisible) {
-          balance += (Number(car.paid) || 0) + (Number(car.discount) || 0);
+          // الرصيد = المجموع - المدفوع - الخصم
+          const total = Number(car.total_s) || 0;
+          const paid = Number(car.paid) || 0;
+          const discount = Number(car.discount) || 0;
+          balance += (total - paid - discount);
         }
       } else if (item.type === 'payment') {
+        // الدفعة تُطرح من الدين
         balance -= Math.abs(Number(item.data.amount) || 0);
       }
       
@@ -819,9 +824,7 @@ function getDownloadUrl(name) {
                       {{showPaymentsInTable ? '✅ الدفعات ظاهرة (' + paymentsCount + ')' : '❌ الدفعات مخفية (' + paymentsCount + ')'}}
                     </label>
                 </div>
-                <div v-if="!showPaymentsInTable && paymentsCount > 0" class="text-xs text-purple-600 dark:text-purple-400 mt-1 mr-5">
-                  💡 لتحسين الأداء، الدفعات مخفية افتراضياً
-                </div>
+                 
               </div>
             </div>
             <div class="px-4">
@@ -1240,8 +1243,8 @@ function getDownloadUrl(name) {
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("discount") }}
                     </th>
-                    <th scope="col" class="px-1 py-2 text-base bg-blue-500 text-white">
-                      الرصيد المتصل 💰
+                    <th scope="col" class="px-1 py-2 text-base bg-orange-500 text-white">
+                      الدين  
                     </th>
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("date") }}
@@ -1385,8 +1388,8 @@ function getDownloadUrl(name) {
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1 font-bold"
                       :style="{
-                        backgroundColor: (item.data.paid > 0 || item.data.discount > 0) ? '#bfdbfe' : '#e5e7eb',
-                        color: (item.data.paid > 0 || item.data.discount > 0) ? '#1e40af' : '#374151'
+                        backgroundColor: item.balance > 0 ? '#fed7aa' : '#d1fae5',
+                        color: item.balance > 0 ? '#c2410c' : '#065f46'
                       }"
                     >
                       {{ item.balance?.toFixed(0) || 0 }}
@@ -1542,10 +1545,13 @@ function getDownloadUrl(name) {
                     <td className="border dark:border-gray-800 text-center px-2 py-2 bg-red-50 dark:bg-red-950"></td>
                     <!-- 20. discount -->
                     <td className="border dark:border-gray-800 text-center px-2 py-2 bg-red-50 dark:bg-red-950"></td>
-                    <!-- 21. الرصيد المتصل -->
+                    <!-- 21. الدين المتبقي -->
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-base"
-                      style="background-color: #c084fc; color: white;"
+                      :style="{
+                        backgroundColor: item.balance > 0 ? '#fb923c' : '#10b981',
+                        color: 'white'
+                      }"
                     >
                       {{ item.balance?.toFixed(0) || 0 }}
                     </td>
