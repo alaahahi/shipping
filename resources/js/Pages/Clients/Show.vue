@@ -542,8 +542,14 @@ function getTodayDate() {
 }
 
 
-function isRowVisible(car) {
-  return (car.results == 2 && showComplatedCars.value) || car.results != 2;
+function shouldShowCar(car) {
+  if (!car) {
+    return false;
+  }
+  if (car.results == 2) {
+    return showComplatedCars.value;
+  }
+  return true;
 }
 
 const mergedData = computed(() => {
@@ -599,7 +605,7 @@ const mergedData = computed(() => {
       
       if (item.type === 'car') {
         const car = item.data;
-        const isVisible = (car.results == 2 && showComplatedCars.value) || car.results != 2;
+        const isVisible = shouldShowCar(car);
         
         if (isVisible) {
           // السيارة تزيد الرصيد: (المجموع - الخصم) فقط - بدون طرح المدفوع
@@ -1299,7 +1305,7 @@ function getDownloadUrl(name) {
                   <!-- صف السيارة -->
                   <tr
                     v-if="item.type === 'car'"
-                    v-show="(item.data.results == 2 && showComplatedCars)|| item.data.results!=2"
+                    v-show="shouldShowCar(item.data)"
                     :class="{
                       'bg-red-100 dark:bg-red-900': item.data.results == 0,
                       'bg-red-100 dark:bg-red-900': item.data.results == 1,
