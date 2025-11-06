@@ -608,9 +608,9 @@ const mergedData = computed(() => {
           balance += (total - paid - discount); // يزيد الرصيد
         }
       } else if (item.type === 'payment') {
-        // الدفعة تنزل الرصيد
-        const paymentAmount = Math.abs(Number(item.data.amount) || 0);
-        balance -= paymentAmount; // ينزل الرصيد
+        // الدفعة قيمتها سالبة أصلاً، نجمعها مباشرة
+        const paymentAmount = Number(item.data.amount) || 0;
+        balance += paymentAmount; // نجمع (السالب ينزل الرصيد تلقائياً)
       }
       
       merged.push({
