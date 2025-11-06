@@ -35,16 +35,25 @@ createInertiaApp({
 
 InertiaProgress.init({ color: '#f00' });
 
-// 🚀 PWA: تسجيل Service Worker - نسخة محسّنة
+// 🚀 PWA: تسجيل Service Worker - نسخة محسّنة ومستقرة
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
         try {
-            // إلغاء تسجيل جميع SW القديمة
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            for (let registration of registrations) {
-                await registration.unregister();
+            // فحص وجود ملف sw.js قبل التسجيل
+            const swExists = await fetch('/sw.js', { method: 'HEAD' })
+                .then(response => response.ok)
+                .catch(() => false);
+            
+            if (!swExists) {
+                console.warn('⚠️ Service Worker file not found, skipping registration');
+                // إلغاء تسجيل أي SW قديمة
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                }
+                console.log('🗑️ Old Service Workers unregistered');
+                return;
             }
-            console.log('🗑️ Old Service Workers unregistered');
             
             // تسجيل SW جديد
             const registration = await navigator.serviceWorker.register('/sw.js', {
@@ -54,10 +63,12 @@ if ('serviceWorker' in navigator) {
             
             console.log('✅ Service Worker v2.0 registered:', registration.scope);
             
-            // التحقق من التحديثات كل 60 ثانية
+            // التحقق من التحديثات كل 5 دقائق (تقليل التردد لتحسين الأداء)
             setInterval(() => {
-                registration.update();
-            }, 60000);
+                registration.update().catch(err => {
+                    console.warn('⚠️ SW update check failed:', err);
+                });
+            }, 300000); // 5 دقائق
             
             // معالجة التحديثات
             registration.addEventListener('updatefound', () => {
@@ -69,12 +80,6 @@ if ('serviceWorker' in navigator) {
                         console.log('✅ New version available!');
                         // إرسال رسالة للـ SW الجديد لتفعيله فوراً
                         newWorker.postMessage({ type: 'SKIP_WAITING' });
-                        
-                        // إعادة تحميل الصفحة بعد 1 ثانية
-                        setTimeout(() => {
-                            console.log('🔄 Reloading page for SW update...');
-                            window.location.reload();
-                        }, 1000);
                     }
                 });
             });
@@ -85,12 +90,16 @@ if ('serviceWorker' in navigator) {
                 if (!refreshing) {
                     refreshing = true;
                     console.log('🔄 SW controller changed, reloading...');
-                    window.location.reload();
+                    // تأخير صغير قبل إعادة التحميل
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
                 }
             });
             
         } catch (error) {
-            console.error('❌ Service Worker registration failed:', error);
+            console.warn('⚠️ Service Worker registration failed (app will work without it):', error.message);
+            // التطبيق يعمل بشكل طبيعي بدون Service Worker
         }
     });
 }

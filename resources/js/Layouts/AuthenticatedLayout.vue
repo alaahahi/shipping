@@ -82,7 +82,7 @@ const switchLocale = (locale) => {
               </div>
               
               <!-- صفحة مراقبة المزامنة -->
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="false">
                 <NavLink
                   :href="route('sync.monitor')"
                   :active="route().current('sync.monitor')"
@@ -101,7 +101,7 @@ const switchLocale = (locale) => {
                 </NavLink>
               </div>
               
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="false">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6 && false">
                 <NavLink
                   :href="route('online_contracts')"
                   :active="route().current('online_contracts')"
