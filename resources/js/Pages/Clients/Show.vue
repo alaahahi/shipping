@@ -45,6 +45,7 @@ let showErorrAmount = ref(false);
 let showTransactions= ref(false);
 let showComplatedCars = ref(false);
 let showPaymentsInTable = ref(false);
+let isDataLoaded = ref(false);
 let showModalAddCarContracts =  ref(false);
 let showModalEditCarContracts =  ref(false);
 let showModalAddExitCar = ref(false);
@@ -57,7 +58,6 @@ let formDriving = ref({});
 let discount= ref(0);
 let note = ref('');
 let amount = ref(0);
-let runningBalance = ref(0);
 
 let client_Select = ref(0);
 let showReceiveBtn = ref(0);
@@ -74,15 +74,18 @@ const props = defineProps({
 });
 
 let getResults = async (page = 1) => {
+  isDataLoaded.value = false;
   axios
     .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${props.client_id}&from=${from.value}&to=${to.value}`)
     .then((response) => {
       laravelData.value = response.data;
       client_Select.value = response.data.client.id
       checkClientBalance(response.data.cars_sum)
+      isDataLoaded.value = true;
     })
     .catch((error) => {
       console.error(error);
+      isDataLoaded.value = true;
     });
 };
 function calculateTotalFilteredAmount() {
@@ -538,51 +541,65 @@ function getTodayDate() {
   return `${year}-${month}-${day}`;
 }
 
-function calculateRunningBalance(item, isVisible) {
-  // فقط احسب للصفوف المرئية
-  if (isVisible) {
-    if (item.type === 'car') {
-      runningBalance.value += (parseFloat(item.data.paid) || 0) + (parseFloat(item.data.discount) || 0);
-    } else if (item.type === 'payment') {
-      // الدفعة تُطرح من الرصيد (لأن العميل دفع)
-      runningBalance.value -= (parseFloat(item.data.amount) * -1) || 0;
-    }
-  }
-  return runningBalance.value.toFixed(0);
-}
-
-function resetRunningBalance() {
-  runningBalance.value = 0;
-  return '';
-}
 
 function isRowVisible(car) {
   return (car.results == 2 && showComplatedCars.value) || car.results != 2;
 }
 
-function getMergedData() {
-  const merged = [];
-  const cars = laravelData.value?.data || [];
-  const transactions = laravelData.value?.transactions || [];
+const mergedData = computed(() => {
+  if (!isDataLoaded.value || !laravelData.value) return [];
   
-  // إضافة السيارات أولاً
-  cars.forEach(car => {
-    merged.push({ type: 'car', data: car });
-  });
-  
-  // إضافة الدفعات فقط إذا كان الفلاغ مفعل
-  if (showPaymentsInTable.value) {
-    // فلترة الدفعات فقط (المدفوعات)
-    const payments = transactions.filter(t => t.type === 'out' && t.amount < 0 && t.is_pay === 1);
+  try {
+    const merged = [];
+    const cars = laravelData.value.data || [];
+    const transactions = laravelData.value.transactions || [];
     
-    // إضافة جميع الدفعات في النهاية
-    payments.forEach(payment => {
-      merged.push({ type: 'payment', data: payment });
-    });
+    let balance = 0;
+    
+    // إضافة السيارات
+    if (Array.isArray(cars)) {
+      for (let i = 0; i < cars.length; i++) {
+        const car = cars[i];
+        const isVisible = (car.results == 2 && showComplatedCars.value) || car.results != 2;
+        
+        if (isVisible) {
+          balance += (Number(car.paid) || 0) + (Number(car.discount) || 0);
+        }
+        
+        merged.push({ 
+          type: 'car', 
+          data: car,
+          balance: balance,
+          id: `car-${car.id || i}`
+        });
+      }
+    }
+    
+    // إضافة الدفعات
+    if (showPaymentsInTable.value && Array.isArray(transactions)) {
+      const payments = transactions.filter(t => 
+        t && t.type === 'out' && Number(t.amount) < 0 && t.is_pay === 1
+      );
+      
+      for (let i = 0; i < payments.length; i++) {
+        const payment = payments[i];
+        balance -= Math.abs(Number(payment.amount) || 0);
+        
+        merged.push({ 
+          type: 'payment', 
+          data: payment,
+          balance: balance,
+          id: `payment-${payment.id || i}`
+        });
+      }
+    }
+    
+    return merged;
+  } catch (error) {
+    console.error('❌ Error in mergedData:', error);
+    return [];
   }
-  
-  return merged;
-}
+});
 
 
 function getImageUrl(name) {
@@ -1137,7 +1154,13 @@ function getDownloadUrl(name) {
               </table>
           </div>
           <div>
-            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <!-- Loading State -->
+            <div v-if="!isDataLoaded" class="text-center py-10">
+              <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              <p class="mt-4 text-gray-600 dark:text-gray-400">جاري تحميل البيانات...</p>
+            </div>
+            
+            <div v-else class="relative overflow-x-auto shadow-md sm:rounded-lg">
               <table
                 class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center"
               >
@@ -1238,8 +1261,7 @@ function getDownloadUrl(name) {
                   </tr>
                 </thead>
                 <tbody>
-                  {{ resetRunningBalance() }}
-                  <template v-for="(item, i) in getMergedData()" :key="item.type + '-' + item.data.id">
+                  <template v-for="(item, i) in mergedData" :key="item.id">
                   <!-- صف السيارة -->
                   <tr
                     v-if="item.type === 'car'"
@@ -1357,7 +1379,7 @@ function getDownloadUrl(name) {
                         color: (item.data.paid > 0 || item.data.discount > 0) ? '#1e40af' : '#374151'
                       }"
                     >
-                      {{ calculateRunningBalance(item, isRowVisible(item.data)) }}
+                      {{ item.balance?.toFixed(0) || 0 }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
@@ -1515,7 +1537,7 @@ function getDownloadUrl(name) {
                       className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-base"
                       style="background-color: #c084fc; color: white;"
                     >
-                      {{ calculateRunningBalance(item, true) }}
+                      {{ item.balance?.toFixed(0) || 0 }}
                     </td>
                     <!-- 22. date -->
                     <td className="border dark:border-gray-800 text-center px-2 py-2 text-sm">
