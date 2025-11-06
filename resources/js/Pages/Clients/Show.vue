@@ -591,6 +591,9 @@ const mergedData = computed(() => {
     
     // حساب الرصيد المتصل (الدين المتبقي)
     let balance = 0;
+    let totalDebt = 0; // إجمالي الدين من السيارات
+    let totalPayments = 0; // إجمالي الدفعات العامة
+    
     const merged = [];
     
     for (let i = 0; i < allItems.length; i++) {
@@ -601,15 +604,28 @@ const mergedData = computed(() => {
         const isVisible = (car.results == 2 && showComplatedCars.value) || car.results != 2;
         
         if (isVisible) {
-          // الرصيد = المجموع - المدفوع - الخصم
+          // دين السيارة = المجموع - المدفوع - الخصم
           const total = Number(car.total_s) || 0;
           const paid = Number(car.paid) || 0;
           const discount = Number(car.discount) || 0;
-          balance += (total - paid - discount);
+          const carDebt = total - paid - discount;
+          
+          // إضافة دين السيارة للإجمالي
+          totalDebt += carDebt;
+          
+          // الدين الحالي = إجمالي ديون السيارات - إجمالي الدفعات العامة
+          balance = totalDebt - totalPayments;
+        } else {
+          // السيارة مخفية، لا نحسب دينها
+          balance = totalDebt - totalPayments;
         }
       } else if (item.type === 'payment') {
-        // الدفعة تُطرح من الدين
-        balance -= Math.abs(Number(item.data.amount) || 0);
+        // الدفعة العامة تُطرح من الدين الكلي
+        const paymentAmount = Math.abs(Number(item.data.amount) || 0);
+        totalPayments += paymentAmount;
+        
+        // الدين الحالي = إجمالي ديون السيارات - إجمالي الدفعات
+        balance = totalDebt - totalPayments;
       }
       
       merged.push({
@@ -818,13 +834,16 @@ function getDownloadUrl(name) {
             <div>
               <div className="mb-4  mr-5">
                 <InputLabel for="showPayments" value="عرض الدفعات في الجدول 💳" />
-                <div class="flex items-center ps-4  rounded-lg border border-purple-300 text-gray-900 mt-1 bg-purple-50 dark:bg-purple-950">
+                <div class="flex items-center ps-4 rounded-lg border mt-1 transition-colors duration-200"
+                     :class="{
+                       'border-purple-400 bg-purple-50 dark:border-purple-600 dark:bg-purple-900/30': showPaymentsInTable,
+                       'border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800': !showPaymentsInTable
+                     }">
                     <input id="bordered-checkbox-2" type="checkbox" @change="showPaymentsInTable = !showPaymentsInTable" :value="showPaymentsInTable" :checked="showPaymentsInTable" name="bordered-checkbox-2" class="w-4 h-4 mx-2 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="bordered-checkbox-2" class="w-full pt-3 py-2 mx-4 text-sm  font-medium text-gray-900 dark:text-gray-300"> 
+                    <label for="bordered-checkbox-2" class="w-full pt-3 py-2 mx-4 text-sm font-medium text-gray-900 dark:text-gray-300"> 
                       {{showPaymentsInTable ? '✅ الدفعات ظاهرة (' + paymentsCount + ')' : '❌ الدفعات مخفية (' + paymentsCount + ')'}}
                     </label>
                 </div>
-                 
               </div>
             </div>
             <div class="px-4">
@@ -1243,8 +1262,8 @@ function getDownloadUrl(name) {
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("discount") }}
                     </th>
-                    <th scope="col" class="px-1 py-2 text-base bg-orange-500 text-white">
-                      الدين  
+                    <th scope="col" class="px-1 py-2 text-base bg-gradient-to-r from-orange-500 to-red-500 text-white dark:from-orange-600 dark:to-red-600">
+                      الدين المتبقي
                     </th>
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("date") }}
@@ -1387,9 +1406,9 @@ function getDownloadUrl(name) {
                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ item.data.discount}}</td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1 font-bold"
-                      :style="{
-                        backgroundColor: item.balance > 0 ? '#fed7aa' : '#d1fae5',
-                        color: item.balance > 0 ? '#c2410c' : '#065f46'
+                      :class="{
+                        'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200': item.balance > 0,
+                        'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': item.balance <= 0
                       }"
                     >
                       {{ item.balance?.toFixed(0) || 0 }}
@@ -1520,7 +1539,7 @@ function getDownloadUrl(name) {
                   <!-- صف الدفعة -->
                   <tr
                     v-if="item.type === 'payment'"
-                    class="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 border-b dark:border-gray-700"
+                    class="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border-b dark:border-gray-700"
                   >
                     <!-- 1. no -->
                     <td className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-purple-800 dark:text-purple-200">
@@ -1538,19 +1557,19 @@ function getDownloadUrl(name) {
                     <!-- 13-17. shipping to land_shipping -->
                     <td colspan="5" className="border dark:border-gray-800 text-center px-2 py-2"></td>
                     <!-- 18. total -->
-                    <td className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-red-700 dark:text-red-300 text-base bg-red-50 dark:bg-red-950">
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-red-700 dark:text-red-300 text-base bg-red-50 dark:bg-red-900/20">
                       <span class="text-red-600 dark:text-red-400">⬇️ -</span> {{ (item.data.amount * -1).toFixed(0) }}
                     </td>
                     <!-- 19. paid -->
-                    <td className="border dark:border-gray-800 text-center px-2 py-2 bg-red-50 dark:bg-red-950"></td>
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 bg-red-50 dark:bg-red-900/20"></td>
                     <!-- 20. discount -->
-                    <td className="border dark:border-gray-800 text-center px-2 py-2 bg-red-50 dark:bg-red-950"></td>
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 bg-red-50 dark:bg-red-900/20"></td>
                     <!-- 21. الدين المتبقي -->
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-base"
-                      :style="{
-                        backgroundColor: item.balance > 0 ? '#fb923c' : '#10b981',
-                        color: 'white'
+                      :class="{
+                        'bg-purple-600 text-white dark:bg-purple-700': item.balance > 0,
+                        'bg-green-600 text-white dark:bg-green-700': item.balance <= 0
                       }"
                     >
                       {{ item.balance?.toFixed(0) || 0 }}
