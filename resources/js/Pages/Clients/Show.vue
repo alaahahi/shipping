@@ -661,7 +661,7 @@ const distributedBalance = computed(() => {
 const finalNetBalance = computed(() => {
   try {
     const walletBalance = Number(laravelData.value?.client?.wallet?.balance || 0);
-    return distributedBalance.value - walletBalance;
+    return walletBalance - distributedBalance.value  ;
   } catch (error) {
     return distributedBalance.value;
   }
@@ -1676,7 +1676,7 @@ watch(showPaymentsInTable, (newVal) => {
                     </td>
                     <!-- 2-17. باقي الأعمدة -->
                     <td colspan="16" className="border dark:border-gray-800 text-start px-4 py-3">
-                      <span class="text-2xl font-bold text-green-900 dark:text-green-200">📊 صافي الدين (الرصيد النهائي):</span>
+                      <span class="text-xl font-bold text-green-900 dark:text-green-200"> صافي الدين (الرصيد النهائي):</span>
                     </td>
                     <!-- 18. total -->
                     <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
