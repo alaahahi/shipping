@@ -589,11 +589,8 @@ const mergedData = computed(() => {
     // ترتيب حسب التاريخ (الأقدم أولاً)
     allItems.sort((a, b) => a.date - b.date);
     
-    // حساب الرصيد المتصل (الدين المتبقي)
+    // حساب الرصيد المتصل (بسيط جداً)
     let balance = 0;
-    let totalDebt = 0; // إجمالي الدين من السيارات
-    let totalPayments = 0; // إجمالي الدفعات العامة
-    
     const merged = [];
     
     for (let i = 0; i < allItems.length; i++) {
@@ -604,28 +601,16 @@ const mergedData = computed(() => {
         const isVisible = (car.results == 2 && showComplatedCars.value) || car.results != 2;
         
         if (isVisible) {
-          // دين السيارة = المجموع - المدفوع - الخصم
+          // السيارة تزيد الرصيد: المجموع - المدفوع - الخصم
           const total = Number(car.total_s) || 0;
           const paid = Number(car.paid) || 0;
           const discount = Number(car.discount) || 0;
-          const carDebt = total - paid - discount;
-          
-          // إضافة دين السيارة للإجمالي
-          totalDebt += carDebt;
-          
-          // الدين الحالي = إجمالي ديون السيارات - إجمالي الدفعات العامة
-          balance = totalDebt - totalPayments;
-        } else {
-          // السيارة مخفية، لا نحسب دينها
-          balance = totalDebt - totalPayments;
+          balance += (total - paid - discount); // يزيد الرصيد
         }
       } else if (item.type === 'payment') {
-        // الدفعة العامة تُطرح من الدين الكلي
+        // الدفعة تنزل الرصيد
         const paymentAmount = Math.abs(Number(item.data.amount) || 0);
-        totalPayments += paymentAmount;
-        
-        // الدين الحالي = إجمالي ديون السيارات - إجمالي الدفعات
-        balance = totalDebt - totalPayments;
+        balance -= paymentAmount; // ينزل الرصيد
       }
       
       merged.push({
