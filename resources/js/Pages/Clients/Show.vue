@@ -602,11 +602,12 @@ const mergedData = computed(() => {
         const isVisible = (car.results == 2 && showComplatedCars.value) || car.results != 2;
         
         if (isVisible) {
-          // السيارة تزيد الرصيد: المجموع - الخصم (بدون طرح المدفوع)
+          // السيارة تزيد الرصيد: (المجموع - الخصم - المدفوع)
           const total = Number(car.total_s) || 0;
           const discount = Number(car.discount) || 0;
-          balance += (total - discount); // يزيد الرصيد
-          totalSum += (total - discount); // المجموع التراكمي
+          const paid = Number(car.paid) || 0;
+          balance += (total - discount - paid); // الرصيد = الإجمالي - الخصم - المدفوع
+          totalSum += (total - discount - paid); // المجموع التراكمي
         }
       } else if (item.type === 'payment') {
         // الدفعة قيمتها سالبة أصلاً، نجمعها مباشرة
@@ -809,28 +810,42 @@ function getDownloadUrl(name) {
               </select>
             </div>
             <div>
-              <div className="mb-4  mr-5">
-                <InputLabel for="totalAmount" value="فلترة السيارات المكتملة" />
-                <div class="flex items-center ps-4  rounded-lg border border-gray-300 text-gray-900 mt-1">
-                    <input id="bordered-checkbox-1" type="checkbox" @change="showComplatedCars== true? showComplatedCars=false: showComplatedCars=true" :value="showComplatedCars" :checked="!showComplatedCars" name="bordered-checkbox" class="w-4 h-4 mx-2 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="bordered-checkbox-1" class="w-full pt-3 py-2 mx-4 text-sm  font-medium text-gray-900 dark:text-gray-300"> 
-                      {{showComplatedCars== false?' تم الفلتر':'تم عرض جميع السيارة'}}
+              <div className="mb-4 mr-5">
+                <InputLabel for="filters" value="خيارات العرض" class="mb-2" />
+                <div class="space-y-2 p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
+                  <!-- فلتر السيارات المكتملة -->
+                  <div class="flex items-center justify-between">
+                    <label for="switch-completed" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      🚗 السيارات المكتملة
                     </label>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div className="mb-4  mr-5">
-                <InputLabel for="showPayments" value="عرض الدفعات في الجدول 💳" />
-                <div class="flex items-center ps-4 rounded-lg border mt-1 transition-colors duration-200"
-                     :class="{
-                       'border-purple-400 bg-purple-50 dark:border-purple-600 dark:bg-purple-900/30': showPaymentsInTable,
-                       'border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800': !showPaymentsInTable
-                     }">
-                    <input id="bordered-checkbox-2" type="checkbox" @change="showPaymentsInTable = !showPaymentsInTable" :value="showPaymentsInTable" :checked="showPaymentsInTable" name="bordered-checkbox-2" class="w-4 h-4 mx-2 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="bordered-checkbox-2" class="w-full pt-3 py-2 mx-4 text-sm font-medium text-gray-900 dark:text-gray-300"> 
-                      {{showPaymentsInTable ? '✅ الدفعات ظاهرة (' + paymentsCount + ')' : '❌ الدفعات مخفية (' + paymentsCount + ')'}}
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        id="switch-completed"
+                        @change="showComplatedCars = !showComplatedCars" 
+                        :checked="!showComplatedCars" 
+                        class="sr-only peer"
+                      >
+                      <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
+                  </div>
+                  
+                  <!-- فلتر الدفعات -->
+                  <div class="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <label for="switch-payments" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      💳 الدفعات ({{ paymentsCount }})
+                    </label>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        id="switch-payments"
+                        @change="showPaymentsInTable = !showPaymentsInTable" 
+                        :checked="showPaymentsInTable" 
+                        class="sr-only peer"
+                      >
+                      <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1606,6 +1621,35 @@ function getDownloadUrl(name) {
                     <!-- 21. الرصيد -->
                     <td className="border dark:border-gray-800 text-center px-2 py-3 font-bold text-xl bg-amber-200 dark:bg-amber-800 text-amber-900 dark:text-amber-100">
                       {{ ((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)).toFixed(0) }}
+                    </td>
+                    <!-- 22. date -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
+                    <!-- 23-25. الأعمدة الأخرى -->
+                    <td colspan="3" className="border dark:border-gray-800 text-center px-2 py-3 print:hidden"></td>
+                  </tr>
+                  
+                  <!-- صف صافي الدين (الرصيد التراكمي - الرصيد غير الموزع) -->
+                  <tr 
+                    v-if="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)) != 0"
+                    class="bg-gradient-to-r from-green-200 to-emerald-200 dark:from-green-900/40 dark:to-emerald-900/40 border-t-4 border-green-600"
+                  >
+                    <!-- 1. no -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3 font-bold text-2xl">
+                      ✅
+                    </td>
+                    <!-- 2-17. باقي الأعمدة -->
+                    <td colspan="16" className="border dark:border-gray-800 text-start px-4 py-3">
+                      <span class="text-2xl font-bold text-green-900 dark:text-green-200">📊 صافي الدين (الرصيد النهائي):</span>
+                    </td>
+                    <!-- 18. total -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
+                    <!-- 19. paid -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
+                    <!-- 20. discount -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
+                    <!-- 21. صافي الدين -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3 font-bold text-2xl bg-green-300 dark:bg-green-700 text-green-900 dark:text-green-100">
+                      {{ (mergedData.length > 0 ? (mergedData[mergedData.length - 1].totalSum - ((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid))) : 0).toFixed(0) }}
                     </td>
                     <!-- 22. date -->
                     <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
