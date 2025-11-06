@@ -44,6 +44,7 @@ let showModalAddCarPayment = ref(false);
 let showErorrAmount = ref(false);
 let showTransactions= ref(false);
 let showComplatedCars = ref(false);
+let showPaymentsInTable = ref(false);
 let showModalAddCarContracts =  ref(false);
 let showModalEditCarContracts =  ref(false);
 let showModalAddExitCar = ref(false);
@@ -102,6 +103,14 @@ function calculateTotalFilteredAmount() {
 
   }
   return {  totalAmount };
+}
+
+function getPaymentsCount() {
+  try {
+    return laravelData.value?.transactions?.filter(t => t.type === 'out' && t.amount < 0 && t.is_pay === 1).length || 0;
+  } catch (error) {
+    return 0;
+  }
 }
 function openModalAddPayFromBalanceCar(form = {}) {
   formData.value = form;
@@ -165,6 +174,7 @@ watch(() => props.client_id, (newValue, oldValue) => {
     showPaymentForm.value = false;
     showTransactions.value = false;
     showComplatedCars.value = false;
+    showPaymentsInTable.value = false;
     amount.value = 0;
     discount.value = 0;
     note.value = '';
@@ -555,18 +565,21 @@ function getMergedData() {
   const cars = laravelData.value?.data || [];
   const transactions = laravelData.value?.transactions || [];
   
-  // فلترة الدفعات فقط (المدفوعات)
-  const payments = transactions.filter(t => t.type === 'out' && t.amount < 0 && t.is_pay === 1);
-  
   // إضافة السيارات أولاً
   cars.forEach(car => {
     merged.push({ type: 'car', data: car });
   });
   
-  // إضافة جميع الدفعات في النهاية
-  payments.forEach(payment => {
-    merged.push({ type: 'payment', data: payment });
-  });
+  // إضافة الدفعات فقط إذا كان الفلاغ مفعل
+  if (showPaymentsInTable.value) {
+    // فلترة الدفعات فقط (المدفوعات)
+    const payments = transactions.filter(t => t.type === 'out' && t.amount < 0 && t.is_pay === 1);
+    
+    // إضافة جميع الدفعات في النهاية
+    payments.forEach(payment => {
+      merged.push({ type: 'payment', data: payment });
+    });
+  }
   
   return merged;
 }
@@ -758,6 +771,20 @@ function getDownloadUrl(name) {
                     <label for="bordered-checkbox-1" class="w-full pt-3 py-2 mx-4 text-sm  font-medium text-gray-900 dark:text-gray-300"> 
                       {{showComplatedCars== false?' تم الفلتر':'تم عرض جميع السيارة'}}
                     </label>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div className="mb-4  mr-5">
+                <InputLabel for="showPayments" value="عرض الدفعات في الجدول 💳" />
+                <div class="flex items-center ps-4  rounded-lg border border-purple-300 text-gray-900 mt-1 bg-purple-50 dark:bg-purple-950">
+                    <input id="bordered-checkbox-2" type="checkbox" @change="showPaymentsInTable = !showPaymentsInTable" :value="showPaymentsInTable" :checked="showPaymentsInTable" name="bordered-checkbox-2" class="w-4 h-4 mx-2 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="bordered-checkbox-2" class="w-full pt-3 py-2 mx-4 text-sm  font-medium text-gray-900 dark:text-gray-300"> 
+                      {{showPaymentsInTable ? '✅ الدفعات ظاهرة (' + getPaymentsCount() + ')' : '❌ الدفعات مخفية (' + getPaymentsCount() + ')'}}
+                    </label>
+                </div>
+                <div v-if="!showPaymentsInTable && getPaymentsCount() > 0" class="text-xs text-purple-600 dark:text-purple-400 mt-1 mr-5">
+                  💡 لتحسين الأداء، الدفعات مخفية افتراضياً
                 </div>
               </div>
             </div>
