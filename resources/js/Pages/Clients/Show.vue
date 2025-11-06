@@ -56,6 +56,7 @@ let formDriving = ref({});
 let discount= ref(0);
 let note = ref('');
 let amount = ref(0);
+let runningBalance = ref(0);
 
 let client_Select = ref(0);
 let showReceiveBtn = ref(0);
@@ -527,6 +528,49 @@ function getTodayDate() {
   return `${year}-${month}-${day}`;
 }
 
+function calculateRunningBalance(item, isVisible) {
+  // فقط احسب للصفوف المرئية
+  if (isVisible) {
+    if (item.type === 'car') {
+      runningBalance.value += (parseFloat(item.data.paid) || 0) + (parseFloat(item.data.discount) || 0);
+    } else if (item.type === 'payment') {
+      // الدفعة تُطرح من الرصيد (لأن العميل دفع)
+      runningBalance.value -= (parseFloat(item.data.amount) * -1) || 0;
+    }
+  }
+  return runningBalance.value.toFixed(0);
+}
+
+function resetRunningBalance() {
+  runningBalance.value = 0;
+  return '';
+}
+
+function isRowVisible(car) {
+  return (car.results == 2 && showComplatedCars.value) || car.results != 2;
+}
+
+function getMergedData() {
+  const merged = [];
+  const cars = laravelData.value?.data || [];
+  const transactions = laravelData.value?.transactions || [];
+  
+  // فلترة الدفعات فقط (المدفوعات)
+  const payments = transactions.filter(t => t.type === 'out' && t.amount < 0 && t.is_pay === 1);
+  
+  // إضافة السيارات أولاً
+  cars.forEach(car => {
+    merged.push({ type: 'car', data: car });
+  });
+  
+  // إضافة جميع الدفعات في النهاية
+  payments.forEach(payment => {
+    merged.push({ type: 'payment', data: payment });
+  });
+  
+  return merged;
+}
+
 
 function getImageUrl(name) {
       // Provide the base URL for your images
@@ -874,6 +918,17 @@ function getDownloadUrl(name) {
             </div>
 
             <div className="mb-4  mr-5">
+              <InputLabel for="total_running_balance" value="💰 إجمالي الرصيد المتصل" />
+              <TextInput
+                id="total_running_balance"
+                type="text"
+                class="mt-1 block w-full font-bold bg-blue-100 text-blue-900"
+                :value="laravelData?.cars_paid + laravelData?.cars_discount"
+                disabled
+              />
+            </div>
+
+            <div className="mb-4  mr-5">
               <InputLabel
                 for="contract_total"
                 value="العقود المنجزة"
@@ -1125,6 +1180,9 @@ function getDownloadUrl(name) {
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("discount") }}
                     </th>
+                    <th scope="col" class="px-1 py-2 text-base bg-blue-500 text-white">
+                      الرصيد المتصل 💰
+                    </th>
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("date") }}
                     </th>
@@ -1153,15 +1211,17 @@ function getDownloadUrl(name) {
                   </tr>
                 </thead>
                 <tbody>
+                  {{ resetRunningBalance() }}
+                  <template v-for="(item, i) in getMergedData()" :key="item.type + '-' + item.data.id">
+                  <!-- صف السيارة -->
                   <tr
-                    v-for="(car, i) in (laravelData?.data || [])"
-                    v-show="(car.results == 2 && showComplatedCars)|| car.results!=2"
-                    :key="car.id"
+                    v-if="item.type === 'car'"
+                    v-show="(item.data.results == 2 && showComplatedCars)|| item.data.results!=2"
                     :class="{
-                      'bg-red-100 dark:bg-red-900': car.results == 0,
-                      'bg-red-100 dark:bg-red-900': car.results == 1,
-                      'bg-green-100 dark:bg-green-900': car.results == 2,
-                      'bg-yellow-100 dark:bg-yellow-900':(props.q && (car.vin.startsWith(props.q) || (car.car_number ? car.car_number.toString().startsWith(props.q) : false))),
+                      'bg-red-100 dark:bg-red-900': item.data.results == 0,
+                      'bg-red-100 dark:bg-red-900': item.data.results == 1,
+                      'bg-green-100 dark:bg-green-900': item.data.results == 2,
+                      'bg-yellow-100 dark:bg-yellow-900':(props.q && (item.data.vin.startsWith(props.q) || (item.data.car_number ? item.data.car_number.toString().startsWith(props.q) : false))),
                     }
                     "
                     class="border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600"
@@ -1174,100 +1234,108 @@ function getDownloadUrl(name) {
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.car_type }}
+                      {{ item.data.car_type }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.year }}
+                      {{ item.data.year }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.car_color }}
+                      {{ item.data.car_color }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.vin }}
+                      {{ item.data.vin }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.car_number }}
+                      {{ item.data.car_number }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.dinar_s }}
+                      {{ item.data.dinar_s }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.dolar_price_s }}
+                      {{ item.data.dolar_price_s }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1 print:hidden"
                     >
-                      {{ ((car.dinar_s/car.dolar_price_s)*100)?.toFixed(0)||0 }}
+                      {{ ((item.data.dinar_s/item.data.dolar_price_s)*100)?.toFixed(0)||0 }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1 print:hidden"
                     >
-                      {{ car.note }}
+                      {{ item.data.note }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1 print:hidden"
                     >
-                      {{ ((car.dinar_s/130000)*100)?.toFixed(0)||0 }}
+                      {{ ((item.data.dinar_s/130000)*100)?.toFixed(0)||0 }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1 print:hidden"
                     >
-                      {{ (((car.dinar_s/130000)*100)?.toFixed(0)||0)-(((car.dinar_s/car.dolar_price_s)*100)?.toFixed(0)||0) }}
+                      {{ (((item.data.dinar_s/130000)*100)?.toFixed(0)||0)-(((item.data.dinar_s/item.data.dolar_price_s)*100)?.toFixed(0)||0) }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.shipping_dolar_s }}
+                      {{ item.data.shipping_dolar_s }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.coc_dolar_s }}
+                      {{ item.data.coc_dolar_s }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.checkout_s }}
+                      {{ item.data.checkout_s }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.expenses_s }}
+                      {{ item.data.expenses_s }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.land_shipping_s }}
+                      {{ item.data.land_shipping_s }}
                     </td>
                     
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.total_s.toFixed(0) }}
+                      {{ item.data.total_s.toFixed(0) }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.paid }}
+                      {{ item.data.paid }}
                     </td>
-                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.discount}}</td>
-
+                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ item.data.discount}}</td>
+                    <td
+                      className="border dark:border-gray-800 text-center px-2 py-1 font-bold"
+                      :style="{
+                        backgroundColor: (item.data.paid > 0 || item.data.discount > 0) ? '#bfdbfe' : '#e5e7eb',
+                        color: (item.data.paid > 0 || item.data.discount > 0) ? '#1e40af' : '#374151'
+                      }"
+                    >
+                      {{ calculateRunningBalance(item, isRowVisible(item.data)) }}
+                    </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.date }}
+                      {{ item.data.date }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-start px-2 py-1 print:hidden"
@@ -1277,7 +1345,7 @@ function getDownloadUrl(name) {
                         tabIndex="1"
                         
                         class="px-1 py-1  text-white mx-1 bg-slate-500 rounded"
-                        @click="openModalEditCars(car)"
+                        @click="openModalEditCars(item.data)"
                       >
                         <edit />
                       </button>
@@ -1285,31 +1353,31 @@ function getDownloadUrl(name) {
                         tabIndex="1"
                         
                         class="px-1 py-1  text-white mx-1 bg-orange-500 rounded"
-                        @click="openModalDelCar(car)"
+                        @click="openModalDelCar(item.data)"
                       >
                         <trash />
                       </button>
                       <button
-                        v-if="car.total_s != (car.paid+ car.discount)"
+                        v-if="item.data.total_s != (item.data.paid+ item.data.discount)"
                         tabIndex="1"
                         class="px-1 py-1  text-white mx-1 bg-green-500 rounded"
-                        @click="openAddCarPayment(car)"
+                        @click="openAddCarPayment(item.data)"
                       >
                         <pay />
                       </button>
                       <button
-                        v-if="(car.contract?.price != car.contract?.paid) || (car.contract?.price_dinar != car.contract?.paid_dinar)"
+                        v-if="(item.data.contract?.price != item.data.contract?.paid) || (item.data.contract?.price_dinar != item.data.contract?.paid_dinar)"
                         tabIndex="1"
                         class="px-1 py-1  text-white mx-1 bg-pink-500 rounded"
-                        @click="openModalEditCarContracts(car)"
+                        @click="openModalEditCarContracts(item.data)"
                       >
                         <pay />
                       </button>
                       <button
-                      v-if="!car.contract"
+                      v-if="!item.data.contract"
                         tabIndex="1"
                         class="px-1 py-1  text-white mx-1 bg-yellow-500 rounded"
-                        @click="openModalAddCarContracts(car)"
+                        @click="openModalAddCarContracts(item.data)"
                       >
                         <newContracts />
                       </button>
@@ -1317,16 +1385,16 @@ function getDownloadUrl(name) {
                       <button
                         tabIndex="1"
                         class="px-1 py-1  text-white mx-1 bg-red-500 rounded"
-                        v-if="!car.is_exit"
-                        @click="openModalAddExitCar(car)"
+                        v-if="!item.data.is_exit"
+                        @click="openModalAddExitCar(item.data)"
                       >
                         <exit />
                       </button>
                       <button
                         tabIndex="1"
                         class="px-1 py-1  text-white mx-1 bg-blue-500 rounded"
-                        v-if="car.is_exit"
-                        @click="openModalShowExitCar(car)"
+                        v-if="item.data.is_exit"
+                        @click="openModalShowExitCar(item.data)"
 
                       >
                         <show />
@@ -1334,7 +1402,7 @@ function getDownloadUrl(name) {
                       <button
                         tabIndex="1"
                         class="px-1 py-1  text-white mx-1 bg-violet-500 rounded"
-                        @click="openModalShowDriving(car)"
+                        @click="openModalShowDriving(item.data)"
 
                       >
                         <document />
@@ -1342,7 +1410,7 @@ function getDownloadUrl(name) {
                       <a  target="_blank"
                    
                       style="display: inline-flex;"
-                      :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&print=6&car_id=${car.id}`"
+                      :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&print=6&car_id=${item.data.id}`"
                       tabIndex="1"
                       class="px-1 py-1  text-white  m-1 bg-gray-900 rounded"
                       >
@@ -1351,7 +1419,7 @@ function getDownloadUrl(name) {
                     </td>
                     <td  className="border dark:border-gray-800 text-start px-2 py-1 print:hidden">
                       <a
-                        v-for="(image, index) in car.car_images"
+                        v-for="(image, index) in item.data.car_images"
                         :key="index"
                         :href="getDownloadUrl(image.name)"
                         style="cursor: pointer;"
@@ -1370,22 +1438,79 @@ function getDownloadUrl(name) {
                         style="min-width: 100px;"
                         class="px-1 py-1  text-white mx-1 bg-green-500 rounded"
                         v-if="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)) != 0"
-                        @click="openModalAddPayFromBalanceCar(car)"
+                        @click="openModalAddPayFromBalanceCar(item.data)"
                       >
                         دفع من الرصيد
                       </button>
                       <button
                         tabIndex="1"
                         style="min-width: 100px;"
-                        v-if="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_sum)) != 0 && car.paid"
+                        v-if="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_sum)) != 0 && item.data.paid"
                         class="px-1 py-1 mt-1 text-white mx-1 bg-red-500 rounded"
-                        @click="openModalDelPayFromBalanceCar(car)"
+                        @click="openModalDelPayFromBalanceCar(item.data)"
                       >
                        اعادة للرصيد
                       </button>
                       </td>
                       
                   </tr>
+                  
+                  <!-- صف الدفعة -->
+                  <tr
+                    v-if="item.type === 'payment'"
+                    class="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 border-b dark:border-gray-700"
+                  >
+                    <!-- 1. no -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-purple-800 dark:text-purple-200">
+                      💳
+                    </td>
+                    <!-- 2-6. car_type to car_number -->
+                    <td colspan="5" className="border dark:border-gray-800 text-start px-3 py-2">
+                      <span class="font-bold text-purple-800 dark:text-purple-200">💰 دفعة من العميل:</span>
+                      <span class="font-semibold mr-2">{{ item.data.description }}</span>
+                    </td>
+                    <!-- 7-8. dinar, dolar_price -->
+                    <td colspan="2" className="border dark:border-gray-800 text-center px-2 py-2"></td>
+                    <!-- 9-12. print:hidden columns -->
+                    <td colspan="4" className="border dark:border-gray-800 text-center px-2 py-2 print:hidden"></td>
+                    <!-- 13-17. shipping to land_shipping -->
+                    <td colspan="5" className="border dark:border-gray-800 text-center px-2 py-2"></td>
+                    <!-- 18. total -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-red-700 dark:text-red-300 text-base bg-red-50 dark:bg-red-950">
+                      <span class="text-red-600 dark:text-red-400">⬇️ -</span> {{ (item.data.amount * -1).toFixed(0) }}
+                    </td>
+                    <!-- 19. paid -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 bg-red-50 dark:bg-red-950"></td>
+                    <!-- 20. discount -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 bg-red-50 dark:bg-red-950"></td>
+                    <!-- 21. الرصيد المتصل -->
+                    <td
+                      className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-base"
+                      style="background-color: #c084fc; color: white;"
+                    >
+                      {{ calculateRunningBalance(item, true) }}
+                    </td>
+                    <!-- 22. date -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 text-sm">
+                      📅 {{ item.data.created }}
+                    </td>
+                    <!-- 23. execute print:hidden -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 print:hidden">
+                      <a  target="_blank"
+                        style="display: inline-flex;"
+                        :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&print=2&transactions_id=${item.data.id}`"
+                        tabIndex="1"
+                        class="px-2 py-1 text-white bg-purple-600 rounded hover:bg-purple-700"
+                      >
+                        <print class="inline-flex" />
+                      </a>
+                    </td>
+                    <!-- 24. تخزين print:hidden -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 print:hidden"></td>
+                    <!-- 25. الرصيد print:hidden -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 print:hidden"></td>
+                  </tr>
+                  </template>
                 </tbody>
               </table>
             </div>

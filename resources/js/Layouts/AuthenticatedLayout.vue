@@ -398,7 +398,7 @@ const switchLocale = (locale) => {
               <ResponsiveNavLink
                 :href="route('sync.monitor')"
                 :active="route().current('sync.monitor')"
-                v-if="$page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6"
+                v-if="$page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6 &&false"
               >
               🔄 المزامنة
               </ResponsiveNavLink>
@@ -407,7 +407,7 @@ const switchLocale = (locale) => {
               <ResponsiveNavLink
                 :href="route('offline.car.search')"
                 :active="route().current('offline.car.search')"
-                v-if="$page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6"
+                v-if="$page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6 &&false"
               >
               🔍 بحث Offline
               </ResponsiveNavLink>
