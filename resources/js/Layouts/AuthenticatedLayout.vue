@@ -92,7 +92,7 @@ const switchLocale = (locale) => {
               </div>
               
               <!-- صفحة البحث Offline -->
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6 &&false">
                 <NavLink
                   :href="route('offline.car.search')"
                   :active="route().current('offline.car.search')"
@@ -101,7 +101,7 @@ const switchLocale = (locale) => {
                 </NavLink>
               </div>
               
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6 && false">
                 <NavLink
                   :href="route('online_contracts')"
                   :active="route().current('online_contracts')"

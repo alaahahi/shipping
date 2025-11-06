@@ -3,7 +3,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
 import { Head, Link, useForm } from "@inertiajs/inertia-vue3";
 import { Inertia } from "@inertiajs/inertia";
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, computed } from 'vue';
 import { TailwindPagination } from "laravel-vue-pagination";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
@@ -105,13 +105,13 @@ function calculateTotalFilteredAmount() {
   return {  totalAmount };
 }
 
-function getPaymentsCount() {
+const paymentsCount = computed(() => {
   try {
     return laravelData.value?.transactions?.filter(t => t.type === 'out' && t.amount < 0 && t.is_pay === 1).length || 0;
   } catch (error) {
     return 0;
   }
-}
+});
 function openModalAddPayFromBalanceCar(form = {}) {
   formData.value = form;
   showModalAddPayFromBalanceCar.value = true;
@@ -780,10 +780,10 @@ function getDownloadUrl(name) {
                 <div class="flex items-center ps-4  rounded-lg border border-purple-300 text-gray-900 mt-1 bg-purple-50 dark:bg-purple-950">
                     <input id="bordered-checkbox-2" type="checkbox" @change="showPaymentsInTable = !showPaymentsInTable" :value="showPaymentsInTable" :checked="showPaymentsInTable" name="bordered-checkbox-2" class="w-4 h-4 mx-2 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                     <label for="bordered-checkbox-2" class="w-full pt-3 py-2 mx-4 text-sm  font-medium text-gray-900 dark:text-gray-300"> 
-                      {{showPaymentsInTable ? '✅ الدفعات ظاهرة (' + getPaymentsCount() + ')' : '❌ الدفعات مخفية (' + getPaymentsCount() + ')'}}
+                      {{showPaymentsInTable ? '✅ الدفعات ظاهرة (' + paymentsCount + ')' : '❌ الدفعات مخفية (' + paymentsCount + ')'}}
                     </label>
                 </div>
-                <div v-if="!showPaymentsInTable && getPaymentsCount() > 0" class="text-xs text-purple-600 dark:text-purple-400 mt-1 mr-5">
+                <div v-if="!showPaymentsInTable && paymentsCount > 0" class="text-xs text-purple-600 dark:text-purple-400 mt-1 mr-5">
                   💡 لتحسين الأداء، الدفعات مخفية افتراضياً
                 </div>
               </div>
