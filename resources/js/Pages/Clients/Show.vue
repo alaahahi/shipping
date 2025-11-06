@@ -591,6 +591,7 @@ const mergedData = computed(() => {
     
     // حساب الرصيد المتصل (بسيط جداً)
     let balance = 0;
+    let totalSum = 0;
     const merged = [];
     
     for (let i = 0; i < allItems.length; i++) {
@@ -601,21 +602,23 @@ const mergedData = computed(() => {
         const isVisible = (car.results == 2 && showComplatedCars.value) || car.results != 2;
         
         if (isVisible) {
-          // السيارة تزيد الرصيد: المجموع - المدفوع - الخصم
+          // السيارة تزيد الرصيد: المجموع - الخصم (بدون طرح المدفوع)
           const total = Number(car.total_s) || 0;
-          const paid = Number(car.paid) || 0;
           const discount = Number(car.discount) || 0;
-          balance += (total - paid - discount); // يزيد الرصيد
+          balance += (total - discount); // يزيد الرصيد
+          totalSum += (total - discount); // المجموع التراكمي
         }
       } else if (item.type === 'payment') {
         // الدفعة قيمتها سالبة أصلاً، نجمعها مباشرة
         const paymentAmount = Number(item.data.amount) || 0;
         balance += paymentAmount; // نجمع (السالب ينزل الرصيد تلقائياً)
+        totalSum += paymentAmount; // المجموع التراكمي
       }
       
       merged.push({
         ...item,
-        balance: balance
+        balance: balance,
+        totalSum: totalSum
       });
     }
     
@@ -1248,7 +1251,10 @@ function getDownloadUrl(name) {
                       {{ $t("discount") }}
                     </th>
                     <th scope="col" class="px-1 py-2 text-base bg-gradient-to-r from-orange-500 to-red-500 text-white dark:from-orange-600 dark:to-red-600">
-                      الدين المتبقي
+                      الرصيد
+                    </th>
+                    <th scope="col" class="px-1 py-2 text-base bg-gradient-to-r from-blue-500 to-indigo-500 text-white dark:from-blue-600 dark:to-indigo-600">
+                      المجموع
                     </th>
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("date") }}
@@ -1397,6 +1403,11 @@ function getDownloadUrl(name) {
                       }"
                     >
                       {{ item.balance?.toFixed(0) || 0 }}
+                    </td>
+                    <td
+                      className="border dark:border-gray-800 text-center px-2 py-1 font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200"
+                    >
+                      {{ item.totalSum?.toFixed(0) || 0 }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
@@ -1549,7 +1560,7 @@ function getDownloadUrl(name) {
                     <td className="border dark:border-gray-800 text-center px-2 py-2 bg-red-50 dark:bg-red-900/20"></td>
                     <!-- 20. discount -->
                     <td className="border dark:border-gray-800 text-center px-2 py-2 bg-red-50 dark:bg-red-900/20"></td>
-                    <!-- 21. الدين المتبقي -->
+                    <!-- 21. الرصيد -->
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-base"
                       :class="{
@@ -1559,7 +1570,13 @@ function getDownloadUrl(name) {
                     >
                       {{ item.balance?.toFixed(0) || 0 }}
                     </td>
-                    <!-- 22. date -->
+                    <!-- 22. المجموع -->
+                    <td
+                      className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-base bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200"
+                    >
+                      {{ item.totalSum?.toFixed(0) || 0 }}
+                    </td>
+                    <!-- 23. date -->
                     <td className="border dark:border-gray-800 text-center px-2 py-2 text-sm">
                       📅 {{ item.data.created }}
                     </td>
@@ -1580,6 +1597,39 @@ function getDownloadUrl(name) {
                     <td className="border dark:border-gray-800 text-center px-2 py-2 print:hidden"></td>
                   </tr>
                   </template>
+                  
+                  <!-- صف الرصيد غير الموزع في آخر الجدول -->
+                  <tr 
+                    v-if="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)) != 0"
+                    class="bg-gradient-to-r from-yellow-100 to-amber-100 dark:from-yellow-900/30 dark:to-amber-900/30 border-t-4 border-amber-500"
+                  >
+                    <!-- 1. no -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3 font-bold">
+                      ⚠️
+                    </td>
+                    <!-- 2-17. باقي الأعمدة -->
+                    <td colspan="16" className="border dark:border-gray-800 text-start px-4 py-3">
+                      <span class="text-xl font-bold text-amber-800 dark:text-amber-200">💰 الرصيد غير الموزع على السيارات:</span>
+                    </td>
+                    <!-- 18. total -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
+                    <!-- 19. paid -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
+                    <!-- 20. discount -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
+                    <!-- 21. الرصيد -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3 font-bold text-xl bg-amber-200 dark:bg-amber-800 text-amber-900 dark:text-amber-100">
+                      {{ ((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)).toFixed(0) }}
+                    </td>
+                    <!-- 22. المجموع -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3 font-bold text-xl bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100">
+                      {{ ((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)).toFixed(0) }}
+                    </td>
+                    <!-- 23. date -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
+                    <!-- 24-26. الأعمدة الأخرى -->
+                    <td colspan="3" className="border dark:border-gray-800 text-center px-2 py-3 print:hidden"></td>
+                  </tr>
                 </tbody>
               </table>
             </div>
