@@ -980,16 +980,7 @@ function getDownloadUrl(name) {
               />
             </div>
 
-            <div className="mb-4  mr-5">
-              <InputLabel for="total_running_balance" value="💰 إجمالي الرصيد المتصل" />
-              <TextInput
-                id="total_running_balance"
-                type="text"
-                class="mt-1 block w-full font-bold bg-blue-100 text-blue-900"
-                :value="laravelData?.cars_paid + laravelData?.cars_discount"
-                disabled
-              />
-            </div>
+      
 
             <div className="mb-4  mr-5">
               <InputLabel
