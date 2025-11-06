@@ -1648,7 +1648,7 @@ function getDownloadUrl(name) {
                     <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
                     <!-- 21. صافي الدين -->
                     <td className="border dark:border-gray-800 text-center px-2 py-3 font-bold text-2xl bg-green-300 dark:bg-green-700 text-green-900 dark:text-green-100">
-                      {{ (mergedData.length > 0 ? (mergedData[mergedData.length - 1].totalSum - ((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid))) : 0).toFixed(0) }}
+                      {{ (((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)) - (mergedData.length > 0 ? mergedData[mergedData.length - 1].totalSum : 0)).toFixed(0) }}
                     </td>
                     <!-- 22. date -->
                     <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
