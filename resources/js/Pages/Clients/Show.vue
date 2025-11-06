@@ -550,32 +550,26 @@ const mergedData = computed(() => {
   if (!isDataLoaded.value || !laravelData.value) return [];
   
   try {
-    const merged = [];
     const cars = laravelData.value.data || [];
     const transactions = laravelData.value.transactions || [];
     
-    let balance = 0;
+    // تجهيز السيارات والدفعات
+    const allItems = [];
     
-    // إضافة السيارات
+    // إضافة السيارات مع تواريخها
     if (Array.isArray(cars)) {
       for (let i = 0; i < cars.length; i++) {
         const car = cars[i];
-        const isVisible = (car.results == 2 && showComplatedCars.value) || car.results != 2;
-        
-        if (isVisible) {
-          balance += (Number(car.paid) || 0) + (Number(car.discount) || 0);
-        }
-        
-        merged.push({ 
+        allItems.push({ 
           type: 'car', 
           data: car,
-          balance: balance,
+          date: new Date(car.created_at || car.date || 0),
           id: `car-${car.id || i}`
         });
       }
     }
     
-    // إضافة الدفعات
+    // إضافة الدفعات مع تواريخها (إذا كان الفلاغ مفعل)
     if (showPaymentsInTable.value && Array.isArray(transactions)) {
       const payments = transactions.filter(t => 
         t && t.type === 'out' && Number(t.amount) < 0 && t.is_pay === 1
@@ -583,15 +577,40 @@ const mergedData = computed(() => {
       
       for (let i = 0; i < payments.length; i++) {
         const payment = payments[i];
-        balance -= Math.abs(Number(payment.amount) || 0);
-        
-        merged.push({ 
+        allItems.push({ 
           type: 'payment', 
           data: payment,
-          balance: balance,
+          date: new Date(payment.created_at || payment.created || 0),
           id: `payment-${payment.id || i}`
         });
       }
+    }
+    
+    // ترتيب حسب التاريخ (الأقدم أولاً)
+    allItems.sort((a, b) => a.date - b.date);
+    
+    // حساب الرصيد المتصل
+    let balance = 0;
+    const merged = [];
+    
+    for (let i = 0; i < allItems.length; i++) {
+      const item = allItems[i];
+      
+      if (item.type === 'car') {
+        const car = item.data;
+        const isVisible = (car.results == 2 && showComplatedCars.value) || car.results != 2;
+        
+        if (isVisible) {
+          balance += (Number(car.paid) || 0) + (Number(car.discount) || 0);
+        }
+      } else if (item.type === 'payment') {
+        balance -= Math.abs(Number(item.data.amount) || 0);
+      }
+      
+      merged.push({
+        ...item,
+        balance: balance
+      });
     }
     
     return merged;
