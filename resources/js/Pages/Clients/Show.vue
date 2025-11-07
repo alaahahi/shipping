@@ -610,9 +610,8 @@ const mergedData = computed(() => {
         if (isVisible) {
           // السيارة تزيد الرصيد: (المجموع - الخصم) فقط - بدون طرح المدفوع
           const total = Number(car.total_s) || 0;
-          const discount = Number(car.discount) || 0;
-          balance += (total - discount); // الرصيد = الإجمالي - الخصم فقط
-          totalSum += (total - discount); // المجموع التراكمي
+          balance += (total); // الرصيد = الإجمالي - الخصم فقط  - discount
+          totalSum += (total ); // المجموع التراكمي-   discount
         }
       } else if (item.type === 'payment') {
         // الدفعة قيمتها سالبة أصلاً، نجمعها مباشرة (الدفعات تنزل الرصيد)
@@ -1608,7 +1607,7 @@ watch(showPaymentsInTable, (newVal) => {
                     </td>
                     <!-- 22. date -->
                     <td className="border dark:border-gray-800 text-center px-2 py-2 text-sm">
-                      📅 {{ item.data.created }}
+                        {{ item.data.created }}
                     </td>
                     <!-- 23. execute print:hidden -->
                     <td className="border dark:border-gray-800 text-center px-2 py-2 print:hidden">
