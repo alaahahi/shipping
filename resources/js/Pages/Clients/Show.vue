@@ -109,7 +109,7 @@ const saveClientPhone = debounce(async (value) => {
   } finally {
     isSavingPhone.value = false;
   }
-}, 600);
+}, 3000);
 
 watch(clientPhone, (newVal, oldVal) => {
   if (!allowAutoSavePhone.value) {
