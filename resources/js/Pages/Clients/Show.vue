@@ -923,9 +923,9 @@ watch(showComplatedCars, (newVal) => {
               </select>
             </div>
             <div>
-              <div className="mb-4 mr-5">
+              <div class="mb-4 mr-5">
                 <InputLabel for="filters" value="خيارات العرض" class="mb-2" />
-                <div class="space-y-2 p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
+                <div class="p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
                   <!-- فلتر السيارات المكتملة -->
                   <div class="flex items-center justify-between">
                     <label for="switch-completed" class="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -946,8 +946,8 @@ watch(showComplatedCars, (newVal) => {
                 </div>
               </div>
             </div>
-            <div class="px-4">
-              <div className="mb-4 mx-5">
+            <div class="px-2 flex flex-col justify-end">
+              <div class="mb-4">
                 <InputLabel for="from" :value="$t('from_date')" />
                 <TextInput
                   id="from"
@@ -957,8 +957,8 @@ watch(showComplatedCars, (newVal) => {
                 />
               </div>
             </div>
-            <div class="px-4">
-              <div className="mb-4 mx-5">
+            <div class="px-2 flex flex-col justify-end">
+              <div class="mb-4">
                 <InputLabel for="to" :value="$t('to_date')" />
                 <TextInput
                   id="to"
@@ -968,34 +968,31 @@ watch(showComplatedCars, (newVal) => {
                 />
               </div>
             </div>
-            <div className="mb-4  mr-5 print:hidden">
+            <div class="mb-4 mr-5 print:hidden flex flex-col gap-2">
               <InputLabel for="pay" value="فلترة" />
               <button
                 @click.prevent="getResults(1, false)"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded"
-                style="width: 100%"
+                class="w-full px-6 py-2 mt-1 font-bold text-white bg-gray-500 rounded"
               >
                 <span>فلترة</span>
               </button>
             </div>
-            <div className="mb-4  mr-5 print:hidden">
+            <div class="mb-4 mr-5 print:hidden flex flex-col gap-2">
               <InputLabel for="pay" value="طباعة" />
               <a
                 :href="`/api/getIndexAccountsSelas?user_id=${client_Select}&from=${from}&to=${to}&print=1&showComplatedCars=${ showComplatedCars ? 0:1}`"
                 target="_blank"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded block text-center"
-                style="width: 100%"
+                class="w-full px-6 py-2 mt-1 font-bold text-white bg-orange-500 rounded block text-center"
               >
                 <span>طباعة</span>
               </a>
             </div>
-            <div className="mb-4  mr-5 print:hidden">
+            <div class="mb-4 mr-5 print:hidden flex flex-col gap-2">
               <InputLabel for="pay" value="طباعة" />
               <a
                 :href="`/api/getIndexAccountsSelas?user_id=${client_Select}&from=${from}&to=${to}&print=1&printExcel=1&showComplatedCars=${ showComplatedCars ? 0:1}`"
                 target="_blank"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-green-500 rounded block text-center"
-                style="width: 100%"
+                class="w-full px-6 py-2 mt-1 font-bold text-white bg-green-500 rounded block text-center"
               >
                 <span>Excel</span>
               </a>
@@ -1053,6 +1050,44 @@ watch(showComplatedCars, (newVal) => {
                 disabled
               />
             </div>
+       
+            <div className="mb-4  mr-5 print:hidden"   v-if="((calculateTotalFilteredAmount().totalAmount)*-1)-(laravelData?.cars_sum) !=0">
+              <InputLabel for="pay" value="اضافة دفعة" />
+              <button
+                @click.prevent="showAddPaymentTotal()"
+                v-if="!showPaymentForm"
+                :disabled="isLoading"
+                class="px-6 mb-6 py-2 mt-1 font-bold text-white bg-green-500 rounded"
+                style="width: 100%">
+                <span>اضافة دفعة</span>
+              </button>
+              <button
+                @click.prevent="hideAddPaymentTotal()"
+                v-if="showPaymentForm"
+                :disabled="isLoading"
+                class="px-6 mb-6 py-2 mt-1 font-bold text-white bg-pink-500 rounded"
+                style="width: 100%">
+                <span>اخفاء دفعة</span>
+              </button>
+            </div>
+            <div className="mb-4  mr-5 print:hidden" >
+              <InputLabel for="pay" value="عرض الدفعات" />
+              <button
+                @click.prevent="showTransactionsDiv()"
+                v-if="!showTransactions"
+                :disabled="isLoading"
+                class="px-6 mb-6 py-2 mt-1 font-bold text-white bg-purple-500 rounded"
+                style="width: 100%">
+                <span>عرض الدفعات</span>
+              </button>
+              <button
+                @click.prevent="hideTransactionsDiv()"
+                v-if="showTransactions"
+                class="px-6 mb-6 py-2 mt-1 font-bold text-white bg-pink-500 rounded"
+                style="width: 100%">
+                <span>اخفاء الدفعات</span>
+              </button>
+            </div>
             <div className="mb-4 mr-5">
               <InputLabel for="client_phone" value="رقم هاتف الزبون" />
               <TextInput
@@ -1066,44 +1101,6 @@ watch(showComplatedCars, (newVal) => {
                 جاري حفظ رقم الهاتف...
               </p>
             </div>
-            <div className="mb-4  mr-5 print:hidden"   v-if="((calculateTotalFilteredAmount().totalAmount)*-1)-(laravelData?.cars_sum) !=0">
-              <InputLabel for="pay" value="اضافة دفعة" />
-              <button
-                @click.prevent="showAddPaymentTotal()"
-                v-if="!showPaymentForm"
-                :disabled="isLoading"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-green-500 rounded"
-                style="width: 100%">
-                <span>اضافة دفعة</span>
-              </button>
-              <button
-                @click.prevent="hideAddPaymentTotal()"
-                v-if="showPaymentForm"
-                :disabled="isLoading"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-pink-500 rounded"
-                style="width: 100%">
-                <span>اخفاء دفعة</span>
-              </button>
-            </div>
-            <div className="mb-4  mr-5 print:hidden" >
-              <InputLabel for="pay" value="عرض الدفعات" />
-              <button
-                @click.prevent="showTransactionsDiv()"
-                v-if="!showTransactions"
-                :disabled="isLoading"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-purple-500 rounded"
-                style="width: 100%">
-                <span>عرض الدفعات</span>
-              </button>
-              <button
-                @click.prevent="hideTransactionsDiv()"
-                v-if="showTransactions"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-pink-500 rounded"
-                style="width: 100%">
-                <span>اخفاء الدفعات</span>
-              </button>
-            </div>
-
             <div className="mb-4  mr-5"   v-if="distributedBalance != 0">
               <InputLabel for="cars_need_paid" value="الرصيد غير موزع بالدولار" />
               <TextInput
@@ -1212,7 +1209,7 @@ watch(showComplatedCars, (newVal) => {
               <button
                 @click.prevent="confirmAddPaymentTotal(amount, client_Select,discount,note)"
                 :disabled="isLoading"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-green-500 rounded"
+                class="px-6 mb-6 py-2 mt-1 font-bold text-white bg-green-500 rounded"
                 style="width: 100%"
               >
                 <span v-if="showErorrAmount">يرجى مراجعة المبلغ ل</span>
