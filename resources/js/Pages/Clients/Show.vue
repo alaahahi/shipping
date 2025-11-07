@@ -129,6 +129,10 @@ function syncClientPhone(phone) {
   });
 }
 
+const isClientPhoneTooLong = computed(() => {
+  return clientPhone.value ? String(clientPhone.value).length > 10 : false;
+});
+
 const isFilterActive = computed(() => {
   const fromVal = from.value && from.value !== 0 && from.value !== '0' && from.value !== '';
   const toVal = to.value && to.value !== 0 && to.value !== '0' && to.value !== '';
@@ -1093,10 +1097,18 @@ watch(showComplatedCars, (newVal) => {
               <TextInput
                 id="client_phone"
                 type="text"
-                class="mt-1 block w-full"
+                :class="[
+                  'mt-1 block w-full border rounded',
+                  isClientPhoneTooLong
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-400'
+                    : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-200'
+                ]"
                 v-model="clientPhone"
                 :disabled="isSavingPhone"
               />
+              <p v-if="isClientPhoneTooLong" class="text-xs text-red-500 mt-1">
+                الرقم يجب ألا يتجاوز 10 أرقام.
+              </p>
               <p v-if="isSavingPhone" class="text-xs text-gray-500 mt-1">
                 جاري حفظ رقم الهاتف...
               </p>
