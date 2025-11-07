@@ -660,10 +660,10 @@ const distributedBalance = computed(() => {
 
 const finalNetBalance = computed(() => {
   try {
-    const walletBalance = Number(laravelData.value?.client?.wallet?.balance || 0);
-    return walletBalance - distributedBalance.value  ;
+    const carsSum = Number(laravelData.value?.cars_sum || 0);
+    return carsSum - distributedBalance.value;
   } catch (error) {
-    return distributedBalance.value;
+    return -distributedBalance.value;
   }
 });
 
