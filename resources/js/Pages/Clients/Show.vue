@@ -1578,7 +1578,6 @@ watch(showPaymentsInTable, (newVal) => {
                     </td>
                     <!-- 2-6. car_type to car_number -->
                     <td colspan="5" className="border dark:border-gray-800 text-start px-3 py-2">
-                      <span class="font-bold text-purple-800 dark:text-purple-200">💰 دفعة من العميل:</span>
                       <span class="font-semibold mr-2">{{ item.data.description }}</span>
                     </td>
                     <!-- 7-8. dinar, dolar_price -->
