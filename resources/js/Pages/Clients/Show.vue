@@ -1635,7 +1635,7 @@ watch(showPaymentsInTable, (newVal) => {
                   >
                     <!-- 1. no -->
                     <td className="border dark:border-gray-800 text-center px-2 py-3 font-bold">
-                      ⚠️
+                       
                     </td>
                     <!-- 2-17. باقي الأعمدة -->
                     <td colspan="16" className="border dark:border-gray-800 text-start px-4 py-3">
@@ -1657,31 +1657,7 @@ watch(showPaymentsInTable, (newVal) => {
                     <td colspan="3" className="border dark:border-gray-800 text-center px-2 py-3 print:hidden"></td>
                   </tr>
                   
-                  <!-- صف صافي الدين (الرصيد التراكمي - الرصيد غير الموزع) -->
-                  <tr 
-                    v-if="distributedBalance != 0"
-                    class="bg-gradient-to-r from-green-200 to-emerald-200 dark:from-green-900/40 dark:to-emerald-900/40 border-t-4 border-green-600"
-                  >
-                    <!-- 1. no -->
-                    <td className="border dark:border-gray-800 text-center px-2 py-3 font-bold text-2xl">
-                      ✅
-                    </td>
-                    <!-- 2-17. باقي الأعمدة -->
-                    <td colspan="16" className="border dark:border-gray-800 text-start px-4 py-3">
-                      <span class="text-xl font-bold text-green-900 dark:text-green-200"> صافي الدين (الرصيد النهائي):</span>
-                    </td>
-                    <!-- 18. total -->
-                    <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
-                    <!-- 19. paid -->
-                    <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
-                    <!-- 20. discount -->
-                    <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
-             
-                    <!-- 22. date -->
-                    <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
-                    <!-- 23-25. الأعمدة الأخرى -->
-                    <td colspan="3" className="border dark:border-gray-800 text-center px-2 py-3 print:hidden"></td>
-                  </tr>
+ 
                 </tbody>
               </table>
             </div>
