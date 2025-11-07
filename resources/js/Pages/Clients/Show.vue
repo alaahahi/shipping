@@ -192,6 +192,9 @@ const isFilterActive = computed(() => {
 });
 
 const paymentIdentifierLookup = computed(() => {
+  if (!showComplatedCars.value) {
+    return Object.create(null);
+  }
   const lookup = Object.create(null);
   mergedData.value.forEach((item) => {
     if (item.type === 'payment' && Array.isArray(item.relatedIdentifiers) && item.relatedIdentifiers.length) {
@@ -823,7 +826,7 @@ const mergedData = computed(() => {
     }
     
     // إضافة الدفعات مع تواريخها (إذا كان الفلاغ مفعل)
-    if (showPaymentsInTable.value && Array.isArray(transactions)) {
+    if (showPaymentsInTable.value && Array.isArray(transactions) && showComplatedCars.value) {
       const payments = transactions.filter(t => 
         t && t.type === 'out' && Number(t.amount) < 0 && t.is_pay === 1
       );
@@ -1099,10 +1102,10 @@ watch(showComplatedCars, (newVal) => {
                       >
                       <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
-                  </div>
-                  
                 </div>
+                  
               </div>
+            </div>
             </div>
             <div class="px-2 flex flex-col justify-end">
               <div class="mb-4">
@@ -1577,15 +1580,16 @@ watch(showComplatedCars, (newVal) => {
                     v-show="shouldShowCar(item.data)"
                     :class="[
                       {
-                        'bg-red-100 dark:bg-red-900': item.data.results == 0,
-                        'bg-red-100 dark:bg-red-900': item.data.results == 1,
-                        'bg-green-100 dark:bg-green-900': item.data.results == 2,
+                      'bg-red-100 dark:bg-red-900': item.data.results == 0,
+                      'bg-red-100 dark:bg-red-900': item.data.results == 1,
+                      'bg-green-100 dark:bg-green-900': item.data.results == 2,
                         'bg-yellow-100 dark:bg-yellow-900': (props.q && (item.data.vin.startsWith(props.q) || (item.data.car_number ? item.data.car_number.toString().startsWith(props.q) : false))),
                       },
                       isCarReferencedByPayment(item)
-                        ? 'ring-2 ring-purple-300 dark:ring-purple-600 ring-inset'
+                        ? 'ring-2 ring-inset'
                         : ''
                     ]"
+                    :style="getCarHighlightStyle(item)"
                     class="border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600"
                   >
                     <td
@@ -1822,8 +1826,9 @@ watch(showComplatedCars, (newVal) => {
                     v-if="item.type === 'payment'"
                     :class="[
                       'bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border-b dark:border-gray-700',
-                      paymentReferencesCars(item) ? 'ring-2 ring-purple-300 dark:ring-purple-600 ring-inset' : ''
+                      paymentReferencesCars(item) ? 'ring-2 ring-inset' : ''
                     ]"
+                    :style="getPaymentHighlightStyle(item)"
                   >
                     <!-- 1. no -->
                     <td className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-purple-800 dark:text-purple-200">
