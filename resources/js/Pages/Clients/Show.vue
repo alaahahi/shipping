@@ -644,8 +644,6 @@ function getDownloadUrl(name) {
       return `/public/uploads/${name}`;
     }
 
-const showCompletedCarsComputed = computed(() => showComplatedCars.value || showPaymentsInTable.value);
-
 const distributedBalance = computed(() => {
   try {
     const paymentsTotal = Number(calculateTotalFilteredAmount().totalAmount || 0);
@@ -658,20 +656,8 @@ const distributedBalance = computed(() => {
 });
  
 
-let previousCompletedState = false;
-watch(showPaymentsInTable, (newVal) => {
-  if (newVal) {
-    previousCompletedState = showComplatedCars.value;
-    showComplatedCars.value = true;
-  } else {
-    showComplatedCars.value = previousCompletedState;
-  }
-});
-
 watch(showComplatedCars, (newVal) => {
-  if (!newVal && showPaymentsInTable.value) {
-    showPaymentsInTable.value = false;
-  }
+  showPaymentsInTable.value = newVal;
 });
 
 </script>
@@ -864,25 +850,6 @@ watch(showComplatedCars, (newVal) => {
                     </label>
                   </div>
                   
-                  <!-- فلتر الدفعات -->
-                  <div
-                    v-if="showComplatedCars"
-                    class="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700"
-                  >
-                    <label for="switch-payments" class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      💳 الدفعات ({{ paymentsCount }})
-                    </label>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        id="switch-payments"
-                        @change="showPaymentsInTable = !showPaymentsInTable" 
-                        :checked="showPaymentsInTable" 
-                        class="sr-only peer"
-                      >
-                      <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
-                    </label>
-                  </div>
                 </div>
               </div>
             </div>
