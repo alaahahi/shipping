@@ -657,15 +657,7 @@ const distributedBalance = computed(() => {
     return 0;
   }
 });
-
-const finalNetBalance = computed(() => {
-  try {
-    const carsSum = Number(laravelData.value?.cars_sum || 0);
-    return carsSum - distributedBalance.value;
-  } catch (error) {
-    return -distributedBalance.value;
-  }
-});
+ 
 
 let previousCompletedState = false;
 watch(showPaymentsInTable, (newVal) => {
