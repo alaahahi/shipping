@@ -929,7 +929,7 @@ watch(showComplatedCars, (newVal) => {
                   <!-- فلتر السيارات المكتملة -->
                   <div class="flex items-center justify-between">
                     <label for="switch-completed" class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      🚗 السيارات المكتملة
+                       السيارات المكتملة
                     </label>
                     <label class="relative inline-flex items-center cursor-pointer">
                       <input 
