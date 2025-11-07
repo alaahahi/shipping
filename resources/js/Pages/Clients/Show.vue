@@ -84,6 +84,58 @@ let clientPhone = ref('');
 let isSavingPhone = ref(false);
 const allowAutoSavePhone = ref(false);
 
+function normalizeIdentifier(value) {
+  if (value === undefined || value === null) {
+    return '';
+  }
+  return value.toString().replace(/[\s-]+/g, '').toUpperCase();
+}
+
+function extractIdentifiersFromDescription(description) {
+  if (!description || typeof description !== 'string') {
+    return [];
+  }
+  const matches = description.match(/[A-Za-z0-9]+/g) || [];
+  return matches
+    .map((segment) => normalizeIdentifier(segment))
+    .filter((segment) => segment.length >= 3)
+    .filter((segment, index, self) => segment && self.indexOf(segment) === index);
+}
+
+const highlightPalette = [
+  '#F97316', // orange
+  '#10B981', // emerald
+  '#3B82F6', // blue
+  '#EC4899', // pink
+  '#F59E0B', // amber
+  '#22D3EE', // cyan
+  '#8B5CF6', // violet
+  '#F87171', // red
+  '#14B8A6', // teal
+  '#A855F7', // purple
+];
+
+function getHighlightColorForPayment(payment) {
+  const base = Number(payment?.id ?? 0) || payment?.description?.length || 0;
+  const index = Math.abs(base) % highlightPalette.length;
+  return highlightPalette[index];
+}
+
+function withAlpha(hexColor, alpha = 0.15) {
+  if (!hexColor) {
+    return `rgba(0,0,0,${alpha})`;
+  }
+  let hex = hexColor.replace('#', '');
+  if (hex.length === 3) {
+    hex = hex.split('').map((char) => char + char).join('');
+  }
+  const bigint = parseInt(hex, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 const saveClientPhone = debounce(async (value) => {
   if (!currentClientId.value) {
     return;
@@ -138,6 +190,100 @@ const isFilterActive = computed(() => {
   const toVal = to.value && to.value !== 0 && to.value !== '0' && to.value !== '';
   return Boolean(fromVal || toVal);
 });
+
+const paymentIdentifierLookup = computed(() => {
+  const lookup = Object.create(null);
+  mergedData.value.forEach((item) => {
+    if (item.type === 'payment' && Array.isArray(item.relatedIdentifiers) && item.relatedIdentifiers.length) {
+      item.relatedIdentifiers.forEach((identifier) => {
+        if (!identifier) {
+          return;
+        }
+        if (!lookup[identifier]) {
+          lookup[identifier] = [];
+        }
+        const color = item.highlightColor || highlightPalette[0];
+        if (!lookup[identifier].includes(color)) {
+          lookup[identifier].push(color);
+        }
+      });
+    }
+  });
+  return lookup;
+});
+
+function getIdentifierColors(identifiers) {
+  const colors = [];
+  identifiers.forEach((identifier) => {
+    if (!identifier) {
+      return;
+    }
+    const list = paymentIdentifierLookup.value[identifier];
+    if (Array.isArray(list)) {
+      list.forEach((color) => {
+        if (color && !colors.includes(color)) {
+          colors.push(color);
+        }
+      });
+    }
+  });
+  return colors;
+}
+
+function isCarReferencedByPayment(item) {
+  if (!item || item.type !== 'car') {
+    return false;
+  }
+  const identifiers = Array.isArray(item.normalizedIdentifiers)
+    ? item.normalizedIdentifiers
+    : [
+        normalizeIdentifier(item?.data?.car_number),
+        normalizeIdentifier(item?.data?.vin),
+      ].filter(Boolean);
+  return getIdentifierColors(identifiers).length > 0;
+}
+
+function paymentReferencesCars(item) {
+  return Boolean(item?.type === 'payment' && item?.relatedIdentifiers?.length);
+}
+
+function getCarHighlightStyle(item) {
+  if (!item || item.type !== 'car') {
+    return {};
+  }
+  const identifiers = Array.isArray(item.normalizedIdentifiers)
+    ? item.normalizedIdentifiers
+    : [
+        normalizeIdentifier(item?.data?.car_number),
+        normalizeIdentifier(item?.data?.vin),
+      ].filter(Boolean);
+  const colors = getIdentifierColors(identifiers);
+  if (!colors.length) {
+    return {};
+  }
+  const color = colors[0];
+  return {
+    boxShadow: `inset 0 -3px 0 ${color}`,
+    backgroundColor: withAlpha(color, 0.12),
+  };
+}
+
+function getPaymentHighlightStyle(item) {
+  if (!paymentReferencesCars(item)) {
+    return {};
+  }
+  const color = item.highlightColor || highlightPalette[0];
+  return {
+    boxShadow: `inset 0 3px 0 ${color}`,
+    backgroundColor: withAlpha(color, 0.18),
+  };
+}
+
+function getCarHighlightClass(item) {
+  return isCarReferencedByPayment(item)
+    ? 'car-highlighted'
+    : '';
+}
 
 let getResults = async (page = 1, shouldCheckBalance = true) => {
   isDataLoaded.value = false;
@@ -663,11 +809,15 @@ const mergedData = computed(() => {
     if (Array.isArray(cars)) {
       for (let i = 0; i < cars.length; i++) {
         const car = cars[i];
+        const normalizedCarNumber = normalizeIdentifier(car?.car_number);
+        const normalizedVin = normalizeIdentifier(car?.vin);
+        const normalizedIdentifiers = [normalizedCarNumber, normalizedVin].filter(Boolean);
         allItems.push({ 
           type: 'car', 
           data: car,
           date: new Date(car.created_at || car.date || 0),
-          id: `car-${car.id || i}`
+          id: `car-${car.id || i}`,
+          normalizedIdentifiers
         });
       }
     }
@@ -680,11 +830,15 @@ const mergedData = computed(() => {
       
       for (let i = 0; i < payments.length; i++) {
         const payment = payments[i];
+        const relatedIdentifiers = extractIdentifiersFromDescription(payment?.description);
+        const highlightColor = getHighlightColorForPayment(payment);
         allItems.push({ 
           type: 'payment', 
           data: payment,
           date: new Date(payment.created_at || payment.created || 0),
-          id: `payment-${payment.id || i}`
+          id: `payment-${payment.id || i}`,
+          relatedIdentifiers,
+          highlightColor
         });
       }
     }
@@ -1421,13 +1575,17 @@ watch(showComplatedCars, (newVal) => {
                   <tr
                     v-if="item.type === 'car'"
                     v-show="shouldShowCar(item.data)"
-                    :class="{
-                      'bg-red-100 dark:bg-red-900': item.data.results == 0,
-                      'bg-red-100 dark:bg-red-900': item.data.results == 1,
-                      'bg-green-100 dark:bg-green-900': item.data.results == 2,
-                      'bg-yellow-100 dark:bg-yellow-900':(props.q && (item.data.vin.startsWith(props.q) || (item.data.car_number ? item.data.car_number.toString().startsWith(props.q) : false))),
-                    }
-                    "
+                    :class="[
+                      {
+                        'bg-red-100 dark:bg-red-900': item.data.results == 0,
+                        'bg-red-100 dark:bg-red-900': item.data.results == 1,
+                        'bg-green-100 dark:bg-green-900': item.data.results == 2,
+                        'bg-yellow-100 dark:bg-yellow-900': (props.q && (item.data.vin.startsWith(props.q) || (item.data.car_number ? item.data.car_number.toString().startsWith(props.q) : false))),
+                      },
+                      isCarReferencedByPayment(item)
+                        ? 'ring-2 ring-purple-300 dark:ring-purple-600 ring-inset'
+                        : ''
+                    ]"
                     class="border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600"
                   >
                     <td
@@ -1662,7 +1820,10 @@ watch(showComplatedCars, (newVal) => {
                   <!-- صف الدفعة -->
                   <tr
                     v-if="item.type === 'payment'"
-                    class="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border-b dark:border-gray-700"
+                    :class="[
+                      'bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border-b dark:border-gray-700',
+                      paymentReferencesCars(item) ? 'ring-2 ring-purple-300 dark:ring-purple-600 ring-inset' : ''
+                    ]"
                   >
                     <!-- 1. no -->
                     <td className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-purple-800 dark:text-purple-200">
