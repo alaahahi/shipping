@@ -1684,10 +1684,7 @@ watch(showPaymentsInTable, (newVal) => {
                     <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
                     <!-- 20. discount -->
                     <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
-                    <!-- 21. صافي الدين -->
-                    <td className="border dark:border-gray-800 text-center px-2 py-3 font-bold text-2xl bg-green-300 dark:bg-green-700 text-green-900 dark:text-green-100">
-                      {{ finalNetBalance.toFixed(0) }}
-                    </td>
+             
                     <!-- 22. date -->
                     <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
                     <!-- 23-25. الأعمدة الأخرى -->
