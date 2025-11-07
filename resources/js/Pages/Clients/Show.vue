@@ -1629,7 +1629,7 @@ watch(showPaymentsInTable, (newVal) => {
                   
                   <!-- صف الرصيد غير الموزع في آخر الجدول -->
                   <tr 
-                    v-if="distributedBalance != 0"
+                    v-if="!showPaymentsInTable && distributedBalance != 0"
                     class="bg-gradient-to-r from-yellow-100 to-amber-100 dark:from-yellow-900/30 dark:to-amber-900/30 border-t-4 border-amber-500"
                   >
                     <!-- 1. no -->
