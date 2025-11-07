@@ -73,6 +73,12 @@ let page = 1;
 let q = '';
 let allTransfers=ref([]);
 
+const editingDescriptionId = ref(null);
+const descriptionDraft = ref('');
+const isSavingDescription = ref(false);
+const descriptionError = ref('');
+const DESCRIPTION_MAX_LENGTH = 1000;
+
 const refresh = () => {
   page = 0;
   transactions.value.length = 0;
@@ -357,7 +363,73 @@ function updateResults(input) {
   return input.toLocaleString();
 }
 
+function startEditingDescription(tran) {
+  if (!tran || isSavingDescription.value) {
+    return;
+  }
+  editingDescriptionId.value = tran.id;
+  descriptionDraft.value = tran.description ?? '';
+  descriptionError.value = '';
+}
 
+function cancelEditingDescription() {
+  if (isSavingDescription.value) {
+    return;
+  }
+  editingDescriptionId.value = null;
+  descriptionDraft.value = '';
+  descriptionError.value = '';
+}
+
+async function saveDescription(tran) {
+  if (!tran || editingDescriptionId.value !== tran.id) {
+    return;
+  }
+
+  const trimmed = descriptionDraft.value ? descriptionDraft.value.trim() : '';
+
+  if (!trimmed) {
+    descriptionError.value = 'الوصف مطلوب';
+    return;
+  }
+
+  if (trimmed.length > DESCRIPTION_MAX_LENGTH) {
+    descriptionError.value = `الوصف يجب ألا يتجاوز ${DESCRIPTION_MAX_LENGTH} حرفًا`;
+    return;
+  }
+
+  isSavingDescription.value = true;
+  descriptionError.value = '';
+
+  try {
+    await axios.post('/api/updateTransactionDescription', {
+      transaction_id: tran.id,
+      description: trimmed,
+    });
+
+    tran.description = trimmed;
+    tran._descriptionUpdated = true;
+    setTimeout(() => {
+      if (tran) {
+        tran._descriptionUpdated = false;
+      }
+    }, 3000);
+
+    cancelEditingDescription();
+  } catch (error) {
+    if (error.response?.data?.errors?.description?.length) {
+      descriptionError.value = error.response.data.errors.description[0];
+    } else if (error.response?.data?.message) {
+      descriptionError.value = error.response.data.message;
+    } else {
+      descriptionError.value = 'حدث خطأ أثناء حفظ الوصف';
+    }
+  } finally {
+    isSavingDescription.value = false;
+  }
+}
+ 
+ 
 </script>
 
 <template>
@@ -950,10 +1022,63 @@ function updateResults(input) {
 
                   
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran?.created_at.slice(0, 19).replace("T", "  ") }}</td>
-                  <th className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.description }}</th>
+                  <th className="border dark:border-gray-800 text-center px-2 py-1 align-top">
+                    <div v-if="editingDescriptionId === tran.id" class="space-y-2 text-right">
+                      <textarea
+                        v-model="descriptionDraft"
+                        class="w-full rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm leading-6 p-2"
+                        rows="3"
+                        :maxlength="DESCRIPTION_MAX_LENGTH"
+                        placeholder="اكتب الوصف الجديد هنا"
+                      ></textarea>
+                      <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                        <span>الحد الأقصى {{ DESCRIPTION_MAX_LENGTH }} حرفًا</span>
+                        <span :class="descriptionDraft.length > DESCRIPTION_MAX_LENGTH ? 'text-red-500' : ''">
+                          {{ descriptionDraft.length }}/{{ DESCRIPTION_MAX_LENGTH }}
+                        </span>
+                      </div>
+                      <p v-if="descriptionError" class="text-xs text-red-500">{{ descriptionError }}</p>
+                      <div class="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          class="px-3 py-1 text-sm font-semibold rounded bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                          @click="cancelEditingDescription"
+                          :disabled="isSavingDescription"
+                        >
+                          إلغاء
+                        </button>
+                        <button
+                          type="button"
+                          class="px-3 py-1 text-sm font-semibold text-white bg-green-600 rounded disabled:opacity-70"
+                          @click="saveDescription(tran)"
+                          :disabled="isSavingDescription"
+                        >
+                          <span v-if="isSavingDescription">جارٍ الحفظ...</span>
+                          <span v-else>حفظ</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div v-else class="space-y-1 text-right">
+                      <span class="block whitespace-pre-line leading-6">{{ tran.description }}</span>
+                      <span
+                        v-if="tran._descriptionUpdated"
+                        class="inline-flex items-center text-xs font-semibold text-green-600"
+                      >
+                        تم التحديث
+                      </span>
+                    </div>
+                  </th>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.type == 'inUser'|| tran.type == 'in'|| tran.type == 'inUserBox' ? updateResults(tran.amount)+' '+tran.currency : '' }}</td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.type == 'outUser'|| tran.type == 'out'|| tran.type == 'debt' || tran.type == 'outUserBox' ? updateResults(tran.amount)+' '+tran.currency : '' }}</td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
+                    <button
+                      class="px-1 py-1 text-white bg-blue-500 rounded-md focus:outline-none disabled:opacity-60"
+                      title="تعديل الوصف"
+                      @click="startEditingDescription(tran)"
+                      :disabled="isSavingDescription && editingDescriptionId === tran.id"
+                    >
+                      <edit class="w-4 h-4" />
+                    </button>
                     <button class="px-1 py-1 text-white bg-rose-500 rounded-md focus:outline-none" @click="openModalDel(tran)" >
                       <trash />
                     </button>

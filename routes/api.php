@@ -104,6 +104,7 @@ Route::post('cancelTransfers',[TransfersController::class, 'cancelTransfers'])->
 Route::get('getIndexAccountsSelas',[AccountingController::class, 'getIndexAccountsSelas'])->name('getIndexAccountsSelas');
 
 Route::post('deleteTransactions',[AccountingController::class, 'delTransactions'])->name('deleteTransactions');
+Route::post('updateTransactionDescription',[AccountingController::class, 'updateTransactionDescription'])->name('updateTransactionDescription');
 
 
 Route::get('carConfig',[CarConfigController::class, 'index'])->name('carConfig');

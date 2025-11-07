@@ -765,6 +765,49 @@ class AccountingController extends Controller
         return Response::json('balance is good',200);
     }
 
+    public function updateTransactionDescription(Request $request)
+    {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
+
+        $validated = $request->validate([
+            'transaction_id' => ['required', 'integer', 'exists:transactions,id'],
+            'description' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $transaction = Transactions::with(['wallet.user'])->find($validated['transaction_id']);
+
+        if (!$transaction) {
+            return Response::json(['message' => 'لم يتم العثور على الحركة المطلوبة'], 404);
+        }
+
+        $walletUser = optional($transaction->wallet)->user;
+
+        if (!$walletUser || $walletUser->owner_id !== Auth::user()->owner_id) {
+            return Response::json(['message' => 'غير مصرح بتعديل هذه الحركة'], 403);
+        }
+
+        $description = trim($validated['description']);
+
+        if ($description === '') {
+            return Response::json([
+                'errors' => [
+                    'description' => ['الوصف مطلوب'],
+                ],
+            ], 422);
+        }
+
+        $transaction->description = $description;
+        $transaction->save();
+
+        return Response::json([
+            'message' => 'تم تحديث الوصف بنجاح',
+            'transaction' => [
+                'id' => $transaction->id,
+                'description' => $transaction->description,
+            ],
+        ], 200);
+    }
+ 
     public function increaseWallet(int $amount,$desc,$user_id,$morphed_id='',$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0,$type='in',$details=[]) 
     {
         $this->accounting->loadAccounts(Auth::user()->owner_id);

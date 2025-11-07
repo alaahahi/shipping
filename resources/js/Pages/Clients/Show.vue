@@ -277,8 +277,8 @@ function getPaymentHighlightStyle(item) {
   }
   const color = item.highlightColor || highlightPalette[0];
   return {
-    boxShadow: `inset 0 3px 0 ${color}`,
-    backgroundColor: withAlpha(color, 0.18),
+    boxShadow: `inset 0 0 0 2px ${withAlpha(color, 0.35)}`,
+    backgroundColor: withAlpha(color, 0.12),
   };
 }
 
@@ -301,6 +301,7 @@ let getResults = async (page = 1, shouldCheckBalance = true) => {
       laravelData.value = response.data;
       client_Select.value = response.data.client.id
       syncClientPhone(response.data?.client?.phone);
+      cancelEditingPaymentDescription();
       if (shouldCheckBalance && !isFilterActive.value) {
         checkClientBalance(response.data.cars_sum);
       }
@@ -382,6 +383,7 @@ const getResultsSelect = async (page = 1) => {
       laravelData.value = response.data;
       client_Select.value = response.data.client.id
       syncClientPhone(response.data?.client?.phone);
+      cancelEditingPaymentDescription();
       if (!isFilterActive.value) {
         checkClientBalance(response.data.cars_sum);
       }
@@ -914,6 +916,80 @@ watch(showComplatedCars, (newVal) => {
   showPaymentsInTable.value = newVal;
 });
 
+const payment_loading = ref(false);
+const selectedCompletedCarsState = ref(true);
+
+const editingPaymentDescriptionId = ref(null);
+const paymentDescriptionDraft = ref('');
+const paymentDescriptionError = ref('');
+const isSavingPaymentDescription = ref(false);
+const PAYMENT_DESCRIPTION_MAX = 1000;
+
+function startEditingPaymentDescription(payment) {
+  if (!payment || isSavingPaymentDescription.value) {
+    return;
+  }
+  editingPaymentDescriptionId.value = payment.id;
+  paymentDescriptionDraft.value = payment.description ?? '';
+  paymentDescriptionError.value = '';
+}
+
+function cancelEditingPaymentDescription() {
+  if (isSavingPaymentDescription.value) {
+    return;
+  }
+  editingPaymentDescriptionId.value = null;
+  paymentDescriptionDraft.value = '';
+  paymentDescriptionError.value = '';
+}
+
+async function savePaymentDescription(payment) {
+  if (!payment || editingPaymentDescriptionId.value !== payment.id) {
+    return;
+  }
+
+  const trimmed = paymentDescriptionDraft.value ? paymentDescriptionDraft.value.trim() : '';
+
+  if (!trimmed) {
+    paymentDescriptionError.value = 'الوصف مطلوب';
+    return;
+  }
+
+  if (trimmed.length > PAYMENT_DESCRIPTION_MAX) {
+    paymentDescriptionError.value = `الوصف يجب ألا يتجاوز ${PAYMENT_DESCRIPTION_MAX} حرفًا`;
+    return;
+  }
+
+  isSavingPaymentDescription.value = true;
+  paymentDescriptionError.value = '';
+
+  try {
+    await axios.post('/api/updateTransactionDescription', {
+      transaction_id: payment.id,
+      description: trimmed,
+    });
+
+    payment.description = trimmed;
+    payment._descriptionUpdated = true;
+    setTimeout(() => {
+      if (payment) {
+        payment._descriptionUpdated = false;
+      }
+    }, 3000);
+
+    cancelEditingPaymentDescription();
+  } catch (error) {
+    if (error.response?.data?.errors?.description?.length) {
+      paymentDescriptionError.value = error.response.data.errors.description[0];
+    } else if (error.response?.data?.message) {
+      paymentDescriptionError.value = error.response.data.message;
+    } else {
+      paymentDescriptionError.value = 'حدث خطأ أثناء حفظ الوصف';
+    }
+  } finally {
+    isSavingPaymentDescription.value = false;
+  }
+}
 </script>
 
 <template>
@@ -1430,9 +1506,62 @@ watch(showComplatedCars, (newVal) => {
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ indexs++ }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.id }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.created }}</td>
-                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.description }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200 align-top">
+                    <div v-if="editingPaymentDescriptionId === user.id" class="space-y-2 text-right">
+                      <textarea
+                        v-model="paymentDescriptionDraft"
+                        class="w-full rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm leading-6 p-2"
+                        rows="3"
+                        :maxlength="PAYMENT_DESCRIPTION_MAX"
+                        placeholder="اكتب الوصف الجديد هنا"
+                      ></textarea>
+                      <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                        <span>الحد الأقصى {{ PAYMENT_DESCRIPTION_MAX }} حرفًا</span>
+                        <span :class="paymentDescriptionDraft.length > PAYMENT_DESCRIPTION_MAX ? 'text-red-500' : ''">
+                          {{ paymentDescriptionDraft.length }}/{{ PAYMENT_DESCRIPTION_MAX }}
+                        </span>
+                      </div>
+                      <p v-if="paymentDescriptionError" class="text-xs text-red-500">{{ paymentDescriptionError }}</p>
+                      <div class="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          class="px-3 py-1 text-sm font-semibold rounded bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                          @click="cancelEditingPaymentDescription"
+                          :disabled="isSavingPaymentDescription"
+                        >
+                          إلغاء
+                        </button>
+                        <button
+                          type="button"
+                          class="px-3 py-1 text-sm font-semibold text-white bg-green-600 rounded disabled:opacity-70"
+                          @click="savePaymentDescription(user)"
+                          :disabled="isSavingPaymentDescription"
+                        >
+                          <span v-if="isSavingPaymentDescription">جارٍ الحفظ...</span>
+                          <span v-else>حفظ</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div v-else class="space-y-1 text-right">
+                      <span class="block whitespace-pre-line leading-6">{{ user.description }}</span>
+                      <span py-1 text-white bg-blue-500 rounded-md focus:outline-none disabled:opacity-60
+                        v-if="user._descriptionUpdated"
+                        class="inline-flex items-center text-xs font-semibold text-green-600"
+                      >
+                        تم التحديث
+                      </span>
+                    </div>
+                  </td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.amount*-1  }}</td>
-                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">  
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200 space-x-1 space-x-reverse">  
+                    <button
+                      class="px-4 py-2  text-white bg-blue-500 rounded-md focus:outline-none disabled:opacity-60"
+                      title="تعديل الوصف"
+                      @click="startEditingPaymentDescription(user)"
+                      :disabled="isSavingPaymentDescription && editingPaymentDescriptionId === user.id"
+                    >
+                      <edit class="w-4 h-4" />
+                    </button>
                     <a v-if="user.type =='out' && user.amount<0" target="_blank"
                     style="display: inline-flex;"
                     :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&from=${from}&to=${to}&print=2&transactions_id=${user.id}`"
