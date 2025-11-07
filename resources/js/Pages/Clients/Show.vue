@@ -668,6 +668,12 @@ watch(showPaymentsInTable, (newVal) => {
   }
 });
 
+watch(showComplatedCars, (newVal) => {
+  if (!newVal && showPaymentsInTable.value) {
+    showPaymentsInTable.value = false;
+  }
+});
+
 </script>
 
 <template>
@@ -859,7 +865,10 @@ watch(showPaymentsInTable, (newVal) => {
                   </div>
                   
                   <!-- فلتر الدفعات -->
-                  <div class="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <div
+                    v-if="showComplatedCars"
+                    class="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700"
+                  >
                     <label for="switch-payments" class="text-sm font-medium text-gray-700 dark:text-gray-300">
                       💳 الدفعات ({{ paymentsCount }})
                     </label>
@@ -1144,6 +1153,7 @@ watch(showPaymentsInTable, (newVal) => {
                   <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
                   <tr  class="bg-rose-500 text-gray-100 rounded-l-lg mb-2 sm:mb-0">
                     <th className="px-1 py-2 text-base">#</th>
+                    <th className="px-1 py-2 text-base">no</th>
                     <th className="px-1 py-2 text-base">{{$t('date')}}</th>
                     <th className="px-1 py-2 text-base">{{$t('description')}}</th>
                     <th className="px-1 py-2 text-base">{{$t('amount')}}</th>
