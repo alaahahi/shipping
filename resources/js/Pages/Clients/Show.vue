@@ -3,7 +3,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
 import { Head, Link, useForm } from "@inertiajs/inertia-vue3";
 import { Inertia } from "@inertiajs/inertia";
-import { onMounted, ref, watch, computed } from 'vue';
+import { onMounted, ref, watch, computed, nextTick } from 'vue';
 import { TailwindPagination } from "laravel-vue-pagination";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
@@ -29,7 +29,7 @@ import document from "@/Components/icon/document.vue";
 import newContracts from "@/Components/icon/new.vue";
 
 import { useToast } from "vue-toastification";
-import { create } from "lodash";
+import { debounce } from "lodash";
 let toast = useToast();
 let sums= ref(0);
 let laravelData = ref({});
@@ -73,14 +73,84 @@ const props = defineProps({
   q:String
 });
 
-let getResults = async (page = 1) => {
+const currentClientId = computed(() => {
+  if (client_Select.value && client_Select.value !== 0 && client_Select.value !== "undefined") {
+    return client_Select.value;
+  }
+  return props.client_id;
+});
+
+let clientPhone = ref('');
+let isSavingPhone = ref(false);
+const allowAutoSavePhone = ref(false);
+
+const saveClientPhone = debounce(async (value) => {
+  if (!currentClientId.value) {
+    return;
+  }
+  try {
+    isSavingPhone.value = true;
+    await axios.post("/api/updateClientPhone", {
+      userId: currentClientId.value,
+      phone: value
+    });
+    toast.success("تم تحديث رقم الهاتف بنجاح", {
+      timeout: 2000,
+      position: "bottom-right",
+      rtl: true,
+    });
+  } catch (error) {
+    console.error(error);
+    toast.error("لم يتم تحديث رقم الهاتف", {
+      timeout: 3000,
+      position: "bottom-right",
+      rtl: true,
+    });
+  } finally {
+    isSavingPhone.value = false;
+  }
+}, 600);
+
+watch(clientPhone, (newVal, oldVal) => {
+  if (!allowAutoSavePhone.value) {
+    return;
+  }
+  if (newVal === oldVal) {
+    return;
+  }
+  saveClientPhone(newVal);
+});
+
+function syncClientPhone(phone) {
+  allowAutoSavePhone.value = false;
+  clientPhone.value = phone ?? '';
+  nextTick(() => {
+    allowAutoSavePhone.value = true;
+  });
+}
+
+const isFilterActive = computed(() => {
+  const fromVal = from.value && from.value !== 0 && from.value !== '0' && from.value !== '';
+  const toVal = to.value && to.value !== 0 && to.value !== '0' && to.value !== '';
+  return Boolean(fromVal || toVal);
+});
+
+let getResults = async (page = 1, shouldCheckBalance = true) => {
   isDataLoaded.value = false;
+  const userId = currentClientId.value;
+  if (!userId) {
+    isDataLoaded.value = true;
+    return;
+  }
   axios
-    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${props.client_id}&from=${from.value}&to=${to.value}`)
+    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${userId}&from=${from.value || ""}&to=${to.value || ""}`)
     .then((response) => {
       laravelData.value = response.data;
       client_Select.value = response.data.client.id
-      checkClientBalance(response.data.cars_sum)
+      syncClientPhone(response.data?.client?.phone);
+      if (shouldCheckBalance && !isFilterActive.value) {
+        checkClientBalance(response.data.cars_sum);
+      }
       isDataLoaded.value = true;
     })
     .catch((error) => {
@@ -149,13 +219,19 @@ function confirmDelPayFromBalanceCar(V) {
 }
 
 const getResultsSelect = async (page = 1) => {
-
+  const userId = currentClientId.value;
+  if (!userId) {
+    return;
+  }
   axios
-    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${client_Select.value}&from=${from.value}&to=${to.value}`)
+    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${userId}&from=${from.value || ""}&to=${to.value || ""}`)
     .then((response) => {
       laravelData.value = response.data;
       client_Select.value = response.data.client.id
-
+      syncClientPhone(response.data?.client?.phone);
+      if (!isFilterActive.value) {
+        checkClientBalance(response.data.cars_sum);
+      }
 
     })
     .catch((error) => {
@@ -489,7 +565,23 @@ function confirmAddExitCar(v){
 }
 
 function checkClientBalance(v){
-    axios.get(`/api/checkClientBalance?userId=${props.client_id}&currentBalance=${v+calculateTotalFilteredAmount().totalAmount}`)
+    if (isFilterActive.value) {
+      return;
+    }
+    const userId = currentClientId.value;
+    if (!userId) {
+      return;
+    }
+    const transactionsTotal = Number(calculateTotalFilteredAmount().totalAmount || 0);
+    const currentBalance = Number(v || 0) + transactionsTotal;
+    const params = new URLSearchParams({
+      userId: userId,
+      currentBalance: currentBalance,
+      from: from.value || "",
+      to: to.value || ""
+    }).toString();
+
+    axios.get(`/api/checkClientBalance?${params}`)
     .then(response => {
       console.log(response)
       if(response.status==201){
@@ -502,6 +594,7 @@ function checkClientBalance(v){
       }
     })
     .catch(error => {
+        console.error(error);
       toast.error( "لم يتم اعادة فحص الحساب  بنجاح ", {
             timeout: 5000,
             position: "bottom-right",
@@ -878,7 +971,7 @@ watch(showComplatedCars, (newVal) => {
             <div className="mb-4  mr-5 print:hidden">
               <InputLabel for="pay" value="فلترة" />
               <button
-                @click.prevent="getResults()"
+                @click.prevent="getResults(1, false)"
                 class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded"
                 style="width: 100%"
               >
@@ -959,6 +1052,19 @@ watch(showComplatedCars, (newVal) => {
                 :value="((calculateTotalFilteredAmount().totalAmount)*-1)-(laravelData?.cars_sum)"
                 disabled
               />
+            </div>
+            <div className="mb-4 mr-5">
+              <InputLabel for="client_phone" value="رقم هاتف الزبون" />
+              <TextInput
+                id="client_phone"
+                type="text"
+                class="mt-1 block w-full"
+                v-model="clientPhone"
+                :disabled="isSavingPhone"
+              />
+              <p v-if="isSavingPhone" class="text-xs text-gray-500 mt-1">
+                جاري حفظ رقم الهاتف...
+              </p>
             </div>
             <div className="mb-4  mr-5 print:hidden"   v-if="((calculateTotalFilteredAmount().totalAmount)*-1)-(laravelData?.cars_sum) !=0">
               <InputLabel for="pay" value="اضافة دفعة" />

@@ -229,6 +229,25 @@ class UserController extends Controller
        
         return Response::json($user, 200);
     }
+    public function updateClientPhone(Request $request)
+    {
+        $validated = Validator::make($request->all(), [
+            'userId' => 'required|integer|exists:users,id',
+            'phone' => 'nullable|string|max:255',
+        ])->validate();
+
+        $user = User::where('id', $validated['userId'])
+            ->where('owner_id', Auth::user()->owner_id)
+            ->firstOrFail();
+
+        $user->phone = $validated['phone'];
+        $user->save();
+
+        return response()->json([
+            'message' => 'Client phone updated successfully',
+            'phone' => $user->phone,
+        ], 200);
+    }
     public function delClient(Request $request)
     {
     // Find the client

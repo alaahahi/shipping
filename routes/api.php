@@ -92,6 +92,8 @@ Route::post('clientsStore',[UserController::class, 'clientsStore'])->name('clien
 Route::post('clientsEdit',[UserController::class, 'clientsEdit'])->name('clientsEdit');
 Route::post('delClient',[UserController::class, 'delClient'])->name('delClient');
 
+Route::post('updateClientPhone',[UserController::class, 'updateClientPhone'])->name('updateClientPhone');
+
 
 Route::post('addTransfers',[TransfersController::class, 'addTransfers'])->name('addTransfers');
 Route::get('transfers',[TransfersController::class, 'index'])->name('transfers');
