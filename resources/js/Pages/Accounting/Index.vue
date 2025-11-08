@@ -30,6 +30,7 @@ import print from "@/Components/icon/print.vue";
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
 import debounce from 'lodash/debounce';
+import { formatBaghdadTimestamp } from "@/utils/datetime";
 
 
 const laravelData = ref({});
@@ -361,6 +362,102 @@ function updateResults(input) {
   
   // Use toLocaleString to format the number with commas
   return input.toLocaleString();
+}
+
+const IN_TYPES = ['in', 'inUser', 'inUserBox'];
+const OUT_TYPES = ['out', 'outUser', 'outUserBox', 'debt'];
+
+function formatAmount(tran, direction) {
+  if (!tran) {
+    return '';
+  }
+  const amount = Number(tran.amount);
+  if (Number.isNaN(amount)) {
+    return '';
+  }
+  if (direction === 'in' && IN_TYPES.includes(tran.type)) {
+    return `${updateResults(Math.abs(amount))} ${tran.currency ?? ''}`.trim();
+  }
+  if (direction === 'out' && OUT_TYPES.includes(tran.type)) {
+    return `${updateResults(Math.abs(amount))} ${tran.currency ?? ''}`.trim();
+  }
+  return '';
+}
+
+function getAmountClass(direction) {
+  return direction === 'in' ? 'amount-pill amount-pill--in dark:text-white text-xl font-bold' : 'amount-pill amount-pill--out dark:text-white text-xl font-bold';
+}
+
+function getRowClasses(tran) {
+  const base = [
+    'transition-colors',
+    'duration-150',
+    'border-b',
+    'border-transparent',
+    'hover:shadow-md',
+  ];
+
+  if (!tran) {
+    return base;
+  }
+
+  if (IN_TYPES.includes(tran.type)) {
+    base.push(
+      'bg-gradient-to-l',
+      'from-emerald-700',
+      'to-emerald-600',
+      'text-white',
+      'hover:from-emerald-600',
+      'hover:to-emerald-500'
+    );
+  } else if (OUT_TYPES.includes(tran.type)) {
+    base.push(
+      'bg-gradient-to-l',
+      'from-rose-700',
+      'to-rose-600',
+      'text-white',
+      'hover:from-rose-600',
+      'hover:to-rose-500'
+    );
+  } else {
+    base.push(
+      'bg-slate-800',
+      'text-white',
+      'hover:bg-slate-700'
+    );
+  }
+
+  return base;
+}
+
+function getAccountLink(tran) {
+  if (!tran) {
+    return null;
+  }
+
+  const type = tran.morphed_type ?? '';
+  const id = tran.morphed?.id ?? tran.morphed_id;
+  const tranType = tran.type ?? '';
+
+  if (!id) {
+    return null;
+  }
+
+  const isBoxTransfer = tranType === 'inUserBox' || tranType === 'outUserBox';
+
+  if (isBoxTransfer) {
+    return route('wallet', { id });
+  }
+
+  if (type.includes('User')) {
+    return route('showClients', { id, q: '' });
+  }
+
+  if (type.includes('Wallet')) {
+    return route('wallet', { id });
+  }
+
+  return null;
 }
 
 function startEditingDescription(tran) {
@@ -954,8 +1051,8 @@ async function saveDescription(tran) {
              
               </div>
                <div class="relative w-full px-4">
-                          <table class="w-full border border-gray-300 text-center text-sm">
-                            <thead class="bg-gray-100">
+                          <table class="w-full text-sm text-center text-gray-100 border border-gray-700 rounded-lg overflow-hidden bg-slate-900">
+                            <thead class="bg-slate-800 text-gray-100">
                               <tr>
                                 <th class="border p-2">العملة</th>
                                 <th class="border p-2">الدخل</th>
@@ -965,21 +1062,21 @@ async function saveDescription(tran) {
                             </thead>
                             <tbody>
                               <!-- دولار -->
-                              <tr>
-                                <td class="border p-2 font-bold text-blue-600">دولار</td>
-                                <td class="border p-2 text-green-600">{{updateResults(transactionInTodayDollar)}}</td>
-                                <td class="border p-2 text-red-600">{{updateResults(transactionOutTodayDollar)}}</td>
-                                <td class="border p-2 font-semibold">
-                                  <span :class="(transactionInTodayDollar + transactionOutTodayDollar) > 0 ? 'text-green-600' : 'text-red-600'" >{{updateResults(transactionInTodayDollar + transactionOutTodayDollar)}}</span>
+                              <tr class="bg-slate-900">
+                                <td class="border border-gray-700 p-2 font-bold text-emerald-300">دولار</td>
+                                <td class="border border-gray-700 p-2 text-emerald-200 font-semibold">{{updateResults(transactionInTodayDollar)}}</td>
+                                <td class="border border-gray-700 p-2 text-rose-200 font-semibold">{{updateResults(transactionOutTodayDollar)}}</td>
+                                <td class="border border-gray-700 p-2 font-semibold">
+                                  <span :class="(transactionInTodayDollar + transactionOutTodayDollar) > 0 ? 'text-emerald-300' : 'text-rose-300'" >{{updateResults(transactionInTodayDollar + transactionOutTodayDollar)}}</span>
                                 </td>
                               </tr>
                               <!-- دينار -->
-                              <tr>
-                                <td class="border p-2 font-bold text-blue-600">دينار</td>
-                                <td class="border p-2 text-green-600">{{updateResults(transactionInTodayDinar)}}</td>
-                                <td class="border p-2 text-red-600">{{updateResults(transactionOutTodayDinar)}}</td>
-                                <td class="border p-2 font-semibold">
-                                  <span :class="(transactionInTodayDinar + transactionOutTodayDinar) > 0 ? 'text-green-600' : 'text-red-600'">{{updateResults(transactionInTodayDinar + transactionOutTodayDinar)}}</span>
+                              <tr class="bg-slate-900">
+                                <td class="border border-gray-700 p-2 font-bold text-indigo-300">دينار</td>
+                                <td class="border border-gray-700 p-2 text-emerald-200 font-semibold">{{updateResults(transactionInTodayDinar)}}</td>
+                                <td class="border border-gray-700 p-2 text-rose-200 font-semibold">{{updateResults(transactionOutTodayDinar)}}</td>
+                                <td class="border border-gray-700 p-2 font-semibold">
+                                  <span :class="(transactionInTodayDinar + transactionOutTodayDinar) > 0 ? 'text-emerald-300' : 'text-rose-300'">{{updateResults(transactionInTodayDinar + transactionOutTodayDinar)}}</span>
                                 </td>
                               </tr>
                             </tbody>
@@ -988,11 +1085,9 @@ async function saveDescription(tran) {
 
             </div>
          
-            <div class="overflow-x-auto shadow-md mt-5">
-              <table class="w-full text-right text-gray-500   dark:text-gray-400 text-center">
-                <thead
-                  class="text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center"
-                >
+         <div class="overflow-x-auto shadow-lg mt-5 rounded-lg">
+              <table class="w-full text-right text-gray-100 dark:text-gray-100 text-center bg-slate-900 rounded-lg overflow-hidden">
+                <thead class="uppercase bg-slate-800 text-gray-100 text-center">
                   <tr class="rounded-l-lg mb-2 sm:mb-0">
                     <th className="px-2 py-2" style="width: 200px;">حساب
                     </th>
@@ -1001,7 +1096,7 @@ async function saveDescription(tran) {
                     <th className="px-2 py-2">الوصف</th>
                     <th className="px-2 py-2">ايداع</th>
                     <th className="px-2 py-2">سحب</th>
-                    <th className="px-2 py-2" style="width: 150px;">تنفيذ</th>
+                    <th className="px-2 py-2" style="width: 200px;">تنفيذ</th>
                     <th
                       scope="col"
                       class="px-1 py-2 text-base print:hidden" style="width: 100px;"
@@ -1012,17 +1107,28 @@ async function saveDescription(tran) {
                 </thead>
                 <tbody>
          
-                  <tr v-for="tran in transactions" :key="tran.id" 
-                  :class="{
-                    'bg-red-100 dark:bg-red-900': tran.type === 'out' || tran.type === 'outUserBox'|| tran.type === 'outUser'|| tran.type === 'debt',
-                    'bg-green-100 dark:bg-green-900': tran.type === 'in' || tran.type === 'inUser'  || tran.type === 'inUserBox' 
-                  }"
-                  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.morphed?.name ? tran.morphed?.name:'' }}</td>
+                  <tr
+                    v-for="tran in transactions"
+                    :key="tran.id"
+                    :class="getRowClasses(tran)"
+                  >
+                    <td class="border border-transparent text-center px-2 py-1 whitespace-nowrap">
+                      <Link
+                        v-if="getAccountLink(tran)"
+                        :href="getAccountLink(tran)"
+                        class="account-link"
+                      >
+                        {{ tran.morphed?.name ?? '—' }}
+                      </Link>
+                      <span v-else>
+                        {{ tran.morphed?.name ?? '—' }}
+                      </span>
+                    </td>
 
-                  
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran?.created_at.slice(0, 19).replace("T", "  ") }}</td>
-                  <th className="border dark:border-gray-800 text-center px-2 py-1 align-top">
+                    <td class="border border-transparent text-center px-2 py-1 whitespace-nowrap">
+                      {{ formatBaghdadTimestamp(tran?.created_at) }}
+                    </td>
+                    <th class="border border-transparent text-center px-2 py-1 align-top">
                     <div v-if="editingDescriptionId === tran.id" class="space-y-2 text-right">
                       <textarea
                         v-model="descriptionDraft"
@@ -1058,8 +1164,8 @@ async function saveDescription(tran) {
                         </button>
                       </div>
                     </div>
-                    <div v-else class="space-y-1 text-right">
-                      <span class="block whitespace-pre-line leading-6">{{ tran.description }}</span>
+                    <div v-else class="space-y-1 text-center">
+                      <span class="block whitespace-pre-line leading-6 pt-5">{{ tran.description }}</span>
                       <span
                         v-if="tran._descriptionUpdated"
                         class="inline-flex items-center text-xs font-semibold text-green-600"
@@ -1068,60 +1174,69 @@ async function saveDescription(tran) {
                       </span>
                     </div>
                   </th>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.type == 'inUser'|| tran.type == 'in'|| tran.type == 'inUserBox' ? updateResults(tran.amount)+' '+tran.currency : '' }}</td>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.type == 'outUser'|| tran.type == 'out'|| tran.type == 'debt' || tran.type == 'outUserBox' ? updateResults(tran.amount)+' '+tran.currency : '' }}</td>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">
-                    <button
-                      class="px-1 py-1 text-white bg-blue-500 rounded-md focus:outline-none disabled:opacity-60"
-                      title="تعديل الوصف"
-                      @click="startEditingDescription(tran)"
-                      :disabled="isSavingDescription && editingDescriptionId === tran.id"
-                    >
-                      <edit class="w-4 h-4" />
-                    </button>
-                    <button class="px-1 py-1 text-white bg-rose-500 rounded-md focus:outline-none" @click="openModalDel(tran)" >
-                      <trash />
-                    </button>
-
-                    <button class="px-1 mx-2 py-1 text-white bg-purple-600 rounded-md focus:outline-none" @click="openModalUploader(tran)" >
-                      <imags />
-                    </button>
-                      <a  target="_blank"
-                      v-if="tran.type === 'out' || tran.type === 'outUser'|| tran.type === 'debt'" 
-                      style="display: inline-flex;"
-                      :href="`/api/getIndexAccountsSelas?user_id=${boxes[0].id}&print=2&transactions_id=${tran.id}`"
-                      tabIndex="1"
-                      class="px-1 py-1  text-white  m-1 bg-green-500 rounded"
-                      >
-                      <print class="inline-flex" />
-                      </a>
-                      <a  target="_blank"
-                      v-if="tran.type === 'in' || tran.type === 'inUser' "
-                      style="display: inline-flex;"
-                      :href="`/api/getIndexAccountsSelas?user_id=${boxes[0].id}&print=3&transactions_id=${tran.id}`"
-                      tabIndex="1"
-                      class="px-1 py-1  text-white  m-1 bg-green-500 rounded"
-                      >
-                      <print class="inline-flex" />
-                      </a>
-                      <a  target="_blank"
-                      v-if=" tran.type === 'inUserBox'"
-                      style="display: inline-flex;"
-                      :href="`/api/getIndexAccountsSelas?user_id=${tran.morphed_id}&print=3&transactions_id=${tran.id}`"
-                      tabIndex="1"
-                      class="px-1 py-1  text-white  m-1 bg-green-500 rounded"
-                      >
-                      <print class="inline-flex" />
-                      </a>
-                      <a  target="_blank"
-                      v-if=" tran.type === 'outUserBox'"
-                      style="display: inline-flex;"
-                      :href="`/api/getIndexAccountsSelas?user_id=${tran.morphed_id}&print=2&transactions_id=${tran.id}`"
-                      tabIndex="1"
-                      class="px-1 py-1  text-white  m-1 bg-green-500 rounded"
-                      >
-                      <print class="inline-flex" />
-                      </a>
+                    <td class="border border-transparent text-center px-2 py-1">
+                      <span v-if="formatAmount(tran, 'in')" :class="getAmountClass('in')">
+                        {{ formatAmount(tran, 'in') }}
+                      </span>
+                    </td>
+                    <td class="border border-transparent text-center px-2 py-1">
+                      <span v-if="formatAmount(tran, 'out')" :class="getAmountClass('out')">
+                        {{ formatAmount(tran, 'out') }}
+                      </span>
+                    </td>
+                    <td class="border border-transparent text-center px-2 py-1">
+                      <div class="action-group">
+                        <button
+                          class="action-btn action-btn--edit"
+                          title="تعديل الوصف"
+                          @click="startEditingDescription(tran)"
+                          :disabled="isSavingDescription && editingDescriptionId === tran.id"
+                        >
+                          <edit class="w-4 h-4" />
+                        </button>
+                        <button class="action-btn action-btn--delete" @click="openModalDel(tran)" title="حذف الحركة">
+                          <trash />
+                        </button>
+                        <button class="action-btn action-btn--upload" @click="openModalUploader(tran)" title="مرفقات الحركة">
+                          <imags />
+                        </button>
+                        <a
+                          v-if="tran.type === 'out' || tran.type === 'outUser' || tran.type === 'debt'"
+                          :href="`/api/getIndexAccountsSelas?user_id=${boxes[0].id}&print=2&transactions_id=${tran.id}`"
+                          target="_blank"
+                          class="action-btn action-btn--print"
+                          title="طباعة سند الصرف"
+                        >
+                          <print class="inline-flex" />
+                        </a>
+                        <a
+                          v-if="tran.type === 'in' || tran.type === 'inUser'"
+                          :href="`/api/getIndexAccountsSelas?user_id=${boxes[0].id}&print=3&transactions_id=${tran.id}`"
+                          target="_blank"
+                          class="action-btn action-btn--print"
+                          title="طباعة سند القبض"
+                        >
+                          <print class="inline-flex" />
+                        </a>
+                        <a
+                          v-if="tran.type === 'inUserBox'"
+                          :href="`/api/getIndexAccountsSelas?user_id=${tran.morphed_id}&print=3&transactions_id=${tran.id}`"
+                          target="_blank"
+                          class="action-btn action-btn--print"
+                          title="طباعة سند القبض"
+                        >
+                          <print class="inline-flex" />
+                        </a>
+                        <a
+                          v-if="tran.type === 'outUserBox'"
+                          :href="`/api/getIndexAccountsSelas?user_id=${tran.morphed_id}&print=2&transactions_id=${tran.id}`"
+                          target="_blank"
+                          class="action-btn action-btn--print"
+                          title="طباعة سند الصرف"
+                        >
+                          <print class="inline-flex" />
+                        </a>
+                      </div>
                    </td>
                   <td>
                     <a
@@ -1153,5 +1268,89 @@ async function saveDescription(tran) {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+}
+
+.amount-pill {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.amount-pill--in {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #047857;
+}
+
+.amount-pill--out {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+}
+
+.action-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.action-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.action-btn:disabled,
+.action-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-btn--edit {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.action-btn--delete {
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
+}
+
+.action-btn--upload {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.action-btn--print {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.account-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  font-weight: 700;
+  color: #f8fafc;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.35), rgba(14, 165, 233, 0.45));
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  box-shadow: 0 10px 24px -14px rgba(14, 116, 144, 0.7);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.account-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 32px -18px rgba(59, 130, 246, 0.7);
+  filter: brightness(1.08);
 }
 </style>

@@ -25,6 +25,7 @@ import edit from "@/Components/icon/edit.vue";
 import exit from "@/Components/icon/exit.vue";
 import show from "@/Components/icon/show.vue";
 import document from "@/Components/icon/document.vue";
+import { formatBaghdadTimestamp } from "@/utils/datetime";
 
 import newContracts from "@/Components/icon/new.vue";
 
@@ -1649,7 +1650,7 @@ async function savePaymentDescription(payment) {
                   <tr class="text-center" v-if="user.type=='out' && user.amount < 0 && user.is_pay == 1 ">
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ indexs++ }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.id }}</td>
-                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.created }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ formatBaghdadTimestamp(user.created_at) }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200 align-top">
                     <div v-if="editingPaymentDescriptionId === user.id" class="space-y-2 text-right">
                       <textarea

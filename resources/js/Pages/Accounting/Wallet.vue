@@ -22,6 +22,7 @@ import edit from "@/Components/icon/edit.vue";
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
 import debounce from 'lodash/debounce';
+import { formatBaghdadTimestamp } from "@/utils/datetime";
 
 
 const laravelData = ref({});
@@ -474,7 +475,7 @@ function conGenfirmExpenses(V) {
                   <!-- <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.morphed?.name }}</td> -->
 
                   
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran?.created_at.slice(0, 19).replace("T", "  ") }}</td>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ formatBaghdadTimestamp(tran?.created_at) }}</td>
                   <th className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.description }}</th>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.type == 'inUser' ? tran.amount+' '+tran.currency : '' }}</td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.type == 'outUser' ? tran.amount+' '+tran.currency : '' }}</td>
