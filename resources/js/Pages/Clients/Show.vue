@@ -306,6 +306,21 @@ let getResults = async (page = 1, shouldCheckBalance = true) => {
         checkClientBalance(response.data.cars_sum);
       }
       isDataLoaded.value = true;
+
+      if (props.q && !hasHandledQueryBehavior.value) {
+        const cars = Array.isArray(response.data?.data) ? response.data.data : [];
+        const matchingCar = cars.find((car) => matchesCarQuery(car));
+        if (matchingCar) {
+          if (matchingCar.results === 2) {
+            showComplatedCars.value = true;
+            showPaymentsInTable.value = true;
+          }
+          nextTick(() => {
+            scrollToHighlightedCar();
+          });
+        }
+        hasHandledQueryBehavior.value = true;
+      }
     })
     .catch((error) => {
       console.error(error);
@@ -388,6 +403,19 @@ const getResultsSelect = async (page = 1) => {
         checkClientBalance(response.data.cars_sum);
       }
 
+      if (props.q) {
+        const cars = Array.isArray(response.data?.data) ? response.data.data : [];
+        const matchingCar = cars.find((car) => matchesCarQuery(car));
+        if (matchingCar) {
+          if (matchingCar.results === 2) {
+            showComplatedCars.value = true;
+            showPaymentsInTable.value = true;
+          }
+          nextTick(() => {
+            scrollToHighlightedCar();
+          });
+        }
+      }
     })
     .catch((error) => {
       console.error(error);
@@ -398,6 +426,82 @@ const getResultsSelect = async (page = 1) => {
 onMounted(() => {
   getResults();
 });
+
+const hasHandledQueryBehavior = ref(false);
+const shouldAutoScrollToQuery = ref(true);
+const matchedRowElement = ref(null);
+
+function matchesCarQuery(car) {
+  if (!car || !props.q) {
+    return false;
+  }
+  const query = String(props.q).trim().toUpperCase();
+  if (!query) {
+    return false;
+  }
+  const vin = car?.vin ? String(car.vin).toUpperCase() : '';
+  const carNumber = car?.car_number ? String(car.car_number).toUpperCase() : '';
+  const chassis = car?.chassis_number ? String(car.chassis_number).toUpperCase() : '';
+  return (
+    vin.startsWith(query) ||
+    carNumber.startsWith(query) ||
+    chassis.startsWith(query)
+  );
+}
+
+function resetQueryBehaviour() {
+  hasHandledQueryBehavior.value = false;
+  shouldAutoScrollToQuery.value = true;
+  matchedRowElement.value = null;
+}
+
+function scrollToHighlightedCar(retry = 6) {
+  if (!shouldAutoScrollToQuery.value || typeof window === 'undefined' || retry <= 0) {
+    return;
+  }
+
+  if (matchedRowElement.value && typeof matchedRowElement.value.scrollIntoView === 'function') {
+    matchedRowElement.value.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+    shouldAutoScrollToQuery.value = false;
+    return;
+  }
+
+  if (typeof document?.querySelector !== 'function') {
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    const el = document.querySelector('[data-car-match="true"]');
+    if (el) {
+      matchedRowElement.value = el;
+      if (typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+        shouldAutoScrollToQuery.value = false;
+      }
+    } else if (retry > 1) {
+      setTimeout(() => scrollToHighlightedCar(retry - 1), 160);
+    }
+  });
+}
+
+function setMatchedRowRef(el, car) {
+  const isMatch = matchesCarQuery(car);
+  if (!isMatch) {
+    return;
+  }
+
+  if (el) {
+    matchedRowElement.value = el;
+  } else if (matchedRowElement.value) {
+    matchedRowElement.value = null;
+  }
+}
 
 // مراقبة تغييرات client_id عند التنقل بين الصفحات
 watch(() => props.client_id, (newValue, oldValue) => {
@@ -890,6 +994,48 @@ const mergedData = computed(() => {
   }
 });
 
+watch(() => props.q, () => {
+  resetQueryBehaviour();
+  if (props.q) {
+    nextTick(() => {
+      scrollToHighlightedCar();
+    });
+  }
+});
+
+watch(matchedRowElement, (el) => {
+  if (!el || !shouldAutoScrollToQuery.value || typeof el.scrollIntoView !== 'function') {
+    return;
+  }
+  nextTick(() => {
+    el.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+    shouldAutoScrollToQuery.value = false;
+  });
+});
+
+watch(
+  () => showComplatedCars.value,
+  (newVal) => {
+    showPaymentsInTable.value = newVal;
+    if (props.q && shouldAutoScrollToQuery.value) {
+      nextTick(() => scrollToHighlightedCar());
+    }
+  }
+);
+
+watch(
+  () => mergedData.value,
+  () => {
+    if (props.q && shouldAutoScrollToQuery.value) {
+      nextTick(() => scrollToHighlightedCar());
+    }
+  },
+  { deep: true }
+);
+
 
 function getImageUrl(name) {
       // Provide the base URL for your images
@@ -912,9 +1058,7 @@ const distributedBalance = computed(() => {
 });
  
 
-watch(showComplatedCars, (newVal) => {
-  showPaymentsInTable.value = newVal;
-});
+
 
 const payment_loading = ref(false);
 const selectedCompletedCarsState = ref(true);
@@ -1712,12 +1856,15 @@ async function savePaymentDescription(payment) {
                       'bg-red-100 dark:bg-red-900': item.data.results == 0,
                       'bg-red-100 dark:bg-red-900': item.data.results == 1,
                       'bg-green-100 dark:bg-green-900': item.data.results == 2,
-                        'bg-yellow-100 dark:bg-yellow-900': (props.q && (item.data.vin.startsWith(props.q) || (item.data.car_number ? item.data.car_number.toString().startsWith(props.q) : false))),
                       },
                       isCarReferencedByPayment(item)
                         ? 'ring-2 ring-inset'
                         : ''
+                    ,
+                      matchesCarQuery(item.data) ? 'query-highlight-row' : ''
                     ]"
+                    :data-car-match="matchesCarQuery(item.data) ? 'true' : null"
+                    :ref="el => setMatchedRowRef(el, item.data)"
                     :style="getCarHighlightStyle(item)"
                     class="border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600"
                   >
@@ -2080,5 +2227,54 @@ async function savePaymentDescription(payment) {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+}
+.query-highlight-row {
+  position: relative;
+  scroll-margin-top: 160px;
+}
+
+.query-highlight-row > td {
+  background-image: linear-gradient(90deg, rgba(250, 204, 21, 0.22), rgba(250, 204, 21, 0.35));
+  background-color: rgba(250, 204, 21, 0.25) !important;
+  color: #1f2937;
+}
+
+.dark .query-highlight-row > td {
+  background-image: linear-gradient(90deg, rgba(217, 119, 6, 0.35), rgba(217, 119, 6, 0.25));
+  background-color: rgba(217, 119, 6, 0.25) !important;
+  color: #f9fafb;
+}
+
+.query-highlight-row::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 0.375rem;
+  box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.45), 0 12px 30px -12px rgba(234, 179, 8, 0.6);
+  pointer-events: none;
+  animation: queryHighlightPulse 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .query-highlight-row::after {
+    animation: none;
+  }
+}
+
+@keyframes queryHighlightPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.4), 0 10px 28px -14px rgba(234, 179, 8, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.55), 0 14px 36px -10px rgba(234, 179, 8, 0.6);
+  }
+}
+
+.query-highlight-row svg {
+  color: #92400e;
+}
+
+.dark .query-highlight-row svg {
+  color: #fbbf24;
 }
 </style>
