@@ -691,7 +691,7 @@ function openModalAddCarContracts(form={}) {
   showModalAddCarContracts.value = true;
 }
 function openModalEditCarContracts(form={}) {
-  formData.value=formshowModalShowExitCar
+  formData.value=form
 
   showModalEditCarContracts.value = true;
 }
@@ -703,7 +703,7 @@ function openModalAddExitCar(form={}) {
 }
 function openModalShowExitCar(form={}) {
   formData.value=form
-  .value = true;
+  showModalShowExitCar.value = true;
 }
 function openModalShowDriving(form={}) {
   formDriving.value.car_typeDriving = form.car_type
