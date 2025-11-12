@@ -307,15 +307,18 @@ class DashboardController extends Controller
         $shipping_dolar = $request->shipping_dolar ?? 0;
         $coc_dolar = $request->coc_dolar ?? 0;
         $dinar = $request->dinar ?? 0;
-        $dolar_price = $request->dolar_price ?? 1;
+        // keep the original exchange rate as entered (e.g., 140000)
+        $dolar_price_input = $request->dolar_price ?? 1;
         $expenses = $request->expenses ?? 0;
         $land_shipping = $request->land_shipping ?? 0;
         $land_shipping_dinar = $request->land_shipping_dinar ?? 0;
 
-        if ($dolar_price == 0) {
-            $dolar_price = 1;
-        } elseif ($dolar_price > 9999) {
-            $dolar_price = $dolar_price / 100;
+        // use a calculated rate for math (divide by 100 only for calculations)
+        $calc_rate = $dolar_price_input;
+        if ($calc_rate == 0) {
+            $calc_rate = 1;
+        } elseif ($calc_rate > 9999) {
+            $calc_rate = $calc_rate / 100;
         }
 
         $carsPayload = collect($request->get('cars', []))
@@ -342,8 +345,8 @@ class DashboardController extends Controller
             return Response::json(['message' => 'VIN is required'], 422);
         }
 
-        $dolar_custom = (int) ($dinar / ($dolar_price)) ?? 0;
-        $land_shipping_dinar_custom = (int) ($land_shipping_dinar / ($dolar_price)) ?? 0;
+        $dolar_custom = (int) ($dinar / ($calc_rate)) ?? 0;
+        $land_shipping_dinar_custom = (int) ($land_shipping_dinar / ($calc_rate)) ?? 0;
         $total_amount = $checkout + $shipping_dolar + $expenses + $coc_dolar + $dolar_custom + $land_shipping + $land_shipping_dinar_custom;
 
         if (empty($client_id) || $client_id == 0) {
@@ -391,7 +394,8 @@ class DashboardController extends Controller
                     'vin' => $carData['vin'],
                     'car_number' => $carData['car_number'],
                     'dinar' => $dinar,
-                    'dolar_price' => $dolar_price,
+                    // store the entered exchange rate as-is
+                    'dolar_price' => $dolar_price_input,
                     'shipping_dolar' => $shipping_dolar,
                     'coc_dolar' => $coc_dolar,
                     'checkout' => $checkout,
@@ -454,16 +458,19 @@ class DashboardController extends Controller
 
         $dinar=$request->dinar;
         $expenses=($request->expenses??0);
-        $dolar_price=$request->dolar_price ;
-        if($dolar_price==0){
-            $dolar_price=1;
-        }elseif($dolar_price > 9999){
-            $dolar_price=$dolar_price/100;
+        // keep original exchange rate as entered
+        $dolar_price_input = $request->dolar_price;
+        // calculate effective rate for math
+        $calc_rate = $dolar_price_input;
+        if($calc_rate==0){
+            $calc_rate=1;
+        }elseif($calc_rate > 9999){
+            $calc_rate=$calc_rate/100;
         }else{
-            $dolar_price=$dolar_price;
+            $calc_rate=$calc_rate;
         }
 
-        $total = (int)(($checkout+$shipping_dolar+ $coc_dolar +(int)($dinar / ($dolar_price))+(int)($land_shipping_dinar / ($dolar_price))+$expenses+$land_shipping) ??0);
+        $total = (int)(($checkout+$shipping_dolar+ $coc_dolar +(int)($dinar / ($calc_rate))+(int)($land_shipping_dinar / ($calc_rate))+$expenses+$land_shipping) ??0);
         $profit=$car->total_s-$total;
 
         if($car->client_id == $request->client_id)
