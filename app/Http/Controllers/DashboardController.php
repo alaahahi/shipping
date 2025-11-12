@@ -605,7 +605,6 @@ class DashboardController extends Controller
 
         $requestData = $request->all();
         $allowedFields = [
-            'car_owner',
             'dolar_price',
             'shipping_dolar',
             'coc_dolar',
@@ -696,7 +695,6 @@ class DashboardController extends Controller
 
         $requestData = $request->all();
         $allowedFields = [
-            'car_owner',
             'dolar_price_s',
             'shipping_dolar_s',
             'coc_dolar_s',

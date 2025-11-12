@@ -111,6 +111,7 @@ function openBulkEdit() {
   delete initial.year;
   delete initial.dinar;
   delete initial.dinar_s;
+  delete initial.car_owner;
   bulkFormData.value = initial;
   showModalBulkEdit.value = true;
 }
@@ -219,6 +220,7 @@ function confirmBulkUpdate(V) {
   delete payload.dinar_s;
   delete payload.vin;
   delete payload.car_number;
+  delete payload.car_owner;
   axios
     .post("/api/bulkUpdateCarsS", payload)
     .then(() => {

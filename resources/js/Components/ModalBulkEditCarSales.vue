@@ -95,17 +95,6 @@ function handleSubmit() {
               class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 lg:gap-2"
             >
               <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="car_owner">
-                  {{ $t("car_owner") }}
-                </label>
-                <input
-                  id="car_owner"
-                  type="text"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="formData.car_owner"
-                />
-              </div>
-              <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="dolar_price_s">
                   {{ $t("dolar_price") }}
                 </label>
