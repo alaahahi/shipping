@@ -1,10 +1,11 @@
 // Service Worker - تحديث مُحسّن للـ SPA
 // الهدف: عدم التدخل في Inertia + دعم offline
 
-const CACHE_NAME = 'shipping-v2.0.0'; // ⬆️ تحديث الإصدار لتفعيل التحديث
+const CACHE_NAME = 'shipping-v2.1.0'; // ⬆️ تحديث الإصدار لتفعيل التحديث
 const ASSETS_TO_CACHE = [
   '/',
-  '/offline.html'
+  '/offline.html',
+  '/app-shell.html'
 ];
 
 // تثبيت Service Worker
@@ -72,6 +73,30 @@ self.addEventListener('fetch', (event) => {
   if (url.pathname.startsWith('/api/') || 
       url.pathname.includes('logout') || 
       url.pathname.includes('login')) {
+    return;
+  }
+  
+  // ✅ تعامل مع طلبات التصفّح (navigate) لتوفير fallback
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          return response;
+        })
+        .catch(async () => {
+          const cachedPage = await caches.match(request);
+          if (cachedPage) {
+            return cachedPage;
+          }
+          const shell = await caches.match('/app-shell.html');
+          if (shell) {
+            return shell;
+          }
+          return caches.match('/offline.html');
+        })
+    );
     return;
   }
   

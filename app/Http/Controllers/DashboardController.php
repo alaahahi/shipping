@@ -298,86 +298,133 @@ class DashboardController extends Controller
     }
     public function addCars(Request $request)
     {
-        $owner_id=Auth::user()->owner_id;
-        $year_date=Carbon::now()->format('Y');
-        $client_id =$request->client_id;
-        $car_id=$request->id??0;
-        $maxNo = Car::max('no');
+        $owner_id = Auth::user()->owner_id;
+        $year_date = Carbon::now()->format('Y');
+        $client_id = $request->client_id;
+        $maxNo = Car::max('no') ?? 0;
+        $results = 0;
+        $checkout = $request->checkout ?? 0;
+        $shipping_dolar = $request->shipping_dolar ?? 0;
+        $coc_dolar = $request->coc_dolar ?? 0;
+        $dinar = $request->dinar ?? 0;
+        $dolar_price = $request->dolar_price ?? 1;
+        $expenses = $request->expenses ?? 0;
+        $land_shipping = $request->land_shipping ?? 0;
+        $land_shipping_dinar = $request->land_shipping_dinar ?? 0;
 
-        if($car_id){
-            $no = $request->no;
-        }else{
-            $no = $maxNo + 1;
+        if ($dolar_price == 0) {
+            $dolar_price = 1;
+        } elseif ($dolar_price > 9999) {
+            $dolar_price = $dolar_price / 100;
         }
-        $results=0;
-        $checkout=$request->checkout ?? 0;
-        $shipping_dolar=$request->shipping_dolar ?? 0;
-        $coc_dolar=$request->coc_dolar ?? 0;
-        $dinar=$request->dinar ?? 0;
-        $dolar_price=$request->dolar_price ?? 1;
-        $expenses=$request->expenses ?? 0;
-        $land_shipping=$request->land_shipping??0;
-        $land_shipping_dinar=$request->land_shipping_dinar??0;
 
-        $paid=$request->paid ?? 0;
-        
-        if($dolar_price==0){
-            $dolar_price=1;
-        }elseif($dolar_price > 9999){
-            $dolar_price=$dolar_price/100;
-        }else{
-            $dolar_price=$dolar_price;
+        $carsPayload = collect($request->get('cars', []))
+            ->map(function ($car) {
+                return [
+                    'vin' => isset($car['vin']) ? trim($car['vin']) : null,
+                    'car_number' => isset($car['car_number']) && $car['car_number'] !== null
+                        ? trim($car['car_number'])
+                        : null,
+                ];
+            })
+            ->filter(function ($car) {
+                return !empty($car['vin']);
+            });
+
+        if ($carsPayload->isEmpty() && $request->vin) {
+            $carsPayload = collect([[
+                'vin' => trim($request->vin),
+                'car_number' => $request->car_number ? trim($request->car_number) : null,
+            ]]);
         }
-        $dolar_custom=(int)($dinar/($dolar_price)) ??0;
-        $land_shipping_dinar_custom=(int)($land_shipping_dinar/($dolar_price)) ??0;
 
-        $total_amount = $checkout+$shipping_dolar+$expenses+ $coc_dolar +$dolar_custom+$land_shipping+$land_shipping_dinar_custom;
-        if( $client_id==0){
+        if ($carsPayload->isEmpty()) {
+            return Response::json(['message' => 'VIN is required'], 422);
+        }
+
+        $dolar_custom = (int) ($dinar / ($dolar_price)) ?? 0;
+        $land_shipping_dinar_custom = (int) ($land_shipping_dinar / ($dolar_price)) ?? 0;
+        $total_amount = $checkout + $shipping_dolar + $expenses + $coc_dolar + $dolar_custom + $land_shipping + $land_shipping_dinar_custom;
+
+        if (empty($client_id) || $client_id == 0) {
             $client = new User;
             $client->name = $request->client_name;
             $client->phone = $request->client_phone;
-            $client->created =Carbon::now()->format('Y-m-d');
+            $client->created = Carbon::now()->format('Y-m-d');
             $client->type_id = $this->accounting->userClient();
             $client->owner_id = $owner_id;
             $client->year_date = $year_date;
             $client->save();
-            Wallet::create(['user_id' => $client->id,'balance'=>0]);
-            $client_id=$client->id;
+            Wallet::create(['user_id' => $client->id, 'balance' => 0]);
+            $client_id = $client->id;
         }
-        $car=Car::create([
-            'note'=> $request->note??'',
-            'no'=>$no,
-            'car_owner'=> $request->car_owner,
-            'car_type'=> $request->car_type,
-            'vin'=> $request->vin,
-            'car_number'=> $request->car_number,
-            'dinar'=> $request->dinar,
-            'dolar_price'=> $request->dolar_price,
-            'shipping_dolar'=> $request->shipping_dolar,
-            'coc_dolar'=> $request->coc_dolar,
-            'checkout'=> $request->checkout,
-            'total'=> $total_amount,
-            'year'=> $request->year,
-            'year_date'=>$year_date,
-            'car_color'=> $request->car_color,
-            'date'=> $request->date,
-            'expenses'=> $expenses,
-            'client_id'=>$client_id,
-            'results'=> $results,
-            'owner_id'=>$owner_id,
-            'land_shipping'=>$land_shipping,
-            'land_shipping_dinar'=>$land_shipping_dinar,
-            'profit'=>($total_amount*-1)
-             ]);
-                if($total_amount){
-                    $desc='اضافة سيارة من المشتريات رقم شانصى '.$request->vin;
-                    if($total_amount){
-                        $this->accountingController->decreaseWallet(($total_amount),$desc,$this->accounting->mainAccount()->id,$car->id,'App\Models\Car');
-                    }
+
+        $createdCars = collect();
+
+        DB::transaction(function () use (
+            $request,
+            $carsPayload,
+            $owner_id,
+            $year_date,
+            $client_id,
+            $results,
+            $checkout,
+            $shipping_dolar,
+            $coc_dolar,
+            $dinar,
+            $dolar_price,
+            $expenses,
+            $land_shipping,
+            $land_shipping_dinar,
+            $total_amount,
+            &$maxNo,
+            &$createdCars
+        ) {
+            foreach ($carsPayload as $carData) {
+                $maxNo += 1;
+
+                $car = Car::create([
+                    'note' => $request->note ?? '',
+                    'no' => $maxNo,
+                    'car_owner' => $request->car_owner,
+                    'car_type' => $request->car_type,
+                    'vin' => $carData['vin'],
+                    'car_number' => $carData['car_number'],
+                    'dinar' => $dinar,
+                    'dolar_price' => $dolar_price,
+                    'shipping_dolar' => $shipping_dolar,
+                    'coc_dolar' => $coc_dolar,
+                    'checkout' => $checkout,
+                    'total' => $total_amount,
+                    'year' => $request->year,
+                    'year_date' => $year_date,
+                    'car_color' => $request->car_color,
+                    'date' => $request->date,
+                    'expenses' => $expenses,
+                    'client_id' => $client_id,
+                    'results' => $results,
+                    'owner_id' => $owner_id,
+                    'land_shipping' => $land_shipping,
+                    'land_shipping_dinar' => $land_shipping_dinar,
+                    'profit' => ($total_amount * -1),
+                ]);
+
+                if ($total_amount) {
+                    $desc = 'اضافة سيارة من المشتريات رقم شانصى ' . $carData['vin'];
+                    $this->accountingController->decreaseWallet(
+                        ($total_amount),
+                        $desc,
+                        $this->accounting->mainAccount()->id,
+                        $car->id,
+                        'App\Models\Car'
+                    );
                 }
 
+                $createdCars->push($car);
+            }
+        });
 
-        return Response::json('ok', 200);    
+        return Response::json('ok', 200);
     }
     public function updateCarsP(Request $request)
     {
