@@ -122,6 +122,8 @@ Route::post('addCarsAnnual',[AnnualController::class, 'addCarsAnnual'])->name('a
 
 Route::post('updateCarsS',[DashboardController::class, 'updateCarsS'])->name('updateCarsS');
 Route::post('updateCarsP',[DashboardController::class, 'updateCarsP'])->name('updateCarsP');
+Route::post('bulkUpdateCarsP',[DashboardController::class, 'bulkUpdateCarsP'])->name('bulkUpdateCarsP');
+Route::post('bulkUpdateCarsS',[DashboardController::class, 'bulkUpdateCarsS'])->name('bulkUpdateCarsS');
 
 Route::get('/getcount', [DashboardController::class, 'getcount'])->name('getcount');
 

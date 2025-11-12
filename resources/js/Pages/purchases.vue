@@ -4,6 +4,7 @@ import { Head } from '@inertiajs/inertia-vue3';
 import Modal from "@/Components/Modal.vue";
 import ModalAddCar from "@/Components/ModalAddCars.vue";
 import ModalEditCars from "@/Components/ModalEditCars.vue";
+import ModalBulkEditCars from "@/Components/ModalBulkEditCars.vue";
 import ModalAddExpenses from "@/Components/ModalAddExpenses.vue";
 import ModalAddGenExpenses from "@/Components/ModalAddGenExpenses.vue";
 import ModalAddToBox from "@/Components/ModalAddToBox.vue";
@@ -72,6 +73,7 @@ let showModalFromBox =  ref(false);
 let showModalAddTransfers =  ref(false);
 let showModalAddCarPayment =  ref(false);
 let showModalEditCars=ref(false);
+let showModalBulkEdit = ref(false);
 let showModalDelCar =  ref(false);
 let mainAccount= ref(0)
 let allCars= ref(0)
@@ -79,6 +81,8 @@ let sumTotal= ref(0)
 let sumPaid= ref(0)
 let sumProfit= ref(0)
 let sumDebit= ref(0)
+const selectedCarIds = ref([]);
+const bulkFormData = ref({});
 
 function openModalEditCars(form={}){
   formData.value=form
@@ -87,6 +91,34 @@ function openModalEditCars(form={}){
 function openModalDelCar(form={}) {
   formData.value=form
   showModalDelCar.value = true;
+}
+
+function openBulkEdit() {
+  if (!selectedCarIds.value.length) {
+    toast.warning("الرجاء اختيار سيارة واحدة على الأقل", {
+      timeout: 2000,
+      position: "bottom-right",
+      rtl: true,
+    });
+    return;
+  }
+  const firstId = selectedCarIds.value[0];
+  const firstCar = car.value.find((item) => item.id === firstId);
+  if (!firstCar) {
+    return;
+  }
+  bulkFormData.value = {
+    ...firstCar,
+  };
+  delete bulkFormData.value.car_type;
+  delete bulkFormData.value.car_color;
+  delete bulkFormData.value.year;
+  delete bulkFormData.value.dinar;
+  delete bulkFormData.value.client_id;
+  delete bulkFormData.value.client;
+  delete bulkFormData.value.client_name;
+  delete bulkFormData.value.client_phone;
+  showModalBulkEdit.value = true;
 }
 
 function openAddCar(form={}) {
@@ -150,6 +182,7 @@ const refresh = () => {
   page = 0;
   car.value.length = 0;
   resetData.value = !resetData.value;
+  selectedCarIds.value = [];
 
 
 };
@@ -248,6 +281,42 @@ function confirmUpdateCar(V) {
   })
 }
 
+function confirmBulkUpdate(V) {
+  const payload = {
+    ...V,
+    car_ids: selectedCarIds.value,
+  };
+  delete payload.car_type;
+  delete payload.car_color;
+  delete payload.year;
+  delete payload.dinar;
+  delete payload.vin;
+  delete payload.car_number;
+  delete payload.client_id;
+  delete payload.client_name;
+  delete payload.client_phone;
+  axios.post('/api/bulkUpdateCarsP', payload)
+  .then(() => {
+    toast.success("تم التعديل الجماعي بنجاح", {
+      timeout: 2000,
+      position: "bottom-right",
+      rtl: true
+    });
+    showModalBulkEdit.value = false;
+    selectedCarIds.value = [];
+    refresh();
+    getcountTotalInfo();
+  })
+  .catch(error => {
+    console.error(error);
+    toast.error("فشل التعديل الجماعي", {
+      timeout: 2000,
+      position: "bottom-right",
+      rtl: true
+    });
+  });
+}
+
 
 
 function confirmDelCar(V) {
@@ -340,6 +409,16 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
         <template #header>
           </template>
     </ModalEditCars>
+    <ModalBulkEditCars
+            :show="showModalBulkEdit ? true : false"
+            :baseData="bulkFormData"
+            :client="client"
+            :selected-count="selectedCarIds.length"
+            @confirm="confirmBulkUpdate"
+            @close="showModalBulkEdit = false"
+            >
+      <template #header></template>
+    </ModalBulkEditCars>
 
  
     <ModalAddCarPayment
@@ -757,6 +836,19 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                               {{ $t('addCar') }} 
                             </button>
                           </div>
+                          <div class="text-center">
+                            <button
+                              type="button"
+                              @click="openBulkEdit()"
+                              :disabled="!selectedCarIds.length"
+                              style="min-width:150px;"
+                              :class="[
+                                'px-6 mb-12 mx-2 py-2 font-bold text-white rounded',
+                                selectedCarIds.length ? 'bg-blue-500' : 'bg-gray-400 cursor-not-allowed'
+                              ]">
+                              تعديل جماعي
+                            </button>
+                          </div>
                           </div>
                         <div>
                           <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -764,6 +856,9 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
                                     <tr>
                 
+                                        <th scope="col" class="px-1 py-3 text-base">
+                                          تحديد
+                                        </th>
                                         <th scope="col" class="px-1 py-3 text-base	">
                                           {{ $t('car_owner') }}
                                         </th>
@@ -834,6 +929,14 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
 
 
                                   <tr v-for="car in car" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                      <td className="border dark:border-gray-900 text-center px-1 py-2">
+                                        <input
+                                          type="checkbox"
+                                          :value="car.id"
+                                          v-model="selectedCarIds"
+                                          class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                        />
+                                      </td>
                                       <td className="border dark:border-gray-900 text-center dark:text-gray-200 text-black px-1 py-2 " style="font-weight: bold;font-size: 16px;">{{ car.client?.name }}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_type}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.year}}</td>

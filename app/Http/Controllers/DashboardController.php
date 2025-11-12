@@ -590,6 +590,178 @@ class DashboardController extends Controller
         return Response::json($expenses, 200);    
 
     }
+    public function bulkUpdateCarsP(Request $request)
+    {
+        $owner_id = Auth::user()->owner_id;
+        $carIds = $request->get('car_ids', []);
+        if (!is_array($carIds) || empty($carIds)) {
+            return Response::json(['message' => 'car_ids is required'], 422);
+        }
+
+        $cars = Car::whereIn('id', $carIds)->where('owner_id', $owner_id)->get();
+        if ($cars->isEmpty()) {
+            return Response::json('ok', 200);
+        }
+
+        $requestData = $request->all();
+        $allowedFields = [
+            'car_owner',
+            'dolar_price',
+            'shipping_dolar',
+            'coc_dolar',
+            'checkout',
+            'expenses',
+            'land_shipping',
+            'land_shipping_dinar',
+            'note',
+            'date',
+        ];
+
+        foreach ($cars as $car) {
+            $checkout = array_key_exists('checkout', $requestData) ? (float)$requestData['checkout'] : ($car->checkout ?? 0);
+            $shipping_dolar = array_key_exists('shipping_dolar', $requestData) ? (float)$requestData['shipping_dolar'] : ($car->shipping_dolar ?? 0);
+            $coc_dolar = array_key_exists('coc_dolar', $requestData) ? (float)$requestData['coc_dolar'] : ($car->coc_dolar ?? 0);
+            $expenses = array_key_exists('expenses', $requestData) ? (float)$requestData['expenses'] : ($car->expenses ?? 0);
+            $land_shipping = array_key_exists('land_shipping', $requestData) ? (float)$requestData['land_shipping'] : ($car->land_shipping ?? 0);
+            $land_shipping_dinar = array_key_exists('land_shipping_dinar', $requestData) ? (float)$requestData['land_shipping_dinar'] : ($car->land_shipping_dinar ?? 0);
+            $dolar_price_input = array_key_exists('dolar_price', $requestData)
+                ? (float)$requestData['dolar_price']
+                : ($car->dolar_price ?? 1);
+
+            $calc_rate = $dolar_price_input;
+            if ($calc_rate == 0) {
+                $calc_rate = 1;
+            } elseif ($calc_rate > 9999) {
+                $calc_rate = $calc_rate / 100;
+            }
+
+            $dinar = $car->dinar ?? 0;
+            $dolar_custom = (int)($dinar / $calc_rate);
+            $land_shipping_dinar_custom = (int)($land_shipping_dinar / $calc_rate);
+            $total = (int)(
+                ($checkout + $shipping_dolar + $coc_dolar
+                + $dolar_custom
+                + $land_shipping_dinar_custom
+                + $expenses + $land_shipping) ?? 0
+            );
+            $profit = $car->total_s - $total;
+
+            // حساب الفروقات للصندوق
+            if ($total > $car->total) {
+                $descClient = trans('text.addExpenses') . ' ' . ($total - $car->total) . ' ' . trans('text.for_car') . $car->car_type . ' ' . $car->vin;
+                $this->accountingController->decreaseWallet(($total - $car->total), $descClient, $this->accounting->mainAccount()->id, $car->id, 'App\Models\Car');
+            } else {
+                $descClient = 'مرتجع للصندوق مصاريف';
+                $this->accountingController->increaseWallet(($car->total - $total), $descClient, $this->accounting->mainAccount()->id, $car->id, 'App\Models\Car');
+            }
+
+            $dataToUpdate = [];
+            foreach ($allowedFields as $field) {
+                if (array_key_exists($field, $requestData)) {
+                    $dataToUpdate[$field] = $requestData[$field];
+                }
+            }
+
+            $dataToUpdate['total'] = $total;
+            $dataToUpdate['profit'] = $profit;
+            $dataToUpdate['dolar_price'] = $dolar_price_input;
+
+            if ($car->paid) {
+                if ($total > $car->paid + $car->discount) {
+                    $dataToUpdate['results'] = 1;
+                } elseif ($total == $car->paid + $car->discount) {
+                    $dataToUpdate['results'] = 2;
+                } else {
+                    $dataToUpdate['results'] = 0;
+                }
+            }
+
+            $car->update($dataToUpdate);
+        }
+
+        return Response::json('ok', 200);
+    }
+    public function bulkUpdateCarsS(Request $request)
+    {
+        $owner_id = Auth::user()->owner_id;
+        $carIds = $request->get('car_ids', []);
+        if (!is_array($carIds) || empty($carIds)) {
+            return Response::json(['message' => 'car_ids is required'], 422);
+        }
+
+        $cars = Car::whereIn('id', $carIds)->where('owner_id', $owner_id)->get();
+        if ($cars->isEmpty()) {
+            return Response::json('ok', 200);
+        }
+
+        $requestData = $request->all();
+        $allowedFields = [
+            'car_owner',
+            'dolar_price_s',
+            'shipping_dolar_s',
+            'coc_dolar_s',
+            'checkout_s',
+            'expenses_s',
+            'land_shipping_s',
+            'land_shipping_dinar_s',
+            'note',
+            'date',
+        ];
+
+        foreach ($cars as $car) {
+            $checkout_s = array_key_exists('checkout_s', $requestData) ? (float)$requestData['checkout_s'] : ($car->checkout_s ?? 0);
+            $shipping_dolar_s = array_key_exists('shipping_dolar_s', $requestData) ? (float)$requestData['shipping_dolar_s'] : ($car->shipping_dolar_s ?? 0);
+            $coc_dolar_s = array_key_exists('coc_dolar_s', $requestData) ? (float)$requestData['coc_dolar_s'] : ($car->coc_dolar_s ?? 0);
+            $expenses_s = array_key_exists('expenses_s', $requestData) ? (float)$requestData['expenses_s'] : ($car->expenses_s ?? 0);
+            $land_shipping_s = array_key_exists('land_shipping_s', $requestData) ? (float)$requestData['land_shipping_s'] : ($car->land_shipping_s ?? 0);
+            $land_shipping_dinar_s = array_key_exists('land_shipping_dinar_s', $requestData) ? (float)$requestData['land_shipping_dinar_s'] : ($car->land_shipping_dinar_s ?? 0);
+            $dolar_price_s_input = array_key_exists('dolar_price_s', $requestData)
+                ? (float)$requestData['dolar_price_s']
+                : ($car->dolar_price_s ?? 1);
+
+            $calc_rate_s = $dolar_price_s_input;
+            if ($calc_rate_s == 0) {
+                $calc_rate_s = 1;
+            } elseif ($calc_rate_s > 9999) {
+                $calc_rate_s = $calc_rate_s / 100;
+            }
+
+            $dinar_s = $car->dinar_s ?? 0;
+            $dolar_custom_s = (int)($dinar_s / $calc_rate_s);
+            $land_shipping_dinar_custom_s = (int)($land_shipping_dinar_s / $calc_rate_s);
+            $total_s = (($checkout_s + $shipping_dolar_s + $coc_dolar_s
+                + $dolar_custom_s
+                + $land_shipping_dinar_custom_s
+                + $expenses_s + $land_shipping_s) ?? 0);
+            $profit = $total_s - $car->total;
+            $descClient = trans('text.editExpenses') . ' ' . ($total_s - $car->total_s) . ' ' . trans('text.for_car') . $car->car_type . ' ' . $car->vin;
+            $this->accountingController->increaseWallet($total_s - $car->total_s, $descClient, $car->client_id, $car->id, 'App\Models\User');
+
+            $dataToUpdate = [];
+            foreach ($allowedFields as $field) {
+                if (array_key_exists($field, $requestData)) {
+                    $dataToUpdate[$field] = $requestData[$field];
+                }
+            }
+            $dataToUpdate['total_s'] = $total_s;
+            $dataToUpdate['profit'] = $profit;
+            $dataToUpdate['dolar_price_s'] = $dolar_price_s_input;
+
+            if ($car->paid) {
+                if ($total_s > ($car->paid + $car->discount)) {
+                    $dataToUpdate['results'] = 1;
+                } elseif ($total_s == $car->paid + $car->discount) {
+                    $dataToUpdate['results'] = 2;
+                } else {
+                    $dataToUpdate['results'] = 0;
+                }
+            }
+
+            $car->update($dataToUpdate);
+        }
+
+        return Response::json('ok', 200);
+    }
 
     public function payCar(Request $request)
     {
