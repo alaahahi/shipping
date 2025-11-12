@@ -375,7 +375,7 @@ class DashboardController extends Controller
             $shipping_dolar,
             $coc_dolar,
             $dinar,
-            $dolar_price,
+            $dolar_price_input,
             $expenses,
             $land_shipping,
             $land_shipping_dinar,
