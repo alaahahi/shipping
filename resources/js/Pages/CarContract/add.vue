@@ -32,6 +32,8 @@ import { useIndexedDB } from '@/composables/useIndexedDB';
 
 const { t } = useI18n();
 
+const showBrokerageSection = import.meta.env.VITE_SHOW_BROKERAGE !== 'false';
+
 // تفعيل نظام Offline (IndexedDB)
 const { isOnline, pendingCount, isSyncing, saveContract, syncAll } = useIndexedDB();
 const props = defineProps({
@@ -787,6 +789,7 @@ function VinApi1 (v){
                             v-model="form.phone_seller"
                           />
                         </div>
+                    <template v-if="showBrokerageSection">
                     <div class="flex justify-center">
                       <div className="mb-4 ml-5">
                         <InputLabel for="tex_seller" value="دلالى دولار" />
@@ -850,6 +853,7 @@ function VinApi1 (v){
                         />
                       </div>
                     </div>
+                    </template>
                     <div className="mb-4">
                       <InputLabel for="note" value="ملاحظة" />
                       <TextInput
@@ -944,6 +948,7 @@ function VinApi1 (v){
                       />
                     </div>
 
+                    <template v-if="showBrokerageSection">
                     <div class="flex justify-center">
                       <div className="mb-4 ml-5">
                         <InputLabel for="tex_buyer" value="دلالى دولار" />
@@ -1004,6 +1009,7 @@ function VinApi1 (v){
                         />
                       </div>
                     </div>
+                    </template>
                   </div>
                   <div className="mb-4">
                     <InputLabel for="system_note" value="ملاحظة ستاف" />

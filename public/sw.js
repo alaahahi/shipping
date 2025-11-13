@@ -64,9 +64,31 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // ❌ تجاهل تماماً: طلبات Inertia (التنقل في SPA)
-  if (request.headers.get('X-Inertia') || request.headers.get('X-Inertia-Version')) {
-    return; // دع Inertia يتعامل معها بشكل طبيعي
+  // ✅ دعم طلبات Inertia (زيارة الصفحات داخل التطبيق)
+  const isInertiaRequest = request.headers.get('X-Inertia') || request.headers.get('X-Inertia-Version');
+  if (isInertiaRequest) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response && response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(async () => {
+          const cached = await caches.match(request);
+          if (cached) {
+            return cached;
+          }
+          const shell = await caches.match('/app-shell.html');
+          if (shell) {
+            return shell;
+          }
+          return caches.match('/offline.html');
+        })
+    );
+    return;
   }
   
   // ❌ تجاهل تماماً: API endpoints

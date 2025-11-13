@@ -27,6 +27,8 @@ const props = defineProps({
   user: String,
 });
 
+const showBrokerageSection = import.meta.env.VITE_SHOW_BROKERAGE !== 'false';
+
 const toast = useToast();
 let showModal = ref(false);
 let showModalCar = ref(false);
@@ -265,12 +267,14 @@ function openModalDelCar(v) {
                         <th scope="col" class="px-1 py-3 text-base">
                           {{ $t("seller") }}
                         </th>
-                        <th scope="col" class="px-1 py-3 text-base">
-                          {{ $t("debt") }}
-                        </th>
-                        <th scope="col" class="px-1 py-3 text-base">
-                          {{ $t("debtInDinars") }}
-                        </th>
+                        <template v-if="showBrokerageSection">
+                          <th scope="col" class="px-1 py-3 text-base">
+                            {{ $t("debt") }}
+                          </th>
+                          <th scope="col" class="px-1 py-3 text-base">
+                            {{ $t("debtInDinars") }}
+                          </th>
+                        </template>
                         <th scope="col" class="px-1 py-3 text-base">
                           {{ $t("car_type") }}
                         </th>
@@ -292,18 +296,22 @@ function openModalDelCar(v) {
                         <th scope="col" class="px-1 py-3 text-base">
                           {{ $t("Buyer") }}
                         </th>
-                        <th scope="col" class="px-1 py-3 text-base">
-                          {{ $t("debt") }}
-                        </th>
-                        <th scope="col" class="px-1 py-3 text-base">
-                          {{ $t("debtInDinars") }}
-                        </th>
-                        <th scope="col" class="px-1 py-3 text-base">
-                          واصل دولار
-                        </th>
-                        <th scope="col" class="px-1 py-3 text-base">
-                          واصل دينار
-                        </th>
+                        <template v-if="showBrokerageSection">
+                          <th scope="col" class="px-1 py-3 text-base">
+                            {{ $t("debt") }}
+                          </th>
+                          <th scope="col" class="px-1 py-3 text-base">
+                            {{ $t("debtInDinars") }}
+                          </th>
+                        </template>
+                        <template v-if="showBrokerageSection">
+                          <th scope="col" class="px-1 py-3 text-base">
+                            واصل دولار
+                          </th>
+                          <th scope="col" class="px-1 py-3 text-base">
+                            واصل دينار
+                          </th>
+                        </template>
                         <th scope="col" class="px-1 py-3 text-base">
                           {{ $t("note") }}
                         </th>
@@ -342,16 +350,18 @@ function openModalDelCar(v) {
                         >
                           {{ car.name_seller }}
                         </td>
-                        <td
-                          className="border dark:border-gray-800 text-center px-1 py-2 "
-                        >
-                          {{ car.tex_seller - car.tex_seller_paid }}
-                        </td>
-                        <td
-                          className="border dark:border-gray-800 text-center px-1 py-2 "
-                        >
-                          {{ car.tex_seller_dinar - car.tex_seller_dinar_paid }}
-                        </td>
+                        <template v-if="showBrokerageSection">
+                          <td
+                            className="border dark:border-gray-800 text-center px-1 py-2 "
+                          >
+                            {{ car.tex_seller - car.tex_seller_paid }}
+                          </td>
+                          <td
+                            className="border dark:border-gray-800 text-center px-1 py-2 "
+                          >
+                            {{ car.tex_seller_dinar - car.tex_seller_dinar_paid }}
+                          </td>
+                        </template>
                         <td
                           className="border dark:border-gray-800 text-center px-1 py-2 "
                         >
@@ -387,28 +397,32 @@ function openModalDelCar(v) {
                         >
                           {{ car.name_buyer }}
                         </td>
-                        <td
-                          className="border dark:border-gray-800 text-center px-1 py-2 "
-                        >
-                          {{ car.tex_buyer - car.tex_buyer_paid }}
-                        </td>
-                        <td
-                          className="border dark:border-gray-800 text-center px-1 py-2 "
-                        >
-                          {{ car.tex_buyer_dinar - car.tex_buyer_dinar_paid }}
-                        </td>
-                        <td
-                          className="border dark:border-gray-800 text-center px-1 py-2 "
-                        >
-                          {{ car.tex_seller_paid + car.tex_buyer_paid }}
-                        </td>
-                        <td
-                          className="border dark:border-gray-800 text-center px-1 py-2 "
-                        >
-                          {{
-                            car.tex_seller_dinar_paid + car.tex_buyer_dinar_paid
-                          }}
-                        </td>
+                        <template v-if="showBrokerageSection">
+                          <td
+                            className="border dark:border-gray-800 text-center px-1 py-2 "
+                          >
+                            {{ car.tex_buyer - car.tex_buyer_paid }}
+                          </td>
+                          <td
+                            className="border dark:border-gray-800 text-center px-1 py-2 "
+                          >
+                            {{ car.tex_buyer_dinar - car.tex_buyer_dinar_paid }}
+                          </td>
+                        </template>
+                        <template v-if="showBrokerageSection">
+                          <td
+                            className="border dark:border-gray-800 text-center px-1 py-2 "
+                          >
+                            {{ car.tex_seller_paid + car.tex_buyer_paid }}
+                          </td>
+                          <td
+                            className="border dark:border-gray-800 text-center px-1 py-2 "
+                          >
+                            {{
+                              car.tex_seller_dinar_paid + car.tex_buyer_dinar_paid
+                            }}
+                          </td>
+                        </template>
                         <td
                           className="border dark:border-gray-800 text-center px-1 py-2 "
                         >
