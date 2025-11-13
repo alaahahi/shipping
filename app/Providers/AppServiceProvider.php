@@ -38,6 +38,13 @@ class AppServiceProvider extends ServiceProvider
             $host = $request->getHost();
             config(['session.domain' => $host]);
 
+            $httpHost = $request->getHttpHost();
+            $statefulDomains = config('sanctum.stateful', []);
+            $statefulDomains[] = $host;
+            $statefulDomains[] = $httpHost;
+            $statefulDomains = array_values(array_unique(array_filter($statefulDomains)));
+            config(['sanctum.stateful' => $statefulDomains]);
+
             $rootUrl = $request->getSchemeAndHttpHost();
 
             URL::forceRootUrl($rootUrl);
