@@ -32,6 +32,8 @@ use Illuminate\Support\Str;
 
 class CarContractController extends Controller
 {
+    protected bool $showBrokerage;
+
     public function __construct(AccountingController $accountingController)
     {
     $this->accountingController = $accountingController;
@@ -39,6 +41,7 @@ class CarContractController extends Controller
     $this->userAccount =  UserType::where('name', 'account')->first()->id;
     $this->mainBoxContract= User::with('wallet')->where('type_id', $this->userAccount)->where('email','mainBoxContract@account.com');
     $this->currentDate = Carbon::now()->format('Y-m-d');
+    $this->showBrokerage = filter_var(config('car_contract.show_brokerage', false), FILTER_VALIDATE_BOOLEAN);
     }
 
     public function contract(Request $request)
@@ -54,7 +57,12 @@ class CarContractController extends Controller
         ->select('name_buyer', DB::raw('MAX(phone_buyer) as phone_buyer'), DB::raw('MAX(address_buyer) as address_buyer'))
         ->groupBy('name_buyer')
         ->get();
-        return Inertia::render('CarContract/add', ['client1'=>$client1,'data'=>$data,'client2'=>$client2 ]);   
+        return Inertia::render('CarContract/add', [
+            'client1'=>$client1,
+            'data'=>$data,
+            'client2'=>$client2,
+            'showBrokerage' => $this->showBrokerage,
+        ]);   
     }
     public function contract_print(Request $request)
     {
@@ -75,13 +83,20 @@ class CarContractController extends Controller
         $owner_id=Auth::user()->owner_id;
         $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
         $q= $_GET['q'] ?? '';
-        return Inertia::render('CarContract/index', ['client'=>$client,'user'=>$q ]);
+        return Inertia::render('CarContract/index', [
+            'client'=>$client,
+            'user'=>$q,
+            'showBrokerage' => $this->showBrokerage,
+        ]);
     }
     public function contract_account(Request $request)
     {
         $owner_id=Auth::user()->owner_id;
         $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
-        return Inertia::render('CarContract/account', ['client'=>$client ]);   
+        return Inertia::render('CarContract/account', [
+            'client'=>$client,
+            'showBrokerage' => $this->showBrokerage,
+        ]);   
     }
  
     public function addCarContract(Request $request)

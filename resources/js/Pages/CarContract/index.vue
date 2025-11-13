@@ -19,15 +19,19 @@ import "v3-infinite-loading/lib/style.css";
 import debounce from "lodash/debounce";
 import { useToast } from "vue-toastification";
 import axios from "axios";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 const props = defineProps({
   client: Array,
   user: String,
+  showBrokerage: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-const showBrokerageSection = import.meta.env.VITE_SHOW_BROKERAGE !== 'false';
+const showBrokerageSection = computed(() => props.showBrokerage);
 
 const toast = useToast();
 let showModal = ref(false);

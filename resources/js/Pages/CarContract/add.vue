@@ -13,7 +13,7 @@ import PrimaryButton from "@/Components/PrimaryButton.vue";
 import TextInput from "@/Components/TextInput.vue";
 import { useToast } from "vue-toastification";
 import axios from "axios";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import newContracts from "@/Components/icon/new.vue";
 import show from "@/Components/icon/show.vue";
@@ -32,15 +32,19 @@ import { useIndexedDB } from '@/composables/useIndexedDB';
 
 const { t } = useI18n();
 
-const showBrokerageSection = import.meta.env.VITE_SHOW_BROKERAGE !== 'false';
-
-// تفعيل نظام Offline (IndexedDB)
-const { isOnline, pendingCount, isSyncing, saveContract, syncAll } = useIndexedDB();
 const props = defineProps({
   client1: Array,
   client2: Array,
-  data:Object
+  data:Object,
+  showBrokerage: {
+    type: Boolean,
+    default: false,
+  },
 });
+const showBrokerageSection = computed(() => props.showBrokerage);
+
+// تفعيل نظام Offline (IndexedDB)
+const { isOnline, pendingCount, isSyncing, saveContract, syncAll } = useIndexedDB();
 const formData = ref({});
 const toast = useToast();
 let searchTerm = ref("");
