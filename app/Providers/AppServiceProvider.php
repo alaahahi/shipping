@@ -35,10 +35,13 @@ class AppServiceProvider extends ServiceProvider
                 URL::forceScheme('https');
             }
 
-            $host = $request->getSchemeAndHttpHost();
+            $host = $request->getHost();
+            config(['session.domain' => $host]);
 
-            URL::forceRootUrl($host);
-            config(['app.url' => $host]);
+            $rootUrl = $request->getSchemeAndHttpHost();
+
+            URL::forceRootUrl($rootUrl);
+            config(['app.url' => $rootUrl]);
         }
     }
 }
