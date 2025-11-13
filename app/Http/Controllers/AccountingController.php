@@ -34,7 +34,7 @@ use App\Models\Expenses;
 use App\Models\TransactionsImages;
 use App\Helpers\UploadHelper;
 use Intervention\Image\Facades\Image;
-use File;
+use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ImportInfo;
 use App\Exports\ExportInfo;

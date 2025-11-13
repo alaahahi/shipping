@@ -21,7 +21,7 @@ use App\Models\Hunter;
  
 
 use Intervention\Image\Facades\Image;
-use File;
+use Illuminate\Support\Facades\File;
 
 
 class HunterController extends Controller

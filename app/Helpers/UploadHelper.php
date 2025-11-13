@@ -3,7 +3,7 @@
 namespace App\Helpers;
 
 use Request;
-use File;
+use Illuminate\Support\Facades\File;
 
 class UploadHelper
 {
