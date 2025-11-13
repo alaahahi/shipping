@@ -189,7 +189,8 @@ Route::group(['middleware' => ['auth','verified']], function () {
     
  });
 
- Route::get('makeDrivingDocumentPdf',[CarContractController::class, 'makeDrivingDocumentPdf'])->name('makeDrivingDocumentPdf');
+Route::get('contract/verify/{token}', [CarContractController::class, 'verify'])->name('contract.verify');
+Route::get('makeDrivingDocumentPdf',[CarContractController::class, 'makeDrivingDocumentPdf'])->name('makeDrivingDocumentPdf');
 
 
 require __DIR__.'/auth.php';

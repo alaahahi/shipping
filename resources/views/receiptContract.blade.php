@@ -11,6 +11,7 @@ $Help = new MyHelp();
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 
 <style>
@@ -45,6 +46,41 @@ body {
   b{
     color:cornflowerblue
   }
+  .qr-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 40px 8px 40px;
+    font-size: 12px;
+    font-weight: 600;
+    background-color: #f0f8ff;
+  }
+  .qr-header .info-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #0f172a;
+  }
+  .qr-header .info-item .label {
+    color: #475569;
+  }
+  .qr-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .qr-wrapper img {
+    width: 70px;
+    height: 70px;
+    background: #ffffff;
+    padding: 4px;
+    border-radius: 8px;
+  }
+  .qr-wrapper .qr-caption {
+    font-size: 9px;
+    color: #475569;
+  }
   </style>
 <body style="direction: rtl;"> 
   @if($config['second_title_ar']=='عين دبي')
@@ -53,17 +89,20 @@ body {
   <img src="/img/bg.jpg" width="100%" class="p-3" />
   @endif
   <div class="content">
-    <div class="d-flex justify-content-around py-2"  style="font-size: 13px ; font-weight: 700;background-color: #f0f8ff">
-      <div class="text-center"  style="width:300px">
-        <span >
-          الرقم : {{$data['id'] ??''}}
-        </span>
-
+    <div class="qr-header">
+      <div class="info-item">
+        <span class="label">الرقم:</span>
+        <span class="value">{{$data['id'] ?? ''}}</span>
       </div>
-      <div class="text-center"  style="width:300px">
-        <span>
-        التاريخ  : {{$data['created'] ??''}}
-      </span>
+      @if(!empty($verificationUrl))
+      <div class="qr-wrapper">
+        <img id="contract-qr" alt="QR" style="display:none;" />
+        <span class="qr-caption">امسح QR للتحقق</span>
+      </div>
+      @endif
+      <div class="info-item">
+        <span class="label">التاريخ:</span>
+        <span class="value">{{$data['created'] ?? ''}}</span>
       </div>
     </div>
 
@@ -87,6 +126,9 @@ body {
           <div class="py-2">
             رقم موبایل : {{$data['phone_seller'] ??''}}
           </div>
+        <div class="py-2">
+          رقم الهوية : {{$data['seller_id_number'] ?? ''}}
+        </div>
         </div>
       </div>
       <div>
@@ -108,6 +150,9 @@ body {
         </div>
         <div class="py-2">
           رقم موبایل : {{$data['phone_buyer'] ??''}}
+        </div>
+        <div class="py-2">
+          رقم الهوية : {{$data['buyer_id_number'] ?? ''}}
         </div>
       </div>
       </div>
@@ -331,11 +376,40 @@ body {
 
 <script>
     $(document).ready(function() {
-        function openPrintDialog() {
-             window.print();
+        const verificationUrl = @json($verificationUrl ?? '');
+        const qrImg = document.getElementById('contract-qr');
+        const triggerPrint = () => window.print();
+        const fallbackRender = () => {
+            if (verificationUrl && qrImg) {
+                qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(verificationUrl);
+                qrImg.style.display = 'block';
+            }
+            triggerPrint();
+        };
+
+        if (typeof QRCode !== 'undefined' && verificationUrl && qrImg && typeof QRCode.toDataURL === 'function') {
+            QRCode.toDataURL(
+                verificationUrl,
+                {
+                    width: 150,
+                    margin: 1,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff"
+                },
+                function (error, url) {
+                    if (error) {
+                        console.error(error);
+                        fallbackRender();
+                    } else {
+                        qrImg.src = url;
+                        qrImg.style.display = 'block';
+                        setTimeout(triggerPrint, 200);
+                    }
+                }
+            );
+        } else {
+            fallbackRender();
         }
-    
-        openPrintDialog();
     });
     </script>
 

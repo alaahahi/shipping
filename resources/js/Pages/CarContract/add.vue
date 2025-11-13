@@ -230,14 +230,15 @@ function confirmDelCarFav(V) {
     });
 }
 const profileAdded = ref(0);
-const form = props.data ? ref(props.data) : ref
-({
+const createEmptyForm = () => ({
   name_seller: "",
   phone_seller: "",
   address_seller: "",
+  seller_id_number: "",
   name_buyer: "",
   phone_buyer: "",
   address_buyer: "",
+  buyer_id_number: "",
   tex_seller: 0,
   tex_seller_dinar: 0,
   tex_buyer: 0,
@@ -263,6 +264,17 @@ const form = props.data ? ref(props.data) : ref
   tex_buyer_paid: 0,
   tex_buyer_dinar_paid: 0,
 });
+
+const form = ref(createEmptyForm());
+
+if (props.data) {
+  form.value = {
+    ...createEmptyForm(),
+    ...props.data,
+    seller_id_number: props.data.seller_id_number ?? "",
+    buyer_id_number: props.data.buyer_id_number ?? "",
+  };
+}
 
 
 const isLoading = ref(false);
@@ -537,37 +549,7 @@ const printOfflineContract = () => {
 
 // تابع باقي الكود الأصلي
 const originalResetForm = () => {
-  form.value = {
-    name_seller: "",
-    phone_seller: "",
-    address_seller: "",
-    name_buyer: "",
-    phone_buyer: "",
-    address_buyer: "",
-    tex_seller: 0,
-    tex_seller_dinar: 0,
-    tex_buyer: 0,
-    tex_buyer_dinar: 0,
-    vin: "",
-    car_name: "",
-    modal: "",
-    color: "",
-    size: "",
-    note: "",
-    no:"",
-    vin_s: "",
-    car_name_s: "",
-    modal_s: "",
-    color_s: "",
-    size_s: "",
-    system_note: "",
-    car_price: 0,
-    car_paid: 0,
-    tex_seller_paid: 0,
-    tex_seller_dinar_paid: 0,
-    tex_buyer_paid: 0,
-    tex_buyer_dinar_paid: 0,
-  };
+  form.value = createEmptyForm();
 };
 
  
@@ -789,6 +771,14 @@ function VinApi1 (v){
                             v-model="form.phone_seller"
                           />
                         </div>
+                        <div className="mb-4">
+                          <InputLabel for="seller_id_number" value="رقم الهوية" />
+                          <TextInput
+                            type="text"
+                            class="mt-1 block w-full"
+                            v-model="form.seller_id_number"
+                          />
+                        </div>
                     <template v-if="showBrokerageSection">
                     <div class="flex justify-center">
                       <div className="mb-4 ml-5">
@@ -945,6 +935,15 @@ function VinApi1 (v){
                         type="text"
                         class="mt-1 block w-full"
                         v-model="form.phone_buyer"
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <InputLabel for="buyer_id_number" value="رقم الهوية" />
+                      <TextInput
+                        id="buyer_id_number"
+                        type="text"
+                        class="mt-1 block w-full"
+                        v-model="form.buyer_id_number"
                       />
                     </div>
 
