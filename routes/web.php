@@ -15,6 +15,7 @@ use App\Http\Controllers\AnnualController;
 use App\Http\Controllers\CarExpensesController;
 use App\Http\Controllers\CarContractController;
 use App\Http\Controllers\HunterController;
+use App\Http\Controllers\SyncMonitorController;
 
 
 use App\Models\SystemConfig;
@@ -49,10 +50,9 @@ Route::group(['middleware' => ['auth','verified']], function () {
 
     Route::get('accounting',[AccountingController::class,'index'])->name('accounting');
     
-    // صفحة مراقبة المزامنة
-    Route::get('sync-monitor', function () {
-        return Inertia::render('SyncMonitor');
-    })->name('sync.monitor');
+    Route::get('sync-monitor', [SyncMonitorController::class, 'index'])->name('sync.monitor');
+    Route::post('sync/run', [SyncMonitorController::class, 'run'])->name('sync.run');
+    Route::delete('sync/jobs', [SyncMonitorController::class, 'flush'])->name('sync.jobs.flush');
     
     // صفحة البحث Offline
     Route::get('offline-car-search', function () {

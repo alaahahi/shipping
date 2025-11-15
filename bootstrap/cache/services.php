@@ -46,10 +46,11 @@
     42 => 'App\\Providers\\AuthServiceProvider',
     43 => 'App\\Providers\\EventServiceProvider',
     44 => 'App\\Providers\\RouteServiceProvider',
-    45 => 'SimpleSoftwareIO\\QrCode\\QrCodeServiceProvider',
-    46 => 'Intervention\\Image\\ImageServiceProvider',
-    47 => 'Maatwebsite\\Excel\\ExcelServiceProvider',
-    48 => 'Alkoumi\\LaravelArabicTafqeet\\LaravelArabicTafqeetServiceProvider',
+    45 => 'App\\Providers\\DatabaseFailoverServiceProvider',
+    46 => 'SimpleSoftwareIO\\QrCode\\QrCodeServiceProvider',
+    47 => 'Intervention\\Image\\ImageServiceProvider',
+    48 => 'Maatwebsite\\Excel\\ExcelServiceProvider',
+    49 => 'Alkoumi\\LaravelArabicTafqeet\\LaravelArabicTafqeetServiceProvider',
   ),
   'eager' => 
   array (
@@ -83,10 +84,11 @@
     27 => 'App\\Providers\\AuthServiceProvider',
     28 => 'App\\Providers\\EventServiceProvider',
     29 => 'App\\Providers\\RouteServiceProvider',
-    30 => 'SimpleSoftwareIO\\QrCode\\QrCodeServiceProvider',
-    31 => 'Intervention\\Image\\ImageServiceProvider',
-    32 => 'Maatwebsite\\Excel\\ExcelServiceProvider',
-    33 => 'Alkoumi\\LaravelArabicTafqeet\\LaravelArabicTafqeetServiceProvider',
+    30 => 'App\\Providers\\DatabaseFailoverServiceProvider',
+    31 => 'SimpleSoftwareIO\\QrCode\\QrCodeServiceProvider',
+    32 => 'Intervention\\Image\\ImageServiceProvider',
+    33 => 'Maatwebsite\\Excel\\ExcelServiceProvider',
+    34 => 'Alkoumi\\LaravelArabicTafqeet\\LaravelArabicTafqeetServiceProvider',
   ),
   'deferred' => 
   array (
