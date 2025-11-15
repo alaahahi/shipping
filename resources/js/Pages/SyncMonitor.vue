@@ -88,69 +88,6 @@
           </div>
         </div>
 
-        <!-- تفاصيل الاتصال الحالية -->
-        <div class="mb-6 bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
-          <div class="flex flex-wrap justify-between items-start gap-4">
-            <div>
-              <h3 class="text-lg font-semibold dark:text-gray-200">ℹ️ تفاصيل الاتصال الحالية</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                {{ connectionInfo.tip }}
-              </p>
-            </div>
-            <span
-              class="px-3 py-1 rounded-full text-sm font-semibold"
-              :class="connectionInfo.isLocal
-                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100'
-                : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100'"
-            >
-              {{ connectionInfo.environmentLabel }}
-            </span>
-          </div>
-
-          <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm dark:text-gray-200">
-            <div>
-              <p class="text-gray-500 dark:text-gray-400">المضيف / المنفذ</p>
-              <p class="font-semibold">
-                {{ connectionInfo.host }}<span v-if="connectionInfo.port">:{{ connectionInfo.port }}</span>
-              </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                {{ connectionInfo.protocol }} • {{ connectionInfo.secure ? '🔒 اتصال آمن' : '⚠️ اتصال غير مشفر' }}
-              </p>
-            </div>
-            <div>
-              <p class="text-gray-500 dark:text-gray-400">نوع الشبكة</p>
-              <p class="font-semibold">{{ connectionInfo.networkType }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                Effective: {{ connectionInfo.effectiveType }}
-              </p>
-            </div>
-            <div>
-              <p class="text-gray-500 dark:text-gray-400">سرعة تقريبية</p>
-              <p class="font-semibold">
-                {{ connectionInfo.downlink ? connectionInfo.downlink + ' Mbps' : 'غير متاح' }}
-              </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                RTT: {{ connectionInfo.rtt ? connectionInfo.rtt + ' ms' : 'غير متاح' }}
-              </p>
-            </div>
-            <div>
-              <p class="text-gray-500 dark:text-gray-400">عنوان API / المزامنة</p>
-              <p class="font-semibold truncate" :title="connectionInfo.apiBaseUrl">
-                {{ connectionInfo.apiBaseUrl }}
-              </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                آخر تحديث: {{ connectionInfo.lastUpdated || '—' }}
-              </p>
-            </div>
-          </div>
-
-          <div class="mt-4 text-xs text-gray-600 dark:text-gray-400">
-            <span class="font-mono bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded inline-block break-all w-full md:w-auto">
-              {{ connectionInfo.origin }}
-            </span>
-          </div>
-        </div>
-
         <!-- إحصائيات -->
         <div class="mb-6 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg shadow-lg p-6 text-white">
           <h3 class="text-xl font-bold mb-4">📊 الإحصائيات</h3>
@@ -507,23 +444,6 @@ const localDataCounts = ref({
   contracts: 0,
   transactions: 0
 });
-const defaultConnectionInfo = {
-  environmentLabel: 'غير معروف',
-  tip: '—',
-  host: '-',
-  port: '',
-  protocol: '-',
-  origin: '-',
-  secure: false,
-  networkType: 'غير متاح',
-  effectiveType: 'غير متاح',
-  downlink: null,
-  rtt: null,
-  apiBaseUrl: '-',
-  lastUpdated: null,
-  isLocal: false
-};
-const connectionInfo = ref(buildConnectionInfo());
 
 const isRefreshing = ref(false);
 const isSyncing = ref(false);
@@ -531,8 +451,6 @@ const retryingItems = ref(new Set());
 const filter = ref('all');
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
-let refreshInterval = null;
-let connectionApiRef = null;
 
 // Modals
 const detailsModal = ref({
@@ -614,7 +532,6 @@ const refreshData = async () => {
   try {
     // تحديث حالة الاتصال
     connectionStatus.value.online = navigator.onLine;
-    updateConnectionInfo();
     
     // جلب بيانات Sync Queue من IndexedDB
     if (window.$db) {
@@ -911,7 +828,6 @@ const showDatabaseInfo = async () => {
 // Event Listeners
 const handleOnline = () => {
   connectionStatus.value.online = true;
-  updateConnectionInfo();
   toast.success('🌐 عاد الاتصال!');
   refreshData();
   
@@ -925,7 +841,6 @@ const handleOnline = () => {
 
 const handleOffline = () => {
   connectionStatus.value.online = false;
-  updateConnectionInfo();
   toast.warning('📴 فقدان الاتصال - وضع Offline');
   refreshData();
 };
@@ -933,113 +848,21 @@ const handleOffline = () => {
 // Lifecycle
 onMounted(() => {
   refreshData();
-  updateConnectionInfo();
-
+  
+  // إضافة مستمعين
   window.addEventListener('online', handleOnline);
   window.addEventListener('offline', handleOffline);
-
-  refreshInterval = setInterval(refreshData, 10000);
-
-  connectionApiRef = getNavigatorConnection();
-  if (connectionApiRef?.addEventListener) {
-    connectionApiRef.addEventListener('change', updateConnectionInfo);
-  } else if (connectionApiRef) {
-    connectionApiRef.onchange = updateConnectionInfo;
-  }
+  
+  // تحديث دوري كل 10 ثواني
+  const interval = setInterval(refreshData, 10000);
+  
+  // التنظيف
+  onUnmounted(() => {
+    window.removeEventListener('online', handleOnline);
+    window.removeEventListener('offline', handleOffline);
+    clearInterval(interval);
+  });
 });
-
-onUnmounted(() => {
-  window.removeEventListener('online', handleOnline);
-  window.removeEventListener('offline', handleOffline);
-
-  if (refreshInterval) {
-    clearInterval(refreshInterval);
-    refreshInterval = null;
-  }
-
-  if (connectionApiRef?.removeEventListener) {
-    connectionApiRef.removeEventListener('change', updateConnectionInfo);
-  } else if (connectionApiRef) {
-    connectionApiRef.onchange = null;
-  }
-});
-
-// معلومات الاتصال
-const updateConnectionInfo = () => {
-  connectionInfo.value = buildConnectionInfo();
-};
-
-function buildConnectionInfo() {
-  if (typeof window === 'undefined') {
-    return { ...defaultConnectionInfo };
-  }
-
-  const { protocol, hostname, port, origin } = window.location;
-  const normalizedHost = (hostname || '').toLowerCase();
-  const isLocalHost =
-    ['localhost', '127.0.0.1'].includes(normalizedHost) ||
-    normalizedHost.startsWith('192.168.') ||
-    normalizedHost.startsWith('10.') ||
-    normalizedHost.endsWith('.local');
-
-  const connectionApi = getNavigatorConnection();
-  const downlinkValue =
-    typeof connectionApi?.downlink === 'number'
-      ? Number(connectionApi.downlink.toFixed(1))
-      : null;
-  const rttValue =
-    typeof connectionApi?.rtt === 'number'
-      ? Math.round(connectionApi.rtt)
-      : null;
-  const apiBaseUrl = guessApiBaseUrl(origin);
-
-  return {
-    environmentLabel: isLocalHost ? '🖥️ بيئة محلية (Local)' : '☁️ اتصال خادم/سيرفر',
-    tip: isLocalHost
-      ? 'أنت تعمل على نسخة محلية، تذكّر مزامنة البيانات قبل نشرها.'
-      : 'الاتصال مباشر بالسيرفر، تأكد من استقرار الشبكة أثناء المزامنة.',
-    host: hostname || '-',
-    port: port || (protocol === 'https:' ? '443' : '80'),
-    protocol: protocol ? protocol.replace(':', '').toUpperCase() : '-',
-    origin: origin || '-',
-    secure: protocol === 'https:',
-    networkType: connectionApi?.type || 'غير معروف',
-    effectiveType: connectionApi?.effectiveType || 'غير معروف',
-    downlink: downlinkValue,
-    rtt: rttValue,
-    apiBaseUrl,
-    lastUpdated: new Date().toLocaleTimeString('ar-SA'),
-    isLocal: isLocalHost
-  };
-}
-
-function guessApiBaseUrl(fallbackOrigin = '-') {
-  if (typeof window === 'undefined') {
-    return fallbackOrigin;
-  }
-
-  if (window?.axios?.defaults?.baseURL) {
-    return window.axios.defaults.baseURL;
-  }
-
-  if (window?.Ziggy?.url) {
-    return window.Ziggy.url;
-  }
-
-  if (window?.Laravel?.baseUrl) {
-    return window.Laravel.baseUrl;
-  }
-
-  return window.location?.origin || fallbackOrigin || '-';
-}
-
-function getNavigatorConnection() {
-  if (typeof navigator === 'undefined') {
-    return null;
-  }
-
-  return navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
-}
 </script>
 
 <style scoped>
