@@ -21,8 +21,6 @@ use App\Http\Controllers\HunterController;
 use App\Http\Controllers\AnnualController;
 use App\Http\Controllers\CarExpensesController;
 use App\Http\Controllers\CarContractController;
-use App\Http\Controllers\SyncController;
-use App\Http\Controllers\SyncMonitorController;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Cache\FileStore;
@@ -242,7 +240,3 @@ Route::post('search-vins', [CarExpensesController::class, 'searchVINs'])->name('
 
 
 });
-
-Route::post('/sync', [SyncController::class, 'sync']);
-Route::get('/changes', [SyncController::class, 'changes']);
-Route::get('/sync/status', [SyncMonitorController::class, 'status']);

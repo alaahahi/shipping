@@ -43,14 +43,6 @@ return [
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
         ],
 
-        'sync_sqlite' => [
-            'driver' => 'sqlite',
-            'url' => env('DATABASE_URL'),
-            'database' => env('SYNC_SQLITE_PATH', database_path('sync.sqlite')),
-            'prefix' => '',
-            'foreign_key_constraints' => true,
-        ],
-
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DATABASE_URL'),
@@ -102,16 +94,6 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
-    ],
-
-    'failover' => [
-        'enabled' => env('DB_FAILOVER_ENABLED', true),
-        'primary' => env('DB_PRIMARY_CONNECTION', env('DB_CONNECTION', 'mysql')),
-        'fallback' => env('DB_FALLBACK_CONNECTION', env('SYNC_LOCAL_CONNECTION', 'sync_sqlite')),
-        'check_url' => env('DB_FAILOVER_CHECK_URL', env('SYNC_SERVER_URL')),
-        'timeout' => (int) env('DB_FAILOVER_TIMEOUT', 2),
-        'cache_key' => env('DB_FAILOVER_CACHE_KEY', 'database:failover:online'),
-        'cache_ttl' => (int) env('DB_FAILOVER_CACHE_TTL', 60),
     ],
 
     /*

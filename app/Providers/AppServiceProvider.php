@@ -2,11 +2,8 @@
 
 namespace App\Providers;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,12 +24,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        Model::creating(function (Model $model) {
-            if (Schema::hasColumn($model->getTable(), 'uuid') && empty($model->uuid)) {
-                $model->uuid = (string) Str::uuid();
-            }
-        });
-
         if ($this->app->runningInConsole()) {
             return;
         }

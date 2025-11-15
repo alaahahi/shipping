@@ -20,11 +20,6 @@ class Kernel extends ConsoleKernel
         $schedule->call(function () {
            DB::table('massage')->where('created_at','<=',Carbon::now()->subDays(7))->delete();
         })->everyMinute();
-
-        $schedule->command('sync:run')
-            ->everyMinute()
-            ->withoutOverlapping()
-            ->runInBackground();
     }
 
     /**
