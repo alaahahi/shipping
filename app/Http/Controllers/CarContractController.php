@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use App\Models\Transfers;
 use App\Models\User;
 use App\Models\Car;
@@ -36,12 +37,29 @@ class CarContractController extends Controller
 
     public function __construct(AccountingController $accountingController)
     {
-    $this->accountingController = $accountingController;
-    $this->userClient =  UserType::where('name', 'client')->first()->id;
-    $this->userAccount =  UserType::where('name', 'account')->first()->id;
-    $this->mainBoxContract= User::with('wallet')->where('type_id', $this->userAccount)->where('email','mainBoxContract@account.com');
-    $this->currentDate = Carbon::now()->format('Y-m-d');
-    $this->showBrokerage = filter_var(config('car_contract.show_brokerage', false), FILTER_VALIDATE_BOOLEAN);
+        $this->accountingController = $accountingController;
+        $this->userClient = $this->resolveUserTypeId('client');
+        $this->userAccount = $this->resolveUserTypeId('account');
+        $this->mainBoxContract = User::with('wallet')
+            ->where('type_id', $this->userAccount)
+            ->where('email', 'mainBoxContract@account.com');
+        $this->currentDate = Carbon::now()->format('Y-m-d');
+        $this->showBrokerage = filter_var(config('car_contract.show_brokerage', false), FILTER_VALIDATE_BOOLEAN);
+    }
+
+    protected function resolveUserTypeId(string $typeName, ?int $default = null): ?int
+    {
+        $id = UserType::where('name', $typeName)->value('id');
+
+        if (!$id && $default !== null) {
+            return $default;
+        }
+
+        if (!$id) {
+            Log::warning('UserType missing for contracts module', ['type' => $typeName]);
+        }
+
+        return $id;
     }
 
     public function contract(Request $request)
@@ -177,7 +195,11 @@ class CarContractController extends Controller
         }
          
 
-        return Response::json('ok', 200);    
+        return Response::json([
+            'success' => true,
+            'id' => $car->id,
+            'message' => 'تم حفظ العقد بنجاح'
+        ], 200);    
     }
     public function getIndexContractCar(Request $request){
         $owner_id=Auth::user()->owner_id;

@@ -1,7 +1,8 @@
-// Service Worker - تحديث مُحسّن للـ SPA
-// الهدف: عدم التدخل في Inertia + دعم offline
+// Service Worker - PWA محسّن - دعم Offline سريع
+// الهدف: تسريع التطبيق + دعم offline بدون تخزين IndexedDB
 
-const CACHE_NAME = 'shipping-v2.1.0'; // ⬆️ تحديث الإصدار لتفعيل التحديث
+const CACHE_NAME = 'shipping-v3.0.0'; // ⬆️ تحديث الإصدار - PWA محسّن
+const RUNTIME_CACHE = 'shipping-runtime-v3.0.0';
 const ASSETS_TO_CACHE = [
   '/',
   '/offline.html',
@@ -163,69 +164,74 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// 🚀 المرحلة 4: Background Sync
+// 🚀 Background Sync - مزامنة SQLite تلقائياً عند عودة الإنترنت
 self.addEventListener('sync', (event) => {
   console.log('🔄 Background Sync event:', event.tag);
   
-  if (event.tag === 'sync-contracts') {
-    event.waitUntil(syncContracts());
+  if (event.tag === 'sync-database') {
+    event.waitUntil(syncDatabase());
   }
 });
 
-// دالة المزامنة في الخلفية
-async function syncContracts() {
+// دالة المزامنة في الخلفية - SQLite -> MySQL ثم MySQL -> SQLite
+async function syncDatabase() {
   try {
-    console.log('🔄 بدء المزامنة في الخلفية...');
+    console.log('🔄 بدء مزامنة قاعدة البيانات في الخلفية...');
     
-    // فتح IndexedDB
-    const db = await openDatabase();
-    const contracts = await getPendingContracts(db);
+    // 1. أولاً: مزامنة من SQLite إلى MySQL (نقل البيانات المحلية للسيرفر)
+    console.log('📤 مزامنة من SQLite إلى MySQL...');
+    const responseUp = await fetch('/api/sync-monitor/sync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        direction: 'up', // من SQLite إلى MySQL
+        safe_mode: true, // Safe Mode: إضافة فقط، لا تحديث
+        create_backup: true // إنشاء نسخة احتياطية
+      })
+    });
     
-    if (contracts.length === 0) {
-      console.log('✅ لا يوجد عقود للمزامنة');
-      return;
+    if (!responseUp.ok) {
+      console.error('❌ فشلت المزامنة من SQLite إلى MySQL:', responseUp.status);
+      throw new Error('فشلت المزامنة من SQLite إلى MySQL');
     }
     
-    console.log(`📦 وجدنا ${contracts.length} عقد للمزامنة`);
+    const resultUp = await responseUp.json();
+    console.log('✅ تمت المزامنة من SQLite إلى MySQL:', resultUp);
     
-    let synced = 0;
-    for (const contract of contracts) {
-      try {
-        // إرسال العقد للسيرفر
-        const response = await fetch('/api/addCarContract', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(contract)
-        });
-        
-        if (response.ok) {
-          // حذف من IndexedDB
-          await deleteContractFromDB(db, contract.id);
-          console.log(`✅ تمت مزامنة: ${contract.offline_id}`);
-          synced++;
-        } else {
-          console.error(`❌ فشل: ${contract.offline_id}`, response.status);
-        }
-        
-        // تأخير صغير
-        await new Promise(resolve => setTimeout(resolve, 500));
-      } catch (error) {
-        console.error(`❌ خطأ في مزامنة: ${contract.offline_id}`, error);
-      }
+    // 2. ثانياً: مزامنة من MySQL إلى SQLite (للتأكد من التحديثات)
+    console.log('📥 مزامنة من MySQL إلى SQLite...');
+    const responseDown = await fetch('/api/sync-monitor/sync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        direction: 'down' // من MySQL إلى SQLite
+      })
+    });
+    
+    if (!responseDown.ok) {
+      console.error('❌ فشلت المزامنة من MySQL إلى SQLite:', responseDown.status);
+      // لا نرمي خطأ هنا لأن المزامنة الأولى نجحت
+    } else {
+      const resultDown = await responseDown.json();
+      console.log('✅ تمت المزامنة من MySQL إلى SQLite:', resultDown);
     }
-    
-    console.log(`✅ تمت مزامنة ${synced} من ${contracts.length} عقد في الخلفية`);
     
     // إرسال رسالة للتطبيق
     const clients = await self.clients.matchAll();
     clients.forEach(client => {
       client.postMessage({
         type: 'SYNC_COMPLETE',
-        synced: synced,
-        total: contracts.length
+        success: true,
+        data: {
+          up: resultUp,
+          down: resultDown
+        }
       });
     });
     
@@ -233,40 +239,6 @@ async function syncContracts() {
     console.error('❌ خطأ في Background Sync:', error);
     throw error; // لإعادة المحاولة تلقائياً
   }
-}
-
-// فتح IndexedDB
-function openDatabase() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('ShippingDB', 1);
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-// الحصول على العقود المعلقة
-function getPendingContracts(db) {
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['contracts'], 'readonly');
-    const store = transaction.objectStore('contracts');
-    const index = store.index('synced');
-    const request = index.getAll(false);
-    
-    request.onsuccess = () => resolve(request.result || []);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-// حذف عقد من IndexedDB
-function deleteContractFromDB(db, id) {
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['contracts'], 'readwrite');
-    const store = transaction.objectStore('contracts');
-    const request = store.delete(id);
-    
-    request.onsuccess = () => resolve(true);
-    request.onerror = () => reject(request.error);
-  });
 }
 
 console.log('🚀 Service Worker loaded!');

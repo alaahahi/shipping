@@ -27,8 +27,8 @@ import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
 import debounce from "lodash/debounce";
 
-// 🚀 نظام Offline متقدم مع IndexedDB
-import { useIndexedDB } from '@/composables/useIndexedDB';
+// 🚀 نظام Offline سريع - استخدام SQLite مباشرة
+import { useOfflineSync } from '@/composables/useOfflineSync';
 
 const { t } = useI18n();
 
@@ -43,8 +43,9 @@ const props = defineProps({
 });
 const showBrokerageSection = computed(() => props.showBrokerage);
 
-// تفعيل نظام Offline (IndexedDB)
-const { isOnline, pendingCount, isSyncing, saveContract, syncAll } = useIndexedDB();
+// تفعيل نظام Offline (SQLite مباشرة)
+const { isOnline, isSyncing, saveContract } = useOfflineSync();
+const pendingCount = ref(0); // لم نعد نحتاجه
 const formData = ref({});
 const toast = useToast();
 let searchTerm = ref("");
@@ -341,34 +342,25 @@ const submit = async (V) => {
           }
         }, 1000);
       } else {
-        console.log('💾 حفظ offline - سنطبع الآن');
+        console.log('💾 حفظ offline - سننتقل للطباعة');
         
-        // تم الحفظ offline
-        // حفظ بيانات العقد للطباعة المؤقتة
-        localStorage.setItem('last_offline_contract', JSON.stringify({
-          ...V,
-          saved_at: new Date().toISOString(),
-          offline_id: result.id || Date.now()
-        }));
-        
-        console.log('📊 pendingCount:', pendingCount.value);
-
-        toast.success(`✅ تم الحفظ محلياً - يمكنك الطباعة الآن
-        
-⚠️ سيتم إرسال العقد للسيرفر عند الاتصال بالإنترنت
-العقود المعلقة: ${pendingCount.value}`, {
-          timeout: 6000,
+        // تم الحفظ offline - الانتقال للصفحة العادية مثل الفلو الطبيعي
+        toast.success('✅ تم حفظ العقد محلياً - سيتم المزامنة تلقائياً عند عودة الإنترنت', {
+          timeout: 3000,
           position: 'bottom-right',
           rtl: true
         });
 
-        // فتح نافذة الطباعة المؤقتة
         setTimeout(() => {
           isLoading.value = false;
-          console.log('🖨️ فتح نافذة الطباعة...');
-          // فتح صفحة طباعة offline
-          printOfflineContract();
-        }, 1500);
+          // الانتقال لصفحة الطباعة - نفس الفلو الطبيعي
+          if (result.id || result.data?.id) {
+            const contractId = result.id || result.data?.id;
+            window.location = `/car_contract/${contractId}`;
+          } else {
+            window.location = '/car_contract';
+          }
+        }, 1000);
       }
     } else {
       // فشل الحفظ
@@ -391,165 +383,7 @@ const submit = async (V) => {
   }
 };
 
-// 🖨️ طباعة عقد offline (نفس تصميم العقد الأصلي - JavaScript خالص)
-const printOfflineContract = () => {
-  const contractData = localStorage.getItem('last_offline_contract');
-  if (!contractData) {
-    toast.error('❌ لا يوجد عقد للطباعة');
-    return;
-  }
-
-  try {
-    const contract = JSON.parse(contractData);
-    const currentDate = new Date().toLocaleDateString('en-US');
-    const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    
-    // إنشاء نافذة طباعة
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
-    
-    if (!printWindow) {
-      toast.error('❌ يرجى السماح بفتح النوافذ المنبثقة');
-      return;
-    }
-
-    // بناء HTML بالكامل (JavaScript خالص - لا يحتاج سيرفر)
-    printWindow.document.write('<!DOCTYPE html>');
-    printWindow.document.write('<html>');
-    printWindow.document.write('<head>');
-    printWindow.document.write('<title>شركة سلام جلال أيوب</title>');
-    printWindow.document.write('<meta charset="utf-8">');
-    printWindow.document.write('<meta name="viewport" content="width=device-width, initial-scale=1">');
-    printWindow.document.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">');
-    printWindow.document.write('<scr` + `ipt src="https://code.jquery.com/jquery-3.6.0.min.js"></scr` + `ipt>');
-    printWindow.document.write('</head>');
-    
-    // Styles
-    printWindow.document.write('<style>');
-    printWindow.document.write('@font-face { font-family: "Peshang"; src: url("/Peshang.ttf") format("truetype"); }');
-    printWindow.document.write('body { font-family: "Peshang", sans-serif; }');
-    printWindow.document.write('@page { size: A4; margin: 0; }');
-    printWindow.document.write('html, body { width: 210mm; height: 297mm; margin: 0; padding: 0; }');
-    printWindow.document.write('b { color: cornflowerblue; }');
-    printWindow.document.write('.offline-warning { position: fixed; top: 5mm; right: 5mm; background: #fef3c7; color: #92400e; padding: 5px 15px; border-radius: 5px; font-size: 10px; border: 2px solid #f59e0b; z-index: 1000; }');
-    printWindow.document.write('@media print { .no-print { display: none !important; } }');
-    printWindow.document.write('</style>');
-    
-    // Body
-    printWindow.document.write('<body style="direction: rtl;">');
-    
-    // Badge تحذير
-    printWindow.document.write('<div class="offline-warning no-print">⚠️ محفوظ محلياً - بانتظار المزامنة</div>');
-    
-    // الشعار
-    printWindow.document.write('<img src="./img/bg.jpg" width="100%" class="p-3" />');
-    
-    printWindow.document.write('<div class="content">');
-    
-    // الرقم والتاريخ
-    printWindow.document.write('<div class="d-flex justify-content-around py-2" style="font-size: 13px; font-weight: 700; background-color: #f0f8ff">');
-    printWindow.document.write('<div class="text-center" style="width:300px"><span>الرقم : ' + (contract.offline_id || 'Offline') + '</span></div>');
-    printWindow.document.write('<div class="text-center" style="width:300px"><span>التاريخ : ' + currentDate + '</span></div>');
-    printWindow.document.write('</div>');
-    
-    // البائع والمشتري
-    printWindow.document.write('<div class="d-flex justify-content-around mt-1" style="font-size: 13px; font-weight: 700;">');
-    
-    // البائع
-    printWindow.document.write('<div>');
-    printWindow.document.write('<div class="text-center p-1" style="width:300px; border: 1px cornflowerblue solid; background-color: cornflowerblue; color:#fff">');
-    printWindow.document.write('<span>لایەنی یەکەم فرۆشیار - الطرف الأول البائع</span>');
-    printWindow.document.write('</div>');
-    printWindow.document.write('<div class="p-2" style="width:300px; border: 1px cornflowerblue solid;">');
-    printWindow.document.write('<div class="py-2">فرۆشیار / البائع : <span class="fw-bold" style="font-size:14px;">' + (contract.name_seller || '') + '</span></div>');
-    printWindow.document.write('<div class="py-2">دانیشتوی / الساکن : ' + (contract.address_seller || '') + '</div>');
-    printWindow.document.write('<div class="py-2">رقم موبایل : ' + (contract.phone_seller || '') + '</div>');
-    printWindow.document.write('</div>');
-    printWindow.document.write('</div>');
-    
-    // المشتري
-    printWindow.document.write('<div>');
-    printWindow.document.write('<div class="text-center p-1" style="width:300px; border: 1px cornflowerblue solid; background-color: cornflowerblue; color:#fff">');
-    printWindow.document.write('<span>لایەنی دووەم کریار - الطرف الثانی المشتری</span>');
-    printWindow.document.write('</div>');
-    printWindow.document.write('<div class="p-2" style="width:300px; border: 1px cornflowerblue solid">');
-    printWindow.document.write('<div class="py-2">کریار / المشتری : <span class="fw-bold" style="font-size:14px;">' + (contract.name_buyer || '') + '</span></div>');
-    printWindow.document.write('<div class="py-2">دانیشتوی / الساکن : ' + (contract.address_buyer || '') + '</div>');
-    printWindow.document.write('<div class="py-2">رقم موبایل : ' + (contract.phone_buyer || '') + '</div>');
-    printWindow.document.write('</div>');
-    printWindow.document.write('</div>');
-    
-    printWindow.document.write('</div>');
-    
-    // نص الاتفاق
-    printWindow.document.write('<div class="py-1 text-danger text-center" style="font-size: 13px">');
-    printWindow.document.write('<div>رێکەوتن کرا لە نێوان هەردوو لیەن لە سەر ئەم خالنەی خوارەوه</div>');
-    printWindow.document.write('<div>وتم الاتفاق على النقاط التالية بين الطرفين</div>');
-    printWindow.document.write('</div>');
-    
-    // تفاصيل العقد
-    printWindow.document.write('<div style="font-size: 13px; padding: 0 50px">');
-    
-    // السيارة الأولى
-    printWindow.document.write('<div>');
-    printWindow.document.write('<div>1. فرۆشتنی لایەنی یەکەم بە لایەنی دووەم ئوتومبێلی ژمارە (بيع سيارة الطرف الأول إلى سيارة الطرف الثاني رقم) : <b class="px-3">' + (contract.car_number || '') + '</b></div>');
-    printWindow.document.write('<div class="pt-2">لە جۆری (من النوع) : <b class="px-3">' + (contract.car_name || '') + '</b> مودیل : <b class="px-3">' + (contract.modal || '') + '</b> قبارە (الحجم) : <b class="px-3">' + (contract.size || '') + '</b> رەنگ (اللون) : <b class="px-3">' + (contract.color || '') + '</b></div>');
-    printWindow.document.write('<div class="pt-2">ژمارە لشە (الشاصی) : <b class="px-3">' + (contract.vin || '') + '</b></div>');
-    printWindow.document.write('<div class="pt-2">لە جیاتی / بڕی پارە (بمبلغ قدره) : <b class="px-3 fs-6">' + (contract.car_price || 0) + ' $</b></div>');
-    printWindow.document.write('<div class="pt-2">فرۆشیار وەری گرت بڕی پارە (وقد قبض) : <b class="px-3 fs-6">' + (contract.car_paid || 0) + ' $</b></div>');
-    printWindow.document.write('<div class="pt-2">ئەو برەی ماوەتەوە (الباقی) : <b class="px-3 fs-6">' + ((contract.car_price || 0) - (contract.car_paid || 0)) + ' $</b></div>');
-    printWindow.document.write('</div>');
-    
-    // السيارة البديلة
-    printWindow.document.write('<div>');
-    printWindow.document.write('<div class="pt-3">2. گۆرینەوەی لایەنی یەکەم ئوتومبێلی ژمارە (السيارة البديلة) : <b class="px-3">' + (contract.no_s || '') + '</b></div>');
-    printWindow.document.write('<div class="pt-2">لە جۆری (من النوع) : <b class="px-3">' + (contract.car_name_s || '') + '</b> مودیل : <b class="px-3">' + (contract.modal_s || '') + '</b> قبارە (الحجم) : <b class="px-3">' + (contract.size_s || '') + '</b> رەنگ (اللون) : <b class="px-3">' + (contract.color_s || '') + '</b></div>');
-    printWindow.document.write('<div class="pt-2">ژمارە لشە (الشاصی) : <b class="px-3">' + (contract.vin_s || '') + '</b></div>');
-    printWindow.document.write('<div class="pt-2">تێبینی (ملاحظة) : <b class="px-3">' + (contract.note || '') + '</b></div>');
-    printWindow.document.write('</div>');
-    
-    // الشروط
-    printWindow.document.write('<div class="pt-2" style="color: brown; font-size: 11px">3. علی البائع و المشتری تسجیل السیارة حسب قوانین مدیریة المرور العامة مع إجراء معاملة نقل الملکیة</div>');
-    printWindow.document.write('<div class="pt-2" style="color: brown; font-size: 11px">4. علی المشتری فحص السیارة قبل الشراء و نحن غیر مسؤولین بعد توقیع عقد المعرض</div>');
-    printWindow.document.write('<div class="pt-2" style="color: brown; font-size: 11px">5. الطرف الاول مسؤول عن کافة أنواع الغرامات قبل موعد الشراء</div>');
-    printWindow.document.write('<div class="pt-2" style="color: brown; font-size: 11px">6. صاحب المعرض غیر مسؤول عن السیارة بعد البیع</div>');
-    printWindow.document.write('<div class="pt-2" style="color: brown; font-size: 11px">7. علی المشتري تسجیل السیارة خلال شهر واحد</div>');
-    printWindow.document.write('<div class="pt-2" style="color: brown; font-size: 11px">8. کتب هذا العقد بثالثة نسخ بتاریخ <b class="px-2">' + currentDate + '</b> <span class="px-5">الساعة</span> <b class="px-2">' + currentTime + '</b></div>');
-    printWindow.document.write('<div class="pt-2" style="color: brown; font-size: 11px">9. کل عقد غیر مختوم من المعرض یعتبر باطل</div>');
-    
-    // التوقيعات
-    printWindow.document.write('<div class="d-flex justify-content-between mt-5 pt-2">');
-    printWindow.document.write('<div>بەلێن و رەزامەندی لایەنی یەکەم فرۆشیار (البائع)</div>');
-    printWindow.document.write('<div>نووسەری پێشانگا</div>');
-    printWindow.document.write('<div>بەلێن و رەزامەندی لایەنی دووەم کریار (المشتری)</div>');
-    printWindow.document.write('</div>');
-    
-    printWindow.document.write('<div class="d-flex justify-content-between mt-4">');
-    printWindow.document.write('<div class="text-center" style="width: 184px"><b>' + (contract.name_seller || '') + '</b></div>');
-    printWindow.document.write('<div class="text-center" style="width: 184px"><b>كاتب المعرض</b></div>');
-    printWindow.document.write('<div class="text-center" style="width: 184px"><b>' + (contract.name_buyer || '') + '</b></div>');
-    printWindow.document.write('</div>');
-    
-    printWindow.document.write('</div>'); // end padding div
-    printWindow.document.write('</div>'); // end content
-    
-    // أزرار الطباعة
-    printWindow.document.write('<div class="no-print" style="text-align: center; margin-top: 30px; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">');
-    printWindow.document.write('<button onclick="window.print()" style="padding: 10px 30px; font-size: 16px; background: #4f46e5; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 0 5px;">🖨️ طباعة</button>');
-    printWindow.document.write('<button onclick="window.close()" style="padding: 10px 30px; font-size: 16px; background: #6b7280; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 0 5px;">إغلاق</button>');
-    printWindow.document.write('</div>');
-    
-
-    
-    printWindow.document.write('</body>');
-    printWindow.document.write('</html>');
-    
-    printWindow.document.close();
-
-  } catch (error) {
-    console.error('خطأ في الطباعة:', error);
-    toast.error('❌ فشلت عملية الطباعة');
-  }
-};
+// تم إزالة printOfflineContract - الآن نستخدم الانتقال للصفحة العادية
 
 // تابع باقي الكود الأصلي
 const originalResetForm = () => {
@@ -653,34 +487,13 @@ function VinApi1 (v){
   <Head title="Dashboard" />
   <AuthenticatedLayout>
     
-    <!-- 🐛 Debug: عرض pendingCount دائماً -->
-    <div class="fixed top-4 right-4 bg-blue-500 text-white px-3 py-2 rounded text-xs z-50 no-print">
-      📊 Debug: pendingCount = {{ pendingCount }}
-    </div>
-
-    <!-- 🚀 شريط حالة Offline مع IndexedDB -->
-    <div v-if="pendingCount > 0" class="fixed bottom-4 left-4 bg-yellow-500 text-white px-4 py-3 rounded-lg shadow-xl z-50">
+    <!-- 🔔 مؤشر حالة الاتصال -->
+    <div v-if="!isOnline" class="fixed bottom-4 left-4 bg-yellow-500 text-white px-4 py-3 rounded-lg shadow-xl z-50">
       <div class="flex items-center space-x-3 space-x-reverse">
         <div class="flex-1">
-          <p class="font-bold">
-            <span v-if="isSyncing">🔄</span>
-            <span v-else>⏳</span>
-            {{ pendingCount }} عقد بانتظار المزامنة
-          </p>
-          <p class="text-sm opacity-90">
-            <span v-if="isSyncing">جاري المزامنة...</span>
-            <span v-else-if="isOnline">متصل</span>
-            <span v-else>غير متصل</span>
-          </p>
+          <p class="font-bold">📡 العمل في وضع Offline</p>
+          <p class="text-sm opacity-90">يتم الحفظ في SQLite المحلي - سيتم المزامنة تلقائياً عند عودة الإنترنت</p>
         </div>
-        <button 
-          @click="syncAll" 
-          :disabled="!isOnline || isSyncing"
-          class="px-3 py-1 bg-white text-yellow-600 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-        >
-          <span v-if="isSyncing">⏳ جاري...</span>
-          <span v-else>مزامنة</span>
-        </button>
       </div>
     </div>
     

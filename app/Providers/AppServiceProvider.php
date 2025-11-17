@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -14,7 +17,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->booted(function () {
+            $this->ensureSyncDatabaseFileExists();
+            $this->configureDatabaseFailover();
+        });
     }
 
     /**
@@ -50,5 +56,107 @@ class AppServiceProvider extends ServiceProvider
             URL::forceRootUrl($rootUrl);
             config(['app.url' => $rootUrl]);
         }
+    }
+
+    /**
+     * Ensure the local sync database file exists before using it.
+     *
+     * @return void
+     */
+    protected function ensureSyncDatabaseFileExists(): void
+    {
+        $path = env('SYNC_SQLITE_PATH');
+
+        if (!$path) {
+            return;
+        }
+
+        $directory = dirname($path);
+
+        if (!is_dir($directory)) {
+            @mkdir($directory, 0755, true);
+        }
+
+        if (!file_exists($path)) {
+            @touch($path);
+        }
+    }
+
+    /**
+     * Dynamically switch the database connection to the fallback (SQLite)
+     * whenever the primary server becomes unreachable (e.g. offline mode).
+     *
+     * @return void
+     */
+    protected function configureDatabaseFailover(): void
+    {
+        if (!env('DB_FAILOVER_ENABLED', false)) {
+            return;
+        }
+
+        $cacheKey = 'db-failover:use-fallback';
+        $ttl = max((int) env('DB_FAILOVER_CACHE_TTL', 60), 15);
+        $fallbackConnection = env('DB_FALLBACK_CONNECTION', 'sync_sqlite');
+        $shouldUseFallback = Cache::get($cacheKey, false);
+
+        if (!$shouldUseFallback) {
+            $shouldUseFallback = !$this->primaryDatabaseReachable();
+
+            if ($shouldUseFallback) {
+                Cache::put($cacheKey, true, $ttl);
+            }
+        } else {
+            // Re-check after TTL expires by clearing the cache when the primary is back.
+            if ($this->primaryDatabaseReachable()) {
+                Cache::forget($cacheKey);
+                $shouldUseFallback = false;
+            }
+        }
+
+        if ($shouldUseFallback) {
+            config(['database.default' => $fallbackConnection]);
+            Log::channel(env('LOG_CHANNEL', 'stack'))->info('Database failover activated', [
+                'fallback' => $fallbackConnection,
+            ]);
+        }
+    }
+
+    /**
+     * Attempt to reach the primary database host quickly using a socket ping.
+     *
+     * @return bool
+     */
+    protected function primaryDatabaseReachable(): bool
+    {
+        $primaryConnection = env('DB_PRIMARY_CONNECTION', config('database.default'));
+        $connectionConfig = config("database.connections.{$primaryConnection}");
+
+        if (empty($connectionConfig)) {
+            return false;
+        }
+
+        $host = Arr::get($connectionConfig, 'host');
+        $port = (int) Arr::get($connectionConfig, 'port', 3306);
+        $timeout = (float) env('DB_FAILOVER_TIMEOUT', 2);
+
+        if (!$host) {
+            return false;
+        }
+
+        $socket = @fsockopen($host, $port, $errno, $errstr, $timeout);
+
+        if ($socket) {
+            fclose($socket);
+            return true;
+        }
+
+        Log::debug('Primary database unreachable', [
+            'host' => $host,
+            'port' => $port,
+            'errno' => $errno ?? null,
+            'error' => $errstr ?? null,
+        ]);
+
+        return false;
     }
 }

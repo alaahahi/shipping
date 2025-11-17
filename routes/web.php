@@ -54,6 +54,14 @@ Route::group(['middleware' => ['auth','verified']], function () {
         return Inertia::render('SyncMonitor');
     })->name('sync.monitor');
     
+    // صفحة تفاصيل الجدول
+    Route::get('sync-monitor/table/{tableName}', function (string $tableName, \Illuminate\Http\Request $request) {
+        return Inertia::render('SyncMonitor/TableDetails', [
+            'tableName' => $tableName,
+            'connection' => $request->get('connection', 'auto')
+        ]);
+    })->name('sync.monitor.table.details');
+    
     // صفحة البحث Offline
     Route::get('offline-car-search', function () {
         return Inertia::render('OfflineCarSearch');

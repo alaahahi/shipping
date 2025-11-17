@@ -21,6 +21,7 @@ use App\Http\Controllers\HunterController;
 use App\Http\Controllers\AnnualController;
 use App\Http\Controllers\CarExpensesController;
 use App\Http\Controllers\CarContractController;
+use App\Http\Controllers\SyncMonitorController;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Cache\FileStore;
@@ -153,6 +154,22 @@ Route::get('carsHunterImageDel',[HunterController::class, 'carsHunterImageDel'])
 Route::post('updateCarsHunter',[HunterController::class, 'updateCarsHunter'])->name('updateCarsHunter');
 Route::post('delCarsHunterr',[HunterController::class, 'delCarsHunterr'])->name('delCarsHunterr'); 
 
+// Sync Monitor APIs - استخدام auth بدلاً من auth:sanctum لأن الصفحة تستخدم session
+Route::middleware('auth')->group(function () {
+        Route::get('/sync-monitor/tables', [SyncMonitorController::class, 'tables'])->name('sync.monitor.tables');
+        Route::get('/sync-monitor/table/{tableName}', [SyncMonitorController::class, 'tableDetails'])->name('sync.monitor.table.details');
+        Route::post('/sync-monitor/sync', [SyncMonitorController::class, 'sync'])->name('sync.monitor.sync');
+        Route::get('/sync-monitor/sync-progress', [SyncMonitorController::class, 'syncProgress'])->name('sync.monitor.sync.progress');
+        Route::get('/sync-monitor/metadata', [SyncMonitorController::class, 'syncMetadata'])->name('sync.monitor.metadata');
+        Route::get('/sync-monitor/test/{tableName}', [SyncMonitorController::class, 'testSync'])->name('sync.monitor.test');
+        Route::post('/sync-monitor/table/{tableName}/truncate', [SyncMonitorController::class, 'truncateTable'])->name('sync.monitor.table.truncate');
+        Route::delete('/sync-monitor/table/{tableName}/delete', [SyncMonitorController::class, 'deleteTable'])->name('sync.monitor.table.delete');
+        Route::get('/sync-monitor/backups', [SyncMonitorController::class, 'backups'])->name('sync.monitor.backups');
+        Route::post('/sync-monitor/restore-backup', [SyncMonitorController::class, 'restoreBackup'])->name('sync.monitor.restore.backup');
+        Route::get('/sync-monitor/download-backup', [SyncMonitorController::class, 'downloadBackup'])->name('sync.monitor.download.backup');
+        Route::delete('/sync-monitor/backup/delete', [SyncMonitorController::class, 'deleteBackup'])->name('sync.monitor.backup.delete');
+});
+
 Route::post('TransactionsUpload',[AccountingController::class, 'TransactionsUpload'])->name('TransactionsUpload');
 Route::get('TransactionsImageDel',[AccountingController::class, 'TransactionsImageDel'])->name('TransactionsImageDel');
 
@@ -192,8 +209,8 @@ Route::get('delCompany/{id}',[CarConfigController::class, 'companyDel'])->name('
 Route::get('delName/{id}',[CarConfigController::class, 'delName'])->name('delName');
 Route::get('delModel/{id}',[CarConfigController::class, 'delModel'])->name('delModel');
 Route::get('delColor/{id}',[CarConfigController::class, 'delColor'])->name('delColor');
-Route::get('companyStoreEdit',[CarConfigController::class, 'index'])->name('companyStoreEdit');
-Route::post('companyStoreEdit',[CarConfigController::class, 'storeEdit'])->name('companyStoreEdit');
+Route::get('companyStoreEdit',[CarConfigController::class, 'index'])->name('api.companyStoreEdit');
+Route::post('companyStoreEdit',[CarConfigController::class, 'storeEdit'])->name('api.companyStoreEdit.post');
 
 
 Route::post('salesDebt',[AccountingController::class, 'salesDebt'])->name('salesDebt');
