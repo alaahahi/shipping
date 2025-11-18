@@ -17,9 +17,22 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->call(function () {
-           DB::table('massage')->where('created_at','<=',Carbon::now()->subDays(7))->delete();
-        })->everyMinute();
+        // تعطيل المزامنة على السيرفر - تعمل فقط في البيئة المحلية
+        if (env('APP_ENV') === 'server' || env('APP_ENV') === 'production') {
+            return;
+        }
+
+        // مزامنة من MySQL إلى SQLite كل 5 دقائق (فقط في البيئة المحلية)
+        $schedule->command('db:sync --direction=down')
+            ->everyFiveMinutes()
+            ->withoutOverlapping()
+            ->appendOutputTo(storage_path('logs/sync.log'));
+
+        // مزامنة من SQLite إلى MySQL كل 10 دقائق (فقط في البيئة المحلية)
+        $schedule->command('db:sync --direction=up')
+            ->everyTenMinutes()
+            ->withoutOverlapping()
+            ->appendOutputTo(storage_path('logs/sync.log'));
     }
 
     /**

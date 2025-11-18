@@ -25,6 +25,13 @@ class SyncDatabase extends Command
 
     public function handle()
     {
+        // تعطيل المزامنة على السيرفر - تعمل فقط في البيئة المحلية
+        if (env('APP_ENV') === 'server' || env('APP_ENV') === 'production') {
+            $this->error("❌ المزامنة معطلة على السيرفر. تعمل فقط في البيئة المحلية.");
+            $this->info("💡 لتشغيل المزامنة، قم بتغيير APP_ENV إلى 'local' في ملف .env");
+            return 1;
+        }
+
         $direction = $this->option('direction');
         $tables = $this->option('tables');
         $all = $this->option('all');

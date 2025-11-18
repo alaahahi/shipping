@@ -239,6 +239,15 @@ class SyncMonitorController extends Controller
      */
     public function sync(Request $request, DatabaseSyncService $syncService): JsonResponse
     {
+        // تعطيل المزامنة على السيرفر - تعمل فقط في البيئة المحلية
+        if (env('APP_ENV') === 'server' || env('APP_ENV') === 'production') {
+            return response()->json([
+                'success' => false,
+                'message' => 'المزامنة معطلة على السيرفر. تعمل فقط في البيئة المحلية.',
+                'error' => 'Sync is disabled on server environment'
+            ], 403);
+        }
+
         try {
             $direction = $request->get('direction', 'down'); // down = MySQL->SQLite, up = SQLite->MySQL
             $tables = $request->get('tables'); // comma-separated list
