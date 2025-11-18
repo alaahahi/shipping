@@ -4,12 +4,12 @@
     <template #header>
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-4">
-          <button
-            @click="$inertia.visit('/sync-monitor')"
-            class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+          <Link
+            href="/sync-monitor"
+            class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 inline-block"
           >
             ← رجوع
-          </button>
+          </Link>
           <h2 class="font-semibold text-xl dark:text-gray-200 text-gray-800">
             📋 تفاصيل الجدول: {{ tableName }}
           </h2>
@@ -148,7 +148,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { Head, usePage } from '@inertiajs/inertia-vue3';
+import { Head, Link } from '@inertiajs/inertia-vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';

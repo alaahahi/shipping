@@ -11,6 +11,38 @@ use Exception;
 class DatabaseSyncService
 {
     /**
+     * قائمة الجداول المستثناة من المزامنة
+     * هذه الجداول لا تحتاج إلى مزامنة لأنها:
+     * - جداول نظام Laravel (migrations, jobs, etc.)
+     * - جداول أدوات التطوير (telescope, debugbar, etc.)
+     * - جداول مؤقتة أو للـ logging فقط
+     */
+    protected array $excludedTables = [
+        // جداول Laravel النظامية
+        'migrations',
+        'jobs',
+        'job_batches',
+        'failed_jobs',
+        'sessions',
+        'cache',
+        'cache_locks',
+        'password_resets', // جدول مؤقت لإعادة تعيين كلمات المرور
+        
+        // جداول Telescope (أدوات التطوير)
+        'telescope_entries',
+        'telescope_entries_tags',
+        'telescope_monitoring',
+        
+        // جداول SQLite النظامية
+        'sqlite_sequence',
+        'sqlite_master',
+        
+        // جداول أخرى للـ logging والتطوير
+        'sync_metadata', // جدول metadata المزامنة نفسه
+        'sync_jobs', // جدول مهام المزامنة
+    ];
+
+    /**
      * إنشاء نسخة احتياطية من قاعدة البيانات قبل المزامنة
      */
     protected function createBackup(): ?string
@@ -178,6 +210,9 @@ class DatabaseSyncService
                 $tables = $this->getAllTables($mysqlDb, false);
             }
 
+            // تصفية الجداول المستثناة
+            $tables = $this->filterExcludedTables($tables);
+
             foreach ($tables as $tableName) {
                 try {
                     $synced = $this->syncTable($mysqlDb, $sqliteDb, $tableName, $forceFullSync);
@@ -337,7 +372,9 @@ class DatabaseSyncService
         }
 
         // جلب البيانات (بحد أقصى 10000 سجل في كل مرة لتجنب timeout)
-        $data = $query->limit(10000)->get()->toArray();
+        $data = $query->limit(10000)->get()->map(function ($item) {
+            return (array) $item;
+        })->toArray();
         
         if (!empty($data)) {
             Log::info("Smart sync: Found records to sync", [
@@ -363,9 +400,11 @@ class DatabaseSyncService
         $maxUpdatedAt = $lastUpdatedAt;
 
         foreach ($chunks as $chunkIndex => $chunk) {
-            $insertData = array_map(function ($item) {
-                return (array) $item;
-            }, $chunk);
+            // التأكد من تحويل جميع العناصر إلى arrays
+            $insertData = [];
+            foreach ($chunk as $item) {
+                $insertData[] = is_array($item) ? $item : (array) $item;
+            }
 
             // التحقق من السجلات الموجودة مسبقاً (batch check)
             $existingIds = [];
@@ -381,6 +420,11 @@ class DatabaseSyncService
 
             foreach ($insertData as $row) {
                 try {
+                    // التأكد من أن $row هو array
+                    if (!is_array($row)) {
+                        $row = (array) $row;
+                    }
+                    
                     // استخدام upsert بناءً على ID
                     if ($hasId && isset($row['id'])) {
                         $rowId = (int)$row['id'];
@@ -397,13 +441,18 @@ class DatabaseSyncService
                                     ->where('id', $rowId)
                                     ->first();
                                 
-                                if ($currentRecord && isset($currentRecord->updated_at)) {
-                                    $currentUpdatedAt = strtotime($currentRecord->updated_at);
-                                    $newUpdatedAt = strtotime($row['updated_at']);
+                                if ($currentRecord) {
+                                    // تحويل $currentRecord إلى array إذا كان object
+                                    $currentRecordArray = is_array($currentRecord) ? $currentRecord : (array) $currentRecord;
                                     
-                                    // تحديث فقط إذا كان السجل الجديد أحدث
-                                    if ($newUpdatedAt <= $currentUpdatedAt) {
-                                        continue; // تخطي السجل القديم
+                                    if (isset($currentRecordArray['updated_at'])) {
+                                        $currentUpdatedAt = strtotime($currentRecordArray['updated_at']);
+                                        $newUpdatedAt = strtotime($row['updated_at']);
+                                        
+                                        // تحديث فقط إذا كان السجل الجديد أحدث
+                                        if ($newUpdatedAt <= $currentUpdatedAt) {
+                                            continue; // تخطي السجل القديم
+                                        }
                                     }
                                 }
                             }
@@ -786,17 +835,15 @@ class DatabaseSyncService
                 $tables = $this->getAllTables($sqliteDb, true);
             }
 
+            // تصفية الجداول المستثناة
+            $tables = $this->filterExcludedTables($tables);
+
             // 2. استخدام Transaction لحماية البيانات
             DB::beginTransaction();
             
             try {
                 foreach ($tables as $tableName) {
                     try {
-                        // تخطي جداول النظام
-                        if (in_array($tableName, ['migrations', 'sqlite_sequence'])) {
-                            continue;
-                        }
-
                         $synced = $this->syncTableReverse($mysqlDb, $sqliteDb, $tableName, $safeMode, $forceFullSync);
                         $results['success'][$tableName] = $synced;
                         $results['total_synced'] += $synced;
@@ -1168,6 +1215,31 @@ class DatabaseSyncService
         }
 
         return $totalUpserted;
+    }
+
+    /**
+     * تصفية الجداول المستثناة من المزامنة
+     * 
+     * @param array $tables قائمة الجداول
+     * @return array قائمة الجداول بعد التصفية
+     */
+    protected function filterExcludedTables(array $tables): array
+    {
+        return array_filter($tables, function ($tableName) {
+            // تخطي الجداول المستثناة
+            if (in_array($tableName, $this->excludedTables)) {
+                Log::debug("Skipping excluded table from sync", ['table' => $tableName]);
+                return false;
+            }
+            
+            // تخطي الجداول التي تبدأ بـ telescope_ (للتأكد من تغطية جميع جداول Telescope)
+            if (strpos($tableName, 'telescope_') === 0) {
+                Log::debug("Skipping Telescope table from sync", ['table' => $tableName]);
+                return false;
+            }
+            
+            return true;
+        });
     }
 }
 

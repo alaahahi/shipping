@@ -499,7 +499,7 @@
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div class="flex gap-2 items-center">
                       <button
-                        @click="$inertia.visit(`/sync-monitor/table/${table.name}?connection=${table.connection}`)"
+                        @click="viewTableDetails(table.name, table.connection)"
                         class="text-blue-600 hover:text-blue-900 dark:text-blue-400"
                       >
                         عرض التفاصيل
@@ -897,7 +897,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { Head } from '@inertiajs/inertia-vue3';
+import { Head, router } from '@inertiajs/inertia-vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Modal from '@/Components/Modal.vue';
 import SyncIndicator from '@/Components/SyncIndicator.vue';
@@ -1412,6 +1412,11 @@ const loadSyncedTables = async () => {
   } finally {
     loadingTables.value = false;
   }
+};
+
+const viewTableDetails = (tableName, tableConnection = null) => {
+  const url = `/sync-monitor/table/${tableName}${tableConnection ? `?connection=${tableConnection}` : ''}`;
+  router.visit(url);
 };
 
 const showTableDetails = async (tableName, tableConnection = null) => {
