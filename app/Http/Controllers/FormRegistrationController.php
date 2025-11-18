@@ -18,7 +18,6 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
-use App\Models\Massage;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -193,7 +192,7 @@ class FormRegistrationController extends Controller
             $authUser = auth()?->user();
             if($authUser){
                                 //$usersType = UserType::all();
-                $cards= Card::all();
+                $cards= [];
                 $sales = User::where('type_id', $this->userSeles)->get();
                 return Inertia::render('FormRegistration', ['url'=>$this->url,'cards'=> $cards,'sales'=> $sales]);
             }

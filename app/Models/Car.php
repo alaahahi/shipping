@@ -60,22 +60,6 @@ class Car extends Model
     {
         return $this->belongsTo(User::class);
     }
-    public function company()
-    {
-        return $this->belongsTo(Company::class, 'company_id');
-    }
-    public function carmodel()
-    {
-        return $this->belongsTo(CarModel::class,'model_id');
-    }
-    public function name()
-    {
-        return $this->belongsTo(Name::class);
-    }
-    public function color()
-    {
-        return $this->belongsTo(Color::class);
-    }
     public function Client()
     {
         return $this->belongsTo(User::class);
