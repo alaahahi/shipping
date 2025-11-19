@@ -30,6 +30,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // التحقق من الترخيص عند بدء التطبيق (إذا كان مفعلاً)
+        if (config('license.enabled') && !$this->app->runningInConsole()) {
+            $this->checkLicenseOnBoot();
+        }
+
         if ($this->app->runningInConsole()) {
             return;
         }
@@ -55,6 +60,53 @@ class AppServiceProvider extends ServiceProvider
 
             URL::forceRootUrl($rootUrl);
             config(['app.url' => $rootUrl]);
+        }
+    }
+
+    /**
+     * التحقق من الترخيص عند بدء التطبيق
+     */
+    protected function checkLicenseOnBoot(): void
+    {
+        // السماح بالوصول لصفحات التفعيل والـ API بدون ترخيص
+        $request = $this->app->make('request');
+        
+        if (!$request) {
+            return;
+        }
+
+        $excludedPaths = [
+            '/license/activate',
+            '/license/status',
+            '/api/license',
+            '/login',
+            '/register',
+        ];
+
+        $currentPath = $request->getPathInfo();
+
+        foreach ($excludedPaths as $path) {
+            if (strpos($currentPath, $path) === 0) {
+                return; // السماح بالوصول
+            }
+        }
+
+        // التحقق من الترخيص فقط إذا كان مفعلاً وليس في Console
+        if (config('license.check_on_every_request', false)) {
+            try {
+                $licenseService = app(\App\Services\LicenseService::class);
+                
+                if (!$licenseService::isActivated()) {
+                    // إذا كان الطلب API، لا نفعل شيء هنا (يتم التعامل معه في Middleware)
+                    if (!$request->expectsJson() && !$request->is('api/*')) {
+                        // سيتم التعامل معه في Middleware
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error('License check failed on boot', [
+                    'error' => $e->getMessage()
+                ]);
+            }
         }
     }
 

@@ -107,5 +107,139 @@
     </head>
     <body class="font-sans antialiased">
         @inertia
+        
+        <!-- نظام التبديل التلقائي بين Online/Offline -->
+        <script>
+            (function() {
+                // قراءة URLs من Laravel
+                const connectionInfo = @json($connection ?? [
+                    'online_url' => 'https://system.intellijapp.com/dashboard',
+                    'local_url' => 'http://127.0.0.1:8000/'
+                ]);
+                const onlineUrl = connectionInfo.online_url || "https://system.intellijapp.com/dashboard";
+                const localUrl = connectionInfo.local_url || "http://127.0.0.1:8000/";
+                let isChecking = false;
+                let lastCheckTime = 0;
+                const CHECK_INTERVAL = 5000; // 5 ثوانٍ
+                const CHECK_COOLDOWN = 2000; // 2 ثانية بين الفحوصات
+
+                // التحقق من الاتصال الفعلي
+                async function checkRealConnection() {
+                    try {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 3000);
+                        
+                        const response = await fetch('https://www.google.com/favicon.ico', {
+                            method: 'HEAD',
+                            mode: 'no-cors',
+                            signal: controller.signal,
+                            cache: 'no-cache'
+                        });
+                        
+                        clearTimeout(timeoutId);
+                        return true;
+                    } catch (error) {
+                        // محاولة بديلة
+                        try {
+                            const response = await fetch('https://www.google.com', {
+                                method: 'HEAD',
+                                mode: 'no-cors',
+                                cache: 'no-cache'
+                            });
+                            return true;
+                        } catch (e) {
+                            return false;
+                        }
+                    }
+                }
+
+                // التحقق من الاتصال والتبديل
+                async function checkConnection() {
+                    // منع الفحص المتكرر
+                    const now = Date.now();
+                    if (isChecking || (now - lastCheckTime < CHECK_COOLDOWN)) {
+                        return;
+                    }
+
+                    isChecking = true;
+                    lastCheckTime = now;
+
+                    try {
+                        const isOnline = navigator.onLine && await checkRealConnection();
+                        const currentUrl = window.location.href;
+                        const isLocal = currentUrl.startsWith("http://127.0.0.1") || currentUrl.startsWith("http://localhost");
+
+                        // إذا كان الاتصال متاحاً وكنت على اللوكل
+                        if (isOnline && isLocal) {
+                            // التحقق من أن السيرفر متاح قبل التبديل
+                            try {
+                                const testResponse = await fetch(onlineUrl.replace('/dashboard', '/api/health'), {
+                                    method: 'GET',
+                                    mode: 'no-cors',
+                                    cache: 'no-cache'
+                                });
+                                
+                                // الانتقال إلى السيرفر بعد تأكيد الاتصال
+                                setTimeout(() => {
+                                    window.location.href = onlineUrl;
+                                }, 1000);
+                            } catch (e) {
+                                // السيرفر غير متاح، البقاء على اللوكل
+                                console.log('السيرفر غير متاح، البقاء على اللوكل');
+                            }
+                        }
+                        // إذا فقد الاتصال وكنت على السيرفر
+                        else if (!isOnline && !isLocal) {
+                            // الانتقال إلى اللوكل
+                            setTimeout(() => {
+                                window.location.href = localUrl;
+                            }, 1000);
+                        }
+                    } catch (error) {
+                        console.error('خطأ في فحص الاتصال:', error);
+                    } finally {
+                        isChecking = false;
+                    }
+                }
+
+                // عند تغيير حالة الاتصال
+                window.addEventListener('online', () => {
+                    console.log('✅ الاتصال متاح');
+                    setTimeout(checkConnection, 1000);
+                });
+
+                window.addEventListener('offline', () => {
+                    console.log('❌ الاتصال غير متاح');
+                    setTimeout(checkConnection, 1000);
+                });
+
+                // فحص عند تحميل الصفحة
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', () => {
+                        setTimeout(checkConnection, 2000);
+                    });
+                } else {
+                    setTimeout(checkConnection, 2000);
+                }
+
+                // فحص دوري كل 5 ثوانٍ
+                setInterval(checkConnection, CHECK_INTERVAL);
+
+                // حفظ معلومات الاتصال في window للوصول من المكونات
+                window.connectionInfo = connectionInfo;
+
+                // إضافة وظيفة عامة للتبديل اليدوي
+                window.switchToLocal = function() {
+                    window.location.href = localUrl;
+                };
+
+                window.switchToOnline = function() {
+                    window.location.href = onlineUrl;
+                };
+
+                // إضافة وظيفة للتحقق من الاتصال يدوياً
+                window.checkConnectionManually = checkConnection;
+            })();
+        </script>
     </body>
 </html>

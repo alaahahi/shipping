@@ -23,6 +23,24 @@
 
         <!-- الأزرار -->
         <div class="status-actions">
+          <!-- أزرار التبديل بين Online/Offline -->
+          <button
+            v-if="isLocal"
+            @click="switchToOnline"
+            class="btn-switch"
+            title="التبديل إلى السيرفر"
+          >
+            🌐 Online
+          </button>
+          <button
+            v-if="!isLocal"
+            @click="switchToLocal"
+            class="btn-switch"
+            title="التبديل إلى اللوكل"
+          >
+            💻 Local
+          </button>
+
           <button
             v-if="canSync"
             @click="syncNow"
@@ -72,6 +90,7 @@ const pendingCount = ref(0);
 const syncedCount = ref(0);
 const totalCount = ref(0);
 const dismissed = ref(false);
+const isLocal = ref(window.location.href.startsWith("http://127.0.0.1") || window.location.href.startsWith("http://localhost"));
 
 // الحالة المحسوبة
 const canSync = computed(() => {
@@ -205,6 +224,27 @@ const handleOffline = () => {
   showBar.value = true;
 };
 
+// وظائف التبديل بين Online/Offline
+const switchToLocal = () => {
+  if (window.switchToLocal) {
+    window.switchToLocal();
+  } else {
+    // استخدام URL من connectionInfo إذا كان متاحاً
+    const localUrl = window.connectionInfo?.local_url || "http://127.0.0.1:8000/";
+    window.location.href = localUrl;
+  }
+};
+
+const switchToOnline = () => {
+  if (window.switchToOnline) {
+    window.switchToOnline();
+  } else {
+    // استخدام URL من connectionInfo إذا كان متاحاً
+    const onlineUrl = window.connectionInfo?.online_url || "https://system.intellijapp.com/dashboard";
+    window.location.href = onlineUrl;
+  }
+};
+
 // Lifecycle
 onMounted(() => {
   updateStatus();
@@ -326,7 +366,8 @@ onMounted(() => {
 
 .btn-sync,
 .btn-details,
-.btn-close {
+.btn-close,
+.btn-switch {
   padding: 6px 12px;
   border: none;
   border-radius: 6px;
@@ -334,6 +375,17 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 600;
   transition: all 0.2s;
+}
+
+.btn-switch {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  margin-left: 8px;
+}
+
+.btn-switch:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.05);
 }
 
 .btn-sync {

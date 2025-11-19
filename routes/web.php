@@ -41,7 +41,19 @@ Route::get('/', function () {
     ]);
 });
 
-Route::group(['middleware' => ['auth','verified']], function () {
+// Routes الترخيص (بدون middleware للسماح بالوصول قبل التفعيل)
+use App\Http\Controllers\LicenseController;
+Route::get('/license/activate', [LicenseController::class, 'showActivate'])->name('license.activate');
+Route::get('/license/status', [LicenseController::class, 'showStatus'])->name('license.status');
+Route::post('/license/activate', [LicenseController::class, 'activate'])->name('license.activate.post');
+
+// Routes إدارة الترخيصات (للأدمن فقط)
+use App\Http\Controllers\AdminLicenseController;
+Route::middleware(['auth', 'verified'])->group(function () {
+});
+Route::get('/admin/licenses', [AdminLicenseController::class, 'index'])->name('admin.licenses.index');
+
+Route::group(['middleware' => ['auth','verified', 'check.license']], function () {
 
     Route::get('dashboard',[DashboardController::class,'index'])->middleware(['auth', 'verified'])->name('dashboard');
     Route::get('sales',[DashboardController::class,'sales'])->name('sales');

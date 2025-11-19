@@ -17,6 +17,14 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        // التحقق من الترخيص دورياً (كل ساعة)
+        if (config('license.enabled')) {
+            $schedule->command('license:verify')
+                ->hourly()
+                ->withoutOverlapping()
+                ->appendOutputTo(storage_path('logs/license.log'));
+        }
+
         // تعطيل المزامنة على السيرفر - تعمل فقط في البيئة المحلية
         if (env('APP_ENV') === 'server' || env('APP_ENV') === 'production') {
             return;

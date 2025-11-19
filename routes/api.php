@@ -22,6 +22,8 @@ use App\Http\Controllers\AnnualController;
 use App\Http\Controllers\CarExpensesController;
 use App\Http\Controllers\CarContractController;
 use App\Http\Controllers\SyncMonitorController;
+use App\Http\Controllers\LicenseController;
+use App\Http\Controllers\AdminLicenseController;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Cache\FileStore;
@@ -255,5 +257,28 @@ Route::get('checkClientBalance',[AccountingController::class, 'checkClientBalanc
 
 Route::post('search-vins', [CarExpensesController::class, 'searchVINs'])->name('search-vins');
 
+// License APIs - بدون middleware للسماح بالتفعيل قبل تسجيل الدخول
+Route::prefix('license')->group(function () {
+    Route::get('/status', [LicenseController::class, 'status'])->name('api.license.status');
+    Route::post('/activate', [LicenseController::class, 'activate'])->name('api.license.activate');
+    Route::post('/verify', [LicenseController::class, 'verify'])->name('api.license.verify');
+    Route::get('/server-info', [LicenseController::class, 'getServerInfo'])->name('api.license.server-info');
+    
+    // Routes محمية (تحتاج auth)
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/deactivate', [LicenseController::class, 'deactivate'])->name('api.license.deactivate');
+    });
+});
 
+// Admin License Management APIs - للأدمن فقط
+Route::prefix('admin/licenses')->middleware('auth:sanctum')->group(function () {
+   
+});
+ Route::get('/', [AdminLicenseController::class, 'list'])->name('api.admin.licenses.list');
+    Route::get('/statistics', [AdminLicenseController::class, 'statistics'])->name('api.admin.licenses.statistics');
+    Route::post('/', [AdminLicenseController::class, 'create'])->name('api.admin.licenses.create');
+    Route::get('/{id}', [AdminLicenseController::class, 'show'])->name('api.admin.licenses.show');
+    Route::put('/{id}', [AdminLicenseController::class, 'update'])->name('api.admin.licenses.update');
+    Route::post('/{id}/toggle', [AdminLicenseController::class, 'toggle'])->name('api.admin.licenses.toggle');
+    Route::delete('/{id}', [AdminLicenseController::class, 'destroy'])->name('api.admin.licenses.destroy');
 });

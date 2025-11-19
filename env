@@ -16,6 +16,11 @@ DB_DATABASE=intellij_system
 DB_USERNAME=intellij_system
 DB_PASSWORD=QG5T4ECIGY!G
 
+# رابط السيرفر (Online)
+ONLINE_URL=https://system.intellijapp.com
+
+# رابط المحلي (Local) - اختياري، سيستخدم APP_URL إذا لم يتم تحديده
+LOCAL_URL=http://127.0.0.1:8000 
 
 DB_FAILOVER_ENABLED=true
 DB_PRIMARY_CONNECTION=mysql

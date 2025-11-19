@@ -9,6 +9,7 @@ import { Link } from "@inertiajs/inertia-vue3";
 import { useI18n } from "vue-i18n";
 import DarkModeToggle from '@/Components/DarkToggle.vue';
 import SyncStatusBar from '@/Components/SyncStatusBar.vue';
+import WiFiIcon from '@/Components/WiFiIcon.vue';
 
 const showingNavigationDropdown = ref(false);
 const i18n = useI18n();
@@ -23,6 +24,9 @@ const switchLocale = (locale) => {
   <div>
     <!-- شريط حالة المزامنة -->
     <SyncStatusBar />
+    
+    <!-- أيقونة WiFi للتبديل السريع -->
+    <WiFiIcon />
     
     <div class="min-h-screen bg-gray-100 dark:bg-gray-800">
       <nav class="bg-white border-gray-100 dark:bg-gray-900  print:hidden">
