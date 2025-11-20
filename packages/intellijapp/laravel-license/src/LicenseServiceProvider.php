@@ -50,13 +50,30 @@ class LicenseServiceProvider extends ServiceProvider
 
         // Register commands
         if ($this->app->runningInConsole()) {
-                $this->commands([
-                    GenerateLicense::class,
-                    VerifyLicense::class,
-                    InstallLicense::class,
-                    SyncLicense::class,
-                ]);
+            $this->commands([
+                GenerateLicense::class,
+                VerifyLicense::class,
+                InstallLicense::class,
+                SyncLicense::class,
+            ]);
         }
+
+        // دمج مع نظام المزامنة الموجود (إذا كان متوفراً)
+        $this->integrateWithSyncSystem();
+    }
+
+    /**
+     * دمج Package مع نظام المزامنة الموجود
+     */
+    protected function integrateWithSyncSystem(): void
+    {
+        // إضافة جدول licenses إلى قائمة المزامنة
+        // (سيتم استدعاؤه تلقائياً عند استخدام DatabaseSyncService)
+        if (class_exists(\App\Services\DatabaseSyncService::class)) {
+            // يمكن إضافة logic هنا للدمج مع DatabaseSyncService
+            // على سبيل المثال: إضافة 'licenses' إلى excludedTables إذا لزم الأمر
+        }
+    }
     }
 }
 

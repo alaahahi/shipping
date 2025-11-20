@@ -74,5 +74,20 @@ return [
         'server_info',
         'domain',
     ],
+
+    // إعدادات قاعدة البيانات (للدعم المحلي مع SQLite)
+    'database' => [
+        // Connection الافتراضي (MySQL)
+        'default_connection' => env('LICENSE_DB_CONNECTION', 'mysql'),
+        
+        // Connection للعمل المحلي (SQLite)
+        'local_connection' => env('LICENSE_LOCAL_CONNECTION', 'sync_sqlite'),
+        
+        // التبديل التلقائي بين MySQL و SQLite حسب البيئة
+        'auto_switch' => env('LICENSE_AUTO_SWITCH_DB', false),
+        
+        // استخدام SQLite في البيئة المحلية تلقائياً
+        'use_sqlite_in_local' => env('LICENSE_USE_SQLITE_IN_LOCAL', true),
+    ],
 ];
 

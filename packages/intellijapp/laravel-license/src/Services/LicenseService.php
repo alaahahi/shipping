@@ -27,11 +27,14 @@ class LicenseService
 
     /**
      * الحصول على الترخيص الحالي
+     * يستخدم Connection الافتراضي (يتم تبديله تلقائياً إلى SQLite في Local)
      */
     public static function getCurrentLicense(): ?License
     {
-        return Cache::remember('current_license', 3600, function () {
-            // محاولة الحصول من Database أولاً
+        $cacheKey = 'current_license_' . self::getCurrentDomain();
+        
+        return Cache::remember($cacheKey, 3600, function () {
+            // استخدام Connection الافتراضي (سيتم تبديله تلقائياً في AppServiceProvider)
             $domain = self::getCurrentDomain();
             $license = License::where('domain', $domain)
                 ->where('is_active', true)

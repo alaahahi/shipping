@@ -5,12 +5,19 @@ namespace IntellijApp\License\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\App;
 
 class License extends Model
 {
     use HasFactory;
 
     protected $table = 'licenses';
+
+    /**
+     * استخدام Connection الافتراضي من النظام
+     * النظام يقوم بالتبديل التلقائي بين MySQL و SQLite في AppServiceProvider
+     */
+    // لا حاجة لـ Constructor - سيستخدم Connection الافتراضي تلقائياً
 
     protected $fillable = [
         'license_key',
