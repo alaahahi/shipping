@@ -32,7 +32,28 @@ class CheckLicense
         }
 
         // التحقق من Controllers المستثناة
-        $controller = class_basename($request->route()->getController());
+        $route = $request->route();
+        if (!$route) {
+            return $next($request);
+        }
+        
+        // التحقق من أن Route يحتوي على Controller وليس Closure
+        $action = $route->getAction();
+        if (isset($action['controller'])) {
+            $controller = $action['controller'];
+            // إذا كان Controller هو Closure أو لا يحتوي على @، تخطي التحقق
+            if ($controller instanceof \Closure || strpos($controller, '@') === false) {
+                return $next($request);
+            }
+            
+            // استخراج اسم Controller من "Controller@method"
+            $controllerName = explode('@', $controller)[0];
+            $controller = class_basename($controllerName);
+        } else {
+            // إذا لم يكن هناك controller في action، قد يكون Closure
+            return $next($request);
+        }
+        
         $excludedControllers = config('license.excluded_controllers', []);
 
         if (in_array($controller, $excludedControllers)) {

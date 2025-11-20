@@ -146,6 +146,16 @@ class ConnectionService
     }
 
     /**
+     * التحقق من تفعيل النقل التلقائي
+     *
+     * @return bool
+     */
+    public static function isAutoSwitchEnabled(): bool
+    {
+        return env('AUTO_SWITCH_ENABLED', env('APP_ENV') === 'production');
+    }
+
+    /**
      * الحصول على معلومات الاتصال للعرض في الواجهة
      *
      * @return array
@@ -156,6 +166,7 @@ class ConnectionService
         $manualMode = self::getManualMode();
         $currentUrl = request()->getSchemeAndHttpHost() . request()->getPathInfo();
         $isLocal = strpos($currentUrl, '127.0.0.1') !== false || strpos($currentUrl, 'localhost') !== false;
+        $autoSwitchEnabled = self::isAutoSwitchEnabled();
         
         return [
             'is_online' => $isOnline,
@@ -165,7 +176,8 @@ class ConnectionService
             'online_url' => self::getOnlineUrl(),
             'local_url' => self::getLocalUrl(),
             'appropriate_url' => self::getAppropriateUrl(),
-            'should_redirect' => !self::isUrlAppropriate($currentUrl),
+            'should_redirect' => $autoSwitchEnabled && !self::isUrlAppropriate($currentUrl),
+            'auto_switch_enabled' => $autoSwitchEnabled,
         ];
     }
 }

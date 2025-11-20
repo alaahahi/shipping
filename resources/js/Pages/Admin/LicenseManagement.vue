@@ -21,6 +21,8 @@ const loading = ref(false);
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const showDetailsModal = ref(false);
+const showLicenseKeyModal = ref(false);
+const newLicenseKey = ref('');
 const selectedLicense = ref(null);
 const statistics = ref({
     total: 0,
@@ -98,8 +100,9 @@ const createLicense = async () => {
         const response = await axios.post('/api/admin/licenses', createForm.data());
         if (response.data.success) {
             toast.success('تم إنشاء الترخيص بنجاح!');
-            toast.info(`مفتاح الترخيص: ${response.data.license_key.substring(0, 50)}...`);
+            newLicenseKey.value = response.data.license_key;
             showCreateModal.value = false;
+            showLicenseKeyModal.value = true;
             createForm.reset();
             await loadLicenses();
             await loadStatistics();
@@ -108,6 +111,22 @@ const createLicense = async () => {
         toast.error(error.response?.data?.message || 'فشل إنشاء الترخيص');
     } finally {
         loading.value = false;
+    }
+};
+
+const copyLicenseKey = async () => {
+    try {
+        await navigator.clipboard.writeText(newLicenseKey.value);
+        toast.success('تم نسخ مفتاح الترخيص!');
+    } catch (error) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = newLicenseKey.value;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        toast.success('تم نسخ مفتاح الترخيص!');
     }
 };
 
@@ -152,6 +171,7 @@ const showDetails = async (id) => {
         toast.error('فشل تحميل التفاصيل');
     }
 };
+
 
 const updateLicense = async () => {
     if (!selectedLicense.value) return;
@@ -314,7 +334,7 @@ onMounted(() => {
                 <h3 class="text-lg font-semibold">إنشاء ترخيص جديد</h3>
             </template>
             <template #body>
-                <form @submit.prevent="createLicense" class="space-y-4">
+                <form @submit.prevent class="space-y-4">
                     <div>
                         <InputLabel for="domain" value="Domain" />
                         <TextInput
@@ -363,15 +383,17 @@ onMounted(() => {
                         />
                     </div>
 
-                    <div class="flex justify-end gap-2">
-                        <PrimaryButton type="button" @click="showCreateModal = false">
-                            إلغاء
-                        </PrimaryButton>
-                        <PrimaryButton type="submit" :disabled="loading">
-                            إنشاء
-                        </PrimaryButton>
-                    </div>
                 </form>
+            </template>
+            <template #footer>
+                <div class="flex justify-end gap-2">
+                    <PrimaryButton type="button" @click="showCreateModal = false">
+                        إلغاء
+                    </PrimaryButton>
+                    <PrimaryButton type="button" @click="createLicense" :disabled="loading">
+                        إنشاء
+                    </PrimaryButton>
+                </div>
             </template>
         </Modal>
 
@@ -381,7 +403,7 @@ onMounted(() => {
                 <h3 class="text-lg font-semibold">تعديل الترخيص</h3>
             </template>
             <template #body>
-                <form @submit.prevent="updateLicense" class="space-y-4">
+                <form @submit.prevent class="space-y-4">
                     <div>
                         <InputLabel for="edit_type" value="النوع" />
                         <select
@@ -426,15 +448,17 @@ onMounted(() => {
                         ></textarea>
                     </div>
 
-                    <div class="flex justify-end gap-2">
-                        <PrimaryButton type="button" @click="showEditModal = false">
-                            إلغاء
-                        </PrimaryButton>
-                        <PrimaryButton type="submit" :disabled="loading">
-                            حفظ
-                        </PrimaryButton>
-                    </div>
                 </form>
+            </template>
+            <template #footer>
+                <div class="flex justify-end gap-2">
+                    <PrimaryButton type="button" @click="showEditModal = false">
+                        إلغاء
+                    </PrimaryButton>
+                    <PrimaryButton type="button" @click="updateLicense" :disabled="loading">
+                        حفظ
+                    </PrimaryButton>
+                </div>
             </template>
         </Modal>
 
@@ -473,6 +497,51 @@ onMounted(() => {
                     <div>
                         <strong>آخر تحقق:</strong> {{ selectedLicense.last_verified_at || '-' }}
                     </div>
+                    <div v-if="selectedLicense.max_installations">
+                        <strong>عدد التثبيتات المسموح:</strong> {{ selectedLicense.max_installations }}
+                    </div>
+                </div>
+            </template>
+            <template #footer>
+                <div class="flex justify-end">
+                    <PrimaryButton @click="showDetailsModal = false">
+                        إغلاق
+                    </PrimaryButton>
+                </div>
+            </template>
+        </Modal>
+
+        <!-- Modal عرض مفتاح الترخيص -->
+        <Modal :show="showLicenseKeyModal" @close="showLicenseKeyModal = false">
+            <template #header>
+                <h3 class="text-lg font-semibold">مفتاح الترخيص</h3>
+            </template>
+            <template #body>
+                <div class="space-y-4">
+                    <div>
+                        <InputLabel value="انسخ هذا المفتاح واحفظه في مكان آمن" />
+                        <div class="mt-2 flex gap-2">
+                            <TextInput
+                                :value="newLicenseKey"
+                                type="text"
+                                readonly
+                                class="flex-1 font-mono text-sm"
+                            />
+                            <PrimaryButton @click="copyLicenseKey" type="button">
+                                📋 نسخ
+                            </PrimaryButton>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                            ⚠️ لن تتمكن من رؤية هذا المفتاح مرة أخرى بعد إغلاق هذه النافذة
+                        </p>
+                    </div>
+                </div>
+            </template>
+            <template #footer>
+                <div class="flex justify-end">
+                    <PrimaryButton @click="showLicenseKeyModal = false">
+                        تم
+                    </PrimaryButton>
                 </div>
             </template>
         </Modal>

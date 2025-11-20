@@ -155,6 +155,7 @@ Route::post('carsHunterUpload',[HunterController::class, 'carsHunterUpload'])->n
 Route::get('carsHunterImageDel',[HunterController::class, 'carsHunterImageDel'])->name('carsHunterImageDel');
 Route::post('updateCarsHunter',[HunterController::class, 'updateCarsHunter'])->name('updateCarsHunter');
 Route::post('delCarsHunterr',[HunterController::class, 'delCarsHunterr'])->name('delCarsHunterr'); 
+});
 
 // Sync Monitor APIs - استخدام auth بدلاً من auth:sanctum لأن الصفحة تستخدم session
 Route::middleware('auth')->group(function () {
@@ -272,9 +273,7 @@ Route::prefix('license')->group(function () {
 
 // Admin License Management APIs - للأدمن فقط
 Route::prefix('admin/licenses')->middleware('auth:sanctum')->group(function () {
-   
-});
- Route::get('/', [AdminLicenseController::class, 'list'])->name('api.admin.licenses.list');
+    Route::get('/', [AdminLicenseController::class, 'list'])->name('api.admin.licenses.list');
     Route::get('/statistics', [AdminLicenseController::class, 'statistics'])->name('api.admin.licenses.statistics');
     Route::post('/', [AdminLicenseController::class, 'create'])->name('api.admin.licenses.create');
     Route::get('/{id}', [AdminLicenseController::class, 'show'])->name('api.admin.licenses.show');

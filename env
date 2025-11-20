@@ -5,6 +5,10 @@ APP_DEBUG=false
 APP_URL=http://127.0.0.1:8000
 FRONTEND_URL=http://127.0.0.1:8000
 
+# إعدادات التبديل التلقائي بين Local/Online
+# true = تفعيل النقل التلقائي | false = إيقاف النقل التلقائي (التبديل يدوياً فقط)
+AUTO_SWITCH_ENABLED=false
+
 LOG_CHANNEL=stack
 LOG_DEPRECATIONS_CHANNEL=null
 LOG_LEVEL=debug
@@ -21,6 +25,10 @@ ONLINE_URL=https://system.intellijapp.com
 
 # رابط المحلي (Local) - اختياري، سيستخدم APP_URL إذا لم يتم تحديده
 LOCAL_URL=http://127.0.0.1:8000 
+LICENSE_ENABLED=true
+LICENSE_SECRET_KEY=your-secret-key-change-this
+LICENSE_CHECK_EVERY_REQUEST=false
+LICENSE_OFFLINE_MODE=true
 
 DB_FAILOVER_ENABLED=true
 DB_PRIMARY_CONNECTION=mysql

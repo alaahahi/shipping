@@ -153,8 +153,17 @@
                     }
                 }
 
+                // التحقق من تفعيل النقل التلقائي
+                const autoSwitchEnabled = connectionInfo.auto_switch_enabled !== false;
+
                 // التحقق من الاتصال والتبديل
                 async function checkConnection() {
+                    // إذا كان النقل التلقائي معطلاً، لا نفعل شيء
+                    if (!autoSwitchEnabled) {
+                        console.log('⚠️ النقل التلقائي معطّل - يمكنك التبديل يدوياً');
+                        return;
+                    }
+
                     // منع الفحص المتكرر
                     const now = Date.now();
                     if (isChecking || (now - lastCheckTime < CHECK_COOLDOWN)) {
