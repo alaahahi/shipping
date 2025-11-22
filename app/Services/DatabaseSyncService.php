@@ -1241,5 +1241,123 @@ class DatabaseSyncService
             return true;
         });
     }
+
+    /**
+     * مزامنة التغييرات من sync_queue إلى MySQL
+     */
+    public function syncFromQueue(): array
+    {
+        $results = [
+            'success' => [],
+            'failed' => [],
+            'total_synced' => 0,
+            'queue_processed' => 0
+        ];
+
+        try {
+            $syncQueueService = app(\App\Services\SyncQueueService::class);
+            $mysqlDb = DB::connection('mysql');
+            
+            // جلب التغييرات المعلقة
+            $pendingChanges = $syncQueueService->getPendingChanges(null, 500);
+            
+            if (empty($pendingChanges)) {
+                return $results;
+            }
+
+            // تجميع التغييرات حسب الجدول
+            $changesByTable = [];
+            foreach ($pendingChanges as $change) {
+                $tableName = $change['table_name'];
+                if (!isset($changesByTable[$tableName])) {
+                    $changesByTable[$tableName] = [];
+                }
+                $changesByTable[$tableName][] = $change;
+            }
+
+            // معالجة كل جدول
+            foreach ($changesByTable as $tableName => $changes) {
+                $synced = 0;
+                $failed = 0;
+
+                foreach ($changes as $change) {
+                    try {
+                        // تحديث حالة السجل إلى "syncing"
+                        DB::table('sync_queue')
+                            ->where('id', $change['id'])
+                            ->update(['status' => 'syncing']);
+
+                        $success = false;
+
+                        switch ($change['action']) {
+                            case 'insert':
+                            case 'update':
+                                if ($change['data']) {
+                                    // استخدام upsert
+                                    if ($mysqlDb->table($tableName)->where('id', $change['record_id'])->exists()) {
+                                        // تحديث
+                                        $updateData = $change['data'];
+                                        unset($updateData['id']);
+                                        $mysqlDb->table($tableName)
+                                            ->where('id', $change['record_id'])
+                                            ->update($updateData);
+                                    } else {
+                                        // إدراج
+                                        $mysqlDb->table($tableName)->insert($change['data']);
+                                    }
+                                    $success = true;
+                                }
+                                break;
+
+                            case 'delete':
+                                $mysqlDb->table($tableName)
+                                    ->where('id', $change['record_id'])
+                                    ->delete();
+                                $success = true;
+                                break;
+                        }
+
+                        if ($success) {
+                            $syncQueueService->markAsSynced($change['id']);
+                            $synced++;
+                            $results['total_synced']++;
+                        } else {
+                            $syncQueueService->markAsFailed($change['id'], 'Unknown action or missing data');
+                            $failed++;
+                        }
+
+                    } catch (\Exception $e) {
+                        $syncQueueService->markAsFailed($change['id'], $e->getMessage());
+                        $failed++;
+                        Log::error("Failed to sync queued change", [
+                            'queue_id' => $change['id'],
+                            'table' => $tableName,
+                            'record_id' => $change['record_id'],
+                            'action' => $change['action'],
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+
+                if ($synced > 0) {
+                    $results['success'][$tableName] = $synced;
+                }
+                if ($failed > 0) {
+                    $results['failed'][$tableName] = "Failed: {$failed} records";
+                }
+            }
+
+            $results['queue_processed'] = count($pendingChanges);
+
+        } catch (\Exception $e) {
+            Log::error('Sync from queue failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
+
+        return $results;
+    }
 }
 

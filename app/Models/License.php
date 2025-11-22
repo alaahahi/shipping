@@ -10,6 +10,12 @@ class License extends Model
 {
     use HasFactory;
 
+    /**
+     * استخدام Connection الافتراضي (يتم تبديله تلقائياً إلى SQLite في Local)
+     * لا حاجة لتحديد connection - سيستخدم config('database.default')
+     */
+    // protected $connection = null; // null = يستخدم الافتراضي
+
     protected $fillable = [
         'license_key',
         'domain',

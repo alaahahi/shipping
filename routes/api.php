@@ -24,6 +24,7 @@ use App\Http\Controllers\CarContractController;
 use App\Http\Controllers\SyncMonitorController;
 use App\Http\Controllers\LicenseController;
 use App\Http\Controllers\AdminLicenseController;
+use App\Http\Controllers\DatabaseStatusController;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Cache\FileStore;
@@ -157,8 +158,12 @@ Route::post('updateCarsHunter',[HunterController::class, 'updateCarsHunter'])->n
 Route::post('delCarsHunterr',[HunterController::class, 'delCarsHunterr'])->name('delCarsHunterr'); 
 });
 
+// Database Status - متاح بدون auth للاختبار
+Route::get('/database/status', [DatabaseStatusController::class, 'status'])->name('api.database.status');
+
 // Sync Monitor APIs - استخدام auth بدلاً من auth:sanctum لأن الصفحة تستخدم session
 Route::middleware('auth')->group(function () {
+        
         Route::get('/sync-monitor/tables', [SyncMonitorController::class, 'tables'])->name('sync.monitor.tables');
         Route::get('/sync-monitor/table/{tableName}', [SyncMonitorController::class, 'tableDetails'])->name('sync.monitor.table.details');
         Route::post('/sync-monitor/sync', [SyncMonitorController::class, 'sync'])->name('sync.monitor.sync');
@@ -221,6 +226,8 @@ Route::post('delTransactions',[AccountingController::class, 'delTransactions'])-
 Route::post('receiptArrived',[AccountingController::class, 'receiptArrived'])->name('receiptArrived');
 Route::post('receiptArrivedUser',[AccountingController::class, 'receiptArrivedUser'])->name('receiptArrivedUser');
 Route::post('salesDebtUser',[AccountingController::class, 'salesDebtUser'])->name('salesDebtUser');
+Route::post('receiptArrivedUserAmanah',[AccountingController::class, 'receiptArrivedUserAmanah'])->name('receiptArrivedUserAmanah');
+Route::post('salesDebtUserAmanah',[AccountingController::class, 'salesDebtUserAmanah'])->name('salesDebtUserAmanah');
 
 
 Route::post('GenExpenses',[AccountingController::class, 'GenExpenses'])->name('GenExpenses');

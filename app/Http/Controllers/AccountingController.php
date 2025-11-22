@@ -148,7 +148,7 @@ class AccountingController extends Controller
     }
      if($type=='wallet'){
         $allTransactions = $transactions
-        ->whereIn('type', ['inUser', 'outUser'])
+        ->whereIn('type', ['inUser', 'outUser', 'inUserAmanah', 'outUserAmanah'])
         ->where('wallet_id', $user->wallet->id)
         ->paginate(1000);
          }elseif($type=='printExcel'){
@@ -162,12 +162,16 @@ class AccountingController extends Controller
      $sumInTransactions = $allTransactions->where('currency','$')->whereIn('type', ['in', 'inUserBox'])->sum('amount');
      $sumInTransactionsUser = $allTransactions->where('currency','$')->where('type', 'inUser')->sum('amount');
      $sumOutTransactionsUser = $allTransactions->where('currency','$')->where('type', 'outUser')->sum('amount');
+     $sumInTransactionsUserAmanah = $allTransactions->where('currency','$')->where('type', 'inUserAmanah')->sum('amount');
+     $sumOutTransactionsUserAmanah = $allTransactions->where('currency','$')->where('type', 'outUserAmanah')->sum('amount');
 
      $sumAllTransactionsDinar = $allTransactions->where('currency','IQD')->sum('amount');
      $sumDebitTransactionsDinar = $allTransactions->where('currency','IQD')->whereIn('type', ['debt','outUserBox'])->sum('amount');
      $sumInTransactionsDinar = $allTransactions->where('currency','IQD')->whereIn('type', ['in', 'inUserBox'])->sum('amount');
      $sumInTransactionsDinarUser = $allTransactions->where('currency','IQD')->where('type', 'inUser')->sum('amount');
      $sumOutTransactionsDinarUser = $allTransactions->where('currency','IQD')->where('type', 'outUser')->sum('amount');
+     $sumInTransactionsDinarUserAmanah = $allTransactions->where('currency','IQD')->where('type', 'inUserAmanah')->sum('amount');
+     $sumOutTransactionsDinarUserAmanah = $allTransactions->where('currency','IQD')->where('type', 'outUserAmanah')->sum('amount');
 
      
      // Additional logic to retrieve client data
@@ -183,7 +187,11 @@ class AccountingController extends Controller
          'sumInTransactionsUser' =>  $sumInTransactionsUser,
          'sumInTransactionsDinarUser' => $sumInTransactionsDinarUser,
          'sumOutTransactionsUser' =>  $sumOutTransactionsUser,
-         'sumOutTransactionsDinarUser' => $sumOutTransactionsDinarUser
+         'sumOutTransactionsDinarUser' => $sumOutTransactionsDinarUser,
+         'sumInTransactionsUserAmanah' =>  $sumInTransactionsUserAmanah,
+         'sumInTransactionsDinarUserAmanah' => $sumInTransactionsDinarUserAmanah,
+         'sumOutTransactionsUserAmanah' =>  $sumOutTransactionsUserAmanah,
+         'sumOutTransactionsDinarUserAmanah' => $sumOutTransactionsDinarUserAmanah
      ];
      if($print==1){
          $config=SystemConfig::first();
@@ -238,6 +246,37 @@ class AccountingController extends Controller
         $transactionq=$this->debtWallet($amountDinar,$desc,$this->accounting->mainBox()->id,$user_id,'App\Models\User',0,0,'IQD',$date,0,'outUserBox');
         $transactionDetilsq = ['type' => 'outUser','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDinar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'IQD','parent_id'=>$transactionq->id];
         $transaction = Transactions::create($transactionDetilsq);
+      }
+      return Response::json($request, 200);
+  
+      }
+     public function salesDebtUserAmanah(Request $request)
+     {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
+      $owner_id=Auth::user()->owner_id;
+      $note= $request->note??'';
+      $amountDollar= $request->amountDollar??0;
+      $amountDinar= $request->amountDinar??0;
+      $user_id=$request->id;
+      $user=  User::with('wallet')->find($user_id);
+      $desc="وصل سحب أمانة"." ".' قاسه'.' '.$user->name.' '.$note;
+      $date= $request->date??0;
+      if($amountDollar){
+        // لا نؤثر على الصندوق - فقط ننقص من المحفظة
+        $transactionDetilsd = ['type' => 'outUserAmanah','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDollar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'$','parent_id'=>0];
+        $transaction = Transactions::create($transactionDetilsd);
+        // تحديث رصيد المحفظة فقط
+        $wallet = Wallet::find($user->wallet->id);
+        $wallet->decrement('balance', $amountDollar);
+      }
+      if($amountDinar)
+      {
+        // لا نؤثر على الصندوق - فقط ننقص من المحفظة
+        $transactionDetilsq = ['type' => 'outUserAmanah','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDinar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'IQD','parent_id'=>0];
+        $transaction = Transactions::create($transactionDetilsq);
+        // تحديث رصيد المحفظة فقط
+        $wallet = Wallet::find($user->wallet->id);
+        $wallet->decrement('balance_dinar', $amountDinar);
       }
       return Response::json($request, 200);
   
@@ -310,6 +349,40 @@ class AccountingController extends Controller
             $transactionDetilsq = ['type' => 'inUser','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDinar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'IQD','parent_id'=>$transactionq->id];
             $transaction = Transactions::create($transactionDetilsq);
 
+        }
+ 
+        return Response::json($transaction, 200);
+    
+        }
+       public function receiptArrivedUserAmanah(Request $request)
+       {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
+        $owner_id=Auth::user()->owner_id;
+        $note= $request->amountNote??'';
+        $user_id=$request->id;
+
+        $amountDollar= $request->amountDollar??0;
+        $amountDinar= $request->amountDinar??0;
+        $user=  User::with('wallet')->find($user_id);
+
+        $desc="وصل قبض أمانة"." ".' قاسه'.' '.$user->name.' '.$note;
+        $date= $request->date??0;
+            
+        if($amountDollar){
+            // لا نؤثر على الصندوق - فقط نضيف للمحفظة
+            $transactionDetilsd = ['type' => 'inUserAmanah','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDollar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'$','parent_id'=>0];
+            $transaction = Transactions::create($transactionDetilsd);
+            // تحديث رصيد المحفظة فقط
+            $wallet = Wallet::find($user->wallet->id);
+            $wallet->increment('balance', $amountDollar);
+        }
+        if($amountDinar){
+            // لا نؤثر على الصندوق - فقط نضيف للمحفظة
+            $transactionDetilsq = ['type' => 'inUserAmanah','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDinar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'IQD','parent_id'=>0];
+            $transaction = Transactions::create($transactionDetilsq);
+            // تحديث رصيد المحفظة فقط
+            $wallet = Wallet::find($user->wallet->id);
+            $wallet->increment('balance_dinar', $amountDinar);
         }
  
         return Response::json($transaction, 200);

@@ -30,6 +30,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // تسجيل Observers للمزامنة
+        if (class_exists(\App\Models\Car::class)) {
+            \App\Models\Car::observe(\App\Observers\CarObserver::class);
+        }
+        
         // التحقق من الترخيص عند بدء التطبيق (إذا كان مفعلاً)
         if (config('license.enabled') && !$this->app->runningInConsole()) {
             $this->checkLicenseOnBoot();
@@ -146,9 +151,48 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
 
+        $fallbackConnection = env('DB_FALLBACK_CONNECTION', 'sync_sqlite');
+        $primaryConnection = env('DB_PRIMARY_CONNECTION', 'mysql');
+        
+        // الأولوية 1: في البيئة المحلية (Local)، استخدم SQLite دائماً حتى مع وجود اتصال
+        if (app()->environment('local')) {
+            config(['database.default' => $fallbackConnection]);
+            Log::channel(env('LOG_CHANNEL', 'stack'))->info('Database switched to SQLite (Local Environment)', [
+                'fallback' => $fallbackConnection,
+                'mode' => 'local_environment',
+                'env' => app()->environment()
+            ]);
+            return;
+        }
+        
+        // الأولوية 2: التحقق من الوضع اليدوي من ConnectionService
+        // إذا كان المستخدم اختار Local من الواجهة، استخدم SQLite دائماً
+        if (class_exists(\App\Services\ConnectionService::class)) {
+            $manualMode = \App\Services\ConnectionService::getManualMode();
+            
+            if ($manualMode === 'local') {
+                // الوضع اليدوي: Local - استخدم SQLite دائماً
+                config(['database.default' => $fallbackConnection]);
+                Log::channel(env('LOG_CHANNEL', 'stack'))->info('Database switched to SQLite (Manual Local Mode)', [
+                    'fallback' => $fallbackConnection,
+                    'mode' => 'manual_local'
+                ]);
+                return;
+            }
+            
+            if ($manualMode === 'online') {
+                // الوضع اليدوي: Online - استخدم MySQL دائماً
+                config(['database.default' => $primaryConnection]);
+                Log::channel(env('LOG_CHANNEL', 'stack'))->info('Database switched to MySQL (Manual Online Mode)', [
+                    'mode' => 'manual_online'
+                ]);
+                return;
+            }
+        }
+
+        // الأولوية 3: الوضع التلقائي - التحقق من توفر MySQL
         $cacheKey = 'db-failover:use-fallback';
         $ttl = max((int) env('DB_FAILOVER_CACHE_TTL', 60), 15);
-        $fallbackConnection = env('DB_FALLBACK_CONNECTION', 'sync_sqlite');
         $shouldUseFallback = Cache::get($cacheKey, false);
 
         if (!$shouldUseFallback) {
@@ -169,6 +213,7 @@ class AppServiceProvider extends ServiceProvider
             config(['database.default' => $fallbackConnection]);
             Log::channel(env('LOG_CHANNEL', 'stack'))->info('Database failover activated', [
                 'fallback' => $fallbackConnection,
+                'mode' => 'auto_failover'
             ]);
         }
     }

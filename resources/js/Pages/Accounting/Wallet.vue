@@ -34,6 +34,8 @@ let showModalAddGenExpenses = ref(false);
 let showModalConvertDollarDinar = ref(false);
 let showModalConvertDinarDollar = ref(false);
 let showModalDel = ref(false);
+let showModalAddSalesAmanah = ref(false);
+let showModaldebtSalesAmanah = ref(false);
 let transactions= ref([]);
 let expenses_type_id = ref(0);
 let tranId =ref({});
@@ -110,6 +112,12 @@ function opendebtSales() {
 function openAddExpenses(){
   showModalAddExpensesWallet.value = true;
 }
+function openAddSalesAmanah() {
+  showModalAddSalesAmanah.value = true;
+}
+function opendebtSalesAmanah() {
+  showModaldebtSalesAmanah.value = true;
+}
 function openConvertDollarDinar(){
   showModalConvertDollarDinar.value = true;
 }
@@ -169,6 +177,31 @@ function confirmdebt(V) {
   .then(response => {
     showModaldebtSales.value=false;
     showModalAddExpensesWallet.value = false;
+    window.location.reload();
+
+  })
+  .catch(error => {
+
+    errors.value = error.response.data.errors
+  })
+}
+function confirmAmanah(V) {
+  V.id=props.boxes.id;
+  axios.post('/api/receiptArrivedUserAmanah',V)
+  .then(response => {
+    showModalAddSalesAmanah.value=false;
+    window.location.reload();
+
+  })
+  .catch(error => {
+
+    errors.value = error.response.data.errors
+  })
+}
+function confirmdebtAmanah(V) {
+  axios.post('/api/salesDebtUserAmanah',V)
+  .then(response => {
+    showModaldebtSalesAmanah.value=false;
     window.location.reload();
 
   })
@@ -298,6 +331,30 @@ function conGenfirmExpenses(V) {
             
            </template>
       </ModalAddExpensesWallet>
+      <ModalAddSales
+            :show="showModalAddSalesAmanah ? true : false"
+            @a="confirmAmanah($event)"
+            @close="showModalAddSalesAmanah = false"
+            >
+          <template #header>
+            <h3 class="text-center">أمانة - إيداع</h3>
+            
+           </template>
+      </ModalAddSales>
+ 
+      <ModalAddExpensesWallet 
+            :show="showModaldebtSalesAmanah ? true : false"
+            :boxes="boxes"
+            :sum_transactions="laravelData.sum_transactions"
+            :sum_transactions_dinar="laravelData.sum_transactions_dinar"
+            @a="confirmdebtAmanah($event)"
+            @close="showModaldebtSalesAmanah = false"
+            >
+          <template #header>
+            <h3 class="text-center">أمانة - سحب</h3>
+            
+           </template>
+      </ModalAddExpensesWallet>
       <ModalConvertDollarDinar 
             :show="showModalConvertDollarDinar ? true : false"
             :boxes="boxes"
@@ -334,7 +391,7 @@ function conGenfirmExpenses(V) {
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
         <div class="overflow-hidden shadow-sm sm:rounded-lg">
           <div class=" border-b border-gray-200">
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-3 lg:gap-3">
               <div class="pt-5  print:hidden">
               <button style=" width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-green-800 rounded-md focus:outline-none"
                                             @click="openAddSales()">
@@ -351,6 +408,19 @@ function conGenfirmExpenses(V) {
 
               </button>
        
+              </div>
+              <div class="pt-5  print:hidden">
+              <button style=" width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-green-600 rounded-md focus:outline-none border-2 border-green-300"
+                                            @click="openAddSalesAmanah()">
+                                            أمانة - إيداع
+              </button>
+              </div>
+
+              <div class="pt-5  print:hidden">
+              <button  style=" width: 100%; margin-top: 4px;"  v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2|| $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-red-600 rounded-md focus:outline-none border-2 border-red-300"
+                                            @click="opendebtSalesAmanah()">
+                                             أمانة - سحب
+              </button>
               </div>
               <div class=" px-4">
                           <div >
@@ -419,7 +489,7 @@ function conGenfirmExpenses(V) {
                           </button>
                         </div>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-3 lg:gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-6 gap-3 lg:gap-3">
               <div class=" px-4">
                             <div >
                               <InputLabel for="to" :value="`حساب ${boxes.name} بالدولار`" />
@@ -446,6 +516,30 @@ function conGenfirmExpenses(V) {
                               />
                             </div>
               </div>
+              <div class=" px-4">
+                            <div >
+                              <InputLabel for="to" :value="`أمانة ${boxes.name} بالدولار`" />
+                              <TextInput
+                                id="to"
+                                type="number"
+                                disabled
+                                class="mt-1 block w-full bg-blue-50"
+                                :value="(laravelData.sumInTransactionsUserAmanah||0)-(laravelData.sumOutTransactionsUserAmanah||0)"
+                              />
+                            </div>
+              </div>
+              <div class=" px-4">
+                            <div >
+                              <InputLabel for="to" :value="`أمانة ${boxes.name} بالدينار العراقي`" />
+                              <TextInput
+                                id="to"
+                                type="number"
+                                disabled
+                                class="mt-1 block w-full bg-blue-50"
+                                :value="(laravelData.sumInTransactionsDinarUserAmanah||0)-(laravelData.sumOutTransactionsDinarUserAmanah||0)"
+                              />
+                            </div>
+              </div>
       
             </div>
           
@@ -469,16 +563,29 @@ function conGenfirmExpenses(V) {
                 </thead>
                 <tbody>
          
-                  <tr v-for="tran in   transactions" :key="tran.id" :class="tran.type != 'inUser' ? 'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
+                  <tr v-for="tran in   transactions" :key="tran.id" 
+                      :class="[
+                        tran.type == 'inUserAmanah' ? 'bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-500' :
+                        tran.type == 'outUserAmanah' ? 'bg-orange-100 dark:bg-orange-900 border-l-4 border-orange-500' :
+                        tran.type != 'inUser' ? 'bg-red-100 dark:bg-red-900' : 'bg-green-100 dark:bg-green-900'
+                      ]"  
+                      class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
 
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.id }}</td>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">
+                    {{ tran.id }}
+                    <span v-if="tran.type == 'inUserAmanah' || tran.type == 'outUserAmanah'" class="text-xs text-blue-600 dark:text-blue-300 font-bold">(أمانة)</span>
+                  </td>
                   <!-- <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.morphed?.name }}</td> -->
 
                   
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ formatBaghdadTimestamp(tran?.created_at) }}</td>
                   <th className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.description }}</th>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.type == 'inUser' ? tran.amount+' '+tran.currency : '' }}</td>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.type == 'outUser' ? tran.amount+' '+tran.currency : '' }}</td>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">
+                    {{ (tran.type == 'inUser' || tran.type == 'inUserAmanah') ? tran.amount+' '+tran.currency : '' }}
+                  </td>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">
+                    {{ (tran.type == 'outUser' || tran.type == 'outUserAmanah') ? tran.amount+' '+tran.currency : '' }}
+                  </td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
                  
                   </td>
