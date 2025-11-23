@@ -223,6 +223,20 @@ class AccountingController extends Controller
 
         return view('receiptPaymentTotal',compact('data','config','transactions_id'));
      }
+     elseif($print==7){
+        $config=SystemConfig::first();
+        // Filter only Amanah transactions - get collection from paginated result
+        $amanahTransactions = collect($allTransactions->items())->whereIn('type', ['inUserAmanah', 'outUserAmanah'])->values();
+        $data['transactions'] = $amanahTransactions;
+        return view('receiptWalletTotal',compact('data','config'));
+     }
+     elseif($print==8){
+        $config=SystemConfig::first();
+        // Filter only Wallet transactions (excluding Amanah) - get collection from paginated result
+        $walletTransactions = collect($allTransactions->items())->whereIn('type', ['inUser', 'outUser'])->values();
+        $data['transactions'] = $walletTransactions;
+        return view('receiptWalletTotal',compact('data','config'));
+     }
      return response()->json($data); 
      }
      public function salesDebtUser(Request $request)

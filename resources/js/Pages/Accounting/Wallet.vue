@@ -76,8 +76,6 @@ const getResults = async ($state) => {
         page: page,
         q: q,
         user_id: props.boxes.id,
-        from:from.value,
-        to: to.value,
         type: 'wallet'
       }
     });
@@ -284,6 +282,18 @@ function conGenfirmExpenses(V) {
 
 }
 
+function printAmanah() {
+  if(props.boxes?.id) {
+    window.open(`/getIndexAccounting?user_id=${props.boxes.id}&type=wallet&print=7`, '_blank');
+  }
+}
+
+function printWallet() {
+  if(props.boxes?.id) {
+    window.open(`/getIndexAccounting?user_id=${props.boxes.id}&type=wallet&print=8`, '_blank');
+  }
+}
+
 </script>
 
 <template>
@@ -391,83 +401,54 @@ function conGenfirmExpenses(V) {
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
         <div class="overflow-hidden shadow-sm sm:rounded-lg">
           <div class=" border-b border-gray-200">
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-3 lg:gap-3">
-              <div class="pt-5  print:hidden">
-              <button style=" width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-green-800 rounded-md focus:outline-none"
-                                            @click="openAddSales()">
-                                            وصل قبض
-                                            (أضافة)
-              </button>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-3 mb-4">
+              <div class="pt-5 print:hidden">
+                <button style="width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5" 
+                        className="px-4 py-2 text-white bg-green-800 rounded-md focus:outline-none hover:bg-green-900 transition"
+                        @click="openAddSales()">
+                  وصل قبض (إضافة)
+                </button>
               </div>
 
-              <div class="pt-5  print:hidden">
-              <button  style=" width: 100%; margin-top: 4px;"  v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2|| $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-red-800 rounded-md focus:outline-none"
-                                            @click="openAddExpenses()">
-                                             وصل صرف
-                                             (سحب)
-
-              </button>
-       
-              </div>
-              <div class="pt-5  print:hidden">
-              <button style=" width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-green-600 rounded-md focus:outline-none border-2 border-green-300"
-                                            @click="openAddSalesAmanah()">
-                                            أمانة - إيداع
-              </button>
+              <div class="pt-5 print:hidden">
+                <button style="width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2|| $page.props.auth.user.type_id==5" 
+                        className="px-4 py-2 text-white bg-red-800 rounded-md focus:outline-none hover:bg-red-900 transition"
+                        @click="openAddExpenses()">
+                  وصل صرف (سحب)
+                </button>
               </div>
 
-              <div class="pt-5  print:hidden">
-              <button  style=" width: 100%; margin-top: 4px;"  v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2|| $page.props.auth.user.type_id==5" className="px-4 py-2 text-white bg-red-600 rounded-md focus:outline-none border-2 border-red-300"
-                                            @click="opendebtSalesAmanah()">
-                                             أمانة - سحب
-              </button>
-              </div>
-              <div class=" px-4">
-                          <div >
-                              <InputLabel for="from" value="من تاريخ" />
-                              <TextInput
-                                id="from"
-                                type="date"
-                                class="mt-1 block w-full"
-                                v-model="from"
-                                
-                              />
-                            </div>
-              </div>
-              <div class=" px-4">
-                            <div >
-                              <InputLabel for="to" value="حتى تاريخ" />
-                              <TextInput
-                                id="to"
-                                type="date"
-                                class="mt-1 block w-full"
-                                v-model="to"
-                              />
-                            </div>
-              </div>
-              <div className=" mr-5 print:hidden">
-                            <InputLabel for="pay" value="فلترة" />
-                            <button
-                            @click.prevent="refresh()"
-                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded" style="width: 100%">
-                            <span v-if="!isLoading">فلترة</span>
-                            <span v-else>جاري الحفظ...</span>
-                          </button>
-              </div>
-              <div className=" mr-5 print:hidden" >
-                            <InputLabel for="pay" value="طباعة" />
-                            <a
-                            class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded" style="display: block;text-align: center;"
-                            :href="`/getIndexAccounting?user_id=${laravelData?.user?.id}&from=${from}&to=${to}&print=6`"
-                            target="_blank"
-                            >
-                            
-                            <span v-if="!isLoading">طباعة</span>
-                            <span v-else>جاري الحفظ...</span>
-                          </a>
+              <div class="pt-5 print:hidden">
+                <button style="width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5" 
+                        className="px-4 py-2 text-white bg-green-600 rounded-md focus:outline-none border-2 border-green-300 hover:bg-green-700 transition"
+                        @click="openAddSalesAmanah()">
+                  أمانة - إيداع
+                </button>
               </div>
 
-              
+              <div class="pt-5 print:hidden">
+                <button style="width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2|| $page.props.auth.user.type_id==5" 
+                        className="px-4 py-2 text-white bg-red-600 rounded-md focus:outline-none border-2 border-red-300 hover:bg-red-700 transition"
+                        @click="opendebtSalesAmanah()">
+                  أمانة - سحب
+                </button>
+              </div>
+
+              <div class="pt-5 print:hidden">
+                <button style="width: 100%; margin-top: 4px;" 
+                        className="px-4 py-2 text-white bg-blue-600 rounded-md focus:outline-none hover:bg-blue-700 transition font-semibold"
+                        @click="printAmanah()">
+                  طباعة الأمانة
+                </button>
+              </div>
+
+              <div class="pt-5 print:hidden">
+                <button style="width: 100%; margin-top: 4px;" 
+                        className="px-4 py-2 text-white bg-orange-600 rounded-md focus:outline-none hover:bg-orange-700 transition font-semibold"
+                        @click="printWallet()">
+                  طباعة الصندوق
+                </button>
+              </div>
             </div>
             <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3" v-if="false">
                         <div>
