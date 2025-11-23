@@ -11,6 +11,7 @@ import ModalAddGenExpenses from "@/Components/ModalAddGenExpenses.vue";
 import ModalConvertDollarDinar from "@/Components/ModalConvertDollarDinar.vue";
 import ModalConvertDinarDollar from "@/Components/ModalConvertDinarDollar.vue";
 import ModalDel from "@/Components/ModalDel.vue";
+import ModalUploader from "@/Components/ModalUploader.vue";
 
 
 import axios from 'axios';
@@ -18,6 +19,7 @@ import show from "@/Components/icon/show.vue";
 import pay from "@/Components/icon/pay.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
+import imags from "@/Components/icon/imags.vue";
 
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
@@ -34,6 +36,7 @@ let showModalAddGenExpenses = ref(false);
 let showModalConvertDollarDinar = ref(false);
 let showModalConvertDinarDollar = ref(false);
 let showModalDel = ref(false);
+let showModalUploader = ref(false);
 let showModalAddSalesAmanah = ref(false);
 let showModaldebtSalesAmanah = ref(false);
 let transactions= ref([]);
@@ -125,6 +128,10 @@ function openConvertDinarDollar(){
 function openModalDel(tran){
   tranId.value = tran
   showModalDel.value = true;
+}
+function openModalUploader(tran){
+  tranId.value = tran
+  showModalUploader.value = true;
 }
 
 const props = defineProps({
@@ -316,6 +323,19 @@ function printWallet() {
           </h2>
           </template>
     </ModalDel>
+
+    <ModalUploader
+            :show="showModalUploader ? true : false"
+            :formData="tranId"
+            @a="refresh()"
+            @close="showModalUploader = false"
+            >
+          <template #header>
+            <h2 class=" mb-5 dark:text-white text-center">
+              مرفقات الحركة
+          </h2>
+          </template>
+    </ModalUploader>
 
     <ModalAddSales
             :show="showModalAddSales ? true : false"
@@ -568,7 +588,22 @@ function printWallet() {
                     {{ (tran.type == 'outUser' || tran.type == 'outUserAmanah') ? tran.amount+' '+tran.currency : '' }}
                   </td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
-                 
+                    <div class="action-group">
+                      <button 
+                        class="action-btn action-btn--upload"
+                        @click="openModalUploader(tran)" 
+                        title="مرفقات الحركة"
+                      >
+                        <imags />
+                      </button>
+                      <button 
+                        class="action-btn action-btn--delete"
+                        @click="openModalDel(tran)" 
+                        title="حذف الحركة"
+                      >
+                        <trash />
+                      </button>
+                    </div>
                   </td>
                   </tr>
                 </tbody>
@@ -592,5 +627,56 @@ function printWallet() {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+}
+
+.action-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.action-btn:disabled,
+.action-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: block;
+  stroke: currentColor;
+  fill: none;
+}
+
+.action-btn--upload {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.action-btn--delete {
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
 }
 </style>

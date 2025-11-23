@@ -276,21 +276,15 @@ class AccountingController extends Controller
       $desc="وصل سحب أمانة"." ".' قاسه'.' '.$user->name.' '.$note;
       $date= $request->date??0;
       if($amountDollar){
-        // لا نؤثر على الصندوق - فقط ننقص من المحفظة
+        // الأمانة لا تؤثر على balance - balance فقط للسيارات
         $transactionDetilsd = ['type' => 'outUserAmanah','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDollar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'$','parent_id'=>0];
         $transaction = Transactions::create($transactionDetilsd);
-        // تحديث رصيد المحفظة فقط
-        $wallet = Wallet::find($user->wallet->id);
-        $wallet->decrement('balance', $amountDollar);
       }
       if($amountDinar)
       {
-        // لا نؤثر على الصندوق - فقط ننقص من المحفظة
+        // الأمانة لا تؤثر على balance - balance فقط للسيارات
         $transactionDetilsq = ['type' => 'outUserAmanah','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDinar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'IQD','parent_id'=>0];
         $transaction = Transactions::create($transactionDetilsq);
-        // تحديث رصيد المحفظة فقط
-        $wallet = Wallet::find($user->wallet->id);
-        $wallet->decrement('balance_dinar', $amountDinar);
       }
       return Response::json($request, 200);
   
@@ -383,20 +377,14 @@ class AccountingController extends Controller
         $date= $request->date??0;
             
         if($amountDollar){
-            // لا نؤثر على الصندوق - فقط نضيف للمحفظة
+            // الأمانة لا تؤثر على balance - balance فقط للسيارات
             $transactionDetilsd = ['type' => 'inUserAmanah','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDollar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'$','parent_id'=>0];
             $transaction = Transactions::create($transactionDetilsd);
-            // تحديث رصيد المحفظة فقط
-            $wallet = Wallet::find($user->wallet->id);
-            $wallet->increment('balance', $amountDollar);
         }
         if($amountDinar){
-            // لا نؤثر على الصندوق - فقط نضيف للمحفظة
+            // الأمانة لا تؤثر على balance - balance فقط للسيارات
             $transactionDetilsq = ['type' => 'inUserAmanah','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDinar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'IQD','parent_id'=>0];
             $transaction = Transactions::create($transactionDetilsq);
-            // تحديث رصيد المحفظة فقط
-            $wallet = Wallet::find($user->wallet->id);
-            $wallet->increment('balance_dinar', $amountDinar);
         }
  
         return Response::json($transaction, 200);
