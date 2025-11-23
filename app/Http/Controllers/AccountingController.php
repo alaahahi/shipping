@@ -132,6 +132,7 @@ class AccountingController extends Controller
      $q= $_GET['q'] ?? 0;
      $type = $_GET['type'] ??'';
      $transactions_id = $_GET['transactions_id'] ?? 0;
+     $owner_id = $owner_id ?? Auth::user()->owner_id;
      $user = User::with('wallet')->where('id',$user_id)->first();
      if($from && $to ){
          $transactions = Transactions ::with('TransactionsImages')->with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('id','desc')->whereBetween('created', [$from, $to]);
@@ -236,6 +237,42 @@ class AccountingController extends Controller
         $walletTransactions = collect($allTransactions->items())->whereIn('type', ['inUser', 'outUser'])->values();
         $data['transactions'] = $walletTransactions;
         return view('receiptWalletTotal',compact('data','config'));
+     }
+     elseif($print==9){
+        // طباعة وصل قبض للدفعات (inUser)
+        $config=SystemConfig::first();
+        $transaction = Transactions::find($transactions_id);
+        $clientData = [
+            'client' => $user
+        ];
+        return view('receiptWallet',compact('clientData','config','transactions_id','owner_id','transaction'));
+     }
+     elseif($print==10){
+        // طباعة وصل دفع للدفعات (outUser)
+        $config=SystemConfig::first();
+        $transaction = Transactions::find($transactions_id);
+        $clientData = [
+            'client' => $user
+        ];
+        return view('receiptWalletPayment',compact('clientData','config','transactions_id','owner_id','transaction'));
+     }
+     elseif($print==11){
+        // طباعة وصل قبض للأمانات (inUserAmanah)
+        $config=SystemConfig::first();
+        $transaction = Transactions::find($transactions_id);
+        $clientData = [
+            'client' => $user
+        ];
+        return view('receiptWalletAmanah',compact('clientData','config','transactions_id','owner_id','transaction'));
+     }
+     elseif($print==12){
+        // طباعة وصل دفع للأمانات (outUserAmanah)
+        $config=SystemConfig::first();
+        $transaction = Transactions::find($transactions_id);
+        $clientData = [
+            'client' => $user
+        ];
+        return view('receiptWalletAmanahPayment',compact('clientData','config','transactions_id','owner_id','transaction'));
      }
      return response()->json($data); 
      }

@@ -20,6 +20,7 @@ import pay from "@/Components/icon/pay.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
 import imags from "@/Components/icon/imags.vue";
+import print from "@/Components/icon/print.vue";
 
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
@@ -61,7 +62,7 @@ let debtOnlineContractsDinar = ref(0)
 let resetData = ref(false);
 let user_id = 0;
 let page = 1;
-let q = '';
+let q = ref('');
 const refresh = () => {
   page = 0;
   transactions.value.length = 0;
@@ -77,7 +78,7 @@ const getResults = async ($state) => {
       params: {
         limit: 1000,
         page: page,
-        q: q,
+        q: q.value,
         user_id: props.boxes.id,
         type: 'wallet'
       }
@@ -270,6 +271,61 @@ function updateResults(input) {
   
   // Use toLocaleString to format the number with commas
   return input.toLocaleString();
+}
+
+function getImageUrl(name) {
+  // Provide the base URL for your images
+  return `/public/uploadsResized/${name}`;
+}
+
+function getDownloadUrl(name) {
+  // Provide the base URL for downloading images
+  return `/public/uploads/${name}`;
+}
+
+// حساب الرصيد التراكمي
+function calculateBalance(transaction, index) {
+  let balance = 0;
+  // نحتاج لحساب الرصيد من أقدم معاملة حتى هذه المعاملة
+  // المعاملات مرتبة من الأحدث للأقدم، لذا نحتاج لعكس الترتيب في الحساب
+  
+  // إنشاء نسخة مرتبة من المعاملات حسب التاريخ والـ ID من الأقدم للأحدث
+  const sortedTransactions = [...transactions.value]
+    .filter(t => t && t.currency === transaction.currency)
+    .sort((a, b) => {
+      // الترتيب حسب التاريخ أولاً
+      const dateA = new Date(a.created_at || a.created || 0);
+      const dateB = new Date(b.created_at || b.created || 0);
+      const dateDiff = dateA.getTime() - dateB.getTime();
+      
+      // إذا كانت التواريخ متساوية، نرتب حسب ID (الأقدم أولاً - ID أصغر)
+      if (dateDiff === 0) {
+        return (a.id || 0) - (b.id || 0);
+      }
+      return dateDiff;
+    });
+  
+  // العثور على موضع هذه المعاملة في القائمة المرتبة
+  const transactionId = transaction.id || 0;
+  
+  for (let i = 0; i < sortedTransactions.length; i++) {
+    const tran = sortedTransactions[i];
+    
+    // نأخذ فقط معاملات الصندوق (ليس الأمانة) لحساب الرصيد
+    if (tran.type === 'inUser') {
+      balance += parseFloat(tran.amount) || 0;
+    } else if (tran.type === 'outUser') {
+      balance -= Math.abs(parseFloat(tran.amount) || 0);
+    }
+    // نتجاهل معاملات الأمانة لأنها لا تؤثر على balance
+    
+    // إذا وصلنا إلى هذه المعاملة، نتوقف
+    if (tran.id === transactionId) {
+      break;
+    }
+  }
+  
+  return balance;
 }
 
 function conGenfirmExpenses(V) {
@@ -544,7 +600,20 @@ function printWallet() {
       
             </div>
           
-
+            <!-- مربع البحث -->
+            <div class="mt-4 mb-4 px-4">
+              <div class="max-w-md">
+                <InputLabel for="search" value="بحث في الدفعات والأمانات" />
+                <TextInput
+                  id="search"
+                  type="text"
+                  class="mt-1 block w-full"
+                  v-model="q"
+                  placeholder="ابحث برقم الوصل أو الوصف..."
+                  @input="debouncedGetResultsCar"
+                />
+              </div>
+            </div>
 
             <div class="overflow-x-auto shadow-md mt-5">
               <table class="w-full text-right text-gray-500   dark:text-gray-400 text-center">
@@ -558,13 +627,15 @@ function printWallet() {
                     <th className="px-2 py-2">الوصف</th>
                     <th className="px-2 py-2">ايداع</th>
                     <th className="px-2 py-2">سحب</th>
+                    <th className="px-2 py-2">الرصيد</th>
+                    <th className="px-2 py-2">المرفقات</th>
                     <th className="px-2 py-2">تنفيذ</th>
 
                   </tr>
                 </thead>
                 <tbody>
          
-                  <tr v-for="tran in   transactions" :key="tran.id" 
+                  <tr v-for="(tran, index) in   transactions" :key="tran.id" 
                       :class="[
                         tran.type == 'inUserAmanah' ? 'bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-500' :
                         tran.type == 'outUserAmanah' ? 'bg-orange-100 dark:bg-orange-900 border-l-4 border-orange-500' :
@@ -588,6 +659,34 @@ function printWallet() {
                     {{ (tran.type == 'outUser' || tran.type == 'outUserAmanah') ? tran.amount+' '+tran.currency : '' }}
                   </td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
+                    <span v-if="tran.type == 'inUser' || tran.type == 'outUser'">
+                      {{ updateResults(calculateBalance(tran, index)) }} {{ tran.currency }}
+                    </span>
+                    <span v-else class="text-gray-400">-</span>
+                  </td>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">
+                    <div class="flex flex-wrap justify-center gap-1">
+                      <a
+                        v-for="(image, index) in tran.transactions_images || []"
+                        :key="index"
+                        :href="getDownloadUrl(image.name)"
+                        style="cursor: pointer;"
+                        target="_blank"
+                        class="inline-block"
+                      >
+                        <img 
+                          :src="getImageUrl(image.name)" 
+                          alt="" 
+                          class="rounded" 
+                          style="max-width: 50px; max-height: 50px; display: inline;" 
+                        />
+                      </a>
+                      <span v-if="!tran.transactions_images || tran.transactions_images.length === 0" class="text-gray-400 text-xs">
+                        لا يوجد
+                      </span>
+                    </div>
+                  </td>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">
                     <div class="action-group">
                       <button 
                         class="action-btn action-btn--upload"
@@ -596,6 +695,42 @@ function printWallet() {
                       >
                         <imags />
                       </button>
+                      <a
+                        v-if="tran.type == 'outUser'"
+                        :href="`/getIndexAccounting?user_id=${props.boxes.id}&print=10&transactions_id=${tran.id}`"
+                        target="_blank"
+                        class="action-btn action-btn--print"
+                        title="طباعة سند الصرف"
+                      >
+                        <print />
+                      </a>
+                      <a
+                        v-if="tran.type == 'inUser'"
+                        :href="`/getIndexAccounting?user_id=${props.boxes.id}&print=9&transactions_id=${tran.id}`"
+                        target="_blank"
+                        class="action-btn action-btn--print"
+                        title="طباعة سند القبض"
+                      >
+                        <print />
+                      </a>
+                      <a
+                        v-if="tran.type == 'outUserAmanah'"
+                        :href="`/getIndexAccounting?user_id=${props.boxes.id}&print=12&transactions_id=${tran.id}`"
+                        target="_blank"
+                        class="action-btn action-btn--print"
+                        title="طباعة سند صرف أمانة"
+                      >
+                        <print />
+                      </a>
+                      <a
+                        v-if="tran.type == 'inUserAmanah'"
+                        :href="`/getIndexAccounting?user_id=${props.boxes.id}&print=11&transactions_id=${tran.id}`"
+                        target="_blank"
+                        class="action-btn action-btn--print"
+                        title="طباعة سند قبض أمانة"
+                      >
+                        <print />
+                      </a>
                       <button 
                         class="action-btn action-btn--delete"
                         @click="openModalDel(tran)" 
