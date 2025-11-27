@@ -22,6 +22,7 @@ class AccountingCacheService
             Cache::rememberForever('user_type_account', fn () => UserType::where('name', 'account')->first()?->id);
             Cache::rememberForever('user_type_seles_kirkuk', fn () => UserType::where('name', 'selesKirkuk')->first()?->id);
             Cache::rememberForever('user_type_car_expenses', fn () => UserType::where('name', 'car_expenses')->first()?->id);
+            Cache::rememberForever('user_type_internal_sales_client', fn () => UserType::where('name', 'internal_sales_client')->first()?->id);
         }
     
     }
@@ -76,6 +77,7 @@ class AccountingCacheService
     public function userAccount(){ return Cache::get('user_type_account'); }
     public function userSelesKirkuk(){ return Cache::get('user_type_seles_kirkuk'); }
     public function userCarExpenses(){ return Cache::get('user_type_car_expenses'); }
+    public function userInternalSalesClient(){ return Cache::get('user_type_internal_sales_client'); }
 
 
     public function getAccount($key)
@@ -111,6 +113,7 @@ class AccountingCacheService
         Cache::forget('user_type_account');
         Cache::forget('user_type_seles_kirkuk');
         Cache::forget('user_type_car_expenses');
+        Cache::forget('user_type_internal_sales_client');
 
 
         $ownerId = Cache::get('owner_id');

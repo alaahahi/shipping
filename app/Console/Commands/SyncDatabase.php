@@ -46,14 +46,14 @@ class SyncDatabase extends Command
         $this->newLine();
 
         try {
-            if ($direction === 'down' || $direction === 'down') {
+            if ($direction === 'down') {
                 // من MySQL إلى SQLite
                 $this->info("📥 مزامنة من MySQL إلى SQLite...");
                 $results = $this->syncService->syncFromMySQLToSQLite($tablesArray);
             } else {
                 // من SQLite إلى MySQL
                 $this->info("📤 مزامنة من SQLite إلى MySQL...");
-                $results = $this->syncService->syncFromSQLiteToMySQL($tablesArray);
+                $results = $this->syncService->syncFromSQLiteToMySQL($tablesArray, false, true, false);
             }
 
             $this->displayResults($results);

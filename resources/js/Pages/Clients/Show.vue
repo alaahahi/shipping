@@ -1274,9 +1274,18 @@ async function savePaymentDescription(payment) {
       </div>
     </div>
     <div class="py-4" v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
-      <h2 class="text-center pb-2 dark:text-gray-400">
-        {{ $t("sales_bill") }}
-      </h2>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-center pb-2 dark:text-gray-400 flex-1">
+          {{ $t("sales_bill") }}
+        </h2>
+        <Link 
+          :href="`/internalSales/${currentClientId}`" 
+          class="px-4 py-2 text-white bg-purple-600 rounded hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 flex items-center gap-2"
+        >
+          <span>💰</span>
+          <span>المبيعات الداخلية</span>
+        </Link>
+      </div>
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 p-6 dark:bg-gray-900">
         <div class="overflow-hidden shadow-sm sm:rounded-lg">
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 lg:gap-1">

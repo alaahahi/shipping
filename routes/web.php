@@ -85,6 +85,7 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
     Route::get('sentToCourt/{id}',[FormRegistrationController::class, 'sentToCourt'])->name("sentToCourt");
     Route::get('clients',[UserController::class, 'clients'])->name('clients');
     Route::get('showClients/{id}',[UserController::class, 'showClients'])->name('showClients');
+    Route::get('internalSales/{id}',[UserController::class, 'internalSales'])->name('internalSales');
 
     
     Route::get('getIndexClients',[UserController::class, 'getIndexClients'])->name("getIndexClients");

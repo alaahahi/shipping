@@ -70,6 +70,14 @@ Route::get('/clear-config-cache', function () {
 });
 Route::get('refreshCache',[DashboardController::class, 'refreshCache'])->name('refreshCache');
 Route::get('loadAccounts',[DashboardController::class, 'loadAccounts'])->name('loadAccounts');
+
+// Test route to clear route cache
+Route::get('clear-route-cache', function () {
+    \Artisan::call('route:clear');
+    \Artisan::call('config:clear');
+    return response()->json(['message' => 'Route cache cleared successfully']);
+});
+
 Route::middleware('auth:sanctum')->group(function () {
 Route::apiResource('upload', UploadController::class);
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {return $request->user();});
@@ -97,6 +105,29 @@ Route::post('clientsEdit',[UserController::class, 'clientsEdit'])->name('clients
 Route::post('delClient',[UserController::class, 'delClient'])->name('delClient');
 
 Route::post('updateClientPhone',[UserController::class, 'updateClientPhone'])->name('updateClientPhone');
+
+// Internal Sales Routes
+Route::post('toggleInternalSales',[UserController::class, 'toggleInternalSales'])->name('toggleInternalSales');
+Route::get('getInternalSales',[UserController::class, 'getInternalSales'])->name('getInternalSales');
+Route::get('getUnsoldCars',[UserController::class, 'getUnsoldCars'])->name('getUnsoldCars');
+Route::get('getAllClients',[UserController::class, 'getAllClients'])->name('getAllClients');
+Route::post('addInternalSale',[UserController::class, 'addInternalSale'])->name('addInternalSale');
+Route::post('addBulkInternalSale',[UserController::class, 'addBulkInternalSale'])->name('addBulkInternalSale');
+Route::post('updateInternalSale',[UserController::class, 'updateInternalSale'])->name('updateInternalSale');
+Route::post('bulkUpdateInternalSales',[UserController::class, 'bulkUpdateInternalSales'])->name('bulkUpdateInternalSales');
+Route::post('addPaymentToBuyer',[UserController::class, 'addPaymentToBuyer'])->name('addPaymentToBuyer');
+Route::get('getBuyerPaymentDetails',[UserController::class, 'getBuyerPaymentDetails'])->name('getBuyerPaymentDetails');
+Route::post('deletePayment',[UserController::class, 'deletePayment'])->name('deletePayment');
+Route::post('deleteInternalSale',[UserController::class, 'deleteInternalSale'])->name('deleteInternalSale');
+Route::get('getInternalSalesBuyers',[UserController::class, 'getInternalSalesBuyers'])->name('getInternalSalesBuyers');
+
+// Car Sales Routes
+Route::post('sellCar',[UserController::class, 'sellCar'])->name('sellCar');
+Route::get('getCarSales',[UserController::class, 'getCarSales'])->name('getCarSales');
+Route::get('getBuyers',[UserController::class, 'getBuyers'])->name('getBuyers');
+Route::post('addSalePayment',[UserController::class, 'addSalePayment'])->name('addSalePayment');
+Route::get('getSalePayments',[UserController::class, 'getSalePayments'])->name('getSalePayments');
+Route::get('getBuyerSales',[UserController::class, 'getBuyerSales'])->name('getBuyerSales');
 
 
 Route::post('addTransfers',[TransfersController::class, 'addTransfers'])->name('addTransfers');

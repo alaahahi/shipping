@@ -54,7 +54,8 @@ class Car extends Model
         'land_shipping',
         'land_shipping_s',
         'land_shipping_dinar',
-        'land_shipping_dinar_s'
+        'land_shipping_dinar_s',
+        'car_price'
     ];
     public function user()
     {
@@ -127,5 +128,15 @@ class Car extends Model
     {
         // Calculate and return the sum of amountDinar for all related expenses
         return $this->carexpenses->sum('amountDinar');
+    }
+
+    public function internalSale()
+    {
+        return $this->hasOne(InternalSale::class, 'car_id');
+    }
+
+    public function carSale()
+    {
+        return $this->hasOne(CarSale::class, 'car_id');
     }
   }

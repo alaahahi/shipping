@@ -555,6 +555,179 @@ class DatabaseSyncService
     }
 
     /**
+     * التأكد من وجود الجدول في MySQL مع نفس البنية من SQLite
+     */
+    protected function ensureTableExistsReverse($sqliteDb, $mysqlDb, string $tableName): void
+    {
+        if ($this->tableExists($mysqlDb, $tableName, false)) {
+            return;
+        }
+
+        Log::info("Creating new table in MySQL from SQLite structure", ['table' => $tableName]);
+
+        // جلب بنية الجدول من SQLite
+        $columns = $this->getTableStructureFromSQLite($sqliteDb, $tableName);
+
+        // إنشاء الجدول في MySQL
+        $this->createTableInMySQLFromSQLite($mysqlDb, $tableName, $columns);
+    }
+
+    /**
+     * جلب بنية الجدول من SQLite
+     */
+    protected function getTableStructureFromSQLite($sqliteDb, string $tableName): array
+    {
+        return $sqliteDb->select("PRAGMA table_info(`{$tableName}`)");
+    }
+
+    /**
+     * إنشاء جدول في MySQL من بنية SQLite
+     */
+    protected function createTableInMySQLFromSQLite($mysqlDb, string $tableName, array $columns): void
+    {
+        // التحقق من أن اسم الجدول آمن
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $tableName)) {
+            throw new Exception("Invalid table name: {$tableName}");
+        }
+
+        $sql = "CREATE TABLE IF NOT EXISTS `{$tableName}` (";
+        $columnDefs = [];
+        $primaryKeyFound = false;
+
+        foreach ($columns as $column) {
+            // تحويل إلى array إذا كان object لتسهيل الوصول
+            $col = is_array($column) ? $column : (array) $column;
+            $name = $col['name'] ?? $column->name ?? null;
+            if (!$name) continue;
+            
+            $sqliteType = $col['type'] ?? $column->type ?? 'TEXT';
+            $type = $this->mapSQLiteTypeToMySQL($sqliteType);
+            $notnull = $col['notnull'] ?? $column->notnull ?? 0;
+            $nullable = $notnull == 0 ? ' NULL' : ' NOT NULL';
+            
+            // معالجة default values
+            $default = '';
+            $dfltValue = $col['dflt_value'] ?? $column->dflt_value ?? null;
+            if ($dfltValue !== null && strtoupper(trim($dfltValue)) !== 'NULL') {
+                $defaultValue = trim($dfltValue, "'\"");
+                // التحقق إذا كان رقم
+                if (is_numeric($defaultValue)) {
+                    $default = " DEFAULT {$defaultValue}";
+                } elseif (in_array(strtoupper($defaultValue), ['CURRENT_TIMESTAMP', 'CURRENT_DATE', 'CURRENT_TIME'])) {
+                    $default = " DEFAULT " . strtoupper($defaultValue);
+                } else {
+                    $defaultValue = str_replace("'", "''", $defaultValue);
+                    $default = " DEFAULT '{$defaultValue}'";
+                }
+            }
+            
+            // إضافة PRIMARY KEY إذا كان pk = 1
+            $pk = $col['pk'] ?? $column->pk ?? 0;
+            if ($pk == 1 && !$primaryKeyFound) {
+                // في MySQL، نستخدم AUTO_INCREMENT للـ PRIMARY KEY إذا كان INTEGER
+                if (strtoupper($type) === 'INT' || strtoupper($type) === 'BIGINT') {
+                    $columnDefs[] = "`{$name}` {$type} PRIMARY KEY AUTO_INCREMENT{$nullable}{$default}";
+                } else {
+                    $columnDefs[] = "`{$name}` {$type} PRIMARY KEY{$nullable}{$default}";
+                }
+                $primaryKeyFound = true;
+            } else {
+                $columnDefs[] = "`{$name}` {$type}{$nullable}{$default}";
+            }
+        }
+
+        $sql .= implode(', ', $columnDefs);
+        $sql .= ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+
+        try {
+            $mysqlDb->statement($sql);
+            Log::info("Successfully created table in MySQL", ['table' => $tableName]);
+        } catch (Exception $e) {
+            Log::error("Failed to create table in MySQL", [
+                'table' => $tableName,
+                'error' => $e->getMessage(),
+                'sql' => $sql
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * تحويل أنواع SQLite إلى MySQL
+     */
+    protected function mapSQLiteTypeToMySQL(string $sqliteType): string
+    {
+        // SQLite قد يخزن الأنواع بأحرف صغيرة أو كبيرة، أو مع معلومات إضافية
+        $type = strtoupper(trim($sqliteType));
+        
+        // إزالة أي معلومات إضافية مثل (255) من النوع
+        $baseType = preg_replace('/\([^)]*\)/', '', $type);
+        $baseType = trim($baseType);
+
+        // أنواع رقمية
+        if (in_array($baseType, ['INTEGER', 'INT'])) {
+            // محاولة استخراج الحجم إذا كان موجوداً
+            if (preg_match('/\((\d+)\)/', $type, $matches)) {
+                $size = (int)$matches[1];
+                if ($size <= 11) {
+                    return 'INT';
+                } elseif ($size <= 20) {
+                    return 'BIGINT';
+                }
+            }
+            return 'INT';
+        }
+        if ($baseType === 'BIGINT') {
+            return 'BIGINT';
+        }
+        if (in_array($baseType, ['TINYINT', 'SMALLINT', 'MEDIUMINT'])) {
+            return $baseType;
+        }
+
+        // أنواع فاصلة عائمة
+        if (in_array($baseType, ['REAL', 'FLOAT', 'DOUBLE'])) {
+            return 'DOUBLE';
+        }
+        if (in_array($baseType, ['NUMERIC', 'DECIMAL'])) {
+            // محاولة استخراج الدقة
+            if (preg_match('/\((\d+),(\d+)\)/', $type, $matches)) {
+                return "DECIMAL({$matches[1]},{$matches[2]})";
+            }
+            return 'DECIMAL(10,2)';
+        }
+
+        // أنواع نصية
+        if ($baseType === 'TEXT') {
+            return 'TEXT';
+        }
+        if ($baseType === 'VARCHAR' || $baseType === 'CHAR') {
+            // محاولة استخراج الحجم
+            if (preg_match('/\((\d+)\)/', $type, $matches)) {
+                $length = min((int)$matches[1], 65535);
+                if ($length <= 255) {
+                    return "VARCHAR({$length})";
+                } else {
+                    return 'TEXT';
+                }
+            }
+            return 'VARCHAR(255)';
+        }
+
+        // أنواع تاريخ ووقت
+        if (in_array($baseType, ['DATE', 'TIME', 'DATETIME', 'TIMESTAMP'])) {
+            return $baseType;
+        }
+
+        // أنواع ثنائية
+        if ($baseType === 'BLOB') {
+            return 'BLOB';
+        }
+
+        // افتراضي - نص (SQLite يستخدم TEXT كافتراضي)
+        return 'TEXT';
+    }
+
+    /**
      * جلب بنية الجدول
      */
     protected function getTableStructure($db, string $tableName, bool $isSQLite): array
@@ -906,6 +1079,9 @@ class DatabaseSyncService
         if (!$this->tableExists($sqliteDb, $tableName, true)) {
             throw new Exception("Table {$tableName} does not exist in SQLite");
         }
+
+        // التأكد من وجود الجدول في MySQL - إنشاؤه إذا لم يكن موجوداً
+        $this->ensureTableExistsReverse($sqliteDb, $mysqlDb, $tableName);
 
         // التحقق من وجود عمود id و updated_at
         $hasId = $this->hasColumn($sqliteDb, $tableName, 'id');

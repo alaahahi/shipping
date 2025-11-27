@@ -30,6 +30,7 @@ class User extends Authenticatable
         'parent_id',
         'is_band',
         'phone',
+        'has_internal_sales',
         'device',
         'created',
         'year_date'
@@ -77,5 +78,15 @@ class User extends Authenticatable
     public function wallet()
     {
         return $this->hasOne(Wallet::class);
+    }
+
+    public function internalSales()
+    {
+        return $this->hasMany(InternalSale::class, 'client_id');
+    }
+
+    public function carSales()
+    {
+        return $this->hasMany(CarSale::class, 'buyer_id');
     }
 }

@@ -36,6 +36,19 @@ const props = defineProps({
                           class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
                           v-model="formData.phone" />
                         </div>
+                        <div className="mb-4 mx-5">
+                        <label class="flex items-center cursor-pointer">
+                          <span class="mr-3 text-sm font-medium dark:text-gray-200">تفعيل المبيعات الداخلية</span>
+                          <div class="relative">
+                            <input 
+                              type="checkbox" 
+                              class="sr-only peer" 
+                              v-model="formData.has_internal_sales"
+                            >
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                          </div>
+                        </label>
+                        </div>
             </div>
   
             <div class="modal-footer my-2">
