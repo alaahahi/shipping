@@ -21,17 +21,24 @@ $Help = new MyHelp();
     }
     </style>
 </head>
+@php
+  // تعريف القيم الافتراضية
+  $currency = '$';
+  $description = '';
+  $amount = 0;
+  $created = '';
+@endphp
+
 @if($transaction)
 
-
   <?php  
-  $currency = $transaction->currency;
-  $description =$transaction->description;
-  $amount= ($transaction->amount)-$transaction->discount;
+  $currency = $transaction->currency ?? '$';
+  $description =$transaction->description ?? '';
+  $amount= ($transaction->amount ?? 0)-($transaction->discount ?? 0);
   if($amount<0){
     $amount= $amount * -1;
   }
-  $created =$transaction->created_at ;
+  $created =$transaction->created_at ?? '';
   ?>
 
 @endif

@@ -291,7 +291,7 @@ function calculateBalance(transaction, index) {
   
   // إنشاء نسخة مرتبة من المعاملات حسب التاريخ والـ ID من الأقدم للأحدث
   const sortedTransactions = [...transactions.value]
-    .filter(t => t && t.currency === transaction.currency)
+    .filter(t => t && (t.currency ?? '$') === (transaction.currency ?? '$'))
     .sort((a, b) => {
       // الترتيب حسب التاريخ أولاً
       const dateA = new Date(a.created_at || a.created || 0);
@@ -653,14 +653,14 @@ function printWallet() {
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ formatBaghdadTimestamp(tran?.created_at) }}</td>
                   <th className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.description }}</th>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
-                    {{ (tran.type == 'inUser' || tran.type == 'inUserAmanah') ? tran.amount+' '+tran.currency : '' }}
+                    {{ (tran.type == 'inUser' || tran.type == 'inUserAmanah') ? tran.amount+' '+(tran.currency ?? '$') : '' }}
                   </td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
-                    {{ (tran.type == 'outUser' || tran.type == 'outUserAmanah') ? tran.amount+' '+tran.currency : '' }}
+                    {{ (tran.type == 'outUser' || tran.type == 'outUserAmanah') ? tran.amount+' '+(tran.currency ?? '$') : '' }}
                   </td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
                     <span v-if="tran.type == 'inUser' || tran.type == 'outUser'">
-                      {{ updateResults(calculateBalance(tran, index)) }} {{ tran.currency }}
+                      {{ updateResults(calculateBalance(tran, index)) }} {{ tran.currency ?? '$' }}
                     </span>
                     <span v-else class="text-gray-400">-</span>
                   </td>

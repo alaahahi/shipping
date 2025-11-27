@@ -1015,27 +1015,73 @@ class UserController extends Controller
 
     public function addPaymentToBuyer(Request $request)
     {
-        $validated = Validator::make($request->all(), [
-            'buyer_id' => 'required|integer|exists:users,id',
-            'merchant_id' => 'required|integer|exists:users,id',
-            'amount' => 'required|numeric|min:0.01',
-            'note' => 'nullable|string|max:1000',
-        ])->validate();
-
         $owner_id = Auth::user()->owner_id;
+        
+        Log::info('addPaymentToBuyer: Request received', [
+            'owner_id' => $owner_id,
+            'request_data' => $request->all(),
+            'user_id' => Auth::id(),
+        ]);
+        
+        try {
+            $validated = Validator::make($request->all(), [
+                'buyer_id' => 'required|integer|exists:users,id',
+                'merchant_id' => 'required|integer|exists:users,id',
+                'amount' => 'required|numeric|min:0.01',
+                'note' => 'nullable|string|max:1000',
+            ])->validate();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('addPaymentToBuyer: Validation failed', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all(),
+            ]);
+            throw $e;
+        }
+
         $buyer_id = $validated['buyer_id'];
         $merchant_id = $validated['merchant_id'];
         $amount = $validated['amount'];
         $note = $validated['note'] ?? '';
 
+        Log::debug('addPaymentToBuyer: Validated data', [
+            'buyer_id' => $buyer_id,
+            'merchant_id' => $merchant_id,
+            'amount' => $amount,
+            'owner_id' => $owner_id,
+        ]);
+
         // التحقق من أن المشتري والتاجر يتبعان نفس owner_id
         $buyer = User::where('id', $buyer_id)
             ->where('owner_id', $owner_id)
-            ->firstOrFail();
+            ->first();
+            
+        if (!$buyer) {
+            Log::error('addPaymentToBuyer: Buyer not found or does not belong to owner', [
+                'buyer_id' => $buyer_id,
+                'owner_id' => $owner_id,
+                'buyer_exists' => User::where('id', $buyer_id)->exists(),
+                'buyer_owner_id' => User::where('id', $buyer_id)->value('owner_id'),
+            ]);
+            return response()->json([
+                'error' => 'المشتري غير موجود أو لا ينتمي للمالك المحدد',
+            ], 404);
+        }
 
         $merchant = User::where('id', $merchant_id)
             ->where('owner_id', $owner_id)
-            ->firstOrFail();
+            ->first();
+            
+        if (!$merchant) {
+            Log::error('addPaymentToBuyer: Merchant not found or does not belong to owner', [
+                'merchant_id' => $merchant_id,
+                'owner_id' => $owner_id,
+                'merchant_exists' => User::where('id', $merchant_id)->exists(),
+                'merchant_owner_id' => User::where('id', $merchant_id)->value('owner_id'),
+            ]);
+            return response()->json([
+                'error' => 'التاجر غير موجود أو لا ينتمي للمالك المحدد',
+            ], 404);
+        }
 
         // جلب جميع المبيعات غير المدفوعة بالكامل للزبون من هذا التاجر
         // ترتيبها حسب تاريخ الإنشاء (الأقدم أولاً) لتطبيق الدفعات بشكل تسلسلي
@@ -1053,7 +1099,22 @@ class UserController extends Controller
             })
             ->values();
 
+        Log::debug('addPaymentToBuyer: Checking unpaid sales', [
+            'unpaid_sales_count' => $unpaidSales->count(),
+            'buyer_id' => $buyer_id,
+            'merchant_id' => $merchant_id,
+        ]);
+
         if ($unpaidSales->isEmpty()) {
+            Log::warning('addPaymentToBuyer: No unpaid sales found', [
+                'buyer_id' => $buyer_id,
+                'merchant_id' => $merchant_id,
+                'all_sales_count' => InternalSale::where('client_id', $buyer_id)
+                    ->whereHas('car', function($query) use ($merchant_id) {
+                        $query->where('client_id', $merchant_id);
+                    })
+                    ->count(),
+            ]);
             return response()->json([
                 'error' => 'لا توجد مبيعات غير مدفوعة لهذا الزبون',
             ], 400);
@@ -1064,7 +1125,16 @@ class UserController extends Controller
             return $sale->sale_price - $sale->paid_amount;
         });
 
+        Log::debug('addPaymentToBuyer: Debt calculation', [
+            'total_debt' => $totalDebt,
+            'requested_amount' => $amount,
+        ]);
+
         if ($amount > $totalDebt) {
+            Log::warning('addPaymentToBuyer: Amount exceeds total debt', [
+                'amount' => $amount,
+                'total_debt' => $totalDebt,
+            ]);
             return response()->json([
                 'error' => 'المبلغ أكبر من الدين المتبقي (' . number_format($totalDebt, 2) . ' $)',
             ], 400);
@@ -1119,6 +1189,13 @@ class UserController extends Controller
 
             DB::commit();
 
+            Log::info('addPaymentToBuyer: Payment added successfully', [
+                'amount' => $amount,
+                'sales_updated' => $salesUpdated,
+                'buyer_id' => $buyer_id,
+                'merchant_id' => $merchant_id,
+            ]);
+
             return response()->json([
                 'message' => 'تم إضافة الدفعة بنجاح',
                 'amount' => $amount,
@@ -1126,8 +1203,24 @@ class UserController extends Controller
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            Log::error('addPaymentToBuyer: Exception occurred', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'owner_id' => $owner_id,
+                'buyer_id' => $buyer_id ?? null,
+                'merchant_id' => $merchant_id ?? null,
+                'amount' => $amount ?? null,
+            ]);
+            
             return response()->json([
                 'error' => 'حدث خطأ: ' . $e->getMessage(),
+                'debug' => [
+                    'file' => basename($e->getFile()),
+                    'line' => $e->getLine(),
+                ],
             ], 500);
         }
     }

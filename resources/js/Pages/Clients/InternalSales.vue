@@ -717,7 +717,27 @@ function closeAddPaymentModal() {
 }
 
 async function handleConfirmPayment(paymentData) {
-  if (!selectedBuyer.value) return;
+  if (!selectedBuyer.value) {
+    toast.error('لم يتم تحديد المشتري', {
+      timeout: 2000,
+      position: "bottom-right",
+      rtl: true,
+    });
+    return;
+  }
+  
+  if (!currentClientId.value) {
+    toast.error('لم يتم تحديد التاجر', {
+      timeout: 2000,
+      position: "bottom-right",
+      rtl: true,
+    });
+    console.error('currentClientId is missing:', {
+      client_id: props.client_id,
+      client: props.client,
+    });
+    return;
+  }
   
   // Handle both old format (just amount) and new format (object with amount and note)
   const amount = typeof paymentData === 'object' ? paymentData.amount : paymentData;
@@ -743,12 +763,16 @@ async function handleConfirmPayment(paymentData) {
 
   isLoadingPayment.value = true;
   try {
-    await axios.post('/api/addPaymentToBuyer', {
-      buyer_id: selectedBuyer.value.id,
-      merchant_id: currentClientId.value,
-      amount: amount,
+    const requestData = {
+      buyer_id: parseInt(selectedBuyer.value.id),
+      merchant_id: parseInt(currentClientId.value),
+      amount: parseFloat(amount),
       note: note
-    });
+    };
+    
+    console.log('Sending payment request:', requestData);
+    
+    await axios.post('/api/addPaymentToBuyer', requestData);
     
     toast.success('تم إضافة الدفعة بنجاح', {
       timeout: 2000,
@@ -760,8 +784,23 @@ async function handleConfirmPayment(paymentData) {
     loadInternalSales();
     loadInternalSalesBuyers();
   } catch (error) {
-    console.error('Error adding payment:', error);
-    toast.error(error.response?.data?.error || 'فشل إضافة الدفعة', {
+    console.error('Error adding payment:', {
+      error: error,
+      response: error.response,
+      message: error.message,
+      requestData: {
+        buyer_id: selectedBuyer.value?.id,
+        merchant_id: currentClientId.value,
+        amount: amount,
+      }
+    });
+    
+    const errorMessage = error.response?.data?.error || 
+                        error.response?.data?.message || 
+                        error.message || 
+                        'فشل إضافة الدفعة';
+    
+    toast.error(errorMessage, {
       timeout: 3000,
       position: "bottom-right",
       rtl: true,

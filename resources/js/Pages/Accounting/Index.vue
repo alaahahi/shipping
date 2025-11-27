@@ -376,10 +376,10 @@ function formatAmount(tran, direction) {
     return '';
   }
   if (direction === 'in' && IN_TYPES.includes(tran.type)) {
-    return `${updateResults(Math.abs(amount))} ${tran.currency ?? ''}`.trim();
+    return `${updateResults(Math.abs(amount))} ${tran.currency ?? '$'}`.trim();
   }
   if (direction === 'out' && OUT_TYPES.includes(tran.type)) {
-    return `${updateResults(Math.abs(amount))} ${tran.currency ?? ''}`.trim();
+    return `${updateResults(Math.abs(amount))} ${tran.currency ?? '$'}`.trim();
   }
   return '';
 }

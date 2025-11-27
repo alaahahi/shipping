@@ -13,17 +13,24 @@ $Help = new MyHelp();
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 </head>
+@php
+  // تعريف القيم الافتراضية
+  $currency = '$';
+  $description = '';
+  $amount = 0;
+  $created = '';
+@endphp
+
 @if($transaction)
 
-
   <?php  
-  $currency = $transaction->currency;
-  $description =$transaction->description;
-  $amount= ($transaction->amount)-$transaction->discount;
+  $currency = $transaction->currency ?? '$';
+  $description =$transaction->description ?? '';
+  $amount= ($transaction->amount ?? 0)-($transaction->discount ?? 0);
   if($amount<0){
     $amount= $amount * -1;
   }
-  $created =$transaction->created_at ;
+  $created =$transaction->created_at ?? '';
   ?>
 
 @endif
@@ -107,7 +114,7 @@ $Help = new MyHelp();
     {{$amount??0}}
     </div>
     <div class="col-1 alert-primary border p-2">
-      {{$currency}}
+      {{$currency ?? '$'}}
     </div>
     <div class="col-8 text-start ps-5">
       اسم وتوقيع المستلم
@@ -257,7 +264,7 @@ $Help = new MyHelp();
       {{$amount??0}}
       </div>
       <div class="col-1 alert-primary border p-2">
-      {{$currency}}
+      {{$currency ?? '$'}}
       </div>
       <div class="col-8 text-start ps-5">
         اسم وتوقيع المستلم
