@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Services\AccountingCacheService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -459,18 +460,50 @@ class UserController extends Controller
             if (!$client_id && $validated['client_name']) {
                 $internalSalesClientTypeId = $this->accounting->userInternalSalesClient();
                 
+                Log::info('addInternalSale: Checking for internal_sales_client user type', [
+                    'owner_id' => $owner_id,
+                    'cache_value' => $internalSalesClientTypeId,
+                    'client_name' => $validated['client_name'],
+                ]);
+                
                 // إذا لم يكن موجوداً في الكاش، جلب من قاعدة البيانات مباشرة
                 if (!$internalSalesClientTypeId) {
+                    Log::warning('addInternalSale: internal_sales_client not found in cache, checking database', [
+                        'owner_id' => $owner_id,
+                    ]);
+                    
                     $internalSalesClientTypeId = \App\Models\UserType::where('name', 'internal_sales_client')->first()?->id;
                     
-                    // إذا لم يكن موجوداً في قاعدة البيانات أيضاً، إرجاع خطأ
+                    // إذا لم يكن موجوداً في قاعدة البيانات أيضاً، إرجاع خطأ تفصيلي
                     if (!$internalSalesClientTypeId) {
+                        // جلب جميع أنواع المستخدمين الموجودة للمساعدة في التشخيص
+                        $allUserTypes = \App\Models\UserType::select('id', 'name')->get()->toArray();
+                        $cacheStatus = Cache::get('user_type_internal_sales_client');
+                        
+                        Log::error('addInternalSale: internal_sales_client user type not found', [
+                            'owner_id' => $owner_id,
+                            'cache_status' => $cacheStatus,
+                            'available_user_types' => $allUserTypes,
+                            'user_agent' => $request->userAgent(),
+                            'request_data' => $validated,
+                        ]);
+                        
                         return response()->json([
                             'error' => 'نوع المستخدم للمبيعات الداخلية غير موجود. يرجى تشغيل migration أولاً.',
+                            'debug' => [
+                                'cache_value' => $cacheStatus,
+                                'available_user_types' => $allUserTypes,
+                                'searched_for' => 'internal_sales_client',
+                            ],
                         ], 500);
                     }
                     
                     // تحديث الكاش
+                    Log::info('addInternalSale: Found internal_sales_client in database, updating cache', [
+                        'type_id' => $internalSalesClientTypeId,
+                        'owner_id' => $owner_id,
+                    ]);
+                    
                     \Illuminate\Support\Facades\Cache::rememberForever('user_type_internal_sales_client', fn () => $internalSalesClientTypeId);
                 }
                 
@@ -495,13 +528,47 @@ class UserController extends Controller
 
             // Verify client belongs to owner and is internal sales client or has internal sales enabled
             $internalSalesClientTypeId = $this->accounting->userInternalSalesClient();
+            
+            Log::debug('addInternalSale: Verifying client', [
+                'client_id' => $client_id,
+                'owner_id' => $owner_id,
+                'internal_sales_client_type_id' => $internalSalesClientTypeId,
+            ]);
+            
             $client = User::where('id', $client_id)
                 ->where('owner_id', $owner_id)
                 ->where(function($query) use ($internalSalesClientTypeId) {
                     $query->where('type_id', $internalSalesClientTypeId)
                           ->orWhere('has_internal_sales', true);
                 })
-                ->firstOrFail();
+                ->first();
+            
+            if (!$client) {
+                Log::warning('addInternalSale: Client verification failed - client does not match internal sales criteria', [
+                    'client_id' => $client_id,
+                    'owner_id' => $owner_id,
+                    'internal_sales_client_type_id' => $internalSalesClientTypeId,
+                    'client_exists' => User::where('id', $client_id)->exists(),
+                    'client_owner_id' => User::where('id', $client_id)->value('owner_id'),
+                    'client_type_id' => User::where('id', $client_id)->value('type_id'),
+                    'client_has_internal_sales' => User::where('id', $client_id)->value('has_internal_sales'),
+                ]);
+                
+                // محاولة العثور على العميل بدون التحقق من نوعه
+                $client = User::where('id', $client_id)
+                    ->where('owner_id', $owner_id)
+                    ->first();
+                    
+                if (!$client) {
+                    Log::error('addInternalSale: Client not found or does not belong to owner', [
+                        'client_id' => $client_id,
+                        'owner_id' => $owner_id,
+                    ]);
+                    throw new \Exception('العميل غير موجود أو لا ينتمي للمالك المحدد');
+                }
+                
+                throw new \Exception('العميل غير مفعل للمبيعات الداخلية. يرجى تفعيل المبيعات الداخلية للعميل أو اختيار عميل آخر.');
+            }
 
             // Check if sale already exists for this car
             $existingSale = InternalSale::where('car_id', $validated['car_id'])
@@ -567,8 +634,24 @@ class UserController extends Controller
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            // تسجيل تفصيلي للخطأ
+            Log::error('addInternalSale: Exception occurred', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'owner_id' => $owner_id ?? null,
+                'request_data' => $validated ?? null,
+                'user_id' => Auth::id() ?? null,
+            ]);
+            
             return response()->json([
                 'error' => 'حدث خطأ: ' . $e->getMessage(),
+                'debug' => [
+                    'file' => basename($e->getFile()),
+                    'line' => $e->getLine(),
+                ],
             ], 500);
         }
     }
@@ -596,14 +679,47 @@ class UserController extends Controller
             if (!$client_id && $validated['client_name']) {
                 $internalSalesClientTypeId = $this->accounting->userInternalSalesClient();
                 
+                Log::info('addBulkInternalSale: Checking for internal_sales_client user type', [
+                    'owner_id' => $owner_id,
+                    'cache_value' => $internalSalesClientTypeId,
+                    'client_name' => $validated['client_name'],
+                    'cars_count' => count($validated['cars'] ?? []),
+                ]);
+                
                 if (!$internalSalesClientTypeId) {
+                    Log::warning('addBulkInternalSale: internal_sales_client not found in cache, checking database', [
+                        'owner_id' => $owner_id,
+                    ]);
+                    
                     $internalSalesClientTypeId = \App\Models\UserType::where('name', 'internal_sales_client')->first()?->id;
                     
                     if (!$internalSalesClientTypeId) {
+                        // جلب جميع أنواع المستخدمين الموجودة للمساعدة في التشخيص
+                        $allUserTypes = \App\Models\UserType::select('id', 'name')->get()->toArray();
+                        $cacheStatus = Cache::get('user_type_internal_sales_client');
+                        
+                        Log::error('addBulkInternalSale: internal_sales_client user type not found', [
+                            'owner_id' => $owner_id,
+                            'cache_status' => $cacheStatus,
+                            'available_user_types' => $allUserTypes,
+                            'user_agent' => $request->userAgent(),
+                            'cars_count' => count($validated['cars'] ?? []),
+                        ]);
+                        
                         return response()->json([
                             'error' => 'نوع المستخدم للمبيعات الداخلية غير موجود. يرجى تشغيل migration أولاً.',
+                            'debug' => [
+                                'cache_value' => $cacheStatus,
+                                'available_user_types' => $allUserTypes,
+                                'searched_for' => 'internal_sales_client',
+                            ],
                         ], 500);
                     }
+                    
+                    Log::info('addBulkInternalSale: Found internal_sales_client in database, updating cache', [
+                        'type_id' => $internalSalesClientTypeId,
+                        'owner_id' => $owner_id,
+                    ]);
                     
                     \Illuminate\Support\Facades\Cache::rememberForever('user_type_internal_sales_client', fn () => $internalSalesClientTypeId);
                 }
@@ -704,8 +820,24 @@ class UserController extends Controller
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            // تسجيل تفصيلي للخطأ
+            Log::error('addBulkInternalSale: Exception occurred', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'owner_id' => $owner_id ?? null,
+                'request_data' => $validated ?? null,
+                'user_id' => Auth::id() ?? null,
+            ]);
+            
             return response()->json([
                 'error' => 'حدث خطأ: ' . $e->getMessage(),
+                'debug' => [
+                    'file' => basename($e->getFile()),
+                    'line' => $e->getLine(),
+                ],
             ], 500);
         }
     }
