@@ -58,6 +58,7 @@ let bulkSaleForm = ref({
   sale_date: '',
   showNewClientForm: false
 });
+let searchTerm = ref('');
 
 const currentClientId = computed(() => {
   return props.client_id || props.client?.id;
@@ -128,6 +129,37 @@ const availableClients = computed(() => {
     }));
   }
   return [];
+});
+
+// تصفية المبيعات بناءً على البحث
+const filteredInternalSales = computed(() => {
+  if (!searchTerm.value || searchTerm.value.trim() === '') {
+    return internalSalesData.value;
+  }
+  
+  const search = searchTerm.value.toLowerCase().trim();
+  
+  return internalSalesData.value.filter(sale => {
+    // البحث في رقم الشاصي (VIN)
+    const vin = (sale.car?.vin || '').toLowerCase();
+    // البحث في رقم السيارة (car_number)
+    const carNumber = (sale.car?.car_number || '').toLowerCase();
+    // البحث في نوع السيارة
+    const carType = (sale.car?.car_type || '').toLowerCase();
+    // البحث في سنة السيارة
+    const year = (sale.car?.year || '').toString().toLowerCase();
+    // البحث في اسم الزبون
+    const clientName = (sale.client?.name || '').toLowerCase();
+    // البحث في رقم هاتف الزبون
+    const clientPhone = (sale.client?.phone || '').toLowerCase();
+    
+    return vin.includes(search) || 
+           carNumber.includes(search) || 
+           carType.includes(search) || 
+           year.includes(search) ||
+           clientName.includes(search) ||
+           clientPhone.includes(search);
+  });
 });
 
 function onCarSelected() {
@@ -556,10 +588,19 @@ function toggleSaleSelection(saleId) {
 }
 
 function toggleSelectAll() {
-  if (selectedSales.value.length === internalSalesData.value.length) {
-    selectedSales.value = [];
+  const filteredIds = filteredInternalSales.value.map(sale => sale.id);
+  const allSelected = filteredIds.length > 0 && filteredIds.every(id => selectedSales.value.includes(id));
+  
+  if (allSelected) {
+    // إزالة المحددات من النتائج المصفاة فقط
+    selectedSales.value = selectedSales.value.filter(id => !filteredIds.includes(id));
   } else {
-    selectedSales.value = internalSalesData.value.map(sale => sale.id);
+    // إضافة جميع النتائج المصفاة
+    filteredIds.forEach(id => {
+      if (!selectedSales.value.includes(id)) {
+        selectedSales.value.push(id);
+      }
+    });
   }
 }
 
@@ -1170,6 +1211,30 @@ onMounted(() => {
           </div>
 
           <div v-else class="overflow-x-auto shadow-md sm:rounded-lg">
+            <!-- حقل البحث -->
+            <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-2">
+                <InputLabel for="search_sale" value="بحث عن بيع السيارة:" class="!mb-0" />
+                <TextInput
+                  id="search_sale"
+                  v-model="searchTerm"
+                  type="text"
+                  placeholder="ابحث بالشانصي (VIN)، رقم السيارة، نوع السيارة، اسم الزبون..."
+                  class="flex-1"
+                />
+                <button
+                  v-if="searchTerm"
+                  @click="searchTerm = ''"
+                  class="px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                >
+                  ✕
+                </button>
+              </div>
+              <p v-if="searchTerm" class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                تم العثور على {{ filteredInternalSales.length }} من {{ internalSalesData.length }} مبيعة
+              </p>
+            </div>
+            
             <div v-if="selectedSales.length > 0" class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 flex justify-between items-center">
               <span class="text-blue-700 dark:text-blue-300 font-medium">
                 تم اختيار {{ selectedSales.length }} مبيعة
@@ -1187,7 +1252,7 @@ onMounted(() => {
                   <th class="px-2 py-3 print:hidden">
                     <input
                       type="checkbox"
-                      :checked="selectedSales.length === internalSalesData.length && internalSalesData.length > 0"
+                      :checked="selectedSales.length === filteredInternalSales.length && filteredInternalSales.length > 0"
                       @change="toggleSelectAll"
                       class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                     />
@@ -1209,7 +1274,7 @@ onMounted(() => {
               </thead>
               <tbody>
                 <tr 
-                  v-for="(sale, index) in internalSalesData" 
+                  v-for="(sale, index) in filteredInternalSales" 
                   :key="sale.id"
                   class="bg-white border-b dark:bg-gray-900 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                 >
@@ -1267,9 +1332,10 @@ onMounted(() => {
                     </button>
                   </td>
                 </tr>
-                <tr v-if="internalSalesData.length === 0" class="bg-gray-100 dark:bg-gray-800">
+                <tr v-if="filteredInternalSales.length === 0" class="bg-gray-100 dark:bg-gray-800">
                   <td colspan="13" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                    لا توجد مبيعات داخلية
+                    <span v-if="searchTerm">لا توجد نتائج للبحث "{{ searchTerm }}"</span>
+                    <span v-else>لا توجد مبيعات داخلية</span>
                   </td>
                 </tr>
               </tbody>

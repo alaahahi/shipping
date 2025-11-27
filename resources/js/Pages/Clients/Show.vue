@@ -1279,6 +1279,7 @@ async function savePaymentDescription(payment) {
           {{ $t("sales_bill") }}
         </h2>
         <Link 
+          v-if="props.client?.has_internal_sales"
           :href="`/internalSales/${currentClientId}`" 
           class="px-4 py-2 text-white bg-purple-600 rounded hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 flex items-center gap-2"
         >

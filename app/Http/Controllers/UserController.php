@@ -62,6 +62,10 @@ class UserController extends Controller
         $q = request()->query('q');
         $clients = User::with('wallet')->where('owner_id',$owner_id)->where('type_id', $this->accounting->userClient())->get();
         $client= user::find($id);
+        // إضافة has_internal_sales إلى بيانات client
+        if ($client) {
+            $client->has_internal_sales = (bool)($client->has_internal_sales ?? false);
+        }
         $this->accounting->loadAccounts(Auth::user()->owner_id);
         return Inertia::render('Clients/Show', ['url'=>$this->url,'client'=>$client,'clients'=>$clients,'client_id'=>$id,'q'=>$q]);
     }
