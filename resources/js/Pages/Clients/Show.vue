@@ -2069,6 +2069,15 @@ async function savePaymentDescription(payment) {
                       >
                       <print class="inline-flex" />
                       </a>
+                      <Link
+                        v-if="props.client?.has_internal_sales"
+                        :href="`/internalSales/${currentClientId}?car_id=${item.data.id}`"
+                        tabIndex="1"
+                        class="px-1 py-1  text-white  m-1 bg-purple-600 rounded hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800"
+                        title="بيع في المبيعات الداخلية"
+                      >
+                        💰
+                      </Link>
                     </td>
                     <td  className="border dark:border-gray-800 text-start px-2 py-1 print:hidden">
                       <a

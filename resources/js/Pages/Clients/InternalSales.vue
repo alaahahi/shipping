@@ -59,6 +59,7 @@ let bulkSaleForm = ref({
   showNewClientForm: false
 });
 let searchTerm = ref('');
+let searchUnsoldCars = ref('');
 
 const currentClientId = computed(() => {
   return props.client_id || props.client?.id;
@@ -159,6 +160,31 @@ const filteredInternalSales = computed(() => {
            year.includes(search) ||
            clientName.includes(search) ||
            clientPhone.includes(search);
+  });
+});
+
+// تصفية السيارات المتاحة للبيع بناءً على البحث
+const filteredUnsoldCars = computed(() => {
+  if (!searchUnsoldCars.value || searchUnsoldCars.value.trim() === '') {
+    return unsoldCars.value;
+  }
+  
+  const search = searchUnsoldCars.value.toLowerCase().trim();
+  
+  return unsoldCars.value.filter(car => {
+    // البحث في رقم الشاصي (VIN)
+    const vin = (car.vin || '').toLowerCase();
+    // البحث في رقم السيارة (car_number)
+    const carNumber = (car.car_number || '').toLowerCase();
+    // البحث في نوع السيارة
+    const carType = (car.car_type || '').toLowerCase();
+    // البحث في سنة السيارة
+    const year = (car.year || '').toString().toLowerCase();
+    
+    return vin.includes(search) || 
+           carNumber.includes(search) || 
+           carType.includes(search) || 
+           year.includes(search);
   });
 });
 
@@ -864,6 +890,23 @@ onMounted(() => {
     loadInternalSalesBuyers();
     loadUnsoldCars();
     loadAllClients();
+    
+    // التحقق من وجود car_id في query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const carId = urlParams.get('car_id');
+    if (carId) {
+      // انتظار تحميل السيارات ثم فتح نموذج البيع
+      setTimeout(async () => {
+        await loadUnsoldCars();
+        const car = unsoldCars.value.find(c => c.id == carId);
+        if (car) {
+          openAddInternalSale(car);
+        }
+        // إزالة car_id من URL
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }, 500);
+    }
   }
 });
 </script>
@@ -979,12 +1022,40 @@ onMounted(() => {
                بيع مجمع
              </button>
           </div>
+          
+          <!-- حقل البحث في السيارات المتاحة -->
+          <div class="mb-4 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center gap-2">
+              <InputLabel for="search_unsold_cars" value="بحث في السيارات المتاحة:" class="!mb-0" />
+              <TextInput
+                id="search_unsold_cars"
+                v-model="searchUnsoldCars"
+                type="text"
+                placeholder="ابحث بالشانصي (VIN)، رقم السيارة، نوع السيارة، السنة..."
+                class="flex-1"
+              />
+              <button
+                v-if="searchUnsoldCars"
+                @click="searchUnsoldCars = ''"
+                class="px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              >
+                ✕
+              </button>
+            </div>
+            <p v-if="searchUnsoldCars" class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              تم العثور على {{ filteredUnsoldCars.length }} من {{ unsoldCars.length }} سيارة
+            </p>
+          </div>
          
           <div v-if="isLoadingUnsoldCars" class="text-center py-4">
             <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
           </div>
           <div v-else-if="unsoldCars.length === 0" class="text-center py-4 text-gray-500 dark:text-gray-400">
             لا توجد سيارات متاحة للبيع حالياً
+          </div>
+          <div v-else-if="filteredUnsoldCars.length === 0" class="text-center py-4 text-gray-500 dark:text-gray-400">
+            <span v-if="searchUnsoldCars">لا توجد نتائج للبحث "{{ searchUnsoldCars }}"</span>
+            <span v-else>لا توجد سيارات متاحة للبيع حالياً</span>
           </div>
           <div v-else class="overflow-x-auto max-h-96 overflow-y-auto">
             <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center">
@@ -1000,7 +1071,7 @@ onMounted(() => {
               </thead>
               <tbody>
                 <tr 
-                  v-for="car in unsoldCars" 
+                  v-for="car in filteredUnsoldCars" 
                   :key="car.id"
                   class="bg-white border-b dark:bg-gray-900 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                 >
