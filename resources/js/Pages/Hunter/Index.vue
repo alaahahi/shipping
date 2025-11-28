@@ -9,7 +9,7 @@ import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
 
 import ModalAddCarsHunter from "@/Components/ModalAddCarsHunter.vue";
-
+import ModalCarWarning from "@/Components/ModalCarWarning.vue";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
 import ModalUpdateCarsHunter from "@/Components/ModalUpdateCarsHunter.vue";
 import InfiniteLoading from "v3-infinite-loading";
@@ -27,6 +27,8 @@ let showModal = ref(false);
 let showModalAddCarsHunter =  ref(false);
 let showModalUpdateCarsHunter=ref(false);
 let showModalDelCar =  ref(false);
+let showModalCarWarning = ref(false);
+let carWarningData = ref(null);
 let mainAccount= ref(0)
 let allCars= ref(0)
 let saveCar= ref(false)
@@ -153,6 +155,21 @@ function confirmDelCar(V) {
 
 
 const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce delay (in milliseconds) as needed
+function handleCarExists(carData) {
+  carWarningData.value = carData;
+  showModalCarWarning.value = true;
+}
+
+function handleCarUpdated(updatedData) {
+  // Refresh the car list after update
+  refresh();
+  toast.success("تم تحديث معلومات السيارة بنجاح", {
+    timeout: 3000,
+    position: "bottom-right",
+    rtl: true
+  });
+}
+
 function confirmCar(V) {
   axios.post('/api/addCarsHunter',V)
   .then(response => {
@@ -199,19 +216,26 @@ function getDownloadUrl(name,year) {
             :formData="formData"
             :saveCar="saveCar"
             :show="showModalAddCarsHunter ? true : false"
-            :client="clientHunter"
             @a="confirmCar($event)"
+            @carExists="handleCarExists($event)"
             @close="showModalAddCarsHunter = false;saveCar=0;refresh()"
             >
         <template #header>
           </template>
     </ModalAddCarsHunter>
 
+    <ModalCarWarning
+            :show="showModalCarWarning ? true : false"
+            :carData="carWarningData"
+            @close="showModalCarWarning = false; carWarningData = null"
+            @updated="handleCarUpdated($event)"
+            >
+    </ModalCarWarning>
+
     <ModalUpdateCarsHunter
             :formData="formData"
             :saveCar="saveCar"
             :show="showModalUpdateCarsHunter ? true : false"
-            :client="clientHunter"
             @a="confirmUpdateCar($event)"
             @close="showModalUpdateCarsHunter = false"
             >

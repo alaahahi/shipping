@@ -13,8 +13,14 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('car', function (Blueprint $table) {
-            $table->decimal('car_price', 15, 2)->default(0)->after('total_s')->comment('سعر السيارة للمبيعات الداخلية');
+        Schema::create('car_images_hunter', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->integer('year')->nullable();
+            $table->unsignedBigInteger('car_id');
+            $table->timestamps();
+            
+            $table->index('car_id');
         });
     }
 
@@ -25,17 +31,7 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('car', function (Blueprint $table) {
-            $table->dropColumn('car_price');
-        });
+        Schema::dropIfExists('car_images_hunter');
     }
 };
-
-
-
-
-
-
-
-
 

@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use App\Models\Hunter;
+use App\Models\Car;
+use App\Models\CarExpenses;
  
 
 use Intervention\Image\Facades\Image;
@@ -184,5 +186,370 @@ class HunterController extends Controller
             return response()->json(false); 
 
         }
+    }
+
+    /**
+     * Check if car exists in CARS table by VIN
+     */
+    public function checkCarInCars(Request $request)
+    {
+        $owner_id = Auth::user()->owner_id;
+        $vin = $request->get('vin');
+        
+        if (!$vin) {
+            return response()->json(['exists' => false], 200);
+        }
+
+        $car = Car::where('vin', $vin)
+            ->where('owner_id', $owner_id)
+            ->with(['client', 'carexpenses'])
+            ->first();
+
+        if ($car) {
+            // Calculate expenses from purchases (total, expenses, etc.)
+            $purchaseExpenses = [
+                'total' => $car->total ?? 0,
+                'expenses' => $car->expenses ?? 0,
+                'checkout' => $car->checkout ?? 0,
+                'shipping_dolar' => $car->shipping_dolar ?? 0,
+                'coc_dolar' => $car->coc_dolar ?? 0,
+                'dinar' => $car->dinar ?? 0,
+                'land_shipping' => $car->land_shipping ?? 0,
+                'land_shipping_dinar' => $car->land_shipping_dinar ?? 0,
+            ];
+
+            // Calculate expenses from sales (total_s, expenses_s, etc.)
+            $salesExpenses = [
+                'total_s' => $car->total_s ?? 0,
+                'expenses_s' => $car->expenses_s ?? 0,
+                'checkout_s' => $car->checkout_s ?? 0,
+                'shipping_dolar_s' => $car->shipping_dolar_s ?? 0,
+                'coc_dolar_s' => $car->coc_dolar_s ?? 0,
+                'dinar_s' => $car->dinar_s ?? 0,
+                'land_shipping_s' => $car->land_shipping_s ?? 0,
+                'land_shipping_dinar_s' => $car->land_shipping_dinar_s ?? 0,
+            ];
+
+            // Get additional expenses from car_expenses table
+            $additionalExpenses = $car->carexpenses->map(function($expense) {
+                return [
+                    'id' => $expense->id,
+                    'note' => $expense->note,
+                    'amount_dollar' => $expense->amount_dollar ?? 0,
+                    'amount_dinar' => $expense->amount_dinar ?? 0,
+                    'created' => $expense->created,
+                ];
+            });
+
+            // Calculate total additional expenses in dollars
+            $totalAdditionalExpenses = $car->carexpenses->sum('amount_dollar');
+
+            // Calculate total purchases (including additional expenses)
+            $totalPurchases = ($car->total ?? 0) + $totalAdditionalExpenses;
+
+            // Calculate total sales
+            $totalSales = $car->total_s ?? 0;
+
+            // Calculate profit (sales - purchases including additional expenses)
+            $profit = $totalSales - $totalPurchases;
+
+            return response()->json([
+                'exists' => true,
+                'car' => [
+                    'id' => $car->id,
+                    'vin' => $car->vin,
+                    'car_type' => $car->car_type,
+                    'year' => $car->year,
+                    'car_color' => $car->car_color,
+                    'note' => $car->note,
+                    'client' => $car->client ? [
+                        'id' => $car->client->id,
+                        'name' => $car->client->name,
+                    ] : null,
+                    'purchase_expenses' => $purchaseExpenses,
+                    'sales_expenses' => $salesExpenses,
+                    'additional_expenses' => $additionalExpenses,
+                    'total_purchases' => $totalPurchases, // إجمالي المشتريات (بما في ذلك المصاريف الإضافية)
+                    'total_sales' => $totalSales, // إجمالي المبيعات
+                    'profit' => $profit, // الربح
+                    'paid' => $car->paid ?? 0,
+                    'discount' => $car->discount ?? 0,
+                    'results' => $car->results ?? 0,
+                ]
+            ], 200);
+        }
+
+        // If car not found in current project, check in second project
+        $secondProjectUrl = env('SECOND_PROJECT_URL');
+        $apiKey = env('API_KEY');
+        
+        if ($secondProjectUrl && $apiKey) {
+            try {
+                $response = Http::withHeaders([
+                    'X-API-Key' => $apiKey,
+                    'Accept' => 'application/json',
+                ])->timeout(5)->get(rtrim($secondProjectUrl, '/') . '/api/external/checkCar', [
+                    'vin' => $vin,
+                ]);
+
+                if ($response->successful()) {
+                    $responseData = $response->json();
+                    if (isset($responseData['exists']) && $responseData['exists']) {
+                        return response()->json([
+                            'exists' => true,
+                            'from_second_project' => true,
+                            'message' => 'تم العثور على السيارة في المشروع الثاني',
+                            'car' => $responseData['car'] ?? null
+                        ], 200);
+                    }
+                }
+            } catch (\Illuminate\Http\Client\ConnectionException $e) {
+                // Connection timeout or network error
+                \Log::warning('Failed to connect to second project: ' . $e->getMessage());
+            } catch (\Exception $e) {
+                // Other errors
+                \Log::warning('Failed to check car in second project: ' . $e->getMessage());
+            }
+        }
+
+        return response()->json(['exists' => false], 200);
+    }
+
+    /**
+     * External API: Check car by VIN (for second project)
+     * This endpoint is public but requires API key
+     */
+    public function externalCheckCar(Request $request)
+    {
+        $vin = $request->get('vin');
+        
+        if (!$vin) {
+            return response()->json(['exists' => false], 200);
+        }
+
+        // Get all owner_ids or use a specific one
+        // For now, we'll search across all owners
+        $car = Car::where('vin', $vin)
+            ->with(['client', 'carexpenses'])
+            ->first();
+
+        if ($car) {
+            // Calculate expenses from purchases
+            $purchaseExpenses = [
+                'total' => $car->total ?? 0,
+                'expenses' => $car->expenses ?? 0,
+                'checkout' => $car->checkout ?? 0,
+                'shipping_dolar' => $car->shipping_dolar ?? 0,
+                'coc_dolar' => $car->coc_dolar ?? 0,
+                'dinar' => $car->dinar ?? 0,
+                'land_shipping' => $car->land_shipping ?? 0,
+                'land_shipping_dinar' => $car->land_shipping_dinar ?? 0,
+            ];
+
+            // Calculate expenses from sales
+            $salesExpenses = [
+                'total_s' => $car->total_s ?? 0,
+                'expenses_s' => $car->expenses_s ?? 0,
+                'checkout_s' => $car->checkout_s ?? 0,
+                'shipping_dolar_s' => $car->shipping_dolar_s ?? 0,
+                'coc_dolar_s' => $car->coc_dolar_s ?? 0,
+                'dinar_s' => $car->dinar_s ?? 0,
+                'land_shipping_s' => $car->land_shipping_s ?? 0,
+                'land_shipping_dinar_s' => $car->land_shipping_dinar_s ?? 0,
+            ];
+
+            // Get additional expenses
+            $additionalExpenses = $car->carexpenses->map(function($expense) {
+                return [
+                    'id' => $expense->id,
+                    'note' => $expense->note,
+                    'amount_dollar' => $expense->amount_dollar ?? 0,
+                    'amount_dinar' => $expense->amount_dinar ?? 0,
+                    'created' => $expense->created,
+                ];
+            });
+
+            // Calculate profit
+            $profit = ($car->total_s ?? 0) - ($car->total ?? 0);
+
+            return response()->json([
+                'exists' => true,
+                'car' => [
+                    'id' => $car->id,
+                    'vin' => $car->vin,
+                    'car_type' => $car->car_type,
+                    'year' => $car->year,
+                    'car_color' => $car->car_color,
+                    'note' => $car->note,
+                    'client' => $car->client ? [
+                        'id' => $car->client->id,
+                        'name' => $car->client->name,
+                    ] : null,
+                    'purchase_expenses' => $purchaseExpenses,
+                    'sales_expenses' => $salesExpenses,
+                    'additional_expenses' => $additionalExpenses,
+                    'profit' => $profit,
+                    'paid' => $car->paid ?? 0,
+                    'discount' => $car->discount ?? 0,
+                    'results' => $car->results ?? 0,
+                ]
+            ], 200);
+        }
+
+        return response()->json(['exists' => false], 200);
+    }
+
+    /**
+     * External API: Get sales data (for trader)
+     * This endpoint is public but requires API key
+     */
+    public function externalGetSales(Request $request)
+    {
+        $from = $request->get('from');
+        $to = $request->get('to');
+        $vin = $request->get('vin');
+        
+        $query = Car::where('total_s', '>', 0)
+            ->with(['client'])
+            ->whereNotNull('total_s');
+
+        if ($vin) {
+            $query->where('vin', 'LIKE', '%' . $vin . '%');
+        }
+
+        if ($from && $to) {
+            $query->whereBetween('date', [$from, $to]);
+        }
+
+        $cars = $query->get()->map(function($car) {
+            return [
+                'id' => $car->id,
+                'vin' => $car->vin,
+                'car_type' => $car->car_type,
+                'year' => $car->year,
+                'car_color' => $car->car_color,
+                'date' => $car->date,
+                'total_s' => $car->total_s ?? 0,
+                'paid' => $car->paid ?? 0,
+                'discount' => $car->discount ?? 0,
+                'profit' => ($car->total_s ?? 0) - ($car->total ?? 0),
+                'client' => $car->client ? [
+                    'id' => $car->client->id,
+                    'name' => $car->client->name,
+                ] : null,
+                'results' => $car->results ?? 0,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'count' => $cars->count(),
+            'sales' => $cars
+        ], 200);
+    }
+
+    /**
+     * Update car expenses and recalculate profit
+     */
+    public function updateCarExpenses(Request $request)
+    {
+        $owner_id = Auth::user()->owner_id;
+        $carId = $request->get('car_id');
+        
+        $car = Car::where('id', $carId)
+            ->where('owner_id', $owner_id)
+            ->first();
+
+        if (!$car) {
+            return response()->json(['error' => 'Car not found'], 404);
+        }
+
+        // Update purchase expenses if provided
+        if ($request->has('purchase_expenses')) {
+            $purchaseData = $request->get('purchase_expenses');
+            $updateData = [];
+            
+            if (isset($purchaseData['expenses'])) $updateData['expenses'] = $purchaseData['expenses'];
+            if (isset($purchaseData['checkout'])) $updateData['checkout'] = $purchaseData['checkout'];
+            if (isset($purchaseData['shipping_dolar'])) $updateData['shipping_dolar'] = $purchaseData['shipping_dolar'];
+            if (isset($purchaseData['coc_dolar'])) $updateData['coc_dolar'] = $purchaseData['coc_dolar'];
+            if (isset($purchaseData['dinar'])) $updateData['dinar'] = $purchaseData['dinar'];
+            if (isset($purchaseData['land_shipping'])) $updateData['land_shipping'] = $purchaseData['land_shipping'];
+            if (isset($purchaseData['land_shipping_dinar'])) $updateData['land_shipping_dinar'] = $purchaseData['land_shipping_dinar'];
+            if (isset($purchaseData['dolar_price'])) $updateData['dolar_price'] = $purchaseData['dolar_price'];
+
+            // Recalculate total
+            $dolar_price = $updateData['dolar_price'] ?? $car->dolar_price ?? 1;
+            $calc_rate = $dolar_price;
+            if ($calc_rate == 0) {
+                $calc_rate = 1;
+            } elseif ($calc_rate > 9999) {
+                $calc_rate = $calc_rate / 100;
+            }
+
+            $checkout = $updateData['checkout'] ?? $car->checkout ?? 0;
+            $shipping_dolar = $updateData['shipping_dolar'] ?? $car->shipping_dolar ?? 0;
+            $coc_dolar = $updateData['coc_dolar'] ?? $car->coc_dolar ?? 0;
+            $dinar = $updateData['dinar'] ?? $car->dinar ?? 0;
+            $expenses = $updateData['expenses'] ?? $car->expenses ?? 0;
+            $land_shipping = $updateData['land_shipping'] ?? $car->land_shipping ?? 0;
+            $land_shipping_dinar = $updateData['land_shipping_dinar'] ?? $car->land_shipping_dinar ?? 0;
+
+            $updateData['total'] = (int)(($checkout + $shipping_dolar + $coc_dolar + (int)($dinar / $calc_rate) + (int)($land_shipping_dinar / $calc_rate) + $expenses + $land_shipping) ?? 0);
+            
+            $car->update($updateData);
+        }
+
+        // Update sales expenses if provided
+        if ($request->has('sales_expenses')) {
+            $salesData = $request->get('sales_expenses');
+            $updateData = [];
+            
+            if (isset($salesData['expenses_s'])) $updateData['expenses_s'] = $salesData['expenses_s'];
+            if (isset($salesData['checkout_s'])) $updateData['checkout_s'] = $salesData['checkout_s'];
+            if (isset($salesData['shipping_dolar_s'])) $updateData['shipping_dolar_s'] = $salesData['shipping_dolar_s'];
+            if (isset($salesData['coc_dolar_s'])) $updateData['coc_dolar_s'] = $salesData['coc_dolar_s'];
+            if (isset($salesData['dinar_s'])) $updateData['dinar_s'] = $salesData['dinar_s'];
+            if (isset($salesData['land_shipping_s'])) $updateData['land_shipping_s'] = $salesData['land_shipping_s'];
+            if (isset($salesData['land_shipping_dinar_s'])) $updateData['land_shipping_dinar_s'] = $salesData['land_shipping_dinar_s'];
+            if (isset($salesData['dolar_price_s'])) $updateData['dolar_price_s'] = $salesData['dolar_price_s'];
+
+            // Recalculate total_s
+            $dolar_price_s = $updateData['dolar_price_s'] ?? $car->dolar_price_s ?? 1;
+            $calc_rate_s = $dolar_price_s;
+            if ($calc_rate_s == 0) {
+                $calc_rate_s = 1;
+            } elseif ($calc_rate_s > 9999) {
+                $calc_rate_s = $calc_rate_s / 100;
+            }
+
+            $checkout_s = $updateData['checkout_s'] ?? $car->checkout_s ?? 0;
+            $shipping_dolar_s = $updateData['shipping_dolar_s'] ?? $car->shipping_dolar_s ?? 0;
+            $coc_dolar_s = $updateData['coc_dolar_s'] ?? $car->coc_dolar_s ?? 0;
+            $dinar_s = $updateData['dinar_s'] ?? $car->dinar_s ?? 0;
+            $expenses_s = $updateData['expenses_s'] ?? $car->expenses_s ?? 0;
+            $land_shipping_s = $updateData['land_shipping_s'] ?? $car->land_shipping_s ?? 0;
+            $land_shipping_dinar_s = $updateData['land_shipping_dinar_s'] ?? $car->land_shipping_dinar_s ?? 0;
+
+            $updateData['total_s'] = (int)(($checkout_s + $shipping_dolar_s + $coc_dolar_s + (int)($dinar_s / $calc_rate_s) + (int)($land_shipping_dinar_s / $calc_rate_s) + $expenses_s + $land_shipping_s) ?? 0);
+            
+            $car->update($updateData);
+        }
+
+        // Recalculate profit
+        $car->refresh();
+        $profit = ($car->total_s ?? 0) - ($car->total ?? 0);
+        $car->update(['profit' => $profit]);
+
+        // Update note if provided
+        if ($request->has('note')) {
+            $car->update(['note' => $request->get('note')]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'car' => $car->fresh(['client', 'carexpenses']),
+            'profit' => $profit
+        ], 200);
     }
     }

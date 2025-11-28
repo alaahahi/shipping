@@ -1,9 +1,11 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import axios from 'axios';
 import Uploader  from 'vue-media-upload';
 import { ModelListSelect } from "vue-search-select"
 import "vue-search-select/dist/VueSearchSelect.css"
+import debounce from 'lodash/debounce';
+import { useToast } from "vue-toastification";
 
 const props = defineProps({
   show: Boolean,
@@ -12,6 +14,10 @@ const props = defineProps({
   saveCar: Boolean,
 });
 
+const emit = defineEmits(['a', 'close', 'carExists']);
+
+const toast = useToast();
+const isCheckingCar = ref(false);
 
 function getTodayDate() {
   const today = new Date();
@@ -22,6 +28,34 @@ function getTodayDate() {
 }
 let showClient = ref(true);
 
+// Check if car exists in CARS table
+const checkCarExists = debounce(async (vin) => {
+  if (!vin || vin.length < 3) {
+    return;
+  }
+
+  isCheckingCar.value = true;
+  try {
+    const response = await axios.get('/api/checkCarInCars', {
+      params: { vin: vin }
+    });
+
+    if (response.data.exists) {
+      emit('carExists', response.data);
+    }
+  } catch (error) {
+    console.error('Error checking car:', error);
+  } finally {
+    isCheckingCar.value = false;
+  }
+}, 800);
+
+// Watch for VIN changes
+watch(() => props.formData?.vin, (newVin) => {
+  if (newVin && props.show) {
+    checkCarExists(newVin);
+  }
+});
 
 function removeMedia(removedImage){
               axios.get('/api/carsHunterImageDel?name='+removedImage.name)
@@ -56,13 +90,15 @@ function removeMedia(removedImage){
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 lg:gap-2">  
               <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="vin">
-                  رقم الشانصي</label
-                >
+                  رقم الشانصي
+                  <span v-if="isCheckingCar" class="text-blue-500 text-xs mr-2">جاري التحقق...</span>
+                </label>
                 <input
                   id="vin"
                   type="text"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.vin"
+                  @input="checkCarExists(formData.vin)"
                 />
               </div>
 

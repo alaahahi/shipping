@@ -186,7 +186,15 @@ Route::get('getIndexCarHunter',[HunterController::class, 'getIndexCarHunter'])->
 Route::post('carsHunterUpload',[HunterController::class, 'carsHunterUpload'])->name('carsHunterUpload');
 Route::get('carsHunterImageDel',[HunterController::class, 'carsHunterImageDel'])->name('carsHunterImageDel');
 Route::post('updateCarsHunter',[HunterController::class, 'updateCarsHunter'])->name('updateCarsHunter');
-Route::post('delCarsHunterr',[HunterController::class, 'delCarsHunterr'])->name('delCarsHunterr'); 
+Route::post('delCarsHunterr',[HunterController::class, 'delCarsHunterr'])->name('delCarsHunterr');
+Route::get('checkCarInCars',[HunterController::class, 'checkCarInCars'])->name('checkCarInCars');
+Route::post('updateCarExpenses',[HunterController::class, 'updateCarExpenses'])->name('updateCarExpenses'); 
+});
+
+// External APIs (without auth, but with API key)
+Route::middleware('api.key')->prefix('external')->group(function () {
+    Route::get('checkCar', [HunterController::class, 'externalCheckCar'])->name('external.checkCar');
+    Route::get('getSales', [HunterController::class, 'externalGetSales'])->name('external.getSales');
 });
 
 // Database Status - متاح بدون auth للاختبار

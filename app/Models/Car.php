@@ -120,14 +120,14 @@ class Car extends Model
 
     public function getSumAmountDollarAttribute()
     {
-        // Calculate and return the sum of amountDollar for all related expenses
-        return $this->carexpenses->sum('amountDollar');
+        // Calculate and return the sum of amount_dollar for all related expenses
+        return $this->carexpenses->sum('amount_dollar');
     }
 
     public function getSumAmountDinarAttribute()
     {
-        // Calculate and return the sum of amountDinar for all related expenses
-        return $this->carexpenses->sum('amountDinar');
+        // Calculate and return the sum of amount_dinar for all related expenses
+        return $this->carexpenses->sum('amount_dinar');
     }
 
     public function internalSale()
