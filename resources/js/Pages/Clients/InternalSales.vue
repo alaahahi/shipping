@@ -144,7 +144,7 @@ const filteredInternalSales = computed(() => {
     // البحث في رقم الشاصي (VIN)
     const vin = (sale.car?.vin || '').toLowerCase();
     // البحث في رقم السيارة (car_number)
-    const carNumber = (sale.car?.car_number || '').toLowerCase();
+    const carNumber = String(sale.car?.car_number || '').toLowerCase();
     // البحث في نوع السيارة
     const carType = (sale.car?.car_type || '').toLowerCase();
     // البحث في سنة السيارة
@@ -175,7 +175,7 @@ const filteredUnsoldCars = computed(() => {
     // البحث في رقم الشاصي (VIN)
     const vin = (car.vin || '').toLowerCase();
     // البحث في رقم السيارة (car_number)
-    const carNumber = (car.car_number || '').toLowerCase();
+    const carNumber = String(car.car_number || '').toLowerCase();
     // البحث في نوع السيارة
     const carType = (car.car_type || '').toLowerCase();
     // البحث في سنة السيارة
