@@ -2073,6 +2073,7 @@ async function savePaymentDescription(payment) {
                       <span
                         v-if="props.client?.has_internal_sales && item.data.internal_sale?.client"
                         class="px-2 py-1 m-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs font-semibold"
+                        style="min-width: 110px; display: block;"
                         title="مباعة في المبيعات الداخلية"
                       >
                         👤 {{ item.data.internal_sale.client.name }}
