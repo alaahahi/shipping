@@ -1,1 +1,0 @@
-import{a as c,o as s}from"./app.d74e5b59.js";const a={__name:"CustomButton",props:["rowIndex","model","save","close"],setup(e){const n=t=>{const o=new CustomEvent("cell",{bubbles:!0,detail:{row:e.model}});$el.dispatchEvent(o),t.stopPropagation(),typeof e.close=="function"&&e.close()};return(t,o)=>(s(),c("button",{onClick:n},"Edit"))}};export{a as default};
