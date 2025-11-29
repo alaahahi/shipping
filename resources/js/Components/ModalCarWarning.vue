@@ -577,6 +577,39 @@ async function saveExpenses() {
 
 .modal-body {
   margin: 20px 0;
+  overflow-y: auto;
+  max-height: calc(90vh - 200px);
+  padding-right: 5px;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.dark .modal-body::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.dark .modal-body::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
+
+.dark .modal-body::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 
 .modal-default-button {

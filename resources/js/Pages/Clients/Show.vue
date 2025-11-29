@@ -1501,14 +1501,14 @@ async function savePaymentDescription(payment) {
                 جاري حفظ رقم الهاتف...
               </p>
             </div>
-            <div className="mb-4  mr-5"   v-if="distributedBalance != 0">
+            <div className="mb-4  mr-5">
               <InputLabel for="cars_need_paid" value="الرصيد غير موزع بالدولار" />
               <TextInput
                 id="cars_need_paid"
                 type="number"
                 class="mt-1 block w-full"
                
-                :value="distributedBalance"
+                :value="distributedBalance || 0"
               />
             </div>
 
@@ -1547,16 +1547,6 @@ async function savePaymentDescription(payment) {
                 type="number"
                 class="mt-1 block w-full"
                 :value="laravelData?.contract_total_debit_Dollar"
-                disabled
-              />
-            </div>
-            <div className="mb-4  mr-5">
-              <InputLabel for="cars_paid" value="مجموع الدين عقود بالدينار" />
-              <TextInput
-                id="cars_paid"
-                type="number"
-                class="mt-1 block w-full"
-                :value="laravelData?.contract_total_debit_Dinar"
                 disabled
               />
             </div>
@@ -1866,7 +1856,7 @@ async function savePaymentDescription(payment) {
                       {
                       'bg-red-100 dark:bg-red-900': item.data.results == 0,
                       'bg-red-100 dark:bg-red-900': item.data.results == 1,
-                      'bg-green-100 dark:bg-green-900': item.data.results == 2,
+                      'bg-green-200 dark:bg-green-800 border-green-400 dark:border-green-600': item.data.results == 2,
                       },
                       isCarReferencedByPayment(item)
                         ? 'ring-2 ring-inset'
@@ -1973,7 +1963,7 @@ async function savePaymentDescription(payment) {
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ item.data.paid }}
+                      ${{ (item.data.paid || 0).toLocaleString('en-US') }}
                     </td>
                     <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ item.data.discount}}</td>
                     <td
