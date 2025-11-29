@@ -21,8 +21,6 @@ use App\Models\Hunter;
 use App\Models\Car;
 use App\Models\CarExpenses;
 use App\Models\Transactions;
-use App\Models\User;
-use App\Models\Wallet;
  
 
 use Intervention\Image\Facades\Image;
