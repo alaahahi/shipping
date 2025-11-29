@@ -47,37 +47,92 @@ Headers:
 }
 ```
 
-#### API للمبيعات (للتاجر)
+#### API للمبيعات (للتاجر) - مشابه لصفحة التاجر
 ```
-GET /api/external/getSales?from=2024-01-01&to=2024-12-31&vin=123456789
+GET /api/external/getSales?id=1
 Headers:
   X-API-Key: your-secret-api-key-here
 ```
 
 **المعاملات:**
-- `from` (اختياري): تاريخ البداية
-- `to` (اختياري): تاريخ النهاية
-- `vin` (اختياري): رقم الشانصي للبحث
+- `id` (مطلوب): رقم الزبون/التاجر لعرض جميع سياراته
 
 **الاستجابة:**
 ```json
 {
   "success": true,
-  "count": 10,
-  "sales": [
+  "cars": [
     {
       "id": 1,
       "vin": "123456789",
       "car_type": "تويوتا",
+      "year": 2024,
+      "car_color": "أبيض",
+      "date": "2024-01-15",
       "total_s": 5000,
+      "total": 4000,
       "paid": 3000,
+      "discount": 100,
       "profit": 1000,
+      "results": 1,
+      "note": "ملاحظة",
       "client": {
         "id": 1,
-        "name": "اسم العميل"
-      }
+        "name": "اسم التاجر"
+      },
+      "has_contract": true,
+      "is_exit": 0
     }
-  ]
+  ],
+  "summary": {
+    "car_total": 10,
+    "car_total_unpaid": 2,
+    "car_total_uncomplete": 5,
+    "car_total_complete": 3,
+    "cars_sum": 50000,
+    "cars_paid": 30000,
+    "cars_discount": 1000,
+    "cars_need_paid": 19000
+  }
+}
+```
+
+#### API للدفعات (للتاجر)
+```
+GET /api/external/getPayments?client_id=1&from=2024-01-01&to=2024-12-31
+Headers:
+  X-API-Key: your-secret-api-key-here
+```
+
+**المعاملات:**
+- `client_id` (مطلوب): رقم التاجر
+- `from` (اختياري): تاريخ البداية
+- `to` (اختياري): تاريخ النهاية
+
+**الاستجابة:**
+```json
+{
+  "success": true,
+  "client": {
+    "id": 1,
+    "name": "اسم التاجر",
+    "wallet_balance": -5000
+  },
+  "payments": [
+    {
+      "id": 123,
+      "amount": 1000,
+      "currency": "$",
+      "description": "دفعة للسيارة رقم 1",
+      "date": "2024-01-20",
+      "type": "out"
+    }
+  ],
+  "summary": {
+    "total_payments_dollar": 10000,
+    "total_payments_dinar": 0,
+    "count": 5
+  }
 }
 ```
 

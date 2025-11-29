@@ -20,6 +20,9 @@ use Illuminate\Support\Facades\Http;
 use App\Models\Hunter;
 use App\Models\Car;
 use App\Models\CarExpenses;
+use App\Models\Transactions;
+use App\Models\User;
+use App\Models\Wallet;
  
 
 use Intervention\Image\Facades\Image;
@@ -400,28 +403,34 @@ class HunterController extends Controller
     }
 
     /**
-     * External API: Get sales data (for trader)
+     * External API: Get sales data (for trader) - similar to trader page
      * This endpoint is public but requires API key
      */
     public function externalGetSales(Request $request)
     {
-        $from = $request->get('from');
-        $to = $request->get('to');
-        $vin = $request->get('vin');
+        $client_id = $request->get('id') ?? $request->get('client_id');
         
-        $query = Car::where('total_s', '>', 0)
-            ->with(['client'])
-            ->whereNotNull('total_s');
-
-        if ($vin) {
-            $query->where('vin', 'LIKE', '%' . $vin . '%');
+        if (!$client_id) {
+            return response()->json(['error' => 'id (client_id) is required'], 400);
         }
+        
+        // Get all cars for this client
+        $cars = Car::where('client_id', $client_id)
+            ->with(['client', 'contract', 'exitcar'])
+            ->get();
+        
+        // Calculate totals
+        $cars_sum = $cars->sum('total_s');
+        $cars_paid = $cars->sum('paid');
+        $cars_discount = $cars->sum('discount');
+        $cars_need_paid = $cars_sum - ($cars_paid + $cars_discount);
+        $car_total = $cars->count();
+        $car_total_unpaid = $cars->where('results', 0)->count();
+        $car_total_uncomplete = $cars->where('results', 1)->count();
+        $car_total_complete = $cars->where('results', 2)->count();
 
-        if ($from && $to) {
-            $query->whereBetween('date', [$from, $to]);
-        }
-
-        $cars = $query->get()->map(function($car) {
+        // Format cars data
+        $carsData = $cars->map(function($car) {
             return [
                 'id' => $car->id,
                 'vin' => $car->vin,
@@ -430,21 +439,96 @@ class HunterController extends Controller
                 'car_color' => $car->car_color,
                 'date' => $car->date,
                 'total_s' => $car->total_s ?? 0,
+                'total' => $car->total ?? 0,
                 'paid' => $car->paid ?? 0,
                 'discount' => $car->discount ?? 0,
                 'profit' => ($car->total_s ?? 0) - ($car->total ?? 0),
+                'results' => $car->results ?? 0,
+                'note' => $car->note,
                 'client' => $car->client ? [
                     'id' => $car->client->id,
                     'name' => $car->client->name,
                 ] : null,
-                'results' => $car->results ?? 0,
+                'has_contract' => $car->contract ? true : false,
+                'is_exit' => $car->is_exit ?? 0,
             ];
         });
 
         return response()->json([
             'success' => true,
-            'count' => $cars->count(),
-            'sales' => $cars
+            'cars' => $carsData,
+            'summary' => [
+                'car_total' => $car_total,
+                'car_total_unpaid' => $car_total_unpaid,
+                'car_total_uncomplete' => $car_total_uncomplete,
+                'car_total_complete' => $car_total_complete,
+                'cars_sum' => $cars_sum,
+                'cars_paid' => $cars_paid,
+                'cars_discount' => $cars_discount,
+                'cars_need_paid' => $cars_need_paid,
+            ]
+        ], 200);
+    }
+
+    /**
+     * External API: Get payments for a client (for trader)
+     * This endpoint is public but requires API key
+     */
+    public function externalGetPayments(Request $request)
+    {
+        $client_id = $request->get('client_id');
+        $from = $request->get('from');
+        $to = $request->get('to');
+        
+        if (!$client_id) {
+            return response()->json(['error' => 'client_id is required'], 400);
+        }
+
+        $client = User::with('wallet')->where('id', $client_id)->first();
+        
+        if (!$client || !$client->wallet) {
+            return response()->json(['error' => 'Client not found'], 404);
+        }
+
+        // Get payments (transactions with type 'out' and is_pay = 1)
+        $query = Transactions::where('wallet_id', $client->wallet->id)
+            ->where('type', 'out')
+            ->where('is_pay', 1)
+            ->where('amount', '<', 0) // Payments are negative
+            ->orderBy('created', 'desc');
+
+        if ($from && $to) {
+            $query->whereBetween('created', [$from, $to]);
+        }
+
+        $payments = $query->get()->map(function($transaction) {
+            return [
+                'id' => $transaction->id,
+                'amount' => abs($transaction->amount), // Convert to positive
+                'currency' => $transaction->currency ?? '$',
+                'description' => $transaction->description,
+                'date' => $transaction->created,
+                'type' => $transaction->type,
+            ];
+        });
+
+        // Calculate totals
+        $totalPaymentsDollar = $payments->where('currency', '$')->sum('amount');
+        $totalPaymentsDinar = $payments->where('currency', 'IQD')->sum('amount');
+
+        return response()->json([
+            'success' => true,
+            'client' => [
+                'id' => $client->id,
+                'name' => $client->name,
+                'wallet_balance' => $client->wallet->balance ?? 0,
+            ],
+            'payments' => $payments,
+            'summary' => [
+                'total_payments_dollar' => $totalPaymentsDollar,
+                'total_payments_dinar' => $totalPaymentsDinar,
+                'count' => $payments->count(),
+            ]
         ], 200);
     }
 

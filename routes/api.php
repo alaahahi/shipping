@@ -195,6 +195,7 @@ Route::post('updateCarExpenses',[HunterController::class, 'updateCarExpenses'])-
 Route::middleware('api.key')->prefix('external')->group(function () {
     Route::get('checkCar', [HunterController::class, 'externalCheckCar'])->name('external.checkCar');
     Route::get('getSales', [HunterController::class, 'externalGetSales'])->name('external.getSales');
+    Route::get('getPayments', [HunterController::class, 'externalGetPayments'])->name('external.getPayments');
 });
 
 // Database Status - متاح بدون auth للاختبار
