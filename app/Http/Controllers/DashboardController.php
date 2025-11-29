@@ -651,8 +651,13 @@ class DashboardController extends Controller
             }
 
             $dataToUpdate = [];
+            $textFields = ['note']; // Fields that should not be updated if empty
             foreach ($allowedFields as $field) {
                 if (array_key_exists($field, $requestData)) {
+                    // Skip empty strings for text fields to prevent overwriting existing data
+                    if (in_array($field, $textFields) && trim($requestData[$field]) === '') {
+                        continue;
+                    }
                     $dataToUpdate[$field] = $requestData[$field];
                 }
             }
@@ -732,8 +737,13 @@ class DashboardController extends Controller
             $this->accountingController->increaseWallet($total_s - $car->total_s, $descClient, $car->client_id, $car->id, 'App\Models\User');
 
             $dataToUpdate = [];
+            $textFields = ['note']; // Fields that should not be updated if empty
             foreach ($allowedFields as $field) {
                 if (array_key_exists($field, $requestData)) {
+                    // Skip empty strings for text fields to prevent overwriting existing data
+                    if (in_array($field, $textFields) && trim($requestData[$field]) === '') {
+                        continue;
+                    }
                     $dataToUpdate[$field] = $requestData[$field];
                 }
             }
