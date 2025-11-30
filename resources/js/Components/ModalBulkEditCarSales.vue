@@ -16,7 +16,6 @@ const emit = defineEmits(["close", "confirm"]);
 
 const formData = ref({});
 const exchangeRateError = ref(false);
-const includedFields = ref({});
 
 function cloneBaseData() {
   const data = {
@@ -51,15 +50,8 @@ watch(
         formData.value.expenses_s = props.baseData.expenses_s;
       }
       exchangeRateError.value = false;
-      // Initialize all fields as included by default
-      const fields = ['dolar_price_s', 'shipping_dolar_s', 'coc_dolar_s', 'checkout_s', 'expenses_s', 'land_shipping_s', 'land_shipping_dinar_s', 'date', 'note'];
-      includedFields.value = {};
-      fields.forEach(field => {
-        includedFields.value[field] = true;
-      });
     } else {
       formData.value = {};
-      includedFields.value = {};
     }
   }
 );
@@ -79,14 +71,7 @@ function handleSubmit() {
   if (isSubmitDisabled.value) {
     return;
   }
-  // Only include fields that are checked
-  const dataToSubmit = {};
-  Object.keys(formData.value).forEach(key => {
-    if (includedFields.value[key]) {
-      dataToSubmit[key] = formData.value[key];
-    }
-  });
-  emit("confirm", dataToSubmit);
+  emit("confirm", { ...formData.value });
 }
 </script>
 
@@ -110,189 +95,108 @@ function handleSubmit() {
               class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 lg:gap-2"
             >
               <div className="mb-4 mx-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <input
-                    type="checkbox"
-                    id="include_dolar_price_s"
-                    v-model="includedFields.dolar_price_s"
-                    class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <label class="dark:text-gray-200" for="dolar_price_s">
-                    {{ $t("dolar_price") }}
-                  </label>
-                </div>
+                <label class="dark:text-gray-200" for="dolar_price_s">
+                  {{ $t("dolar_price") }}
+                </label>
                 <input
                   id="dolar_price_s"
                   @change="validateExchangeRate"
                   type="number"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.dolar_price_s"
-                  :disabled="!includedFields.dolar_price_s"
                 />
                 <div v-if="exchangeRateError" class="text-red-500">
                   مطلوب رقم من 6 خانة فقط
                 </div>
               </div>
               <div className="mb-4 mx-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <input
-                    type="checkbox"
-                    id="include_shipping_dolar_s"
-                    v-model="includedFields.shipping_dolar_s"
-                    class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <label class="dark:text-gray-200" for="shipping_dolar_s">
-                    {{ $t("shipping_dolar") }}
-                  </label>
-                </div>
+                <label class="dark:text-gray-200" for="shipping_dolar_s">
+                  {{ $t("shipping_dolar") }}
+                </label>
                 <input
                   id="shipping_dolar_s"
                   type="number"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.shipping_dolar_s"
-                  :disabled="!includedFields.shipping_dolar_s"
                 />
               </div>
               <div className="mb-4 mx-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <input
-                    type="checkbox"
-                    id="include_coc_dolar_s"
-                    v-model="includedFields.coc_dolar_s"
-                    class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <label class="dark:text-gray-200" for="coc_dolar_s">
-                    {{ $t("coc_dolar") }}
-                  </label>
-                </div>
+                <label class="dark:text-gray-200" for="coc_dolar_s">
+                  {{ $t("coc_dolar") }}
+                </label>
                 <input
                   id="coc_dolar_s"
                   type="number"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.coc_dolar_s"
-                  :disabled="!includedFields.coc_dolar_s"
                 />
               </div>
               <div className="mb-4 mx-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <input
-                    type="checkbox"
-                    id="include_checkout_s"
-                    v-model="includedFields.checkout_s"
-                    class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <label class="dark:text-gray-200" for="checkout_s">
-                    {{ $t("checkout") }}
-                  </label>
-                </div>
+                <label class="dark:text-gray-200" for="checkout_s">
+                  {{ $t("checkout") }}
+                </label>
                 <input
                   id="checkout_s"
                   type="number"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.checkout_s"
-                  :disabled="!includedFields.checkout_s"
                 />
               </div>
               <div className="mb-4 mx-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <input
-                    type="checkbox"
-                    id="include_expenses_s"
-                    v-model="includedFields.expenses_s"
-                    class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <label class="dark:text-gray-200" for="expenses_s">
-                    {{ $t("expenses") }}
-                  </label>
-                </div>
+                <label class="dark:text-gray-200" for="expenses_s">
+                  {{ $t("expenses") }}
+                </label>
                 <input
                   id="expenses_s"
                   type="number"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.expenses_s"
-                  :disabled="!includedFields.expenses_s"
                 />
               </div>
               <div className="mb-4 mx-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <input
-                    type="checkbox"
-                    id="include_land_shipping_s"
-                    v-model="includedFields.land_shipping_s"
-                    class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <label class="dark:text-gray-200" for="land_shipping_s">
-                    نقل بري
-                  </label>
-                </div>
+                <label class="dark:text-gray-200" for="land_shipping_s">
+                  نقل بري
+                </label>
                 <input
                   id="land_shipping_s"
                   type="number"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.land_shipping_s"
-                  :disabled="!includedFields.land_shipping_s"
                 />
               </div>
               <div className="mb-4 mx-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <input
-                    type="checkbox"
-                    id="include_land_shipping_dinar_s"
-                    v-model="includedFields.land_shipping_dinar_s"
-                    class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <label class="dark:text-gray-200" for="land_shipping_dinar_s">
-                    نقل وتخليص بالدينار
-                  </label>
-                </div>
+                <label class="dark:text-gray-200" for="land_shipping_dinar_s">
+                  نقل وتخليص بالدينار
+                </label>
                 <input
                   id="land_shipping_dinar_s"
                   type="number"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.land_shipping_dinar_s"
-                  :disabled="!includedFields.land_shipping_dinar_s"
                 />
               </div>
               <div className="mb-4 mx-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <input
-                    type="checkbox"
-                    id="include_date_s"
-                    v-model="includedFields.date"
-                    class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <label class="dark:text-gray-200" for="date">
-                    {{ $t("date") }}
-                  </label>
-                </div>
+                <label class="dark:text-gray-200" for="date">
+                  {{ $t("date") }}
+                </label>
                 <input
                   id="date"
                   type="date"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.date"
-                  :disabled="!includedFields.date"
                 />
               </div>
             </div>
 
             <div className="mb-4 mx-1">
-              <div class="flex items-center gap-2 mb-1">
-                <input
-                  type="checkbox"
-                  id="include_note_s"
-                  v-model="includedFields.note"
-                  class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
-                />
-                <label class="dark:text-gray-200" for="note">
-                  {{ $t("note") }}
-                </label>
-              </div>
+              <label class="dark:text-gray-200" for="note">
+                {{ $t("note") }}
+              </label>
               <input
                 id="note"
                 type="text"
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                 v-model="formData.note"
-                :disabled="!includedFields.note"
               />
             </div>
           </div>

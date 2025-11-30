@@ -550,10 +550,29 @@ body {
         const verificationUrl = @json($verificationUrl ?? '');
         const qrImg = document.getElementById('contract-qr');
         const triggerPrint = () => window.print();
-        const fallbackRender = () => {
+        
+        // دالة للانتظار حتى يتم تحميل الصورة ثم الطباعة
+        const waitForImageLoad = (img) => {
+            return new Promise((resolve) => {
+                if (img.complete) {
+                    // الصورة محملة بالفعل
+                    resolve();
+                } else {
+                    // انتظار تحميل الصورة
+                    img.onload = () => resolve();
+                    img.onerror = () => resolve(); // حتى لو فشل التحميل، نكمل
+                    // timeout احتياطي بعد 2 ثانية
+                    setTimeout(() => resolve(), 2000);
+                }
+            });
+        };
+
+        const fallbackRender = async () => {
             if (verificationUrl && qrImg) {
                 qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(verificationUrl);
                 qrImg.style.display = 'block';
+                // انتظار تحميل الصورة قبل الطباعة
+                await waitForImageLoad(qrImg);
             }
             triggerPrint();
         };
@@ -567,14 +586,17 @@ body {
                     colorDark: "#000000",
                     colorLight: "#ffffff"
                 },
-                function (error, url) {
+                async function (error, url) {
                     if (error) {
                         console.error(error);
-                        fallbackRender();
+                        await fallbackRender();
                     } else {
                         qrImg.src = url;
                         qrImg.style.display = 'block';
-                        setTimeout(triggerPrint, 200);
+                        // انتظار تحميل الصورة قبل الطباعة
+                        await waitForImageLoad(qrImg);
+                        // تأخير إضافي صغير للتأكد من عرض الصورة
+                        setTimeout(triggerPrint, 300);
                     }
                 }
             );

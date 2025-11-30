@@ -289,7 +289,8 @@ const isLoading = ref(false);
 let isValid = true;
 
 // 🔥 دالة الحفظ الجديدة - تعمل Online و Offline
-const submit = async (V) => {
+// shouldPrint: true = يذهب للطباعة، false = يعود لقائمة العقود
+const submit = async (V, shouldPrint = true) => {
   isLoading.value = true;
   let missingFields = [];
 
@@ -324,7 +325,7 @@ const submit = async (V) => {
         profileAdded.value = true;
 
       if (result.online) {
-        console.log('🌐 حفظ online - سننتقل للطباعة');
+        console.log('🌐 حفظ online');
         // تم الحفظ online مباشرة
         toast.success('✅ تم حفظ العقد بنجاح', {
           timeout: 3000,
@@ -334,17 +335,23 @@ const submit = async (V) => {
 
         setTimeout(() => {
           isLoading.value = false;
-          // الانتقال لصفحة الطباعة
-          if (result.data && result.data.id) {
-            window.location = `/car_contract/${result.data.id}`;
+          // تحديد الوجهة بناءً على shouldPrint
+          if (shouldPrint) {
+            // الانتقال لصفحة الطباعة
+            if (result.data && result.data.id) {
+              window.location = `/contract_print/${result.data.id}`;
+            } else {
+              window.location = '/car_contract';
+            }
           } else {
-          window.location = '/car_contract';
+            // العودة لقائمة العقود
+            window.location = '/car_contract';
           }
         }, 1000);
       } else {
-        console.log('💾 حفظ offline - سننتقل للطباعة');
+        console.log('💾 حفظ offline');
         
-        // تم الحفظ offline - الانتقال للصفحة العادية مثل الفلو الطبيعي
+        // تم الحفظ offline
         toast.success('✅ تم حفظ العقد محلياً - سيتم المزامنة تلقائياً عند عودة الإنترنت', {
           timeout: 3000,
           position: 'bottom-right',
@@ -353,11 +360,17 @@ const submit = async (V) => {
 
         setTimeout(() => {
           isLoading.value = false;
-          // الانتقال لصفحة الطباعة - نفس الفلو الطبيعي
-          if (result.id || result.data?.id) {
-            const contractId = result.id || result.data?.id;
-            window.location = `/car_contract/${contractId}`;
+          // تحديد الوجهة بناءً على shouldPrint
+          if (shouldPrint) {
+            // الانتقال لصفحة الطباعة
+            if (result.id || result.data?.id) {
+              const contractId = result.id || result.data?.id;
+              window.location = `/contract_print/${contractId}`;
+            } else {
+              window.location = '/car_contract';
+            }
           } else {
+            // العودة لقائمة العقود
             window.location = '/car_contract';
           }
         }, 1000);
@@ -381,6 +394,16 @@ const submit = async (V) => {
     });
     isLoading.value = false;
   }
+};
+
+// دالة الحفظ والطباعة
+const submitAndPrint = () => {
+  submit(form.value, true);
+};
+
+// دالة الحفظ فقط
+const submitOnly = () => {
+  submit(form.value, false);
 };
 
 // تم إزالة printOfflineContract - الآن نستخدم الانتقال للصفحة العادية
@@ -1057,22 +1080,20 @@ function VinApi1 (v){
         </Link>
 
         <button
-          v-if="!data"
-          @click="submit(form)"
+          @click="submitOnly"
           :disabled="isLoading"
-          class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-rose-500 rounded"
+          class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-600"
         >
-          <span v-if="!isLoading">حفظ</span>
+          <span v-if="!isLoading">حفظ فقط</span>
           <span v-else>جاري الحفظ...</span>
         </button>
 
-        <button 
-          v-if="data"
-          @click="submit(form)"
+        <button
+          @click="submitAndPrint"
           :disabled="isLoading"
-          class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-rose-500 rounded"
+          class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-rose-500 rounded hover:bg-rose-600"
         >
-          <span v-if="!isLoading">حفظ التعديلات</span>
+          <span v-if="!isLoading">حفظ وطباعة</span>
           <span v-else>جاري الحفظ...</span>
         </button>
     
