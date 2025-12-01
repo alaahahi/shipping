@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use App\Models\CarDamageReport;
 use App\Models\SystemConfig;
 use Carbon\Carbon;
@@ -127,8 +128,20 @@ class CarDamageReportController extends Controller
             $limit = $request->get('limit', 20);
 
             // التحقق من جميع التقارير أولاً
+            $connection = CarDamageReport::getConnection()->getName();
+            Log::info('Using database connection: ' . $connection);
             $allReports = CarDamageReport::where('owner_id', $owner_id)->get();
             Log::info('Total reports in DB for owner_id ' . $owner_id . ': ' . $allReports->count());
+            
+            // التحقق من SQLite أيضاً
+            try {
+                $sqliteReports = DB::connection('sync_sqlite')->table('car_damage_reports')
+                    ->where('owner_id', $owner_id)
+                    ->get();
+                Log::info('Total reports in SQLite for owner_id ' . $owner_id . ': ' . $sqliteReports->count());
+            } catch (\Exception $e) {
+                Log::warning('Could not check SQLite: ' . $e->getMessage());
+            }
 
             $data = CarDamageReport::where('owner_id', $owner_id)->orderBy('id', 'desc');
 
