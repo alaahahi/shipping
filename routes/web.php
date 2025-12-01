@@ -14,6 +14,7 @@ use App\Http\Controllers\OnlineContractsController;
 use App\Http\Controllers\AnnualController;
 use App\Http\Controllers\CarExpensesController;
 use App\Http\Controllers\CarContractController;
+use App\Http\Controllers\CarDamageReportController;
 use App\Http\Controllers\HunterController;
 
 
@@ -207,6 +208,8 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
 
     Route::get('wallet',[AccountingController::class, 'wallet'])->name("wallet");
 
+    Route::get('damage_report',[CarDamageReportController::class, 'index'])->name('damage_report.index');
+    Route::get('damage_report/{id}/edit', [CarDamageReportController::class, 'edit'])->name('damage_report.edit');
     
  });
 

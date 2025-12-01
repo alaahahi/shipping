@@ -21,6 +21,7 @@ use App\Http\Controllers\HunterController;
 use App\Http\Controllers\AnnualController;
 use App\Http\Controllers\CarExpensesController;
 use App\Http\Controllers\CarContractController;
+use App\Http\Controllers\CarDamageReportController;
 use App\Http\Controllers\SyncMonitorController;
 use App\Http\Controllers\LicenseController;
 use App\Http\Controllers\AdminLicenseController;
@@ -300,6 +301,14 @@ Route::get('contract_account_report',[CarContractController::class, 'contract_ac
 
 Route::post('makeDrivingDocument',[CarContractController::class, 'makeDrivingDocument'])->name('makeDrivingDocument');
 Route::get('makeDrivingDocumentPdf',[CarContractController::class, 'makeDrivingDocumentPdf'])->name('makeDrivingDocumentPdf');
+
+Route::middleware('auth')->group(function () {
+    Route::post('storeDamageReport',[CarDamageReportController::class, 'store'])->name('storeDamageReport');
+    Route::post('updateDamageReport',[CarDamageReportController::class, 'update'])->name('updateDamageReport');
+    Route::get('getIndexDamageReport',[CarDamageReportController::class, 'getIndex'])->name('getIndexDamageReport');
+    Route::get('makeDamageReportPdf',[CarDamageReportController::class, 'makeDamageReportPdf'])->name('makeDamageReportPdf');
+    Route::post('deleteDamageReport',[CarDamageReportController::class, 'delete'])->name('deleteDamageReport');
+});
 
 Route::get('checkClientBalance',[AccountingController::class, 'checkClientBalance'])->name('checkClientBalance');
 

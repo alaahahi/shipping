@@ -133,6 +133,14 @@ const switchLocale = (locale) => {
                     مراجعة السيارات
                 </NavLink>
               </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6||$page.props.auth.user.type_id==7">
+                <NavLink
+                  :href="route('damage_report.index')"
+                  :active="route().current('damage_report.index')"
+                >
+                  تقارير الضرر
+                </NavLink>
+              </div>
               <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==7">
                 <NavLink
                   :href="route('car_expenses')"
@@ -436,6 +444,13 @@ const switchLocale = (locale) => {
                 v-if="$page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==7"
               >
               مصاريف السيارات 
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
+                :href="route('damage_report.index')"
+                :active="route().current('damage_report.index')"
+                v-if="$page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6||$page.props.auth.user.type_id==7"
+              >
+              تقارير الضرر
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('contract')"
