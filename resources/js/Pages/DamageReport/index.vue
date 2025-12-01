@@ -259,9 +259,10 @@ const debouncedRefresh = debounce(refresh, 500);
         <div class="bg-white overflow-hidden shadow-sm">
           <div class="p-6 dark:bg-gray-900">
             <div class="flex flex-col">
-              <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-2 lg:gap-1">
-                <div>
-                  <form class="flex items-center max-w-5xl mt-1">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-3 items-end">
+                <div class="md:col-span-2">
+                  <label class="block mb-1 text-sm font-medium dark:text-gray-200">بحث (اسم السائق، رقم CMR، رقم الشاصي)</label>
+                  <form class="flex items-center max-w-5xl">
                     <div class="relative w-full">
                       <input
                         type="text"
@@ -274,35 +275,33 @@ const debouncedRefresh = debounce(refresh, 500);
                   </form>
                 </div>
                 <div>
-                  <label class="dark:text-gray-200 text-sm">من تاريخ</label>
+                  <label class="block mb-1 text-sm font-medium dark:text-gray-200">من تاريخ</label>
                   <TextInput
                     type="date"
                     v-model="from"
                     @input="debouncedRefresh"
-                    class="mt-1 block w-full"
+                    class="block w-full"
                   />
                 </div>
                 <div>
-                  <label class="dark:text-gray-200 text-sm">إلى تاريخ</label>
+                  <label class="block mb-1 text-sm font-medium dark:text-gray-200">إلى تاريخ</label>
                   <TextInput
                     type="date"
                     v-model="to"
                     @input="debouncedRefresh"
-                    class="mt-1 block w-full"
+                    class="block w-full"
                   />
                 </div>
-                <div>
+                <div class="flex gap-2">
                   <button
                     @click="openModalDamageReport()"
-                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 whitespace-nowrap"
                   >
                     تقرير جديد
                   </button>
-                </div>
-                <div>
                   <Link
                     :href="route('dashboard')"
-                    class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                    class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 whitespace-nowrap text-center"
                   >
                     العودة
                   </Link>

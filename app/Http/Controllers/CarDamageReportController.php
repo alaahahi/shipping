@@ -161,7 +161,9 @@ class CarDamageReportController extends Controller
             if ($q) {
                 $data->where(function ($query) use ($q) {
                     $query->where('driver_name', 'LIKE', '%' . $q . '%')
-                        ->orWhere('cmr_number', 'LIKE', '%' . $q . '%');
+                        ->orWhere('cmr_number', 'LIKE', '%' . $q . '%')
+                        ->orWhereRaw("JSON_SEARCH(cars_info, 'one', ?, NULL, '$[*].vin') IS NOT NULL", ['%' . $q . '%'])
+                        ->orWhereRaw("cars_info LIKE ?", ['%"vin":"%' . $q . '%"%']);
                 });
                 Log::info('Filtering by search: ' . $q);
             }
