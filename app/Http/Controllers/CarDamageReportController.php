@@ -128,19 +128,23 @@ class CarDamageReportController extends Controller
             $limit = $request->get('limit', 20);
 
             // التحقق من جميع التقارير أولاً
-            $connection = CarDamageReport::getConnection()->getName();
+            $model = new CarDamageReport();
+            $connection = $model->getConnection()->getName();
             Log::info('Using database connection: ' . $connection);
             $allReports = CarDamageReport::where('owner_id', $owner_id)->get();
             Log::info('Total reports in DB for owner_id ' . $owner_id . ': ' . $allReports->count());
             
-            // التحقق من SQLite أيضاً
+            // التحقق من SQLite أيضاً (فقط في البيئة المحلية)
             try {
-                $sqliteReports = DB::connection('sync_sqlite')->table('car_damage_reports')
-                    ->where('owner_id', $owner_id)
-                    ->get();
-                Log::info('Total reports in SQLite for owner_id ' . $owner_id . ': ' . $sqliteReports->count());
+                if (config('app.env') === 'local') {
+                    $sqliteReports = DB::connection('sync_sqlite')->table('car_damage_reports')
+                        ->where('owner_id', $owner_id)
+                        ->get();
+                    Log::info('Total reports in SQLite for owner_id ' . $owner_id . ': ' . $sqliteReports->count());
+                }
             } catch (\Exception $e) {
-                Log::warning('Could not check SQLite: ' . $e->getMessage());
+                // تجاهل الخطأ في السيرفر إذا لم يكن SQLite متاحاً
+                Log::debug('Could not check SQLite: ' . $e->getMessage());
             }
 
             $data = CarDamageReport::where('owner_id', $owner_id)->orderBy('id', 'desc');
