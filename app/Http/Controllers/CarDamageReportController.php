@@ -62,6 +62,7 @@ class CarDamageReportController extends Controller
         }
 
         $report = CarDamageReport::create([
+            'verification_token' => Str::uuid()->toString(),
             'driver_name' => $driver_name,
             'cmr_number' => $cmr_number,
             'cars_count' => $cars_count,
@@ -100,6 +101,11 @@ class CarDamageReportController extends Controller
             $damage = str_replace('$', '', $damage);
             $damage = floatval(trim($damage));
             $total_damage += $damage;
+        }
+
+        // إنشاء token إذا لم يكن موجوداً
+        if (empty($report->verification_token)) {
+            $report->verification_token = Str::uuid()->toString();
         }
 
         $report->update([
@@ -195,6 +201,25 @@ class CarDamageReportController extends Controller
         $config = SystemConfig::first();
         
         return view('documents.damage_report', compact('report', 'config'));
+    }
+
+    public function verify($token)
+    {
+        $report = CarDamageReport::where('verification_token', $token)->firstOrFail();
+
+        if (empty($report->verification_token)) {
+            $report->verification_token = Str::uuid()->toString();
+            $report->save();
+        }
+
+        $config = SystemConfig::first();
+        $verificationUrl = route('damage_report.verify', $report->verification_token);
+
+        return view('damageReportVerify', [
+            'report' => $report,
+            'config' => $config,
+            'verificationUrl' => $verificationUrl,
+        ]);
     }
 
     public function delete(Request $request)

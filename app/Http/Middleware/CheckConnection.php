@@ -28,6 +28,8 @@ class CheckConnection
             '/license/status',
             '/login',
             '/register',
+            '/contract/verify',
+            '/damage_report/verify',
         ];
 
         $currentPath = $request->getPathInfo();

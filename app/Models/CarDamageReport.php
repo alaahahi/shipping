@@ -14,6 +14,7 @@ class CarDamageReport extends Model
     
     protected $fillable = [
         'id',
+        'verification_token',
         'driver_name',
         'cmr_number',
         'cars_count',

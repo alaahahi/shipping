@@ -105,7 +105,7 @@ $Help = new MyHelp();
       <div class="col-sm-6 px-5">
         <div style="width: 110px; margin: 0 auto;">
           <div style="color: #fff;text-align: center;font-size: 5px">
-              {!! QrCode::size(100)->generate(url('').'/api/makeDamageReportPdf?doc_id='.$report['id']); !!}
+              {!! QrCode::size(100)->generate(route('damage_report.verify', $report['verification_token'] ?? $report['id'])); !!}
           </div>
         </div>
       </div>
