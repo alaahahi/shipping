@@ -1,13 +1,9 @@
 APP_NAME=Laravel
 APP_ENV=local
 APP_KEY=base64:6COAvuJ1WJH3gvpMFydBLFaoYHkfKF4njcBf7Av6ikE=
-APP_DEBUG=false
+APP_DEBUG=true
 APP_URL=http://127.0.0.1:8000
 FRONTEND_URL=http://127.0.0.1:8000
-
-# إعدادات التبديل التلقائي بين Local/Online
-# true = تفعيل النقل التلقائي | false = إيقاف النقل التلقائي (التبديل يدوياً فقط)
-AUTO_SWITCH_ENABLED=false
 
 LOG_CHANNEL=stack
 LOG_DEPRECATIONS_CHANNEL=null
@@ -16,19 +12,14 @@ LOG_LEVEL=debug
 DB_CONNECTION=mysql
 DB_HOST=209.172.2.60
 DB_PORT=3306
-DB_DATABASE=intellij_system
-DB_USERNAME=intellij_system
-DB_PASSWORD=QG5T4ECIGY!G
+DB_DATABASE=intellij_db_shippingkirkuk
+DB_USERNAME=intellij_shippingkirkuk
+DB_PASSWORD=u^zb2t@@j~bA
+# رابط المشروع الثاني (في المشروع الأول فقط)
+SECOND_PROJECT_URL=hhttps://shippingkirkuk.intellijapp.com
 
-# رابط السيرفر (Online)
-ONLINE_URL=https://system.intellijapp.com
-
-# رابط المحلي (Local) - اختياري، سيستخدم APP_URL إذا لم يتم تحديده
-LOCAL_URL=http://127.0.0.1:8000 
-LICENSE_ENABLED=true
-LICENSE_SECRET_KEY=your-secret-key-change-this
-LICENSE_CHECK_EVERY_REQUEST=false
-LICENSE_OFFLINE_MODE=true
+# API Key (نفس القيمة في المشروعين)
+API_KEY=alaa
 
 DB_FAILOVER_ENABLED=true
 DB_PRIMARY_CONNECTION=mysql
@@ -52,6 +43,13 @@ FILESYSTEM_DISK=public
 QUEUE_CONNECTION=sync
 SESSION_DRIVER=file
 SESSION_LIFETIME=525600
+AUTO_SWITCH_ENABLED=false
+
+# رابط السيرفر (Online)
+ONLINE_URL=https://system.intellijapp.com
+
+# رابط المحلي (Local) - اختياري، سيستخدم APP_URL إذا لم يتم تحديده
+LOCAL_URL=http://127.0.0.1:8000 
 
 MEMCACHED_HOST=127.0.0.1
 
