@@ -53,7 +53,9 @@ use App\Http\Controllers\AdminLicenseController;
 Route::middleware(['auth', 'verified'])->group(function () {
 });
 Route::get('/admin/licenses', [AdminLicenseController::class, 'index'])->name('admin.licenses.index');
-
+Route::get('sync-monitor', function () {
+    return Inertia::render('SyncMonitor');
+})->name('sync.monitor');
 Route::group(['middleware' => ['auth','verified', 'check.license']], function () {
 
     Route::get('dashboard',[DashboardController::class,'index'])->middleware(['auth', 'verified'])->name('dashboard');
@@ -63,9 +65,7 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
     Route::get('accounting',[AccountingController::class,'index'])->name('accounting');
     
     // صفحة مراقبة المزامنة
-    Route::get('sync-monitor', function () {
-        return Inertia::render('SyncMonitor');
-    })->name('sync.monitor');
+
     
     // صفحة تفاصيل الجدول
     Route::get('sync-monitor/table/{tableName}', function (string $tableName, \Illuminate\Http\Request $request) {
