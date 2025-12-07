@@ -30,7 +30,18 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Cache\FileStore;
 use Illuminate\Filesystem\Filesystem;
-
+Route::get('/sync-monitor/tables', [SyncMonitorController::class, 'tables'])->name('sync.monitor.tables');
+Route::get('/sync-monitor/table/{tableName}', [SyncMonitorController::class, 'tableDetails'])->name('sync.monitor.table.details');
+Route::post('/sync-monitor/sync', [SyncMonitorController::class, 'sync'])->name('sync.monitor.sync');
+Route::get('/sync-monitor/sync-progress', [SyncMonitorController::class, 'syncProgress'])->name('sync.monitor.sync.progress');
+Route::get('/sync-monitor/metadata', [SyncMonitorController::class, 'syncMetadata'])->name('sync.monitor.metadata');
+Route::get('/sync-monitor/test/{tableName}', [SyncMonitorController::class, 'testSync'])->name('sync.monitor.test');
+Route::post('/sync-monitor/table/{tableName}/truncate', [SyncMonitorController::class, 'truncateTable'])->name('sync.monitor.table.truncate');
+Route::delete('/sync-monitor/table/{tableName}/delete', [SyncMonitorController::class, 'deleteTable'])->name('sync.monitor.table.delete');
+Route::get('/sync-monitor/backups', [SyncMonitorController::class, 'backups'])->name('sync.monitor.backups');
+Route::post('/sync-monitor/restore-backup', [SyncMonitorController::class, 'restoreBackup'])->name('sync.monitor.restore.backup');
+Route::get('/sync-monitor/download-backup', [SyncMonitorController::class, 'downloadBackup'])->name('sync.monitor.download.backup');
+Route::delete('/sync-monitor/backup/delete', [SyncMonitorController::class, 'deleteBackup'])->name('sync.monitor.backup.delete');
 
 Route::get('/debug-owner-cache/{ownerId}', function ($ownerId) {
     $keys = [
@@ -205,18 +216,7 @@ Route::get('/database/status', [DatabaseStatusController::class, 'status'])->nam
 // Sync Monitor APIs - استخدام auth بدلاً من auth:sanctum لأن الصفحة تستخدم session
 Route::middleware('auth')->group(function () {
         
-        Route::get('/sync-monitor/tables', [SyncMonitorController::class, 'tables'])->name('sync.monitor.tables');
-        Route::get('/sync-monitor/table/{tableName}', [SyncMonitorController::class, 'tableDetails'])->name('sync.monitor.table.details');
-        Route::post('/sync-monitor/sync', [SyncMonitorController::class, 'sync'])->name('sync.monitor.sync');
-        Route::get('/sync-monitor/sync-progress', [SyncMonitorController::class, 'syncProgress'])->name('sync.monitor.sync.progress');
-        Route::get('/sync-monitor/metadata', [SyncMonitorController::class, 'syncMetadata'])->name('sync.monitor.metadata');
-        Route::get('/sync-monitor/test/{tableName}', [SyncMonitorController::class, 'testSync'])->name('sync.monitor.test');
-        Route::post('/sync-monitor/table/{tableName}/truncate', [SyncMonitorController::class, 'truncateTable'])->name('sync.monitor.table.truncate');
-        Route::delete('/sync-monitor/table/{tableName}/delete', [SyncMonitorController::class, 'deleteTable'])->name('sync.monitor.table.delete');
-        Route::get('/sync-monitor/backups', [SyncMonitorController::class, 'backups'])->name('sync.monitor.backups');
-        Route::post('/sync-monitor/restore-backup', [SyncMonitorController::class, 'restoreBackup'])->name('sync.monitor.restore.backup');
-        Route::get('/sync-monitor/download-backup', [SyncMonitorController::class, 'downloadBackup'])->name('sync.monitor.download.backup');
-        Route::delete('/sync-monitor/backup/delete', [SyncMonitorController::class, 'deleteBackup'])->name('sync.monitor.backup.delete');
+      
 });
 
 Route::post('TransactionsUpload',[AccountingController::class, 'TransactionsUpload'])->name('TransactionsUpload');
