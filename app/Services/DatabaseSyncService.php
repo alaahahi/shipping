@@ -161,19 +161,42 @@ class DatabaseSyncService
                 // استعادة من JSON
                 $backupData = json_decode(file_get_contents($backupFile), true);
                 $mysqlDb = DB::connection('mysql');
-                
+
+                // التأكد من وجود قسم tables في ملف النسخة الاحتياطية
+                if (!isset($backupData['tables']) || !is_array($backupData['tables'])) {
+                    Log::error('❌ ملف النسخة الاحتياطية لا يحتوي على بيانات صحيحة', ['file' => $backupFile]);
+                    return false;
+                }
+
                 DB::transaction(function () use ($mysqlDb, $backupData) {
-                    foreach ($backupData as $table => $rows) {
-                        // حذف البيانات الحالية
-                        $mysqlDb->table($table)->truncate();
-                        // إعادة إدراج البيانات
-                        if (!empty($rows)) {
-                            $mysqlDb->table($table)->insert($rows);
+                    // التكرار فقط على الجداول وليس على metadata
+                    foreach ($backupData['tables'] as $table => $rows) {
+                        // التأكد من أن اسم الجدول صحيح
+                        if (!is_string($table) || empty($table)) {
+                            Log::warning('تجاهل اسم جدول غير صحيح', ['table' => $table]);
+                            continue;
+                        }
+
+                        try {
+                            // حذف البيانات الحالية
+                            $mysqlDb->table($table)->truncate();
+                            // إعادة إدراج البيانات
+                            if (!empty($rows) && is_array($rows)) {
+                                $mysqlDb->table($table)->insert($rows);
+                            }
+                            Log::debug("تم استعادة الجدول: {$table}", ['records' => count($rows ?? [])]);
+                        } catch (Exception $e) {
+                            Log::warning("فشل في استعادة الجدول: {$table}", ['error' => $e->getMessage()]);
+                            throw $e; // إعادة رمي الخطأ لإلغاء المعاملة
                         }
                     }
                 });
-                
-                Log::info('✅ تم استعادة النسخة الاحتياطية من JSON', ['file' => $backupFile]);
+
+                Log::info('✅ تم استعادة النسخة الاحتياطية من JSON', [
+                    'file' => $backupFile,
+                    'tables_restored' => count($backupData['tables'] ?? []),
+                    'total_records' => $backupData['total_records'] ?? 0
+                ]);
                 return true;
             }
             
