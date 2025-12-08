@@ -1453,39 +1453,6 @@ class DatabaseSyncService
     }
 
 
-    /**
-     * تنظيف قيمة واحدة
-     */
-    protected function cleanValue($value, string $tableName, string $columnName)
-    {
-        // إذا كانت القيمة null، استخدم القيمة الافتراضية
-        if ($value === null) {
-            return $this->getDefaultValueForColumn($tableName, $columnName);
-        }
-
-        // إذا كانت القيمة نص فارغ وكان العمود يتوقع رقماً
-        if ($value === '' && $this->isNumericColumn($tableName, $columnName)) {
-            return $this->getDefaultValueForColumn($tableName, $columnName);
-        }
-
-        // إذا كانت القيمة نص فارغ وكان العمود يتوقع تاريخ
-        if ($value === '' && $this->isDateColumn($columnName)) {
-            return null;
-        }
-
-        // تنظيف النصوص من الأحرف الخاصة المشاكلة
-        if (is_string($value)) {
-            // إزالة الأحرف الخاصة المشاكلة
-            $value = trim($value);
-
-            // تحويل النصوص الفارغة إلى null للأعمدة غير الإجبارية
-            if ($value === '') {
-                return $this->getDefaultValueForColumn($tableName, $columnName);
-            }
-        }
-
-        return $value;
-    }
 
     /**
      * التحقق من أن العمود يتوقع قيمة عددية
