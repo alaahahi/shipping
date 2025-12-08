@@ -1441,12 +1441,9 @@ class DatabaseSyncService
             $cleanRow = [];
 
             foreach ($row as $column => $value) {
-                // تحويل القيم null أو الفارغة إلى قيم افتراضية حسب نوع العمود
-                if ($value === null || $value === '') {
-                    $cleanRow[$column] = $this->getDefaultValueForColumn($tableName, $column);
-                } else {
-                    $cleanRow[$column] = $value;
-                }
+                // تنظيف القيمة قبل المعالجة
+                $cleanValue = $this->cleanValue($value, $tableName, $column);
+                $cleanRow[$column] = $cleanValue;
             }
 
             $cleanedRows[] = $cleanRow;
@@ -1532,6 +1529,72 @@ class DatabaseSyncService
                str_contains($columnName, 'created') ||
                str_contains($columnName, 'updated') ||
                str_contains($columnName, 'deleted');
+    }
+
+    /**
+     * تنظيف القيمة قبل الإدراج
+     */
+    protected function cleanValue(mixed $value, string $tableName, string $columnName): mixed
+    {
+        // تحويل القيم null أو الفارغة إلى قيم افتراضية
+        if ($value === null || $value === '') {
+            return $this->getDefaultValueForColumn($tableName, $columnName);
+        }
+
+        // للأعمدة العددية، استخراج الأرقام من النصوص المختلطة
+        if ($this->isNumericColumn($tableName, $columnName)) {
+            // استخراج الأرقام من النص
+            if (is_string($value)) {
+                // البحث عن أرقام في النص (مثل "20$ نقل داخلي" -> 20)
+                preg_match('/(\d+)/', $value, $matches);
+                if (!empty($matches)) {
+                    return (int) $matches[1];
+                }
+                // إذا لم نجد أرقام، استخدم القيمة الافتراضية
+                return $this->getDefaultValueForColumn($tableName, $columnName);
+            }
+            // التأكد من أن القيمة عددية
+            return is_numeric($value) ? (int) $value : $this->getDefaultValueForColumn($tableName, $columnName);
+        }
+
+        // للأعمدة النصية، تنظيف النصوص
+        if ($this->isTextColumn($columnName)) {
+            if (is_string($value)) {
+                // إزالة المسافات الزائدة وتنظيف النص
+                return trim($value);
+            }
+        }
+
+        // للتواريخ، التأكد من صحة التنسيق
+        if ($this->isDateColumn($columnName)) {
+            if (is_string($value) && !empty($value)) {
+                // محاولة تحويل التاريخ إلى تنسيق صحيح
+                try {
+                    return date('Y-m-d H:i:s', strtotime($value));
+                } catch (\Exception $e) {
+                    return null;
+                }
+            }
+        }
+
+        return $value;
+    }
+
+    /**
+     * التحقق من أن العمود يتوقع قيمة نصية
+     */
+    protected function isTextColumn(string $columnName): bool
+    {
+        return str_contains($columnName, 'note') ||
+               str_contains($columnName, 'comment') ||
+               str_contains($columnName, 'description') ||
+               str_contains($columnName, 'name') ||
+               str_contains($columnName, 'address') ||
+               str_contains($columnName, 'phone') ||
+               str_contains($columnName, 'color') ||
+               str_contains($columnName, 'type') ||
+               str_contains($columnName, 'vin') ||
+               str_contains($columnName, 'car_number');
     }
 
     /**
