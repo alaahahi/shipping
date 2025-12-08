@@ -53,9 +53,14 @@ use App\Http\Controllers\AdminLicenseController;
 Route::middleware(['auth', 'verified'])->group(function () {
 });
 Route::get('/admin/licenses', [AdminLicenseController::class, 'index'])->name('admin.licenses.index');
+
+// صفحة مراقبة المزامنة - متاحة بدون تسجيل دخول
 Route::get('sync-monitor', function () {
-    return Inertia::render('SyncMonitor');
+    return Inertia::render('SyncMonitor', [
+        'layout' => null, // استخدام layout بسيط بدون auth
+    ]);
 })->name('sync.monitor');
+
 Route::group(['middleware' => ['auth','verified', 'check.license']], function () {
 
     Route::get('dashboard',[DashboardController::class,'index'])->middleware(['auth', 'verified'])->name('dashboard');
@@ -63,9 +68,6 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
     Route::get('purchases',[DashboardController::class,'purchases'])->name('purchases');
 
     Route::get('accounting',[AccountingController::class,'index'])->name('accounting');
-    
-    // صفحة مراقبة المزامنة
-
     
     // صفحة تفاصيل الجدول
     Route::get('sync-monitor/table/{tableName}', function (string $tableName, \Illuminate\Http\Request $request) {
@@ -210,7 +212,11 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
 
     Route::get('damage_report',[CarDamageReportController::class, 'index'])->name('damage_report.index');
     Route::get('damage_report/{id}/edit', [CarDamageReportController::class, 'edit'])->name('damage_report.edit');
-    
+
+    // Car History routes
+    Route::get('car/{carId}/history', [CarHistoryController::class, 'index'])->name('car.history');
+    Route::get('car/{carId}/history/{historyId}', [CarHistoryController::class, 'show'])->name('car.history.show');
+
  });
 
 Route::get('contract/verify/{token}', [CarContractController::class, 'verify'])->name('contract.verify');

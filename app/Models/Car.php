@@ -2,15 +2,17 @@
 
 namespace App\Models;
 use App\Models\User;
+use App\Traits\TracksHistory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Car extends Model
 {
-    use HasFactory;
+    use HasFactory, TracksHistory;
     protected $table = 'car';
     protected $fillable = [
         'id',
@@ -138,5 +140,18 @@ class Car extends Model
     public function carSale()
     {
         return $this->hasOne(CarSale::class, 'car_id');
+    }
+
+    public function history(): HasMany
+    {
+        return $this->hasMany(CarHistory::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get recent history for this car
+     */
+    public function getRecentHistory(int $limit = 10)
+    {
+        return $this->history()->limit($limit)->get();
     }
   }

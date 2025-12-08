@@ -262,7 +262,8 @@ class SyncMonitorController extends Controller
             }
 
             // حفظ حالة المزامنة في Session للتتبع
-            $sessionKey = 'sync_progress_' . $request->user()->id;
+            $userId = optional($request->user())->id ?? 'guest';
+            $sessionKey = 'sync_progress_' . $userId;
             cache()->put($sessionKey, [
                 'status' => 'running',
                 'direction' => $direction,
@@ -311,7 +312,8 @@ class SyncMonitorController extends Controller
 
         } catch (\Exception $e) {
             // تحديث حالة المزامنة عند الفشل
-            $sessionKey = 'sync_progress_' . ($request->user()->id ?? 'guest');
+            $userId = optional($request->user())->id ?? 'guest';
+            $sessionKey = 'sync_progress_' . $userId;
             cache()->put($sessionKey, [
                 'status' => 'failed',
                 'error' => $e->getMessage(),
@@ -338,7 +340,8 @@ class SyncMonitorController extends Controller
     public function syncProgress(Request $request): JsonResponse
     {
         try {
-            $sessionKey = 'sync_progress_' . ($request->user()->id ?? 'guest');
+            $userId = optional($request->user())->id ?? 'guest';
+            $sessionKey = 'sync_progress_' . $userId;
             $progress = cache()->get($sessionKey);
 
             if (!$progress) {
@@ -648,7 +651,7 @@ class SyncMonitorController extends Controller
             if (unlink($backupPath)) {
                 Log::info('تم حذف النسخة الاحتياطية', [
                     'file' => $backupFile,
-                    'user' => $request->user()->id ?? 'guest'
+                    'user' => optional($request->user())->id ?? 'guest'
                 ]);
 
                 return response()->json([
@@ -717,7 +720,7 @@ class SyncMonitorController extends Controller
             Log::info('تم تفريغ الجدول', [
                 'table' => $tableName,
                 'connection' => 'sync_sqlite',
-                'user' => $request->user()->id ?? 'guest'
+                'user' => optional($request->user())->id ?? 'guest'
             ]);
 
             return response()->json([
@@ -782,7 +785,7 @@ class SyncMonitorController extends Controller
             Log::warning('تم حذف الجدول', [
                 'table' => $tableName,
                 'connection' => 'sync_sqlite',
-                'user' => $request->user()->id ?? 'guest'
+                'user' => optional($request->user())->id ?? 'guest'
             ]);
 
             return response()->json([

@@ -124,7 +124,7 @@ const switchLocale = (locale) => {
 
                 
               </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==7">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && ($page.props.auth.user.type_id==1||$page.props.auth.user.type_id==7)">
                 <NavLink
                   :href="route('car_check')"
                   :active="route().current('car_check')"
@@ -133,7 +133,7 @@ const switchLocale = (locale) => {
                     مراجعة السيارات
                 </NavLink>
               </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6||$page.props.auth.user.type_id==7">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && ($page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6||$page.props.auth.user.type_id==7)">
                 <NavLink
                   :href="route('damage_report.index')"
                   :active="route().current('damage_report.index')"
@@ -150,7 +150,7 @@ const switchLocale = (locale) => {
                    مصاريف السيارات
                 </NavLink>
               </div> -->
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==8">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.type_id==8">
                 <NavLink
                   :href="route('contract')"
                   :active="route().current('contract')"
@@ -159,7 +159,7 @@ const switchLocale = (locale) => {
                 {{ $t("newContract") }}
                 </NavLink>
               </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==8">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.type_id==8">
                 <NavLink
                   :href="route('car_contract')"
                   :active="route().current('car_contract')"
@@ -168,7 +168,7 @@ const switchLocale = (locale) => {
                 {{ $t("SalesContracts") }}
                 </NavLink>
               </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==8">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.type_id==8">
                 <NavLink
                   :href="route('contract_account')"
                   :active="route().current('contract_account')"
@@ -177,7 +177,7 @@ const switchLocale = (locale) => {
                 {{ $t("CompanyExpenses") }}
                 </NavLink>
               </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.owner_id==1">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1">
                 <NavLink
                   :href="route('hunter')"
                   :active="route().current('hunter')"
@@ -279,7 +279,7 @@ const switchLocale = (locale) => {
                         type="button"
                         class="dark:bg-gray-800  dark:text-gray-300 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150"
                       >
-                        {{ $page.props.auth.user.name }}
+                        {{ $page.props.auth.user?.name || 'غير مسجل' }}
 
                         <svg
                           class="ml-2 -mr-0.5 h-4 w-4"
@@ -370,10 +370,10 @@ const switchLocale = (locale) => {
           <div class="pt-4 pb-1 border-t border-gray-200">
             <div class="px-4">
               <div class="font-medium text-base text-gray-800">
-                {{ $page.props.auth.user.name }}
+                {{ $page.props.auth.user?.name || 'غير مسجل' }}
               </div>
               <div class="font-medium text-sm text-gray-500">
-                {{ $page.props.auth.user.email }}
+                {{ $page.props.auth.user?.email || '' }}
               </div>
             </div>
             <div class="mt-3 space-y-1">
@@ -387,21 +387,21 @@ const switchLocale = (locale) => {
               <ResponsiveNavLink
                 :href="route('purchases')"
                 :active="route().current('purchases')"
-                v-if="$page.props.auth.user.type_id == 1"
+                v-if="$page.props.auth.user && $page.props.auth.user.type_id == 1"
               >
               {{ $t("purchases") }}
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('sales')"
                 :active="route().current('sales')"
-                v-if="$page.props.auth.user.type_id == 1"
+                v-if="$page.props.auth.user && $page.props.auth.user.type_id == 1"
               >
               {{ $t("sales") }}
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('accounting')"
                 :active="route().current('accounting')"
-                v-if="$page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6"
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6)"
               >
               المحاسبة  
               </ResponsiveNavLink>
@@ -410,7 +410,7 @@ const switchLocale = (locale) => {
               <ResponsiveNavLink
                 :href="route('sync.monitor')"
                 :active="route().current('sync.monitor')"
-                v-if="$page.props.auth.user.type_id == 1"
+                v-if="$page.props.auth.user && $page.props.auth.user.type_id == 1"
               >
               🔄 المزامنة
               </ResponsiveNavLink>
@@ -419,7 +419,7 @@ const switchLocale = (locale) => {
               <ResponsiveNavLink
                 :href="route('offline.car.search')"
                 :active="route().current('offline.car.search')"
-                v-if="$page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6 &&false"
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6) && false"
               >
               🔍 بحث Offline
               </ResponsiveNavLink>
@@ -427,21 +427,21 @@ const switchLocale = (locale) => {
               <ResponsiveNavLink
                 :href="route('online_contracts')"
                 :active="route().current('online_contracts')"
-                v-if="$page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6"
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6)"
               >
               {{ $t("online_contracts") }}
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('annual_information')"
                 :active="route().current('annual_information')"
-                v-if="$page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6"
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6)"
               >
               معلومات السنوية
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('car_expenses')"
                 :active="route().current('car_expenses')"
-                v-if="$page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==7"
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==7)"
               >
               مصاريف السيارات 
               </ResponsiveNavLink>
@@ -455,28 +455,28 @@ const switchLocale = (locale) => {
               <ResponsiveNavLink
                 :href="route('contract')"
                 :active="route().current('contract')"
-                v-if="$page.props.auth.user.type_id==8"
+                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8"
               >
               عقد جديد   
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('car_contract')"
                 :active="route().current('car_contract')"
-                v-if="$page.props.auth.user.type_id==8"
+                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8"
               >
               عقود البيع  
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('contract_account')"
                 :active="route().current('contract_account')"
-                v-if="$page.props.auth.user.type_id==8"
+                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8"
               >
               محاسبة عقود
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('hunter')"
                 :active="route().current('hunter')"
-                v-if="$page.props.auth.user.type_id==8"
+                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8"
               >
               عاطل 
               </ResponsiveNavLink>

@@ -308,6 +308,21 @@ Route::middleware('auth')->group(function () {
     Route::get('getIndexDamageReport',[CarDamageReportController::class, 'getIndex'])->name('getIndexDamageReport');
     Route::get('makeDamageReportPdf',[CarDamageReportController::class, 'makeDamageReportPdf'])->name('makeDamageReportPdf');
     Route::post('deleteDamageReport',[CarDamageReportController::class, 'delete'])->name('deleteDamageReport');
+
+    // Car History APIs
+    Route::get('car/{carId}/history', [CarHistoryController::class, 'getHistory'])->name('car.history.api');
+    Route::get('car/{carId}/history/{historyId}', [CarHistoryController::class, 'show'])->name('car.history.show.api');
+    Route::post('car/{carId}/history/compare', [CarHistoryController::class, 'compare'])->name('car.history.compare');
+    Route::get('car-history/statistics', [CarHistoryController::class, 'statistics'])->name('car.history.statistics');
+    Route::post('car-history/migrate-transactions', [CarHistoryController::class, 'migrateTransactions'])->name('car.history.migrate');
+    Route::post('car-history/cleanup', [CarHistoryController::class, 'cleanup'])->name('car.history.cleanup');
+
+    // System APIs
+    Route::post('system/clear-cache', [CarHistoryController::class, 'clearCache'])->name('system.clear.cache');
+    Route::post('system/optimize-database', [CarHistoryController::class, 'optimizeDatabase'])->name('system.optimize.database');
+    Route::post('system/generate-backup', [CarHistoryController::class, 'generateBackup'])->name('system.generate.backup');
+    Route::get('system/health-check', [CarHistoryController::class, 'healthCheck'])->name('system.health.check');
+    Route::get('system/database-info', [CarHistoryController::class, 'getDatabaseInfo'])->name('system.database.info');
 });
 
 Route::get('checkClientBalance',[AccountingController::class, 'checkClientBalance'])->name('checkClientBalance');

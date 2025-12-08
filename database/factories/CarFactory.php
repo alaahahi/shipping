@@ -12,7 +12,10 @@ class CarFactory extends Factory
 
     public function definition(): array
     {
+        static $nextNo = 1;
+
         return [
+            'no' => $nextNo++,
             'client_id' => User::factory(),
             'car_type' => $this->faker->randomElement(['Toyota', 'Honda', 'BMW', 'Mercedes', 'Nissan']),
             'year' => $this->faker->year(),
@@ -23,6 +26,7 @@ class CarFactory extends Factory
             'discount' => $this->faker->randomFloat(2, 0, 5000),
             'results' => $this->faker->randomElement([0, 1, 2]),
             'date' => $this->faker->date(),
+            'owner_id' => 1, // إضافة owner_id المطلوب
         ];
     }
 }

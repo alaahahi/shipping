@@ -1057,7 +1057,9 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                         </button>
                                       </div>
                                       <div class="basis-3/4" style="direction: ltr;">
-                                        <vue-tailwind-datepicker overlay :options="options" :disable-date="dDate"  i18n="ar"  as-single use-range v-model="dateValue" />
+                                        <input type="date" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                                        <span class="mx-2">إلى</span>
+                                        <input type="date" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
                                       </div>
                     </div>
                     <div class="flex pt-5 items-center">

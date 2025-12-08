@@ -1,7 +1,6 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, useForm } from "@inertiajs/inertia-vue3";
-import VueTailwindDatepicker from "vue-tailwind-datepicker";
 import ModalAddCarExpensesFav from "@/Components/ModalAddCarExpensesFav.vue";
 import ModalAddCarExpenses from "@/Components/ModalAddCarExpenses.vue";
 import ModalArchiveCar from "@/Components/ModalArchiveCar.vue";
