@@ -182,7 +182,9 @@ class DatabaseSyncService
                             $mysqlDb->table($table)->truncate();
                             // إعادة إدراج البيانات
                             if (!empty($rows) && is_array($rows)) {
-                                $mysqlDb->table($table)->insert($rows);
+                                // تنظيف البيانات من القيم null إذا لزم الأمر
+                                $cleanRows = $this->cleanDataForInsert($rows, $table);
+                                $mysqlDb->table($table)->insert($cleanRows);
                             }
                             Log::debug("تم استعادة الجدول: {$table}", ['records' => count($rows ?? [])]);
                         } catch (Exception $e) {
@@ -1429,8 +1431,80 @@ class DatabaseSyncService
     }
 
     /**
+     * تنظيف البيانات قبل الإدراج لتجنب أخطاء القيم null
+     */
+    protected function cleanDataForInsert(array $rows, string $tableName): array
+    {
+        $cleanedRows = [];
+
+        foreach ($rows as $row) {
+            $cleanRow = [];
+
+            foreach ($row as $column => $value) {
+                // تحويل القيم null إلى قيم افتراضية حسب نوع العمود
+                if ($value === null) {
+                    $cleanRow[$column] = $this->getDefaultValueForColumn($tableName, $column);
+                } else {
+                    $cleanRow[$column] = $value;
+                }
+            }
+
+            $cleanedRows[] = $cleanRow;
+        }
+
+        return $cleanedRows;
+    }
+
+    /**
+     * الحصول على القيمة الافتراضية للعمود
+     */
+    protected function getDefaultValueForColumn(string $tableName, string $columnName): mixed
+    {
+        // قيم افتراضية شائعة حسب أسماء الأعمدة
+        $defaults = [
+            'id' => null, // سيتم تعيينه تلقائياً
+            'created_at' => now()->toDateTimeString(),
+            'updated_at' => now()->toDateTimeString(),
+            'deleted_at' => null,
+        ];
+
+        // قيم افتراضية للأرقام
+        if (str_contains($columnName, 'price') ||
+            str_contains($columnName, 'cost') ||
+            str_contains($columnName, 'amount') ||
+            str_contains($columnName, 'total') ||
+            str_contains($columnName, 'paid') ||
+            str_contains($columnName, 'profit')) {
+            return 0;
+        }
+
+        // قيم افتراضية للنصوص
+        if (str_contains($columnName, 'note') ||
+            str_contains($columnName, 'comment') ||
+            str_contains($columnName, 'description')) {
+            return '';
+        }
+
+        // قيم افتراضية للمعرفات
+        if (str_contains($columnName, '_id') && $columnName !== 'id') {
+            return 0;
+        }
+
+        // قيم افتراضية منطقية
+        if (str_contains($columnName, 'is_') ||
+            str_contains($columnName, 'has_') ||
+            str_contains($columnName, 'active') ||
+            str_contains($columnName, 'status')) {
+            return 0;
+        }
+
+        // إرجاع القيمة الافتراضية إذا كانت موجودة
+        return $defaults[$columnName] ?? '';
+    }
+
+    /**
      * تصفية الجداول المستثناة من المزامنة
-     * 
+     *
      * @param array $tables قائمة الجداول
      * @return array قائمة الجداول بعد التصفية
      */
