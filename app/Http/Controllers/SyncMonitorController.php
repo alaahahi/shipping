@@ -624,6 +624,164 @@ class SyncMonitorController extends Controller
     }
 
     /**
+     * قراءة محتوى ملف النسخة الاحتياطية لاستخراج أسماء الجداول
+     */
+    public function getBackupContent(Request $request): JsonResponse
+    {
+        try {
+            $backupFile = $request->get('file');
+
+            if (!$backupFile) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'اسم الملف مطلوب'
+                ], 400);
+            }
+
+            $backupPath = storage_path('app/backups/' . basename($backupFile));
+
+            if (!file_exists($backupPath)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'النسخة الاحتياطية غير موجودة'
+                ], 404);
+            }
+
+            // قراءة محتوى الملف
+            $backupData = json_decode(file_get_contents($backupPath), true);
+
+            if (!$backupData || !isset($backupData['tables'])) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'ملف النسخة الاحتياطية تالف أو غير صحيح'
+                ], 400);
+            }
+
+            $tables = array_keys($backupData['tables']);
+
+            return response()->json([
+                'success' => true,
+                'tables' => $tables,
+                'total_records' => $backupData['total_records'] ?? 0,
+                'tables_count' => count($tables)
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to read backup content', [
+                'error' => $e->getMessage(),
+                'file' => $backupFile ?? 'unknown'
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'فشل في قراءة محتوى النسخة الاحتياطية'
+            ], 500);
+        }
+    }
+
+    /**
+     * استعادة جداول محددة من النسخة الاحتياطية
+     */
+    public function restoreSelectedTables(Request $request, DatabaseSyncService $syncService): JsonResponse
+    {
+        try {
+            $backupFile = $request->get('backup_file');
+            $tables = $request->get('tables');
+
+            if (!$backupFile) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'اسم الملف مطلوب'
+                ], 400);
+            }
+
+            if (!$tables) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'يجب تحديد الجداول المراد استعادتها'
+                ], 400);
+            }
+
+            $backupPath = storage_path('app/backups/' . basename($backupFile));
+
+            if (!file_exists($backupPath)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'النسخة الاحتياطية غير موجودة'
+                ], 404);
+            }
+
+            // قراءة محتوى الملف
+            $backupData = json_decode(file_get_contents($backupPath), true);
+
+            if (!$backupData || !isset($backupData['tables'])) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'ملف النسخة الاحتياطية تالف أو غير صحيح'
+                ], 400);
+            }
+
+            $tablesArray = explode(',', $tables);
+            $tablesArray = array_map('trim', $tablesArray);
+
+            // التحقق من وجود الجداول المطلوبة
+            $availableTables = array_keys($backupData['tables']);
+            $missingTables = array_diff($tablesArray, $availableTables);
+
+            if (!empty($missingTables)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'الجداول التالية غير موجودة في النسخة الاحتياطية: ' . implode(', ', $missingTables)
+                ], 400);
+            }
+
+            // إنشاء بيانات استعادة محدودة بالجداول المحددة
+            $restoreData = [
+                'created_at' => $backupData['created_at'] ?? now()->toDateTimeString(),
+                'database' => $backupData['database'] ?? config('database.connections.mysql.database'),
+                'tables' => array_intersect_key($backupData['tables'], array_flip($tablesArray))
+            ];
+
+            // كتابة ملف مؤقت للاستعادة
+            $tempBackupPath = storage_path('app/backups/temp_restore_' . time() . '.json');
+            file_put_contents($tempBackupPath, json_encode($restoreData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+            // استعادة البيانات المحددة
+            $success = $syncService->restoreBackup($tempBackupPath);
+
+            // حذف الملف المؤقت
+            if (file_exists($tempBackupPath)) {
+                unlink($tempBackupPath);
+            }
+
+            if ($success) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "تمت استعادة " . count($tablesArray) . " جدول بنجاح",
+                    'tables_restored' => $tablesArray
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'فشلت عملية الاستعادة'
+                ], 500);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Failed to restore selected tables', [
+                'error' => $e->getMessage(),
+                'backup_file' => $backupFile ?? 'unknown',
+                'tables' => $tables ?? 'unknown'
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'فشلت استعادة الجداول المحددة'
+            ], 500);
+        }
+    }
+
+    /**
      * حذف نسخة احتياطية
      */
     public function deleteBackup(Request $request): JsonResponse

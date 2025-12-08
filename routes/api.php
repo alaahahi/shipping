@@ -40,6 +40,8 @@ Route::post('/sync-monitor/table/{tableName}/truncate', [SyncMonitorController::
 Route::delete('/sync-monitor/table/{tableName}/delete', [SyncMonitorController::class, 'deleteTable'])->name('sync.monitor.table.delete');
 Route::get('/sync-monitor/backups', [SyncMonitorController::class, 'backups'])->name('sync.monitor.backups');
 Route::post('/sync-monitor/restore-backup', [SyncMonitorController::class, 'restoreBackup'])->name('sync.monitor.restore.backup');
+Route::get('/sync-monitor/backup-content', [SyncMonitorController::class, 'getBackupContent'])->name('sync.monitor.backup.content');
+Route::post('/sync-monitor/restore-selected', [SyncMonitorController::class, 'restoreSelectedTables'])->name('sync.monitor.restore.selected');
 Route::get('/sync-monitor/download-backup', [SyncMonitorController::class, 'downloadBackup'])->name('sync.monitor.download.backup');
 Route::delete('/sync-monitor/backup/delete', [SyncMonitorController::class, 'deleteBackup'])->name('sync.monitor.backup.delete');
 

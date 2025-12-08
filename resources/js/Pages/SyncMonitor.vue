@@ -996,12 +996,48 @@
             </button>
 
             <button
+              @click="showBackupSelector = true"
+              class="px-3 py-2 bg-emerald-600 text-white text-sm rounded hover:bg-emerald-700 ml-2"
+              title="استعادة جداول محددة من النسخة الاحتياطية"
+            >
+              📦 استعادة محددة
+            </button>
+
+            <button
+              @click="showBackupSelector = true"
+              class="px-3 py-2 bg-emerald-600 text-white text-sm rounded hover:bg-emerald-700 ml-2"
+              title="استعادة جداول محددة من النسخة الاحتياطية"
+            >
+              📦 استعادة محددة
+            </button>
+
+            <button
               @click="syncAllTables('down')"
               class="px-3 py-2 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 ml-2"
               :disabled="isSyncing"
               title="تحديث جميع الجداول من MySQL السيرفر إلى SQLite المحلي"
             >
               <span v-if="!isSyncing">🔄 الكل ↓</span>
+              <span v-else>⏳ جاري...</span>
+            </button>
+
+            <button
+              @click="syncSelectedTables"
+              class="px-3 py-2 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 ml-2"
+              :disabled="isSyncing"
+              title="استعادة جداول محددة (سيارات + صور + دفعات + محافظ + مستخدمين)"
+            >
+              <span v-if="!isSyncing">🚗 مختارة ↑</span>
+              <span v-else>⏳ جاري...</span>
+            </button>
+
+            <button
+              @click="syncCheckedTables"
+              class="px-3 py-2 bg-teal-600 text-white text-sm rounded hover:bg-teal-700 ml-2"
+              :disabled="isSyncing || checkedTables.length === 0"
+              title="استعادة الجداول المحددة من القائمة أدناه"
+            >
+              <span v-if="!isSyncing">✅ المحددة ↑</span>
               <span v-else>⏳ جاري...</span>
             </button>
 
@@ -1495,6 +1531,78 @@
 
     <!-- Sync Indicator -->
     <SyncIndicator />
+
+    <!-- Modal لاختيار الجداول من النسخة الاحتياطية -->
+    <div v-if="showBackupSelector" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click="showBackupSelector = false">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden" @click.stop>
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex justify-between items-center">
+            <h3 class="text-lg font-semibold dark:text-gray-200">📦 استعادة جداول محددة من النسخة الاحتياطية</h3>
+            <button @click="showBackupSelector = false" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="p-6 overflow-y-auto max-h-96">
+          <!-- اختيار ملف النسخة الاحتياطية -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium mb-2 dark:text-gray-200">اختر ملف النسخة الاحتياطية:</label>
+            <select
+              v-model="selectedBackupFile"
+              @change="loadBackupTables(selectedBackupFile)"
+              class="w-full p-2 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+            >
+              <option value="null">اختر ملف...</option>
+              <option v-for="backup in backups" :key="backup.name" :value="backup.name">
+                {{ backup.name }} ({{ backup.date }})
+              </option>
+            </select>
+          </div>
+
+          <!-- قائمة الجداول المتاحة -->
+          <div v-if="backupTables.length > 0" class="mb-6">
+            <h4 class="text-md font-medium mb-3 dark:text-gray-200">اختر الجداول المراد استعادتها:</h4>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
+              <label v-for="table in backupTables" :key="table" class="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600">
+                <input
+                  type="checkbox"
+                  :value="table"
+                  v-model="selectedBackupTables"
+                  class="rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700"
+                >
+                <span class="text-sm dark:text-gray-200">{{ table }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- ملخص الاختيار -->
+          <div v-if="selectedBackupTables.length > 0" class="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg">
+            <h5 class="font-medium text-blue-900 dark:text-blue-100 mb-2">الجداول المحددة للاستعادة:</h5>
+            <p class="text-sm text-blue-800 dark:text-blue-200">{{ selectedBackupTables.join(', ') }}</p>
+            <p class="text-xs text-blue-600 dark:text-blue-300 mt-1">عدد الجداول: {{ selectedBackupTables.length }}</p>
+          </div>
+        </div>
+
+        <div class="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+          <button
+            @click="showBackupSelector = false"
+            class="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+          >
+            إلغاء
+          </button>
+          <button
+            @click="restoreSelectedBackupTables"
+            :disabled="selectedBackupTables.length === 0"
+            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            🔄 استعادة المحدد
+          </button>
+        </div>
+      </div>
+    </div>
   </GuestLayout>
 </template>
 
@@ -1545,6 +1653,11 @@ const connectionInfo = ref(buildConnectionInfo());
 const isRefreshing = ref(false);
 const isSyncing = ref(false);
 const retryingItems = ref(new Set());
+const checkedTables = ref([]);
+const showBackupSelector = ref(false);
+const backupTables = ref([]);
+const selectedBackupTables = ref([]);
+const selectedBackupFile = ref(null);
 const filter = ref('all');
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
@@ -2497,6 +2610,74 @@ const syncAllTables = async (direction) => {
   await syncDirection(direction, true); // true لمزامنة الكل
 };
 
+// دالة لاستعادة جداول محددة (سيارات + صور + دفعات + محافظ + مستخدمين)
+const syncSelectedTables = async () => {
+  // الجداول المحددة للاستعادة
+  const selectedTables = ['car', 'car_images', 'buyer_payments', 'wallets', 'users'];
+
+  const confirmMessage = `هل تريد استعادة الجداول المحددة من JSON إلى MySQL؟
+
+📋 الجداول المحددة:
+${selectedTables.join(', ')}
+
+⚠️ سيتم:
+- استعادة بيانات السيارات
+- استعادة صور السيارات
+- استعادة دفعات المشترين
+- استعادة بيانات المحافظ المالية
+- استعادة بيانات المستخدمين
+- إنشاء نسخة احتياطية تلقائية
+
+هل تريد المتابعة؟`;
+
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  syncing.value = true;
+
+  try {
+    toast.info(`🚗 بدء استعادة ${selectedTables.length} جدول محدد...`, { timeout: 3000 });
+
+    const response = await axios.post('/api/sync-monitor/sync', {
+      direction: 'up',
+      tables: selectedTables.join(','),
+      safe_mode: false,
+      create_backup: true,
+      force_full_sync: false
+    }, {
+      withCredentials: true
+    });
+
+    if (response.data.success) {
+      const results = response.data.results;
+      console.log(`✅ تمت استعادة الجداول المحددة:`, results);
+
+      let message = `✅ تمت استعادة الجداول المحددة بنجاح!\n\n`;
+      message += `🚗 الجداول المستعادة: ${selectedTables.join(', ')}\n`;
+      message += `📊 إجمالي السجلات: ${results.total_synced}\n`;
+
+      if (results.backup_file) {
+        message += `💾 النسخة الاحتياطية: ${results.backup_file.split('/').pop()}\n`;
+        toast.info(`💾 تم إنشاء نسخة احتياطية: ${results.backup_file.split('/').pop()}`, { timeout: 3000 });
+      }
+
+      toast.success(message, { timeout: 5000 });
+      await loadSyncMetadata();
+      await loadSyncedTables();
+    } else {
+      console.error(`❌ فشلت استعادة الجداول المحددة:`, response.data.error);
+      toast.error(`❌ فشلت استعادة الجداول المحددة: ${response.data.error || 'خطأ غير معروف'}`);
+    }
+
+  } catch (error) {
+    console.error(`فشلت استعادة الجداول المحددة:`, error);
+    toast.error(`فشلت استعادة الجداول المحددة: ` + (error.response?.data?.error || error.message));
+  } finally {
+    syncing.value = false;
+  }
+};
+
 // دالة المزامنة
 const startSync = async () => {
   const confirmMessage = `هل تريد مزامنة جميع الجداول؟
@@ -2977,6 +3158,73 @@ onMounted(async () => {
   await loadMigrationStats();
   await loadDatabaseInfo();
 });
+
+// دوال استعادة النسخ الاحتياطية المحددة
+const loadBackupTables = async (backupFile) => {
+  try {
+    selectedBackupFile.value = backupFile;
+
+    // قراءة محتوى ملف النسخة الاحتياطية لاستخراج أسماء الجداول
+    const response = await axios.get(`/api/sync-monitor/backup-content?file=${encodeURIComponent(backupFile)}`, {
+      withCredentials: true
+    });
+
+    if (response.data.success) {
+      backupTables.value = response.data.tables || [];
+      selectedBackupTables.value = [];
+    } else {
+      toast.error('فشل في قراءة محتوى النسخة الاحتياطية');
+    }
+  } catch (error) {
+    console.error('خطأ في تحميل جداول النسخة الاحتياطية:', error);
+    toast.error('فشل في تحميل جداول النسخة الاحتياطية');
+  }
+};
+
+const restoreSelectedBackupTables = async () => {
+  if (selectedBackupTables.value.length === 0) {
+    toast.warning('يرجى تحديد جدول واحد على الأقل');
+    return;
+  }
+
+  const confirmMessage = `هل تريد استعادة الجداول المحددة من النسخة الاحتياطية؟
+
+📦 الملف: ${selectedBackupFile.value}
+📋 الجداول المحددة (${selectedBackupTables.value.length}):
+${selectedBackupTables.value.join(', ')}
+
+⚠️ سيتم:
+- استبدال البيانات الحالية بالبيانات من النسخة الاحتياطية
+- معالجة البيانات تلقائياً (أرقام + نصوص)
+
+هل تريد المتابعة؟`;
+
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  try {
+    const response = await axios.post('/api/sync-monitor/restore-selected', {
+      backup_file: selectedBackupFile.value,
+      tables: selectedBackupTables.value.join(',')
+    }, {
+      withCredentials: true
+    });
+
+    if (response.data.success) {
+      toast.success(`✅ تمت استعادة ${selectedBackupTables.value.length} جدول بنجاح!`);
+      showBackupSelector.value = false;
+      selectedBackupTables.value = [];
+      await loadSyncedTables();
+      await loadSyncMetadata();
+    } else {
+      toast.error(`❌ فشلت الاستعادة: ${response.data.error || 'خطأ غير معروف'}`);
+    }
+  } catch (error) {
+    console.error('فشلت استعادة الجداول المحددة:', error);
+    toast.error(`فشلت الاستعادة: ${error.response?.data?.error || error.message}`);
+  }
+};
 </script>
 
 <style scoped>
