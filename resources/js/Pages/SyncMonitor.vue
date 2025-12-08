@@ -978,6 +978,27 @@
                   <span v-if="!syncing">🔄 مزامنة ثنائية الاتجاه</span>
                   <span v-else>⏳ جاري المزامنة...</span>
                 </button>
+
+                <!-- أزرار اختيار اتجاه المزامنة -->
+            <button
+              @click="syncDirection('up')"
+              class="px-3 py-2 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 ml-2"
+              :disabled="isSyncing"
+              title="نقل البيانات الأساسية من SQLite المحلي إلى MySQL السيرفر"
+            >
+              <span v-if="!isSyncing">📤 الجداول الأساسية ↑</span>
+              <span v-else>⏳ جاري...</span>
+            </button>
+
+            <button
+              @click="syncDirection('down')"
+              class="px-3 py-2 bg-purple-500 text-white text-sm rounded hover:bg-purple-600 ml-2"
+              :disabled="isSyncing"
+              title="تحديث البيانات الأساسية من MySQL السيرفر إلى SQLite المحلي"
+            >
+              <span v-if="!isSyncing">📥 الجداول الأساسية ↓</span>
+              <span v-else>⏳ جاري...</span>
+            </button>
               </div>
             </div>
           </div>
@@ -2284,6 +2305,77 @@ const deleteTable = async (tableName) => {
   }
 };
 
+// دالة مزامنة باتجاه واحد محدد
+const syncDirection = async (direction) => {
+  const directionName = direction === 'up' ? 'من SQLite إلى MySQL' : 'من MySQL إلى SQLite';
+  const directionIcon = direction === 'up' ? '📤' : '📥';
+
+  // قائمة الجداول الأساسية المهمة للنقل (بدلاً من جميع الجداول)
+  const importantTables = ['users', 'car', 'car_contract', 'transactions', 'wallets', 'buyer_payments', 'car_sales', 'internal_sales'];
+
+  const confirmMessage = `هل تريد مزامنة الجداول الأساسية ${directionName}؟
+
+📋 الجداول المحددة: ${importantTables.join(', ')}
+
+⚠️ ${direction === 'up' ? 'حماية بيانات السيرفر:' : 'تحديث البيانات المحلية:'}
+${direction === 'up' ? '✅ سيتم إنشاء نسخة احتياطية تلقائياً' : '✅ سيتم تحديث البيانات المحلية'}
+${direction === 'up' ? '✅ Safe Mode: إضافة فقط (لا تحديث السجلات الموجودة)' : '✅ سيتم جلب أحدث البيانات من السيرفر'}
+${direction === 'up' ? '✅ Transaction مع Rollback في حالة الخطأ' : '✅ نسخ ذكي (فقط السجلات الجديدة)'}
+
+سيتم:
+${direction === 'up'
+  ? 'نقل البيانات من SQLite المحلي إلى MySQL السيرفر'
+  : 'تحديث SQLite المحلي من MySQL السيرفر'
+}`;
+
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  syncing.value = true;
+
+  try {
+    toast.info(`${directionIcon} بدء مزامنة ${importantTables.length} جدول أساسي ${directionName}...`, { timeout: 3000 });
+
+    const response = await axios.post('/api/sync-monitor/sync', {
+      direction: direction,
+      tables: importantTables.join(','), // الجداول الأساسية فقط
+      safe_mode: direction === 'up' ? false : true, // Safe Mode للاتجاه up فقط
+      create_backup: direction === 'up' ? true : false, // نسخة احتياطية للاتجاه up فقط
+      force_full_sync: false
+    }, {
+      withCredentials: true
+    });
+
+    if (response.data.success) {
+      const results = response.data.results;
+      console.log(`✅ تمت المزامنة ${directionName}:`, results);
+
+      let message = `✅ تمت المزامنة بنجاح!\n\n`;
+      message += `${directionIcon} ${directionName}: ${results.total_synced} سجل\n`;
+      message += `الجداول المزامنة: ${Object.keys(results.success || {}).length} من ${importantTables.length} جدول أساسي\n`;
+
+      if (results.backup_file) {
+        message += `💾 النسخة الاحتياطية: ${results.backup_file.split('/').pop()}\n`;
+        toast.info(`💾 تم إنشاء نسخة احتياطية: ${results.backup_file.split('/').pop()}`, { timeout: 3000 });
+      }
+
+      toast.success(message, { timeout: 5000 });
+      await loadSyncMetadata(); // تحديث بيانات المزامنة
+      await loadSyncedTables(); // تحديث قائمة الجداول
+    } else {
+      console.error(`❌ فشلت المزامنة ${directionName}:`, response.data.error);
+      toast.error(`❌ فشلت مزامنة الجداول الأساسية ${directionName}: ${response.data.error || 'خطأ غير معروف'}`);
+    }
+
+  } catch (error) {
+    console.error(`فشلت مزامنة الجداول الأساسية ${directionName}:`, error);
+    toast.error(`فشلت مزامنة الجداول الأساسية ${directionName}: ` + (error.response?.data?.error || error.message));
+  } finally {
+    syncing.value = false;
+  }
+};
+
 // دالة المزامنة
 const startSync = async () => {
   const confirmMessage = `هل تريد مزامنة جميع الجداول؟
@@ -2302,10 +2394,10 @@ const startSync = async () => {
   }
 
   syncing.value = true;
-  
+
   try {
     toast.info('🔄 بدء عملية المزامنة مع الحماية...', { timeout: 3000 });
-    
+
     // 1. أولاً: مزامنة من SQLite إلى MySQL (نقل البيانات المحلية للسيرفر)
     toast.info('📤 نقل البيانات من SQLite إلى MySQL (Safe Mode)...', { timeout: 3000 });
     const responseUp = await axios.post('/api/sync-monitor/sync', {
@@ -2316,11 +2408,11 @@ const startSync = async () => {
     }, {
       withCredentials: true
     });
-    
+
     if (responseUp.data.success) {
       const resultsUp = responseUp.data.results;
       console.log('✅ تمت المزامنة من SQLite إلى MySQL:', resultsUp);
-      
+
       if (resultsUp.backup_file) {
         console.log('💾 النسخة الاحتياطية:', resultsUp.backup_file);
         toast.info(`💾 تم إنشاء نسخة احتياطية: ${resultsUp.backup_file.split('/').pop()}`, { timeout: 3000 });
@@ -2329,7 +2421,7 @@ const startSync = async () => {
       console.error('❌ فشلت المزامنة من SQLite إلى MySQL:', responseUp.data.error);
       toast.error('❌ فشلت المزامنة - تم Rollback وحماية البيانات');
     }
-    
+
     // 2. ثانياً: مزامنة من MySQL إلى SQLite (تحديث البيانات المحلية)
     toast.info('📥 تحديث SQLite من MySQL...', { timeout: 3000 });
     const responseDown = await axios.post('/api/sync-monitor/sync', {
@@ -2338,14 +2430,14 @@ const startSync = async () => {
     }, {
       withCredentials: true
     });
-    
+
     if (responseDown.data.success) {
       const resultsDown = responseDown.data.results;
       let message = `✅ تمت المزامنة بنجاح!\n\n`;
       message += `📤 نقل إلى MySQL: ${resultsUp?.total_synced || 0} سجل (Safe Mode)\n`;
       message += `📥 تحديث من MySQL: ${resultsDown.total_synced} سجل\n`;
       message += `الجداول المزامنة: ${Object.keys(resultsDown.success).length}\n`;
-      
+
       if (resultsUp?.backup_file) {
         message += `\n💾 النسخة الاحتياطية: ${resultsUp.backup_file.split('/').pop()}`;
       }

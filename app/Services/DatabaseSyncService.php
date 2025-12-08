@@ -599,19 +599,22 @@ class DatabaseSyncService
             $col = is_array($column) ? $column : (array) $column;
             $name = $col['name'] ?? $column->name ?? null;
             if (!$name) continue;
-            
+
             $sqliteType = $col['type'] ?? $column->type ?? 'TEXT';
             $type = $this->mapSQLiteTypeToMySQL($sqliteType);
             $notnull = $col['notnull'] ?? $column->notnull ?? 0;
-            $nullable = $notnull == 0 ? ' NULL' : ' NOT NULL';
-            
-            // معالجة default values
+
+            // معالجة default values - مع مراعاة قيود MySQL
             $default = '';
             $dfltValue = $col['dflt_value'] ?? $column->dflt_value ?? null;
             if ($dfltValue !== null && strtoupper(trim($dfltValue)) !== 'NULL') {
                 $defaultValue = trim($dfltValue, "'\"");
-                // التحقق إذا كان رقم
-                if (is_numeric($defaultValue)) {
+
+                // في MySQL، الأعمدة TEXT لا يمكن أن يكون لها DEFAULT values
+                if (strtoupper($type) === 'TEXT' || strtoupper($type) === 'BLOB') {
+                    // تخطي DEFAULT للأعمدة TEXT و BLOB
+                    $default = '';
+                } elseif (is_numeric($defaultValue)) {
                     $default = " DEFAULT {$defaultValue}";
                 } elseif (in_array(strtoupper($defaultValue), ['CURRENT_TIMESTAMP', 'CURRENT_DATE', 'CURRENT_TIME'])) {
                     $default = " DEFAULT " . strtoupper($defaultValue);
@@ -620,18 +623,27 @@ class DatabaseSyncService
                     $default = " DEFAULT '{$defaultValue}'";
                 }
             }
-            
+
             // إضافة PRIMARY KEY إذا كان pk = 1
             $pk = $col['pk'] ?? $column->pk ?? 0;
             if ($pk == 1 && !$primaryKeyFound) {
+                // في MySQL، PRIMARY KEY يجب أن تكون NOT NULL دائماً
+                $nullable = ' NOT NULL';
+
                 // في MySQL، نستخدم AUTO_INCREMENT للـ PRIMARY KEY إذا كان INTEGER
                 if (strtoupper($type) === 'INT' || strtoupper($type) === 'BIGINT') {
                     $columnDefs[] = "`{$name}` {$type} PRIMARY KEY AUTO_INCREMENT{$nullable}{$default}";
+                } elseif (strtoupper($type) === 'TEXT' || strtoupper($type) === 'BLOB') {
+                    // TEXT columns لا يمكن استخدامها كـ PRIMARY KEY في MySQL بدون تحديد طول
+                    // سنستخدم VARCHAR(255) بدلاً من TEXT للـ PRIMARY KEY
+                    $columnDefs[] = "`{$name}` VARCHAR(255) PRIMARY KEY{$nullable}{$default}";
                 } else {
                     $columnDefs[] = "`{$name}` {$type} PRIMARY KEY{$nullable}{$default}";
                 }
                 $primaryKeyFound = true;
             } else {
+                // للأعمدة العادية، نحدد NULL/NOT NULL بناءً على $notnull
+                $nullable = $notnull == 0 ? ' NULL' : ' NOT NULL';
                 $columnDefs[] = "`{$name}` {$type}{$nullable}{$default}";
             }
         }
