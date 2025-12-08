@@ -317,21 +317,6 @@
                       {{ table.connection === 'sync_sqlite' ? 'SQLite محلي' : 'MySQL خادم' }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <button
-                      @click="viewTableDetails(table.name, table.connection)"
-                      class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
-                    >
-                      عرض
-                    </button>
-                    <button
-                      v-if="table.connection === 'sync_sqlite'"
-                      @click="truncateTable(table.name)"
-                      class="text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300"
-                    >
-                      تفريغ
-                    </button>
-                  </td>
                 </tr>
                 <tr v-if="syncedTables.length === 0">
                   <td colspan="4" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
@@ -999,6 +984,36 @@
               <span v-if="!isSyncing">📥 الجداول الأساسية ↓</span>
               <span v-else>⏳ جاري...</span>
             </button>
+
+            <button
+              @click="syncAllTables('up')"
+              class="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 ml-2"
+              :disabled="isSyncing"
+              title="نقل جميع الجداول من SQLite المحلي إلى MySQL السيرفر"
+            >
+              <span v-if="!isSyncing">🔄 الكل ↑</span>
+              <span v-else>⏳ جاري...</span>
+            </button>
+
+            <button
+              @click="syncAllTables('down')"
+              class="px-3 py-2 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 ml-2"
+              :disabled="isSyncing"
+              title="تحديث جميع الجداول من MySQL السيرفر إلى SQLite المحلي"
+            >
+              <span v-if="!isSyncing">🔄 الكل ↓</span>
+              <span v-else>⏳ جاري...</span>
+            </button>
+
+            <button
+              @click="syncVisibleTables"
+              class="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 ml-2"
+              :disabled="isSyncing"
+              title="مزامنة جميع الجداول المعروضة حالياً (38 جدول)"
+            >
+              <span v-if="!isSyncing">📋 المعروضة ↑</span>
+              <span v-else>⏳ جاري...</span>
+            </button>
               </div>
             </div>
           </div>
@@ -1061,25 +1076,56 @@
                       >
                         عرض التفاصيل
                       </button>
-                      <!-- أزرار SQLite فقط -->
-                      <template v-if="table.connection === 'sync_sqlite'">
+
+                      <!-- قائمة منسدلة للإجراءات - SQLite فقط -->
+                      <div v-if="table.connection === 'sync_sqlite'" class="relative inline-block">
                         <button
-                          @click="truncateTable(table.name)"
-                          class="text-orange-600 hover:text-orange-900 dark:text-orange-400"
-                          title="تفريغ الجدول (حذف جميع السجلات)"
-                          :disabled="truncatingTable === table.name"
+                          @click="toggleTableMenu(table.name)"
+                          class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                          :class="{ 'bg-gray-100 dark:bg-gray-700': activeMenu === table.name }"
                         >
-                          🗑️ تفريغ
+                          ⋮
                         </button>
-                        <button
-                          @click="deleteTable(table.name)"
-                          class="text-red-600 hover:text-red-900 dark:text-red-400"
-                          title="حذف الجدول بالكامل"
-                          :disabled="deletingTable === table.name"
+
+                        <!-- القائمة المنسدلة -->
+                        <div
+                          v-if="activeMenu === table.name"
+                          class="absolute right-0 mt-1 w-36 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700"
+                          @click.stop
                         >
-                          ❌ حذف
-                        </button>
-                      </template>
+                          <button
+                            @click="syncSingleTable(table.name); activeMenu = null"
+                            class="block w-full text-left px-3 py-2 text-sm text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900"
+                            :disabled="syncingTable === table.name"
+                          >
+                            <span v-if="syncingTable === table.name">⏳ جاري...</span>
+                            <span v-else>📤 مزامنة</span>
+                          </button>
+                          <button
+                            @click="truncateTable(table.name); activeMenu = null"
+                            class="block w-full text-left px-3 py-2 text-sm text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900"
+                            :disabled="truncatingTable === table.name"
+                          >
+                            <span v-if="truncatingTable === table.name">⏳ جاري...</span>
+                            <span v-else>🗑️ تفريغ</span>
+                          </button>
+                          <button
+                            @click="deleteTable(table.name); activeMenu = null"
+                            class="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900"
+                            :disabled="deletingTable === table.name"
+                          >
+                            <span v-if="deletingTable === table.name">⏳ جاري...</span>
+                            <span v-else">❌ حذف</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- خلفية لإغلاق القائمة -->
+                      <div
+                        v-if="activeMenu === table.name"
+                        @click="activeMenu = null"
+                        class="fixed inset-0 z-5"
+                      ></div>
                     </div>
                   </td>
                 </tr>
@@ -1561,6 +1607,8 @@ const databaseInfo = ref({});
 const loadingDatabaseInfo = ref(false);
 const showAllTables = ref(false);
 const truncatingTable = ref(null);
+const syncingTable = ref(null);
+const activeMenu = ref(null);
 const deletingTable = ref(null);
 
 // Sync Metadata
@@ -2274,6 +2322,59 @@ const truncateTable = async (tableName) => {
   }
 };
 
+// دالة لتبديل القائمة المنسدلة
+const toggleTableMenu = (tableName) => {
+  activeMenu.value = activeMenu.value === tableName ? null : tableName;
+};
+
+const syncSingleTable = async (tableName) => {
+  if (!confirm(`هل تريد مزامنة الجدول "${tableName}" من SQLite إلى MySQL؟\n\nسيتم:\n- نقل جميع السجلات الجديدة\n- إنشاء الجدول في MySQL إذا لم يكن موجوداً\n- إنشاء نسخة احتياطية تلقائية`)) {
+    return;
+  }
+
+  syncingTable.value = tableName;
+
+  try {
+    toast.info(`📤 بدء مزامنة جدول ${tableName}...`, { timeout: 3000 });
+
+    const response = await axios.post('/api/sync-monitor/sync', {
+      direction: 'up',
+      tables: tableName, // جدول واحد فقط
+      safe_mode: false,
+      create_backup: true,
+      force_full_sync: false
+    }, {
+      withCredentials: true
+    });
+
+    if (response.data.success) {
+      const results = response.data.results;
+      console.log(`✅ تمت مزامنة الجدول ${tableName}:`, results);
+
+      let message = `✅ تمت مزامنة الجدول ${tableName} بنجاح!\n\n`;
+      message += `السجلات المنقولة: ${results.total_synced}\n`;
+
+      if (results.backup_file) {
+        message += `💾 النسخة الاحتياطية: ${results.backup_file.split('/').pop()}\n`;
+        toast.info(`💾 تم إنشاء نسخة احتياطية: ${results.backup_file.split('/').pop()}`, { timeout: 3000 });
+      }
+
+      toast.success(message, { timeout: 5000 });
+      await loadSyncMetadata(); // تحديث بيانات المزامنة
+      await loadSyncedTables(); // تحديث قائمة الجداول
+    } else {
+      console.error(`❌ فشلت مزامنة الجدول ${tableName}:`, response.data.error);
+      toast.error(`❌ فشلت مزامنة الجدول ${tableName}: ${response.data.error || 'خطأ غير معروف'}`);
+    }
+
+  } catch (error) {
+    console.error(`فشلت مزامنة الجدول ${tableName}:`, error);
+    toast.error(`فشلت مزامنة الجدول ${tableName}: ` + (error.response?.data?.error || error.message));
+  } finally {
+    syncingTable.value = null;
+  }
+};
+
 const deleteTable = async (tableName) => {
   if (!confirm(`⚠️⚠️⚠️ تحذير شديد: هل أنت متأكد تماماً من حذف الجدول "${tableName}"؟\n\nهذا سيحذف الجدول بالكامل من SQLite المحلي!\n\nلا يمكن التراجع عن هذه العملية!`)) {
     return;
@@ -2306,16 +2407,23 @@ const deleteTable = async (tableName) => {
 };
 
 // دالة مزامنة باتجاه واحد محدد
-const syncDirection = async (direction) => {
+const syncDirection = async (direction, syncAll = false) => {
   const directionName = direction === 'up' ? 'من SQLite إلى MySQL' : 'من MySQL إلى SQLite';
   const directionIcon = direction === 'up' ? '📤' : '📥';
 
-  // قائمة الجداول الأساسية المهمة للنقل (بدلاً من جميع الجداول)
-  const importantTables = ['users', 'car', 'car_contract', 'transactions', 'wallets', 'buyer_payments', 'car_sales', 'internal_sales'];
+  let tablesToSync = null; // جميع الجداول
+  let tablesList = "جميع الجداول (باستثناء الجداول النظامية)";
 
-  const confirmMessage = `هل تريد مزامنة الجداول الأساسية ${directionName}؟
+  // إذا كان syncAll = false، استخدم الجداول الأساسية فقط
+  if (!syncAll) {
+    const importantTables = ['users', 'car', 'car_contract', 'transactions', 'wallets', 'buyer_payments', 'car_sales', 'internal_sales'];
+    tablesToSync = importantTables.join(',');
+    tablesList = importantTables.join(', ');
+  }
 
-📋 الجداول المحددة: ${importantTables.join(', ')}
+  const confirmMessage = `هل تريد مزامنة ${tablesList} ${directionName}؟
+
+${!syncAll ? '📋 الجداول الأساسية المهمة' : '📋 جميع الجداول المتاحة (باستثناء جداول النظام)'}
 
 ⚠️ ${direction === 'up' ? 'حماية بيانات السيرفر:' : 'تحديث البيانات المحلية:'}
 ${direction === 'up' ? '✅ سيتم إنشاء نسخة احتياطية تلقائياً' : '✅ سيتم تحديث البيانات المحلية'}
@@ -2335,11 +2443,12 @@ ${direction === 'up'
   syncing.value = true;
 
   try {
-    toast.info(`${directionIcon} بدء مزامنة ${importantTables.length} جدول أساسي ${directionName}...`, { timeout: 3000 });
+    const syncType = syncAll ? 'جميع الجداول' : 'الجداول الأساسية';
+    toast.info(`${directionIcon} بدء مزامنة ${syncType} ${directionName}...`, { timeout: 3000 });
 
     const response = await axios.post('/api/sync-monitor/sync', {
       direction: direction,
-      tables: importantTables.join(','), // الجداول الأساسية فقط
+      tables: tablesToSync, // null لجميع الجداول، أو قائمة الجداول الأساسية
       safe_mode: direction === 'up' ? false : true, // Safe Mode للاتجاه up فقط
       create_backup: direction === 'up' ? true : false, // نسخة احتياطية للاتجاه up فقط
       force_full_sync: false
@@ -2353,7 +2462,12 @@ ${direction === 'up'
 
       let message = `✅ تمت المزامنة بنجاح!\n\n`;
       message += `${directionIcon} ${directionName}: ${results.total_synced} سجل\n`;
-      message += `الجداول المزامنة: ${Object.keys(results.success || {}).length} من ${importantTables.length} جدول أساسي\n`;
+      if (syncAll) {
+        message += `الجداول المزامنة: ${Object.keys(results.success || {}).length} جدول\n`;
+      } else {
+        const importantTables = ['users', 'car', 'car_contract', 'transactions', 'wallets', 'buyer_payments', 'car_sales', 'internal_sales'];
+        message += `الجداول المزامنة: ${Object.keys(results.success || {}).length} من ${importantTables.length} جدول أساسي\n`;
+      }
 
       if (results.backup_file) {
         message += `💾 النسخة الاحتياطية: ${results.backup_file.split('/').pop()}\n`;
@@ -2365,15 +2479,22 @@ ${direction === 'up'
       await loadSyncedTables(); // تحديث قائمة الجداول
     } else {
       console.error(`❌ فشلت المزامنة ${directionName}:`, response.data.error);
-      toast.error(`❌ فشلت مزامنة الجداول الأساسية ${directionName}: ${response.data.error || 'خطأ غير معروف'}`);
+      const syncType = syncAll ? 'جميع الجداول' : 'الجداول الأساسية';
+      toast.error(`❌ فشلت مزامنة ${syncType} ${directionName}: ${response.data.error || 'خطأ غير معروف'}`);
     }
 
   } catch (error) {
-    console.error(`فشلت مزامنة الجداول الأساسية ${directionName}:`, error);
-    toast.error(`فشلت مزامنة الجداول الأساسية ${directionName}: ` + (error.response?.data?.error || error.message));
+    console.error(`فشلت مزامنة ${directionName}:`, error);
+    const syncType = syncAll ? 'جميع الجداول' : 'الجداول الأساسية';
+    toast.error(`فشلت مزامنة ${syncType} ${directionName}: ` + (error.response?.data?.error || error.message));
   } finally {
     syncing.value = false;
   }
+};
+
+// دالة لمزامنة جميع الجداول
+const syncAllTables = async (direction) => {
+  await syncDirection(direction, true); // true لمزامنة الكل
 };
 
 // دالة المزامنة
