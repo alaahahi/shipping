@@ -1441,8 +1441,8 @@ class DatabaseSyncService
             $cleanRow = [];
 
             foreach ($row as $column => $value) {
-                // تحويل القيم null إلى قيم افتراضية حسب نوع العمود
-                if ($value === null) {
+                // تحويل القيم null أو الفارغة إلى قيم افتراضية حسب نوع العمود
+                if ($value === null || $value === '') {
                     $cleanRow[$column] = $this->getDefaultValueForColumn($tableName, $column);
                 } else {
                     $cleanRow[$column] = $value;
@@ -1455,27 +1455,6 @@ class DatabaseSyncService
         return $cleanedRows;
     }
 
-    /**
-     * تنظيف البيانات قبل الإدراج
-     */
-    protected function cleanDataForInsert(array $rows, string $tableName): array
-    {
-        $cleanedRows = [];
-
-        foreach ($rows as $row) {
-            $cleanRow = [];
-
-            foreach ($row as $column => $value) {
-                // تنظيف القيمة قبل المعالجة
-                $cleanValue = $this->cleanValue($value, $tableName, $column);
-                $cleanRow[$column] = $cleanValue;
-            }
-
-            $cleanedRows[] = $cleanRow;
-        }
-
-        return $cleanedRows;
-    }
 
     /**
      * تنظيف قيمة واحدة
