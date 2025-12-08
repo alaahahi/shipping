@@ -1456,6 +1456,106 @@ class DatabaseSyncService
     }
 
     /**
+     * تنظيف البيانات قبل الإدراج
+     */
+    protected function cleanDataForInsert(array $rows, string $tableName): array
+    {
+        $cleanedRows = [];
+
+        foreach ($rows as $row) {
+            $cleanRow = [];
+
+            foreach ($row as $column => $value) {
+                // تنظيف القيمة قبل المعالجة
+                $cleanValue = $this->cleanValue($value, $tableName, $column);
+                $cleanRow[$column] = $cleanValue;
+            }
+
+            $cleanedRows[] = $cleanRow;
+        }
+
+        return $cleanedRows;
+    }
+
+    /**
+     * تنظيف قيمة واحدة
+     */
+    protected function cleanValue($value, string $tableName, string $columnName)
+    {
+        // إذا كانت القيمة null، استخدم القيمة الافتراضية
+        if ($value === null) {
+            return $this->getDefaultValueForColumn($tableName, $columnName);
+        }
+
+        // إذا كانت القيمة نص فارغ وكان العمود يتوقع رقماً
+        if ($value === '' && $this->isNumericColumn($tableName, $columnName)) {
+            return $this->getDefaultValueForColumn($tableName, $columnName);
+        }
+
+        // إذا كانت القيمة نص فارغ وكان العمود يتوقع تاريخ
+        if ($value === '' && $this->isDateColumn($columnName)) {
+            return null;
+        }
+
+        // تنظيف النصوص من الأحرف الخاصة المشاكلة
+        if (is_string($value)) {
+            // إزالة الأحرف الخاصة المشاكلة
+            $value = trim($value);
+
+            // تحويل النصوص الفارغة إلى null للأعمدة غير الإجبارية
+            if ($value === '') {
+                return $this->getDefaultValueForColumn($tableName, $columnName);
+            }
+        }
+
+        return $value;
+    }
+
+    /**
+     * التحقق من أن العمود يتوقع قيمة عددية
+     */
+    protected function isNumericColumn(string $tableName, string $columnName): bool
+    {
+        $numericColumns = [
+            'id', 'user_id', 'owner_id', 'status', 'year', 'year_date',
+            'size', 'size_s', 'no', 'no_s', 'car_price', 'car_paid',
+            'tex_seller', 'tex_buyer', 'tex_seller_dinar', 'tex_buyer_dinar',
+            'tex_seller_paid', 'tex_buyer_paid', 'tex_seller_dinar_paid', 'tex_buyer_dinar_paid'
+        ];
+
+        // أعمدة تنتهي بـ _id
+        if (str_ends_with($columnName, '_id')) {
+            return true;
+        }
+
+        // أعمدة تحتوي على كلمات عددية
+        if (str_contains($columnName, 'price') ||
+            str_contains($columnName, 'cost') ||
+            str_contains($columnName, 'amount') ||
+            str_contains($columnName, 'total') ||
+            str_contains($columnName, 'paid') ||
+            str_contains($columnName, 'profit') ||
+            str_contains($columnName, 'count') ||
+            str_contains($columnName, 'number') ||
+            str_contains($columnName, 'size')) {
+            return true;
+        }
+
+        return in_array($columnName, $numericColumns);
+    }
+
+    /**
+     * التحقق من أن العمود يتوقع قيمة تاريخ
+     */
+    protected function isDateColumn(string $columnName): bool
+    {
+        return str_contains($columnName, 'date') ||
+               str_contains($columnName, 'created') ||
+               str_contains($columnName, 'updated') ||
+               str_contains($columnName, 'deleted');
+    }
+
+    /**
      * الحصول على القيمة الافتراضية للعمود
      */
     protected function getDefaultValueForColumn(string $tableName, string $columnName): mixed
@@ -1466,35 +1566,33 @@ class DatabaseSyncService
             'created_at' => now()->toDateTimeString(),
             'updated_at' => now()->toDateTimeString(),
             'deleted_at' => null,
+            'created' => now()->toDateTimeString(),
         ];
 
         // قيم افتراضية للأرقام
-        if (str_contains($columnName, 'price') ||
-            str_contains($columnName, 'cost') ||
-            str_contains($columnName, 'amount') ||
-            str_contains($columnName, 'total') ||
-            str_contains($columnName, 'paid') ||
-            str_contains($columnName, 'profit')) {
+        if ($this->isNumericColumn($tableName, $columnName)) {
             return 0;
+        }
+
+        // قيم افتراضية للتواريخ
+        if ($this->isDateColumn($columnName)) {
+            return null;
         }
 
         // قيم افتراضية للنصوص
         if (str_contains($columnName, 'note') ||
             str_contains($columnName, 'comment') ||
-            str_contains($columnName, 'description')) {
+            str_contains($columnName, 'description') ||
+            str_contains($columnName, 'name') ||
+            str_contains($columnName, 'address') ||
+            str_contains($columnName, 'phone')) {
             return '';
-        }
-
-        // قيم افتراضية للمعرفات
-        if (str_contains($columnName, '_id') && $columnName !== 'id') {
-            return 0;
         }
 
         // قيم افتراضية منطقية
         if (str_contains($columnName, 'is_') ||
             str_contains($columnName, 'has_') ||
-            str_contains($columnName, 'active') ||
-            str_contains($columnName, 'status')) {
+            str_contains($columnName, 'active')) {
             return 0;
         }
 
