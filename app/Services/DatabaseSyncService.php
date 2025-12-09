@@ -184,11 +184,35 @@ class DatabaseSyncService
                             if (!empty($rows) && is_array($rows)) {
                                 // تنظيف البيانات من القيم null إذا لزم الأمر
                                 $cleanRows = $this->cleanDataForInsert($rows, $table);
-                                $mysqlDb->table($table)->insert($cleanRows);
+                                
+                                // إدراج البيانات على دفعات لتسهيل تتبع الأخطاء
+                                $chunkSize = 100;
+                                $chunks = array_chunk($cleanRows, $chunkSize);
+                                
+                                foreach ($chunks as $chunkIndex => $chunk) {
+                                    try {
+                                        $mysqlDb->table($table)->insert($chunk);
+                                    } catch (Exception $chunkException) {
+                                        // تسجيل تفاصيل أكثر عن الصف الذي يسبب المشكلة
+                                        $rowIndex = ($chunkIndex * $chunkSize) + 1;
+                                        Log::error("فشل في إدراج دفعة من الجدول: {$table}", [
+                                            'chunk_index' => $chunkIndex,
+                                            'row_index' => $rowIndex,
+                                            'chunk_size' => count($chunk),
+                                            'error' => $chunkException->getMessage(),
+                                            'sample_row' => $chunk[0] ?? null
+                                        ]);
+                                        throw $chunkException;
+                                    }
+                                }
                             }
                             Log::debug("تم استعادة الجدول: {$table}", ['records' => count($rows ?? [])]);
                         } catch (Exception $e) {
-                            Log::warning("فشل في استعادة الجدول: {$table}", ['error' => $e->getMessage()]);
+                            Log::warning("فشل في استعادة الجدول: {$table}", [
+                                'error' => $e->getMessage(),
+                                'error_code' => $e->getCode(),
+                                'records_count' => count($rows ?? [])
+                            ]);
                             throw $e; // إعادة رمي الخطأ لإلغاء المعاملة
                         }
                     }
@@ -1480,7 +1504,16 @@ class DatabaseSyncService
             str_contains($columnName, 'profit') ||
             str_contains($columnName, 'count') ||
             str_contains($columnName, 'number') ||
-            str_contains($columnName, 'size')) {
+            str_contains($columnName, 'size') ||
+            str_contains($columnName, 'expenses') ||
+            str_contains($columnName, 'discount') ||
+            str_contains($columnName, 'shipping') ||
+            str_contains($columnName, 'dinar') ||
+            str_contains($columnName, 'dolar') ||
+            str_contains($columnName, 'dollar') ||
+            str_contains($columnName, 'coc') ||
+            str_contains($columnName, 'checkout') ||
+            str_contains($columnName, 'results')) {
             return true;
         }
 
@@ -1512,16 +1545,40 @@ class DatabaseSyncService
         if ($this->isNumericColumn($tableName, $columnName)) {
             // استخراج الأرقام من النص
             if (is_string($value)) {
-                // البحث عن أرقام في النص (مثل "20$ نقل داخلي" -> 20)
-                preg_match('/(\d+)/', $value, $matches);
-                if (!empty($matches)) {
-                    return (int) $matches[1];
+                // تنظيف النص من المسافات الزائدة
+                $value = trim($value);
+                
+                // محاولة استخراج رقم عشري أولاً (مثل "20.5$" -> 20.5)
+                if (preg_match('/(\d+\.?\d*)/', $value, $matches)) {
+                    $numericValue = (float) $matches[1];
+                    // إذا كان العمود يتوقع عدد صحيح، حوله
+                    if (str_ends_with($columnName, '_id') || 
+                        str_contains($columnName, 'id') ||
+                        str_contains($columnName, 'count') ||
+                        str_contains($columnName, 'no')) {
+                        return (int) $numericValue;
+                    }
+                    return $numericValue;
                 }
+                
                 // إذا لم نجد أرقام، استخدم القيمة الافتراضية
                 return $this->getDefaultValueForColumn($tableName, $columnName);
             }
-            // التأكد من أن القيمة عددية
-            return is_numeric($value) ? (int) $value : $this->getDefaultValueForColumn($tableName, $columnName);
+            
+            // إذا كانت القيمة بالفعل رقمية
+            if (is_numeric($value)) {
+                // إذا كان العمود يتوقع عدد صحيح
+                if (str_ends_with($columnName, '_id') || 
+                    str_contains($columnName, 'id') ||
+                    str_contains($columnName, 'count') ||
+                    str_contains($columnName, 'no')) {
+                    return (int) $value;
+                }
+                return (float) $value;
+            }
+            
+            // إذا لم تكن القيمة عددية، استخدم القيمة الافتراضية
+            return $this->getDefaultValueForColumn($tableName, $columnName);
         }
 
         // للأعمدة النصية، تنظيف النصوص

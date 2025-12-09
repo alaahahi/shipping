@@ -34,9 +34,10 @@ class CarConfigController extends Controller
 {
     public function __construct(){
         $this->url = env('FRONTEND_URL');
-        $this->userAdmin =  UserType::where('name', 'admin')->first()->id;
-        $this->userClient =  UserType::where('name', 'client')->first()->id;
-        $this->userAccount =  UserType::where('name', 'account')->first()->id;
+        $this->userAdmin =  UserType::where('name', 'admin')->first()?->id ?? null;
+        $this->userClient =  UserType::where('name', 'client')->first()?->id ?? null;
+        $this->userAccount =  UserType::where('name', 'account')->first()?->id ?? null;
+        $this->userSeles =  UserType::where('name', 'selesKirkuk')->first()?->id ?? null;
          
     }
 

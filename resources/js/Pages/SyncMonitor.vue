@@ -1033,7 +1033,7 @@
             >
               <span v-if="!isSyncing">📋 المعروضة ↑</span>
               <span v-else>⏳ جاري...</span>
-            </button>
+                </button>
               </div>
             </div>
           </div>
@@ -1124,19 +1124,19 @@
                           <button
                             @click="truncateTable(table.name); activeMenu = null"
                             class="block w-full text-left px-3 py-2 text-sm text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900"
-                            :disabled="truncatingTable === table.name"
-                          >
+                          :disabled="truncatingTable === table.name"
+                        >
                             <span v-if="truncatingTable === table.name">⏳ جاري...</span>
                             <span v-else>🗑️ تفريغ</span>
-                          </button>
-                          <button
+                        </button>
+                        <button
                             @click="deleteTable(table.name); activeMenu = null"
                             class="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900"
-                            :disabled="deletingTable === table.name"
-                          >
+                          :disabled="deletingTable === table.name"
+                        >
                             <span v-if="deletingTable === table.name">⏳ جاري...</span>
                             <span v-else">❌ حذف</span>
-                          </button>
+                        </button>
                         </div>
                       </div>
 
@@ -1273,14 +1273,14 @@
                 >
                   📦 استعادة محددة
                 </button>
-                <button
-                  @click="loadBackups"
-                  class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-                  :disabled="loadingBackups"
-                >
-                  <span v-if="!loadingBackups">🔄 تحديث</span>
-                  <span v-else>⏳ جاري...</span>
-                </button>
+              <button
+                @click="loadBackups"
+                class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+                :disabled="loadingBackups"
+              >
+                <span v-if="!loadingBackups">🔄 تحديث</span>
+                <span v-else>⏳ جاري...</span>
+              </button>
               </div>
             </div>
           </div>
@@ -2689,10 +2689,10 @@ const startSync = async () => {
   }
 
   syncing.value = true;
-
+  
   try {
     toast.info('🔄 بدء عملية المزامنة مع الحماية...', { timeout: 3000 });
-
+    
     // 1. أولاً: مزامنة من SQLite إلى MySQL (نقل البيانات المحلية للسيرفر)
     toast.info('📤 نقل البيانات من SQLite إلى MySQL (Safe Mode)...', { timeout: 3000 });
     const responseUp = await axios.post('/api/sync-monitor/sync', {
@@ -2703,11 +2703,11 @@ const startSync = async () => {
     }, {
       withCredentials: true
     });
-
+    
     if (responseUp.data.success) {
       const resultsUp = responseUp.data.results;
       console.log('✅ تمت المزامنة من SQLite إلى MySQL:', resultsUp);
-
+      
       if (resultsUp.backup_file) {
         console.log('💾 النسخة الاحتياطية:', resultsUp.backup_file);
         toast.info(`💾 تم إنشاء نسخة احتياطية: ${resultsUp.backup_file.split('/').pop()}`, { timeout: 3000 });
@@ -2716,7 +2716,7 @@ const startSync = async () => {
       console.error('❌ فشلت المزامنة من SQLite إلى MySQL:', responseUp.data.error);
       toast.error('❌ فشلت المزامنة - تم Rollback وحماية البيانات');
     }
-
+    
     // 2. ثانياً: مزامنة من MySQL إلى SQLite (تحديث البيانات المحلية)
     toast.info('📥 تحديث SQLite من MySQL...', { timeout: 3000 });
     const responseDown = await axios.post('/api/sync-monitor/sync', {
@@ -2725,14 +2725,14 @@ const startSync = async () => {
     }, {
       withCredentials: true
     });
-
+    
     if (responseDown.data.success) {
       const resultsDown = responseDown.data.results;
       let message = `✅ تمت المزامنة بنجاح!\n\n`;
       message += `📤 نقل إلى MySQL: ${resultsUp?.total_synced || 0} سجل (Safe Mode)\n`;
       message += `📥 تحديث من MySQL: ${resultsDown.total_synced} سجل\n`;
       message += `الجداول المزامنة: ${Object.keys(resultsDown.success).length}\n`;
-
+      
       if (resultsUp?.backup_file) {
         message += `\n💾 النسخة الاحتياطية: ${resultsUp.backup_file.split('/').pop()}`;
       }

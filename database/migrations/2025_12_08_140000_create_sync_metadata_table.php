@@ -11,19 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('sync_metadata', function (Blueprint $table) {
-            $table->id();
-            $table->string('table_name');
-            $table->enum('direction', ['up', 'down']); // up = SQLite to MySQL, down = MySQL to SQLite
-            $table->unsignedBigInteger('last_synced_id')->nullable();
-            $table->timestamp('last_synced_at')->nullable();
-            $table->timestamp('last_updated_at')->nullable();
-            $table->unsignedInteger('total_synced')->default(0);
-            $table->timestamps();
+        if (!Schema::hasTable('sync_metadata')) {
+            Schema::create('sync_metadata', function (Blueprint $table) {
+                $table->id();
+                $table->string('table_name');
+                $table->enum('direction', ['up', 'down']); // up = SQLite to MySQL, down = MySQL to SQLite
+                $table->unsignedBigInteger('last_synced_id')->nullable();
+                $table->timestamp('last_synced_at')->nullable();
+                $table->timestamp('last_updated_at')->nullable();
+                $table->unsignedInteger('total_synced')->default(0);
+                $table->timestamps();
 
-            // Index for fast lookups
-            $table->unique(['table_name', 'direction']);
-        });
+                // Index for fast lookups
+                $table->unique(['table_name', 'direction']);
+            });
+        }
     }
 
     /**
