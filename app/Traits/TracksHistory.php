@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Auth;
 
 trait TracksHistory
 {
+    // متغير static لتخزين البيانات القديمة مؤقتاً
+    protected static $oldAttributesCache = [];
+
     protected static function bootTracksHistory()
     {
         static::created(function (Model $model) {
@@ -18,16 +21,20 @@ trait TracksHistory
 
         static::updating(function (Model $model) {
             if ($model instanceof \App\Models\Car) {
-                $model->oldAttributes = $model->getOriginal();
+                // حفظ البيانات القديمة في cache بدلاً من خاصية على الـ model
+                static::$oldAttributesCache[$model->getKey()] = $model->getOriginal();
             }
         });
 
         static::updated(function (Model $model) {
             if ($model instanceof \App\Models\Car) {
-                $changes = static::getChangesArray($model->oldAttributes, $model->getAttributes());
+                $oldAttributes = static::$oldAttributesCache[$model->getKey()] ?? [];
+                $changes = static::getChangesArray($oldAttributes, $model->getAttributes());
                 if (!empty($changes)) {
-                    CarHistory::logUpdate($model, $model->oldAttributes, $changes, Auth::user());
+                    CarHistory::logUpdate($model, $oldAttributes, $changes, Auth::user());
                 }
+                // تنظيف cache بعد الاستخدام
+                unset(static::$oldAttributesCache[$model->getKey()]);
             }
         });
 

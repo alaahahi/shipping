@@ -59,6 +59,9 @@ class Car extends Model
         'land_shipping_dinar_s',
         'car_price'
     ];
+    
+    // منع حفظ oldAttributes كعمود في قاعدة البيانات
+    protected $guarded = ['oldAttributes'];
     public function user()
     {
         return $this->belongsTo(User::class);
