@@ -996,22 +996,6 @@
             </button>
 
             <button
-              @click="showBackupSelector = true"
-              class="px-3 py-2 bg-emerald-600 text-white text-sm rounded hover:bg-emerald-700 ml-2"
-              title="استعادة جداول محددة من النسخة الاحتياطية"
-            >
-              📦 استعادة محددة
-            </button>
-
-            <button
-              @click="showBackupSelector = true"
-              class="px-3 py-2 bg-emerald-600 text-white text-sm rounded hover:bg-emerald-700 ml-2"
-              title="استعادة جداول محددة من النسخة الاحتياطية"
-            >
-              📦 استعادة محددة
-            </button>
-
-            <button
               @click="syncAllTables('down')"
               class="px-3 py-2 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 ml-2"
               :disabled="isSyncing"
@@ -1281,14 +1265,23 @@
               <h3 class="text-lg font-semibold dark:text-gray-200">
                 💾 النسخ الاحتياطية
               </h3>
-              <button
-                @click="loadBackups"
-                class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-                :disabled="loadingBackups"
-              >
-                <span v-if="!loadingBackups">🔄 تحديث</span>
-                <span v-else>⏳ جاري...</span>
-              </button>
+              <div class="flex gap-2">
+                <button
+                  @click="showBackupSelector = true"
+                  class="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm"
+                  title="استعادة جداول محددة من النسخة الاحتياطية"
+                >
+                  📦 استعادة محددة
+                </button>
+                <button
+                  @click="loadBackups"
+                  class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+                  :disabled="loadingBackups"
+                >
+                  <span v-if="!loadingBackups">🔄 تحديث</span>
+                  <span v-else>⏳ جاري...</span>
+                </button>
+              </div>
             </div>
           </div>
 
