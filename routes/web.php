@@ -48,10 +48,8 @@ Route::get('/license/activate', [LicenseController::class, 'showActivate'])->nam
 Route::get('/license/status', [LicenseController::class, 'showStatus'])->name('license.status');
 Route::post('/license/activate', [LicenseController::class, 'activate'])->name('license.activate.post');
 
-// Routes إدارة الترخيصات (للأدمن فقط)
+// Routes إدارة الترخيصات (الوصول عبر كلمة المرور في الرابط)
 use App\Http\Controllers\AdminLicenseController;
-Route::middleware(['auth', 'verified'])->group(function () {
-});
 Route::get('/admin/licenses', [AdminLicenseController::class, 'index'])->name('admin.licenses.index');
 
 // صفحة مراقبة المزامنة - متاحة بدون تسجيل دخول

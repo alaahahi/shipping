@@ -29,12 +29,22 @@ class AdminLicenseController extends Controller
     }
 
     /**
+     * التحقق من كلمة المرور في الطلب
+     */
+    protected function checkPassword(Request $request): bool
+    {
+        $password = $request->query('passwrod') ?? $request->input('passwrod') ?? $request->header('X-Password');
+        return $password === 'Alaa.hahe@1';
+    }
+
+    /**
      * عرض صفحة إدارة الترخيصات
      */
-    public function index()
+    public function index(Request $request)
     {
-        if (!$this->isAdmin()) {
-            abort(403, 'غير مصرح لك بالوصول');
+        // التحقق من كلمة المرور في الرابط
+        if (!$this->checkPassword($request)) {
+            abort(403, 'غير مصرح لك بالوصول - كلمة المرور غير صحيحة');
         }
 
         $licenses = License::orderBy('created_at', 'desc')->get()->map(function ($license) {
@@ -60,12 +70,12 @@ class AdminLicenseController extends Controller
     /**
      * الحصول على قائمة الترخيصات (API)
      */
-    public function list(): JsonResponse
+    public function list(Request $request): JsonResponse
     {
-        if (!$this->isAdmin()) {
+        if (!$this->checkPassword($request)) {
             return Response::json([
                 'success' => false,
-                'message' => 'غير مصرح لك بالوصول'
+                'message' => 'غير مصرح لك بالوصول - كلمة المرور غير صحيحة'
             ], 403);
         }
 
@@ -82,10 +92,10 @@ class AdminLicenseController extends Controller
      */
     public function create(Request $request): JsonResponse
     {
-        if (!$this->isAdmin()) {
+        if (!$this->checkPassword($request)) {
             return Response::json([
                 'success' => false,
-                'message' => 'غير مصرح لك بالوصول'
+                'message' => 'غير مصرح لك بالوصول - كلمة المرور غير صحيحة'
             ], 403);
         }
 
@@ -140,10 +150,10 @@ class AdminLicenseController extends Controller
      */
     public function toggle(Request $request, $id): JsonResponse
     {
-        if (!$this->isAdmin()) {
+        if (!$this->checkPassword($request)) {
             return Response::json([
                 'success' => false,
-                'message' => 'غير مصرح لك بالوصول'
+                'message' => 'غير مصرح لك بالوصول - كلمة المرور غير صحيحة'
             ], 403);
         }
 
@@ -166,12 +176,12 @@ class AdminLicenseController extends Controller
     /**
      * حذف ترخيص
      */
-    public function destroy($id): JsonResponse
+    public function destroy(Request $request, $id): JsonResponse
     {
-        if (!$this->isAdmin()) {
+        if (!$this->checkPassword($request)) {
             return Response::json([
                 'success' => false,
-                'message' => 'غير مصرح لك بالوصول'
+                'message' => 'غير مصرح لك بالوصول - كلمة المرور غير صحيحة'
             ], 403);
         }
 
@@ -187,12 +197,12 @@ class AdminLicenseController extends Controller
     /**
      * عرض تفاصيل ترخيص
      */
-    public function show($id): JsonResponse
+    public function show(Request $request, $id): JsonResponse
     {
-        if (!$this->isAdmin()) {
+        if (!$this->checkPassword($request)) {
             return Response::json([
                 'success' => false,
-                'message' => 'غير مصرح لك بالوصول'
+                'message' => 'غير مصرح لك بالوصول - كلمة المرور غير صحيحة'
             ], 403);
         }
 
@@ -222,10 +232,10 @@ class AdminLicenseController extends Controller
      */
     public function update(Request $request, $id): JsonResponse
     {
-        if (!$this->isAdmin()) {
+        if (!$this->checkPassword($request)) {
             return Response::json([
                 'success' => false,
-                'message' => 'غير مصرح لك بالوصول'
+                'message' => 'غير مصرح لك بالوصول - كلمة المرور غير صحيحة'
             ], 403);
         }
 
@@ -269,12 +279,12 @@ class AdminLicenseController extends Controller
     /**
      * الحصول على إحصائيات الترخيصات
      */
-    public function statistics(): JsonResponse
+    public function statistics(Request $request): JsonResponse
     {
-        if (!$this->isAdmin()) {
+        if (!$this->checkPassword($request)) {
             return Response::json([
                 'success' => false,
-                'message' => 'غير مصرح لك بالوصول'
+                'message' => 'غير مصرح لك بالوصول - كلمة المرور غير صحيحة'
             ], 403);
         }
 

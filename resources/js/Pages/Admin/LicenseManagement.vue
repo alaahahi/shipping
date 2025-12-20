@@ -1,5 +1,5 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import GuestLayout from '@/Layouts/GuestLayout.vue';
 import Modal from '@/Components/Modal.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import InputLabel from '@/Components/InputLabel.vue';
@@ -11,6 +11,16 @@ import { useToast } from "vue-toastification";
 import axios from 'axios';
 
 const toast = useToast();
+
+// الحصول على كلمة المرور من الرابط
+const urlParams = new URLSearchParams(window.location.search);
+const password = urlParams.get('passwrod') || 'Alaa.hahe@1';
+
+// إضافة password parameter لجميع API requests
+const getApiUrl = (url) => {
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}passwrod=${encodeURIComponent(password)}`;
+};
 
 const props = defineProps({
     licenses: Array,
@@ -66,7 +76,7 @@ const getStatusColor = (license) => {
 
 const loadStatistics = async () => {
     try {
-        const response = await axios.get('/api/admin/licenses/statistics');
+        const response = await axios.get(getApiUrl('/api/admin/licenses/statistics'));
         if (response.data.success) {
             statistics.value = response.data.statistics;
         }
@@ -78,7 +88,7 @@ const loadStatistics = async () => {
 const loadLicenses = async () => {
     loading.value = true;
     try {
-        const response = await axios.get('/api/admin/licenses');
+        const response = await axios.get(getApiUrl('/api/admin/licenses'));
         if (response.data.success) {
             licenses.value = response.data.licenses.map(license => ({
                 ...license,
@@ -97,7 +107,8 @@ const loadLicenses = async () => {
 const createLicense = async () => {
     loading.value = true;
     try {
-        const response = await axios.post('/api/admin/licenses', createForm.data());
+        const formData = { ...createForm.data(), passwrod: password };
+        const response = await axios.post(getApiUrl('/api/admin/licenses'), formData);
         if (response.data.success) {
             toast.success('تم إنشاء الترخيص بنجاح!');
             newLicenseKey.value = response.data.license_key;
@@ -132,7 +143,7 @@ const copyLicenseKey = async () => {
 
 const toggleLicense = async (id) => {
     try {
-        const response = await axios.post(`/api/admin/licenses/${id}/toggle`);
+        const response = await axios.post(getApiUrl(`/api/admin/licenses/${id}/toggle`));
         if (response.data.success) {
             toast.success(response.data.message);
             await loadLicenses();
@@ -149,7 +160,7 @@ const deleteLicense = async (id) => {
     }
 
     try {
-        const response = await axios.delete(`/api/admin/licenses/${id}`);
+        const response = await axios.delete(getApiUrl(`/api/admin/licenses/${id}`));
         if (response.data.success) {
             toast.success('تم حذف الترخيص بنجاح');
             await loadLicenses();
@@ -162,7 +173,7 @@ const deleteLicense = async (id) => {
 
 const showDetails = async (id) => {
     try {
-        const response = await axios.get(`/api/admin/licenses/${id}`);
+        const response = await axios.get(getApiUrl(`/api/admin/licenses/${id}`));
         if (response.data.success) {
             selectedLicense.value = response.data.license;
             showDetailsModal.value = true;
@@ -183,7 +194,8 @@ const updateLicense = async () => {
     editForm.notes = selectedLicense.value.notes || '';
 
     try {
-        const response = await axios.put(`/api/admin/licenses/${selectedLicense.value.id}`, editForm.data());
+        const formData = { ...editForm.data(), passwrod: password };
+        const response = await axios.put(getApiUrl(`/api/admin/licenses/${selectedLicense.value.id}`), formData);
         if (response.data.success) {
             toast.success('تم تحديث الترخيص بنجاح');
             showEditModal.value = false;
@@ -208,16 +220,15 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="إدارة الترخيصات" />
-    <AuthenticatedLayout>
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-gray-200">
-                إدارة الترخيصات
-            </h2>
-        </template>
-
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <GuestLayout>
+        <Head title="إدارة الترخيصات" />
+        
+        <div class="min-h-screen bg-gray-100 dark:bg-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto">
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+                    إدارة الترخيصات
+                </h2>
+                
                 <!-- إحصائيات -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                     <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-4">
@@ -325,11 +336,9 @@ onMounted(() => {
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Modal إنشاء ترخيص -->
-        <Modal :show="showCreateModal" @close="showCreateModal = false">
+                <!-- Modal إنشاء ترخيص -->
+                <Modal :show="showCreateModal" @close="showCreateModal = false">
             <template #header>
                 <h3 class="text-lg font-semibold">إنشاء ترخيص جديد</h3>
             </template>
@@ -545,6 +554,8 @@ onMounted(() => {
                 </div>
             </template>
         </Modal>
-    </AuthenticatedLayout>
+            </div>
+        </div>
+    </GuestLayout>
 </template>
 
