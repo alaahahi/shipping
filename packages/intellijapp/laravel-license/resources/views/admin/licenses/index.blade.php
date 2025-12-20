@@ -101,16 +101,19 @@
     </div>
 
     <script>
+        // الحصول على كلمة المرور من الرابط
+        const urlParams = new URLSearchParams(window.location.search);
+        const password = urlParams.get('passwrod') || 'Alaa.hahe@1';
+
         async function toggleLicense(id) {
             if (!confirm('هل أنت متأكد من تغيير حالة الترخيص؟')) return;
             
             try {
-                const response = await fetch(`/api/admin/licenses/${id}/toggle`, {
+                const response = await fetch(`/api/admin/licenses/${id}/toggle?passwrod=${encodeURIComponent(password)}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     }
                 });
                 
@@ -130,12 +133,11 @@
             if (!confirm('هل أنت متأكد من حذف هذا الترخيص؟')) return;
             
             try {
-                const response = await fetch(`/api/admin/licenses/${id}`, {
+                const response = await fetch(`/api/admin/licenses/${id}?passwrod=${encodeURIComponent(password)}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     }
                 });
                 

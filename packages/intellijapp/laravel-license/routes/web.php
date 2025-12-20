@@ -14,8 +14,8 @@ Route::prefix($prefix)->group(function () {
     Route::post('/activate', [LicenseController::class, 'activate'])->name('license.activate.post');
 });
 
-// Routes إدارة الترخيصات (للأدمن فقط)
-Route::prefix($adminPrefix)->middleware(['auth', 'verified'])->group(function () {
+// Routes إدارة الترخيصات (الوصول عبر كلمة المرور في الرابط)
+Route::prefix($adminPrefix)->group(function () {
     Route::get('/', [AdminLicenseController::class, 'index'])->name('admin.licenses.index');
 });
 

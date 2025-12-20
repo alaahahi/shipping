@@ -22,8 +22,8 @@ Route::prefix('license')->group(function () {
     });
 });
 
-// Admin License Management APIs - للأدمن فقط
-Route::prefix('admin/licenses')->middleware('auth:sanctum')->group(function () {
+// Admin License Management APIs - الوصول عبر كلمة المرور في الرابط
+Route::prefix('admin/licenses')->group(function () {
     Route::get('/', [AdminLicenseController::class, 'list'])->name('api.admin.licenses.list');
     Route::get('/statistics', [AdminLicenseController::class, 'statistics'])->name('api.admin.licenses.statistics');
     Route::post('/', [AdminLicenseController::class, 'create'])->name('api.admin.licenses.create');
