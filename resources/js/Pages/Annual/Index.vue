@@ -173,7 +173,7 @@ function confirmCar(V) {
 
 function getImageUrl(name,year) {
       if(year == 2024){
-        return `https://shippingkirkuk.intellijapp.com/public/uploadsResized/${name}`;
+        return `https://main.salam-jalal-co.intellij-app.com/public/uploadsResized/${name}`;
       }else{
         return `/public/uploadsResized/${name}`;
 
@@ -181,7 +181,7 @@ function getImageUrl(name,year) {
     }
 function getDownloadUrl(name,year) {
   if(year == 2024){
-        return `https://shippingkirkuk.intellijapp.com/public/uploads/${name}`;
+        return `https://main.salam-jalal-co.intellij-app.com/public/uploads/${name}`;
       }else{
         return `/public/uploads/${name}`;
 
