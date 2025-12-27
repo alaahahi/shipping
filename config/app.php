@@ -19,6 +19,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Company Name
+    |--------------------------------------------------------------------------
+    |
+    | This value is the name of the company. This value is used when the
+    | application needs to display the company name in titles or other locations.
+    |
+    */
+
+    'company_name' => env('COMPANY_NAME', 'شركة سلام جلال أيوب'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

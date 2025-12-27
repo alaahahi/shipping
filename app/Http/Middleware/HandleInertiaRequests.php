@@ -58,6 +58,7 @@ class HandleInertiaRequests extends Middleware
                 'message' => session('message'),
             ],
             'connection' => ConnectionService::getConnectionInfo(),
+            'company_name' => config('app.company_name'),
         ]);
     }
 }
