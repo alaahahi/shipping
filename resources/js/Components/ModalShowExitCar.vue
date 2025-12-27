@@ -26,37 +26,61 @@ let need_pay =  ref(0);
             </div>
 
             <div class="modal-body">
-    
               <div>
-              <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-2">
-              <div className="mb-4 mx-5">
-              <label  class="dark:text-gray-200" for="amountTotal" >رقم الهاتف</label>
-              <input
-                id="amountTotal"
-                type="number"
-                disabled
-                class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                :value="formData.exitcar?.phone" />
-              </div>
-              <div className="mb-4 mx-5">
-              <label  class="dark:text-gray-200" for="amountTotal" >تاريخ الخروجية</label>
-              <input
-                id="amountTotal"
-                type="date"
-                disabled
-                class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                :value="formData.exitcar?.created" />
-              </div>
-              </div>
-              <div className="mb-4 mx-5">
-              <label  class="dark:text-gray-200" for="notePayment" >{{ $t('note') }} </label>
-              <input
-                id="notePayment"
-                type="text"
-                disabled
-                class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                :value="formData.exitcar?.note" />
-              </div>
+                <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-2">
+                  <div className="mb-4 mx-5">
+                    <label class="dark:text-gray-200" for="exitPhone">رقم الهاتف</label>
+                    <input
+                      id="exitPhone"
+                      type="number"
+                      disabled
+                      class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                      :value="formData.exitcar?.phone"
+                    />
+                  </div>
+                  <div className="mb-4 mx-5">
+                    <label class="dark:text-gray-200" for="exitDate">تاريخ الخروجية</label>
+                    <input
+                      id="exitDate"
+                      type="date"
+                      disabled
+                      class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                      :value="formData.exitcar?.created"
+                    />
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-2">
+                  <div className="mb-4 mx-5">
+                <label class="dark:text-gray-200" for="paidAmountDollar">المبلغ المدفوع للعقد (دولار)</label>
+                    <input
+                      id="paidAmountDollar"
+                      type="number"
+                      disabled
+                      class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                  :value="formData?.contract?.paid ?? 0"
+                    />
+                  </div>
+                  <div className="mb-4 mx-5">
+                <label class="dark:text-gray-200" for="paidAmountDinar">المبلغ المدفوع للعقد (دينار)</label>
+                    <input
+                      id="paidAmountDinar"
+                      type="number"
+                      disabled
+                      class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                  :value="formData?.contract?.paid_dinar ?? 0"
+                    />
+                  </div>
+                </div>
+                <div className="mb-4 mx-5">
+                  <label class="dark:text-gray-200" for="notePayment">{{ $t('note') }}</label>
+                  <input
+                    id="notePayment"
+                    type="text"
+                    disabled
+                    class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                    :value="formData.exitcar?.note"
+                  />
+                </div>
               </div>
             </div>
   

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import axios from 'axios';
 import { ModelListSelect } from "vue-search-select"
   // Import everythModelSelecting
@@ -9,6 +9,68 @@ const props = defineProps({
   formData: Object,
   client: Array,
 });
+const emit = defineEmits(["close", "a"]);
+
+const carEntries = ref([]);
+let carEntryUid = 0;
+
+function createCarEntry(data = {}) {
+  carEntryUid += 1;
+  return {
+    id: carEntryUid,
+    vin: data.vin ?? "",
+    car_number: data.car_number ?? "",
+    error: false,
+  };
+}
+
+function initializeCars() {
+  const baseEntries = Array.isArray(props.formData?.cars) && props.formData.cars.length
+    ? props.formData.cars
+    : [{
+        vin: props.formData?.vin ?? "",
+        car_number: props.formData?.car_number ?? "",
+      }];
+
+  const prepared = baseEntries
+    .map((entry) => createCarEntry(entry))
+    .filter((entry, index, self) => {
+      // keep duplicates for now, will handle via validation, but ensure at least one entry
+      return entry;
+    });
+
+  carEntries.value = prepared.length ? prepared : [createCarEntry()];
+}
+
+watch(
+  () => props.show,
+  (show) => {
+    if (show) {
+      initializeCars();
+      if (props.formData?.client_id) {
+        showClient.value = false;
+      }
+    } else {
+      carEntries.value = [];
+    }
+  }
+);
+
+watch(
+  carEntries,
+  (entries) => {
+    if (!props.formData) {
+      return;
+    }
+    props.formData.cars = entries.map(({ vin, car_number }) => ({
+      vin: vin ?? "",
+      car_number: car_number ?? "",
+    }));
+    props.formData.vin = entries[0]?.vin ?? "";
+    props.formData.car_number = entries[0]?.car_number ?? "";
+  },
+  { deep: true }
+);
     
 function getTodayDate() {
   const today = new Date();
@@ -21,23 +83,6 @@ function getTodayDate() {
   else{
     return `${year}-${month}-${day}`;
 
-  }
-}
-function check_vin(v){
-  if(v){
-    axios.get(`/api/check_vin?car_vin=${v}`)
-  .then(response => {
-    showErrorVin.value =  response.data;
-    if(!showErrorVin.value){
-      //VinApi(v)
-    }
-  })
-  .catch(error => {
-    console.error(error);
-  })
-  }else{
-    showErrorVin.value = false;
-  
   }
 }
 function VinApi (v){
@@ -54,7 +99,6 @@ function VinApi (v){
   })
 }
 let showClient = ref(false);
-let showErrorVin = ref(false);
 let exchangeRateError= ref(false);
 function validateExchangeRate(v) {
       const input = props.formData.dolar_price;
@@ -69,6 +113,101 @@ function onSelect (items, lastSelectItem) {
 
     lastSelectItem.value = lastSelectItem
     }
+function addCarEntry() {
+  carEntries.value.push(createCarEntry());
+}
+function removeCarEntry(index) {
+  if (carEntries.value.length === 1) {
+    carEntries.value[0].vin = "";
+    carEntries.value[0].car_number = "";
+    carEntries.value[0].error = false;
+    return;
+  }
+  carEntries.value.splice(index, 1);
+}
+function checkVin(entry) {
+  const vin = entry.vin ? entry.vin.trim() : "";
+  if (!vin) {
+    entry.error = false;
+    return;
+  }
+  axios
+    .get(`/api/check_vin?car_vin=${vin}`)
+    .then((response) => {
+      entry.error = response.data || false;
+    })
+    .catch((error) => {
+      console.error(error);
+      entry.error = {
+        serverError: true,
+      };
+    });
+}
+const duplicateVinMap = computed(() => {
+  const map = {};
+  carEntries.value.forEach(({ vin }) => {
+    const key = vin ? vin.trim().toUpperCase() : "";
+    if (!key) {
+      return;
+    }
+    map[key] = (map[key] || 0) + 1;
+  });
+  return map;
+});
+function isDuplicateVin(entry) {
+  const key = entry.vin ? entry.vin.trim().toUpperCase() : "";
+  if (!key) {
+    return false;
+  }
+  return (duplicateVinMap.value[key] || 0) > 1;
+}
+const invalidEntries = computed(() =>
+  carEntries.value.filter((entry) => {
+    const hasVin = entry.vin && entry.vin.trim();
+    if (!hasVin) {
+      return false;
+    }
+    if (isDuplicateVin(entry)) {
+      return true;
+    }
+    return !!entry.error;
+  })
+);
+const hasAtLeastOneVin = computed(() =>
+  carEntries.value.some((entry) => entry.vin && entry.vin.trim())
+);
+const isSubmitDisabled = computed(() => {
+  const missingClient =
+    (!props.formData?.client_id || props.formData.client_id === "") &&
+    (!props.formData?.client_name || props.formData.client_name === "");
+  return (
+    missingClient ||
+    exchangeRateError.value ||
+    !hasAtLeastOneVin.value ||
+    invalidEntries.value.length > 0
+  );
+});
+function prepareCarsPayload() {
+  return carEntries.value
+    .map(({ vin, car_number }) => ({
+      vin: vin ? vin.trim() : "",
+      car_number: car_number ? String(car_number).trim() : null,
+    }))
+    .filter((entry) => entry.vin);
+}
+function handleSubmit() {
+  props.formData.date = props.formData.date
+    ? props.formData.date
+    : getTodayDate();
+  const carsPayload = prepareCarsPayload();
+  const payload = {
+    ...props.formData,
+    cars: carsPayload,
+    vin: carsPayload[0]?.vin ?? "",
+    car_number: carsPayload[0]?.car_number ?? "",
+  };
+  emit("a", payload);
+}
 </script>
   <template>
   <Transition name="modal">
@@ -156,19 +295,97 @@ function onSelect (items, lastSelectItem) {
 
 
  
-              <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="pin">
-                  {{ $t("vin") }}</label
+              <div className="mb-4 mx-1 col-span-2 lg:col-span-4">
+                <div class="flex items-center justify-between">
+                  <label class="dark:text-gray-200" for="vin">
+                    {{ $t("vin") }}
+                  </label>
+                  <button
+                    type="button"
+                    class="px-2 py-1 text-white bg-green-600 rounded-md text-sm font-semibold"
+                    @click="addCarEntry"
+                  >
+                    +
+                  </button>
+                </div>
+                <div
+                  v-for="(entry, index) in carEntries"
+                  :key="entry.id"
+                  class="mt-3 border border-dashed border-gray-300 rounded-lg p-3 dark:border-gray-600"
                 >
-                <input
-                  id="vin"
-                  type="text"
-                  @change="check_vin(formData.vin)"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="formData.vin"
-                />
-                <div class="text-red-700" v-if="showErrorVin">
-                  رقم الشاصي مستخدم
+                  <div class="flex items-center justify-between mb-2">
+                    <h3 class="font-semibold dark:text-gray-100">
+                      {{ $t("car") }} {{ index + 1 }}
+                    </h3>
+                    <button
+                      type="button"
+                      class="px-2 py-1 text-sm font-semibold text-white bg-rose-500 rounded-md"
+                      @click="removeCarEntry(index)"
+                    >
+                      &minus;
+                    </button>
+                  </div>
+                  <div
+                    class="grid grid-cols-1 md:grid-cols-2 gap-2"
+                  >
+                    <div>
+                      <label class="dark:text-gray-200 block text-sm" :for="`vin_${entry.id}`">
+                        {{ $t("vin") }}
+                      </label>
+                      <input
+                        :id="`vin_${entry.id}`"
+                        type="text"
+                        @change="checkVin(entry)"
+                        class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                        v-model="entry.vin"
+                      />
+                      <div
+                        class="text-red-700 text-sm mt-2"
+                        v-if="entry.error && entry.error.client_id"
+                      >
+                        رقم الشاصي مستخدم - {{ entry.error.car_type }} -
+                        {{ entry.error.year }} - بتاريخ
+                        <br />
+                        {{ entry.error.date }}
+                      </div>
+                      <div
+                        class="text-red-700 text-sm mt-2"
+                        v-else-if="entry.error && entry.error.price_s"
+                      >
+                        رقم الشاصي عاطل - {{ entry.error.car_type }} -
+                        {{ entry.error.year }}
+                        <br />
+                        سعر المشتريات {{ entry.error.price_p }}
+                        و سعر المبيعات {{ entry.error.price_s }}
+                        -
+                        بتاريخ
+                        {{ entry.error.date }}
+                      </div>
+                      <div
+                        class="text-red-700 text-sm mt-2"
+                        v-else-if="entry.error && entry.error.serverError"
+                      >
+                        حدث خطأ أثناء التحقق من رقم الشاصي، حاول مرة أخرى.
+                      </div>
+                      <div
+                        class="text-red-700 text-sm mt-2"
+                        v-else-if="isDuplicateVin(entry)"
+                      >
+                        رقم الشاصي مكرر في القائمة الحالية.
+                      </div>
+                    </div>
+                    <div>
+                      <label class="dark:text-gray-200 block text-sm" :for="`car_number_${entry.id}`">
+                        {{ $t("car_number") }}
+                      </label>
+                      <input
+                        :id="`car_number_${entry.id}`"
+                        type="text"
+                        class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                        v-model="entry.car_number"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="mb-4 mx-1">
@@ -206,18 +423,6 @@ function onSelect (items, lastSelectItem) {
               </div>
 
        
-              <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="car_number">
-                  {{ $t("car_number") }}</label
-                >
-                <input
-                  id="car_number"
-                  type="number"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="formData.car_number"
-                />
-              </div>
-
               <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="dinar">
                   {{ $t("dinar") }}</label
@@ -363,14 +568,8 @@ function onSelect (items, lastSelectItem) {
               <div class="basis-1/2 px-4">
                 <button
                   class="modal-default-button py-3 bg-rose-500 rounded col-6"
-                  @click="
-                    formData.date = formData.date
-                      ? formData.date
-                      : getTodayDate();
-                    $emit('a', formData);
-                    formData = '';
-                  "
-                  :disabled="(!formData.client_id)&&(!formData.client_name)">
+                  @click="handleSubmit"
+                  :disabled="isSubmitDisabled">
                   {{ $t("yes") }}
                 </button>
               </div>

@@ -6,25 +6,33 @@ $Help = new MyHelp();
 <!DOCTYPE html>
 <html>
 <head>
-    <title>شركة نور البصرة أيوب</title>
+    <title>شركة سلام جلال أيوب</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 </head>
-@if($transactions_id)
-@foreach($clientData['transactions'] as $transaction)
-    @if($transaction->id == $transactions_id)
-    
-        <?php  
-        $currency = $transaction->currency;
-        $description =$transaction->description;
-        $amount= ($transaction->amount * -1)-$transaction->discount;
-        $created =$transaction->created_at ;
-       ?>
-    @endif
-@endforeach
+@php
+  // تعريف القيم الافتراضية
+  $currency = '$';
+  $description = '';
+  $amount = 0;
+  $created = '';
+@endphp
+
+@if($transaction)
+
+  <?php  
+  $currency = $transaction->currency ?? '$';
+  $description =$transaction->description ?? '';
+  $amount= ($transaction->amount ?? 0)-($transaction->discount ?? 0);
+  if($amount<0){
+    $amount= $amount * -1;
+  }
+  $created =$transaction->created_at ?? '';
+  ?>
+
 @endif
 <style>
 @page {
@@ -86,7 +94,7 @@ $Help = new MyHelp();
 
       <div class="col-12  p-2  pe-5"> 
          مبلغ قدره :
-         {{ $Help->numberToWords($amount??0,$currency)}}
+         {{ $Help->numberToWords($amount??0,($currency??'$'))}}
         </div>
         <div class="col-12  p-2  pe-5"> 
           الملاحظات:
@@ -106,7 +114,7 @@ $Help = new MyHelp();
     {{$amount??0}}
     </div>
     <div class="col-1 alert-primary border p-2">
-      {{$currency}}
+      {{$currency ?? '$'}}
     </div>
     <div class="col-8 text-start ps-5">
       اسم وتوقيع المستلم
@@ -144,7 +152,6 @@ $Help = new MyHelp();
             <th scope="col">السيارة</th>
             <th scope="col">تاريخ</th>
             <th scope="col">رقم شاسى</th>
-            <th scope="col">رقم كاتى</th>
             <th scope="col">لون</th>
             <th scope="col">موديل</th>
             <th scope="col">كمرك</th>
@@ -162,7 +169,6 @@ $Help = new MyHelp();
                 <td>{{$data->car_type}}</td>
                 <td>{{$data->date}}</td>
                 <td>{{$data->vin}}</td>
-                <td>{{$data->car_number}}</td>
                 <td>{{$data->car_color}}</td>
                 <td>{{$data->year}}</td>
                 <td>    <?php
@@ -238,7 +244,7 @@ $Help = new MyHelp();
   
         <div class="col-12  p-2  pe-5"> 
            مبلغ قدره :
-           {{  $Help->numberToWords($amount??0,$currency)}}
+           {{  $Help->numberToWords($amount??0,($currency??'$'))}}
           </div>
           <div class="col-12  p-2  pe-5"> 
             الملاحظات:
@@ -258,7 +264,7 @@ $Help = new MyHelp();
       {{$amount??0}}
       </div>
       <div class="col-1 alert-primary border p-2">
-      {{$currency}}
+      {{$currency ?? '$'}}
       </div>
       <div class="col-8 text-start ps-5">
         اسم وتوقيع المستلم

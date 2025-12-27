@@ -16,9 +16,11 @@ class CarContract extends Model
         'name_seller',
         'phone_seller',
         'address_seller',
+        'seller_id_number',
         'name_buyer',
         'phone_buyer',
         'address_buyer',
+        'buyer_id_number',
         'vin',
         'car_name',
         'modal',
@@ -48,6 +50,7 @@ class CarContract extends Model
         'owner_id',
         'year_date',
         'status',
+        'verification_token',
         'created_at',
         'updated_at'
     ];

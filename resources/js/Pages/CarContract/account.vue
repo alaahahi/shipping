@@ -691,7 +691,7 @@ function UpdatePage (){
                   
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran?.created_at.slice(0, 19).replace("T", "  ") }}</td>
                   <th className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.description }}</th>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.amount+' '+tran.currency  }}</td>
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.amount+' '+(tran.currency ?? '$')  }}</td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
                     <button class="px-1 py-1 text-white bg-rose-500 rounded-md focus:outline-none" @click="openModalDel(tran)" >
                       <trash />

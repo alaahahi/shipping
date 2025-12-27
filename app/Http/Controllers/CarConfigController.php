@@ -10,23 +10,21 @@ use App\Models\Profile;
 use App\Models\UserType;
 use App\Models\Wallet;
 use App\Models\Results;
-use App\Models\Company;
 use App\Models\Transactions;
 use App\Models\SystemConfig;
-use App\Models\Name;
 use App\Models\Car;
-use App\Models\CarModel;
-use App\Models\Color;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
-use App\Models\Massage;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Facades\Image;
+use App\Models\Hunter;
+use App\Models\CarImages;
+
 
 
 
@@ -36,9 +34,10 @@ class CarConfigController extends Controller
 {
     public function __construct(){
         $this->url = env('FRONTEND_URL');
-        $this->userAdmin =  UserType::where('name', 'admin')->first()->id;
-        $this->userClient =  UserType::where('name', 'client')->first()->id;
-        $this->userAccount =  UserType::where('name', 'account')->first()->id;
+        $this->userAdmin =  UserType::where('name', 'admin')->first()?->id ?? null;
+        $this->userClient =  UserType::where('name', 'client')->first()?->id ?? null;
+        $this->userAccount =  UserType::where('name', 'account')->first()?->id ?? null;
+        $this->userSeles =  UserType::where('name', 'selesKirkuk')->first()?->id ?? null;
          
     }
 
@@ -49,14 +48,13 @@ class CarConfigController extends Controller
      */
     public function index()
     {   
-       $company = Company::all();
        return Inertia::render('CarConfig/Index', ['url'=>$this->url]);
           
     }
     public function showCar()
     {   
         $car_id =$_GET['car_id'] ?? 0;
-        $data =  Car::with('carmodel')->with('name')->with('user')->with('color')->with('company')->with('client')->with('transactions')->where('id',$car_id)->first();
+        $data =  Car::with('user')->with('client')->with('transactions')->where('id',$car_id)->first();
         return Response::json($data, 200);    
     }
     public function companyEdit($id)
@@ -132,31 +130,19 @@ class CarConfigController extends Controller
     }
     public function getIndex()
     {
-        $data = Company::paginate(10);
-        return Response::json($data, 200);
+        return Response::json([], 200);
     }
     public function getIndexName()
     {
-        $company_id = $_GET['company_id'] ?? 0;
-        if($company_id)
-        {
-            $data = Name::with('company')->where('company_id',$company_id)->paginate(10);
-            return Response::json($data, 200);
-
-        }
-
-        $data = Name::with('company')->paginate(10);
-        return Response::json($data, 200);
+        return Response::json([], 200);
     }
     public function getIndexModel()
     {
-        $data = CarModel::paginate(10);
-        return Response::json($data, 200);
+        return Response::json([], 200);
     }
     public function getIndexColor()
     {
-        $data = Color::paginate(10);
-        return Response::json($data, 200);
+        return Response::json([], 200);
     }
     public function getIndexSaved()
     {
@@ -198,22 +184,18 @@ class CarConfigController extends Controller
     }
     public function companyDel($id)
     {
-        Company::find($id)->delete();
         return Response::json('ok', 200);
     }
     public function delName($id)
     {
-        Name::find($id)->delete();
         return Response::json('ok', 200);
     }
     public function delModel($id)
     {
-        CarModel::find($id)->delete();
         return Response::json('ok', 200);
     }
     public function delColor($id)
     {
-        Color::find($id)->delete();
         return Response::json('ok', 200);
     }
     public function create()
@@ -233,35 +215,18 @@ class CarConfigController extends Controller
                     'name' => 'required|string|max:255',
                     'nameEn' => 'string|max:255',
                      ])->validate();
-                $user = Company::create([
-                    'name' => $request->name,
-                    'name_en'=> $request->nameEn,
-                     ]);
-        $company = Company::all();
         return Inertia::render('CarConfig/Index', ['url'=>$this->url]);
     }
     public function storeName(Request $request)
     {
-    Name::updateOrCreate(['id' => $_GET['id']],[
-                    'company_id' =>$_GET['company_id'],
-                    'name'=> $_GET['name'],
-                    'name_en'=>$_GET['name_en'],
-                     ]);
        return Response::json('ok', 200);    
     }
     public function storeCarModel(Request $request)
     {
-                    CarModel::updateOrCreate(['id' => $_GET['id']],[
-                    'name'=> $_GET['name'],
-                     ]);
        return Response::json('ok', 200);    
     }
     public function storeColor(Request $request)
     {
-                    Color::updateOrCreate(['id' => $_GET['id']],[
-                    'name'=> $_GET['name'],
-                    'name_en'=>$_GET['name_en'],
-                     ]);
        return Response::json('ok', 200);    
     }
 
@@ -382,8 +347,15 @@ class CarConfigController extends Controller
     public function check_vin (Request $request){
         $car_vin = $request->get('car_vin');
         $car = Car::where('vin',$car_vin)->first();
+        $hunter = Hunter::where('vin',$car_vin)->where('status',1)->first();
+        if($hunter){
+                    $hunter->update(['status'=>2]);
+        }
         if($car){
-            return response()->json(true); 
+            return response()->json($car); 
+        }elseif($hunter)
+        {
+            return response()->json($hunter); 
         }else{
             return response()->json(false); 
 

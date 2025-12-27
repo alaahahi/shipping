@@ -164,7 +164,7 @@ function validateExchangeRate(v) {
                 >
                 <input
                   id="car_number"
-                  type="number"
+                  type="text"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.car_number"
                 />
@@ -239,6 +239,22 @@ function validateExchangeRate(v) {
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.expenses"
                 />
+              </div>
+              <div className="mb-4 mx-1">
+                <label class="dark:text-gray-200" for="car_price">
+                  سعر السيارة للمبيعات الداخلية ($)
+                </label>
+                <input
+                  id="car_price"
+                  type="number"
+                  step="0.01"
+                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  v-model="formData.car_price"
+                  placeholder="0.00"
+                />
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  💡 سعر السيارة للمبيعات الداخلية (يمكن تعديله عند البيع)
+                </p>
               </div>
 
               <div className="mb-4 mx-1">

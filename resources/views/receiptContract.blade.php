@@ -6,11 +6,12 @@ $Help = new MyHelp();
 <!DOCTYPE html>
 <html>
 <head>
-    <title>شركة نور البصرة أيوب</title>
+    <title>شركة سلام جلال أيوب</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 
 <style>
@@ -21,6 +22,7 @@ $Help = new MyHelp();
 
 body {
   font-family: 'Peshang', sans-serif; /* Use the custom font */
+  background-color: #e5e9f2;
 }
   /* Set page size to A4 (210mm x 297mm) */
   @page {
@@ -43,7 +45,215 @@ body {
     /* Your additional CSS styles go here */
     /* For example: */
   b{
-    color:cornflowerblue
+    color:cornflowerblue;
+  }
+  .content {
+    margin: 16mm 12mm 20mm;
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+    overflow: hidden;
+    padding: 28px 36px 34px;
+  }
+  .qr-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #d6e0f0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+  }
+  .qr-header .info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .qr-header .info-item .label {
+    color: #475569;
+    font-weight: 500;
+  }
+  .qr-header .info-item .value {
+    color: #1e293b;
+    font-weight: 700;
+  }
+  .qr-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .qr-wrapper img {
+    display: none;
+    width: 80px;
+    height: 80px;
+    background: #ffffff;
+    padding: 4px;
+    border-radius: 12px;
+    border: 1px solid #d6e0f0;
+  }
+  .qr-wrapper .qr-caption {
+    font-size: 9px;
+    color: #475569;
+  }
+  .party-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 20px;
+  }
+  .party-card {
+    border: 1px solid #d6e0f0;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #f8fafc;
+  }
+  .party-card__header {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff;
+    text-align: center;
+    padding: 10px 12px;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .party-card__body {
+    padding: 14px 16px;
+    background: #ffffff;
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    padding: 6px 0;
+    border-bottom: 1px dashed #e2e8f0;
+  }
+  .info-row:last-child {
+    border-bottom: none;
+  }
+  .info-row .label {
+    color: #475569;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .info-row .value {
+    color: #1e293b;
+    font-weight: 600;
+    flex: 1;
+  }
+  .section-title {
+    margin-top: 28px;
+    margin-bottom: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    color: #1d4ed8;
+    border-right: 4px solid #2563eb;
+    padding-right: 10px;
+  }
+  .detail-card {
+    border: 1px solid #d6e0f0;
+    border-radius: 14px;
+    padding: 18px 20px;
+    background: #ffffff;
+  }
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 20px;
+  }
+  .info-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: #1e293b;
+  }
+  .info-block .label {
+    color: #475569;
+    font-weight: 600;
+  }
+  .info-block .value {
+    font-weight: 700;
+  }
+  .terms-card {
+    border: 1px solid #d6e0f0;
+    border-radius: 14px;
+    padding: 18px 22px;
+    background: #ffffff;
+  }
+  .terms-list {
+    counter-reset: term;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .terms-list li {
+    counter-increment: term;
+    font-size: 12px;
+    color: #334155;
+    margin-bottom: 10px;
+    line-height: 1.6;
+    position: relative;
+    padding-right: 28px;
+  }
+  .terms-list li::before {
+    content: counter(term) ".";
+    position: absolute;
+    right: 0;
+    top: 0;
+    font-weight: 700;
+    color: #2563eb;
+  }
+  .highlight {
+    color: #1d4ed8;
+    font-weight: 700;
+    padding: 0 4px;
+  }
+  .info-note {
+    margin-top: 12px;
+    font-size: 11px;
+    color: #475569;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .signature-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    margin-top: 40px;
+  }
+  .signature-col {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    color: #1e293b;
+  }
+  .signature-label {
+    color: #475569;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 12px;
+  }
+  .signature-line {
+    border-bottom: 1px dashed #94a3b8;
+    margin: 0 auto 12px;
+    width: 80%;
+    height: 18px;
+  }
+  @media print {
+    body {
+      background: #ffffff;
+    }
+    .content {
+      margin: 0;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 24px 32px 32px;
+    }
   }
   </style>
 <body style="direction: rtl;"> 
@@ -53,63 +263,69 @@ body {
   <img src="/img/bg.jpg" width="100%" class="p-3" />
   @endif
   <div class="content">
-    <div class="d-flex justify-content-around py-2"  style="font-size: 13px ; font-weight: 700;background-color: #f0f8ff">
-      <div class="text-center"  style="width:300px">
-        <span >
-          الرقم : {{$data['id'] ??''}}
-        </span>
-
+    <div class="qr-header">
+      <div class="info-item">
+        <span class="label">الرقم:</span>
+        <span class="value">{{$data['id'] ?? ''}}</span>
       </div>
-      <div class="text-center"  style="width:300px">
-        <span>
-        التاريخ  : {{$data['created'] ??''}}
-      </span>
+      @if(!empty($verificationUrl))
+      <div class="qr-wrapper">
+        <img id="contract-qr" alt="QR" />
+        <span class="qr-caption">امسح QR للتحقق</span>
+      </div>
+      @endif
+      <div class="info-item">
+        <span class="label">التاريخ:</span>
+        <span class="value">{{$data['created'] ?? ''}}</span>
       </div>
     </div>
 
-    <div class="d-flex justify-content-around  mt-1"  style="font-size: 13px ; font-weight: 700;">
-      <div>
-        <div class="text-center  p-1" style="width:300px;border: 1px cornflowerblue solid;background-color: cornflowerblue ;color:#fff">
-          <span >
-            لایەنی یەکەم فرۆشیار
-            -
-            الطرف الأول  البائع
-          </span>
-
+    <div class="party-grid">
+      <div class="party-card">
+        <div class="party-card__header">
+          لایەنی یەکەم فرۆشیار – الطرف الأول (البائع)
         </div>
-        <div class="  p-2 " style="width:300px;border: 1px cornflowerblue solid;">
-          <div class="py-2">
-            فرۆشیار / البائع : <span class="fw-bold" style="font-size:14px;">{{$data['name_seller'] ??''}}</span> 
+        <div class="party-card__body">
+          <div class="info-row">
+            <span class="label">فرۆشیار / البائع</span>
+            <span class="value">{{$data['name_seller'] ?? ''}}</span>
           </div>
-          <div class="py-2">
-            دانیشتوی / الساکن : {{$data['address_seller'] ??''}}
+          <div class="info-row">
+            <span class="label">دانیشتوی / السكن</span>
+            <span class="value">{{$data['address_seller'] ?? ''}}</span>
           </div>
-          <div class="py-2">
-            رقم موبایل : {{$data['phone_seller'] ??''}}
+          <div class="info-row">
+            <span class="label">رقم الموبايل</span>
+            <span class="value">{{$data['phone_seller'] ?? ''}}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">رقم الهوية</span>
+            <span class="value">{{$data['seller_id_number'] ?? ''}}</span>
           </div>
         </div>
       </div>
-      <div>
-      <div class="text-center p-1"   style="width:300px;border: 1px cornflowerblue solid;background-color: cornflowerblue ;color:#fff">
-        <span>
-          لایەنی دووەم کریار
-          -
-          الطرف الثانی المشتری
-
-      </span>
-      </div>
-      <div class="  p-2 " style="width:300px;border: 1px cornflowerblue solid">
-        <div class="py-2">
-          کریار / المشتری : <span  class="fw-bold" style="font-size:14px;"> {{$data['name_buyer'] ??''}}
-            </span>
+      <div class="party-card">
+        <div class="party-card__header">
+          لایەنی دووەم کریار – الطرف الثاني (المشتري)
         </div>
-        <div class="py-2">
-          دانیشتوی / الساکن : {{$data['address_buyer']??''}}
+        <div class="party-card__body">
+          <div class="info-row">
+            <span class="label">کریار / المشتري</span>
+            <span class="value">{{$data['name_buyer'] ?? ''}}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">دانیشتوی / السكن</span>
+            <span class="value">{{$data['address_buyer'] ?? ''}}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">رقم الموبايل</span>
+            <span class="value">{{$data['phone_buyer'] ?? ''}}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">رقم الهوية</span>
+            <span class="value">{{$data['buyer_id_number'] ?? ''}}</span>
+          </div>
         </div>
-        <div class="py-2">
-          رقم موبایل : {{$data['phone_buyer'] ??''}}
-        </div>
-      </div>
       </div>
     </div>
     <div class="py-1 text-danger text-center" style="font-size: 13px">
@@ -294,7 +510,7 @@ body {
         کل عقد غیر مختوم من المعرض یعتبر باطل
       </div>
 
-      <div class="d-flex justify-content-between  mt-5 pt-2">
+      <div class="d-flex justify-content-between  mt-3 pt-2">
         <div>
           بەلێن و رەزامەندی لایەنی یەکەم 
           فرۆشیار
@@ -309,7 +525,7 @@ body {
              (المشتری)
         </div>
       </div>
-      <div class="d-flex justify-content-between  mt-4">
+      <div class="d-flex justify-content-between  mt-2">
         <div class="text-center" style="width: 184px">
           <b>
             {{$data['name_seller'] ??''}}
@@ -331,11 +547,62 @@ body {
 
 <script>
     $(document).ready(function() {
-        function openPrintDialog() {
-             window.print();
+        const verificationUrl = @json($verificationUrl ?? '');
+        const qrImg = document.getElementById('contract-qr');
+        const triggerPrint = () => window.print();
+        
+        // دالة للانتظار حتى يتم تحميل الصورة ثم الطباعة
+        const waitForImageLoad = (img) => {
+            return new Promise((resolve) => {
+                if (img.complete) {
+                    // الصورة محملة بالفعل
+                    resolve();
+                } else {
+                    // انتظار تحميل الصورة
+                    img.onload = () => resolve();
+                    img.onerror = () => resolve(); // حتى لو فشل التحميل، نكمل
+                    // timeout احتياطي بعد 2 ثانية
+                    setTimeout(() => resolve(), 2000);
+                }
+            });
+        };
+
+        const fallbackRender = async () => {
+            if (verificationUrl && qrImg) {
+                qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(verificationUrl);
+                qrImg.style.display = 'block';
+                // انتظار تحميل الصورة قبل الطباعة
+                await waitForImageLoad(qrImg);
+            }
+            triggerPrint();
+        };
+
+        if (typeof QRCode !== 'undefined' && verificationUrl && qrImg && typeof QRCode.toDataURL === 'function') {
+            QRCode.toDataURL(
+                verificationUrl,
+                {
+                    width: 150,
+                    margin: 1,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff"
+                },
+                async function (error, url) {
+                    if (error) {
+                        console.error(error);
+                        await fallbackRender();
+                    } else {
+                        qrImg.src = url;
+                        qrImg.style.display = 'block';
+                        // انتظار تحميل الصورة قبل الطباعة
+                        await waitForImageLoad(qrImg);
+                        // تأخير إضافي صغير للتأكد من عرض الصورة
+                        setTimeout(triggerPrint, 300);
+                    }
+                }
+            );
+        } else {
+            fallbackRender();
         }
-    
-        openPrintDialog();
     });
     </script>
 

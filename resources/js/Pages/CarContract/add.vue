@@ -1,7 +1,6 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, useForm } from "@inertiajs/inertia-vue3";
-import VueTailwindDatepicker from "vue-tailwind-datepicker";
 import ModalAddCarExpensesFav from "@/Components/ModalAddCarExpensesFav.vue";
 import ModalAddCarExpenses from "@/Components/ModalAddCarExpenses.vue";
 import ModalArchiveCar from "@/Components/ModalArchiveCar.vue";
@@ -13,7 +12,7 @@ import PrimaryButton from "@/Components/PrimaryButton.vue";
 import TextInput from "@/Components/TextInput.vue";
 import { useToast } from "vue-toastification";
 import axios from "axios";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import newContracts from "@/Components/icon/new.vue";
 import show from "@/Components/icon/show.vue";
@@ -26,12 +25,26 @@ import "vue-search-select/dist/VueSearchSelect.css"
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
 import debounce from "lodash/debounce";
+
+// 🚀 نظام Offline سريع - استخدام SQLite مباشرة
+import { useOfflineSync } from '@/composables/useOfflineSync';
+
 const { t } = useI18n();
+
 const props = defineProps({
   client1: Array,
   client2: Array,
-  data:Object
+  data:Object,
+  showBrokerage: {
+    type: Boolean,
+    default: false,
+  },
 });
+const showBrokerageSection = computed(() => props.showBrokerage);
+
+// تفعيل نظام Offline (SQLite مباشرة)
+const { isOnline, isSyncing, saveContract } = useOfflineSync();
+const pendingCount = ref(0); // لم نعد نحتاجه
 const formData = ref({});
 const toast = useToast();
 let searchTerm = ref("");
@@ -221,14 +234,15 @@ function confirmDelCarFav(V) {
     });
 }
 const profileAdded = ref(0);
-const form = props.data ? ref(props.data) : ref
-({
+const createEmptyForm = () => ({
   name_seller: "",
   phone_seller: "",
   address_seller: "",
+  seller_id_number: "",
   name_buyer: "",
   phone_buyer: "",
   address_buyer: "",
+  buyer_id_number: "",
   tex_seller: 0,
   tex_seller_dinar: 0,
   tex_buyer: 0,
@@ -255,13 +269,27 @@ const form = props.data ? ref(props.data) : ref
   tex_buyer_dinar_paid: 0,
 });
 
+const form = ref(createEmptyForm());
+
+if (props.data) {
+  form.value = {
+    ...createEmptyForm(),
+    ...props.data,
+    seller_id_number: props.data.seller_id_number ?? "",
+    buyer_id_number: props.data.buyer_id_number ?? "",
+  };
+}
+
 
 const isLoading = ref(false);
 
 
 
 let isValid = true;
-const submit = (V) => {
+
+// 🔥 دالة الحفظ الجديدة - تعمل Online و Offline
+// shouldPrint: true = يذهب للطباعة، false = يعود لقائمة العقود
+const submit = async (V, shouldPrint = true) => {
   isLoading.value = true;
   let missingFields = [];
 
@@ -278,34 +306,110 @@ const submit = (V) => {
       position: "bottom-right",
       rtl: true,
     });
-    setTimeout(() => {
       isLoading.value = false;
+    return;
+  }
 
-    }, 1000);
-  } else {
-    axios.post('/api/addCarContract', V)
-      .then(response => {
+  try {
+    // 🚀 استخدام نظام Offline الذكي
+    console.log('🚀 بدء عملية الحفظ...');
+    console.log('📝 البيانات المُرسلة:', V);
+    
+    const result = await saveContract(V);
+    
+    console.log('📬 نتيجة الحفظ:', result);
+
+    if (result.success) {
+        console.log('✅ الحفظ نجح!');
         profileAdded.value = true;
+
+      if (result.online) {
+        console.log('🌐 حفظ online');
+        // تم الحفظ online مباشرة
+        toast.success('✅ تم حفظ العقد بنجاح', {
+          timeout: 3000,
+          position: 'bottom-right',
+          rtl: true
+        });
+
         setTimeout(() => {
           isLoading.value = false;
-          window.location = '/car_contract';
+          // تحديد الوجهة بناءً على shouldPrint
+          if (shouldPrint) {
+            // الانتقال لصفحة الطباعة
+            if (result.data && result.data.id) {
+              window.location = `/contract_print/${result.data.id}`;
+            } else {
+              window.location = '/car_contract';
+            }
+          } else {
+            // العودة لقائمة العقود
+            window.location = '/car_contract';
+          }
         }, 1000);
-      })
-      .catch(error => {
-       
-      toast.error("تأكد من الاتصال بالانترنت - لم يتم الحفظ", {
-          timeout: 2000,
-          position: "bottom-right",
+      } else {
+        console.log('💾 حفظ offline');
+        
+        // تم الحفظ offline
+        toast.success('✅ تم حفظ العقد محلياً - سيتم المزامنة تلقائياً عند عودة الإنترنت', {
+          timeout: 3000,
+          position: 'bottom-right',
           rtl: true
-
         });
-        setTimeout(() => {
-      isLoading.value = false;
 
-    }, 1000);
-        console.error(error);
+        setTimeout(() => {
+          isLoading.value = false;
+          // تحديد الوجهة بناءً على shouldPrint
+          if (shouldPrint) {
+            // الانتقال لصفحة الطباعة
+            if (result.id || result.data?.id) {
+              const contractId = result.id || result.data?.id;
+              window.location = `/contract_print/${contractId}`;
+            } else {
+              window.location = '/car_contract';
+            }
+          } else {
+            // العودة لقائمة العقود
+            window.location = '/car_contract';
+          }
+        }, 1000);
+      }
+    } else {
+      // فشل الحفظ
+      console.error('❌❌❌ result.success = false!', result);
+      toast.error('❌ فشل حفظ العقد', {
+        timeout: 3000,
+        position: 'bottom-right',
+        rtl: true
       });
+      isLoading.value = false;
+    }
+  } catch (error) {
+    console.error('❌❌❌ خطأ في حفظ العقد:', error);
+    toast.error('❌ حدث خطأ أثناء الحفظ: ' + error.message, {
+      timeout: 3000,
+      position: 'bottom-right',
+      rtl: true
+    });
+    isLoading.value = false;
   }
+};
+
+// دالة الحفظ والطباعة
+const submitAndPrint = () => {
+  submit(form.value, true);
+};
+
+// دالة الحفظ فقط
+const submitOnly = () => {
+  submit(form.value, false);
+};
+
+// تم إزالة printOfflineContract - الآن نستخدم الانتقال للصفحة العادية
+
+// تابع باقي الكود الأصلي
+const originalResetForm = () => {
+  form.value = createEmptyForm();
 };
 
  
@@ -404,6 +508,17 @@ function VinApi1 (v){
 <template>
   <Head title="Dashboard" />
   <AuthenticatedLayout>
+    
+    <!-- 🔔 مؤشر حالة الاتصال -->
+    <div v-if="!isOnline" class="fixed bottom-4 left-4 bg-yellow-500 text-white px-4 py-3 rounded-lg shadow-xl z-50">
+      <div class="flex items-center space-x-3 space-x-reverse">
+        <div class="flex-1">
+          <p class="font-bold">📡 العمل في وضع Offline</p>
+          <p class="text-sm opacity-90">يتم الحفظ في SQLite المحلي - سيتم المزامنة تلقائياً عند عودة الإنترنت</p>
+        </div>
+      </div>
+    </div>
+    
     <div v-if="profileAdded">
       <div
         id="alert-2"
@@ -495,6 +610,15 @@ function VinApi1 (v){
                             v-model="form.phone_seller"
                           />
                         </div>
+                        <div className="mb-4">
+                          <InputLabel for="seller_id_number" value="رقم الهوية" />
+                          <TextInput
+                            type="text"
+                            class="mt-1 block w-full"
+                            v-model="form.seller_id_number"
+                          />
+                        </div>
+                    <template v-if="showBrokerageSection">
                     <div class="flex justify-center">
                       <div className="mb-4 ml-5">
                         <InputLabel for="tex_seller" value="دلالى دولار" />
@@ -558,6 +682,7 @@ function VinApi1 (v){
                         />
                       </div>
                     </div>
+                    </template>
                     <div className="mb-4">
                       <InputLabel for="note" value="ملاحظة" />
                       <TextInput
@@ -651,7 +776,17 @@ function VinApi1 (v){
                         v-model="form.phone_buyer"
                       />
                     </div>
+                    <div className="mb-4">
+                      <InputLabel for="buyer_id_number" value="رقم الهوية" />
+                      <TextInput
+                        id="buyer_id_number"
+                        type="text"
+                        class="mt-1 block w-full"
+                        v-model="form.buyer_id_number"
+                      />
+                    </div>
 
+                    <template v-if="showBrokerageSection">
                     <div class="flex justify-center">
                       <div className="mb-4 ml-5">
                         <InputLabel for="tex_buyer" value="دلالى دولار" />
@@ -712,6 +847,7 @@ function VinApi1 (v){
                         />
                       </div>
                     </div>
+                    </template>
                   </div>
                   <div className="mb-4">
                     <InputLabel for="system_note" value="ملاحظة ستاف" />
@@ -943,22 +1079,20 @@ function VinApi1 (v){
         </Link>
 
         <button
-          v-if="!data"
-          @click="submit(form)"
+          @click="submitOnly"
           :disabled="isLoading"
-          class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-rose-500 rounded"
+          class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-600"
         >
-          <span v-if="!isLoading">حفظ</span>
+          <span v-if="!isLoading">حفظ فقط</span>
           <span v-else>جاري الحفظ...</span>
         </button>
 
-        <button 
-          v-if="data"
-          @click="submit(form)"
+        <button
+          @click="submitAndPrint"
           :disabled="isLoading"
-          class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-rose-500 rounded"
+          class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-rose-500 rounded hover:bg-rose-600"
         >
-          <span v-if="!isLoading">حفظ التعديلات</span>
+          <span v-if="!isLoading">حفظ وطباعة</span>
           <span v-else>جاري الحفظ...</span>
         </button>
     
@@ -966,6 +1100,7 @@ function VinApi1 (v){
         
       </div>
     </form>
+
   </AuthenticatedLayout>
 </template>
 <style scoped>

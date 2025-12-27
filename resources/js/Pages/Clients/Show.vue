@@ -2,7 +2,8 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
 import { Head, Link, useForm } from "@inertiajs/inertia-vue3";
-import { onMounted, ref } from 'vue';
+import { Inertia } from "@inertiajs/inertia";
+import { onMounted, ref, watch, computed, nextTick } from 'vue';
 import { TailwindPagination } from "laravel-vue-pagination";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
@@ -24,17 +25,19 @@ import edit from "@/Components/icon/edit.vue";
 import exit from "@/Components/icon/exit.vue";
 import show from "@/Components/icon/show.vue";
 import document from "@/Components/icon/document.vue";
+import { formatBaghdadTimestamp } from "@/utils/datetime";
 
 import newContracts from "@/Components/icon/new.vue";
 
 import { useToast } from "vue-toastification";
-import { create } from "lodash";
+import { debounce } from "lodash";
 let toast = useToast();
 let sums= ref(0);
 let laravelData = ref({});
 let isLoading = ref(0);
 let from = ref(0);
 let to = ref(0);
+let indexs=1;
 let showPaymentForm = ref(false);
 let showModalEditCars = ref(false);
 let showModalDelCar = ref(false);
@@ -42,6 +45,8 @@ let showModalAddCarPayment = ref(false);
 let showErorrAmount = ref(false);
 let showTransactions= ref(false);
 let showComplatedCars = ref(false);
+let showPaymentsInTable = ref(false);
+let isDataLoaded = ref(false);
 let showModalAddCarContracts =  ref(false);
 let showModalEditCarContracts =  ref(false);
 let showModalAddExitCar = ref(false);
@@ -60,16 +65,267 @@ let showReceiveBtn = ref(0);
 let showModalAddPayFromBalanceCar = ref(false);
 let showModalDelPayFromBalanceCar = ref(false);
 
-let getResults = async (page = 1) => {
+// يجب تعريف props قبل استخدامها في أي مكان
+const props = defineProps({
+  url: String,
+  clients: Array,
+  client_id: String,
+  client: Object,
+  q:String
+});
+
+const currentClientId = computed(() => {
+  if (client_Select.value && client_Select.value !== 0 && client_Select.value !== "undefined") {
+    return client_Select.value;
+  }
+  return props.client_id;
+});
+
+let clientPhone = ref('');
+let isSavingPhone = ref(false);
+const allowAutoSavePhone = ref(false);
+
+function normalizeIdentifier(value) {
+  if (value === undefined || value === null) {
+    return '';
+  }
+  return value.toString().replace(/[\s-]+/g, '').toUpperCase();
+}
+
+function extractIdentifiersFromDescription(description) {
+  if (!description || typeof description !== 'string') {
+    return [];
+  }
+  const matches = description.match(/[A-Za-z0-9]+/g) || [];
+  return matches
+    .map((segment) => normalizeIdentifier(segment))
+    .filter((segment) => segment.length >= 3)
+    .filter((segment, index, self) => segment && self.indexOf(segment) === index);
+}
+
+const highlightPalette = [
+  '#F97316', // orange
+  '#10B981', // emerald
+  '#3B82F6', // blue
+  '#EC4899', // pink
+  '#F59E0B', // amber
+  '#22D3EE', // cyan
+  '#8B5CF6', // violet
+  '#F87171', // red
+  '#14B8A6', // teal
+  '#A855F7', // purple
+];
+
+function getHighlightColorForPayment(payment) {
+  const base = Number(payment?.id ?? 0) || payment?.description?.length || 0;
+  const index = Math.abs(base) % highlightPalette.length;
+  return highlightPalette[index];
+}
+
+function withAlpha(hexColor, alpha = 0.15) {
+  if (!hexColor) {
+    return `rgba(0,0,0,${alpha})`;
+  }
+  let hex = hexColor.replace('#', '');
+  if (hex.length === 3) {
+    hex = hex.split('').map((char) => char + char).join('');
+  }
+  const bigint = parseInt(hex, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+const saveClientPhone = debounce(async (value) => {
+  if (!currentClientId.value) {
+    return;
+  }
+  try {
+    isSavingPhone.value = true;
+    await axios.post("/api/updateClientPhone", {
+      userId: currentClientId.value,
+      phone: value
+    });
+    toast.success("تم تحديث رقم الهاتف بنجاح", {
+      timeout: 2000,
+      position: "bottom-right",
+      rtl: true,
+    });
+  } catch (error) {
+    console.error(error);
+    toast.error("لم يتم تحديث رقم الهاتف", {
+      timeout: 3000,
+      position: "bottom-right",
+      rtl: true,
+    });
+  } finally {
+    isSavingPhone.value = false;
+  }
+}, 3000);
+
+watch(clientPhone, (newVal, oldVal) => {
+  if (!allowAutoSavePhone.value) {
+    return;
+  }
+  if (newVal === oldVal) {
+    return;
+  }
+  saveClientPhone(newVal);
+});
+
+function syncClientPhone(phone) {
+  allowAutoSavePhone.value = false;
+  clientPhone.value = phone ?? '';
+  nextTick(() => {
+    allowAutoSavePhone.value = true;
+  });
+}
+
+const isClientPhoneTooLong = computed(() => {
+  return clientPhone.value ? String(clientPhone.value).length > 10 : false;
+});
+
+const isFilterActive = computed(() => {
+  const fromVal = from.value && from.value !== 0 && from.value !== '0' && from.value !== '';
+  const toVal = to.value && to.value !== 0 && to.value !== '0' && to.value !== '';
+  return Boolean(fromVal || toVal);
+});
+
+const paymentIdentifierLookup = computed(() => {
+  if (!showComplatedCars.value) {
+    return Object.create(null);
+  }
+  const lookup = Object.create(null);
+  mergedData.value.forEach((item) => {
+    if (item.type === 'payment' && Array.isArray(item.relatedIdentifiers) && item.relatedIdentifiers.length) {
+      item.relatedIdentifiers.forEach((identifier) => {
+        if (!identifier) {
+          return;
+        }
+        if (!lookup[identifier]) {
+          lookup[identifier] = [];
+        }
+        const color = item.highlightColor || highlightPalette[0];
+        if (!lookup[identifier].includes(color)) {
+          lookup[identifier].push(color);
+        }
+      });
+    }
+  });
+  return lookup;
+});
+
+function getIdentifierColors(identifiers) {
+  const colors = [];
+  identifiers.forEach((identifier) => {
+    if (!identifier) {
+      return;
+    }
+    const list = paymentIdentifierLookup.value[identifier];
+    if (Array.isArray(list)) {
+      list.forEach((color) => {
+        if (color && !colors.includes(color)) {
+          colors.push(color);
+        }
+      });
+    }
+  });
+  return colors;
+}
+
+function isCarReferencedByPayment(item) {
+  if (!item || item.type !== 'car') {
+    return false;
+  }
+  const identifiers = Array.isArray(item.normalizedIdentifiers)
+    ? item.normalizedIdentifiers
+    : [
+        normalizeIdentifier(item?.data?.car_number),
+        normalizeIdentifier(item?.data?.vin),
+      ].filter(Boolean);
+  return getIdentifierColors(identifiers).length > 0;
+}
+
+function paymentReferencesCars(item) {
+  return Boolean(item?.type === 'payment' && item?.relatedIdentifiers?.length);
+}
+
+function getCarHighlightStyle(item) {
+  if (!item || item.type !== 'car') {
+    return {};
+  }
+  const identifiers = Array.isArray(item.normalizedIdentifiers)
+    ? item.normalizedIdentifiers
+    : [
+        normalizeIdentifier(item?.data?.car_number),
+        normalizeIdentifier(item?.data?.vin),
+      ].filter(Boolean);
+  const colors = getIdentifierColors(identifiers);
+  if (!colors.length) {
+    return {};
+  }
+  const color = colors[0];
+  return {
+    boxShadow: `inset 0 -3px 0 ${color}`,
+    backgroundColor: withAlpha(color, 0.12),
+  };
+}
+
+function getPaymentHighlightStyle(item) {
+  if (!paymentReferencesCars(item)) {
+    return {};
+  }
+  const color = item.highlightColor || highlightPalette[0];
+  return {
+    boxShadow: `inset 0 0 0 2px ${withAlpha(color, 0.35)}`,
+    backgroundColor: withAlpha(color, 0.12),
+  };
+}
+
+function getCarHighlightClass(item) {
+  return isCarReferencedByPayment(item)
+    ? 'car-highlighted'
+    : '';
+}
+
+let getResults = async (page = 1, shouldCheckBalance = true) => {
+  isDataLoaded.value = false;
+  const userId = currentClientId.value;
+  if (!userId) {
+    isDataLoaded.value = true;
+    return;
+  }
   axios
-    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${props.client_id}&from=${from.value}&to=${to.value}`)
+    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${userId}&from=${from.value || ""}&to=${to.value || ""}`)
     .then((response) => {
       laravelData.value = response.data;
       client_Select.value = response.data.client.id
-      checkClientBalance(response.data.cars_sum)
+      syncClientPhone(response.data?.client?.phone);
+      cancelEditingPaymentDescription();
+      if (shouldCheckBalance && !isFilterActive.value) {
+        checkClientBalance(response.data.cars_sum);
+      }
+      isDataLoaded.value = true;
+
+      if (props.q && !hasHandledQueryBehavior.value) {
+        const cars = Array.isArray(response.data?.data) ? response.data.data : [];
+        const matchingCar = cars.find((car) => matchesCarQuery(car));
+        if (matchingCar) {
+          if (matchingCar.results === 2) {
+            showComplatedCars.value = true;
+            showPaymentsInTable.value = true;
+          }
+          nextTick(() => {
+            scrollToHighlightedCar();
+          });
+        }
+        hasHandledQueryBehavior.value = true;
+      }
     })
     .catch((error) => {
       console.error(error);
+      isDataLoaded.value = true;
     });
 };
 function calculateTotalFilteredAmount() {
@@ -91,6 +347,14 @@ function calculateTotalFilteredAmount() {
   }
   return {  totalAmount };
 }
+
+const paymentsCount = computed(() => {
+  try {
+    return laravelData.value?.transactions?.filter(t => t.type === 'out' && t.amount < 0 && t.is_pay === 1).length || 0;
+  } catch (error) {
+    return 0;
+  }
+});
 function openModalAddPayFromBalanceCar(form = {}) {
   formData.value = form;
   showModalAddPayFromBalanceCar.value = true;
@@ -106,7 +370,7 @@ function confirmAddPayFromBalanceCar(V) {
     .post("/api/AddPayFromBalanceCar", V)
     .then((response) => {
       showModalAddPayFromBalanceCar.value = false;
-      window.location.reload();
+      getResultsSelect();
     })
     .catch((error) => {
       console.error(error);
@@ -117,7 +381,7 @@ function confirmDelPayFromBalanceCar(V) {
     .post("/api/DelPayFromBalanceCar", V)
     .then((response) => {
       showModalDelPayFromBalanceCar.value = false;
-      window.location.reload();
+      getResultsSelect();
     })
     .catch((error) => {
       console.error(error);
@@ -125,27 +389,138 @@ function confirmDelPayFromBalanceCar(V) {
 }
 
 const getResultsSelect = async (page = 1) => {
-
+  const userId = currentClientId.value;
+  if (!userId) {
+    return;
+  }
   axios
-    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${client_Select.value}&from=${from.value}&to=${to.value}`)
+    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${userId}&from=${from.value || ""}&to=${to.value || ""}`)
     .then((response) => {
       laravelData.value = response.data;
       client_Select.value = response.data.client.id
+      syncClientPhone(response.data?.client?.phone);
+      cancelEditingPaymentDescription();
+      if (!isFilterActive.value) {
+        checkClientBalance(response.data.cars_sum);
+      }
 
-
+      if (props.q) {
+        const cars = Array.isArray(response.data?.data) ? response.data.data : [];
+        const matchingCar = cars.find((car) => matchesCarQuery(car));
+        if (matchingCar) {
+          if (matchingCar.results === 2) {
+            showComplatedCars.value = true;
+            showPaymentsInTable.value = true;
+          }
+          nextTick(() => {
+            scrollToHighlightedCar();
+          });
+        }
+      }
     })
     .catch((error) => {
       console.error(error);
     });
 };
-getResults();
-const props = defineProps({
-  url: String,
-  clients: Array,
-  client_id: String,
-  client: Object,
-  q:String
+
+// استدعاء getResults عند تحميل الصفحة
+onMounted(() => {
+  getResults();
 });
+
+const hasHandledQueryBehavior = ref(false);
+const shouldAutoScrollToQuery = ref(true);
+const matchedRowElement = ref(null);
+
+function matchesCarQuery(car) {
+  if (!car || !props.q) {
+    return false;
+  }
+  const query = String(props.q).trim().toUpperCase();
+  if (!query) {
+    return false;
+  }
+  const vin = car?.vin ? String(car.vin).toUpperCase() : '';
+  const carNumber = car?.car_number ? String(car.car_number).toUpperCase() : '';
+  const chassis = car?.chassis_number ? String(car.chassis_number).toUpperCase() : '';
+  return (
+    vin.startsWith(query) ||
+    carNumber.startsWith(query) ||
+    chassis.startsWith(query)
+  );
+}
+
+function resetQueryBehaviour() {
+  hasHandledQueryBehavior.value = false;
+  shouldAutoScrollToQuery.value = true;
+  matchedRowElement.value = null;
+}
+
+function scrollToHighlightedCar(retry = 6) {
+  if (!shouldAutoScrollToQuery.value || typeof window === 'undefined' || retry <= 0) {
+    return;
+  }
+
+  if (matchedRowElement.value && typeof matchedRowElement.value.scrollIntoView === 'function') {
+    matchedRowElement.value.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+    shouldAutoScrollToQuery.value = false;
+    return;
+  }
+
+  if (typeof document?.querySelector !== 'function') {
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    const el = document.querySelector('[data-car-match="true"]');
+    if (el) {
+      matchedRowElement.value = el;
+      if (typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+        shouldAutoScrollToQuery.value = false;
+      }
+    } else if (retry > 1) {
+      setTimeout(() => scrollToHighlightedCar(retry - 1), 160);
+    }
+  });
+}
+
+function setMatchedRowRef(el, car) {
+  const isMatch = matchesCarQuery(car);
+  if (!isMatch) {
+    return;
+  }
+
+  if (el) {
+    matchedRowElement.value = el;
+  } else if (matchedRowElement.value) {
+    matchedRowElement.value = null;
+  }
+}
+
+// مراقبة تغييرات client_id عند التنقل بين الصفحات
+watch(() => props.client_id, (newValue, oldValue) => {
+  if (newValue && newValue !== oldValue) {
+    // إعادة تعيين القيم عند التنقل لعميل جديد
+    from.value = 0;
+    to.value = 0;
+    showPaymentForm.value = false;
+    showTransactions.value = false;
+    showComplatedCars.value = false;
+    showPaymentsInTable.value = false;
+    amount.value = 0;
+    discount.value = 0;
+    note.value = '';
+    indexs = 1;
+    getResults();
+  }
+}, { immediate: false });
 
 const form = useForm();
 
@@ -180,10 +555,20 @@ function confirmDelCar(V) {
     .post("/api/DelCar", V)
     .then((response) => {
       showModalDelCar.value = false;
-      window.location.reload();
+      toast.success("تم حذف السيارة بنجاح", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true,
+      });
+      getResultsSelect();
     })
     .catch((error) => {
       console.error(error);
+      toast.error("فشل حذف السيارة", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true,
+      });
     });
 }
 function confirmUpdateCar(V) {
@@ -307,7 +692,7 @@ function openModalAddCarContracts(form={}) {
   showModalAddCarContracts.value = true;
 }
 function openModalEditCarContracts(form={}) {
-  formData.value=formshowModalShowExitCar
+  formData.value=form
 
   showModalEditCarContracts.value = true;
 }
@@ -319,7 +704,7 @@ function openModalAddExitCar(form={}) {
 }
 function openModalShowExitCar(form={}) {
   formData.value=form
-  .value = true;
+  showModalShowExitCar.value = true;
 }
 function openModalShowDriving(form={}) {
   formDriving.value.car_typeDriving = form.car_type
@@ -440,7 +825,23 @@ function confirmAddExitCar(v){
 }
 
 function checkClientBalance(v){
-    axios.get(`/api/checkClientBalance?userId=${props.client_id}&currentBalance=${v+calculateTotalFilteredAmount().totalAmount}`)
+    if (isFilterActive.value) {
+      return;
+    }
+    const userId = currentClientId.value;
+    if (!userId) {
+      return;
+    }
+    const transactionsTotal = Number(calculateTotalFilteredAmount().totalAmount || 0);
+    const currentBalance = Number(v || 0) + transactionsTotal;
+    const params = new URLSearchParams({
+      userId: userId,
+      currentBalance: currentBalance,
+      from: from.value || "",
+      to: to.value || ""
+    }).toString();
+
+    axios.get(`/api/checkClientBalance?${params}`)
     .then(response => {
       console.log(response)
       if(response.status==201){
@@ -453,6 +854,7 @@ function checkClientBalance(v){
       }
     })
     .catch(error => {
+        console.error(error);
       toast.error( "لم يتم اعادة فحص الحساب  بنجاح ", {
             timeout: 5000,
             position: "bottom-right",
@@ -493,6 +895,149 @@ function getTodayDate() {
 }
 
 
+function shouldShowCar(car) {
+  if (!car) {
+    return false;
+  }
+  if (car.results == 2) {
+    return showComplatedCars.value;
+  }
+  return true;
+}
+
+const mergedData = computed(() => {
+  if (!isDataLoaded.value || !laravelData.value) return [];
+  
+  try {
+    const cars = laravelData.value.data || [];
+    const transactions = laravelData.value.transactions || [];
+    
+    // تجهيز السيارات والدفعات
+    const allItems = [];
+    
+    // إضافة السيارات مع تواريخها
+    if (Array.isArray(cars)) {
+      for (let i = 0; i < cars.length; i++) {
+        const car = cars[i];
+        const normalizedCarNumber = normalizeIdentifier(car?.car_number);
+        const normalizedVin = normalizeIdentifier(car?.vin);
+        const normalizedIdentifiers = [normalizedCarNumber, normalizedVin].filter(Boolean);
+        allItems.push({ 
+          type: 'car', 
+          data: car,
+          date: new Date(car.created_at || car.date || 0),
+          id: `car-${car.id || i}`,
+          normalizedIdentifiers
+        });
+      }
+    }
+    
+    // إضافة الدفعات مع تواريخها (إذا كان الفلاغ مفعل)
+    if (showPaymentsInTable.value && Array.isArray(transactions) && showComplatedCars.value) {
+      const payments = transactions.filter(t => 
+        t && t.type === 'out' && Number(t.amount) < 0 && t.is_pay === 1
+      );
+      
+      for (let i = 0; i < payments.length; i++) {
+        const payment = payments[i];
+        const relatedIdentifiers = extractIdentifiersFromDescription(payment?.description);
+        const highlightColor = getHighlightColorForPayment(payment);
+        allItems.push({ 
+          type: 'payment', 
+          data: payment,
+          date: new Date(payment.created_at || payment.created || 0),
+          id: `payment-${payment.id || i}`,
+          relatedIdentifiers,
+          highlightColor
+        });
+      }
+    }
+    
+    // ترتيب حسب التاريخ (الأقدم أولاً)
+    allItems.sort((a, b) => a.date - b.date);
+    
+    // حساب الرصيد المتصل (بسيط جداً)
+    let balance = 0;
+    let totalSum = 0;
+    const merged = [];
+    
+    for (let i = 0; i < allItems.length; i++) {
+      const item = allItems[i];
+      
+      if (item.type === 'car') {
+        const car = item.data;
+        const isVisible = shouldShowCar(car);
+        
+        if (isVisible) {
+          // السيارة تزيد الرصيد: (المجموع - الخصم) فقط - بدون طرح المدفوع
+          const total = Number(car.total_s) || 0;
+          balance += (total); // الرصيد = الإجمالي - الخصم فقط  - discount
+          totalSum += (total ); // المجموع التراكمي-   discount
+        }
+      } else if (item.type === 'payment') {
+        // الدفعة قيمتها سالبة أصلاً، نجمعها مباشرة (الدفعات تنزل الرصيد)
+        const paymentAmount = Number(item.data.amount) || 0;
+        balance += paymentAmount; // نجمع (السالب ينزل الرصيد تلقائياً)
+        totalSum += paymentAmount; // المجموع التراكمي
+      }
+      
+      merged.push({
+        ...item,
+        balance: balance,
+        totalSum: totalSum
+      });
+    }
+    
+    return merged;
+  } catch (error) {
+    console.error('❌ Error in mergedData:', error);
+    return [];
+  }
+});
+
+watch(() => props.q, () => {
+  resetQueryBehaviour();
+  if (props.q) {
+    nextTick(() => {
+      scrollToHighlightedCar();
+    });
+  }
+});
+
+watch(matchedRowElement, (el) => {
+  if (!el || !shouldAutoScrollToQuery.value || typeof el.scrollIntoView !== 'function') {
+    return;
+  }
+  nextTick(() => {
+    el.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+    shouldAutoScrollToQuery.value = false;
+  });
+});
+
+watch(
+  () => showComplatedCars.value,
+  (newVal) => {
+    showPaymentsInTable.value = newVal;
+    if (props.q && shouldAutoScrollToQuery.value) {
+      nextTick(() => scrollToHighlightedCar());
+    }
+  }
+);
+
+watch(
+  () => mergedData.value,
+  () => {
+    if (props.q && shouldAutoScrollToQuery.value) {
+      nextTick(() => scrollToHighlightedCar());
+    }
+  },
+  { deep: true }
+);
+
+
 function getImageUrl(name) {
       // Provide the base URL for your images
       return `/public/uploadsResized/${name}`;
@@ -502,6 +1047,94 @@ function getDownloadUrl(name) {
       return `/public/uploads/${name}`;
     }
 
+const distributedBalance = computed(() => {
+  try {
+    const paymentsTotal = Number(calculateTotalFilteredAmount().totalAmount || 0);
+    const carsDiscount = Number(laravelData.value?.cars_discount || 0);
+    const carsPaid = Number(laravelData.value?.cars_paid || 0);
+    return (paymentsTotal * -1 - carsDiscount) - carsPaid;
+  } catch (error) {
+    return 0;
+  }
+});
+ 
+
+
+
+const payment_loading = ref(false);
+const selectedCompletedCarsState = ref(true);
+
+const editingPaymentDescriptionId = ref(null);
+const paymentDescriptionDraft = ref('');
+const paymentDescriptionError = ref('');
+const isSavingPaymentDescription = ref(false);
+const PAYMENT_DESCRIPTION_MAX = 1000;
+
+function startEditingPaymentDescription(payment) {
+  if (!payment || isSavingPaymentDescription.value) {
+    return;
+  }
+  editingPaymentDescriptionId.value = payment.id;
+  paymentDescriptionDraft.value = payment.description ?? '';
+  paymentDescriptionError.value = '';
+}
+
+function cancelEditingPaymentDescription() {
+  if (isSavingPaymentDescription.value) {
+    return;
+  }
+  editingPaymentDescriptionId.value = null;
+  paymentDescriptionDraft.value = '';
+  paymentDescriptionError.value = '';
+}
+
+async function savePaymentDescription(payment) {
+  if (!payment || editingPaymentDescriptionId.value !== payment.id) {
+    return;
+  }
+
+  const trimmed = paymentDescriptionDraft.value ? paymentDescriptionDraft.value.trim() : '';
+
+  if (!trimmed) {
+    paymentDescriptionError.value = 'الوصف مطلوب';
+    return;
+  }
+
+  if (trimmed.length > PAYMENT_DESCRIPTION_MAX) {
+    paymentDescriptionError.value = `الوصف يجب ألا يتجاوز ${PAYMENT_DESCRIPTION_MAX} حرفًا`;
+    return;
+  }
+
+  isSavingPaymentDescription.value = true;
+  paymentDescriptionError.value = '';
+
+  try {
+    await axios.post('/api/updateTransactionDescription', {
+      transaction_id: payment.id,
+      description: trimmed,
+    });
+
+    payment.description = trimmed;
+    payment._descriptionUpdated = true;
+    setTimeout(() => {
+      if (payment) {
+        payment._descriptionUpdated = false;
+      }
+    }, 3000);
+
+    cancelEditingPaymentDescription();
+  } catch (error) {
+    if (error.response?.data?.errors?.description?.length) {
+      paymentDescriptionError.value = error.response.data.errors.description[0];
+    } else if (error.response?.data?.message) {
+      paymentDescriptionError.value = error.response.data.message;
+    } else {
+      paymentDescriptionError.value = 'حدث خطأ أثناء حفظ الوصف';
+    }
+  } finally {
+    isSavingPaymentDescription.value = false;
+  }
+}
 </script>
 
 <template>
@@ -511,7 +1144,7 @@ function getDownloadUrl(name) {
       <h2
         class="font-semibold text-xl dark:text-gray-400 text-gray-800 leading-tight"
       >
-      شركة نور البصرة
+        شركة سلام جلال
       </h2>
     </template>
     <ModalAddCarContracts
@@ -641,9 +1274,19 @@ function getDownloadUrl(name) {
       </div>
     </div>
     <div class="py-4" v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
-      <h2 class="text-center pb-2 dark:text-gray-400">
-        {{ $t("sales_bill") }}
-      </h2>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-center pb-2 dark:text-gray-400 flex-1">
+          {{ $t("sales_bill") }}
+        </h2>
+        <Link 
+          v-if="props.client?.has_internal_sales"
+          :href="`/internalSales/${currentClientId}`" 
+          class="px-4 py-2 text-white bg-purple-600 rounded hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 flex items-center gap-2"
+        >
+          <span>💰</span>
+          <span>المبيعات الداخلية</span>
+        </Link>
+      </div>
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 p-6 dark:bg-gray-900">
         <div class="overflow-hidden shadow-sm sm:rounded-lg">
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 lg:gap-1">
@@ -672,18 +1315,31 @@ function getDownloadUrl(name) {
               </select>
             </div>
             <div>
-              <div className="mb-4  mr-5">
-                <InputLabel for="totalAmount" value="فلترة السيارات المكتملة" />
-                <div class="flex items-center ps-4  rounded-lg border border-gray-300 text-gray-900 mt-1">
-                    <input id="bordered-checkbox-1" type="checkbox" @change="showComplatedCars== true? showComplatedCars=false: showComplatedCars=true" :value="showComplatedCars" :checked="!showComplatedCars" name="bordered-checkbox" class="w-4 h-4 mx-2 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="bordered-checkbox-1" class="w-full pt-3 py-2 mx-4 text-sm  font-medium text-gray-900 dark:text-gray-300"> 
-                      {{showComplatedCars== false?' تم الفلتر':'تم عرض جميع السيارة'}}
+              <div class="mb-4 mr-5">
+                <InputLabel for="filters" value="خيارات العرض" class="mb-2" />
+                <div class="p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
+                  <!-- فلتر السيارات المكتملة -->
+                  <div class="flex items-center justify-between">
+                    <label for="switch-completed" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                       السيارات المكتملة
+                    </label>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        id="switch-completed"
+                        @change="showComplatedCars = !showComplatedCars" 
+                        :checked="!showComplatedCars" 
+                        class="sr-only peer"
+                      >
+                      <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                 </div>
+                  
               </div>
             </div>
-            <div class="px-4">
-              <div className="mb-4 mx-5">
+            </div>
+            <div class="px-2 flex flex-col justify-end">
+              <div class="mb-4">
                 <InputLabel for="from" :value="$t('from_date')" />
                 <TextInput
                   id="from"
@@ -693,8 +1349,8 @@ function getDownloadUrl(name) {
                 />
               </div>
             </div>
-            <div class="px-4">
-              <div className="mb-4 mx-5">
+            <div class="px-2 flex flex-col justify-end">
+              <div class="mb-4">
                 <InputLabel for="to" :value="$t('to_date')" />
                 <TextInput
                   id="to"
@@ -704,34 +1360,31 @@ function getDownloadUrl(name) {
                 />
               </div>
             </div>
-            <div className="mb-4  mr-5 print:hidden">
+            <div class="mb-4 mr-5 print:hidden flex flex-col gap-2">
               <InputLabel for="pay" value="فلترة" />
               <button
-                @click.prevent="getResults()"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded"
-                style="width: 100%"
+                @click.prevent="getResults(1, false)"
+                class="w-full px-6 py-2 mt-1 font-bold text-white bg-gray-500 rounded"
               >
                 <span>فلترة</span>
               </button>
             </div>
-            <div className="mb-4  mr-5 print:hidden">
+            <div class="mb-4 mr-5 print:hidden flex flex-col gap-2">
               <InputLabel for="pay" value="طباعة" />
               <a
                 :href="`/api/getIndexAccountsSelas?user_id=${client_Select}&from=${from}&to=${to}&print=1&showComplatedCars=${ showComplatedCars ? 0:1}`"
                 target="_blank"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded block text-center"
-                style="width: 100%"
+                class="w-full px-6 py-2 mt-1 font-bold text-white bg-orange-500 rounded block text-center"
               >
                 <span>طباعة</span>
               </a>
             </div>
-            <div className="mb-4  mr-5 print:hidden">
+            <div class="mb-4 mr-5 print:hidden flex flex-col gap-2">
               <InputLabel for="pay" value="طباعة" />
               <a
                 :href="`/api/getIndexAccountsSelas?user_id=${client_Select}&from=${from}&to=${to}&print=1&printExcel=1&showComplatedCars=${ showComplatedCars ? 0:1}`"
                 target="_blank"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-green-500 rounded block text-center"
-                style="width: 100%"
+                class="w-full px-6 py-2 mt-1 font-bold text-white bg-green-500 rounded block text-center"
               >
                 <span>Excel</span>
               </a>
@@ -789,13 +1442,14 @@ function getDownloadUrl(name) {
                 disabled
               />
             </div>
+       
             <div className="mb-4  mr-5 print:hidden"   v-if="((calculateTotalFilteredAmount().totalAmount)*-1)-(laravelData?.cars_sum) !=0">
               <InputLabel for="pay" value="اضافة دفعة" />
               <button
                 @click.prevent="showAddPaymentTotal()"
                 v-if="!showPaymentForm"
                 :disabled="isLoading"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-green-500 rounded"
+                class="px-6 mb-6 py-2 mt-1 font-bold text-white bg-green-500 rounded"
                 style="width: 100%">
                 <span>اضافة دفعة</span>
               </button>
@@ -803,7 +1457,7 @@ function getDownloadUrl(name) {
                 @click.prevent="hideAddPaymentTotal()"
                 v-if="showPaymentForm"
                 :disabled="isLoading"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-pink-500 rounded"
+                class="px-6 mb-6 py-2 mt-1 font-bold text-white bg-pink-500 rounded"
                 style="width: 100%">
                 <span>اخفاء دفعة</span>
               </button>
@@ -814,29 +1468,51 @@ function getDownloadUrl(name) {
                 @click.prevent="showTransactionsDiv()"
                 v-if="!showTransactions"
                 :disabled="isLoading"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-purple-500 rounded"
+                class="px-6 mb-6 py-2 mt-1 font-bold text-white bg-purple-500 rounded"
                 style="width: 100%">
                 <span>عرض الدفعات</span>
               </button>
               <button
                 @click.prevent="hideTransactionsDiv()"
                 v-if="showTransactions"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-pink-500 rounded"
+                class="px-6 mb-6 py-2 mt-1 font-bold text-white bg-pink-500 rounded"
                 style="width: 100%">
                 <span>اخفاء الدفعات</span>
               </button>
             </div>
-
-            <div className="mb-4  mr-5"   v-if="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)) != 0">
+            <div className="mb-4 mr-5">
+              <InputLabel for="client_phone" value="رقم هاتف الزبون" />
+              <TextInput
+                id="client_phone"
+                type="text"
+                :class="[
+                  'mt-1 block w-full border rounded',
+                  isClientPhoneTooLong
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-400'
+                    : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-200'
+                ]"
+                v-model="clientPhone"
+                :disabled="isSavingPhone"
+              />
+              <p v-if="isClientPhoneTooLong" class="text-xs text-red-500 mt-1">
+                الرقم يجب ألا يتجاوز 10 أرقام.
+              </p>
+              <p v-if="isSavingPhone" class="text-xs text-gray-500 mt-1">
+                جاري حفظ رقم الهاتف...
+              </p>
+            </div>
+            <div className="mb-4  mr-5">
               <InputLabel for="cars_need_paid" value="الرصيد غير موزع بالدولار" />
               <TextInput
                 id="cars_need_paid"
                 type="number"
                 class="mt-1 block w-full"
                
-                :value="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid))"
+                :value="distributedBalance || 0"
               />
             </div>
+
+      
 
             <div className="mb-4  mr-5">
               <InputLabel
@@ -871,16 +1547,6 @@ function getDownloadUrl(name) {
                 type="number"
                 class="mt-1 block w-full"
                 :value="laravelData?.contract_total_debit_Dollar"
-                disabled
-              />
-            </div>
-            <div className="mb-4  mr-5">
-              <InputLabel for="cars_paid" value="مجموع الدين عقود بالدينار" />
-              <TextInput
-                id="cars_paid"
-                type="number"
-                class="mt-1 block w-full"
-                :value="laravelData?.contract_total_debit_Dinar"
                 disabled
               />
             </div>
@@ -933,7 +1599,7 @@ function getDownloadUrl(name) {
               <button
                 @click.prevent="confirmAddPaymentTotal(amount, client_Select,discount,note)"
                 :disabled="isLoading"
-                class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-green-500 rounded"
+                class="px-6 mb-6 py-2 mt-1 font-bold text-white bg-green-500 rounded"
                 style="width: 100%"
               >
                 <span v-if="showErorrAmount">يرجى مراجعة المبلغ ل</span>
@@ -947,6 +1613,7 @@ function getDownloadUrl(name) {
                   <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center" >
                   <tr  class="bg-rose-500 text-gray-100 rounded-l-lg mb-2 sm:mb-0">
                     <th className="px-1 py-2 text-base">#</th>
+                    <th className="px-1 py-2 text-base">no</th>
                     <th className="px-1 py-2 text-base">{{$t('date')}}</th>
                     <th className="px-1 py-2 text-base">{{$t('description')}}</th>
                     <th className="px-1 py-2 text-base">{{$t('amount')}}</th>
@@ -979,13 +1646,67 @@ function getDownloadUrl(name) {
                      </td>
                    
                   </tr>
-                  <template  v-for="user in laravelData.transactions" :key="user.id">
+                  <template  v-for="user in (laravelData?.transactions || [])" :key="user.id">
                   <tr class="text-center" v-if="user.type=='out' && user.amount < 0 && user.is_pay == 1 ">
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ indexs++ }}</td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.id }}</td>
-                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.created }}</td>
-                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.description }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ formatBaghdadTimestamp(user.created_at) }}</td>
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200 align-top">
+                    <div v-if="editingPaymentDescriptionId === user.id" class="space-y-2 text-right">
+                      <textarea
+                        v-model="paymentDescriptionDraft"
+                        class="w-full rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm leading-6 p-2"
+                        rows="3"
+                        :maxlength="PAYMENT_DESCRIPTION_MAX"
+                        placeholder="اكتب الوصف الجديد هنا"
+                      ></textarea>
+                      <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                        <span>الحد الأقصى {{ PAYMENT_DESCRIPTION_MAX }} حرفًا</span>
+                        <span :class="paymentDescriptionDraft.length > PAYMENT_DESCRIPTION_MAX ? 'text-red-500' : ''">
+                          {{ paymentDescriptionDraft.length }}/{{ PAYMENT_DESCRIPTION_MAX }}
+                        </span>
+                      </div>
+                      <p v-if="paymentDescriptionError" class="text-xs text-red-500">{{ paymentDescriptionError }}</p>
+                      <div class="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          class="px-3 py-1 text-sm font-semibold rounded bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                          @click="cancelEditingPaymentDescription"
+                          :disabled="isSavingPaymentDescription"
+                        >
+                          إلغاء
+                        </button>
+                        <button
+                          type="button"
+                          class="px-3 py-1 text-sm font-semibold text-white bg-green-600 rounded disabled:opacity-70"
+                          @click="savePaymentDescription(user)"
+                          :disabled="isSavingPaymentDescription"
+                        >
+                          <span v-if="isSavingPaymentDescription">جارٍ الحفظ...</span>
+                          <span v-else>حفظ</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div v-else class="space-y-1 text-right">
+                      <span class="block whitespace-pre-line leading-6">{{ user.description }}</span>
+                      <span py-1 text-white bg-blue-500 rounded-md focus:outline-none disabled:opacity-60
+                        v-if="user._descriptionUpdated"
+                        class="inline-flex items-center text-xs font-semibold text-green-600"
+                      >
+                        تم التحديث
+                      </span>
+                    </div>
+                  </td>
                   <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ user.amount*-1  }}</td>
-                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">  
+                  <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200 space-x-1 space-x-reverse">  
+                    <button
+                      class="px-4 py-2  text-white bg-blue-500 rounded-md focus:outline-none disabled:opacity-60"
+                      title="تعديل الوصف"
+                      @click="startEditingPaymentDescription(user)"
+                      :disabled="isSavingPaymentDescription && editingPaymentDescriptionId === user.id"
+                    >
+                      <edit class="w-4 h-4" />
+                    </button>
                     <a v-if="user.type =='out' && user.amount<0" target="_blank"
                     style="display: inline-flex;"
                     :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&from=${from}&to=${to}&print=2&transactions_id=${user.id}`"
@@ -1019,7 +1740,13 @@ function getDownloadUrl(name) {
               </table>
           </div>
           <div>
-            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <!-- Loading State -->
+            <div v-if="!isDataLoaded" class="text-center py-10">
+              <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              <p class="mt-4 text-gray-600 dark:text-gray-400">جاري تحميل البيانات...</p>
+            </div>
+            
+            <div v-else class="relative overflow-x-auto shadow-md sm:rounded-lg">
               <table
                 class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center"
               >
@@ -1089,6 +1816,9 @@ function getDownloadUrl(name) {
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("discount") }}
                     </th>
+                    <th scope="col" class="px-1 py-2 text-base bg-gradient-to-r from-blue-500 to-indigo-500 text-white dark:from-blue-600 dark:to-indigo-600">
+                      الرصيد
+                    </th>
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("date") }}
                     </th>
@@ -1117,17 +1847,26 @@ function getDownloadUrl(name) {
                   </tr>
                 </thead>
                 <tbody>
+                  <template v-for="(item, i) in mergedData" :key="item.id">
+                  <!-- صف السيارة -->
                   <tr
-                    v-for="(car, i) in laravelData.data"
-                    v-show="(car.results == 2 && showComplatedCars)|| car.results!=2"
-                    :key="car.id"
-                    :class="{
-                      'bg-red-100 dark:bg-red-900': car.results == 0,
-                      'bg-red-100 dark:bg-red-900': car.results == 1,
-                      'bg-green-100 dark:bg-green-900': car.results == 2,
-                      'bg-yellow-100 dark:bg-yellow-900':(car.vin.startsWith(q)|| ( car.car_number ? car.car_number.toString().startsWith(q) : '')),
-                    }
-                    "
+                    v-if="item.type === 'car'"
+                    v-show="shouldShowCar(item.data)"
+                    :class="[
+                      {
+                      'bg-red-100 dark:bg-red-900': item.data.results == 0,
+                      'bg-red-100 dark:bg-red-900': item.data.results == 1,
+                      'bg-green-200 dark:bg-green-800 border-green-400 dark:border-green-600': item.data.results == 2,
+                      },
+                      isCarReferencedByPayment(item)
+                        ? 'ring-2 ring-inset'
+                        : ''
+                    ,
+                      matchesCarQuery(item.data) ? 'query-highlight-row' : ''
+                    ]"
+                    :data-car-match="matchesCarQuery(item.data) ? 'true' : null"
+                    :ref="el => setMatchedRowRef(el, item.data)"
+                    :style="getCarHighlightStyle(item)"
                     class="border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600"
                   >
                     <td
@@ -1138,100 +1877,108 @@ function getDownloadUrl(name) {
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.car_type }}
+                      {{ item.data.car_type }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.year }}
+                      {{ item.data.year }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.car_color }}
+                      {{ item.data.car_color }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.vin }}
+                      {{ item.data.vin }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.car_number }}
+                      {{ item.data.car_number }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.dinar_s }}
+                      {{ item.data.dinar_s }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.dolar_price_s }}
+                      {{ item.data.dolar_price_s }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1 print:hidden"
                     >
-                      {{ ((car.dinar_s/car.dolar_price_s)*100)?.toFixed(0)||0 }}
+                      {{ ((item.data.dinar_s/item.data.dolar_price_s)*100)?.toFixed(0)||0 }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1 print:hidden"
                     >
-                      {{ car.note }}
+                      {{ item.data.note }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1 print:hidden"
                     >
-                      {{ ((car.dinar_s/130000)*100)?.toFixed(0)||0 }}
+                      {{ ((item.data.dinar_s/130000)*100)?.toFixed(0)||0 }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1 print:hidden"
                     >
-                      {{ (((car.dinar_s/130000)*100)?.toFixed(0)||0)-(((car.dinar_s/car.dolar_price_s)*100)?.toFixed(0)||0) }}
+                      {{ (((item.data.dinar_s/130000)*100)?.toFixed(0)||0)-(((item.data.dinar_s/item.data.dolar_price_s)*100)?.toFixed(0)||0) }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.shipping_dolar_s }}
+                      {{ item.data.shipping_dolar_s }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.coc_dolar_s }}
+                      {{ item.data.coc_dolar_s }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.checkout_s }}
+                      {{ item.data.checkout_s }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.expenses_s }}
+                      {{ item.data.expenses_s }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.land_shipping_s }}
+                      {{ item.data.land_shipping_s }}
                     </td>
                     
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.total_s.toFixed(0) }}
+                      {{ item.data.total_s.toFixed(0) }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.paid }}
+                      ${{ (item.data.paid || 0).toLocaleString('en-US') }}
                     </td>
-                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.discount}}</td>
-
+                    <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ item.data.discount}}</td>
+                    <td
+                      className="border dark:border-gray-800 text-center px-2 py-1 font-bold"
+                      :class="{
+                        'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': item.totalSum > 0,
+                        'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': item.totalSum <= 0
+                      }"
+                    >
+                      {{ item.totalSum?.toFixed(0) || 0 }}
+                    </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ car.date }}
+                      {{ item.data.date }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-start px-2 py-1 print:hidden"
@@ -1241,7 +1988,7 @@ function getDownloadUrl(name) {
                         tabIndex="1"
                         
                         class="px-1 py-1  text-white mx-1 bg-slate-500 rounded"
-                        @click="openModalEditCars(car)"
+                        @click="openModalEditCars(item.data)"
                       >
                         <edit />
                       </button>
@@ -1249,31 +1996,31 @@ function getDownloadUrl(name) {
                         tabIndex="1"
                         
                         class="px-1 py-1  text-white mx-1 bg-orange-500 rounded"
-                        @click="openModalDelCar(car)"
+                        @click="openModalDelCar(item.data)"
                       >
                         <trash />
                       </button>
                       <button
-                        v-if="car.total_s != (car.paid+ car.discount)"
+                        v-if="item.data.total_s != (item.data.paid+ item.data.discount)"
                         tabIndex="1"
                         class="px-1 py-1  text-white mx-1 bg-green-500 rounded"
-                        @click="openAddCarPayment(car)"
+                        @click="openAddCarPayment(item.data)"
                       >
                         <pay />
                       </button>
                       <button
-                        v-if="(car.contract?.price != car.contract?.paid) || (car.contract?.price_dinar != car.contract?.paid_dinar)"
+                        v-if="(item.data.contract?.price != item.data.contract?.paid) || (item.data.contract?.price_dinar != item.data.contract?.paid_dinar)"
                         tabIndex="1"
                         class="px-1 py-1  text-white mx-1 bg-pink-500 rounded"
-                        @click="openModalEditCarContracts(car)"
+                        @click="openModalEditCarContracts(item.data)"
                       >
                         <pay />
                       </button>
                       <button
-                      v-if="!car.contract"
+                      v-if="!item.data.contract"
                         tabIndex="1"
                         class="px-1 py-1  text-white mx-1 bg-yellow-500 rounded"
-                        @click="openModalAddCarContracts(car)"
+                        @click="openModalAddCarContracts(item.data)"
                       >
                         <newContracts />
                       </button>
@@ -1281,16 +2028,16 @@ function getDownloadUrl(name) {
                       <button
                         tabIndex="1"
                         class="px-1 py-1  text-white mx-1 bg-red-500 rounded"
-                        v-if="!car.is_exit"
-                        @click="openModalAddExitCar(car)"
+                        v-if="!item.data.is_exit"
+                        @click="openModalAddExitCar(item.data)"
                       >
                         <exit />
                       </button>
                       <button
                         tabIndex="1"
                         class="px-1 py-1  text-white mx-1 bg-blue-500 rounded"
-                        v-if="car.is_exit"
-                        @click="openModalShowExitCar(car)"
+                        v-if="item.data.is_exit"
+                        @click="openModalShowExitCar(item.data)"
 
                       >
                         <show />
@@ -1298,7 +2045,7 @@ function getDownloadUrl(name) {
                       <button
                         tabIndex="1"
                         class="px-1 py-1  text-white mx-1 bg-violet-500 rounded"
-                        @click="openModalShowDriving(car)"
+                        @click="openModalShowDriving(item.data)"
 
                       >
                         <document />
@@ -1306,16 +2053,35 @@ function getDownloadUrl(name) {
                       <a  target="_blank"
                    
                       style="display: inline-flex;"
-                      :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&print=6&car_id=${car.id}`"
+                      :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&print=6&car_id=${item.data.id}`"
                       tabIndex="1"
                       class="px-1 py-1  text-white  m-1 bg-gray-900 rounded"
                       >
                       <print class="inline-flex" />
                       </a>
+                      <!-- Badge المشتري إذا كانت السيارة مباعة في المبيعات الداخلية -->
+                      <span
+                        v-if="props.client?.has_internal_sales && item.data.internal_sale?.client"
+                        class="px-2 py-1 m-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs font-semibold"
+                        style="min-width: 110px; display: block;"
+                        title="مباعة في المبيعات الداخلية"
+                      >
+                        👤 {{ item.data.internal_sale.client.name }}
+                      </span>
+                      <!-- زر البيع إذا لم تكن مباعة -->
+                      <Link
+                        v-else-if="props.client?.has_internal_sales && !item.data.internal_sale"
+                        :href="`/internalSales/${currentClientId}?car_id=${item.data.id}`"
+                        tabIndex="1"
+                        class="px-1 py-1  text-white  m-1 bg-purple-600 rounded hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800"
+                        title="بيع في المبيعات الداخلية"
+                      >
+                        💰
+                      </Link>
                     </td>
                     <td  className="border dark:border-gray-800 text-start px-2 py-1 print:hidden">
                       <a
-                        v-for="(image, index) in car.car_images"
+                        v-for="(image, index) in item.data.car_images"
                         :key="index"
                         :href="getDownloadUrl(image.name)"
                         style="cursor: pointer;"
@@ -1333,23 +2099,117 @@ function getDownloadUrl(name) {
                         tabIndex="1"
                         style="min-width: 100px;"
                         class="px-1 py-1  text-white mx-1 bg-green-500 rounded"
-                        v-if="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_paid)) != 0"
-                        @click="openModalAddPayFromBalanceCar(car)"
+                        v-if="distributedBalance != 0"
+                        @click="openModalAddPayFromBalanceCar(item.data)"
                       >
                         دفع من الرصيد
                       </button>
                       <button
                         tabIndex="1"
                         style="min-width: 100px;"
-                        v-if="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_sum)) != 0 && car.paid"
+                        v-if="((((calculateTotalFilteredAmount().totalAmount)*-1)-laravelData?.cars_discount)-(laravelData?.cars_sum)) != 0 && item.data.paid"
                         class="px-1 py-1 mt-1 text-white mx-1 bg-red-500 rounded"
-                        @click="openModalDelPayFromBalanceCar(car)"
+                        @click="openModalDelPayFromBalanceCar(item.data)"
                       >
                        اعادة للرصيد
                       </button>
                       </td>
                       
                   </tr>
+                  
+                  <!-- صف الدفعة -->
+                  <tr
+                    v-if="item.type === 'payment'"
+                    :class="[
+                      'bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border-b dark:border-gray-700',
+                      paymentReferencesCars(item) ? 'ring-2 ring-inset' : ''
+                    ]"
+                    :style="getPaymentHighlightStyle(item)"
+                  >
+                    <!-- 1. no -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-purple-800 dark:text-purple-200">
+                      💳
+                    </td>
+                    <!-- 2-6. car_type to car_number -->
+                    <td colspan="5" className="border dark:border-gray-800 text-start px-3 py-2">
+                      <span class="font-semibold mr-2">{{ item.data.description }}</span>
+                    </td>
+                    <!-- 7-8. dinar, dolar_price -->
+                    <td colspan="2" className="border dark:border-gray-800 text-center px-2 py-2"></td>
+                    <!-- 9-12. print:hidden columns -->
+                    <td colspan="4" className="border dark:border-gray-800 text-center px-2 py-2 print:hidden"></td>
+                    <!-- 13-17. shipping to land_shipping -->
+                    <td colspan="5" className="border dark:border-gray-800 text-center px-2 py-2"></td>
+                    <!-- 18. total -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-red-700 dark:text-red-300 text-base bg-red-50 dark:bg-red-900/20">
+                      <span class="text-red-600 dark:text-red-400">⬇️ -</span> {{ (item.data.amount * -1).toFixed(0) }}
+                    </td>
+                    <!-- 19. paid -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 bg-red-50 dark:bg-red-900/20"></td>
+                    <!-- 20. discount -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 bg-red-50 dark:bg-red-900/20"></td>
+                    <!-- 21. الرصيد -->
+                    <td
+                      className="border dark:border-gray-800 text-center px-2 py-2 font-bold text-base"
+                      :class="{
+                        'bg-purple-600 text-white dark:bg-purple-700': item.totalSum > 0,
+                        'bg-green-600 text-white dark:bg-green-700': item.totalSum <= 0
+                      }"
+                    >
+                      {{ item.totalSum?.toFixed(0) || 0 }}
+                    </td>
+                    <!-- 22. date -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 text-sm">
+                        {{ item.data.created }}
+                    </td>
+                    <!-- 23. execute print:hidden -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 print:hidden">
+                      <a  target="_blank"
+                        style="display: inline-flex;"
+                        :href="`/api/getIndexAccountsSelas?user_id=${laravelData.client.id}&print=2&transactions_id=${item.data.id}`"
+                        tabIndex="1"
+                        class="px-2 py-1 text-white bg-purple-600 rounded hover:bg-purple-700"
+                      >
+                        <print class="inline-flex" />
+                      </a>
+                    </td>
+                    <!-- 24. تخزين print:hidden -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 print:hidden"></td>
+                    <!-- 25. الرصيد print:hidden -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-2 print:hidden"></td>
+                  </tr>
+                  </template>
+                  
+                  <!-- صف الرصيد غير الموزع في آخر الجدول -->
+                  <tr 
+                    v-if="!showPaymentsInTable && distributedBalance != 0"
+                    class="bg-gradient-to-r from-yellow-100 to-amber-100 dark:from-yellow-900/30 dark:to-amber-900/30 border-t-4 border-amber-500"
+                  >
+                    <!-- 1. no -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3 font-bold">
+                       
+                    </td>
+                    <!-- 2-17. باقي الأعمدة -->
+                    <td colspan="16" className="border dark:border-gray-800 text-start px-4 py-3">
+                      <span class="text-xl font-bold text-amber-800 dark:text-amber-200">💰 الرصيد غير الموزع على السيارات:</span>
+                    </td>
+                    <!-- 18. total -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
+                    <!-- 19. paid -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
+                    <!-- 20. discount -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
+                    <!-- 21. الرصيد -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3 font-bold text-xl bg-amber-200 dark:bg-amber-800 text-amber-900 dark:text-amber-100">
+                      {{ distributedBalance.toFixed(0) }}
+                    </td>
+                    <!-- 22. date -->
+                    <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
+                    <!-- 23-25. الأعمدة الأخرى -->
+                    <td colspan="3" className="border dark:border-gray-800 text-center px-2 py-3 print:hidden"></td>
+                  </tr>
+                  
+ 
                 </tbody>
               </table>
             </div>
@@ -1387,5 +2247,54 @@ function getDownloadUrl(name) {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+}
+.query-highlight-row {
+  position: relative;
+  scroll-margin-top: 160px;
+}
+
+.query-highlight-row > td {
+  background-image: linear-gradient(90deg, rgba(250, 204, 21, 0.22), rgba(250, 204, 21, 0.35));
+  background-color: rgba(250, 204, 21, 0.25) !important;
+  color: #1f2937;
+}
+
+.dark .query-highlight-row > td {
+  background-image: linear-gradient(90deg, rgba(217, 119, 6, 0.35), rgba(217, 119, 6, 0.25));
+  background-color: rgba(217, 119, 6, 0.25) !important;
+  color: #f9fafb;
+}
+
+.query-highlight-row::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 0.375rem;
+  box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.45), 0 12px 30px -12px rgba(234, 179, 8, 0.6);
+  pointer-events: none;
+  animation: queryHighlightPulse 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .query-highlight-row::after {
+    animation: none;
+  }
+}
+
+@keyframes queryHighlightPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.4), 0 10px 28px -14px rgba(234, 179, 8, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.55), 0 14px 36px -10px rgba(234, 179, 8, 0.6);
+  }
+}
+
+.query-highlight-row svg {
+  color: #92400e;
+}
+
+.dark .query-highlight-row svg {
+  color: #fbbf24;
 }
 </style>

@@ -10,20 +10,16 @@ use App\Models\Profile;
 use App\Models\UserType;
 use App\Models\Wallet;
 use App\Models\Results;
-use App\Models\Company;
 use App\Models\Transactions;
 use App\Models\SystemConfig;
-use App\Models\Name;
 use App\Models\Car;
 use App\Models\ExitCar;
-use App\Models\CarModel;
 use App\Models\Contract;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
-use App\Models\Massage;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -197,6 +193,105 @@ class OnlineContractsController extends Controller
          $contract->delete();
         return Response::json('ok', 200);    
 
+    }
+
+    public function totalInfo(Request $request)
+    {
+        $owner_id=Auth::user()->owner_id;
+        
+        // جلب جميع السيارات
+        $allCars = Car::where('owner_id',$owner_id)->count();
+        
+        // جلب عدد السيارات الخارجة (استخدام groupBy لعد السيارات الفريدة فقط)
+        $exitCar = ExitCar::where('owner_id',$owner_id)
+            ->groupBy('car_id')
+            ->select('car_id')
+            ->get()
+            ->count();
+        
+        // جلب عدد العقود المنجزة
+        $contarts = Contract::where('owner_id',$owner_id)->count();
+        
+        // حساب السيارات المتأخرة (أكثر من سنة بدون خروجية)
+        $oneYearAgo = Carbon::now()->subYear()->format('Y-m-d');
+        $carsOverYear = Car::where('owner_id',$owner_id)
+            ->where('date', '<=', $oneYearAgo)
+            ->where('is_exit', 0)
+            ->count();
+        
+        // حساب السيارات المستحقة الشهر المقبل
+        $nextMonthStart = Carbon::now()->addMonth()->startOfMonth()->format('Y-m-d');
+        $nextMonthEnd = Carbon::now()->addMonth()->endOfMonth()->format('Y-m-d');
+        $oneYearFromNextMonthStart = Carbon::parse($nextMonthStart)->subYear()->format('Y-m-d');
+        $oneYearFromNextMonthEnd = Carbon::parse($nextMonthEnd)->subYear()->format('Y-m-d');
+        
+        $carsNextMonth = Car::where('owner_id',$owner_id)
+            ->whereBetween('date', [$oneYearFromNextMonthStart, $oneYearFromNextMonthEnd])
+            ->where('is_exit', 0)
+            ->count();
+        
+        // جلب بيانات العقود الإلكترونية - دولار
+        $onlineContractsAccount = $this->onlineContracts->where('owner_id',$owner_id)->first();
+        $debtOnlineContractsAccount = $this->debtOnlineContracts->where('owner_id',$owner_id)->first();
+        
+        // جلب بيانات العقود الإلكترونية - دينار
+        $onlineContractsDinarAccount = $this->onlineContractsDinar->where('owner_id',$owner_id)->first();
+        $debtOnlineContractsDinarAccount = $this->debtOnlineContractsDinar->where('owner_id',$owner_id)->first();
+        
+        $data = [
+            'onlineContracts' => $onlineContractsAccount && $onlineContractsAccount->wallet ? (int)$onlineContractsAccount->wallet->balance : 0,
+            'debtOnlineContracts' => $debtOnlineContractsAccount && $debtOnlineContractsAccount->wallet ? abs((int)$debtOnlineContractsAccount->wallet->balance) : 0,
+            'onlineContractsDinar' => $onlineContractsDinarAccount && $onlineContractsDinarAccount->wallet ? (int)$onlineContractsDinarAccount->wallet->balance_dinar : 0,
+            'debtOnlineContractsDinar' => $debtOnlineContractsDinarAccount && $debtOnlineContractsDinarAccount->wallet ? abs((int)$debtOnlineContractsDinarAccount->wallet->balance_dinar) : 0,
+            'exitCar' => $exitCar,
+            'contarts' => $contarts,
+            'allCars' => $allCars,
+            'carsOverYear' => $carsOverYear,
+            'carsNextMonth' => $carsNextMonth,
+        ];
+        
+        return response()->json(['data'=>$data]); 
+    }
+    
+    public function getCarsOverYear(Request $request)
+    {
+        $owner_id = Auth::user()->owner_id;
+        $limit = $request->get('limit', 100);
+        $page = $request->get('page', 1);
+        
+        // السيارات التي مضى عليها أكثر من سنة بدون خروجية
+        $oneYearAgo = Carbon::now()->subYear()->format('Y-m-d');
+        
+        $cars = Car::where('owner_id', $owner_id)
+            ->where('date', '<=', $oneYearAgo)
+            ->where('is_exit', 0)
+            ->with(['client:id,name', 'contract', 'exitcar'])
+            ->orderBy('date', 'ASC')
+            ->paginate($limit);
+        
+        return response()->json($cars);
+    }
+    
+    public function getCarsNextMonth(Request $request)
+    {
+        $owner_id = Auth::user()->owner_id;
+        $limit = $request->get('limit', 100);
+        $page = $request->get('page', 1);
+        
+        // السيارات التي ستصبح مستحقة الشهر المقبل
+        $nextMonthStart = Carbon::now()->addMonth()->startOfMonth()->format('Y-m-d');
+        $nextMonthEnd = Carbon::now()->addMonth()->endOfMonth()->format('Y-m-d');
+        $oneYearFromNextMonthStart = Carbon::parse($nextMonthStart)->subYear()->format('Y-m-d');
+        $oneYearFromNextMonthEnd = Carbon::parse($nextMonthEnd)->subYear()->format('Y-m-d');
+        
+        $cars = Car::where('owner_id', $owner_id)
+            ->whereBetween('date', [$oneYearFromNextMonthStart, $oneYearFromNextMonthEnd])
+            ->where('is_exit', 0)
+            ->with(['client:id,name', 'contract', 'exitcar'])
+            ->orderBy('date', 'ASC')
+            ->paginate($limit);
+        
+        return response()->json($cars);
     }
     
     }

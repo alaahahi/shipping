@@ -12,6 +12,7 @@ import edit from "@/Components/icon/edit.vue";
 import ModalAddCarPayment from "@/Components/ModalAddCarPayment.vue";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
 import ModalEditCars from "@/Components/ModalEditCar_S.vue";
+import ModalBulkEditCarSales from "@/Components/ModalBulkEditCarSales.vue";
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
 import debounce from "lodash/debounce";
@@ -31,9 +32,12 @@ let showModalCar = ref(false);
 let showModalCarSale = ref(false);
 let showModalAddCarPayment = ref(false);
 let showModalEditCars = ref(false);
+let showModalBulkEdit = ref(false);
 let showModalDelCar = ref(false);
 let mainAccount = ref(0);
 let allCars = ref(0);
+const selectedCarIds = ref([]);
+const bulkFormData = ref({});
 
 function openModalEditCars(form = {}) {
   formData.value = form;
@@ -66,6 +70,52 @@ function openModalDelCar(form = {}) {
   showModalDelCar.value = true;
 }
 
+function openBulkEdit() {
+  if (!selectedCarIds.value.length) {
+    toast.warning("الرجاء اختيار سيارة واحدة على الأقل", {
+      timeout: 2000,
+      position: "bottom-right",
+      rtl: true,
+    });
+    return;
+  }
+  const firstId = selectedCarIds.value[0];
+  const firstCar = car.value.find((item) => item.id === firstId);
+  if (!firstCar) {
+    return;
+  }
+  const initial = { ...firstCar };
+  if (!initial.dinar_s || initial.dinar_s === 0) {
+    initial.dinar_s = initial.dinar;
+  }
+  if (!initial.expenses_s || initial.expenses_s === 0) {
+    initial.expenses_s = initial.expenses;
+  }
+  if (!initial.dolar_price_s || initial.dolar_price_s === 0) {
+    initial.dolar_price_s = props.config[0].dolar_price ?? initial.dolar_price_s;
+  }
+  if (!initial.shipping_dolar_s || initial.shipping_dolar_s === 0) {
+    initial.shipping_dolar_s = props.config[0].shipping_dolar ?? initial.shipping_dolar_s;
+  }
+  if (!initial.coc_dolar_s || initial.coc_dolar_s === 0) {
+    initial.coc_dolar_s = props.config[0].coc_dolar ?? initial.coc_dolar_s;
+  }
+  if (!initial.checkout_s || initial.checkout_s === 0) {
+    initial.checkout_s = props.config[0].checkout ?? initial.checkout_s;
+  }
+  if (!initial.land_shipping_s || initial.land_shipping_s === 0) {
+    initial.land_shipping_s = props.config[0].land_shipping_s ?? initial.land_shipping_s;
+  }
+  delete initial.car_type;
+  delete initial.car_color;
+  delete initial.year;
+  delete initial.dinar;
+  delete initial.dinar_s;
+  delete initial.car_owner;
+  bulkFormData.value = initial;
+  showModalBulkEdit.value = true;
+}
+
 function openAddCarPayment(form = {}) {
   formData.value = form;
   formData.value.notePayment = " بيد ";
@@ -84,6 +134,7 @@ const refresh = () => {
   page = 0;
   car.value.length = 0;
   resetData.value = !resetData.value;
+  selectedCarIds.value = [];
 };
 const getResultsCar = async ($state) => {
   console.log($state);
@@ -96,6 +147,7 @@ const getResultsCar = async ($state) => {
         user_id: user_id,
         from: from.value,
         to: to.value,
+        get_image: 1,
       },
     });
 
@@ -149,6 +201,42 @@ function confirmUpdateCar(V) {
       showModal.value = false;
 
       toast.error("لم التعديل بنجاح", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true,
+      });
+    });
+}
+
+function confirmBulkUpdate(V) {
+  const payload = {
+    ...V,
+    car_ids: selectedCarIds.value,
+  };
+  delete payload.car_type;
+  delete payload.car_color;
+  delete payload.year;
+  delete payload.dinar;
+  delete payload.dinar_s;
+  delete payload.vin;
+  delete payload.car_number;
+  delete payload.car_owner;
+  axios
+    .post("/api/bulkUpdateCarsS", payload)
+    .then(() => {
+      toast.success("تم التعديل الجماعي بنجاح", {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true,
+      });
+      showModalBulkEdit.value = false;
+      selectedCarIds.value = [];
+      getcountTotalInfo();
+      refresh();
+    })
+    .catch((error) => {
+      console.error(error);
+      toast.error("فشل التعديل الجماعي", {
         timeout: 2000,
         position: "bottom-right",
         rtl: true,
@@ -229,6 +317,16 @@ function getDownloadUrl(name) {
   >
     <template #header> </template>
   </ModalEditCars>
+
+  <ModalBulkEditCarSales
+    :show="showModalBulkEdit ? true : false"
+    :baseData="bulkFormData"
+    :selected-count="selectedCarIds.length"
+    @confirm="confirmBulkUpdate"
+    @close="showModalBulkEdit = false"
+  >
+    <template #header></template>
+  </ModalBulkEditCarSales>
 
   <ModalAddCarPayment
     :formData="formData"
@@ -380,6 +478,21 @@ function getDownloadUrl(name) {
                     <span>طباعة</span>
                   </a>
                 </div>
+                <div className="mb-4 mr-5 print:hidden text-center">
+                  <InputLabel for="bulk" value="تعديل جماعي" />
+                  <button
+                    id="bulk"
+                    type="button"
+                    @click="openBulkEdit()"
+                    :disabled="!selectedCarIds.length"
+                    :class="[
+                      'px-6 mb-12 py-2 mt-1 font-bold text-white rounded w-full',
+                      selectedCarIds.length ? 'bg-blue-500' : 'bg-gray-400 cursor-not-allowed'
+                    ]"
+                  >
+                    تنفيذ
+                  </button>
+                </div>
               </div>
               <div>
                 <div></div>
@@ -391,6 +504,9 @@ function getDownloadUrl(name) {
                       class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center"
                     >
                       <tr>
+                        <th scope="col" class="px-1 py-3 text-base">
+                          تحديد
+                        </th>
                         <th scope="col" class="px-1 py-3 text-base">
                           {{ $t("car_owner") }}
                         </th>
@@ -473,6 +589,14 @@ function getDownloadUrl(name) {
                         "
                         class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600"
                       >
+                        <td class="border dark:border-gray-800 text-center px-1 py-2">
+                          <input
+                            type="checkbox"
+                            :value="car.id"
+                            v-model="selectedCarIds"
+                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          />
+                        </td>
                         <td
                           className="border dark:border-gray-800 text-center  dark:text-gray-200 text-black px-1 py-2 "
                           style="font-weight: bold; font-size: 16px"

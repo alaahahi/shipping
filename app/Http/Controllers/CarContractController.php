@@ -6,14 +6,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use App\Models\Transfers;
 use App\Models\User;
 use App\Models\Car;
-use App\Models\Company;
-use App\Models\Name;
 use App\Models\Driving;
-use App\Models\CarModel;
-use App\Models\Color;
 use App\Models\Wallet;
 use App\Models\UserType;
 use App\Models\ExpensesType;
@@ -28,16 +25,37 @@ use App\Models\CarContract;
 use App\Models\TransactionsContract;
 use Carbon\Carbon;
 use Inertia\Inertia;
+use Illuminate\Support\Str;
 
 class CarContractController extends Controller
 {
+    protected bool $showBrokerage;
+
     public function __construct(AccountingController $accountingController)
     {
-    $this->accountingController = $accountingController;
-    $this->userClient =  UserType::where('name', 'client')->first()->id;
-    $this->userAccount =  UserType::where('name', 'account')->first()->id;
-    $this->mainBoxContract= User::with('wallet')->where('type_id', $this->userAccount)->where('email','mainBoxContract@account.com');
-    $this->currentDate = Carbon::now()->format('Y-m-d');
+        $this->accountingController = $accountingController;
+        $this->userClient = $this->resolveUserTypeId('client');
+        $this->userAccount = $this->resolveUserTypeId('account');
+        $this->mainBoxContract = User::with('wallet')
+            ->where('type_id', $this->userAccount)
+            ->where('email', 'mainBoxContract@account.com');
+        $this->currentDate = Carbon::now()->format('Y-m-d');
+        $this->showBrokerage = filter_var(config('car_contract.show_brokerage', false), FILTER_VALIDATE_BOOLEAN);
+    }
+
+    protected function resolveUserTypeId(string $typeName, ?int $default = null): ?int
+    {
+        $id = UserType::where('name', $typeName)->value('id');
+
+        if (!$id && $default !== null) {
+            return $default;
+        }
+
+        if (!$id) {
+            Log::warning('UserType missing for contracts module', ['type' => $typeName]);
+        }
+
+        return $id;
     }
 
     public function contract(Request $request)
@@ -53,29 +71,46 @@ class CarContractController extends Controller
         ->select('name_buyer', DB::raw('MAX(phone_buyer) as phone_buyer'), DB::raw('MAX(address_buyer) as address_buyer'))
         ->groupBy('name_buyer')
         ->get();
-        return Inertia::render('CarContract/add', ['client1'=>$client1,'data'=>$data,'client2'=>$client2 ]);   
+        return Inertia::render('CarContract/add', [
+            'client1'=>$client1,
+            'data'=>$data,
+            'client2'=>$client2,
+            'showBrokerage' => $this->showBrokerage,
+        ]);   
     }
     public function contract_print(Request $request)
     {
         $id=$request->id;
         $data = CarContract::find($id);
+        if ($data && empty($data->verification_token)) {
+            $data->verification_token = Str::uuid()->toString();
+            $data->save();
+        }
         $owner_id=Auth::user()->owner_id;
         $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
         $config=SystemConfig::first();
-        return view('receiptContract',compact('data','config'));
+        $verificationUrl = $data ? route('contract.verify', $data->verification_token) : null;
+        return view('receiptContract',compact('data','config','verificationUrl'));
     }
     public function index(Request $request)
     {
         $owner_id=Auth::user()->owner_id;
         $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
         $q= $_GET['q'] ?? '';
-        return Inertia::render('CarContract/index', ['client'=>$client,'user'=>$q ]);
+        return Inertia::render('CarContract/index', [
+            'client'=>$client,
+            'user'=>$q,
+            'showBrokerage' => $this->showBrokerage,
+        ]);
     }
     public function contract_account(Request $request)
     {
         $owner_id=Auth::user()->owner_id;
         $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
-        return Inertia::render('CarContract/account', ['client'=>$client ]);   
+        return Inertia::render('CarContract/account', [
+            'client'=>$client,
+            'showBrokerage' => $this->showBrokerage,
+        ]);   
     }
  
     public function addCarContract(Request $request)
@@ -134,6 +169,12 @@ class CarContractController extends Controller
             ['id' => $contract['id']??0], // Search criteria, usually the primary key
             $contract // Data to be inserted or updated
         );
+
+        if ($car && empty($car->verification_token)) {
+            $car->verification_token = Str::uuid()->toString();
+            $car->save();
+        }
+
         if(!$oldContract) {
             // Logic for new entry scenario
             $desc = ' عقد بيع للسيارة ' . ($contract['car_name']) . ' البائع ' . ($contract['name_seller'] ?? 0) . ' دفع مبلغ ' . ($contract['tex_seller_paid'] ?? 0) . ' و المشتري ' . ($contract['tex_buyer_paid'] ?? 0) . ' دفع مبلغ ' . ($contract['name_buyer'] ?? 0) .' رقم'. ($contract['vin']);
@@ -150,7 +191,11 @@ class CarContractController extends Controller
         }
          
 
-        return Response::json('ok', 200);    
+        return Response::json([
+            'success' => true,
+            'id' => $car->id,
+            'message' => 'تم حفظ العقد بنجاح'
+        ], 200);    
     }
     public function getIndexContractCar(Request $request){
         $owner_id=Auth::user()->owner_id;
@@ -728,5 +773,24 @@ class CarContractController extends Controller
         $config=SystemConfig::first();
         
         return view('documents.driving',compact('doc','config'));
+    }
+
+    public function verify($token)
+    {
+        $contract = CarContract::where('verification_token', $token)->firstOrFail();
+
+        if (empty($contract->verification_token)) {
+            $contract->verification_token = Str::uuid()->toString();
+            $contract->save();
+        }
+
+        $config = SystemConfig::first();
+        $verificationUrl = route('contract.verify', $contract->verification_token);
+
+        return view('contractVerify', [
+            'contract' => $contract,
+            'config' => $config,
+            'verificationUrl' => $verificationUrl,
+        ]);
     }
 }

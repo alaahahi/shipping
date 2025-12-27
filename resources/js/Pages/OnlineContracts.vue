@@ -1,7 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/inertia-vue3';
-import VueTailwindDatepicker from 'vue-tailwind-datepicker'
 import ModalAddCarContracts from "@/Components/ModalAddCarContracts.vue";
 import ModalEditCarContracts from "@/Components/ModalEditCarContracts.vue";
 import ModalAddExitCar from "@/Components/ModalAddExitCar.vue";
@@ -48,9 +47,13 @@ let debtOnlineContractsDinar = ref(0)
 let contarts = ref(0)
 let exitCar = ref(0)
 let allCars= ref(0)
+let carsOverYear = ref(0)
+let carsNextMonth = ref(0)
+
+let activeTab = ref('all') // all, overYear, nextMonth
 
 const getcountTotalInfo = async () => {
-  axios.get('/api/totalInfo')
+  axios.get('/api/onlineContractsTotalInfo')
   .then(response => {
     onlineContracts.value=  response.data.data.onlineContracts
     debtOnlineContracts.value=  response.data.data.debtOnlineContracts
@@ -58,7 +61,9 @@ const getcountTotalInfo = async () => {
     debtOnlineContractsDinar.value = response.data.data.debtOnlineContractsDinar
     exitCar.value = response.data.data.exitCar
     contarts.value = response.data.data.contarts
-    allCars.value =response.data.data.allCars;
+    allCars.value =response.data.data.allCars
+    carsOverYear.value = response.data.data.carsOverYear
+    carsNextMonth.value = response.data.data.carsNextMonth
   })
   .catch(error => {
     console.error(error);
@@ -111,14 +116,38 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
 
 const getResultsCar = async ($state) => {
   try {
-    const response = await axios.get(`/getIndexCar`, {
-      params: {
-        limit: 100,
-        page: page,
-        q: q,
-        user_id: user_id
-      }
-    });
+    // زيادة رقم الصفحة قبل الطلب
+    page++;
+    
+    let response;
+    
+    // تحديد الـ API endpoint بناءً على التاب النشط
+    if (activeTab.value === 'overYear') {
+      response = await axios.get(`/api/getCarsOverYear`, {
+        params: {
+          limit: 100,
+          page: page
+        }
+      });
+    } else if (activeTab.value === 'nextMonth') {
+      response = await axios.get(`/api/getCarsNextMonth`, {
+        params: {
+          limit: 100,
+          page: page
+        }
+      });
+    } else {
+      // التاب الافتراضي - جميع السيارات
+      response = await axios.get(`/getIndexCar`, {
+        params: {
+          limit: 100,
+          page: page,
+          q: q,
+          user_id: user_id,
+          online_contract: 1
+        }
+      });
+    }
 
     const json = response.data;
 
@@ -131,8 +160,6 @@ const getResultsCar = async ($state) => {
        $state.loaded();
     }
 
-
-    page++;
   } catch (error) {
     console.log(error);
     //$state.error();
@@ -154,6 +181,7 @@ function confirmAddCarContracts(V) {
 
       });
       refresh();
+      getcountTotalInfo();
 
 
   })
@@ -180,6 +208,7 @@ function confirmEditCarContracts(V) {
 
       });
       refresh();
+      getcountTotalInfo();
 
 
   })
@@ -209,6 +238,7 @@ function confirmAddExitCar(v){
       });
 
       refresh();
+      getcountTotalInfo();
 
   })
   .catch(error => {
@@ -237,6 +267,7 @@ axios.post(`/api/removeContract`,v)
     });
 
     refresh();
+    getcountTotalInfo();
     showModalDelCar.value = false;
 })
 .catch(error => {
@@ -265,6 +296,13 @@ function getTodayDate() {
 function openModalDelCar(form={}) {
   formData.value=form
   showModalDelCar.value = true;
+}
+
+function switchTab(tab) {
+  activeTab.value = tab;
+  page = 0; // إعادة تعيين الصفحة عند التبديل
+  car.value = []; // مسح البيانات السابقة
+  resetData.value = !resetData.value; // إعادة تشغيل infinite loading
 }
 </script>
 
@@ -446,6 +484,47 @@ function openModalDelCar(form={}) {
                           </button>
                         </div> -->
 
+                      </div>
+
+                      <!-- التابات -->
+                      <div class="mt-4 mb-4">
+                        <div class="border-b border-gray-200 dark:border-gray-700">
+                          <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                            <button
+                              @click="switchTab('all')"
+                              :class="[
+                                activeTab === 'all'
+                                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400',
+                                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                              ]"
+                            >
+                              جميع السيارات ({{ allCars }})
+                            </button>
+                            <button
+                              @click="switchTab('overYear')"
+                              :class="[
+                                activeTab === 'overYear'
+                                  ? 'border-red-500 text-red-600 dark:text-red-400'
+                                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400',
+                                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                              ]"
+                            >
+                              سيارات متأخرة (+سنة) ({{ carsOverYear }})
+                            </button>
+                            <button
+                              @click="switchTab('nextMonth')"
+                              :class="[
+                                activeTab === 'nextMonth'
+                                  ? 'border-orange-500 text-orange-600 dark:text-orange-400'
+                                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400',
+                                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                              ]"
+                            >
+                              مستحقة الشهر المقبل ({{ carsNextMonth }})
+                            </button>
+                          </nav>
+                        </div>
                       </div>
 
                       <div>
@@ -665,6 +744,9 @@ function openModalDelCar(form={}) {
                                       <th scope="col" class="px-1 py-3 text-base">
                                         {{ $t('date') }}
                                       </th>
+                                      <th scope="col" class="px-1 py-3 text-base" v-if="activeTab !== 'all'">
+                                        تاريخ الدخول
+                                      </th>
                         
                                       <th scope="col" class="px-1 py-3 text-base">
                                         مدفوع دولار
@@ -692,6 +774,11 @@ function openModalDelCar(form={}) {
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.vin }}</td>
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.car_number }}</td> 
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.contract?.created  }}</td>
+                                    <td className="border dark:border-gray-800 text-center px-2 py-2 " v-if="activeTab !== 'all'">
+                                      <span :class="activeTab === 'overYear' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 px-2 py-1 rounded' : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 px-2 py-1 rounded'">
+                                        {{ car.date }}
+                                      </span>
+                                    </td>
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.contract?.paid || 0  }}</td>
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{ car.contract?.paid_dinar  || 0 }}</td>
                                     <td className="border dark:border-gray-800 text-center px-2 py-2 ">{{car.contract?.note  }}</td>
@@ -809,7 +896,9 @@ function openModalDelCar(form={}) {
                                       </button>
                                     </div>
                                     <div class="basis-3/4" style="direction: ltr;">
-                                      <vue-tailwind-datepicker overlay :options="options" :disable-date="dDate"  i18n="ar"  as-single use-range v-model="dateValue" />
+                                      <input type="date" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                                      <span class="mx-2">إلى</span>
+                                      <input type="date" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
                                     </div>
                   </div>
                   <div class="flex pt-5 items-center">

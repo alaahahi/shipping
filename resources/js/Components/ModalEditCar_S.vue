@@ -162,7 +162,7 @@ function removeMedia(removedImage){
                 >
                 <input
                   id="car_number"
-                  type="number"
+                  type="text"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.car_number"
                 />

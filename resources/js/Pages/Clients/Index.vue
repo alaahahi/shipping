@@ -117,7 +117,8 @@ function openModalEditClient(form = {}) {
 function confirmAddClient(V) {
   axios.post('/api/clientsStore',V)
   .then(response => {
-      window.location.reload();
+    refresh();
+    showModalAddClient.value = false;
   })
   .catch(error => {
     console.error(error);
@@ -126,11 +127,35 @@ function confirmAddClient(V) {
 function confirmEditClient(V) {
   axios.post('/api/clientsEdit',V)
   .then(response => {
-      window.location.reload();
+    refresh();
+    showModalEditClient.value = false;
   })
   .catch(error => {
     console.error(error);
   })
+}
+
+async function toggleInternalSalesQuick(user) {
+  try {
+    const response = await axios.post('/api/toggleInternalSales', {
+      client_id: user.id,
+      has_internal_sales: !(user.has_internal_sales || false)
+    });
+    // تحديث القيمة في القائمة مباشرة
+    user.has_internal_sales = response.data.has_internal_sales;
+    toast.success('تم تحديث حالة المبيعات الداخلية', {
+      timeout: 2000,
+      position: "bottom-right",
+      rtl: true,
+    });
+  } catch (error) {
+    console.error('Error toggling internal sales:', error);
+    toast.error('فشل تحديث حالة المبيعات الداخلية', {
+      timeout: 3000,
+      position: "bottom-right",
+      rtl: true,
+    });
+  }
 }
 function openModalDelClient(form={}) {
   formData.value=form
@@ -184,7 +209,6 @@ function confirmDelClient(V) {
     <ModalEditClient
             :show="showModalEditClient"
             :formData="formData"
-
             @a="confirmEditClient($event)"
             @close="showModalEditClient = false"
             >
@@ -317,13 +341,8 @@ function confirmDelClient(V) {
                                         <th className="px-1 py-2 text-base">#</th>
                                         <th className="px-1 py-2 text-base">{{ $t('name') }}</th>
                                         <th className="px-1 py-2 text-base">{{ $t('phoneNumber') }}</th>
-                                        <th className="px-1 py-2 text-base">السيارات</th>
-
-                                        <th className="px-1 py-2 text-base"> السيارات غير مدفوع</th>
-                                        <th className="px-1 py-2 text-base"> السيارات مدفوع</th>
-                                        <th className="px-1 py-2 text-base">العقود الالكترونية المنجزة</th>
-                                        <th className="px-1 py-2 text-base">العقود الالكترونية غير المنجزة</th>
                                         <th className="px-1 py-2 text-base">{{ $t('debt') }}</th>
+                                        <th className="px-1 py-2 text-base">المبيعات الداخلية</th>
                                         <th className="px-1 py-2 text-base">{{ $t('execute') }}</th>       
                                     </tr>
                                 </thead>
@@ -334,18 +353,21 @@ function confirmDelClient(V) {
                                       <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{i}}</td>
                                         <td className="border border-white dark:border-gray-800 text-center  dark:text-gray-200 text-black px-1 py-2 " style="font-weight: bold;font-size: 16px;">{{user.name}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.phone}}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count}}</td>
-
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count-user.car_count_completed}}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count_completed}}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.contract_count}}</td>
-                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.car_count-user.contract_count}}</td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">{{user.balance}} $</td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">
+                                          <button
+                                            @click="toggleInternalSalesQuick(user)"
+                                            class="px-2 py-1 rounded text-sm font-semibold"
+                                            :class="user.has_internal_sales ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'"
+                                            :title="user.has_internal_sales ? 'المبيعات الداخلية مفعلة - اضغط لإلغاء التفعيل' : 'المبيعات الداخلية معطلة - اضغط للتفعيل'"
+                                          >
+                                            {{ user.has_internal_sales ? '✓ مفعل' : '✗ معطل' }}
+                                          </button>
+                                        </td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2"  style="min-height: 42px;">
                           
                                         <Link
                                           style="display:inline-flex;"
-                                          v-if="user.car_count"
                                           className="px-1 py-1  text-white mx-1 bg-blue-500 rounded d-inline-block"
                                           :href="route('showClients', user.id)">
                                         <show />
@@ -373,6 +395,14 @@ function confirmDelClient(V) {
                                           className="px-1 py-1  text-white mx-1 bg-purple-900 rounded d-inline-block"
                                           :href="route('wallet',{ 'id':user.id})">
                                         <wallet />
+                                        </Link>
+                                        <Link
+                                          v-if="user.has_internal_sales"
+                                          style="display:inline-flex;"
+                                          className="px-1 py-1  text-white mx-1 bg-purple-600 rounded d-inline-block"
+                                          :href="`/internalSales/${user.id}`"
+                                          title="المبيعات الداخلية">
+                                        💰
                                         </Link>
 
     

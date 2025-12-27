@@ -14,6 +14,9 @@ use App\Http\Controllers\OnlineContractsController;
 use App\Http\Controllers\AnnualController;
 use App\Http\Controllers\CarExpensesController;
 use App\Http\Controllers\CarContractController;
+use App\Http\Controllers\CarDamageReportController;
+use App\Http\Controllers\HunterController;
+
 
 use App\Models\SystemConfig;
 
@@ -39,13 +42,43 @@ Route::get('/', function () {
     ]);
 });
 
-Route::group(['middleware' => ['auth','verified']], function () {
+// Routes الترخيص (بدون middleware للسماح بالوصول قبل التفعيل)
+use App\Http\Controllers\LicenseController;
+Route::get('/license/activate', [LicenseController::class, 'showActivate'])->name('license.activate');
+Route::get('/license/status', [LicenseController::class, 'showStatus'])->name('license.status');
+Route::post('/license/activate', [LicenseController::class, 'activate'])->name('license.activate.post');
+
+// Routes إدارة الترخيصات (الوصول عبر كلمة المرور في الرابط)
+use App\Http\Controllers\AdminLicenseController;
+Route::get('/admin/licenses', [AdminLicenseController::class, 'index'])->name('admin.licenses.index');
+
+// صفحة مراقبة المزامنة - متاحة بدون تسجيل دخول
+Route::get('sync-monitor', function () {
+    return Inertia::render('SyncMonitor', [
+        'layout' => null, // استخدام layout بسيط بدون auth
+    ]);
+})->name('sync.monitor');
+
+Route::group(['middleware' => ['auth','verified', 'check.license']], function () {
 
     Route::get('dashboard',[DashboardController::class,'index'])->middleware(['auth', 'verified'])->name('dashboard');
     Route::get('sales',[DashboardController::class,'sales'])->name('sales');
     Route::get('purchases',[DashboardController::class,'purchases'])->name('purchases');
 
     Route::get('accounting',[AccountingController::class,'index'])->name('accounting');
+    
+    // صفحة تفاصيل الجدول
+    Route::get('sync-monitor/table/{tableName}', function (string $tableName, \Illuminate\Http\Request $request) {
+        return Inertia::render('SyncMonitor/TableDetails', [
+            'tableName' => $tableName,
+            'connection' => $request->get('connection', 'auto')
+        ]);
+    })->name('sync.monitor.table.details');
+    
+    // صفحة البحث Offline
+    Route::get('offline-car-search', function () {
+        return Inertia::render('OfflineCarSearch');
+    })->name('offline.car.search');
 
     
     Route::get('getIndex',[UserController::class, 'getIndex'])->name("getIndex");
@@ -53,6 +86,7 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('sentToCourt/{id}',[FormRegistrationController::class, 'sentToCourt'])->name("sentToCourt");
     Route::get('clients',[UserController::class, 'clients'])->name('clients');
     Route::get('showClients/{id}',[UserController::class, 'showClients'])->name('showClients');
+    Route::get('internalSales/{id}',[UserController::class, 'internalSales'])->name('internalSales');
 
     
     Route::get('getIndexClients',[UserController::class, 'getIndexClients'])->name("getIndexClients");
@@ -153,6 +187,11 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('contract_account',[CarContractController::class, 'contract_account'])->name('contract_account');
     Route::get('contract/{id?}', [CarContractController::class, 'contract'])->name('contract');
     Route::get('contract_print/{id}', [CarContractController::class, 'contract_print'])->name('contract_print');
+    
+    // 🖨️ طباعة العقود المحفوظة offline
+    Route::get('print-offline-contract', function () {
+        return view('receiptContractOffline');
+    })->name('print.offline.contract');
 
 
     
@@ -165,13 +204,22 @@ Route::group(['middleware' => ['auth','verified']], function () {
     Route::get('getIndexAccounting',[AccountingController::class, 'getIndexAccounting'])->name("getIndexAccounting");
 
     Route::get('annual_information',[AnnualController::class, 'index'])->name('annual_information');
+    Route::get('hunter',[HunterController::class, 'index'])->name('hunter');
 
     Route::get('wallet',[AccountingController::class, 'wallet'])->name("wallet");
 
-    
+    Route::get('damage_report',[CarDamageReportController::class, 'index'])->name('damage_report.index');
+    Route::get('damage_report/{id}/edit', [CarDamageReportController::class, 'edit'])->name('damage_report.edit');
+
+    // Car History routes
+    Route::get('car/{carId}/history', [CarHistoryController::class, 'index'])->name('car.history');
+    Route::get('car/{carId}/history/{historyId}', [CarHistoryController::class, 'show'])->name('car.history.show');
+
  });
 
- Route::get('makeDrivingDocumentPdf',[CarContractController::class, 'makeDrivingDocumentPdf'])->name('makeDrivingDocumentPdf');
+Route::get('contract/verify/{token}', [CarContractController::class, 'verify'])->name('contract.verify');
+Route::get('damage_report/verify/{token}', [CarDamageReportController::class, 'verify'])->name('damage_report.verify');
+Route::get('makeDrivingDocumentPdf',[CarContractController::class, 'makeDrivingDocumentPdf'])->name('makeDrivingDocumentPdf');
 
 
 require __DIR__.'/auth.php';

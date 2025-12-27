@@ -23,7 +23,7 @@ use App\Models\ContractImg;
 
 
 use Intervention\Image\Facades\Image;
-use File;
+use Illuminate\Support\Facades\File;
 
 
 class AnnualController extends Controller

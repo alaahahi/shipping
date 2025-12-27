@@ -2,15 +2,17 @@
 
 namespace App\Models;
 use App\Models\User;
+use App\Traits\TracksHistory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Car extends Model
 {
-    use HasFactory;
+    use HasFactory, TracksHistory;
     protected $table = 'car';
     protected $fillable = [
         'id',
@@ -54,27 +56,15 @@ class Car extends Model
         'land_shipping',
         'land_shipping_s',
         'land_shipping_dinar',
-        'land_shipping_dinar_s'
+        'land_shipping_dinar_s',
+        'car_price'
     ];
+    
+    // منع حفظ oldAttributes كعمود في قاعدة البيانات
+    protected $guarded = ['oldAttributes'];
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-    public function company()
-    {
-        return $this->belongsTo(Company::class, 'company_id');
-    }
-    public function carmodel()
-    {
-        return $this->belongsTo(CarModel::class,'model_id');
-    }
-    public function name()
-    {
-        return $this->belongsTo(Name::class);
-    }
-    public function color()
-    {
-        return $this->belongsTo(Color::class);
     }
     public function Client()
     {
@@ -135,13 +125,36 @@ class Car extends Model
 
     public function getSumAmountDollarAttribute()
     {
-        // Calculate and return the sum of amountDollar for all related expenses
-        return $this->carexpenses->sum('amountDollar');
+        // Calculate and return the sum of amount_dollar for all related expenses
+        return $this->carexpenses->sum('amount_dollar');
     }
 
     public function getSumAmountDinarAttribute()
     {
-        // Calculate and return the sum of amountDinar for all related expenses
-        return $this->carexpenses->sum('amountDinar');
+        // Calculate and return the sum of amount_dinar for all related expenses
+        return $this->carexpenses->sum('amount_dinar');
+    }
+
+    public function internalSale()
+    {
+        return $this->hasOne(InternalSale::class, 'car_id');
+    }
+
+    public function carSale()
+    {
+        return $this->hasOne(CarSale::class, 'car_id');
+    }
+
+    public function history(): HasMany
+    {
+        return $this->hasMany(CarHistory::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get recent history for this car
+     */
+    public function getRecentHistory(int $limit = 10)
+    {
+        return $this->history()->limit($limit)->get();
     }
   }

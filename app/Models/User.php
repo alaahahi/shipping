@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Models;
-use App\Models\Massage;
 use App\Models\UserType;
 use Illuminate\Support\Facades\Crypt;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -31,6 +30,7 @@ class User extends Authenticatable
         'parent_id',
         'is_band',
         'phone',
+        'has_internal_sales',
         'device',
         'created',
         'year_date'
@@ -60,10 +60,6 @@ class User extends Authenticatable
     {
         return $this->morphTo();
     }
-    public function massage()
-    {
-        return $this->hasMany(Massage::class,'sender_id');
-    }
     public function userType()
     {
         return $this->belongsTo(UserType::class,'type_id');
@@ -83,8 +79,14 @@ class User extends Authenticatable
     {
         return $this->hasOne(Wallet::class);
     }
-    public function name()
+
+    public function internalSales()
     {
-        return $this->hasOne(Name::class);
+        return $this->hasMany(InternalSale::class, 'client_id');
+    }
+
+    public function carSales()
+    {
+        return $this->hasMany(CarSale::class, 'buyer_id');
     }
 }

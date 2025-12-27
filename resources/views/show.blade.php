@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>شركة نور البصرة أيوب</title>
+    <title>شركة سلام جلال أيوب</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
@@ -97,7 +97,6 @@
             <th scope="col">السيارة</th>
             <th scope="col">تاريخ</th>
             <th scope="col">رقم شاسى</th>
-            <th scope="col">رقم كاتى</th>
             <th scope="col">لون</th>
             <th scope="col">موديل</th>
             <th scope="col">كمرك</th>
@@ -118,7 +117,6 @@
                 <td>{{$data->car_type}}</td>
                 <td>{{$data->date}}</td>
                 <td>{{$data->vin}}</td>
-                <td>{{$data->car_number}}</td>
                 <td>{{$data->car_color}}</td>
                 <td>{{$data->year}}</td>
                 <td>    <?php

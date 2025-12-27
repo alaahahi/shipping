@@ -70,9 +70,8 @@ let showModal = ref(false);
 function sendWhatsAppMessage(phoneNumber) {
   if(phoneNumber){
     phoneNumber= '964'+phoneNumber;
-    const message = 'السلام عليكم: شركة نور البصرة   - أربيل ,يرجى الأخذ بالعلم تسديد المبلغ المستحق عليكم في أقرب وقت ممكن. شكرا لتعاونكم  ..........   سڵاوی خواتان لێبێت: کۆمپانیای سلام جلال   - تکایە ئاگاداربن بە زووترین کات ئەو بڕە پارەیەی کە قەرزارن بیدەن. سوپاس بۆ هەماهەنگیت';
+    const message = 'السلام عليكم: شركة سلام جلال أيوب - أربيل، يرجى الأخذ بالعلم تسديد المبلغ المستحق عليكم في أقرب وقت ممكن. في حال التأخير بالسداد لأكثر من أسبوع من تاريخ وصول السيارة، لا يتم حساب الجمرك على سعر 130000. شكرا لتعاونكم .......... سڵاوی خواثان لێبێت: کۆمپانیای سلام جلال أيوب - هەولێر، تکایە ئاگاداربن بە زووترین کات ئەو بڕە پارەیەی کە قەرزارن بیدەن. ئەگەر دەرەنجامی داواکاری پارەدان زیاتر لە هەفتەیەک پاش گەیشتنی ئۆتۆمبێل بێت، گمرک لەسەر نرخی 130000 ناژمێرێت. سوپاس بۆ هەماهەنگیت';
 
-    // Construct the WhatsApp message URL
     const whatsappURL = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
 
     // Open the WhatsApp app with the pre-filled message
@@ -85,7 +84,7 @@ function sendWhatsAppMessage(phoneNumber) {
     const phoneNumbers = array;
     const baseUrl = 'https://api.textmebot.com/send.php';
     const apiKey = props.apiKey;
-    const textMessage = 'السلام عليكم: شركة نور البصرة   - أربيل ,يرجى الأخذ بالعلم تسديد المبلغ المستحق عليكم في أقرب وقت ممكن. شكرا لتعاونكم  ..........   سڵاوی خواتان لێبێت: کۆمپانیای سلام جلال   - تکایە ئاگاداربن بە زووترین کات ئەو بڕە پارەیەی کە قەرزارن بیدەن. سوپاس بۆ هەماهەنگیت';
+    const textMessage = 'السلام عليكم: شركة سلام جلال أيوب - أربيل، يرجى الأخذ بالعلم تسديد المبلغ المستحق عليكم في أقرب وقت ممكن. في حال التأخير بالسداد لأكثر من أسبوع من تاريخ وصول السيارة، لا يتم حساب الجمرك على سعر 130000. شكرا لتعاونكم .......... سڵاوی خواثان لێبێت: کۆمپانیای سلام جلال أيوب - هەولێر، تکایە ئاگاداربن بە زووترین کات ئەو بڕە پارەیەی کە قەرزارن بیدەن. ئەگەر دەرەنجامی داواکاری پارەدان زیاتر لە هەفتەیەک پاش گەیشتنی ئۆتۆمبێل بێت، گمرک لەسەر نرخی 130000 ناژمێرێت. سوپاس بۆ هەماهەنگیت';
     
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -451,50 +450,8 @@ function getResultsCarSearchLocal () {
                               <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{  updateResults(mainBoxDinar) }} دينار</p>
                             </div>
                           </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                            <div class="mr-4" >
-                              <h2 class="font-semibold ">{{ $t('online_contracts') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(onlineContracts) }} دولار</p>
-                            </div>
-                          </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                            <div class="mr-4" >
-                              <h2 class="font-semibold ">{{ $t('debtOnlineContracts') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(debtOnlineContracts) }} دولار</p>
-                            </div>
-                          </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                            <div class="mr-4" >
-                              <h2 class="font-semibold ">{{ $t('online_contracts') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(onlineContractsDinar) }} دينار</p>
-                            </div>
-                          </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                            <div class="mr-4" >
-                              <h2 class="font-semibold ">{{ $t('debtOnlineContracts') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(debtOnlineContractsDinar) }} دينار</p>
-                            </div>
-                          </div>
+                         
+                      
                           <button @click="sendWhatsAppMessageArray(selectedUserIds)" v-if="selectedUserIds.length" type="button" class="text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 shadow-lg shadow-green-500/50 dark:shadow-lg dark:shadow-green-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">
                             
                             ارسال رسالة تذكير
@@ -516,17 +473,13 @@ function getResultsCarSearchLocal () {
                             <div   class="mr-4"  v-if="selectedUserIds.length">
                             <div   style="display: block;" class="font-semibold">{{ user.name}}</div>
                               <div   style="display: block;" class="mt-2 text-sm text-gray-200  dark:text-gray-200">{{ '$'+updateResults(user.balance) }}
-                                <span class="inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
-                                {{ user.car_total_un_pay}}
-                              </span>
+                              
                               </div>
                             </div>
                             <div   class="mr-4"  v-if="!selectedUserIds.length">
                               <Link :href="route('showClients', { id: user.id, q: searchTerm })" style="display: block;" class="font-semibold">{{ user.name}}</Link>
                               <Link :href="route('showClients', { id: user.id, q: searchTerm })" style="display: block;" class="mt-2 text-sm text-gray-200  dark:text-gray-200">{{ '$'+updateResults(user.balance) }}
-                                <span class="inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
-                                {{ user.car_total_un_pay}}
-                              </span>
+                               
                               </Link>
                             </div>
                             </div>

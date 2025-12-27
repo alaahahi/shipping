@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
-use App\Models\Massage;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -25,9 +24,10 @@ class ResultsController extends Controller
     public function __construct(){
          $this->url = env('FRONTEND_URL');
 
-         $this->userAdmin =  UserType::where('name', 'admin')->first()->id;
-         $this->userClient =  UserType::where('name', 'client')->first()->id;
-         $this->userAccount =  UserType::where('name', 'account')->first()->id;
+         $this->userAdmin =  UserType::where('name', 'admin')->first()?->id ?? null;
+         $this->userClient =  UserType::where('name', 'client')->first()?->id ?? null;
+         $this->userAccount =  UserType::where('name', 'account')->first()?->id ?? null;
+         $this->userSeles =  UserType::where('name', 'selesKirkuk')->first()?->id ?? null;
 
 
     }
