@@ -1145,7 +1145,7 @@ async function savePaymentDescription(payment) {
       <h2
         class="font-semibold text-xl dark:text-gray-400 text-gray-800 leading-tight"
       >
-        {{ company_name || 'شركة سلام جلال' }}
+        {{ props.company_name || 'شركة سلام جلال' }}
       </h2>
     </template>
     <ModalAddCarContracts
