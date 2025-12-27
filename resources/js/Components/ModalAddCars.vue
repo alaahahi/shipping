@@ -381,9 +381,6 @@ function handleSubmit() {
                       <input
                         :id="`car_number_${entry.id}`"
                         type="text"
-                        maxlength="5"
-                        max="99999"
-                        min="10000"
                         class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                         v-model="entry.car_number"
                       />
