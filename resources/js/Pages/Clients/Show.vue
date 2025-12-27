@@ -71,7 +71,8 @@ const props = defineProps({
   clients: Array,
   client_id: String,
   client: Object,
-  q:String
+  q:String,
+  company_name: String
 });
 
 const currentClientId = computed(() => {
@@ -1144,7 +1145,7 @@ async function savePaymentDescription(payment) {
       <h2
         class="font-semibold text-xl dark:text-gray-400 text-gray-800 leading-tight"
       >
-        شركة سلام جلال
+        {{ company_name || 'شركة سلام جلال' }}
       </h2>
     </template>
     <ModalAddCarContracts
