@@ -140,7 +140,7 @@ class AccountingController extends Controller
          $transactions = Transactions ::with('TransactionsImages')->with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('id','desc');
      }
      if($q){
-        $transactions = Transactions::with('TransactionsImages')->where('wallet_id', $user->wallet->id)
+        $transactions = Transactions::with('TransactionsImages')->with('morphed')->where('wallet_id', $user->wallet->id)
         ->where(function ($query) use ($q) {
             $query->where('id', $q)
                   ->orWhere('description', 'LIKE', '%' . $q . '%');
