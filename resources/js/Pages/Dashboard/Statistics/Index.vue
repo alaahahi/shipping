@@ -13,6 +13,7 @@ import CashFlowCards from '@/Components/Dashboard/CashFlowCards.vue';
 import CashFlowChart from '@/Components/Dashboard/CashFlowChart.vue';
 import YearClosingSummary from '@/Components/Dashboard/YearClosingSummary.vue';
 import Filters from '@/Components/Dashboard/Filters.vue';
+import CustomDifferenceTable from '@/Components/Dashboard/CustomDifferenceTable.vue';
 
 const statistics = ref({});
 const loading = ref(false);
@@ -41,7 +42,7 @@ const fetchStatistics = async () => {
     }
     
     // إرسال month فقط إذا كانت محددة وليست null
-    if (month.value !== null && month.value !== undefined) {
+    if (month.value !== null && month.value !== undefined && month.value !== '') {
       params.month = month.value;
     }
     
@@ -215,6 +216,14 @@ watch([year, month], () => {
                 :is-closed="statistics.year_closing.is_closed || false"
               />
             </div>
+
+            <!-- Custom Difference Table -->
+            <div v-if="statistics.custom && statistics.custom.cars_with_difference && statistics.custom.cars_with_difference.length > 0">
+              <CustomDifferenceTable
+                :cars="statistics.custom.cars_with_difference || []"
+                :total-difference="statistics.custom.difference || 0"
+              />
+            </div>
           </div>
 
           <!-- Transfers Tab -->
@@ -248,6 +257,7 @@ watch([year, month], () => {
 
           <!-- Profits Tab -->
           <div v-show="activeTab === 'profits'" class="space-y-6">
+            <!-- أعلى 10 سيارات ربحاً -->
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
               <div class="p-6">
                 <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
@@ -256,6 +266,22 @@ watch([year, month], () => {
                 <CarProfitTable
                   v-if="statistics.cars_with_profit"
                   :cars="statistics.cars_with_profit"
+                  :max-profit="statistics.profit_stats?.max || 0"
+                  :min-profit="statistics.profit_stats?.min || 0"
+                  :avg-profit="statistics.profit_stats?.avg || 0"
+                />
+              </div>
+            </div>
+
+            <!-- أقل 10 سيارات ربحاً -->
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+              <div class="p-6">
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                  أقل 10 سيارات ربحاً
+                </h3>
+                <CarProfitTable
+                  v-if="statistics.cars_with_lowest_profit"
+                  :cars="statistics.cars_with_lowest_profit"
                   :max-profit="statistics.profit_stats?.max || 0"
                   :min-profit="statistics.profit_stats?.min || 0"
                   :avg-profit="statistics.profit_stats?.avg || 0"

@@ -77,14 +77,76 @@ class StatisticsController extends Controller
         $debugBindings = $debugQuery->getBindings();
         $sampleCars = $debugQuery->take(3)->get(['id', 'car_number', 'year_date', 'date']);
 
-        // 2. مجموع الجمرك (شراء + بيع)
-        $customPurchase = (clone $query)->sum('dolar_custom') ?? 0;
-        $customSale = (clone $query)->sum('dolar_custom_s') ?? 0;
-        $totalCustom = $customPurchase + $customSale;
+        // 2. مجموع الجمرك (من dinar و dinar_s)
+        $customPurchase = (clone $query)->sum('dinar') ?? 0;
+        $customSale = (clone $query)->sum('dinar_s') ?? 0;
+        $totalCustom = $customPurchase; // مجموع الجمرك من الشراء
+        $customDifference = $customSale - $customPurchase; // الفرق بين البيع والشراء
+        
+        // السيارات التي يوجد فيها فرق في الجمرك
+        $allCarsForCustom = (clone $query)->get(['id', 'car_number', 'vin', 'dinar', 'dinar_s']);
+        $carsWithCustomDifference = $allCarsForCustom->map(function($car) {
+                $dinar = $car->dinar ?? 0;
+                $dinar_s = $car->dinar_s ?? 0;
+                $difference = $dinar_s - $dinar;
+                return [
+                    'car_number' => $car->car_number,
+                    'vin' => $car->vin,
+                    'dinar' => $dinar,
+                    'dinar_s' => $dinar_s,
+                    'difference' => $difference,
+                ];
+            })
+            ->filter(function($car) {
+                return $car['difference'] != 0;
+            })
+            ->values();
 
-        // 3. الفائدة من فرق سعر الصرف
-        $exchangeBenefit = (clone $query)->selectRaw('SUM((dolar_price * dinar) - (dolar_price_s * dinar_s)) as benefit')
-            ->value('benefit') ?? 0;
+        // 3. الفائدة من فرق سعر الصرف: (dinar_s / dolar_price_s) - (dinar / dolar_price)
+        $carsForExchange = (clone $query)->get();
+        $exchangeBenefit = 0;
+        $sampleCarForDebug = null;
+        foreach ($carsForExchange as $car) {
+            $dinar = $car->dinar ?? 0;
+            $dinar_s = $car->dinar_s ?? 0;
+            $dolar_price = $car->dolar_price ?? 1;
+            $dolar_price_s = $car->dolar_price_s ?? 1;
+            
+            // معالجة dolar_price (مثل DashboardController)
+            $calc_rate = $dolar_price;
+            if ($calc_rate == 0) {
+                $calc_rate = 1;
+            } elseif ($calc_rate > 9999) {
+                $calc_rate = $calc_rate / 100;
+            }
+            
+            $calc_rate_s = $dolar_price_s;
+            if ($calc_rate_s == 0) {
+                $calc_rate_s = 1;
+            } elseif ($calc_rate_s > 9999) {
+                $calc_rate_s = $calc_rate_s / 100;
+            }
+            
+            if ($calc_rate > 0 && $calc_rate_s > 0 && ($dinar > 0 || $dinar_s > 0)) {
+                $purchaseCustom = $dinar / $calc_rate;
+                $saleCustom = $dinar_s / $calc_rate_s;
+                $exchangeBenefit += ($saleCustom - $purchaseCustom);
+                
+                // حفظ عينة للـ debug
+                if (!$sampleCarForDebug) {
+                    $sampleCarForDebug = [
+                        'dinar' => $dinar,
+                        'dinar_s' => $dinar_s,
+                        'dolar_price' => $dolar_price,
+                        'dolar_price_s' => $dolar_price_s,
+                        'calc_rate' => $calc_rate,
+                        'calc_rate_s' => $calc_rate_s,
+                        'purchase_custom' => $purchaseCustom,
+                        'sale_custom' => $saleCustom,
+                    ];
+                }
+            }
+        }
 
         // 4. مصاريف أربيل (من المشتريات والمبيعات)
         $erbilExpensesPurchase = (clone $query)
@@ -381,13 +443,25 @@ class StatisticsController extends Controller
                 'share_3' => 0,
             ]);
         })->sortByDesc('profit')->values()->take(10);
+        
+        // أقل 10 سيارات ربحاً
+        $carsWithLowestProfit = $carsWithProfit->map(function($car) {
+            return array_merge($car, [
+                'net_profit' => $car['profit'],
+                'share_1' => 0,
+                'share_2' => 0,
+                'share_3' => 0,
+            ]);
+        })->sortBy('profit')->values()->take(10);
 
         $data = [
             'total_cars' => $totalCars,
             'custom' => [
-                'purchase' => $customPurchase,
-                'sale' => $customSale,
-                'total' => $totalCustom,
+                'purchase' => $customPurchase, // مجموع dinar
+                'sale' => $customSale, // مجموع dinar_s
+                'total' => $totalCustom, // مجموع الجمرك من الشراء
+                'difference' => $customDifference, // الفرق بين البيع والشراء
+                'cars_with_difference' => $carsWithCustomDifference, // السيارات التي يوجد فيها فرق
             ],
             'exchange_benefit' => $exchangeBenefit,
             'erbil_expenses' => [
@@ -417,6 +491,7 @@ class StatisticsController extends Controller
             'month_labels' => $monthLabels,
             'yearly_profit' => array_sum($monthlyProfits),
             'cars_with_profit' => $carsWithProfitUpdated,
+            'cars_with_lowest_profit' => $carsWithLowestProfit,
             
             // بيانات StatCards
             'cars_count' => $totalCars,
@@ -468,10 +543,18 @@ class StatisticsController extends Controller
                 'month' => $month,
                 'yearInput' => $yearInput,
                 'monthInput' => $monthInput,
+                'monthInput_type' => gettype($monthInput),
                 'query_sql' => $debugSQL,
                 'query_bindings' => $debugBindings,
                 'sample_cars' => $sampleCars->toArray(),
                 'total_cars' => $totalCars,
+                'custom_debug' => [
+                    'custom_purchase' => $customPurchase,
+                    'custom_sale' => $customSale,
+                    'total_custom' => $totalCustom,
+                    'sample_car_exchange' => $sampleCarForDebug,
+                    'exchange_benefit' => $exchangeBenefit,
+                ],
             ];
         }
         
