@@ -239,6 +239,54 @@ const exportStatisticsToExcel = async () => {
     exportingStatistics.value = false;
   }
 };
+
+const exportPaymentsToExcel = async () => {
+  exportingPayments.value = true;
+  try {
+    const params = {};
+    
+    if (year.value) {
+      params.year = year.value;
+    }
+    if (selectedYears.value && selectedYears.value.length > 0) {
+      params.years = selectedYears.value;
+    }
+    if (month.value !== null && month.value !== undefined && month.value !== '') {
+      params.month = month.value;
+    }
+    
+    const response = await axios.get('/api/statistics/export-payments-excel', { 
+      params,
+      responseType: 'blob'
+    });
+    
+    // إنشاء رابط تحميل
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // الحصول على اسم الملف من الـ header أو استخدام اسم افتراضي
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'دفعات_التجار.xlsx';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+      if (filenameMatch && filenameMatch[1]) {
+        filename = decodeURIComponent(filenameMatch[1]);
+      }
+    }
+    
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error exporting payments:', error);
+    alert('حدث خطأ أثناء تصدير دفعات التجار');
+  } finally {
+    exportingPayments.value = false;
+  }
+};
 </script>
 
 <template>
@@ -275,6 +323,15 @@ const exportStatisticsToExcel = async () => {
             class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span v-if="exportingStatistics">جاري التصدير...</span>
+            <span v-else>تصدير Excel</span>
+          </button>
+          <button
+            v-if="activeTab === 'payments'"
+            @click="exportPaymentsToExcel"
+            :disabled="exportingPayments"
+            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span v-if="exportingPayments">جاري التصدير...</span>
             <span v-else>تصدير Excel</span>
           </button>
           <button
@@ -352,6 +409,17 @@ const exportStatisticsToExcel = async () => {
                 ]"
               >
                 أرباح التجار
+              </button>
+              <button
+                @click="activeTab = 'payments'"
+                :class="[
+                  activeTab === 'payments'
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300',
+                  'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                ]"
+              >
+                دفعات التجار
               </button>
             </nav>
           </div>
@@ -556,6 +624,23 @@ const exportStatisticsToExcel = async () => {
                 <TradersProfitTable
                   :traders="tradersProfit"
                 />
+              </div>
+            </div>
+          </div>
+
+          <!-- Payments Tab -->
+          <div v-show="activeTab === 'payments'" class="space-y-6">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+              <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                دفعات التجار
+              </h3>
+              <div class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p class="text-sm text-gray-700 dark:text-gray-300">
+                  <strong>ملاحظة:</strong> يمكنك تصدير جميع دفعات التجار إلى ملف Excel باستخدام زر "تصدير Excel" أعلاه.
+                </p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                  الدفعات تشمل جميع المعاملات من نوع 'out' مع is_pay = 1 و amount &lt; 0
+                </p>
               </div>
             </div>
           </div>
