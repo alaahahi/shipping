@@ -14,12 +14,16 @@ import CashFlowChart from '@/Components/Dashboard/CashFlowChart.vue';
 import YearClosingSummary from '@/Components/Dashboard/YearClosingSummary.vue';
 import Filters from '@/Components/Dashboard/Filters.vue';
 import CustomDifferenceTable from '@/Components/Dashboard/CustomDifferenceTable.vue';
+import TradersProfitTable from '@/Components/Dashboard/TradersProfitTable.vue';
 
 const statistics = ref({});
 const loading = ref(false);
 const year = ref(new Date().getFullYear());
+const selectedYears = ref([]);
 const month = ref(null);
-const activeTab = ref('overview'); // overview, transfers, profits, discounts
+const activeTab = ref('overview'); // overview, transfers, profits, discounts, traders
+const tradersProfit = ref([]);
+const recalculating = ref(false);
 
 // Generate years list (last 10 years)
 const years = computed(() => {
@@ -39,6 +43,11 @@ const fetchStatistics = async () => {
     // إرسال year فقط إذا كانت محددة
     if (year.value) {
       params.year = year.value;
+    }
+    
+    // إرسال years (array) إذا كانت محددة
+    if (selectedYears.value && selectedYears.value.length > 0) {
+      params.years = selectedYears.value;
     }
     
     // إرسال month فقط إذا كانت محددة وليست null
@@ -63,8 +72,61 @@ onMounted(() => {
   fetchStatistics();
 });
 
-watch([year, month], () => {
+watch([year, selectedYears, month], () => {
   fetchStatistics();
+});
+
+const recalculateProfit = async () => {
+  recalculating.value = true;
+  try {
+    const params = {};
+    if (year.value) {
+      params.year = year.value;
+    }
+    if (selectedYears.value && selectedYears.value.length > 0) {
+      params.years = selectedYears.value;
+    }
+    if (month.value !== null && month.value !== undefined && month.value !== '') {
+      params.month = month.value;
+    }
+    
+    const response = await axios.post('/api/statistics/recalculate-profit', params);
+    alert(`تم تحديث ${response.data.updated_cars} سيارة من ${response.data.total_cars} سيارة`);
+    // إعادة تحميل الإحصائيات
+    await fetchStatistics();
+  } catch (error) {
+    console.error('Error recalculating profit:', error);
+    alert('حدث خطأ أثناء إعادة حساب الربح');
+  } finally {
+    recalculating.value = false;
+  }
+};
+
+const fetchTradersProfit = async () => {
+  try {
+    const params = {};
+    if (year.value) {
+      params.year = year.value;
+    }
+    if (selectedYears.value && selectedYears.value.length > 0) {
+      params.years = selectedYears.value;
+    }
+    if (month.value !== null && month.value !== undefined && month.value !== '') {
+      params.month = month.value;
+    }
+    
+    const response = await axios.get('/api/statistics/traders-profit', { params });
+    tradersProfit.value = response.data.traders || [];
+  } catch (error) {
+    console.error('Error fetching traders profit:', error);
+    tradersProfit.value = [];
+  }
+};
+
+watch([activeTab], () => {
+  if (activeTab.value === 'traders') {
+    fetchTradersProfit();
+  }
 });
 </script>
 
@@ -81,14 +143,28 @@ watch([year, month], () => {
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <!-- Filters -->
-        <div class="mb-6">
-          <Filters
-            :selected-year="year"
-            :selected-month="month"
-            :years="years"
-            @update:selected-year="year = $event"
-            @update:selected-month="month = $event"
-          />
+        <div class="mb-6 flex justify-between items-center">
+          <div class="flex-1">
+            <Filters
+              :selected-year="year"
+              :selected-years="selectedYears"
+              :selected-month="month"
+              :years="years"
+              @update:selected-year="year = $event"
+              @update:selected-years="selectedYears = $event"
+              @update:selected-month="month = $event"
+            />
+          </div>
+          <div class="ml-4">
+            <button
+              @click="recalculateProfit"
+              :disabled="recalculating"
+              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span v-if="recalculating">جاري الحساب...</span>
+              <span v-else>إعادة حساب الربح</span>
+            </button>
+          </div>
         </div>
 
         <!-- Loading -->
@@ -146,6 +222,17 @@ watch([year, month], () => {
               >
                 الخصومات
               </button>
+              <button
+                @click="activeTab = 'traders'"
+                :class="[
+                  activeTab === 'traders'
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300',
+                  'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                ]"
+              >
+                أرباح التجار
+              </button>
             </nav>
           </div>
 
@@ -158,20 +245,12 @@ watch([year, month], () => {
               :exchange-profit="statistics.exchange_profit || 0"
               :net-profit="statistics.net_profit || 0"
               :net-transfers="statistics.net_transfers || 0"
-              :cash-balance="statistics.cash_balance || 0"
+              :total-sales="statistics.total_sales || 0"
+              :total-purchases="statistics.total_purchases || 0"
+              :sales-purchase-difference="statistics.sales_purchase_difference || 0"
+              :traders-debt="statistics.traders_debt || 0"
             />
 
-            <!-- Cash Flow Cards -->
-            <div v-if="statistics.cash_flow">
-              <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-                التدفقات النقدية
-              </h3>
-              <CashFlowCards
-                :cash-in="statistics.cash_flow.cash_in || 0"
-                :cash-out="statistics.cash_flow.cash_out || 0"
-                :net-cash="statistics.cash_flow.net_cash || 0"
-              />
-            </div>
 
             <!-- Charts Row -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -303,6 +382,20 @@ watch([year, month], () => {
                   :total-discounts="statistics.discount_stats?.total || 0"
                   :max-discount="statistics.discount_stats?.max || 0"
                   :min-discount="statistics.discount_stats?.min || 0"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Traders Tab -->
+          <div v-show="activeTab === 'traders'" class="space-y-6">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+              <div class="p-6">
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                  مجموع الربح من كل تاجر
+                </h3>
+                <TradersProfitTable
+                  :traders="tradersProfit"
                 />
               </div>
             </div>

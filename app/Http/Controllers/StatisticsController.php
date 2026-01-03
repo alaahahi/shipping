@@ -7,6 +7,9 @@ use App\Models\Transfers;
 use App\Models\BuyerPayment;
 use App\Models\SalePayment;
 use App\Models\Transactions;
+use App\Models\User;
+use App\Models\Wallet;
+use App\Services\AccountingCacheService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +19,13 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class StatisticsController extends Controller
 {
+    protected $accounting;
+    
+    public function __construct(AccountingCacheService $accounting)
+    {
+        $this->accounting = $accounting;
+    }
+    
     /**
      * عرض صفحة الإحصائيات
      */
@@ -38,12 +48,24 @@ class StatisticsController extends Controller
         
         // معالجة السنة والشهر
         $yearInput = $request->input('year');
+        $yearsInput = $request->input('years', []); // array of years
         $monthInput = $request->input('month');
         
         // تحويل year إلى int أو null
         $year = null;
         if ($yearInput !== null && $yearInput !== 'null' && $yearInput !== '' && $yearInput !== 'NaN') {
             $year = is_numeric($yearInput) ? (int)$yearInput : null;
+        }
+        
+        // تحويل years array إلى array of ints
+        $years = [];
+        if (is_array($yearsInput) && count($yearsInput) > 0) {
+            $years = array_map(function($y) {
+                return is_numeric($y) ? (int)$y : null;
+            }, $yearsInput);
+            $years = array_filter($years, function($y) {
+                return $y !== null;
+            });
         }
         
         // تحويل month إلى int أو null
@@ -58,8 +80,15 @@ class StatisticsController extends Controller
         // استعلام أساسي للسيارات مع فلترة حسب owner_id فقط
         $query = Car::where('owner_id', $owner_id);
 
-        // فلترة حسب السنة (من date) - إذا تم تحديدها
-        if ($year) {
+        // فلترة حسب السنوات (من date) - إذا تم تحديد years array
+        if (count($years) > 0) {
+            $query->where(function($q) use ($years) {
+                foreach ($years as $y) {
+                    $q->orWhereYear('date', $y);
+                }
+            });
+        } elseif ($year) {
+            // إذا لم يتم تحديد years array، استخدم year الواحد
             $query->whereYear('date', $year);
         }
 
@@ -102,31 +131,27 @@ class StatisticsController extends Controller
             })
             ->values();
 
-        // 3. الفائدة من فرق سعر الصرف: (dinar_s / dolar_price_s) - (dinar / dolar_price)
+        // 3. حساب الفائدة من فرق سعر الصرف
         $carsForExchange = (clone $query)->get();
         $exchangeBenefit = 0;
         $sampleCarForDebug = null;
+        
         foreach ($carsForExchange as $car) {
             $dinar = $car->dinar ?? 0;
             $dinar_s = $car->dinar_s ?? 0;
             $dolar_price = $car->dolar_price ?? 1;
             $dolar_price_s = $car->dolar_price_s ?? 1;
-            
-            // معالجة dolar_price (مثل DashboardController)
+
+            // Apply the same rate adjustment logic as in DashboardController
             $calc_rate = $dolar_price;
-            if ($calc_rate == 0) {
-                $calc_rate = 1;
-            } elseif ($calc_rate > 9999) {
+            if ($calc_rate > 9999) {
                 $calc_rate = $calc_rate / 100;
             }
-            
             $calc_rate_s = $dolar_price_s;
-            if ($calc_rate_s == 0) {
-                $calc_rate_s = 1;
-            } elseif ($calc_rate_s > 9999) {
+            if ($calc_rate_s > 9999) {
                 $calc_rate_s = $calc_rate_s / 100;
             }
-            
+
             if ($calc_rate > 0 && $calc_rate_s > 0 && ($dinar > 0 || $dinar_s > 0)) {
                 $purchaseCustom = $dinar / $calc_rate;
                 $saleCustom = $dinar_s / $calc_rate_s;
@@ -191,21 +216,10 @@ class StatisticsController extends Controller
             ->count() * 15; // عدد السيارات * 15
 
         // 6. حساب الربح الحقيقي لكل سيارة
+        // Profit = (total_s - discount) - total
         $carsWithProfit = (clone $query)->get()->map(function($car) {
-            // طرح 15 من expenses و expenses_s إذا كانت note تحتوي على "داخلي"
-            $adjustedExpenses = $car->expenses ?? 0;
-            $adjustedExpensesS = $car->expenses_s ?? 0;
-            
-            if ($car->note && stripos($car->note, 'داخلي') !== false) {
-                $adjustedExpenses = max(0, $adjustedExpenses - 15);
-                $adjustedExpensesS = max(0, $adjustedExpensesS - 15);
-            }
-            
-            // حساب الربح لكل سيارة حسب المعادلة المطلوبة
-            // Profit = (total_s - expenses_s - discount - land_shipping_s) - (total + expenses - discount + land_shipping)
             $discount = $car->discount ?? 0;
-            $profit = ($car->total_s - $adjustedExpensesS - $discount - ($car->land_shipping_s ?? 0))
-                    - ($car->total + $adjustedExpenses - $discount + ($car->land_shipping ?? 0));
+            $profit = (($car->total_s ?? 0) - $discount) - ($car->total ?? 0);
             
             return [
                 'id' => $car->id,
@@ -214,8 +228,6 @@ class StatisticsController extends Controller
                 'profit' => $profit,
                 'total' => $car->total ?? 0,
                 'total_s' => $car->total_s ?? 0,
-                'expenses' => $adjustedExpenses,
-                'expenses_s' => $adjustedExpensesS,
                 'discount' => $discount,
             ];
         });
@@ -281,145 +293,146 @@ class StatisticsController extends Controller
                 return $carProfit['profit'] ?? 0;
             });
         } catch (\Exception $e) {
-            // في حالة الخطأ
+            // لا توجد بيانات أربيل
         }
 
-        // الأرباح الشهرية للرسم البياني
-        $monthlyProfits = [];
-        $monthLabels = [];
-        $selectedYear = $year ?: Carbon::now()->format('Y');
-        for ($m = 1; $m <= 12; $m++) {
-            $monthQuery = Car::where('owner_id', $owner_id);
-            
-            // إذا تم تحديد سنة، فلتر حسب date
-            if ($year) {
-                $monthQuery->whereYear('date', $year);
-            }
-            
-            $monthQuery->whereMonth('date', $m);
-            
-            $monthCars = $monthQuery->get();
-            $monthProfit = $monthCars->sum(function($car) {
-                $adjustedExpenses = $car->expenses ?? 0;
-                $adjustedExpensesS = $car->expenses_s ?? 0;
-                
-                if ($car->note && stripos($car->note, 'داخلي') !== false) {
-                    $adjustedExpenses = max(0, $adjustedExpenses - 15);
-                    $adjustedExpensesS = max(0, $adjustedExpensesS - 15);
+        // 11. الحولات
+        $transfersQuery = Transfers::query();
+        
+        // فلترة حسب السنوات المتعددة
+        if (count($years) > 0) {
+            $transfersQuery->where(function($q) use ($years) {
+                foreach ($years as $y) {
+                    $q->orWhereYear('created_at', $y);
                 }
-                
-                $discount = $car->discount ?? 0;
-                return ($car->total_s - $adjustedExpensesS - $discount - ($car->land_shipping_s ?? 0))
-                    - ($car->total + $adjustedExpenses - $discount + ($car->land_shipping ?? 0));
             });
-            
-            $monthName = Carbon::create($selectedYear, $m, 1)->locale('ar')->translatedFormat('F');
-            $monthlyProfits[] = $monthProfit;
-            $monthLabels[] = $monthName;
-        }
-
-        // حساب الحولات (Transfers) - فلترة حسب owner_id من خلال sender_id و receiver_id
-        // Transfers لا يحتوي على owner_id مباشرة، لذلك نستخدم subquery للتحقق من owner_id للـ users
-        $transfersQuery = Transfers::where(function($q) use ($owner_id) {
-            $q->whereIn('sender_id', function($query) use ($owner_id) {
-                $query->select('id')->from('users')->where('owner_id', $owner_id);
-            })
-            ->orWhereIn('receiver_id', function($query) use ($owner_id) {
-                $query->select('id')->from('users')->where('owner_id', $owner_id);
-            });
-        });
-
-        if ($year) {
+        } elseif ($year) {
             $transfersQuery->whereYear('created_at', $year);
         }
+        
         if ($month) {
             $transfersQuery->whereMonth('created_at', $month);
         }
-
-        $grossTransfers = $transfersQuery->sum('amount') ?? 0;
-        $transferFees = $transfersQuery->sum('fee') ?? 0;
+        $transfers = $transfersQuery->get();
+        
+        $grossTransfers = $transfers->sum('amount') ?? 0;
+        $transferFees = $transfers->sum('fee') ?? 0;
         $netTransfers = $grossTransfers - $transferFees;
-
+        
         // حولات أربيل
-        $erbilTransfers = (clone $transfersQuery)
-            ->where(function($q) {
-                $q->where('sender_note', 'LIKE', '%Erbil%')
-                  ->orWhere('sender_note', 'LIKE', '%أربيل%')
-                  ->orWhere('sender_note', 'LIKE', '%اربيل%')
-                  ->orWhere('receiver_note', 'LIKE', '%Erbil%')
-                  ->orWhere('receiver_note', 'LIKE', '%أربيل%')
-                  ->orWhere('receiver_note', 'LIKE', '%اربيل%');
-            })
-            ->sum('amount') ?? 0;
+        $erbilTransfers = $transfers->filter(function($transfer) {
+            $senderNote = $transfer->sender_note ?? '';
+            $receiverNote = $transfer->receiver_note ?? '';
+            return stripos($senderNote, 'Erbil') !== false 
+                || stripos($senderNote, 'أربيل') !== false 
+                || stripos($senderNote, 'اربيل') !== false
+                || stripos($receiverNote, 'Erbil') !== false 
+                || stripos($receiverNote, 'أربيل') !== false 
+                || stripos($receiverNote, 'اربيل') !== false;
+        })->sum('amount') ?? 0;
+        
+        // تفاصيل الحولات
+        $transfersDetails = $transfers->map(function($transfer) {
+            return [
+                'id' => $transfer->id,
+                'no' => $transfer->no,
+                'amount' => $transfer->amount ?? 0,
+                'fee' => $transfer->fee ?? 0,
+                'status' => $transfer->stauts ?? '',
+                'sender_note' => $transfer->sender_note ?? '',
+                'receiver_note' => $transfer->receiver_note ?? '',
+                'currency' => $transfer->currency ?? '',
+                'created_at' => $transfer->created_at,
+            ];
+        });
 
-        // جلب تفاصيل الحولات للعرض
-        $transfersDetails = (clone $transfersQuery)
-            ->select('id', 'no', 'amount', 'fee', 'stauts', 'sender_note', 'receiver_note', 'currency', 'created_at')
-            ->orderBy('created_at', 'desc')
-            ->limit(50)
-            ->get()
-            ->map(function($transfer) {
-                return [
-                    'id' => $transfer->id,
-                    'no' => $transfer->no,
-                    'amount' => $transfer->amount ?? 0,
-                    'fee' => $transfer->fee ?? 0,
-                    'stauts' => $transfer->stauts,
-                    'status' => $transfer->stauts,
-                    'sender_note' => $transfer->sender_note,
-                    'receiver_note' => $transfer->receiver_note,
-                    'currency' => $transfer->currency,
-                    'created_at' => $transfer->created_at,
-                ];
+        // 12. التدفقات النقدية (من BuyerPayment و SalePayment و Transfers)
+        $buyerPaymentsQuery = BuyerPayment::query();
+        $salePaymentsQuery = SalePayment::query();
+        
+        // فلترة حسب السنوات المتعددة
+        if (count($years) > 0) {
+            $buyerPaymentsQuery->where(function($q) use ($years) {
+                foreach ($years as $y) {
+                    $q->orWhereYear('created_at', $y);
+                }
             });
-
-        // حساب الدفعات (BuyerPayment + SalePayment) - فلترة حسب owner_id
-        $buyerPaymentsQuery = BuyerPayment::where('owner_id', $owner_id);
-        $salePaymentsQuery = SalePayment::where('owner_id', $owner_id);
-
-        if ($year) {
+            $salePaymentsQuery->where(function($q) use ($years) {
+                foreach ($years as $y) {
+                    $q->orWhereYear('created_at', $y);
+                }
+            });
+        } elseif ($year) {
             $buyerPaymentsQuery->whereYear('created_at', $year);
             $salePaymentsQuery->whereYear('created_at', $year);
         }
+        
         if ($month) {
             $buyerPaymentsQuery->whereMonth('created_at', $month);
             $salePaymentsQuery->whereMonth('created_at', $month);
         }
+        
+        $cashIn = $salePaymentsQuery->sum('amount') ?? 0;
+        $cashOut = $buyerPaymentsQuery->sum('amount') ?? 0;
+        $netCash = $cashIn - $cashOut + $netTransfers;
 
-        $totalBuyerPayments = $buyerPaymentsQuery->sum('amount') ?? 0;
-        $totalSalePayments = $salePaymentsQuery->sum('amount') ?? 0;
-        $totalPayments = $totalBuyerPayments + $totalSalePayments;
-
-        // حساب التدفقات النقدية (Cash Flow)
-        $cashIn = $totalSalePayments + $netTransfers; // الدفعات المستلمة + الحولات الصافية
-        $cashOut = $totalBuyerPayments; // الدفعات المدفوعة
-        $netCash = $cashIn - $cashOut;
-
+        // 13. الأرباح الشهرية
+        $monthlyProfits = [];
+        $monthLabels = [];
+        
+        // تحديد السنوات للاستخدام في الحسابات الشهرية
+        $yearsForMonthly = count($years) > 0 ? $years : ($year ? [$year] : [Carbon::now()->format('Y')]);
+        $displayYear = count($yearsForMonthly) > 0 ? (int)$yearsForMonthly[0] : (int)Carbon::now()->format('Y');
+        
+        for ($m = 1; $m <= 12; $m++) {
+            $monthQuery = (clone $query)->whereMonth('date', $m);
+            $monthCars = $monthQuery->get();
+            $monthProfit = $monthCars->sum(function($car) {
+                $discount = $car->discount ?? 0;
+                return (($car->total_s ?? 0) - $discount) - ($car->total ?? 0);
+            });
+            
+            $monthName = Carbon::create($displayYear, $m, 1)->locale('ar')->translatedFormat('F');
+            $monthlyProfits[] = $monthProfit;
+            $monthLabels[] = $monthName;
+        }
+        
         // التدفقات النقدية الشهرية
         $cashInMonthly = [];
         $cashOutMonthly = [];
-        $yearForCashFlow = $year ?: Carbon::now()->format('Y');
         for ($m = 1; $m <= 12; $m++) {
-            $buyerPaymentsQuery = BuyerPayment::where('owner_id', $owner_id);
-            $salePaymentsQuery = SalePayment::where('owner_id', $owner_id);
-            $transfersQuery = Transfers::where(function($q) use ($owner_id) {
-                    $q->whereIn('sender_id', function($query) use ($owner_id) {
-                        $query->select('id')->from('users')->where('owner_id', $owner_id);
-                    })
-                    ->orWhereIn('receiver_id', function($query) use ($owner_id) {
-                        $query->select('id')->from('users')->where('owner_id', $owner_id);
-                    });
+            $buyerPaymentsQuery = BuyerPayment::query();
+            $salePaymentsQuery = SalePayment::query();
+            $transfersQuery = Transfers::query();
+            
+            // فلترة حسب السنوات المتعددة
+            if (count($yearsForMonthly) > 0) {
+                $buyerPaymentsQuery->where(function($q) use ($yearsForMonthly, $m) {
+                    foreach ($yearsForMonthly as $y) {
+                        $q->orWhere(function($subQ) use ($y, $m) {
+                            $subQ->whereYear('created_at', $y)->whereMonth('created_at', $m);
+                        });
+                    }
                 });
-            
-            if ($year) {
-                $buyerPaymentsQuery->whereYear('created_at', $year);
-                $salePaymentsQuery->whereYear('created_at', $year);
-                $transfersQuery->whereYear('created_at', $year);
+                $salePaymentsQuery->where(function($q) use ($yearsForMonthly, $m) {
+                    foreach ($yearsForMonthly as $y) {
+                        $q->orWhere(function($subQ) use ($y, $m) {
+                            $subQ->whereYear('created_at', $y)->whereMonth('created_at', $m);
+                        });
+                    }
+                });
+                $transfersQuery->where(function($q) use ($yearsForMonthly, $m) {
+                    foreach ($yearsForMonthly as $y) {
+                        $q->orWhere(function($subQ) use ($y, $m) {
+                            $subQ->whereYear('created_at', $y)->whereMonth('created_at', $m);
+                        });
+                    }
+                });
+            } else {
+                $buyerPaymentsQuery->whereYear('created_at', $displayYear)->whereMonth('created_at', $m);
+                $salePaymentsQuery->whereYear('created_at', $displayYear)->whereMonth('created_at', $m);
+                $transfersQuery->whereYear('created_at', $displayYear)->whereMonth('created_at', $m);
             }
-            
-            $buyerPaymentsQuery->whereMonth('created_at', $m);
-            $salePaymentsQuery->whereMonth('created_at', $m);
-            $transfersQuery->whereMonth('created_at', $m);
             
             $monthBuyerPayments = $buyerPaymentsQuery->sum('amount') ?? 0;
             $monthSalePayments = $salePaymentsQuery->sum('amount') ?? 0;
@@ -433,6 +446,18 @@ class StatisticsController extends Controller
 
         // حساب صافي الربح
         $netProfit = $avgProfit * $totalCars - $totalDiscounts;
+        
+        // حساب مجموع المبيعات والمشتريات والفرق
+        $totalSales = (clone $query)->sum('total_s') ?? 0;
+        $totalPurchases = (clone $query)->sum('total') ?? 0;
+        $salesPurchaseDifference = $totalSales - $totalPurchases;
+        
+        // حساب دين التجار (Clients)
+        $this->accounting->loadAccounts($owner_id);
+        $clientIds = User::where('type_id', $this->accounting->userClient())
+            ->where('owner_id', $owner_id)
+            ->pluck('id');
+        $tradersDebt = Wallet::whereIn('user_id', $clientIds)->sum('balance') ?? 0;
 
         // تحديث cars_with_profit لإضافة share_1, share_2, share_3 (يمكن إضافتها لاحقاً حسب الحاجة)
         $carsWithProfitUpdated = $carsWithProfit->map(function($car) {
@@ -499,7 +524,10 @@ class StatisticsController extends Controller
             'exchange_profit' => $exchangeBenefit,
             'net_profit' => $netProfit,
             'net_transfers' => $netTransfers,
-            'cash_balance' => $netCash,
+            'total_sales' => $totalSales,
+            'total_purchases' => $totalPurchases,
+            'sales_purchase_difference' => $salesPurchaseDifference,
+            'traders_debt' => $tradersDebt,
             
             // بيانات TransfersSummary
             'transfers_summary' => [
@@ -541,20 +569,14 @@ class StatisticsController extends Controller
             $data['_debug'] = [
                 'year' => $year,
                 'month' => $month,
-                'yearInput' => $yearInput,
-                'monthInput' => $monthInput,
-                'monthInput_type' => gettype($monthInput),
-                'query_sql' => $debugSQL,
-                'query_bindings' => $debugBindings,
-                'sample_cars' => $sampleCars->toArray(),
+                'owner_id_requested' => $owner_id_input,
+                'owner_id_type' => gettype($owner_id_input),
+                'owner_id_final' => $owner_id,
                 'total_cars' => $totalCars,
-                'custom_debug' => [
-                    'custom_purchase' => $customPurchase,
-                    'custom_sale' => $customSale,
-                    'total_custom' => $totalCustom,
-                    'sample_car_exchange' => $sampleCarForDebug,
-                    'exchange_benefit' => $exchangeBenefit,
-                ],
+                'sql' => $debugSQL,
+                'bindings' => $debugBindings,
+                'sample_cars' => $sampleCars,
+                'sample_exchange_car' => $sampleCarForDebug,
             ];
         }
         
@@ -583,17 +605,8 @@ class StatisticsController extends Controller
         }
 
         $cars = $query->get()->map(function($car) {
-            $adjustedExpenses = $car->expenses ?? 0;
-            $adjustedExpensesS = $car->expenses_s ?? 0;
-            
-            if ($car->note && stripos($car->note, 'داخلي') !== false) {
-                $adjustedExpenses = max(0, $adjustedExpenses - 15);
-                $adjustedExpensesS = max(0, $adjustedExpensesS - 15);
-            }
-            
             $discount = $car->discount ?? 0;
-            $profit = ($car->total_s - $adjustedExpensesS - $discount - ($car->land_shipping_s ?? 0))
-                    - ($car->total + $adjustedExpenses - $discount + ($car->land_shipping ?? 0));
+            $profit = (($car->total_s ?? 0) - $discount) - ($car->total ?? 0);
             
             return [
                 'id' => $car->id,
@@ -648,6 +661,163 @@ class StatisticsController extends Controller
 
         return response()->json([
             'cars' => $cars,
+        ]);
+    }
+
+    /**
+     * API لإعادة حساب الربح لكل سيارة
+     */
+    public function recalculateProfit(Request $request)
+    {
+        $user = Auth::user();
+        $owner_id_input = $user ? $user->owner_id : ($request->input('owner_id', 1));
+        $owner_id = is_numeric($owner_id_input) ? (int)$owner_id_input : $owner_id_input;
+        $year = $request->input('year', null);
+        $yearsInput = $request->input('years', []);
+        $month = $request->input('month', null);
+
+        $query = Car::where('owner_id', $owner_id);
+
+        // معالجة years array
+        $years = [];
+        if (is_array($yearsInput) && count($yearsInput) > 0) {
+            $years = array_map(function($y) {
+                return is_numeric($y) ? (int)$y : null;
+            }, $yearsInput);
+            $years = array_filter($years, function($y) {
+                return $y !== null;
+            });
+        }
+
+        if (count($years) > 0) {
+            $query->where(function($q) use ($years) {
+                foreach ($years as $y) {
+                    $q->orWhereYear('date', $y);
+                }
+            });
+        } elseif ($year) {
+            $query->whereYear('date', $year);
+        }
+
+        if ($month) {
+            $query->whereMonth('date', $month);
+        }
+
+        $cars = $query->get();
+        $updatedCars = [];
+
+        foreach ($cars as $car) {
+            $discount = $car->discount ?? 0;
+            $newProfit = (($car->total_s ?? 0) - $discount) - ($car->total ?? 0);
+            $oldProfit = $car->profit ?? 0;
+            
+            if ($oldProfit != $newProfit) {
+                $car->profit = $newProfit;
+                $car->save();
+                
+                $updatedCars[] = [
+                    'id' => $car->id,
+                    'car_number' => $car->car_number,
+                    'vin' => $car->vin,
+                    'old_profit' => $oldProfit,
+                    'new_profit' => $newProfit,
+                    'total' => $car->total ?? 0,
+                    'total_s' => $car->total_s ?? 0,
+                    'discount' => $discount,
+                ];
+            }
+        }
+
+        return response()->json([
+            'message' => 'تم إعادة حساب الربح بنجاح',
+            'total_cars' => $cars->count(),
+            'updated_cars' => count($updatedCars),
+            'cars' => $updatedCars,
+        ]);
+    }
+
+    /**
+     * API لمجموع الربح من كل تاجر
+     */
+    public function tradersProfit(Request $request)
+    {
+        $user = Auth::user();
+        $owner_id_input = $user ? $user->owner_id : ($request->input('owner_id', 1));
+        $owner_id = is_numeric($owner_id_input) ? (int)$owner_id_input : $owner_id_input;
+        $year = $request->input('year', null);
+        $yearsInput = $request->input('years', []);
+        $month = $request->input('month', null);
+
+        $this->accounting->loadAccounts($owner_id);
+        $clientIds = User::where('type_id', $this->accounting->userClient())
+            ->where('owner_id', $owner_id)
+            ->pluck('id');
+
+        $query = Car::where('owner_id', $owner_id)
+            ->whereIn('client_id', $clientIds);
+
+        // معالجة years array
+        $years = [];
+        if (is_array($yearsInput) && count($yearsInput) > 0) {
+            $years = array_map(function($y) {
+                return is_numeric($y) ? (int)$y : null;
+            }, $yearsInput);
+            $years = array_filter($years, function($y) {
+                return $y !== null;
+            });
+        }
+
+        if (count($years) > 0) {
+            $query->where(function($q) use ($years) {
+                foreach ($years as $y) {
+                    $q->orWhereYear('date', $y);
+                }
+            });
+        } elseif ($year) {
+            $query->whereYear('date', $year);
+        }
+
+        if ($month) {
+            $query->whereMonth('date', $month);
+        }
+
+        $cars = $query->get();
+
+        // تجميع السيارات حسب client_id
+        $tradersProfit = [];
+        foreach ($cars as $car) {
+            $clientId = $car->client_id;
+            if (!$clientId) continue;
+
+            if (!isset($tradersProfit[$clientId])) {
+                $client = User::find($clientId);
+                $tradersProfit[$clientId] = [
+                    'trader_id' => $clientId,
+                    'trader_name' => $client->name ?? '',
+                    'trader_phone' => $client->phone ?? '',
+                    'total_profit' => 0,
+                    'cars_count' => 0,
+                    'total_sales' => 0,
+                    'total_purchases' => 0,
+                ];
+            }
+
+            $discount = $car->discount ?? 0;
+            $profit = (($car->total_s ?? 0) - $discount) - ($car->total ?? 0);
+            
+            $tradersProfit[$clientId]['total_profit'] += $profit;
+            $tradersProfit[$clientId]['cars_count'] += 1;
+            $tradersProfit[$clientId]['total_sales'] += ($car->total_s ?? 0);
+            $tradersProfit[$clientId]['total_purchases'] += ($car->total ?? 0);
+        }
+
+        $result = collect($tradersProfit)->map(function($trader) {
+            return $trader;
+        })->sortByDesc('total_profit')->values();
+
+        return response()->json([
+            'traders' => $result,
+            'total_traders' => $result->count(),
         ]);
     }
 

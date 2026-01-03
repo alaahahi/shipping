@@ -22,7 +22,19 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
-  cashBalance: {
+  totalSales: {
+    type: Number,
+    default: 0,
+  },
+  totalPurchases: {
+    type: Number,
+    default: 0,
+  },
+  salesPurchaseDifference: {
+    type: Number,
+    default: 0,
+  },
+  tradersDebt: {
     type: Number,
     default: 0,
   },
@@ -136,10 +148,74 @@ const props = defineProps({
       </div>
     </div>
 
-    <!-- الرصيد النقدي -->
+    <!-- مجموع المبيعات -->
+    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
+          <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        </div>
+        <div class="ml-5 w-0 flex-1">
+          <dl>
+            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+              مجموع المبيعات
+            </dt>
+            <dd class="text-lg font-semibold text-green-600 dark:text-green-400">
+              {{ formatNumber(totalSales) }}
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <!-- مجموع المشتريات -->
     <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
       <div class="flex items-center">
         <div class="flex-shrink-0 bg-red-500 rounded-md p-3">
+          <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+          </svg>
+        </div>
+        <div class="ml-5 w-0 flex-1">
+          <dl>
+            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+              مجموع المشتريات
+            </dt>
+            <dd class="text-lg font-semibold text-red-600 dark:text-red-400">
+              {{ formatNumber(totalPurchases) }}
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <!-- الفرق -->
+    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
+          <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <div class="ml-5 w-0 flex-1">
+          <dl>
+            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+              الفرق
+            </dt>
+            <dd class="text-lg font-semibold"
+                :class="salesPurchaseDifference >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+              {{ formatNumber(salesPurchaseDifference) }}
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <!-- دين التجار -->
+    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 bg-orange-500 rounded-md p-3">
           <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
@@ -147,10 +223,10 @@ const props = defineProps({
         <div class="ml-5 w-0 flex-1">
           <dl>
             <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-              الرصيد النقدي
+              دين التجار
             </dt>
-            <dd class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {{ formatNumber(cashBalance) }}
+            <dd class="text-lg font-semibold text-orange-600 dark:text-orange-400">
+              {{ formatNumber(tradersDebt) }}
             </dd>
           </dl>
         </div>

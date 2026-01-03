@@ -97,6 +97,8 @@ Route::get('clear-route-cache', function () {
 Route::get('statistics',[StatisticsController::class, 'getStatistics'])->name('statistics');
 Route::get('statistics/car-profit-stats',[StatisticsController::class, 'carProfitStats'])->name('statistics.carProfitStats');
 Route::get('statistics/discount-stats',[StatisticsController::class, 'discountStats'])->name('statistics.discountStats');
+Route::post('statistics/recalculate-profit',[StatisticsController::class, 'recalculateProfit'])->name('statistics.recalculateProfit');
+Route::get('statistics/traders-profit',[StatisticsController::class, 'tradersProfit'])->name('statistics.tradersProfit');
 Route::get('statistics/export-excel',[StatisticsController::class, 'exportExcel'])->name('statistics.exportExcel');
 
 Route::middleware('auth:sanctum')->group(function () {
