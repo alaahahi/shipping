@@ -1070,4 +1070,45 @@ class StatisticsController extends Controller
         
         return Excel::download(new ExportStatistics($statistics, $year, $years), $fileName);
     }
+
+    /**
+     * تصدير دفعات التجار إلى Excel
+     */
+    public function exportPaymentsExcel(Request $request)
+    {
+        $year = $request->input('year', null);
+        $yearsInput = $request->input('years', []);
+        $month = $request->input('month', null);
+        $owner_id_input = $request->input('owner_id', null);
+        
+        // معالجة owner_id
+        $user = Auth::user();
+        $owner_id_input = $user ? $user->owner_id : ($owner_id_input ?? 1);
+        $owner_id = is_numeric($owner_id_input) ? (int)$owner_id_input : $owner_id_input;
+        
+        // معالجة years array
+        $years = [];
+        if (is_array($yearsInput) && count($yearsInput) > 0) {
+            $years = array_map(function($y) {
+                return is_numeric($y) ? (int)$y : null;
+            }, $yearsInput);
+            $years = array_filter($years, function($y) {
+                return $y !== null;
+            });
+        }
+        
+        $fileName = 'دفعات_التجار';
+        if (!empty($years)) {
+            $fileName .= '_' . implode('_', $years);
+        } elseif ($year) {
+            $fileName .= '_' . $year;
+        }
+        if ($month) {
+            $monthNames = ['', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+            $fileName .= '_' . ($monthNames[$month] ?? $month);
+        }
+        $fileName .= '.xlsx';
+        
+        return Excel::download(new ExportPayments($this->accounting, $owner_id, $year, $years, $month), $fileName);
+    }
 }
