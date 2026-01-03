@@ -1146,14 +1146,17 @@ class StatisticsController extends Controller
                 continue;
             }
             
-            // حساب المطلوب من السيارات
-            $cars = Car::where('client_id', $clientId)->get();
+            // حساب المطلوب من السيارات (استبعاد المحذوفة)
+            $cars = Car::where('client_id', $clientId)
+                ->whereNull('deleted_at')
+                ->get();
             $carsSum = $cars->sum('total_s') ?? 0;
             $carsPaid = $cars->sum('paid') ?? 0;
             $carsDiscount = $cars->sum('discount') ?? 0;
             $carsNeedPaid = $carsSum - ($carsPaid + $carsDiscount);
             
-            // حساب الدفعات الفعلية
+            // حساب الدفعات الفعلية من Transactions
+            // استخدام نفس الاستعلام المستخدم في getStatistics
             $walletId = $client->wallet->id;
             $actualPayments = DB::table('transactions')
                 ->where('wallet_id', $walletId)
@@ -1167,7 +1170,9 @@ class StatisticsController extends Controller
             $currentDebt = $client->wallet->balance ?? 0;
             
             // حساب الفرق
-            $expectedPayments = $carsSum - $currentDebt;
+            // المطلوب من السيارات = total_s (إجمالي المبيعات)
+            // المقارنة: الدفعات الفعلية مقابل المطلوب (total_s)
+            $expectedPayments = $carsSum;
             $difference = $actualPayments - $expectedPayments;
             
             // التحقق من السيارات المحذوفة المدفوعة
