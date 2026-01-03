@@ -24,13 +24,21 @@ const month = ref(null);
 const activeTab = ref('overview'); // overview, transfers, profits, discounts, traders
 const tradersProfit = ref([]);
 const recalculating = ref(false);
+const transferDateFrom = ref(null);
+const transferDateTo = ref(null);
+const exportingTransfers = ref(false);
+const exportingStatistics = ref(false);
 
-// Generate years list (last 10 years)
+// Generate years list (only available years)
 const years = computed(() => {
   const currentYear = new Date().getFullYear();
   const yearsList = [];
+  // Only include years from 2023 onwards (excluding 2022, 2021, 2020, 2019, 2018, 2017)
   for (let i = 0; i < 10; i++) {
-    yearsList.push(currentYear - i);
+    const year = currentYear - i;
+    if (year >= 2023) {
+      yearsList.push(year);
+    }
   }
   return yearsList;
 });
@@ -128,6 +136,108 @@ watch([activeTab], () => {
     fetchTradersProfit();
   }
 });
+
+const exportTransfersToExcel = async () => {
+  exportingTransfers.value = true;
+  try {
+    const params = {};
+    
+    if (transferDateFrom.value) {
+      params.from = transferDateFrom.value;
+    }
+    if (transferDateTo.value) {
+      params.to = transferDateTo.value;
+    }
+    if (year.value) {
+      params.year = year.value;
+    }
+    if (selectedYears.value && selectedYears.value.length > 0) {
+      params.years = selectedYears.value;
+    }
+    if (month.value !== null && month.value !== undefined && month.value !== '') {
+      params.month = month.value;
+    }
+    
+    const response = await axios.get('/api/statistics/export-transfers-excel', { 
+      params,
+      responseType: 'blob'
+    });
+    
+    // إنشاء رابط تحميل
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // الحصول على اسم الملف من الـ header أو استخدام اسم افتراضي
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'الحولات.xlsx';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1];
+      }
+    }
+    
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error exporting transfers:', error);
+    alert('حدث خطأ أثناء تصدير الحولات');
+  } finally {
+    exportingTransfers.value = false;
+  }
+};
+
+const exportStatisticsToExcel = async () => {
+  exportingStatistics.value = true;
+  try {
+    const params = {};
+    
+    if (year.value) {
+      params.year = year.value;
+    }
+    if (selectedYears.value && selectedYears.value.length > 0) {
+      params.years = selectedYears.value;
+    }
+    if (month.value !== null && month.value !== undefined && month.value !== '') {
+      params.month = month.value;
+    }
+    
+    const response = await axios.get('/api/statistics/export-excel', { 
+      params,
+      responseType: 'blob'
+    });
+    
+    // إنشاء رابط تحميل
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // الحصول على اسم الملف من الـ header أو استخدام اسم افتراضي
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'الإحصائيات_العامة.xlsx';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+      if (filenameMatch && filenameMatch[1]) {
+        filename = decodeURIComponent(filenameMatch[1]);
+      }
+    }
+    
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error exporting statistics:', error);
+    alert('حدث خطأ أثناء تصدير الإحصائيات');
+  } finally {
+    exportingStatistics.value = false;
+  }
+};
 </script>
 
 <template>
@@ -143,28 +253,37 @@ watch([activeTab], () => {
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <!-- Filters -->
-        <div class="mb-6 flex justify-between items-center">
-          <div class="flex-1">
-            <Filters
-              :selected-year="year"
-              :selected-years="selectedYears"
-              :selected-month="month"
-              :years="years"
-              @update:selected-year="year = $event"
-              @update:selected-years="selectedYears = $event"
-              @update:selected-month="month = $event"
-            />
-          </div>
-          <div class="ml-4">
-            <button
-              @click="recalculateProfit"
-              :disabled="recalculating"
-              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span v-if="recalculating">جاري الحساب...</span>
-              <span v-else>إعادة حساب الربح</span>
-            </button>
-          </div>
+        <div class="mb-6">
+          <Filters
+            :selected-year="year"
+            :selected-years="selectedYears"
+            :selected-month="month"
+            :years="years"
+            @update:selectedYear="year = $event"
+            @update:selectedYears="selectedYears = $event"
+            @update:selectedMonth="month = $event"
+          />
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mb-4 flex justify-end gap-4">
+          <button
+            v-if="activeTab === 'overview'"
+            @click="exportStatisticsToExcel"
+            :disabled="exportingStatistics"
+            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span v-if="exportingStatistics">جاري التصدير...</span>
+            <span v-else>تصدير Excel</span>
+          </button>
+          <button
+            @click="recalculateProfit"
+            :disabled="recalculating"
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span v-if="recalculating">جاري الحساب...</span>
+            <span v-else>إعادة حساب الربح</span>
+          </button>
         </div>
 
         <!-- Loading -->
@@ -249,6 +368,9 @@ watch([activeTab], () => {
               :total-purchases="statistics.total_purchases || 0"
               :sales-purchase-difference="statistics.sales_purchase_difference || 0"
               :traders-debt="statistics.traders_debt || 0"
+              :traders-payments="statistics.traders_payments || 0"
+              :total-payments-and-debt="statistics.total_payments_and_debt || 0"
+              :sales-vs-payments-difference="statistics.sales_vs_payments_difference || 0"
             />
 
 
@@ -307,6 +429,42 @@ watch([activeTab], () => {
 
           <!-- Transfers Tab -->
           <div v-show="activeTab === 'transfers'" class="space-y-6">
+            <!-- Filters for Transfers -->
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-4">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    من تاريخ
+                  </label>
+                  <input
+                    type="date"
+                    v-model="transferDateFrom"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    إلى تاريخ
+                  </label>
+                  <input
+                    type="date"
+                    v-model="transferDateTo"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+                <div class="flex items-end">
+                  <button
+                    @click="exportTransfersToExcel"
+                    :disabled="exportingTransfers"
+                    class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span v-if="exportingTransfers">جاري التصدير...</span>
+                    <span v-else>تصدير Excel</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <!-- Transfers Summary Cards -->
             <div v-if="statistics.transfers_summary">
               <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">

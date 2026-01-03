@@ -64,22 +64,24 @@ const chartData = computed(() => {
       <text
         v-for="(label, index) in 5"
         :key="label"
-        :x="5"
-        :y="(index * 25) + 10"
-        class="text-xs fill-gray-600 dark:fill-gray-400"
+        :x="8"
+        :y="(index * 25) + 15"
+        class="text-sm font-semibold fill-gray-800 dark:fill-gray-200"
         text-anchor="start"
+        style="font-size: 11px; font-weight: 600;"
       >
         {{ formatNumber(chartData.max - (chartData.max / 4) * index) }}
       </text>
       
       <!-- X-axis labels -->
       <text
-        v-for="(point, index) in chartData.cashInPoints.filter((_, i) => i % 2 === 0)"
+        v-for="(point, index) in chartData.cashInPoints"
         :key="index"
         :x="(point.x / 100) * 380 + 20"
-        :y="195"
-        class="text-xs fill-gray-600 dark:fill-gray-400"
+        :y="192"
+        class="text-sm font-semibold fill-gray-800 dark:fill-gray-200"
         text-anchor="middle"
+        style="font-size: 10px; font-weight: 600;"
       >
         {{ point.label }}
       </text>
@@ -105,30 +107,54 @@ const chartData = computed(() => {
       />
       
       <!-- Cash In Points -->
-      <circle
-        v-for="(point, index) in chartData.cashInPoints"
-        :key="'in-' + index"
-        :cx="(point.x / 100) * 380 + 20"
-        :cy="(point.y / 100) * 180 + 10"
-        r="4"
-        fill="#10b981"
-        class="dark:fill-green-400"
-      >
-        <title>وارد - {{ point.label }}: {{ formatNumber(point.value) }}</title>
-      </circle>
+      <g v-for="(point, index) in chartData.cashInPoints" :key="'in-' + index">
+        <circle
+          :cx="(point.x / 100) * 380 + 20"
+          :cy="(point.y / 100) * 180 + 10"
+          r="5"
+          fill="#10b981"
+          stroke="#ffffff"
+          stroke-width="2"
+          class="dark:fill-green-400 dark:stroke-gray-800"
+        >
+          <title>وارد - {{ point.label }}: {{ formatNumber(point.value) }}</title>
+        </circle>
+        <!-- Value label above point -->
+        <text
+          :x="(point.x / 100) * 380 + 20"
+          :y="(point.y / 100) * 180 - 5"
+          class="text-xs font-bold fill-gray-900 dark:fill-gray-100"
+          text-anchor="middle"
+          style="font-size: 9px; font-weight: 700; pointer-events: none;"
+        >
+          {{ formatNumber(point.value) }}
+        </text>
+      </g>
       
       <!-- Cash Out Points -->
-      <circle
-        v-for="(point, index) in chartData.cashOutPoints"
-        :key="'out-' + index"
-        :cx="(point.x / 100) * 380 + 20"
-        :cy="(point.y / 100) * 180 + 10"
-        r="4"
-        fill="#ef4444"
-        class="dark:fill-red-400"
-      >
-        <title>صادر - {{ point.label }}: {{ formatNumber(point.value) }}</title>
-      </circle>
+      <g v-for="(point, index) in chartData.cashOutPoints" :key="'out-' + index">
+        <circle
+          :cx="(point.x / 100) * 380 + 20"
+          :cy="(point.y / 100) * 180 + 10"
+          r="5"
+          fill="#ef4444"
+          stroke="#ffffff"
+          stroke-width="2"
+          class="dark:fill-red-400 dark:stroke-gray-800"
+        >
+          <title>صادر - {{ point.label }}: {{ formatNumber(point.value) }}</title>
+        </circle>
+        <!-- Value label above point -->
+        <text
+          :x="(point.x / 100) * 380 + 20"
+          :y="(point.y / 100) * 180 - 5"
+          class="text-xs font-bold fill-gray-900 dark:fill-gray-100"
+          text-anchor="middle"
+          style="font-size: 9px; font-weight: 700; pointer-events: none;"
+        >
+          {{ formatNumber(point.value) }}
+        </text>
+      </g>
     </svg>
     
     <!-- Legend -->

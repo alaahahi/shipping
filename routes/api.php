@@ -100,6 +100,7 @@ Route::get('statistics/discount-stats',[StatisticsController::class, 'discountSt
 Route::post('statistics/recalculate-profit',[StatisticsController::class, 'recalculateProfit'])->name('statistics.recalculateProfit');
 Route::get('statistics/traders-profit',[StatisticsController::class, 'tradersProfit'])->name('statistics.tradersProfit');
 Route::get('statistics/export-excel',[StatisticsController::class, 'exportExcel'])->name('statistics.exportExcel');
+Route::get('statistics/export-transfers-excel',[StatisticsController::class, 'exportTransfersExcel'])->name('statistics.exportTransfersExcel');
 
 Route::middleware('auth:sanctum')->group(function () {
 Route::apiResource('upload', UploadController::class);

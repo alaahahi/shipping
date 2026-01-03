@@ -54,22 +54,24 @@ const chartData = computed(() => {
       <text
         v-for="(label, index) in 5"
         :key="label"
-        :x="5"
-        :y="(index * 25) + 10"
-        class="text-xs fill-gray-600 dark:fill-gray-400"
+        :x="8"
+        :y="(index * 25) + 15"
+        class="text-sm font-semibold fill-gray-800 dark:fill-gray-200"
         text-anchor="start"
+        style="font-size: 11px; font-weight: 600;"
       >
         {{ formatNumber(chartData.max - (chartData.max / 4) * index) }}
       </text>
       
       <!-- X-axis labels -->
       <text
-        v-for="(point, index) in chartData.points.filter((_, i) => i % 2 === 0)"
+        v-for="(point, index) in chartData.points"
         :key="index"
         :x="(point.x / 100) * 380 + 20"
-        :y="195"
-        class="text-xs fill-gray-600 dark:fill-gray-400"
+        :y="192"
+        class="text-sm font-semibold fill-gray-800 dark:fill-gray-200"
         text-anchor="middle"
+        style="font-size: 10px; font-weight: 600;"
       >
         {{ point.label }}
       </text>
@@ -85,24 +87,44 @@ const chartData = computed(() => {
       />
       
       <!-- Points -->
-      <circle
-        v-for="(point, index) in chartData.points"
-        :key="index"
-        :cx="(point.x / 100) * 380 + 20"
-        :cy="(point.y / 100) * 180 + 10"
-        r="4"
-        fill="#3b82f6"
-        class="dark:fill-blue-400"
-      >
-        <title>{{ point.label }}: {{ formatNumber(point.profit) }}</title>
-      </circle>
+      <g v-for="(point, index) in chartData.points" :key="index">
+        <circle
+          :cx="(point.x / 100) * 380 + 20"
+          :cy="(point.y / 100) * 180 + 10"
+          r="5"
+          fill="#3b82f6"
+          stroke="#ffffff"
+          stroke-width="2"
+          class="dark:fill-blue-400 dark:stroke-gray-800"
+        >
+          <title>{{ point.label }}: {{ formatNumber(point.profit) }}</title>
+        </circle>
+        <!-- Value label above point -->
+        <text
+          :x="(point.x / 100) * 380 + 20"
+          :y="(point.y / 100) * 180 - 5"
+          class="text-xs font-bold fill-gray-900 dark:fill-gray-100"
+          text-anchor="middle"
+          style="font-size: 9px; font-weight: 700; pointer-events: none;"
+        >
+          {{ formatNumber(point.profit) }}
+        </text>
+      </g>
     </svg>
     
     <!-- Legend -->
-    <div class="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-      <p>إجمالي ربح السنة: {{ formatNumber(yearlyProfit) }}</p>
-      <p class="mt-1">أعلى ربح شهري: {{ formatNumber(chartData.max) }}</p>
-      <p class="mt-1">أقل ربح شهري: {{ formatNumber(chartData.min) }}</p>
+    <div class="mt-4 text-center">
+      <p class="text-base font-bold text-gray-800 dark:text-gray-200">
+        إجمالي ربح السنة: <span class="text-blue-600 dark:text-blue-400">{{ formatNumber(yearlyProfit) }}</span>
+      </p>
+      <div class="mt-2 flex justify-center gap-4 text-sm">
+        <span class="text-gray-700 dark:text-gray-300">
+          أعلى ربح شهري: <span class="font-semibold text-green-600 dark:text-green-400">{{ formatNumber(chartData.max) }}</span>
+        </span>
+        <span class="text-gray-700 dark:text-gray-300">
+          أقل ربح شهري: <span class="font-semibold text-red-600 dark:text-red-400">{{ formatNumber(chartData.min) }}</span>
+        </span>
+      </div>
     </div>
   </div>
 </template>

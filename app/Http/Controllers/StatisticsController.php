@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\ExportTransfers;
+use App\Exports\ExportStatistics;
 
 class StatisticsController extends Controller
 {
@@ -457,7 +459,50 @@ class StatisticsController extends Controller
         $clientIds = User::where('type_id', $this->accounting->userClient())
             ->where('owner_id', $owner_id)
             ->pluck('id');
+        
+        // الحصول على wallet_ids للتجار
+        $walletIds = Wallet::whereIn('user_id', $clientIds)->pluck('id');
+        
+        // حساب دين التجار (balance الحالي - سالب يعني دين)
         $tradersDebt = Wallet::whereIn('user_id', $clientIds)->sum('balance') ?? 0;
+        
+        // حساب مجموع الدفعات التي دفعها التجار
+        // استخدام نفس الاستعلام المستخدم في صفحة التاجر:
+        // Transactions من نوع 'out' مع is_pay = 1 و amount < 0
+        $tradersPayments = 0;
+        if ($walletIds->count() > 0) {
+            $paymentsQuery = Transactions::whereIn('wallet_id', $walletIds)
+                ->where('type', 'out')
+                ->where('is_pay', 1)
+                ->where('amount', '<', 0)
+                ->where('currency', '$');
+            
+            // فلترة حسب السنوات والشهر إذا كانت محددة
+            if (count($years) > 0) {
+                $paymentsQuery->where(function($q) use ($years) {
+                    foreach ($years as $y) {
+                        $q->orWhereYear('created', $y);
+                    }
+                });
+            } elseif ($year) {
+                $paymentsQuery->whereYear('created', $year);
+            }
+            
+            if ($month) {
+                $paymentsQuery->whereMonth('created', $month);
+            }
+            
+            // الدفعات سالبة، لذلك نستخدم ABS
+            $tradersPayments = $paymentsQuery->sum(DB::raw('ABS(amount)')) ?? 0;
+        }
+        
+        // إجمالي الدفعات + الدين (الدين سالب، لذلك نطرحه)
+        // إذا كان الدين سالب (مثل -1000)، يعني التاجر مدين 1000
+        // مجموع الدفعات - الدين = مجموع الدفعات + القيمة المطلقة للدين
+        $totalPaymentsAndDebt = $tradersPayments - $tradersDebt; // نطرح الدين لأنه سالب
+        
+        // المقارنة: المبيعات - (الدفعات + الدين)
+        $salesVsPaymentsDifference = $totalSales - $totalPaymentsAndDebt;
 
         // تحديث cars_with_profit لإضافة share_1, share_2, share_3 (يمكن إضافتها لاحقاً حسب الحاجة)
         $carsWithProfitUpdated = $carsWithProfit->map(function($car) {
@@ -528,6 +573,9 @@ class StatisticsController extends Controller
             'total_purchases' => $totalPurchases,
             'sales_purchase_difference' => $salesPurchaseDifference,
             'traders_debt' => $tradersDebt,
+            'traders_payments' => $tradersPayments,
+            'total_payments_and_debt' => $totalPaymentsAndDebt,
+            'sales_vs_payments_difference' => $salesVsPaymentsDifference,
             
             // بيانات TransfersSummary
             'transfers_summary' => [
@@ -822,11 +870,197 @@ class StatisticsController extends Controller
     }
 
     /**
-     * تصدير البيانات إلى Excel
+     * تصدير الحولات إلى Excel
+     */
+    public function exportTransfersExcel(Request $request)
+    {
+        $from = $request->input('from', null);
+        $to = $request->input('to', null);
+        $year = $request->input('year', null);
+        $yearsInput = $request->input('years', []);
+        $month = $request->input('month', null);
+
+        // معالجة years array
+        $years = [];
+        if (is_array($yearsInput) && count($yearsInput) > 0) {
+            $years = array_map(function($y) {
+                return is_numeric($y) ? (int)$y : null;
+            }, $yearsInput);
+            $years = array_filter($years, function($y) {
+                return $y !== null;
+            });
+        }
+
+        $fileName = 'الحولات';
+        if ($from && $to) {
+            $fileName .= '_' . $from . '_' . $to;
+        } elseif ($from) {
+            $fileName .= '_من_' . $from;
+        } elseif (count($years) > 0) {
+            $fileName .= '_' . implode('_', $years);
+        } elseif ($year) {
+            $fileName .= '_' . $year;
+        }
+        $fileName .= '.xlsx';
+
+        return Excel::download(new ExportTransfers($from, $to, $years, $month), $fileName);
+    }
+
+    /**
+     * تصدير الإحصائيات العامة إلى Excel
      */
     public function exportExcel(Request $request)
     {
-        // يمكن إضافة تصدير Excel لاحقاً
-        return response()->json(['message' => 'Excel export not implemented yet']);
+        $year = $request->input('year', null);
+        $yearsInput = $request->input('years', []);
+        $month = $request->input('month', null);
+        $owner_id_input = $request->input('owner_id', null);
+        
+        // معالجة owner_id
+        $user = Auth::user();
+        $owner_id_input = $user ? $user->owner_id : ($owner_id_input ?? 1);
+        $owner_id = is_numeric($owner_id_input) ? (int)$owner_id_input : $owner_id_input;
+        
+        // معالجة years array
+        $years = [];
+        if (is_array($yearsInput) && count($yearsInput) > 0) {
+            $years = array_map(function($y) {
+                return is_numeric($y) ? (int)$y : null;
+            }, $yearsInput);
+            $years = array_filter($years, function($y) {
+                return $y !== null;
+            });
+        }
+        
+        // جلب البيانات باستخدام نفس منطق getStatistics
+        $query = Car::where('owner_id', $owner_id);
+        
+        if (count($years) > 0) {
+            $query->where(function($q) use ($years) {
+                foreach ($years as $y) {
+                    $q->orWhereYear('date', $y);
+                }
+            });
+        } elseif ($year) {
+            $query->whereYear('date', $year);
+        }
+        
+        if ($month) {
+            $query->whereMonth('date', $month);
+        }
+        
+        // حساب الإحصائيات الأساسية
+        $totalCars = $query->count();
+        $totalSales = (clone $query)->sum('total_s') ?? 0;
+        $totalPurchases = (clone $query)->sum('total') ?? 0;
+        $salesPurchaseDifference = $totalSales - $totalPurchases;
+        $totalCustom = (clone $query)->sum('dinar') ?? 0;
+        
+        // حساب exchange benefit
+        $carsForExchange = (clone $query)->get();
+        $exchangeBenefit = 0;
+        foreach ($carsForExchange as $car) {
+            $dinar = $car->dinar ?? 0;
+            $dinar_s = $car->dinar_s ?? 0;
+            $dolar_price = $car->dolar_price ?? 1;
+            $dolar_price_s = $car->dolar_price_s ?? 1;
+
+            $calc_rate_purchase = $dolar_price;
+            if ($calc_rate_purchase > 9999) {
+                $calc_rate_purchase = $calc_rate_purchase / 100;
+            }
+            $calc_rate_sale = $dolar_price_s;
+            if ($calc_rate_sale > 9999) {
+                $calc_rate_sale = $calc_rate_sale / 100;
+            }
+
+            if ($calc_rate_purchase > 0 && $calc_rate_sale > 0) {
+                $purchaseCustom = $dinar / $calc_rate_purchase;
+                $saleCustom = $dinar_s / $calc_rate_sale;
+                $exchangeBenefit += ($saleCustom - $purchaseCustom);
+            }
+        }
+        
+        // حساب net profit
+        $cars = (clone $query)->get();
+        $totalDiscounts = $cars->sum('discount') ?? 0;
+        $avgProfit = $cars->avg(function($car) {
+            $discount = $car->discount ?? 0;
+            return (($car->total_s ?? 0) - $discount) - ($car->total ?? 0);
+        }) ?? 0;
+        $netProfit = $avgProfit * $totalCars - $totalDiscounts;
+        
+        // حساب net transfers
+        $transfersQuery = Transfers::query();
+        if (count($years) > 0) {
+            $transfersQuery->where(function($q) use ($years) {
+                foreach ($years as $y) {
+                    $q->orWhereYear('created_at', $y);
+                }
+            });
+        } elseif ($year) {
+            $transfersQuery->whereYear('created_at', $year);
+        }
+        if ($month) {
+            $transfersQuery->whereMonth('created_at', $month);
+        }
+        $transfers = $transfersQuery->get();
+        $grossTransfers = $transfers->sum('amount') ?? 0;
+        $transferFees = $transfers->sum('fee') ?? 0;
+        $netTransfers = $grossTransfers - $transferFees;
+        
+        // حساب traders debt
+        $this->accounting->loadAccounts($owner_id);
+        $clientIds = User::where('type_id', $this->accounting->userClient())
+            ->where('owner_id', $owner_id)
+            ->pluck('id');
+        $tradersDebt = Wallet::whereIn('user_id', $clientIds)->sum('balance') ?? 0;
+        
+        // الأرباح الشهرية
+        $monthlyProfits = [];
+        $monthLabels = [];
+        $yearsForMonthly = count($years) > 0 ? $years : ($year ? [$year] : [Carbon::now()->format('Y')]);
+        $displayYear = count($yearsForMonthly) > 0 ? (int)$yearsForMonthly[0] : (int)Carbon::now()->format('Y');
+        
+        for ($m = 1; $m <= 12; $m++) {
+            $monthQuery = (clone $query)->whereMonth('date', $m);
+            $monthCars = $monthQuery->get();
+            $monthProfit = $monthCars->sum(function($car) {
+                $discount = $car->discount ?? 0;
+                return (($car->total_s ?? 0) - $discount) - ($car->total ?? 0);
+            });
+            
+            $monthName = Carbon::create($displayYear, $m, 1)->locale('ar')->translatedFormat('F');
+            $monthlyProfits[] = $monthProfit;
+            $monthLabels[] = $monthName;
+        }
+        
+        $statistics = [
+            'cars_count' => $totalCars,
+            'total_sales' => $totalSales,
+            'total_purchases' => $totalPurchases,
+            'sales_purchase_difference' => $salesPurchaseDifference,
+            'traders_debt' => $tradersDebt,
+            'total_customs' => $totalCustom,
+            'exchange_profit' => $exchangeBenefit,
+            'net_profit' => $netProfit,
+            'net_transfers' => $netTransfers,
+            'monthly_profits' => $monthlyProfits,
+            'month_labels' => $monthLabels,
+        ];
+        
+        $fileName = 'الإحصائيات_العامة';
+        if (!empty($years)) {
+            $fileName .= '_' . implode('_', $years);
+        } elseif ($year) {
+            $fileName .= '_' . $year;
+        }
+        if ($month) {
+            $monthName = Carbon::create($displayYear, $month, 1)->locale('ar')->translatedFormat('F');
+            $fileName .= '_' . $monthName;
+        }
+        $fileName .= '.xlsx';
+        
+        return Excel::download(new ExportStatistics($statistics, $year, $years), $fileName);
     }
 }
