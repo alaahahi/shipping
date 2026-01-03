@@ -477,7 +477,8 @@ class StatisticsController extends Controller
                 ->where('type', 'out')
                 ->where('is_pay', 1)
                 ->where('amount', '<', 0)
-                ->where('currency', '$');
+                ->where('currency', '$')
+                ->whereNull('deleted_at'); // استبعاد المحذوفة
             
             // فلترة حسب السنوات والشهر إذا كانت محددة
             if (count($years) > 0) {
@@ -1156,13 +1157,15 @@ class StatisticsController extends Controller
             $carsNeedPaid = $carsSum - ($carsPaid + $carsDiscount);
             
             // حساب الدفعات الفعلية من Transactions (لا تعتمد على السيارات)
+            // استبعاد الدفعات المحذوفة
             $walletId = $client->wallet->id;
             $paymentsQuery = DB::table('transactions')
                 ->where('wallet_id', $walletId)
                 ->where('type', 'out')
                 ->where('is_pay', 1)
                 ->where('amount', '<', 0)
-                ->where('currency', '$');
+                ->where('currency', '$')
+                ->whereNull('deleted_at'); // استبعاد المحذوفة
             
             $actualPayments = $paymentsQuery->sum(DB::raw('ABS(amount)')) ?? 0;
             
@@ -1173,6 +1176,7 @@ class StatisticsController extends Controller
                 ->where('is_pay', 1)
                 ->where('amount', '<', 0)
                 ->where('currency', '$')
+                ->whereNull('deleted_at') // استبعاد المحذوفة
                 ->orderBy('created', 'desc');
             
             $paymentsDetails = $paymentsDetailsQuery->get()->map(function($transaction) {
