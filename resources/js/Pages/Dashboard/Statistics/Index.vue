@@ -21,13 +21,14 @@ const loading = ref(false);
 const year = ref(new Date().getFullYear());
 const selectedYears = ref([]);
 const month = ref(null);
-const activeTab = ref('overview'); // overview, transfers, profits, discounts, traders
+const activeTab = ref('overview'); // overview, transfers, profits, discounts, traders, payments
 const tradersProfit = ref([]);
 const recalculating = ref(false);
 const transferDateFrom = ref(null);
 const transferDateTo = ref(null);
 const exportingTransfers = ref(false);
 const exportingStatistics = ref(false);
+const exportingPayments = ref(false);
 
 // Generate years list (only available years)
 const years = computed(() => {

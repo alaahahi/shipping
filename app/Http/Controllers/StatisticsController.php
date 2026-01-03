@@ -496,6 +496,12 @@ class StatisticsController extends Controller
             $tradersPayments = $paymentsQuery->sum(DB::raw('ABS(amount)')) ?? 0;
         }
         
+        // حساب مجموع الخصومات من السيارات المفلترة
+        $totalDiscountsFromCars = (clone $query)->sum('discount') ?? 0;
+        
+        // المبيعات الصافية = total_s - discount (للمقارنة مع الدفعات)
+        $netSales = $totalSales - $totalDiscountsFromCars;
+        
         // إجمالي الدفعات + الدين (الدين سالب، لذلك نطرحه)
         // إذا كان الدين سالب (مثل -1000)، يعني التاجر مدين 1000
         // مجموع الدفعات - الدين = مجموع الدفعات + القيمة المطلقة للدين
