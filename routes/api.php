@@ -102,6 +102,8 @@ Route::get('statistics/traders-profit',[StatisticsController::class, 'tradersPro
 Route::get('statistics/export-excel',[StatisticsController::class, 'exportExcel'])->name('statistics.exportExcel');
 Route::get('statistics/export-transfers-excel',[StatisticsController::class, 'exportTransfersExcel'])->name('statistics.exportTransfersExcel');
 Route::get('statistics/export-payments-excel',[StatisticsController::class, 'exportPaymentsExcel'])->name('statistics.exportPaymentsExcel');
+Route::get('statistics/check-traders-payments',[StatisticsController::class, 'checkTradersPayments'])->name('statistics.checkTradersPayments');
+Route::get('statistics/deleted-cars',[StatisticsController::class, 'getDeletedCars'])->name('statistics.getDeletedCars');
 
 Route::middleware('auth:sanctum')->group(function () {
 Route::apiResource('upload', UploadController::class);

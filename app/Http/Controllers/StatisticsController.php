@@ -19,6 +19,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\ExportTransfers;
 use App\Exports\ExportStatistics;
 use App\Exports\ExportPayments;
+use Illuminate\Support\Facades\Artisan;
 
 class StatisticsController extends Controller
 {
@@ -1110,5 +1111,353 @@ class StatisticsController extends Controller
         $fileName .= '.xlsx';
         
         return Excel::download(new ExportPayments($this->accounting, $owner_id, $year, $years, $month), $fileName);
+    }
+
+    /**
+     * فحص دفعات جميع التجار والتحقق من المشاكل
+     */
+    public function checkTradersPayments(Request $request)
+    {
+        $owner_id_input = $request->input('owner_id', null);
+        $user = Auth::user();
+        $owner_id_input = $user ? $user->owner_id : ($owner_id_input ?? 1);
+        $owner_id = is_numeric($owner_id_input) ? (int)$owner_id_input : $owner_id_input;
+        
+        $this->accounting->loadAccounts($owner_id);
+        
+        $clientIds = User::where('type_id', $this->accounting->userClient())
+            ->where('owner_id', $owner_id)
+            ->pluck('id');
+        
+        if ($clientIds->count() == 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'لا توجد تجار لهذا owner_id',
+            ], 404);
+        }
+        
+        $results = [];
+        $totalIssues = 0;
+        
+        foreach ($clientIds as $clientId) {
+            $client = User::with('wallet')->find($clientId);
+            
+            if (!$client || !$client->wallet) {
+                continue;
+            }
+            
+            // حساب المطلوب من السيارات
+            $cars = Car::where('client_id', $clientId)->get();
+            $carsSum = $cars->sum('total_s') ?? 0;
+            $carsPaid = $cars->sum('paid') ?? 0;
+            $carsDiscount = $cars->sum('discount') ?? 0;
+            $carsNeedPaid = $carsSum - ($carsPaid + $carsDiscount);
+            
+            // حساب الدفعات الفعلية
+            $walletId = $client->wallet->id;
+            $actualPayments = DB::table('transactions')
+                ->where('wallet_id', $walletId)
+                ->where('type', 'out')
+                ->where('is_pay', 1)
+                ->where('amount', '<', 0)
+                ->where('currency', '$')
+                ->sum(DB::raw('ABS(amount)')) ?? 0;
+            
+            // حساب الدين الحالي
+            $currentDebt = $client->wallet->balance ?? 0;
+            
+            // حساب الفرق
+            $expectedPayments = $carsSum - $currentDebt;
+            $difference = $actualPayments - $expectedPayments;
+            
+            // التحقق من السيارات المحذوفة المدفوعة
+            $hasDeletedCarsIssue = false;
+            $paidDeletedCars = collect([]);
+            $fullyPaidDeletedCars = collect([]);
+            
+            if ($carsSum == 0 && $actualPayments > 0) {
+                $hasDeletedCarsIssue = true;
+            }
+            
+            try {
+                if (method_exists(Car::class, 'withTrashed')) {
+                    $paidDeletedCars = Car::withTrashed()
+                        ->where('client_id', $clientId)
+                        ->whereNotNull('deleted_at')
+                        ->where(function($q) {
+                            $q->where('paid', '>', 0)
+                              ->orWhere('discount', '>', 0);
+                        })
+                        ->get();
+                    
+                    $fullyPaidDeletedCars = Car::withTrashed()
+                        ->where('client_id', $clientId)
+                        ->whereNotNull('deleted_at')
+                        ->where('results', 2)
+                        ->get();
+                }
+            } catch (\Exception $e) {
+                // SoftDeletes غير مفعل
+            }
+            
+            // التحقق من المشاكل
+            $hasIssues = false;
+            $issues = [];
+            
+            if (abs($difference) > 1) {
+                $hasIssues = true;
+                $issues[] = "فرق بين الدفعات الفعلية والمتوقعة: " . number_format($difference, 2);
+            }
+            
+            if ($hasDeletedCarsIssue) {
+                $hasIssues = true;
+                $issues[] = "مشتبه: سيارات محذوفة ومدفوعة (لا توجد سيارات ولكن هناك دفعات: " . number_format($actualPayments, 2) . ")";
+            }
+            
+            if ($paidDeletedCars->count() > 0) {
+                $hasIssues = true;
+                $issues[] = "سيارات محذوفة ومدفوعة (من DB): " . $paidDeletedCars->count();
+            }
+            
+            if ($fullyPaidDeletedCars->count() > 0) {
+                $hasIssues = true;
+                $issues[] = "سيارات مكتملة الدفع ومحذوفة: " . $fullyPaidDeletedCars->count();
+            }
+            
+            if ($currentDebt < -1) {
+                $hasIssues = true;
+                $issues[] = "دين سالب (دفع زائد): " . number_format($currentDebt, 2);
+            }
+            
+            if ($hasIssues || $hasDeletedCarsIssue || $paidDeletedCars->count() > 0 || $fullyPaidDeletedCars->count() > 0) {
+                $totalIssues++;
+            }
+            
+            $result = [
+                'client_id' => $clientId,
+                'client_name' => $client->name ?? 'N/A',
+                'client_phone' => $client->phone ?? 'N/A',
+                'cars_count' => $cars->count(),
+                'cars_sum' => $carsSum,
+                'cars_paid' => $carsPaid,
+                'cars_discount' => $carsDiscount,
+                'cars_need_paid' => $carsNeedPaid,
+                'actual_payments' => $actualPayments,
+                'current_debt' => $currentDebt,
+                'expected_payments' => $expectedPayments,
+                'difference' => $difference,
+                'paid_deleted_cars_count' => $paidDeletedCars->count(),
+                'fully_paid_deleted_cars_count' => $fullyPaidDeletedCars->count(),
+                'has_issues' => $hasIssues || $hasDeletedCarsIssue,
+                'issues' => $issues,
+                'has_deleted_cars_issue' => $hasDeletedCarsIssue,
+                'paid_deleted_cars' => $paidDeletedCars->map(function($car) {
+                    return [
+                        'id' => $car->id,
+                        'car_number' => $car->car_number,
+                        'vin' => $car->vin,
+                        'total_s' => $car->total_s,
+                        'paid' => $car->paid,
+                        'discount' => $car->discount,
+                        'deleted_at' => $car->deleted_at,
+                    ];
+                })->toArray(),
+                'fully_paid_deleted_cars' => $fullyPaidDeletedCars->map(function($car) {
+                    return [
+                        'id' => $car->id,
+                        'car_number' => $car->car_number,
+                        'vin' => $car->vin,
+                        'total_s' => $car->total_s,
+                        'paid' => $car->paid,
+                        'discount' => $car->discount,
+                        'results' => $car->results,
+                        'deleted_at' => $car->deleted_at,
+                    ];
+                })->toArray(),
+            ];
+            
+            // إضافة فقط التجار الذين لديهم مشاكل
+            if ($result['has_issues']) {
+                $results[] = $result;
+            }
+        }
+        
+        return response()->json([
+            'success' => true,
+            'owner_id' => $owner_id,
+            'total_traders' => $clientIds->count(),
+            'traders_with_issues' => $totalIssues,
+            'scan_date' => now()->toDateTimeString(),
+            'results' => $results,
+        ]);
+    }
+
+    /**
+     * الحصول على السيارات المحذوفة
+     */
+    public function getDeletedCars(Request $request)
+    {
+        $owner_id_input = $request->input('owner_id', null);
+        
+        // معالجة owner_id
+        $user = Auth::user();
+        $owner_id_input = $user ? $user->owner_id : ($owner_id_input ?? 1);
+        $owner_id = is_numeric($owner_id_input) ? (int)$owner_id_input : $owner_id_input;
+        
+        $year = $request->input('year', null);
+        $yearsInput = $request->input('years', []);
+        $month = $request->input('month', null);
+        
+        // معالجة years array
+        $years = [];
+        if (is_array($yearsInput) && count($yearsInput) > 0) {
+            $years = array_map(function($y) {
+                return is_numeric($y) ? (int)$y : null;
+            }, $yearsInput);
+            $years = array_filter($years, function($y) {
+                return $y !== null;
+            });
+        }
+        
+        try {
+            $deletedCars = [];
+            
+            // البحث عن Transactions التي تحتوي على نص "مرتج حذف سيارة"
+            // هذه هي Transactions الخاصة بحذف السيارات
+            $query = Transactions::where('morphed_type', 'App\Models\Car')
+                ->whereNotNull('morphed_id')
+                ->where('description', 'LIKE', '%مرتج حذف سيارة%')
+                ->with(['wallet.user']);
+            
+            // فلترة حسب السنوات (من تاريخ Transaction)
+            if (count($years) > 0) {
+                $query->where(function($q) use ($years) {
+                    foreach ($years as $y) {
+                        $q->orWhereYear('created', $y);
+                    }
+                });
+            } elseif ($year) {
+                $query->whereYear('created', $year);
+            }
+            
+            // فلترة حسب الشهر
+            if ($month) {
+                $query->whereMonth('created', $month);
+            }
+            
+            $deleteTransactions = $query->orderBy('created', 'desc')->get();
+            
+            // تصفية Transactions التي تنتمي لـ owner_id المحدد
+            $filteredTransactions = $deleteTransactions->filter(function($transaction) use ($owner_id) {
+                return $transaction->wallet && 
+                       $transaction->wallet->user && 
+                       $transaction->wallet->user->owner_id == $owner_id;
+            });
+            
+            if ($filteredTransactions->count() > 0) {
+                $deletedCarsData = [];
+                
+                foreach ($filteredTransactions as $deleteTransaction) {
+                    $carId = $deleteTransaction->morphed_id;
+                    
+                    // محاولة الحصول على معلومات السيارة من Transactions الأخرى المرتبطة بنفس السيارة
+                    $carTransactions = Transactions::where('morphed_type', 'App\Models\Car')
+                        ->where('morphed_id', $carId)
+                        ->whereHas('wallet', function($q) use ($owner_id) {
+                            $q->whereHas('user', function($uq) use ($owner_id) {
+                                $uq->where('owner_id', $owner_id);
+                            });
+                        })
+                        ->orderBy('created', 'desc')
+                        ->get();
+                    
+                    // محاولة استخراج معلومات السيارة من Transaction details
+                    $carNumber = 'N/A';
+                    $vin = 'N/A';
+                    $carType = 'N/A';
+                    $total = 0;
+                    $totalS = 0;
+                    $paid = 0;
+                    $discount = 0;
+                    
+                    foreach ($carTransactions as $trans) {
+                        if ($trans->details && is_array($trans->details)) {
+                            foreach ($trans->details as $detail) {
+                                if (isset($detail['car_number']) && $detail['car_number'] && $carNumber === 'N/A') {
+                                    $carNumber = $detail['car_number'];
+                                }
+                                if (isset($detail['vin']) && $detail['vin'] && $vin === 'N/A') {
+                                    $vin = $detail['vin'];
+                                }
+                                if (isset($detail['car_type']) && $detail['car_type'] && $carType === 'N/A') {
+                                    $carType = $detail['car_type'];
+                                }
+                            }
+                        }
+                    }
+                    
+                    // محاولة استخراج المبلغ من description (مرتج حذف سيارةXXXX)
+                    $description = $deleteTransaction->description ?? '';
+                    if (preg_match('/مرتج حذف سيارة\s*([0-9.]+)/', $description, $matches)) {
+                        $total = floatval($matches[1]);
+                    }
+                    
+                    // معلومات التاجر
+                    $clientId = null;
+                    $clientName = 'N/A';
+                    $clientPhone = 'N/A';
+                    
+                    if ($deleteTransaction->wallet && $deleteTransaction->wallet->user) {
+                        $clientId = $deleteTransaction->wallet->user_id;
+                        $clientName = $deleteTransaction->wallet->user->name ?? 'N/A';
+                        $clientPhone = $deleteTransaction->wallet->user->phone ?? 'N/A';
+                    }
+                    
+                    // تاريخ الحذف
+                    $deletedAt = $deleteTransaction->created ?? 
+                               ($deleteTransaction->created_at ? $deleteTransaction->created_at->format('Y-m-d H:i:s') : null);
+                    
+                    // تجنب التكرار (إذا كانت نفس السيارة محذوفة عدة مرات، نأخذ أحدث عملية حذف)
+                    $existingIndex = array_search($carId, array_column($deletedCarsData, 'id'));
+                    if ($existingIndex === false) {
+                        $deletedCarsData[] = [
+                            'id' => $carId,
+                            'car_number' => $carNumber,
+                            'vin' => $vin,
+                            'car_type' => $carType,
+                            'year' => null,
+                            'car_color' => null,
+                            'total_s' => $totalS,
+                            'total' => $total,
+                            'paid' => $paid,
+                            'discount' => $discount,
+                            'profit' => $totalS - $total,
+                            'results' => 0,
+                            'deleted_at' => $deletedAt,
+                            'date' => null,
+                            'client_id' => $clientId,
+                            'client_name' => $clientName,
+                            'client_phone' => $clientPhone,
+                            'transactions_count' => $carTransactions->count(),
+                            'delete_description' => $description,
+                        ];
+                    }
+                }
+                
+                $deletedCars = $deletedCarsData;
+            }
+            
+            return response()->json([
+                'success' => true,
+                'deleted_cars' => $deletedCars,
+                'total' => count($deletedCars),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء جلب السيارات المحذوفة',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

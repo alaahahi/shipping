@@ -938,15 +938,28 @@ class DashboardController extends Controller
         $owner_id=Auth::user()->owner_id;
 
         $car=Car::with('client')->find($request->id);
-        $desc=' مرتج حذف سيارة'.$car->total;
+        
+        if (!$car) {
+            return Response::json(['error' => 'السيارة غير موجودة'], 404);
+        }
+        
+        if (!$car->client) {
+            return Response::json(['error' => 'بيانات التاجر غير موجودة'], 404);
+        }
+        
+        $desc=' مرتج حذف سيارة'.($car->total ?? 0);
         $wallet = Wallet::where('user_id',$car->client_id)->first();
-        $this->accountingController->increaseWallet($car->total, $desc,$this->accounting->mainAccount()->id,$car->id,'App\Models\Car');
-        if($car->results == 0 && $car->total_s!=0){
-            $trans = $this->accountingController->decreaseWallet($car->total_s , $desc,$car->client->id,$car->id,'App\Models\Car');
+        
+        if ($wallet) {
+            $this->accountingController->increaseWallet($car->total ?? 0, $desc,$this->accounting->mainAccount()->id,$car->id,'App\Models\Car');
+        }
+        
+        if($car->results == 0 && ($car->total_s ?? 0) !=0){
+            $trans = $this->accountingController->decreaseWallet($car->total_s ?? 0 , $desc,$car->client->id,$car->id,'App\Models\Car');
         }
         if($car->results == 1){
-            $trans = $this->accountingController->decreaseWallet($car->total_s-$car->paid , $desc,$car->client->id,$car->id,'App\Models\Car');
-            }
+            $trans = $this->accountingController->decreaseWallet(($car->total_s ?? 0)-($car->paid ?? 0) , $desc,$car->client->id,$car->id,'App\Models\Car');
+        }
         $car->delete();
         DB::statement('SET @row_number = 0');
         DB::table('car')

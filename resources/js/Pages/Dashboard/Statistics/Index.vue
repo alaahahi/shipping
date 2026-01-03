@@ -15,20 +15,27 @@ import YearClosingSummary from '@/Components/Dashboard/YearClosingSummary.vue';
 import Filters from '@/Components/Dashboard/Filters.vue';
 import CustomDifferenceTable from '@/Components/Dashboard/CustomDifferenceTable.vue';
 import TradersProfitTable from '@/Components/Dashboard/TradersProfitTable.vue';
+import Modal from '@/Components/Modal.vue';
+import { formatNumber } from '@/utils/numberFormat';
 
 const statistics = ref({});
 const loading = ref(false);
 const year = ref(new Date().getFullYear());
 const selectedYears = ref([]);
 const month = ref(null);
-const activeTab = ref('overview'); // overview, transfers, profits, discounts, traders, payments
+const activeTab = ref('overview'); // overview, transfers, profits, discounts, traders, payments, deleted-cars
 const tradersProfit = ref([]);
+const deletedCars = ref([]);
+const loadingDeletedCars = ref(false);
 const recalculating = ref(false);
 const transferDateFrom = ref(null);
 const transferDateTo = ref(null);
 const exportingTransfers = ref(false);
 const exportingStatistics = ref(false);
 const exportingPayments = ref(false);
+const checkingPayments = ref(false);
+const paymentsCheckResults = ref(null);
+const showPaymentsCheckModal = ref(false);
 
 // Generate years list (only available years)
 const years = computed(() => {
@@ -135,8 +142,41 @@ const fetchTradersProfit = async () => {
 watch([activeTab], () => {
   if (activeTab.value === 'traders') {
     fetchTradersProfit();
+  } else if (activeTab.value === 'deleted-cars') {
+    fetchDeletedCars();
   }
 });
+
+const fetchDeletedCars = async () => {
+  loadingDeletedCars.value = true;
+  try {
+    const params = {};
+    
+    if (year.value) {
+      params.year = year.value;
+    }
+    if (selectedYears.value && selectedYears.value.length > 0) {
+      params.years = selectedYears.value;
+    }
+    if (month.value !== null && month.value !== undefined && month.value !== '') {
+      params.month = month.value;
+    }
+    
+    const response = await axios.get('/api/statistics/deleted-cars', { params });
+    
+    if (response.data.success) {
+      deletedCars.value = response.data.deleted_cars || [];
+    } else {
+      console.error('Error fetching deleted cars:', response.data.message);
+      deletedCars.value = [];
+    }
+  } catch (error) {
+    console.error('Error fetching deleted cars:', error);
+    deletedCars.value = [];
+  } finally {
+    loadingDeletedCars.value = false;
+  }
+};
 
 const exportTransfersToExcel = async () => {
   exportingTransfers.value = true;
@@ -287,6 +327,26 @@ const exportPaymentsToExcel = async () => {
     exportingPayments.value = false;
   }
 };
+
+const checkTradersPayments = async () => {
+  checkingPayments.value = true;
+  paymentsCheckResults.value = null;
+  try {
+    const response = await axios.get('/api/statistics/check-traders-payments');
+    
+    if (response.data.success) {
+      paymentsCheckResults.value = response.data;
+      showPaymentsCheckModal.value = true;
+    } else {
+      alert('حدث خطأ: ' + (response.data.message || 'خطأ غير معروف'));
+    }
+  } catch (error) {
+    console.error('Error checking traders payments:', error);
+    alert('حدث خطأ أثناء فحص دفعات التجار: ' + (error.response?.data?.message || error.message));
+  } finally {
+    checkingPayments.value = false;
+  }
+};
 </script>
 
 <template>
@@ -341,6 +401,14 @@ const exportPaymentsToExcel = async () => {
           >
             <span v-if="recalculating">جاري الحساب...</span>
             <span v-else>إعادة حساب الربح</span>
+          </button>
+          <button
+            @click="checkTradersPayments"
+            :disabled="checkingPayments"
+            class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span v-if="checkingPayments">جاري الفحص...</span>
+            <span v-else>فحص دفعات التجار</span>
           </button>
         </div>
 
@@ -420,6 +488,17 @@ const exportPaymentsToExcel = async () => {
                 ]"
               >
                 دفعات التجار
+              </button>
+              <button
+                @click="activeTab = 'deleted-cars'"
+                :class="[
+                  activeTab === 'deleted-cars'
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300',
+                  'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                ]"
+              >
+                السيارات المحذوفة
               </button>
             </nav>
           </div>
@@ -644,8 +723,156 @@ const exportPaymentsToExcel = async () => {
               </div>
             </div>
           </div>
+
+          <!-- Deleted Cars Tab -->
+          <div v-show="activeTab === 'deleted-cars'" class="space-y-6">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+              <div class="p-6">
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                  السيارات المحذوفة
+                </h3>
+                
+                <div v-if="loadingDeletedCars" class="text-center py-8">
+                  <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
+                  <p class="mt-4 text-gray-600 dark:text-gray-400">جاري تحميل البيانات...</p>
+                </div>
+                
+                <div v-else-if="deletedCars.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+                  لا توجد سيارات محذوفة
+                </div>
+                
+                <div v-else class="overflow-x-auto">
+                  <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-900">
+                      <tr>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">ID</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">رقم السيارة</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">VIN</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">نوع السيارة</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">اسم التاجر</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">عدد المعاملات</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">تاريخ الحذف</th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                      <tr 
+                        v-for="car in deletedCars" 
+                        :key="car.id"
+                        class="hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ car.id }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ car.car_number || '-' }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 font-mono">{{ car.vin || '-' }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ car.car_type || '-' }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ car.client_name || '-' }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ car.transactions_count || 0 }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ car.deleted_at || '-' }}</td>
+                      </tr>
+                    </tbody>
+                    <tfoot class="bg-gray-50 dark:bg-gray-900">
+                      <tr>
+                        <td colspan="6" class="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100 text-right">
+                          المجموع:
+                        </td>
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {{ deletedCars.length }} سيارة
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- Modal for Payments Check Results -->
+    <Modal :show="showPaymentsCheckModal" @close="showPaymentsCheckModal = false">
+      <template #header>
+        <h2 class="text-xl font-bold dark:text-gray-100">نتائج فحص دفعات التجار</h2>
+      </template>
+      
+      <template #body>
+        <div v-if="paymentsCheckResults" class="space-y-4">
+          <!-- Summary -->
+          <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+            <h3 class="font-semibold text-lg mb-2">ملخص الفحص</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <span class="text-gray-600 dark:text-gray-400">إجمالي التجار:</span>
+                <span class="font-bold ml-2">{{ paymentsCheckResults.total_traders || 0 }}</span>
+              </div>
+              <div>
+                <span class="text-gray-600 dark:text-gray-400">عدد التجار الذين لديهم مشاكل:</span>
+                <span class="font-bold ml-2 text-red-600">{{ paymentsCheckResults.traders_with_issues || 0 }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Results Table -->
+          <div v-if="paymentsCheckResults.results && paymentsCheckResults.results.length > 0" class="overflow-x-auto">
+            <h3 class="font-semibold text-lg mb-2">التجار الذين لديهم مشاكل</h3>
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead class="bg-gray-50 dark:bg-gray-900">
+                <tr>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">ID</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">اسم التاجر</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">المبيعات</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">المدفوع</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">الخصم</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">الدفعات الفعلية</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">الدين</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">الفرق</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">المشاكل</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tr 
+                  v-for="result in paymentsCheckResults.results.filter(r => r.has_issues || r.paid_deleted_cars_count > 0 || r.fully_paid_deleted_cars_count > 0)" 
+                  :key="result.client_id"
+                  class="hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ result.client_id }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ result.client_name }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(result.cars_sum) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(result.cars_paid) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(result.cars_discount) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(result.actual_payments) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(result.current_debt) }}</td>
+                  <td class="px-4 py-3 text-sm font-semibold" :class="result.difference >= 0 ? 'text-green-600' : 'text-red-600'">
+                    {{ formatNumber(result.difference) }}
+                  </td>
+                  <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                    <ul class="list-disc list-inside text-xs">
+                      <li v-for="(issue, index) in result.issues" :key="index">{{ issue }}</li>
+                    </ul>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
+            ✓ لا توجد مشاكل في دفعات التجار!
+          </div>
+        </div>
+        <div v-else class="text-center py-8">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
+        </div>
+      </template>
+      
+      <template #footer>
+        <div class="flex justify-end">
+          <button
+            @click="showPaymentsCheckModal = false"
+            class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded"
+          >
+            إغلاق
+          </button>
+        </div>
+      </template>
+    </Modal>
   </AuthenticatedLayout>
 </template>
