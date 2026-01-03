@@ -279,19 +279,18 @@ class StatisticsController extends Controller
         // حولات أربيل
         $erbilTransfers = (clone $transfersQuery)
             ->where(function($q) {
-                $q->where('note', 'LIKE', '%Erbil%')
-                  ->orWhere('note', 'LIKE', '%أربيل%')
-                  ->orWhere('note', 'LIKE', '%اربيل%')
-                  ->orWhere('sender_note', 'LIKE', '%Erbil%')
+                $q->where('sender_note', 'LIKE', '%Erbil%')
                   ->orWhere('sender_note', 'LIKE', '%أربيل%')
+                  ->orWhere('sender_note', 'LIKE', '%اربيل%')
                   ->orWhere('receiver_note', 'LIKE', '%Erbil%')
-                  ->orWhere('receiver_note', 'LIKE', '%أربيل%');
+                  ->orWhere('receiver_note', 'LIKE', '%أربيل%')
+                  ->orWhere('receiver_note', 'LIKE', '%اربيل%');
             })
             ->sum('amount') ?? 0;
 
         // جلب تفاصيل الحولات للعرض
         $transfersDetails = (clone $transfersQuery)
-            ->select('id', 'no', 'amount', 'fee', 'stauts', 'sender_note', 'receiver_note', 'note', 'currency', 'created_at')
+            ->select('id', 'no', 'amount', 'fee', 'stauts', 'sender_note', 'receiver_note', 'currency', 'created_at')
             ->orderBy('created_at', 'desc')
             ->limit(50)
             ->get()
@@ -305,7 +304,6 @@ class StatisticsController extends Controller
                     'status' => $transfer->stauts,
                     'sender_note' => $transfer->sender_note,
                     'receiver_note' => $transfer->receiver_note,
-                    'note' => $transfer->note,
                     'currency' => $transfer->currency,
                     'created_at' => $transfer->created_at,
                 ];
