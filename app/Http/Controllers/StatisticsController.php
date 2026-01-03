@@ -18,6 +18,7 @@ use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\ExportTransfers;
 use App\Exports\ExportStatistics;
+use App\Exports\ExportPayments;
 
 class StatisticsController extends Controller
 {
