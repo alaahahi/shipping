@@ -1157,13 +1157,34 @@ class StatisticsController extends Controller
             
             // حساب الدفعات الفعلية من Transactions (لا تعتمد على السيارات)
             $walletId = $client->wallet->id;
-            $actualPayments = DB::table('transactions')
+            $paymentsQuery = DB::table('transactions')
+                ->where('wallet_id', $walletId)
+                ->where('type', 'out')
+                ->where('is_pay', 1)
+                ->where('amount', '<', 0)
+                ->where('currency', '$');
+            
+            $actualPayments = $paymentsQuery->sum(DB::raw('ABS(amount)')) ?? 0;
+            
+            // جلب تفاصيل الدفعات الفعلية (استعلام منفصل لأن sum() يستنفذ query builder)
+            $paymentsDetailsQuery = DB::table('transactions')
                 ->where('wallet_id', $walletId)
                 ->where('type', 'out')
                 ->where('is_pay', 1)
                 ->where('amount', '<', 0)
                 ->where('currency', '$')
-                ->sum(DB::raw('ABS(amount)')) ?? 0;
+                ->orderBy('created', 'desc');
+            
+            $paymentsDetails = $paymentsDetailsQuery->get()->map(function($transaction) {
+                return [
+                    'id' => $transaction->id,
+                    'amount' => abs($transaction->amount),
+                    'description' => $transaction->description ?? '',
+                    'created' => $transaction->created ?? ($transaction->created_at ?? ''),
+                    'morphed_id' => $transaction->morphed_id ?? null,
+                    'morphed_type' => $transaction->morphed_type ?? null,
+                ];
+            })->toArray();
             
             // حساب الدين الحالي
             $currentDebt = $client->wallet->balance ?? 0;
@@ -1247,6 +1268,7 @@ class StatisticsController extends Controller
                 'cars_discount' => $carsDiscount,
                 'cars_need_paid' => $carsNeedPaid,
                 'actual_payments' => $actualPayments,
+                'payments_details' => $paymentsDetails, // تفاصيل الدفعات الفعلية
                 'current_debt' => $currentDebt,
                 'expected_payments' => $expectedPayments,
                 'difference' => $difference,

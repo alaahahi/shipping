@@ -36,6 +36,8 @@ const exportingPayments = ref(false);
 const checkingPayments = ref(false);
 const paymentsCheckResults = ref(null);
 const showPaymentsCheckModal = ref(false);
+const expandedPaymentDetails = ref({}); // لتتبع أي تاجر يتم عرض تفاصيله
+const expandedPaymentDetails = ref({}); // لتتبع أي تاجر يتم عرض تفاصيله
 
 // Generate years list (only available years)
 const years = computed(() => {
@@ -826,30 +828,86 @@ const checkTradersPayments = async () => {
                   <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">الدين</th>
                   <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">الفرق</th>
                   <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">المشاكل</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">تفاصيل الدفعات</th>
                 </tr>
               </thead>
               <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                <tr 
+                <template 
                   v-for="result in paymentsCheckResults.results.filter(r => r.has_issues || r.paid_deleted_cars_count > 0 || r.fully_paid_deleted_cars_count > 0)" 
                   :key="result.client_id"
-                  class="hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
-                  <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ result.client_id }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ result.client_name }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(result.cars_sum) }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(result.cars_paid) }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(result.cars_discount) }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(result.actual_payments) }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(result.current_debt) }}</td>
-                  <td class="px-4 py-3 text-sm font-semibold" :class="result.difference >= 0 ? 'text-green-600' : 'text-red-600'">
-                    {{ formatNumber(result.difference) }}
-                  </td>
-                  <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    <ul class="list-disc list-inside text-xs">
-                      <li v-for="(issue, index) in result.issues" :key="index">{{ issue }}</li>
-                    </ul>
-                  </td>
-                </tr>
+                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ result.client_id }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ result.client_name }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(result.cars_sum) }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(result.cars_paid) }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(result.cars_discount) }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(result.actual_payments) }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(result.current_debt) }}</td>
+                    <td class="px-4 py-3 text-sm font-semibold" :class="result.difference >= 0 ? 'text-green-600' : 'text-red-600'">
+                      {{ formatNumber(result.difference) }}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                      <ul class="list-disc list-inside text-xs">
+                        <li v-for="(issue, index) in result.issues" :key="index">{{ issue }}</li>
+                      </ul>
+                    </td>
+                    <td class="px-4 py-3 text-sm">
+                      <button
+                        @click="expandedPaymentDetails[result.client_id] = !expandedPaymentDetails[result.client_id]"
+                        class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+                      >
+                        {{ expandedPaymentDetails[result.client_id] ? 'إخفاء' : 'عرض' }}
+                      </button>
+                    </td>
+                  </tr>
+                  <!-- تفاصيل الدفعات -->
+                  <tr v-if="expandedPaymentDetails[result.client_id]">
+                    <td colspan="10" class="px-4 py-4 bg-gray-50 dark:bg-gray-900">
+                      <div v-if="result.payments_details && result.payments_details.length > 0">
+                        <h4 class="font-semibold mb-2 text-gray-900 dark:text-gray-100">تفاصيل الدفعات الفعلية ({{ result.payments_details.length }} دفعة)</h4>
+                        <div class="overflow-x-auto">
+                          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                            <thead class="bg-gray-100 dark:bg-gray-800">
+                              <tr>
+                                <th class="px-3 py-2 text-right text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">ID</th>
+                                <th class="px-3 py-2 text-right text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">المبلغ</th>
+                                <th class="px-3 py-2 text-right text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">الوصف</th>
+                                <th class="px-3 py-2 text-right text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">التاريخ</th>
+                                <th class="px-3 py-2 text-right text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">المرجع</th>
+                              </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                              <tr v-for="payment in result.payments_details" :key="payment.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td class="px-3 py-2 text-xs text-gray-900 dark:text-gray-100">{{ payment.id }}</td>
+                                <td class="px-3 py-2 text-xs text-gray-900 dark:text-gray-100">{{ formatNumber(payment.amount) }}</td>
+                                <td class="px-3 py-2 text-xs text-gray-900 dark:text-gray-100">{{ payment.description || '-' }}</td>
+                                <td class="px-3 py-2 text-xs text-gray-900 dark:text-gray-100">{{ payment.created || '-' }}</td>
+                                <td class="px-3 py-2 text-xs text-gray-900 dark:text-gray-100">
+                                  <span v-if="payment.morphed_type && payment.morphed_id">
+                                    {{ payment.morphed_type }} #{{ payment.morphed_id }}
+                                  </span>
+                                  <span v-else>-</span>
+                                </td>
+                              </tr>
+                            </tbody>
+                            <tfoot class="bg-gray-100 dark:bg-gray-800">
+                              <tr>
+                                <td colspan="4" class="px-3 py-2 text-xs font-semibold text-gray-900 dark:text-gray-100 text-right">المجموع:</td>
+                                <td class="px-3 py-2 text-xs font-semibold text-gray-900 dark:text-gray-100">
+                                  {{ formatNumber(result.actual_payments) }}
+                                </td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      </div>
+                      <div v-else class="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                        لا توجد تفاصيل دفعات متاحة
+                      </div>
+                    </td>
+                  </tr>
+                </template>
               </tbody>
             </table>
           </div>
