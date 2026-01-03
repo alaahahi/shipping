@@ -16,6 +16,7 @@ use App\Http\Controllers\CarExpensesController;
 use App\Http\Controllers\CarContractController;
 use App\Http\Controllers\CarDamageReportController;
 use App\Http\Controllers\HunterController;
+use App\Http\Controllers\StatisticsController;
 
 
 use App\Models\SystemConfig;
@@ -66,6 +67,8 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
     Route::get('purchases',[DashboardController::class,'purchases'])->name('purchases');
 
     Route::get('accounting',[AccountingController::class,'index'])->name('accounting');
+    
+    Route::get('dashboard/statistics',[StatisticsController::class,'index'])->name('dashboard.statistics');
     
     // صفحة تفاصيل الجدول
     Route::get('sync-monitor/table/{tableName}', function (string $tableName, \Illuminate\Http\Request $request) {

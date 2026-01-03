@@ -26,6 +26,7 @@ use App\Http\Controllers\SyncMonitorController;
 use App\Http\Controllers\LicenseController;
 use App\Http\Controllers\AdminLicenseController;
 use App\Http\Controllers\DatabaseStatusController;
+use App\Http\Controllers\StatisticsController;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Cache\FileStore;
@@ -91,6 +92,12 @@ Route::get('clear-route-cache', function () {
     \Artisan::call('config:clear');
     return response()->json(['message' => 'Route cache cleared successfully']);
 });
+
+// Statistics API - تم إزالة الحماية مؤقتاً للاختبار
+Route::get('statistics',[StatisticsController::class, 'getStatistics'])->name('statistics');
+Route::get('statistics/car-profit-stats',[StatisticsController::class, 'carProfitStats'])->name('statistics.carProfitStats');
+Route::get('statistics/discount-stats',[StatisticsController::class, 'discountStats'])->name('statistics.discountStats');
+Route::get('statistics/export-excel',[StatisticsController::class, 'exportExcel'])->name('statistics.exportExcel');
 
 Route::middleware('auth:sanctum')->group(function () {
 Route::apiResource('upload', UploadController::class);
