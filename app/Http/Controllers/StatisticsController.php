@@ -32,7 +32,9 @@ class StatisticsController extends Controller
         // الحصول على owner_id من المستخدم الحالي - جميع الاستعلامات تستخدم هذا الـ owner_id
         // تم تعديله مؤقتاً للاختبار - إذا لم يكن هناك مستخدم، استخدم owner_id = 1
         $user = Auth::user();
-        $owner_id = $user ? $user->owner_id : ($request->input('owner_id', 1));
+        $owner_id_input = $user ? $user->owner_id : ($request->input('owner_id', 1));
+        // تحويل owner_id إلى int لضمان التطابق
+        $owner_id = is_numeric($owner_id_input) ? (int)$owner_id_input : $owner_id_input;
         
         // معالجة السنة والشهر
         $yearInput = $request->input('year');
@@ -56,23 +58,24 @@ class StatisticsController extends Controller
         // استعلام أساسي للسيارات مع فلترة حسب owner_id فقط
         $query = Car::where('owner_id', $owner_id);
 
-        // فلترة حسب السنة (إذا تم تحديدها)
+        // فلترة حسب السنة (من date) - إذا تم تحديدها
         if ($year) {
-            $query->whereYear('year_date', $year);
+            $query->whereYear('date', $year);
         }
 
         // فلترة حسب الشهر (من date) - إذا تم تحديدها
         if ($month) {
             $query->whereMonth('date', $month);
         }
-        
-        // إذا تم تحديد سنة مع الشهر، يجب تطبيق فلترة السنة على date أيضاً للشهر
-        if ($year && $month) {
-            $query->whereYear('date', $year);
-        }
 
         // 1. عدد السيارات
         $totalCars = (clone $query)->count();
+        
+        // Debug مؤقت: فحص الفلترة
+        $debugQuery = (clone $query);
+        $debugSQL = $debugQuery->toSql();
+        $debugBindings = $debugQuery->getBindings();
+        $sampleCars = $debugQuery->take(3)->get(['id', 'car_number', 'year_date', 'date']);
 
         // 2. مجموع الجمرك (شراء + بيع)
         $customPurchase = (clone $query)->sum('dolar_custom') ?? 0;
@@ -226,10 +229,9 @@ class StatisticsController extends Controller
         for ($m = 1; $m <= 12; $m++) {
             $monthQuery = Car::where('owner_id', $owner_id);
             
-            // إذا تم تحديد سنة، فلتر حسب year_date و date
+            // إذا تم تحديد سنة، فلتر حسب date
             if ($year) {
-                $monthQuery->whereYear('year_date', $year)
-                           ->whereYear('date', $year);
+                $monthQuery->whereYear('date', $year);
             }
             
             $monthQuery->whereMonth('date', $m);
@@ -380,7 +382,7 @@ class StatisticsController extends Controller
             ]);
         })->sortByDesc('profit')->values()->take(10);
 
-        return response()->json([
+        $data = [
             'total_cars' => $totalCars,
             'custom' => [
                 'purchase' => $customPurchase,
@@ -457,7 +459,23 @@ class StatisticsController extends Controller
                 'carried_profit' => 0, // يمكن إضافتها لاحقاً
                 'is_closed' => false, // يمكن إضافتها لاحقاً
             ],
-        ]);
+        ];
+        
+        // Debug مؤقت
+        if ($request->input('debug') == '1') {
+            $data['_debug'] = [
+                'year' => $year,
+                'month' => $month,
+                'yearInput' => $yearInput,
+                'monthInput' => $monthInput,
+                'query_sql' => $debugSQL,
+                'query_bindings' => $debugBindings,
+                'sample_cars' => $sampleCars->toArray(),
+                'total_cars' => $totalCars,
+            ];
+        }
+        
+        return response()->json($data);
     }
 
     /**
@@ -466,14 +484,15 @@ class StatisticsController extends Controller
     public function carProfitStats(Request $request)
     {
         $user = Auth::user();
-        $owner_id = $user ? $user->owner_id : ($request->input('owner_id', 1));
+        $owner_id_input = $user ? $user->owner_id : ($request->input('owner_id', 1));
+        $owner_id = is_numeric($owner_id_input) ? (int)$owner_id_input : $owner_id_input;
         $year = $request->input('year', Carbon::now()->format('Y'));
         $month = $request->input('month', null);
 
         $query = Car::where('owner_id', $owner_id);
 
         if ($year) {
-            $query->whereYear('year_date', $year);
+            $query->whereYear('date', $year);
         }
 
         if ($month) {
@@ -514,7 +533,8 @@ class StatisticsController extends Controller
     public function discountStats(Request $request)
     {
         $user = Auth::user();
-        $owner_id = $user ? $user->owner_id : ($request->input('owner_id', 1));
+        $owner_id_input = $user ? $user->owner_id : ($request->input('owner_id', 1));
+        $owner_id = is_numeric($owner_id_input) ? (int)$owner_id_input : $owner_id_input;
         $year = $request->input('year', Carbon::now()->format('Y'));
         $month = $request->input('month', null);
 
@@ -523,7 +543,7 @@ class StatisticsController extends Controller
             ->where('discount', '>', 0);
 
         if ($year) {
-            $query->whereYear('year_date', $year);
+            $query->whereYear('date', $year);
         }
 
         if ($month) {
