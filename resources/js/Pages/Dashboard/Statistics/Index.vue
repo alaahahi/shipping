@@ -37,7 +37,6 @@ const checkingPayments = ref(false);
 const paymentsCheckResults = ref(null);
 const showPaymentsCheckModal = ref(false);
 const expandedPaymentDetails = ref({}); // لتتبع أي تاجر يتم عرض تفاصيله
-const expandedPaymentDetails = ref({}); // لتتبع أي تاجر يتم عرض تفاصيله
 
 // Generate years list (only available years)
 const years = computed(() => {
