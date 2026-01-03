@@ -1156,23 +1156,16 @@ class StatisticsController extends Controller
             $carsNeedPaid = $carsSum - ($carsPaid + $carsDiscount);
             
             // حساب الدفعات الفعلية من Transactions
-            // استخدام نفس الاستعلام المستخدم في getStatistics
-            $walletId = $client->wallet->id;
-            $actualPayments = DB::table('transactions')
-                ->where('wallet_id', $walletId)
-                ->where('type', 'out')
-                ->where('is_pay', 1)
-                ->where('amount', '<', 0)
-                ->where('currency', '$')
-                ->sum(DB::raw('ABS(amount)')) ?? 0;
+            // الدفعات الفعلية = مجموع paid + discount من السيارات
+            // لأن عند الدفع يتم تسجيل paid و discount في جدول cars
+            $actualPayments = $carsPaid + $carsDiscount;
             
             // حساب الدين الحالي
             $currentDebt = $client->wallet->balance ?? 0;
             
             // حساب الفرق
-            // المطلوب من السيارات = total_s (إجمالي المبيعات)
-            // المقارنة: الدفعات الفعلية مقابل المطلوب (total_s)
-            $expectedPayments = $carsSum;
+            // المطلوب من السيارات = total_s - (paid + discount)
+            $expectedPayments = $carsSum - ($carsPaid + $carsDiscount);
             $difference = $actualPayments - $expectedPayments;
             
             // التحقق من السيارات المحذوفة المدفوعة
