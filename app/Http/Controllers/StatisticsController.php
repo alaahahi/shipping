@@ -505,10 +505,10 @@ class StatisticsController extends Controller
         // المبيعات الصافية = total_s - discount (للمقارنة مع الدفعات)
         $netSales = $totalSales - $totalDiscountsFromCars;
         
-        // إجمالي الدفعات + الدين (الدين سالب، لذلك نطرحه)
-        // إذا كان الدين سالب (مثل -1000)، يعني التاجر مدين 1000
-        // مجموع الدفعات - الدين = مجموع الدفعات + القيمة المطلقة للدين
-        $totalPaymentsAndDebt = $tradersPayments - $tradersDebt; // نطرح الدين لأنه سالب
+        // إجمالي الدفعات + الدين
+        // الدين في wallet.balance يكون سالب (مثل -1000 يعني التاجر مدين 1000)
+        // لذلك يجب استخدام القيمة المطلقة للدين ثم الجمع
+        $totalPaymentsAndDebt = $tradersPayments + abs($tradersDebt);
         
         // المقارنة: المبيعات - (الدفعات + الدين)
         $salesVsPaymentsDifference = $totalSales - $totalPaymentsAndDebt;
@@ -1233,12 +1233,14 @@ class StatisticsController extends Controller
             $hasIssues = false;
             $issues = [];
             
-            // حساب الفرق بين الفرق والدين (إذا كان الفرق = الدين، لا توجد مشكلة)
+            // حساب الفرق بين الفرق والدين (إذا كان الفرق = -الدين، لا توجد مشكلة)
             // الفرق = الدفعات الفعلية - المبيعات
             // الدين = الدين الحالي
             // إذا كان الفرق ≈ -الدين، يعني كل شيء صحيح (الدين يغطي الفرق)
+            // مثال: الفرق = -520، الدين = 520 → -520 + 520 = 0 → لا مشكلة
             $differenceVsDebt = abs($difference + $currentDebt);
             
+            // إذا كان الفرق مختلف عن -الدين بأكثر من 1، يوجد مشكلة
             if ($differenceVsDebt > 1) {
                 $hasIssues = true;
                 $issues[] = "فرق بين الدفعات الفعلية والمتوقعة: " . number_format($difference, 2);
