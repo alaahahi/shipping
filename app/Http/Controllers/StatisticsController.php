@@ -457,8 +457,28 @@ class StatisticsController extends Controller
         $internalShippingCarsCount = $internalShippingCarsQuery->count();
         $internalShippingExpenses = $internalShippingCarsCount * 15;
         
-        // صافي الربح بعد خصم مصاريف النقل الداخلي
-        $netProfitAfterInternalShipping = $netProfit - $internalShippingExpenses;
+        // جلب بيانات السيارات ذات النقل الداخلي
+        $internalShippingCars = $internalShippingCarsQuery->get()->map(function($car) {
+            $discount = $car->discount ?? 0;
+            $profit = (($car->total_s ?? 0) - $discount) - ($car->total ?? 0);
+            
+            return [
+                'id' => $car->id,
+                'car_number' => $car->car_number,
+                'vin' => $car->vin,
+                'car_type' => $car->car_type,
+                'profit' => $profit,
+                'total' => $car->total ?? 0,
+                'total_s' => $car->total_s ?? 0,
+                'discount' => $discount,
+                'note' => $car->note ?? '',
+                'client' => $car->client ? [
+                    'id' => $car->client->id,
+                    'name' => $car->client->name,
+                ] : null,
+                'date' => $car->date ?? null,
+            ];
+        });
         
         // صافي الربح بعد خصم مصاريف النقل الداخلي
         $netProfitAfterInternalShipping = $netProfit - $internalShippingExpenses;
@@ -591,6 +611,7 @@ class StatisticsController extends Controller
             'net_profit' => $netProfit,
             'internal_shipping_expenses' => $internalShippingExpenses,
             'internal_shipping_cars_count' => $internalShippingCarsCount,
+            'internal_shipping_cars' => $internalShippingCars,
             'net_profit_after_internal_shipping' => $netProfitAfterInternalShipping,
             'net_transfers' => $netTransfers,
             'total_sales' => $totalSales,
