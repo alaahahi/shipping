@@ -1233,7 +1233,13 @@ class StatisticsController extends Controller
             $hasIssues = false;
             $issues = [];
             
-            if (abs($difference) > 1) {
+            // حساب الفرق بين الفرق والدين (إذا كان الفرق = الدين، لا توجد مشكلة)
+            // الفرق = الدفعات الفعلية - المبيعات
+            // الدين = الدين الحالي
+            // إذا كان الفرق ≈ -الدين، يعني كل شيء صحيح (الدين يغطي الفرق)
+            $differenceVsDebt = abs($difference + $currentDebt);
+            
+            if ($differenceVsDebt > 1) {
                 $hasIssues = true;
                 $issues[] = "فرق بين الدفعات الفعلية والمتوقعة: " . number_format($difference, 2);
             }
