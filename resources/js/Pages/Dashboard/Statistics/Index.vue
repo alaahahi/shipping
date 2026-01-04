@@ -520,6 +520,8 @@ const checkTradersPayments = async () => {
               :traders-payments="statistics.traders_payments || 0"
               :total-payments-and-debt="statistics.total_payments_and_debt || 0"
               :sales-vs-payments-difference="statistics.sales_vs_payments_difference || 0"
+              :internal-shipping-expenses="statistics.internal_shipping_expenses || 0"
+              :net-profit-after-internal-shipping="statistics.net_profit_after_internal_shipping || 0"
             />
 
 

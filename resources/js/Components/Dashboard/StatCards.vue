@@ -50,6 +50,14 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  internalShippingExpenses: {
+    type: Number,
+    default: 0,
+  },
+  netProfitAfterInternalShipping: {
+    type: Number,
+    default: 0,
+  },
 });
 </script>
 
@@ -303,6 +311,49 @@ const props = defineProps({
             <dd class="text-lg font-semibold"
                 :class="salesVsPaymentsDifference >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
               {{ formatNumber(salesVsPaymentsDifference) }}
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <!-- مصاريف النقل الداخلي -->
+    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 bg-amber-500 rounded-md p-3">
+          <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+        </div>
+        <div class="ml-5 w-0 flex-1">
+          <dl>
+            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+              مصاريف النقل الداخلي
+            </dt>
+            <dd class="text-lg font-semibold text-amber-600 dark:text-amber-400">
+              {{ formatNumber(internalShippingExpenses) }}
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <!-- صافي الربح بعد خصم مصاريف النقل الداخلي -->
+    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 bg-emerald-500 rounded-md p-3">
+          <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <div class="ml-5 w-0 flex-1">
+          <dl>
+            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+              صافي الربح بعد خصم النقل الداخلي
+            </dt>
+            <dd class="text-lg font-semibold"
+                :class="netProfitAfterInternalShipping >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+              {{ formatNumber(netProfitAfterInternalShipping) }}
             </dd>
           </dl>
         </div>

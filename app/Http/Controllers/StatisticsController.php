@@ -451,6 +451,18 @@ class StatisticsController extends Controller
         // حساب صافي الربح
         $netProfit = $avgProfit * $totalCars - $totalDiscounts;
         
+        // حساب مصاريف النقل الداخلي
+        // السيارات التي تحتوي على كلمة "داخلي" في note
+        $internalShippingCarsQuery = (clone $query)->where('note', 'like', '%داخلي%');
+        $internalShippingCarsCount = $internalShippingCarsQuery->count();
+        $internalShippingExpenses = $internalShippingCarsCount * 15;
+        
+        // صافي الربح بعد خصم مصاريف النقل الداخلي
+        $netProfitAfterInternalShipping = $netProfit - $internalShippingExpenses;
+        
+        // صافي الربح بعد خصم مصاريف النقل الداخلي
+        $netProfitAfterInternalShipping = $netProfit - $internalShippingExpenses;
+        
         // حساب مجموع المبيعات والمشتريات والفرق
         $totalSales = (clone $query)->sum('total_s') ?? 0;
         $totalPurchases = (clone $query)->sum('total') ?? 0;
@@ -577,6 +589,9 @@ class StatisticsController extends Controller
             'total_customs' => $totalCustom,
             'exchange_profit' => $exchangeBenefit,
             'net_profit' => $netProfit,
+            'internal_shipping_expenses' => $internalShippingExpenses,
+            'internal_shipping_cars_count' => $internalShippingCarsCount,
+            'net_profit_after_internal_shipping' => $netProfitAfterInternalShipping,
             'net_transfers' => $netTransfers,
             'total_sales' => $totalSales,
             'total_purchases' => $totalPurchases,

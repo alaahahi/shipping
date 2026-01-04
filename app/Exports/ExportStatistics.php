@@ -66,6 +66,14 @@ class ExportStatistics implements FromCollection, WithHeadings, WithStyles, With
             'القيمة' => $this->statistics['net_profit'] ?? 0,
         ]);
         $collection->push([
+            'نوع الإحصائية' => 'مصاريف النقل الداخلي',
+            'القيمة' => $this->statistics['internal_shipping_expenses'] ?? 0,
+        ]);
+        $collection->push([
+            'نوع الإحصائية' => 'صافي الربح بعد خصم النقل الداخلي',
+            'القيمة' => $this->statistics['net_profit_after_internal_shipping'] ?? 0,
+        ]);
+        $collection->push([
             'نوع الإحصائية' => 'صافي الحولات',
             'القيمة' => $this->statistics['net_transfers'] ?? 0,
         ]);
