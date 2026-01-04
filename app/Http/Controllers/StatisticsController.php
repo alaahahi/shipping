@@ -1466,6 +1466,19 @@ class StatisticsController extends Controller
                                 if (isset($detail['car_type']) && $detail['car_type'] && $carType === 'N/A') {
                                     $carType = $detail['car_type'];
                                 }
+                                // محاولة استخراج المبالغ من details
+                                if (isset($detail['total_amount']) && $detail['total_amount'] && $totalS == 0) {
+                                    $totalS = floatval($detail['total_amount']);
+                                }
+                                if (isset($detail['total']) && $detail['total'] && $total == 0) {
+                                    $total = floatval($detail['total']);
+                                }
+                                if (isset($detail['paid']) && $detail['paid'] && $paid == 0) {
+                                    $paid = floatval($detail['paid']);
+                                }
+                                if (isset($detail['discount']) && $detail['discount'] && $discount == 0) {
+                                    $discount = floatval($detail['discount']);
+                                }
                             }
                         }
                     }
@@ -1473,7 +1486,9 @@ class StatisticsController extends Controller
                     // محاولة استخراج المبلغ من description (مرتج حذف سيارةXXXX)
                     $description = $deleteTransaction->description ?? '';
                     if (preg_match('/مرتج حذف سيارة\s*([0-9.]+)/', $description, $matches)) {
-                        $total = floatval($matches[1]);
+                        if ($total == 0) {
+                            $total = floatval($matches[1]);
+                        }
                     }
                     
                     // معلومات التاجر

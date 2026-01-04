@@ -875,6 +875,12 @@ const checkTradersPayments = async () => {
                         <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">VIN</th>
                         <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">نوع السيارة</th>
                         <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">اسم التاجر</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">هاتف التاجر</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">المشتريات (total)</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">المبيعات (total_s)</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">المدفوع</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">الخصم</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">الربح</th>
                         <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">عدد المعاملات</th>
                         <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">تاريخ الحذف</th>
                       </tr>
@@ -890,6 +896,14 @@ const checkTradersPayments = async () => {
                         <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 font-mono">{{ car.vin || '-' }}</td>
                         <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ car.car_type || '-' }}</td>
                         <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ car.client_name || '-' }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ car.client_phone || '-' }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(car.total || 0) }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(car.total_s || 0) }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(car.paid || 0) }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ formatNumber(car.discount || 0) }}</td>
+                        <td class="px-4 py-3 text-sm font-semibold" :class="(car.profit || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                          {{ formatNumber(car.profit || 0) }}
+                        </td>
                         <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ car.transactions_count || 0 }}</td>
                         <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ car.deleted_at || '-' }}</td>
                       </tr>
@@ -900,8 +914,24 @@ const checkTradersPayments = async () => {
                           المجموع:
                         </td>
                         <td class="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                          {{ deletedCars.length }} سيارة
+                          {{ formatNumber(deletedCars.reduce((sum, car) => sum + (car.total || 0), 0)) }}
                         </td>
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {{ formatNumber(deletedCars.reduce((sum, car) => sum + (car.total_s || 0), 0)) }}
+                        </td>
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {{ formatNumber(deletedCars.reduce((sum, car) => sum + (car.paid || 0), 0)) }}
+                        </td>
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {{ formatNumber(deletedCars.reduce((sum, car) => sum + (car.discount || 0), 0)) }}
+                        </td>
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {{ formatNumber(deletedCars.reduce((sum, car) => sum + (car.profit || 0), 0)) }}
+                        </td>
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {{ deletedCars.length }}
+                        </td>
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100"></td>
                       </tr>
                     </tfoot>
                   </table>
