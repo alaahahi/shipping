@@ -271,7 +271,7 @@ body {
       @if(!empty($verificationUrl))
       <div class="qr-wrapper">
         <img id="contract-qr" alt="QR" />
-        <span class="qr-caption">امسح QR للتحقق</span>
+        <span class="qr-caption">intellij-app.com بواسطة  </span>
       </div>
       @endif
       <div class="info-item">
