@@ -311,7 +311,7 @@ body {
   @if($config['second_title_ar']=='عين دبي')
   <img src="/img/bg1.jpg" width="100%" class="p-2 pb-0" />
   @else
-  <img src="/img/bg.jpg" width="100%" class="p-3" />
+  <img src="/img/bg.jpg" width="100%"  />
   @endif
   <div class="content">
     <div class="qr-header">
