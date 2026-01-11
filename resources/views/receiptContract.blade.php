@@ -252,7 +252,7 @@ body {
       margin: 0;
       border-radius: 0;
       box-shadow: none;
-      padding: 24px 32px 32px;
+      padding: 4px 12px 12px;
     }
   }
   </style>

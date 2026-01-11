@@ -441,13 +441,6 @@ class AccountingController extends Controller
         $showComplatedCars=$_GET['showComplatedCars'] ?? 0;
         $transactions_id = $_GET['transactions_id'] ?? 0;
         $client = User::with('wallet')->where('id', $user_id)->first();
-        // Ensure client and wallet exist before proceeding to avoid null access
-        if (!$client || !$client->wallet) {
-            return Response::json([
-                'status' => 'error',
-                'message' => 'Client or wallet not found for the provided user_id.',
-            ], 404);
-        }
         if($from && $to ){
             $contract=Contract::where('user_id',$user_id)->whereBetween('created', [$from, $to]);
             $transactions = Transactions ::where('wallet_id', $client?->wallet?->id)->whereBetween('created', [$from, $to]);
