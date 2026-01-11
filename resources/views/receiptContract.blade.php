@@ -62,7 +62,7 @@ body {
     gap: 20px;
     padding-bottom: 16px;
     border-bottom: 1px solid #d6e0f0;
-    font-size: 12px;
+    font-size: 2px;
     font-weight: 600;
     color: #0f172a;
   }
@@ -252,7 +252,7 @@ body {
       margin: 0;
       border-radius: 0;
       box-shadow: none;
-      padding: 4px 12px 12px;
+      padding: 0 12px 12px;
     }
   }
   </style>
