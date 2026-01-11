@@ -248,6 +248,16 @@ body {
     body {
       background: #ffffff;
     }
+    /* تقليل ارتفاع بانر أعلى الصفحة عند الطباعة */
+    body > img {
+      display: block;
+      width: 100% !important;
+      height: 95px !important;
+      object-fit: cover;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
     .content {
       margin: 0;
       border-radius: 0;
@@ -256,10 +266,43 @@ body {
       padding: 0 12px 0;
     }
     .qr-header {
-      padding-bottom: 8px; /* كان 16px => توفير 8px */
+      padding-bottom: 6px; /* توفير إضافي */
     }
+    .qr-wrapper img {
+      width: 72px;
+      height: 72px;
+    }
+    .qr-wrapper .qr-caption {
+      display: none; /* توفير ارتفاع */
+    }
+
+    .party-grid {
+      margin-top: 12px; /* كان 20px */
+      gap: 12px; /* كان 18px */
+    }
+    .party-card__body {
+      padding: 10px 12px; /* كان 14px 16px */
+    }
+    .info-row {
+      padding: 4px 0; /* كان 6px */
+      font-size: 11px; /* كان 12px */
+    }
+
+    .terms-list li {
+      margin-bottom: 6px; /* كان 10px */
+      line-height: 1.5; /* كان 1.6 */
+    }
+
     .signature-row {
-      margin-top: 10px; /* كان 40px => توفير 30px */
+      margin-top: 8px; /* كان 40px */
+    }
+
+    /* تجنّب تقسيم البلوكات بين الصفحات */
+    .party-card,
+    .terms-list,
+    .signature-row {
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
   }
   </style>
