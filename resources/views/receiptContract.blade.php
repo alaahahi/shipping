@@ -481,8 +481,11 @@ body {
       <div class="pt-2 " style="color: brown;font-size: 11px">
         6
         .
-        صاحب المعرض غیر مسؤول عن السیارة بعد البیع
-
+        صاحب المعرض غیر مسؤول عن السیارة بعد البیع 
+و
+ .
+        کل عقد غیر مختوم من المعرض یعتبر باطل
+      </div>
       </div>
       <div class="pt-2 " style="color: brown;font-size: 11px">
         7
