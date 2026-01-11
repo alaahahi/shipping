@@ -478,14 +478,13 @@ body {
         الطرف الاول مسؤول عن کافة أنواع الغرامات قبل موعد الشراء
 
       </div>
-      <div class="pt-2 " style="color: brown;font-size: 11px">
+      < class="pt-2 " style="color: brown;font-size: 11px">
         6
         .
         صاحب المعرض غیر مسؤول عن السیارة بعد البیع 
 و
- .
         کل عقد غیر مختوم من المعرض یعتبر باطل
-      </div>
+      
       </div>
       <div class="pt-2 " style="color: brown;font-size: 11px">
         7
@@ -507,12 +506,6 @@ body {
           {{ \Carbon\Carbon::parse($data['created_at'])->format('h:i:s A') }}
         </b>
       </div>
-      <div class="pt-2 " style="color: brown;font-size: 11px">
-        9
-        .
-        کل عقد غیر مختوم من المعرض یعتبر باطل
-      </div>
-
       <div class="d-flex justify-content-between  mt-3 pt-2">
         <div>
           بەلێن و رەزامەندی لایەنی یەکەم 
