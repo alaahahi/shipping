@@ -71,6 +71,7 @@ body {
     align-items: center;
     gap: 8px;
     min-width: 0;
+    font-size: 10px;
   }
   .qr-header .info-item .label {
     color: #475569;
