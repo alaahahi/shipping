@@ -252,7 +252,14 @@ body {
       margin: 0;
       border-radius: 0;
       box-shadow: none;
-      padding: 0 12px 12px;
+      /* توفير ~50px ارتفاع لتفادي الطباعة على ورقتين */
+      padding: 0 12px 0;
+    }
+    .qr-header {
+      padding-bottom: 8px; /* كان 16px => توفير 8px */
+    }
+    .signature-row {
+      margin-top: 10px; /* كان 40px => توفير 30px */
     }
   }
   </style>
