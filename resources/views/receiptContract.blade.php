@@ -478,7 +478,7 @@ body {
         الطرف الاول مسؤول عن کافة أنواع الغرامات قبل موعد الشراء
 
       </div>
-      < class="pt-2 " style="color: brown;font-size: 11px">
+      <div class="pt-2 " style="color: brown;font-size: 11px">
         6
         .
         صاحب المعرض غیر مسؤول عن السیارة بعد البیع 
