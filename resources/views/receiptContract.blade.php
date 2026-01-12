@@ -62,7 +62,7 @@ body {
     gap: 20px;
     padding-bottom: 16px;
     border-bottom: 1px solid #d6e0f0;
-    font-size: 2px;
+    font-size: 11px;
     font-weight: 600;
     color: #0f172a;
   }
@@ -71,7 +71,7 @@ body {
     align-items: center;
     gap: 8px;
     min-width: 0;
-    font-size: 10px;
+    font-size: 11px;
   }
   .qr-header .info-item .label {
     color: #475569;
@@ -97,7 +97,7 @@ body {
     border: 1px solid #d6e0f0;
   }
   .qr-wrapper .qr-caption {
-    font-size: 9px;
+    font-size: 10px;
     color: #475569;
   }
   .party-grid {
@@ -193,7 +193,7 @@ body {
   }
   .terms-list li {
     counter-increment: term;
-    font-size: 12px;
+    font-size: 13px;
     color: #334155;
     margin-bottom: 10px;
     line-height: 1.6;
@@ -253,7 +253,6 @@ body {
     body > img {
       display: block;
       width: 100% !important;
-      height: 95px !important;
       object-fit: cover;
       padding: 0 !important;
       margin: 0 !important;
@@ -267,35 +266,33 @@ body {
       padding: 0 12px 0;
     }
     .qr-header {
-      padding-bottom: 6px; /* توفير إضافي */
+      padding-bottom: 10px; /* توفير إضافي */
     }
     .qr-wrapper img {
       width: 72px;
       height: 72px;
     }
-    .qr-wrapper .qr-caption {
-      display: none; /* توفير ارتفاع */
-    }
+   
 
     .party-grid {
       margin-top: 12px; /* كان 20px */
-      gap: 12px; /* كان 18px */
+      gap: 14px; /* كان 18px */
     }
     .party-card__body {
       padding: 10px 12px; /* كان 14px 16px */
     }
     .info-row {
       padding: 4px 0; /* كان 6px */
-      font-size: 11px; /* كان 12px */
+      font-size: 12px; /* كان 12px */
     }
 
     .terms-list li {
-      margin-bottom: 6px; /* كان 10px */
-      line-height: 1.5; /* كان 1.6 */
+      margin-bottom: 10px; /* كان 10px */
+      line-height: 1.6; /* كان 1.6 */
     }
 
     .signature-row {
-      margin-top: 8px; /* كان 40px */
+      margin-top: 20px; /* كان 40px */
     }
 
     /* تجنّب تقسيم البلوكات بين الصفحات */
@@ -311,7 +308,7 @@ body {
   @if($config['second_title_ar']=='عين دبي')
   <img src="/img/bg1.jpg" width="100%" class="p-2 pb-0" />
   @else
-  <img src="/img/bg.jpg" width="100%"  />
+  <img src="/img/bg.jpg" width="100%" class="p-2"  />
   @endif
   <div class="content">
     <div class="qr-header">
@@ -322,7 +319,7 @@ body {
       @if(!empty($verificationUrl))
       <div class="qr-wrapper">
         <img id="contract-qr" alt="QR" />
-        <span class="qr-caption">intellij-app.com بواسطة  </span>
+        <div class="qr-caption text-center">intellij-app.com بواسطة  </div>
       </div>
       @endif
       <div class="info-item">
