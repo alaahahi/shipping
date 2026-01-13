@@ -455,21 +455,21 @@ const switchLocale = (locale) => {
               <ResponsiveNavLink
                 :href="route('contract')"
                 :active="route().current('contract')"
-                v-if="$page.props.auth.user.type_id==8||$page.props.auth.user.type_id==9"
+                v-if="$page.props.auth.user.type_id==8||$page.props.auth.user.type_id==10"
               >
               عقد جديد   
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('car_contract')"
                 :active="route().current('car_contract')"
-                v-if="$page.props.auth.user.type_id==8"
+                v-if="$page.props.auth.user.type_id==8||$page.props.auth.user.type_id==10"
               >
               عقود البيع  
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('contract_account')"
                 :active="route().current('contract_account')"
-                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8||$page.props.auth.user.type_id==9"
+                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8"
               >
               محاسبة عقود
               </ResponsiveNavLink>
