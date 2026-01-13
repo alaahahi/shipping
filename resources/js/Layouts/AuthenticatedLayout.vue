@@ -455,28 +455,28 @@ const switchLocale = (locale) => {
               <ResponsiveNavLink
                 :href="route('contract')"
                 :active="route().current('contract')"
-                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8"
+                v-if="$page.props.auth.user.type_id==8||$page.props.auth.user.type_id==9"
               >
               عقد جديد   
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('car_contract')"
                 :active="route().current('car_contract')"
-                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8"
+                v-if="$page.props.auth.user.type_id==8"
               >
               عقود البيع  
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('contract_account')"
                 :active="route().current('contract_account')"
-                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8"
+                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8||$page.props.auth.user.type_id==9"
               >
               محاسبة عقود
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('hunter')"
                 :active="route().current('hunter')"
-                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8"
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==7)"
               >
               عاطل 
               </ResponsiveNavLink>
