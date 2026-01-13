@@ -36,6 +36,8 @@ class CarContractController extends Controller
         $this->accountingController = $accountingController;
         $this->userClient = $this->resolveUserTypeId('client');
         $this->userAccount = $this->resolveUserTypeId('account');
+        $this->userCarContract = $this->resolveUserTypeId('car_contract');
+        $this->userCarContractUser = $this->resolveUserTypeId('car_contract_user');
         $this->mainBoxContract = User::with('wallet')
             ->where('type_id', $this->userAccount)
             ->where('email', 'mainBoxContract@account.com');
@@ -199,6 +201,8 @@ class CarContractController extends Controller
     }
     public function getIndexContractCar(Request $request){
         $owner_id=Auth::user()->owner_id;
+        $current_user_id=Auth::user()->id;
+        $current_user_type_id=Auth::user()->type_id;
         $car_have_expenses = $request->car_have_expenses ?? '';
         $user_id =$_GET['user_id'] ?? '';
         $q = $_GET['q']??'';
@@ -206,7 +210,13 @@ class CarContractController extends Controller
         $to =$_GET['to'] ?? 0;
         $limit =$_GET['limit'] ?? 0;
  
-        $data = CarContract::with('user')->where('owner_id', $owner_id)->orderBy('id', 'desc');;
+        $data = CarContract::with('user')->where('owner_id', $owner_id)->orderBy('id', 'desc');
+
+        // إذا كان نوع المستخدم car_contract_user، يرى فقط العقود التي أنشأها
+        if ($this->userCarContractUser && $current_user_type_id == $this->userCarContractUser) {
+            $data->where('user_id', $current_user_id);
+        }
+        // إذا كان نوع المستخدم car_contract، يرى كل العقود (الحالة الافتراضية)
 
         if ($from && $to) {
             $data->whereBetween('created', [$from, $to]);
@@ -267,10 +277,15 @@ class CarContractController extends Controller
     }
     public function totalInfoContract(Request $request){
         $owner_id=Auth::user()->owner_id;
+        $current_user_id=Auth::user()->id;
+        $current_user_type_id=Auth::user()->type_id;
 
         $allContract = CarContract::with('user')->where('owner_id', $owner_id);
 
-
+        // إذا كان نوع المستخدم car_contract_user، يرى فقط العقود التي أنشأها
+        if ($this->userCarContractUser && $current_user_type_id == $this->userCarContractUser) {
+            $allContract->where('user_id', $current_user_id);
+        }
 
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
@@ -599,30 +614,36 @@ class CarContractController extends Controller
         $to = $_GET['to'] ?? 0;
         $searchType = $_GET['searchType'] ?? '';
         $owner_id=Auth::user()->owner_id;
+        $current_user_id=Auth::user()->id;
+        $current_user_type_id=Auth::user()->type_id;
         $userClient=$this->userClient ?? 0;
 
-        $dataQuery1 = CarContract::where('owner_id', $owner_id)
-        ->select('name_seller', 
+        $dataQuery1 = CarContract::where('owner_id', $owner_id);
+        $dataQuery2 = CarContract::where('owner_id', $owner_id);
+
+        // إذا كان نوع المستخدم car_contract_user، يرى فقط العقود التي أنشأها
+        if ($this->userCarContractUser && $current_user_type_id == $this->userCarContractUser) {
+            $dataQuery1->where('user_id', $current_user_id);
+            $dataQuery2->where('user_id', $current_user_id);
+        }
+
+        $dataQuery1 = $dataQuery1->select('name_seller', 
                  DB::raw('MAX(phone_seller) as phone_seller'), 
                  DB::raw('SUM(tex_seller_dinar) as tex_seller_dinar'), 
                  DB::raw('SUM(tex_seller) as tex_seller'),
                  DB::raw('SUM(tex_seller_dinar_paid) as tex_seller_dinar_paid'), 
                  DB::raw('SUM(tex_seller_paid) as tex_seller_paid'),
                  )
-        ->groupBy('name_seller')
-        ;
+        ->groupBy('name_seller');
 
-
-        $dataQuery2 = CarContract::where('owner_id', $owner_id)
-        ->select('name_buyer', 
+        $dataQuery2 = $dataQuery2->select('name_buyer', 
                  DB::raw('MAX(phone_buyer) as phone_seller'), 
                  DB::raw('SUM(tex_buyer_dinar) as tex_buyer_dinar'), 
                  DB::raw('SUM(tex_buyer) as tex_buyer'),
                  DB::raw('SUM(tex_buyer_dinar_paid) as tex_buyer_dinar_paid'), 
                  DB::raw('SUM(tex_buyer_paid) as tex_buyer_paid')
                  )
-        ->groupBy('name_buyer')
-        ;
+        ->groupBy('name_buyer');
     
         if ($q) {
             if ($q !== 'debit') {
@@ -655,10 +676,20 @@ class CarContractController extends Controller
         $print = $_GET['print'] ?? 0;
         $searchType = $_GET['searchType'] ?? '';
         $owner_id=Auth::user()->owner_id;
+        $current_user_id=Auth::user()->id;
+        $current_user_type_id=Auth::user()->type_id;
         $userClient=$this->userClient ?? 0;
 
-        $dataQuery1 = CarContract::where('owner_id', $owner_id)
-        ->select('name_seller', 
+        $dataQuery1 = CarContract::where('owner_id', $owner_id);
+        $dataQuery2 = CarContract::where('owner_id', $owner_id);
+
+        // إذا كان نوع المستخدم car_contract_user، يرى فقط العقود التي أنشأها
+        if ($this->userCarContractUser && $current_user_type_id == $this->userCarContractUser) {
+            $dataQuery1->where('user_id', $current_user_id);
+            $dataQuery2->where('user_id', $current_user_id);
+        }
+
+        $dataQuery1 = $dataQuery1->select('name_seller', 
                  DB::raw('MAX(phone_seller) as phone_seller'), 
                  DB::raw('SUM(tex_seller_dinar) as tex_seller_dinar'), 
                  DB::raw('SUM(tex_seller) as tex_seller'),
@@ -667,17 +698,14 @@ class CarContractController extends Controller
                  )
         ->groupBy('name_seller');
 
-
-        $dataQuery2 = CarContract::where('owner_id', $owner_id)
-        ->select('name_buyer', 
+        $dataQuery2 = $dataQuery2->select('name_buyer', 
                  DB::raw('MAX(phone_buyer) as phone_seller'), 
                  DB::raw('SUM(tex_buyer_dinar) as tex_buyer_dinar'), 
                  DB::raw('SUM(tex_buyer) as tex_buyer'),
                  DB::raw('SUM(tex_buyer_dinar_paid) as tex_buyer_dinar_paid'), 
                  DB::raw('SUM(tex_buyer_paid) as tex_buyer_paid')
                  )
-        ->groupBy('name_buyer')
-        ;
+        ->groupBy('name_buyer');
     
         if ($q) {
             if ($q !== 'debit') {
