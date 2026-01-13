@@ -150,7 +150,7 @@ const switchLocale = (locale) => {
                    مصاريف السيارات
                 </NavLink>
               </div> -->
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.type_id==8">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && ($page.props.auth.user.type_id==8||$page.props.auth.user.type_id==10)">
                 <NavLink
                   :href="route('contract')"
                   :active="route().current('contract')"
@@ -159,7 +159,7 @@ const switchLocale = (locale) => {
                 {{ $t("newContract") }}
                 </NavLink>
               </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.type_id==8">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && ($page.props.auth.user.type_id==8||$page.props.auth.user.type_id==10)">
                 <NavLink
                   :href="route('car_contract')"
                   :active="route().current('car_contract')"
