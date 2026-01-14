@@ -38,6 +38,9 @@ Route::get('/sync-monitor/table/{tableName}', [SyncMonitorController::class, 'ta
 Route::post('/sync-monitor/sync', [SyncMonitorController::class, 'sync'])->name('sync.monitor.sync');
 Route::get('/sync-monitor/sync-progress', [SyncMonitorController::class, 'syncProgress'])->name('sync.monitor.sync.progress');
 Route::get('/sync-monitor/metadata', [SyncMonitorController::class, 'syncMetadata'])->name('sync.monitor.metadata');
+Route::get('/sync-monitor/migrations', [SyncMonitorController::class, 'getMigrations'])->name('sync.monitor.migrations');
+Route::post('/sync-monitor/check-migration', [SyncMonitorController::class, 'checkMigration'])->name('sync.monitor.check.migration');
+Route::post('/sync-monitor/run-migration', [SyncMonitorController::class, 'runMigration'])->name('sync.monitor.run.migration');
 Route::get('/sync-monitor/test/{tableName}', [SyncMonitorController::class, 'testSync'])->name('sync.monitor.test');
 Route::post('/sync-monitor/table/{tableName}/truncate', [SyncMonitorController::class, 'truncateTable'])->name('sync.monitor.table.truncate');
 Route::delete('/sync-monitor/table/{tableName}/delete', [SyncMonitorController::class, 'deleteTable'])->name('sync.monitor.table.delete');
@@ -351,6 +354,7 @@ Route::middleware('auth')->group(function () {
     Route::get('car/{carId}/history', [CarHistoryController::class, 'getHistory'])->name('car.history.api');
     Route::get('car/{carId}/history/{historyId}', [CarHistoryController::class, 'show'])->name('car.history.show.api');
     Route::post('car/{carId}/history/compare', [CarHistoryController::class, 'compare'])->name('car.history.compare');
+    Route::get('car/{carId}/history', [CarHistoryController::class, 'getHistory'])->name('car.history.get');
     Route::get('car-history/statistics', [CarHistoryController::class, 'statistics'])->name('car.history.statistics');
     Route::post('car-history/migrate-transactions', [CarHistoryController::class, 'migrateTransactions'])->name('car.history.migrate');
     Route::post('car-history/cleanup', [CarHistoryController::class, 'cleanup'])->name('car.history.cleanup');

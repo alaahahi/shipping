@@ -78,7 +78,22 @@ class DashboardController extends Controller
             return $user;
         });
     
-        $config=SystemConfig::first()->default_price_p;
+        // الحصول على SystemConfig أو إنشاء واحد جديد إذا لم يكن موجوداً
+        $systemConfig = SystemConfig::first();
+        if (!$systemConfig) {
+            $systemConfig = SystemConfig::create([
+                'first_title_ar' => '',
+                'first_title_kr' => '',
+                'second_title_ar' => '',
+                'second_title_kr' => '',
+                'third_title_ar' => '',
+                'third_title_kr' => '',
+                'default_price_s' => [],
+                'default_price_p' => [],
+            ]);
+        }
+        
+        $config = $systemConfig->default_price_p ?? [];
         return Inertia::render('purchases', ['client'=>$client,'config'=>$config]);   
     }
     public function sales(Request $request)
@@ -94,7 +109,23 @@ class DashboardController extends Controller
             $user->name = "{$user->name}  {$user->phone}";
             return $user;
         });
-        $config=SystemConfig::first()->default_price_s;
+        
+        // الحصول على SystemConfig أو إنشاء واحد جديد إذا لم يكن موجوداً
+        $systemConfig = SystemConfig::first();
+        if (!$systemConfig) {
+            $systemConfig = SystemConfig::create([
+                'first_title_ar' => '',
+                'first_title_kr' => '',
+                'second_title_ar' => '',
+                'second_title_kr' => '',
+                'third_title_ar' => '',
+                'third_title_kr' => '',
+                'default_price_s' => [],
+                'default_price_p' => [],
+            ]);
+        }
+        
+        $config = $systemConfig->default_price_s ?? [];
 
         return Inertia::render('Sales', ['client'=>$client ,'config'=>$config]);   
     }

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import axios from 'axios';
 import Uploader  from 'vue-media-upload';
 import { useToast } from "vue-toastification";
@@ -36,6 +36,13 @@ function check_vin(v){
 let showClient = ref(false);
 let showErrorVin = ref(false);
 let exchangeRateError= ref(false);
+
+// Car History Tab
+const activeTab = ref('edit');
+const carHistory = ref([]);
+const loadingHistory = ref(false);
+const historyPage = ref(1);
+const historyLastPage = ref(1);
 function validateExchangeRate(v) {
       const input = props.formData.dolar_price_s;
       if (/^\d{6}$/.test(input)) {
@@ -59,6 +66,142 @@ function removeMedia(removedImage){
           console.error(error);
         })
 }
+
+// Car History Functions
+async function loadCarHistory(page = 1) {
+  if (!props.formData?.id) return;
+  
+  loadingHistory.value = true;
+  try {
+    const response = await axios.get(`/api/car/${props.formData.id}/history`, {
+      params: { page }
+    });
+    carHistory.value = response.data.data || [];
+    historyPage.value = response.data.current_page || 1;
+    historyLastPage.value = response.data.last_page || 1;
+  } catch (error) {
+    console.error('Error loading car history:', error);
+    toast.error('حدث خطأ أثناء تحميل تاريخ السيارة', {
+      timeout: 3000,
+      position: "bottom-right",
+      rtl: true,
+    });
+  } finally {
+    loadingHistory.value = false;
+  }
+}
+
+function getActionIcon(action) {
+  const icons = {
+    create: '➕',
+    update: '✏️',
+    delete: '🗑️',
+    restore: '♻️',
+    sale: '💰',
+    purchase: '🛒'
+  };
+  return icons[action] || '📝';
+}
+
+function getActionText(action) {
+  const actions = {
+    create: 'إضافة',
+    update: 'تحديث',
+    delete: 'حذف',
+    restore: 'استعادة',
+    sale: 'بيع',
+    purchase: 'شراء'
+  };
+  return actions[action] || action;
+}
+
+function formatDateTime(dateString) {
+  if (!dateString || dateString === 'null' || dateString === null) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString; // إذا كان التاريخ غير صحيح، إرجاع القيمة الأصلية
+    return date.toLocaleString('ar-IQ', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return dateString;
+  }
+}
+
+function filterChanges(changes) {
+  if (!changes) return {};
+  const filtered = {};
+  Object.keys(changes).forEach(key => {
+    if (key !== 'created_at' && key !== 'updated_at') {
+      filtered[key] = changes[key];
+    }
+  });
+  return filtered;
+}
+
+function getFieldLabel(fieldName) {
+  const fieldLabels = {
+    // مشتريات (Purchase)
+    'dinar': 'دينار',
+    'dolar_price': 'سعر الصرف',
+    'dolar_custom': 'سعر الصرف مخصص',
+    'checkout': 'تخليص',
+    'shipping_dolar': 'نقل مشتريات',
+    'coc_dolar': 'شهادة المنشأ',
+    'total': 'المجموع',
+    'paid': 'المدفوع',
+    'profit': 'الربح',
+    'expenses': 'المصروفات',
+    'land_shipping': 'نقل بري مشتريات',
+    'land_shipping_dinar': 'نقل بري دينار مشتريات',
+    
+    // مبيعات (Sales)
+    'dinar_s': 'دينار مبيعات',
+    'dolar_price_s': 'سعر الصرف مبيعات',
+    'dolar_custom_s': 'سعر الصرف مخصص مبيعات',
+    'checkout_s': 'تخليص مبيعات',
+    'shipping_dolar_s': 'نقل مبيعات',
+    'coc_dolar_s': 'شهادة المنشأ مبيعات',
+    'total_s': 'المجموع مبيعات',
+    'expenses_s': 'المصروفات مبيعات',
+    'land_shipping_s': 'نقل بري مبيعات',
+    'land_shipping_dinar_s': 'نقل بري دينار مبيعات',
+    
+    // معلومات السيارة
+    'car_type': 'نوع السيارة',
+    'year': 'السنة',
+    'car_color': 'اللون',
+    'vin': 'رقم الشاصي',
+    'car_number': 'رقم السيارة',
+    'date': 'التاريخ',
+    'note': 'ملاحظة',
+    'client_id': 'الزبون',
+    'discount': 'الخصم',
+    'car_price': 'سعر السيارة',
+  };
+  
+  return fieldLabels[fieldName] || fieldName;
+}
+
+// Watch for modal open and load history
+watch(() => props.show, (newVal) => {
+  if (newVal && props.formData?.id) {
+    if (activeTab.value === 'history') {
+      loadCarHistory();
+    }
+  }
+});
+
+watch(() => activeTab.value, (newVal) => {
+  if (newVal === 'history' && props.formData?.id && carHistory.value.length === 0) {
+    loadCarHistory();
+  }
+});
 </script>
   <template>
   <Transition name="modal">
@@ -72,7 +215,37 @@ function removeMedia(removedImage){
               </h2>
             </slot>
           </div>
-          <div class="modal-body">
+
+          <!-- Tabs -->
+          <div class="border-b border-gray-200 dark:border-gray-700 mb-4">
+            <div class="flex space-x-8" style="direction: rtl;">
+              <button
+                @click="activeTab = 'edit'"
+                :class="[
+                  'py-2 px-4 text-sm font-medium border-b-2 transition-colors',
+                  activeTab === 'edit'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                ]"
+              >
+                ✏️ تعديل
+              </button>
+              <button
+                @click="activeTab = 'history'"
+                :class="[
+                  'py-2 px-4 text-sm font-medium border-b-2 transition-colors',
+                  activeTab === 'history'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                ]"
+              >
+                📜 تاريخ السيارة
+              </button>
+            </div>
+          </div>
+
+          <!-- Edit Tab -->
+          <div v-if="activeTab === 'edit'" class="modal-body">
             <div
               class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2"
             >
@@ -286,7 +459,98 @@ function removeMedia(removedImage){
             </div>
           </div>
 
-          <div class="modal-footer my-2">
+          <!-- History Tab -->
+          <div v-if="activeTab === 'history'" class="modal-body">
+            <div class="max-h-[60vh] overflow-y-auto">
+              <div v-if="loadingHistory" class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p class="mt-4 text-gray-600 dark:text-gray-400">جاري تحميل التاريخ...</p>
+              </div>
+
+              <div v-else-if="carHistory.length === 0" class="text-center py-8">
+                <div class="text-5xl mb-2">📭</div>
+                <p class="text-lg text-gray-500 dark:text-gray-400">لا يوجد تاريخ للسيارة</p>
+              </div>
+
+              <div v-else class="space-y-4">
+                <div
+                  v-for="(item, index) in carHistory"
+                  :key="item.id || index"
+                  class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-r-4"
+                  :class="{
+                    'border-green-500': item.action === 'create',
+                    'border-blue-500': item.action === 'update',
+                    'border-red-500': item.action === 'delete',
+                    'border-yellow-500': item.action === 'restore',
+                    'border-purple-500': item.action === 'sale' || item.action === 'purchase'
+                  }"
+                >
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <div class="flex items-center gap-2 mb-2">
+                        <span class="text-2xl">{{ getActionIcon(item.action) }}</span>
+                        <span class="font-semibold text-gray-900 dark:text-gray-100">
+                          {{ getActionText(item.action) }}
+                        </span>
+                        <span class="text-xs px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                          {{ formatDateTime(item.created_at) }}
+                        </span>
+                      </div>
+                      
+                      <p class="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                        {{ item.description || 'لا يوجد وصف' }}
+                      </p>
+
+                      <div v-if="item.user" class="text-xs text-gray-500 dark:text-gray-400">
+                        👤 {{ item.user.name || 'مستخدم غير معروف' }}
+                      </div>
+
+                      <template v-if="item.changes && Object.keys(filterChanges(item.changes)).length > 0">
+                        <div class="mt-3 p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 text-xs">
+                          <div class="font-semibold mb-2 text-gray-700 dark:text-gray-300 text-sm">التغييرات:</div>
+                          <div class="space-y-2">
+                            <template v-for="(value, key) in filterChanges(item.changes)" :key="key">
+                              <div class="flex items-center gap-2 py-1 px-2 rounded bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <span class="font-medium text-gray-700 dark:text-gray-300 min-w-[120px]">{{ getFieldLabel(key) }}:</span>
+                                <div class="flex items-center gap-2 flex-1">
+                                  <span class="text-red-600 dark:text-red-400 line-through bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded text-xs font-medium">{{ value.old || 'فارغ' }}</span>
+                                  <span class="text-blue-500 dark:text-blue-400 text-lg font-bold">⟵</span>
+                                  <span class="text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded text-xs font-medium">{{ value.new || 'فارغ' }}</span>
+                                </div>
+                              </div>
+                            </template>
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Pagination -->
+                <div v-if="historyLastPage > 1" class="flex justify-center items-center gap-2 mt-4">
+                  <button
+                    @click="loadCarHistory(historyPage - 1)"
+                    :disabled="historyPage === 1"
+                    class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    السابق
+                  </button>
+                  <span class="text-sm text-gray-600 dark:text-gray-400">
+                    صفحة {{ historyPage }} من {{ historyLastPage }}
+                  </span>
+                  <button
+                    @click="loadCarHistory(historyPage + 1)"
+                    :disabled="historyPage >= historyLastPage"
+                    class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    التالي
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer my-2" v-if="activeTab === 'edit'">
     
 
             <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-1 lg:gap-2">
@@ -332,7 +596,20 @@ function removeMedia(removedImage){
                 </button>
               </div>
             </div>
+          </div>
 
+          <!-- Footer for History Tab -->
+          <div class="modal-footer my-2" v-if="activeTab === 'history'">
+            <div class="flex flex-row">
+              <div class="basis-full px-4">
+                <button
+                  class="modal-default-button py-3 bg-gray-500 rounded w-full"
+                  @click="$emit('close')"
+                >
+                  {{ $t("cancel") }}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

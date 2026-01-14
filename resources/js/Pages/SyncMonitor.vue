@@ -371,6 +371,17 @@
               >
                 🔧 النظام
               </button>
+              <button
+                @click="activeTab = 'migrations'"
+                :class="[
+                  'px-6 py-3 text-sm font-medium border-b-2 transition-colors',
+                  activeTab === 'migrations'
+                    ? 'border-orange-500 text-orange-600 dark:text-orange-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                ]"
+              >
+                📦 المايجريشنز
+              </button>
             </div>
           </div>
 
@@ -602,6 +613,185 @@
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- تبويب المايجريشنز -->
+          <div v-if="activeTab === 'migrations'" class="p-6">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h3 class="text-xl font-semibold dark:text-gray-200 mb-2">
+                  📦 إدارة المايجريشنز
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                  تنفيذ مايجريشن محدد من قاعدة البيانات
+                </p>
+              </div>
+              <div class="flex gap-2">
+                <button
+                  @click="loadMigrations"
+                  :disabled="loadingMigrations"
+                  class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span v-if="!loadingMigrations">🔄 تحديث</span>
+                  <span v-else>⏳ جاري...</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- إحصائيات -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div class="bg-orange-50 dark:bg-orange-900 p-4 rounded-lg">
+                <div class="text-2xl font-bold text-orange-600">{{ dbMigrationStats.total_pending || 0 }}</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">مايجريشنز قيد الانتظار</div>
+              </div>
+              <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                <div class="text-2xl font-bold text-gray-600">{{ dbMigrationStats.total_executed || 0 }}</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">مايجريشنز منفذة</div>
+              </div>
+            </div>
+
+            <!-- فلتر عرض المايجريشنز المنفذة -->
+            <div class="mb-4 flex items-center justify-between">
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  v-model="showExecutedMigrations"
+                  @change="loadMigrations"
+                  id="showExecuted"
+                  class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                >
+                <label for="showExecuted" class="mr-2 text-sm text-gray-700 dark:text-gray-300">
+                  عرض المايجريشنز المنفذة
+                </label>
+              </div>
+            </div>
+
+            <div v-if="loadingMigrations" class="text-center py-12">
+              <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+              <p class="mt-4 text-gray-600 dark:text-gray-400">جاري تحميل المايجريشنز...</p>
+            </div>
+
+            <div v-else class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">اسم المايجريشن</th>
+                      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">اسم الملف</th>
+                      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">التاريخ</th>
+                      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">الإجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tr
+                      v-for="migration in migrations"
+                      :key="migration.file"
+                      class="hover:bg-gray-50 dark:hover:bg-gray-700"
+                      :class="{
+                        'opacity-60': migration.executed
+                      }"
+                    >
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-200">
+                        <div class="flex items-center">
+                          {{ migration.name }}
+                          <span v-if="migration.executed" class="mr-2 px-2 py-1 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full">
+                            ✓ منفذ
+                          </span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 font-mono text-xs">
+                        {{ migration.file }}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {{ migration.date }}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          v-if="!migration.executed"
+                          @click="runSpecificMigration(migration.name)"
+                          :disabled="runningMigration === migration.name"
+                          class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <span v-if="runningMigration !== migration.name">▶️ تنفيذ</span>
+                          <span v-else>⏳ جاري...</span>
+                        </button>
+                        <span v-else class="text-gray-400 dark:text-gray-500 text-sm">
+                          تم التنفيذ
+                        </span>
+                      </td>
+                    </tr>
+                    <tr v-if="migrations.length === 0">
+                      <td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                        <div class="text-5xl mb-2">📭</div>
+                        <p class="text-lg">لا توجد مايجريشنز</p>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- تحذير وجود بيانات -->
+            <div v-if="migrationWarning" class="mt-6 bg-yellow-50 dark:bg-yellow-900 border-l-4 border-yellow-500 p-4 rounded-lg">
+              <div class="flex items-start">
+                <div class="flex-shrink-0">
+                  <span class="text-2xl">⚠️</span>
+                </div>
+                <div class="mr-3 flex-1">
+                  <h4 class="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
+                    تحذير: يوجد بيانات في الجداول المتأثرة
+                  </h4>
+                  <p class="text-sm text-yellow-700 dark:text-yellow-300 mb-3">
+                    تنفيذ هذا المايجريشن قد يحذف البيانات الموجودة!
+                  </p>
+                  <div v-if="migrationWarning.tables" class="mb-3">
+                    <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">
+                      الجداول المتأثرة ({{ migrationWarning.total_records }} سجل):
+                    </p>
+                    <ul class="list-disc list-inside text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+                      <li v-for="table in migrationWarning.tables" :key="table.name">
+                        {{ table.name }}: {{ table.count }} سجل
+                      </li>
+                    </ul>
+                  </div>
+                  <div v-else-if="migrationWarning.table" class="mb-3">
+                    <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                      جدول <strong>{{ migrationWarning.table }}</strong>: {{ migrationWarning.record_count }} سجل
+                    </p>
+                  </div>
+                  <div class="flex gap-2 mt-4">
+                    <button
+                      @click="forceRunMigration(migrationWarning.migration)"
+                      class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium"
+                    >
+                      ⚠️ تنفيذ رغم التحذير (حذف البيانات)
+                    </button>
+                    <button
+                      @click="migrationWarning = null"
+                      class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm"
+                    >
+                      إلغاء
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- عرض نتيجة التنفيذ -->
+            <div v-if="migrationOutput" class="mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-600">
+                <h4 class="text-lg font-semibold dark:text-gray-200">📋 نتيجة التنفيذ:</h4>
+              </div>
+              <div class="p-4">
+                <pre class="text-xs font-mono bg-gray-900 text-green-400 p-4 rounded overflow-x-auto max-h-64 overflow-y-auto">{{ migrationOutput }}</pre>
+                <button
+                  @click="migrationOutput = ''"
+                  class="mt-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm"
+                >
+                  إغلاق
+                </button>
               </div>
             </div>
           </div>
@@ -1135,7 +1325,7 @@
                           :disabled="deletingTable === table.name"
                         >
                             <span v-if="deletingTable === table.name">⏳ جاري...</span>
-                            <span v-else">❌ حذف</span>
+                            <span v-else>❌ حذف</span>
                         </button>
                         </div>
                       </div>
@@ -1698,6 +1888,18 @@ const migrationSettings = ref({
   batchSize: 100,
   delay: 1,
   deleteOldData: false
+});
+
+// Database Migrations
+const migrations = ref([]);
+const loadingMigrations = ref(false);
+const runningMigration = ref(null);
+const migrationOutput = ref('');
+const migrationWarning = ref(null);
+const showExecutedMigrations = ref(false);
+const dbMigrationStats = ref({
+  total_executed: 0,
+  total_pending: 0
 });
 
 // أدوات النظام
@@ -3148,6 +3350,7 @@ const formatBytes = (bytes) => {
 
 // تهيئة البيانات عند تحميل الصفحة
 onMounted(async () => {
+  await loadMigrations();
   await loadMigrationStats();
   await loadDatabaseInfo();
 });
@@ -3180,7 +3383,7 @@ const restoreSelectedBackupTables = async () => {
     return;
   }
 
-  const confirmMessage = `هل تريد استعادة الجداول المحددة من النسخة الاحتياطية؟
+  const confirmMessage = `هل تريد استعادة الجداول المحددة من النسخة الاحتياطية？
 
 📦 الملف: ${selectedBackupFile.value}
 📋 الجداول المحددة (${selectedBackupTables.value.length}):
@@ -3218,6 +3421,161 @@ ${selectedBackupTables.value.join(', ')}
     toast.error(`فشلت الاستعادة: ${error.response?.data?.error || error.message}`);
   }
 };
+
+// Database Migrations Functions
+async function loadMigrations() {
+  loadingMigrations.value = true;
+  try {
+    const response = await axios.get('/api/sync-monitor/migrations', {
+      params: {
+        show_executed: showExecutedMigrations.value
+      },
+      withCredentials: true
+    });
+    migrations.value = response.data.migrations || [];
+    dbMigrationStats.value = {
+      total_executed: response.data.total_executed || 0,
+      total_pending: response.data.total_pending || 0
+    };
+  } catch (error) {
+    console.error('Error loading migrations:', error);
+    toast.error('حدث خطأ أثناء تحميل المايجريشنز', {
+      timeout: 3000,
+      position: "bottom-right",
+      rtl: true,
+    });
+  } finally {
+    loadingMigrations.value = false;
+  }
+}
+
+async function checkMigrationSafety(migrationName) {
+  try {
+    const response = await axios.post('/api/sync-monitor/check-migration', {
+      migration_name: migrationName
+    }, { withCredentials: true });
+
+    if (response.data.success && response.data.has_data) {
+      return {
+        safe: false,
+        warning: true,
+        tables: response.data.tables_with_data,
+        total_records: response.data.total_records,
+        affected_tables: response.data.affected_tables
+      };
+    }
+    return { safe: true };
+  } catch (error) {
+    console.error('Error checking migration safety:', error);
+    // في حالة الخطأ، نعتبره آمناً (لا نمنع التنفيذ)
+    return { safe: true };
+  }
+}
+
+async function runSpecificMigration(migrationName, force = false) {
+  // فحص الأمان أولاً
+  if (!force) {
+    const safetyCheck = await checkMigrationSafety(migrationName);
+    
+    if (!safetyCheck.safe && safetyCheck.warning) {
+      const tablesList = safetyCheck.tables.map(t => `- ${t.name}: ${t.count} سجل`).join('\n');
+      const warningMessage = `⚠️ تحذير: يوجد بيانات في الجداول المتأثرة!\n\n` +
+        `إجمالي السجلات: ${safetyCheck.total_records}\n\n` +
+        `الجداول المتأثرة:\n${tablesList}\n\n` +
+        `تنفيذ هذا المايجريشن قد يحذف هذه البيانات!\n\n` +
+        `هل تريد المتابعة على مسؤوليتك الخاصة؟`;
+      
+      if (!confirm(warningMessage)) {
+        migrationWarning.value = {
+          migration: migrationName,
+          tables: safetyCheck.tables,
+          total_records: safetyCheck.total_records,
+          affected_tables: safetyCheck.affected_tables
+        };
+        return;
+      }
+    }
+  }
+
+  runningMigration.value = migrationName;
+  migrationOutput.value = '';
+  migrationWarning.value = null;
+  
+  try {
+    toast.info('جاري تنفيذ المايجريشن...', {
+      timeout: 2000,
+      position: "bottom-right",
+      rtl: true,
+    });
+
+    const response = await axios.post('/api/sync-monitor/run-migration', {
+      migration_name: migrationName,
+      force: force
+    }, { withCredentials: true });
+
+    if (response.data.success) {
+      toast.success('تم تنفيذ المايجريشن بنجاح', {
+        timeout: 3000,
+        position: "bottom-right",
+        rtl: true,
+      });
+      migrationOutput.value = response.data.output || '';
+      // إعادة تحميل قائمة المايجريشنز
+      await loadMigrations();
+    } else {
+      if (response.data.warning) {
+        // عرض تحذير مع إمكانية الإجبار
+        migrationWarning.value = {
+          migration: migrationName,
+          table: response.data.table,
+          record_count: response.data.record_count,
+          message: response.data.message
+        };
+        toast.warning(response.data.error || 'يوجد بيانات في الجداول المتأثرة', {
+          timeout: 5000,
+          position: "bottom-right",
+          rtl: true,
+        });
+      } else {
+        toast.error(response.data.error || 'فشل تنفيذ المايجريشن', {
+          timeout: 3000,
+          position: "bottom-right",
+          rtl: true,
+        });
+        migrationOutput.value = response.data.output || response.data.error || '';
+      }
+    }
+  } catch (error) {
+    console.error('Error running migration:', error);
+    
+    if (error.response?.data?.warning) {
+      migrationWarning.value = {
+        migration: migrationName,
+        table: error.response.data.table,
+        record_count: error.response.data.record_count,
+        message: error.response.data.message
+      };
+      toast.warning(error.response.data.error || 'يوجد بيانات في الجداول المتأثرة', {
+        timeout: 5000,
+        position: "bottom-right",
+        rtl: true,
+      });
+    } else {
+      toast.error('حدث خطأ أثناء تنفيذ المايجريشن', {
+        timeout: 3000,
+        position: "bottom-right",
+        rtl: true,
+      });
+      migrationOutput.value = error.response?.data?.error || error.message || '';
+    }
+  } finally {
+    runningMigration.value = null;
+  }
+}
+
+function forceRunMigration(migrationName) {
+  runSpecificMigration(migrationName, true);
+}
 </script>
 
 <style scoped>
