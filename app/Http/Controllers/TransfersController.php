@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Transactions;
 use App\Models\Expenses;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use App\Services\ExternalTransferService;
 
 
@@ -476,16 +477,44 @@ class TransfersController extends Controller
     /**
      * التحقق من التحويلات المعلقة من جميع الأنظمة المتصلة وإدخالها في النظام المحلي
      * يتم استدعاؤه من الواجهة عند فتح نافذة التحويلات من فروع أخرى
+     * يستدعي get-pending-transfers من كل نظام متصل للاستعلام عن التحويلات المعلقة الموجهة للنظام الحالي
      */
     public function checkPendingExternalTransfers(Request $request)
     {
         $owner_id = Auth::user()->owner_id ?? 1;
+        $currentSystemUrl = config('app.url');
+        
+        Log::info('checkPendingExternalTransfers called', [
+            'current_system' => $currentSystemUrl,
+            'owner_id' => $owner_id
+        ]);
+        
         $connectedSystems = ConnectedSystem::where('is_active', true)->get();
+        
+        Log::info('Connected systems found', [
+            'count' => $connectedSystems->count(),
+            'systems' => $connectedSystems->map(function($sys) {
+                return [
+                    'id' => $sys->id,
+                    'name' => $sys->name,
+                    'domain' => $sys->domain
+                ];
+            })->toArray()
+        ]);
         
         $totalReceived = 0;
         $errors = [];
 
         foreach ($connectedSystems as $system) {
+            $targetUrl = rtrim($system->domain, '/') . '/api/get-pending-transfers';
+            
+            Log::info('Calling external system', [
+                'system_name' => $system->name,
+                'system_id' => $system->id,
+                'target_url' => $targetUrl,
+                'receiver_system_domain' => $currentSystemUrl
+            ]);
+            
             try {
                 // استدعاء endpoint في النظام المرسل للاستعلام عن التحويلات المعلقة
                 $response = Http::timeout(10)
@@ -493,13 +522,24 @@ class TransfersController extends Controller
                         'API-Key' => $system->api_key,
                         'Content-Type' => 'application/json',
                     ])
-                    ->post($system->domain . '/api/get-pending-transfers', [
-                        'receiver_system_domain' => config('app.url')
+                    ->post($targetUrl, [
+                        'receiver_system_domain' => $currentSystemUrl
                     ]);
+
+                Log::info('Response received from external system', [
+                    'system_name' => $system->name,
+                    'status' => $response->status(),
+                    'successful' => $response->successful()
+                ]);
 
                 if ($response->successful()) {
                     $responseData = $response->json();
                     $pendingTransfers = $responseData['transfers'] ?? [];
+
+                    Log::info('Pending transfers from external system', [
+                        'system_name' => $system->name,
+                        'transfers_count' => count($pendingTransfers)
+                    ]);
 
                     foreach ($pendingTransfers as $pendingTransfer) {
                         // التحقق من أن التحويل غير موجود مسبقاً (تجنب التكرار)
@@ -529,27 +569,52 @@ class TransfersController extends Controller
                             ]);
 
                             $totalReceived++;
+                            
+                            Log::info('Transfer created', [
+                                'transfer_no' => $no,
+                                'external_transfer_no' => $pendingTransfer['no'],
+                                'system_name' => $system->name
+                            ]);
                         }
                     }
                 } else {
+                    $errorMsg = 'فشل الاتصال: ' . $response->status();
                     $errors[] = [
                         'system' => $system->name,
-                        'error' => 'فشل الاتصال: ' . $response->status()
+                        'error' => $errorMsg
                     ];
+                    
+                    Log::warning('Failed to get pending transfers from external system', [
+                        'system_name' => $system->name,
+                        'status' => $response->status(),
+                        'body' => $response->body()
+                    ]);
                 }
             } catch (\Exception $e) {
+                $errorMsg = $e->getMessage();
                 $errors[] = [
                     'system' => $system->name,
-                    'error' => $e->getMessage()
+                    'error' => $errorMsg
                 ];
+                
+                Log::error('Exception when calling external system', [
+                    'system_name' => $system->name,
+                    'target_url' => $targetUrl,
+                    'error' => $errorMsg,
+                    'trace' => $e->getTraceAsString()
+                ]);
             }
         }
 
-        return Response::json([
+        $result = [
             'success' => true,
             'total_received' => $totalReceived,
             'errors' => $errors
-        ], 200);
+        ];
+        
+        Log::info('checkPendingExternalTransfers completed', $result);
+
+        return Response::json($result, 200);
     }
 
     /**
