@@ -55,13 +55,10 @@ watch(() => props.show, async (newVal) => {
           position: "bottom-right",
           rtl: true,
         });
-        emit('refresh');
-      } else {
-        console.log('ℹ️ [DEBUG] No transfers received', {
-          total_received: response.data?.total_received,
-          errors: response.data?.errors
-        });
       }
+      
+      // تحديث القائمة دائماً بعد التحقق من التحويلات المعلقة
+      emit('refresh');
     } catch (error) {
       console.error('❌ [DEBUG] Error checking pending transfers:', {
         message: error.message,
