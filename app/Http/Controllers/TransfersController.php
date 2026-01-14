@@ -210,7 +210,6 @@ class TransfersController extends Controller
         
         $amount = $request->amount;
         $sender_note = $request->sender_note ?? '';
-        $note = $request->note ?? '';
         $sender_system_domain = $request->sender_system_domain;
         $transfer_no = $request->transfer_no;
 
@@ -235,7 +234,6 @@ class TransfersController extends Controller
             'sender_id' => $mainBoxUser->id ?? null,
             'amount' => $amount,
             'sender_note' => $sender_note,
-            'note' => $note,
             'is_external' => true,
             'external_system_id' => $sourceSystem->id ?? null,
             'external_system_domain' => $sender_system_domain,

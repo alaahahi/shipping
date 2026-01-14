@@ -17,7 +17,6 @@ class Transfers extends Model
         'user_id',
         'amount',
         'currency',
-        'note',
         'stauts',
         'sender_id',
         'receiver_id',

@@ -69,7 +69,6 @@ class ExternalTransferService
             'amount' => $transfer->amount,
             'currency' => $transfer->currency ?? '$',
             'sender_note' => $transfer->sender_note,
-            'note' => $transfer->note,
             'sender_system_domain' => env('APP_URL'),
             'transfer_no' => $transfer->no,
         ];
