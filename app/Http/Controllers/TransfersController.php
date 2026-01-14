@@ -449,17 +449,30 @@ class TransfersController extends Controller
         $receiverSystemDomain = rtrim($request->receiver_system_domain, '/');
         $currentSystemDomain = rtrim(config('app.url'), '/');
 
+        Log::info('getPendingTransfers called', [
+            'current_system' => $currentSystemDomain,
+            'receiver_system_domain' => $receiverSystemDomain
+        ]);
+
         // التحقق من أن النظام المستقبل موجود في الأنظمة المتصلة
         $receiverSystem = ConnectedSystem::where('domain', $receiverSystemDomain)
             ->where('is_active', true)
             ->first();
 
         if (!$receiverSystem) {
+            Log::warning('Receiver system not found', [
+                'receiver_system_domain' => $receiverSystemDomain
+            ]);
             return Response::json([
                 'success' => false,
                 'error' => 'النظام المستقبل غير موجود أو غير مفعل'
             ], 404);
         }
+
+        Log::info('Receiver system found', [
+            'receiver_system_id' => $receiverSystem->id,
+            'receiver_system_name' => $receiverSystem->name
+        ]);
 
         // جلب التحويلات المعلقة الموجهة للنظام المستقبل
         $pendingTransfers = Transfers::where('is_external', true)
@@ -467,6 +480,20 @@ class TransfersController extends Controller
             ->whereIn('stauts', ['قيد الإرسال', 'قيد التسليم'])
             ->orderBy('created_at', 'desc')
             ->get();
+
+        Log::info('Pending transfers found', [
+            'count' => $pendingTransfers->count(),
+            'transfers' => $pendingTransfers->map(function($t) {
+                return [
+                    'id' => $t->id,
+                    'no' => $t->no,
+                    'amount' => $t->amount,
+                    'stauts' => $t->stauts,
+                    'external_system_domain' => $t->external_system_domain,
+                    'external_transfer_id' => $t->external_transfer_id
+                ];
+            })->toArray()
+        ]);
 
         return Response::json([
             'success' => true,
