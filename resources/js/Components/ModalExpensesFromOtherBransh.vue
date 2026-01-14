@@ -32,7 +32,26 @@ watch(() => props.allTransfers, (newTransfers) => {
 watch(() => props.show, async (newVal) => {
   if (newVal) {
     try {
-      const response = await axios.post('/api/check-pending-external-transfers');
+      const apiUrl = '/api/check-pending-external-transfers';
+      const currentDomain = window.location.origin;
+      
+      console.log('🔍 [DEBUG] ModalExpensesFromOtherBransh - Checking pending transfers', {
+        currentDomain: currentDomain,
+        apiUrl: apiUrl,
+        fullUrl: currentDomain + apiUrl,
+        timestamp: new Date().toISOString()
+      });
+      
+      const response = await axios.post(apiUrl);
+      
+      console.log('✅ [DEBUG] Response received', {
+        status: response.status,
+        data: response.data,
+        total_received: response.data?.total_received,
+        errors: response.data?.errors,
+        success: response.data?.success
+      });
+      
       if (response.data.success && response.data.total_received > 0) {
         toast.success(`تم استقبال ${response.data.total_received} تحويل معلق`, {
           timeout: 3000,
@@ -40,9 +59,20 @@ watch(() => props.show, async (newVal) => {
           rtl: true,
         });
         emit('refresh');
+      } else {
+        console.log('ℹ️ [DEBUG] No transfers received', {
+          total_received: response.data?.total_received,
+          errors: response.data?.errors
+        });
       }
     } catch (error) {
-      console.error('Error checking pending transfers:', error);
+      console.error('❌ [DEBUG] Error checking pending transfers:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: error.config?.url,
+        fullUrl: error.config?.baseURL + error.config?.url
+      });
       // لا نعرض خطأ للمستخدم، فقط نستمر
     }
   }
