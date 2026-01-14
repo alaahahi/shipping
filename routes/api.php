@@ -51,7 +51,8 @@ Route::post('/sync-monitor/restore-selected', [SyncMonitorController::class, 're
 Route::get('/sync-monitor/download-backup', [SyncMonitorController::class, 'downloadBackup'])->name('sync.monitor.download.backup');
 Route::delete('/sync-monitor/backup/delete', [SyncMonitorController::class, 'deleteBackup'])->name('sync.monitor.backup.delete');
 Route::post('get-pending-transfers', [TransfersController::class, 'getPendingTransfers'])->name('getPendingTransfers');
-
+Route::post('receive-transfer', [TransfersController::class, 'receiveExternalTransfer'])->name('receiveExternalTransfer');
+Route::post('confirm-external-transfer', [TransfersController::class, 'confirmExternalTransfer'])->name('confirmExternalTransfer');
 Route::get('/debug-owner-cache/{ownerId}', function ($ownerId) {
     $keys = [
         'main_account', 'in_account', 'out_account', 'debt_account',
@@ -172,12 +173,7 @@ Route::post('check-pending-external-transfers',[TransfersController::class, 'che
 Route::post('archiveTransfer',[TransfersController::class, 'archiveTransfer'])->name('archiveTransfer');
 Route::post('unarchiveTransfer',[TransfersController::class, 'unarchiveTransfer'])->name('unarchiveTransfer');
 
-// Routes محمية بـ API_KEY middleware للتحويلات الخارجية
-Route::middleware('api.key')->group(function () {
-    Route::post('receive-transfer', [TransfersController::class, 'receiveExternalTransfer'])->name('receiveExternalTransfer');
-    Route::post('confirm-external-transfer', [TransfersController::class, 'confirmExternalTransfer'])->name('confirmExternalTransfer');
-});
-
+ 
 // Routes عادية للتحويلات الخارجية
 Route::get('connected-systems', [TransfersController::class, 'getConnectedSystems'])->name('getConnectedSystems');
 Route::get('all-connected-systems', [TransfersController::class, 'getAllConnectedSystems'])->name('getAllConnectedSystems');

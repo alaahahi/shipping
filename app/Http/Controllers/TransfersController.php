@@ -321,7 +321,12 @@ class TransfersController extends Controller
             return Response::json(['error' => 'التحويل غير موجود'], 404);
         }
 
-        $owner_id = 1; // يمكن تعديله حسب الحاجة
+        // الحصول على owner_id من التحويل
+        $senderUser = User::find($transfer->sender_id);
+        if (!$senderUser) {
+            return Response::json(['error' => 'المستخدم المرسل غير موجود'], 404);
+        }
+        $owner_id = $senderUser->owner_id;
         $mainBoxUser = $this->mainBox->where('owner_id', $owner_id)->first();
         
         // تحديث التحويل
@@ -332,7 +337,7 @@ class TransfersController extends Controller
             'stauts' => 'تم الأستلام'
         ]);
 
-        // تحديث الحسابات في النظام المرسل
+        // تحديث الحسابات في النظام المرسل - سحب المبلغ من الصندوق
         $desc = ' تحويل إلى نظام خارجي مبلغ ' . $transfer->amount . ' ' . $transfer->sender_note . ' ' . $transfer->receiver_note . ' ' . 'أجور التحويل ' . $transfer->fee . ' المبلغ الصافي ' . ($transfer->amount - $transfer->fee) . ' دولار ';
         if ($transfer->sender_id) {
             $this->accountingController->decreaseWallet($transfer->amount, $desc, $transfer->sender_id, $transfer->sender_id, 'App\Models\User');
