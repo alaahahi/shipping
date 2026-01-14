@@ -32,46 +32,86 @@ watch(() => props.allTransfers, (newTransfers) => {
 watch(() => props.show, async (newVal) => {
   if (newVal) {
     try {
-      const apiUrl = '/api/check-pending-external-transfers';
       const currentDomain = window.location.origin;
       
-      console.log('🔍 [DEBUG] ModalExpensesFromOtherBransh - Checking pending transfers', {
+      console.log('🔍 [DEBUG] ModalExpensesFromOtherBransh - Checking pending transfers from connected systems', {
         currentDomain: currentDomain,
-        apiUrl: apiUrl,
-        fullUrl: currentDomain + apiUrl,
         timestamp: new Date().toISOString()
       });
       
-      const response = await axios.post(apiUrl);
+      // جلب الأنظمة المتصلة
+      const systemsResponse = await axios.get('/api/all-connected-systems');
+      const connectedSystems = systemsResponse.data.filter(system => system.is_active);
       
-      console.log('✅ [DEBUG] Response received', {
-        status: response.status,
-        data: response.data,
-        total_received: response.data?.total_received,
-        errors: response.data?.errors,
-        success: response.data?.success
+      console.log('📡 [DEBUG] Connected systems found', {
+        count: connectedSystems.length,
+        systems: connectedSystems.map(s => ({ id: s.id, name: s.name, domain: s.domain }))
       });
       
-      if (response.data.success && response.data.total_received > 0) {
-        toast.success(`تم استقبال ${response.data.total_received} تحويل معلق`, {
+      let totalReceived = 0;
+      const errors = [];
+      
+      // استدعاء API من كل نظام متصل مباشرة
+      for (const system of connectedSystems) {
+        try {
+          const apiUrl = `${system.domain}/api/get-pending-transfers`;
+          
+          console.log('🔄 [DEBUG] Calling external system', {
+            systemName: system.name,
+            systemDomain: system.domain,
+            apiUrl: apiUrl,
+            receiverDomain: currentDomain
+          });
+          
+          const response = await axios.post(apiUrl, {
+            receiver_system_domain: currentDomain
+          }, {
+            headers: {
+              'API-Key': system.api_key,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          console.log('✅ [DEBUG] Response from external system', {
+            systemName: system.name,
+            status: response.status,
+            transfersCount: response.data?.transfers?.length || 0
+          });
+          
+          if (response.data.success && response.data.transfers && response.data.transfers.length > 0) {
+            totalReceived += response.data.transfers.length;
+          }
+        } catch (error) {
+          console.error('❌ [DEBUG] Error calling external system', {
+            systemName: system.name,
+            systemDomain: system.domain,
+            error: error.message,
+            response: error.response?.data
+          });
+          errors.push({
+            system: system.name,
+            error: error.response?.data?.error || error.message
+          });
+        }
+      }
+      
+      if (totalReceived > 0) {
+        toast.success(`تم استقبال ${totalReceived} تحويل معلق`, {
           timeout: 3000,
           position: "bottom-right",
           rtl: true,
         });
         emit('refresh');
       } else {
-        console.log('ℹ️ [DEBUG] No transfers received', {
-          total_received: response.data?.total_received,
-          errors: response.data?.errors
+        console.log('ℹ️ [DEBUG] No transfers received from any system', {
+          errors: errors
         });
       }
     } catch (error) {
       console.error('❌ [DEBUG] Error checking pending transfers:', {
         message: error.message,
         response: error.response?.data,
-        status: error.response?.status,
-        url: error.config?.url,
-        fullUrl: error.config?.baseURL + error.config?.url
+        status: error.response?.status
       });
       // لا نعرض خطأ للمستخدم، فقط نستمر
     }
