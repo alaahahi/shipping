@@ -16,15 +16,18 @@ class VerifyApiKey
      */
     public function handle(Request $request, Closure $next)
     {
-        $apiKey = $request->header('X-API-Key') ?? $request->get('api_key');
+        // التحقق من API-Key header أو X-API-Key أو api_key parameter
+        $apiKey = $request->header('API-Key') 
+                ?? $request->header('X-API-Key') 
+                ?? $request->get('api_key');
         $expectedKey = env('API_KEY');
 
         if (!$expectedKey) {
             return response()->json(['error' => 'API key not configured'], 500);
         }
 
-        if ($apiKey !== $expectedKey) {
-            return response()->json(['error' => 'Invalid API key'], 401);
+        if (!$apiKey || $apiKey !== $expectedKey) {
+            return response()->json(['error' => 'Invalid or missing API key'], 401);
         }
 
         return $next($request);

@@ -27,6 +27,8 @@ use App\Http\Controllers\LicenseController;
 use App\Http\Controllers\AdminLicenseController;
 use App\Http\Controllers\DatabaseStatusController;
 use App\Http\Controllers\StatisticsController;
+use App\Http\Controllers\SystemConfigController;
+use App\Http\Controllers\CarHistoryController;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Cache\FileStore;
@@ -135,6 +137,7 @@ Route::post('updateClientPhone',[UserController::class, 'updateClientPhone'])->n
 
 // Internal Sales Routes
 Route::post('toggleInternalSales',[UserController::class, 'toggleInternalSales'])->name('toggleInternalSales');
+Route::post('toggleShowInDashboard',[UserController::class, 'toggleShowInDashboard'])->name('toggleShowInDashboard');
 Route::get('getInternalSales',[UserController::class, 'getInternalSales'])->name('getInternalSales');
 Route::get('getUnsoldCars',[UserController::class, 'getUnsoldCars'])->name('getUnsoldCars');
 Route::get('getAllClients',[UserController::class, 'getAllClients'])->name('getAllClients');
@@ -161,6 +164,26 @@ Route::post('addTransfers',[TransfersController::class, 'addTransfers'])->name('
 Route::get('transfers',[TransfersController::class, 'index'])->name('transfers');
 Route::post('confirmTransfers',[TransfersController::class, 'confirmTransfers'])->name('confirmTransfers');
 Route::post('cancelTransfers',[TransfersController::class, 'cancelTransfers'])->name('cancelTransfers');
+Route::post('archiveTransfer',[TransfersController::class, 'archiveTransfer'])->name('archiveTransfer');
+Route::post('unarchiveTransfer',[TransfersController::class, 'unarchiveTransfer'])->name('unarchiveTransfer');
+
+// Routes محمية بـ API_KEY middleware للتحويلات الخارجية
+Route::middleware('api.key')->group(function () {
+    Route::post('receive-transfer', [TransfersController::class, 'receiveExternalTransfer'])->name('receiveExternalTransfer');
+    Route::post('confirm-external-transfer', [TransfersController::class, 'confirmExternalTransfer'])->name('confirmExternalTransfer');
+});
+
+// Routes عادية للتحويلات الخارجية
+Route::get('connected-systems', [TransfersController::class, 'getConnectedSystems'])->name('getConnectedSystems');
+Route::get('all-connected-systems', [TransfersController::class, 'getAllConnectedSystems'])->name('getAllConnectedSystems');
+Route::post('connected-systems', [TransfersController::class, 'storeConnectedSystem'])->name('storeConnectedSystem');
+Route::put('connected-systems/{id}', [TransfersController::class, 'updateConnectedSystem'])->name('updateConnectedSystem');
+Route::delete('connected-systems/{id}', [TransfersController::class, 'deleteConnectedSystem'])->name('deleteConnectedSystem');
+Route::post('send-external-transfer', [TransfersController::class, 'sendExternalTransfer'])->name('sendExternalTransfer');
+
+// System Config routes
+Route::get('system-config', [SystemConfigController::class, 'index'])->name('systemConfig.index');
+Route::put('system-config', [SystemConfigController::class, 'update'])->name('systemConfig.update');
 
 
 Route::get('getIndexAccountsSelas',[AccountingController::class, 'getIndexAccountsSelas'])->name('getIndexAccountsSelas');

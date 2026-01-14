@@ -68,6 +68,14 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
 
     Route::get('accounting',[AccountingController::class,'index'])->name('accounting');
     
+    Route::get('system-settings', function () {
+        return Inertia::render('Admin/SystemSettings');
+    })->name('systemSettings');
+    
+    Route::get('connected-systems', function () {
+        return Inertia::render('Admin/ConnectedSystems');
+    })->name('connectedSystems');
+    
     Route::get('dashboard/statistics',[StatisticsController::class,'index'])->name('dashboard.statistics');
     
     // صفحة تفاصيل الجدول
@@ -214,9 +222,9 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
     Route::get('damage_report',[CarDamageReportController::class, 'index'])->name('damage_report.index');
     Route::get('damage_report/{id}/edit', [CarDamageReportController::class, 'edit'])->name('damage_report.edit');
 
-    // Car History routes
-    Route::get('car/{carId}/history', [CarHistoryController::class, 'index'])->name('car.history');
-    Route::get('car/{carId}/history/{historyId}', [CarHistoryController::class, 'show'])->name('car.history.show');
+    // Car History routes - commented out until CarHistoryController is created
+    // Route::get('car/{carId}/history', [CarHistoryController::class, 'index'])->name('car.history');
+    // Route::get('car/{carId}/history/{historyId}', [CarHistoryController::class, 'show'])->name('car.history.show');
 
  });
 

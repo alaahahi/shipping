@@ -16,6 +16,9 @@ import edit from "@/Components/icon/edit.vue";
 import ModalDelClient from "@/Components/ModalDelCar.vue";
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
+import { useToast } from "vue-toastification";
+
+const toast = useToast();
 
 let showModalEditClient = ref(false);
 let showModalAddClient = ref(false);
@@ -151,6 +154,29 @@ async function toggleInternalSalesQuick(user) {
   } catch (error) {
     console.error('Error toggling internal sales:', error);
     toast.error('فشل تحديث حالة المبيعات الداخلية', {
+      timeout: 3000,
+      position: "bottom-right",
+      rtl: true,
+    });
+  }
+}
+
+async function toggleShowInDashboardQuick(user) {
+  try {
+    const response = await axios.post('/api/toggleShowInDashboard', {
+      client_id: user.id,
+      show_in_dashboard: !(user.show_in_dashboard || false)
+    });
+    // تحديث القيمة في القائمة مباشرة
+    user.show_in_dashboard = response.data.show_in_dashboard;
+    toast.success('تم تحديث حالة العرض في لوحة التحكم', {
+      timeout: 2000,
+      position: "bottom-right",
+      rtl: true,
+    });
+  } catch (error) {
+    console.error('Error toggling show in dashboard:', error);
+    toast.error('فشل تحديث حالة العرض في لوحة التحكم', {
       timeout: 3000,
       position: "bottom-right",
       rtl: true,
@@ -343,6 +369,7 @@ function confirmDelClient(V) {
                                         <th className="px-1 py-2 text-base">{{ $t('phoneNumber') }}</th>
                                         <th className="px-1 py-2 text-base">{{ $t('debt') }}</th>
                                         <th className="px-1 py-2 text-base">المبيعات الداخلية</th>
+                                        <th className="px-1 py-2 text-base">عرض في لوحة التحكم</th>
                                         <th className="px-1 py-2 text-base">{{ $t('execute') }}</th>       
                                     </tr>
                                 </thead>
@@ -362,6 +389,16 @@ function confirmDelClient(V) {
                                             :title="user.has_internal_sales ? 'المبيعات الداخلية مفعلة - اضغط لإلغاء التفعيل' : 'المبيعات الداخلية معطلة - اضغط للتفعيل'"
                                           >
                                             {{ user.has_internal_sales ? '✓ مفعل' : '✗ معطل' }}
+                                          </button>
+                                        </td>
+                                        <td className="border border-white  dark:border-gray-800 text-center px-4 py-2">
+                                          <button
+                                            @click="toggleShowInDashboardQuick(user)"
+                                            class="px-2 py-1 rounded text-sm font-semibold"
+                                            :class="user.show_in_dashboard ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'"
+                                            :title="user.show_in_dashboard ? 'العرض في لوحة التحكم مفعل - اضغط لإلغاء التفعيل' : 'العرض في لوحة التحكم معطل - اضغط للتفعيل'"
+                                          >
+                                            {{ user.show_in_dashboard ? '✓ مفعل' : '✗ معطل' }}
                                           </button>
                                         </td>
                                         <td className="border border-white  dark:border-gray-800 text-center px-4 py-2"  style="min-height: 42px;">

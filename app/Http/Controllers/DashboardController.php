@@ -490,6 +490,11 @@ class DashboardController extends Controller
             }
         }
             $dataToUpdate = $request->all();
+            
+            // Ensure car_number is preserved as string (don't convert to integer)
+            if ($request->has('car_number')) {
+                $dataToUpdate['car_number'] = (string) $request->car_number;
+            }
 
             // If 'purchase_price' and 'paid_amount' are calculated separately, add them to $dataToUpdate
             $dataToUpdate['total']=$total;
@@ -559,6 +564,10 @@ class DashboardController extends Controller
         $this->accountingController->increaseWallet($total_s-$car->total_s, $descClient,$car->client_id,$car->id,'App\Models\User');
             // Extract the relevant fields from the $request object
             $dataToUpdate = $request->all();
+            // Ensure car_number is preserved as string (don't convert to integer)
+            if ($request->has('car_number')) {
+                $dataToUpdate['car_number'] = (string) $request->car_number;
+            }
             // If 'purchase_price' and 'paid_amount' are calculated separately, add them to $dataToUpdate
             $dataToUpdate['total_s']=$total_s;
             $dataToUpdate['profit']=$profit;

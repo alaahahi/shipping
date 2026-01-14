@@ -1,6 +1,7 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import print from "@/Components/icon/print.vue";
+import axios from 'axios';
 
 const activeTab = ref('add'); // Set the default active tab
 
@@ -13,6 +14,52 @@ const props = defineProps({
   allTransfers:Array,
   formData:Object
 });
+
+const emit = defineEmits(['a', 'close']);
+
+const transferType = ref('local'); // 'local' or 'external'
+const connectedSystems = ref([]);
+const selectedSystemId = ref(null);
+
+onMounted(() => {
+  loadConnectedSystems();
+});
+
+function loadConnectedSystems() {
+  axios.get('/api/connected-systems')
+    .then(response => {
+      connectedSystems.value = response.data;
+    })
+    .catch(error => {
+      console.error('Error loading connected systems:', error);
+    });
+}
+
+function handleSubmit() {
+  if (transferType.value === 'external') {
+    // إرسال تحويل خارجي
+    const data = {
+      amount: props.formData.amount,
+      sender_note: props.formData.note || '',
+      note: props.formData.note || '',
+      external_system_id: selectedSystemId.value
+    };
+    axios.post('/api/send-external-transfer', data)
+      .then(response => {
+        alert('تم إرسال التحويل الخارجي بنجاح');
+        transferType.value = 'local';
+        selectedSystemId.value = null;
+        emit('close');
+      })
+      .catch(error => {
+        console.error('Error sending external transfer:', error);
+        alert('حدث خطأ أثناء إرسال التحويل الخارجي: ' + (error.response?.data?.error || error.message));
+      });
+  } else {
+    // تحويل محلي عادي
+    emit('a', props.formData);
+  }
+}
 
 </script>
   <template>
@@ -48,6 +95,29 @@ const props = defineProps({
                 <div v-if="activeTab =='add'"> 
                 <div >
                           <h1 class="text-center dark:text-gray-200 mt-4"> اضافة دفعة</h1>
+                          <div className="mb-4 mx-5">
+                          <label  class="dark:text-gray-200" for="transfer_type" >نوع التحويل</label>
+                          <select
+                            id="transfer_type"
+                            v-model="transferType"
+                            class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                            @change="selectedSystemId = null">
+                            <option value="local">تحويل محلي</option>
+                            <option value="external">تحويل خارجي</option>
+                          </select>
+                          </div>
+                          <div v-if="transferType === 'external'" className="mb-4 mx-5">
+                          <label  class="dark:text-gray-200" for="external_system" >اختر النظام المستقبل</label>
+                          <select
+                            id="external_system"
+                            v-model="selectedSystemId"
+                            class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900">
+                            <option value="">-- اختر النظام --</option>
+                            <option v-for="system in connectedSystems" :key="system.id" :value="system.id">
+                              {{ system.name }} ({{ system.domain }})
+                            </option>
+                          </select>
+                          </div>
                           <div className="mb-4 mx-5">
                           <label  class="dark:text-gray-200" for="expens_amount" >المبلغ بالدولار</label>
                           <input
@@ -119,7 +189,12 @@ const props = defineProps({
                     @click="$emit('close');activeTab = 'add'">{{ $t('cancel') }}</button>
                   </div>
               <div class="basis-1/2 px-4">
-                <button class="modal-default-button py-3  bg-rose-500 rounded col-6"  @click="$emit('a',formData);formData=''" :disabled="!(formData.amount)">{{ $t('yes') }}</button>
+                <button 
+                  class="modal-default-button py-3  bg-rose-500 rounded col-6"  
+                  @click="handleSubmit" 
+                  :disabled="!(formData.amount) || (transferType === 'external' && !selectedSystemId)">
+                  {{ $t('yes') }}
+                </button>
                 </div>
 
             </div>

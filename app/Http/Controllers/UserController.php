@@ -129,6 +129,7 @@ class UserController extends Controller
                     'users.name', 
                     'users.phone', 
                     'users.has_internal_sales',
+                    'users.show_in_dashboard',
                     'users.created_at'
                 ])
                 ->where('users.owner_id', $owner_id)
@@ -303,6 +304,26 @@ class UserController extends Controller
         return response()->json([
             'message' => 'Internal sales status updated successfully',
             'has_internal_sales' => $client->has_internal_sales,
+        ], 200);
+    }
+
+    public function toggleShowInDashboard(Request $request)
+    {
+        $validated = Validator::make($request->all(), [
+            'client_id' => 'required|integer|exists:users,id',
+            'show_in_dashboard' => 'required|boolean',
+        ])->validate();
+
+        $client = User::where('id', $validated['client_id'])
+            ->where('owner_id', Auth::user()->owner_id)
+            ->firstOrFail();
+
+        $client->show_in_dashboard = $validated['show_in_dashboard'];
+        $client->save();
+
+        return response()->json([
+            'message' => 'Show in dashboard status updated successfully',
+            'show_in_dashboard' => $client->show_in_dashboard,
         ], 200);
     }
 

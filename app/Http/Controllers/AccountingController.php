@@ -110,8 +110,19 @@ class AccountingController extends Controller
         $owner_id=Auth::user()->owner_id;
         $boxes = User::with('wallet')->where('owner_id',$owner_id)->where('email', 'mainBox@account.com')->get();
         $this->accounting->loadAccounts(Auth::user()->owner_id);
+        
+        // جلب المحافظ المميزة للعرض في لوحة التحكم
+        $flaggedWallets = User::with('wallet')
+            ->where('owner_id', $owner_id)
+            ->where('show_in_dashboard', true)
+            ->whereHas('wallet')
+            ->get();
 
-        return Inertia::render('Accounting/Index', ['boxes'=>$boxes,'accounts'=>$this->accounting->mainAccount()]);
+        return Inertia::render('Accounting/Index', [
+            'boxes'=>$boxes,
+            'accounts'=>$this->accounting->mainAccount(),
+            'flaggedWallets'=>$flaggedWallets
+        ]);
     }
     public function wallet(Request $request)
     {  

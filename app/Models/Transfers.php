@@ -25,7 +25,12 @@ class Transfers extends Model
         'updated_at',
         'sender_note',
         'receiver_note',
-        'fee'
+        'fee',
+        'is_archived',
+        'is_external',
+        'external_system_id',
+        'external_transfer_id',
+        'external_system_domain'
     ];
 
     public function morphed()
@@ -34,5 +39,15 @@ class Transfers extends Model
     }
 
     protected $dates = ['deleted_at']; // Define the deleted_at column as a date
+
+    protected $casts = [
+        'is_external' => 'boolean',
+        'is_archived' => 'boolean',
+    ];
+
+    public function connectedSystem()
+    {
+        return $this->belongsTo(ConnectedSystem::class, 'external_system_id');
+    }
 
   }

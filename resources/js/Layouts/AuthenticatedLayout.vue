@@ -186,6 +186,14 @@ const switchLocale = (locale) => {
                 عاطل
                 </NavLink>
               </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1">
+                <NavLink
+                  :href="route('systemSettings')"
+                  :active="route().current('systemSettings')"
+                >
+                  إعدادات النظام
+                </NavLink>
+              </div>
               <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                 <NavLink
                   :href="route('dubai')"
@@ -479,6 +487,13 @@ const switchLocale = (locale) => {
                 v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==7)"
               >
               عاطل 
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
+                :href="route('systemSettings')"
+                :active="route().current('systemSettings')"
+                v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1"
+              >
+              إعدادات النظام
               </ResponsiveNavLink>
 
               <ResponsiveNavLink
