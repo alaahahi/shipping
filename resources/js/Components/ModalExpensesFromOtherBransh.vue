@@ -18,6 +18,8 @@ const props = defineProps({
   formData:Object
 });
 
+const emit = defineEmits(['close', 'refresh']);
+
 // إنشاء reactive state محلي للتحويلات
 const localTransfers = ref([...props.allTransfers]);
 
@@ -25,6 +27,26 @@ const localTransfers = ref([...props.allTransfers]);
 watch(() => props.allTransfers, (newTransfers) => {
   localTransfers.value = [...newTransfers];
 }, { deep: true, immediate: true });
+
+// التحقق من التحويلات المعلقة عند فتح النافذة
+watch(() => props.show, async (newVal) => {
+  if (newVal) {
+    try {
+      const response = await axios.post('/api/check-pending-external-transfers');
+      if (response.data.success && response.data.total_received > 0) {
+        toast.success(`تم استقبال ${response.data.total_received} تحويل معلق`, {
+          timeout: 3000,
+          position: "bottom-right",
+          rtl: true,
+        });
+        emit('refresh');
+      }
+    } catch (error) {
+      console.error('Error checking pending transfers:', error);
+      // لا نعرض خطأ للمستخدم، فقط نستمر
+    }
+  }
+});
 
 // تصفية التحويلات حسب الحالة
 const activeTransfers = computed(() => {

@@ -611,6 +611,7 @@ function getOrangeColorClass(index) {
             :GenExpenses="GenExpenses"
             :allTransfers="allTransfers"
             @a="conGenfirmExpenses($event)"
+            @refresh="getTransfers"
             @close="showModalExpensesFromOtherBransh = false">
         <template #header>
           </template>

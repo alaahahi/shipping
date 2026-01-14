@@ -167,6 +167,7 @@ Route::post('addTransfers',[TransfersController::class, 'addTransfers'])->name('
 Route::get('transfers',[TransfersController::class, 'index'])->name('transfers');
 Route::post('confirmTransfers',[TransfersController::class, 'confirmTransfers'])->name('confirmTransfers');
 Route::post('cancelTransfers',[TransfersController::class, 'cancelTransfers'])->name('cancelTransfers');
+Route::post('check-pending-external-transfers',[TransfersController::class, 'checkPendingExternalTransfers'])->name('checkPendingExternalTransfers');
 Route::post('archiveTransfer',[TransfersController::class, 'archiveTransfer'])->name('archiveTransfer');
 Route::post('unarchiveTransfer',[TransfersController::class, 'unarchiveTransfer'])->name('unarchiveTransfer');
 
@@ -174,6 +175,7 @@ Route::post('unarchiveTransfer',[TransfersController::class, 'unarchiveTransfer'
 Route::middleware('api.key')->group(function () {
     Route::post('receive-transfer', [TransfersController::class, 'receiveExternalTransfer'])->name('receiveExternalTransfer');
     Route::post('confirm-external-transfer', [TransfersController::class, 'confirmExternalTransfer'])->name('confirmExternalTransfer');
+    Route::post('get-pending-transfers', [TransfersController::class, 'getPendingTransfers'])->name('getPendingTransfers');
 });
 
 // Routes عادية للتحويلات الخارجية

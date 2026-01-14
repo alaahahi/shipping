@@ -63,19 +63,68 @@ class TransfersController extends Controller
         return Response::json($transfers, 200);    
     }
 
-    public function addTransfers()
+    public function addTransfers(Request $request)
     {
-        $owner_id=Auth::user()->owner_id;
+        $owner_id = Auth::user()->owner_id;
+        $amount = $request->input('amount', $request->get('amount', ''));
+        $sender_note = $request->input('sender_note', $request->get('sender_note', ''));
+        $external_system_id = $request->input('external_system_id');
+        
         $maxNo = Transfers::max('no') ?? 0;
         $no = $maxNo + 1;
-        $tran=Transfers::create([
-            'no'=>$no,
-            'user_id' =>Auth::user()->id,
-            'stauts'=>'قيد التسليم',
-            'sender_id' =>$this->mainBox->where('owner_id',$owner_id)->first()->id,
-            'amount'=> $_GET['amount'] ??'',
-            'sender_note'=>$_GET['sender_note'] ?? '',
-             ]);
+        
+        // إذا كان تحويل خارجي
+        if ($external_system_id) {
+            // التحقق من وجود النظام الخارجي
+            $targetSystem = ConnectedSystem::where('id', $external_system_id)
+                ->where('is_active', true)
+                ->first();
+
+            if (!$targetSystem) {
+                return Response::json(['error' => 'النظام الخارجي غير موجود أو غير مفعل'], 404);
+            }
+
+            // إنشاء تحويل خارجي
+            $transfer = Transfers::create([
+                'no' => $no,
+                'user_id' => Auth::user()->id,
+                'stauts' => 'قيد الإرسال',
+                'sender_id' => $this->mainBox->where('owner_id', $owner_id)->first()->id,
+                'amount' => $amount,
+                'sender_note' => $sender_note,
+                'is_external' => true,
+                'external_system_id' => $external_system_id,
+                'external_system_domain' => $targetSystem->domain,
+            ]);
+
+            // إرسال التحويل إلى النظام الخارجي
+            $result = $this->externalTransferService->sendTransfer($transfer, $targetSystem);
+
+            if ($result['success']) {
+                return Response::json([
+                    'message' => 'تم إرسال التحويل بنجاح',
+                    'transfer' => $transfer->fresh()
+                ], 200);
+            } else {
+                // تحديث حالة التحويل إلى فشل
+                $transfer->update(['stauts' => 'فشل الإرسال']);
+                return Response::json([
+                    'error' => 'فشل إرسال التحويل',
+                    'details' => $result['error']
+                ], 500);
+            }
+        }
+        
+        // تحويل محلي عادي
+        $tran = Transfers::create([
+            'no' => $no,
+            'user_id' => Auth::user()->id,
+            'stauts' => 'قيد التسليم',
+            'sender_id' => $this->mainBox->where('owner_id', $owner_id)->first()->id,
+            'amount' => $amount,
+            'sender_note' => $sender_note,
+        ]);
+        
         return Response::json('ok', 200);    
     }
     public function confirmTransfers(Request $request){
@@ -384,6 +433,123 @@ class TransfersController extends Controller
     {
         $systems = ConnectedSystem::all();
         return Response::json($systems, 200);
+    }
+
+    /**
+     * API: الحصول على التحويلات المعلقة الموجهة لنظام معين (يتم استدعاؤه من النظام المستقبل)
+     * هذا endpoint يتم استدعاؤه من النظام المستقبل للاستعلام عن التحويلات المعلقة الموجهة إليه
+     */
+    public function getPendingTransfers(Request $request)
+    {
+        $request->validate([
+            'receiver_system_domain' => 'required|string',
+        ]);
+
+        $receiverSystemDomain = rtrim($request->receiver_system_domain, '/');
+        $currentSystemDomain = rtrim(config('app.url'), '/');
+
+        // التحقق من أن النظام المستقبل موجود في الأنظمة المتصلة
+        $receiverSystem = ConnectedSystem::where('domain', $receiverSystemDomain)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$receiverSystem) {
+            return Response::json([
+                'success' => false,
+                'error' => 'النظام المستقبل غير موجود أو غير مفعل'
+            ], 404);
+        }
+
+        // جلب التحويلات المعلقة الموجهة للنظام المستقبل
+        $pendingTransfers = Transfers::where('is_external', true)
+            ->where('external_system_domain', $receiverSystemDomain)
+            ->whereIn('stauts', ['قيد الإرسال', 'قيد التسليم'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return Response::json([
+            'success' => true,
+            'transfers' => $pendingTransfers
+        ], 200);
+    }
+
+    /**
+     * التحقق من التحويلات المعلقة من جميع الأنظمة المتصلة وإدخالها في النظام المحلي
+     * يتم استدعاؤه من الواجهة عند فتح نافذة التحويلات من فروع أخرى
+     */
+    public function checkPendingExternalTransfers(Request $request)
+    {
+        $owner_id = Auth::user()->owner_id ?? 1;
+        $connectedSystems = ConnectedSystem::where('is_active', true)->get();
+        
+        $totalReceived = 0;
+        $errors = [];
+
+        foreach ($connectedSystems as $system) {
+            try {
+                // استدعاء endpoint في النظام المرسل للاستعلام عن التحويلات المعلقة
+                $response = Http::timeout(10)
+                    ->withHeaders([
+                        'API-Key' => $system->api_key,
+                        'Content-Type' => 'application/json',
+                    ])
+                    ->post($system->domain . '/api/get-pending-transfers', [
+                        'receiver_system_domain' => config('app.url')
+                    ]);
+
+                if ($response->successful()) {
+                    $responseData = $response->json();
+                    $pendingTransfers = $responseData['transfers'] ?? [];
+
+                    foreach ($pendingTransfers as $pendingTransfer) {
+                        // التحقق من أن التحويل غير موجود مسبقاً (تجنب التكرار)
+                        $existingTransfer = Transfers::where('is_external', true)
+                            ->where('external_system_domain', $system->domain)
+                            ->where('external_transfer_id', $pendingTransfer['no'])
+                            ->first();
+
+                        if (!$existingTransfer) {
+                            // إنشاء تحويل محلي
+                            $maxNo = Transfers::max('no') ?? 0;
+                            $no = $maxNo + 1;
+
+                            $mainBoxUser = $this->mainBox->where('owner_id', $owner_id)->first();
+
+                            Transfers::create([
+                                'no' => $no,
+                                'user_id' => $mainBoxUser->user_id ?? 1,
+                                'stauts' => 'قيد التسليم',
+                                'sender_id' => $mainBoxUser->id ?? null,
+                                'amount' => $pendingTransfer['amount'],
+                                'sender_note' => $pendingTransfer['sender_note'] ?? '',
+                                'is_external' => true,
+                                'external_system_id' => $system->id,
+                                'external_system_domain' => $system->domain,
+                                'external_transfer_id' => $pendingTransfer['no'],
+                            ]);
+
+                            $totalReceived++;
+                        }
+                    }
+                } else {
+                    $errors[] = [
+                        'system' => $system->name,
+                        'error' => 'فشل الاتصال: ' . $response->status()
+                    ];
+                }
+            } catch (\Exception $e) {
+                $errors[] = [
+                    'system' => $system->name,
+                    'error' => $e->getMessage()
+                ];
+            }
+        }
+
+        return Response::json([
+            'success' => true,
+            'total_received' => $totalReceived,
+            'errors' => $errors
+        ], 200);
     }
 
     /**
