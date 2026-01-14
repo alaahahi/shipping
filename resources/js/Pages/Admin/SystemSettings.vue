@@ -289,6 +289,52 @@ function toggleActive(system) {
       });
     });
 }
+
+const testingConnection = ref(false);
+
+function testConnection() {
+  if (!formData.value.domain || !formData.value.api_key) {
+    toast.warning('الرجاء إدخال الدومين و API Key أولاً', {
+      timeout: 2000,
+      position: "bottom-right",
+      rtl: true,
+    });
+    return;
+  }
+
+  testingConnection.value = true;
+  
+  axios.post('/api/test-connection', {
+    domain: formData.value.domain,
+    api_key: formData.value.api_key
+  })
+  .then(response => {
+    if (response.data.success) {
+      toast.success(response.data.message || 'تم التحقق من الاتصال بنجاح', {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true,
+      });
+    } else {
+      toast.error(response.data.message || 'فشل التحقق من الاتصال', {
+        timeout: 3000,
+        position: "bottom-right",
+        rtl: true,
+      });
+    }
+  })
+  .catch(error => {
+    const errorMessage = error.response?.data?.message || error.message || 'حدث خطأ أثناء التحقق من الاتصال';
+    toast.error(errorMessage, {
+      timeout: 3000,
+      position: "bottom-right",
+      rtl: true,
+    });
+  })
+  .finally(() => {
+    testingConnection.value = false;
+  });
+}
 </script>
 
 <template>
@@ -602,13 +648,24 @@ function toggleActive(system) {
 
           <div class="mb-4">
             <InputLabel for="api_key" value="API Key" />
-            <TextInput
-              id="api_key"
-              v-model="formData.api_key"
-              type="text"
-              class="mt-1 block w-full"
-              placeholder="alaa"
-            />
+            <div class="flex gap-2">
+              <TextInput
+                id="api_key"
+                v-model="formData.api_key"
+                type="text"
+                class="mt-1 block flex-1"
+                placeholder="alaa"
+              />
+              <button
+                @click="testConnection"
+                :disabled="testingConnection || !formData.domain || !formData.api_key"
+                class="mt-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                type="button"
+              >
+                <span v-if="testingConnection" class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                <span>{{ testingConnection ? 'جارٍ التحقق...' : 'التحقق من الاتصال' }}</span>
+              </button>
+            </div>
           </div>
 
           <div class="mb-4">

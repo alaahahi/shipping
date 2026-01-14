@@ -385,4 +385,72 @@ class TransfersController extends Controller
         $systems = ConnectedSystem::all();
         return Response::json($systems, 200);
     }
+
+    /**
+     * التحقق من الاتصال بالنظام الخارجي
+     */
+    public function testConnection(Request $request)
+    {
+        $request->validate([
+            'domain' => 'required|string',
+            'api_key' => 'required|string',
+        ]);
+
+        $domain = rtrim($request->domain, '/');
+        $apiKey = $request->api_key;
+
+        try {
+            // محاولة إرسال طلب اختباري للتحقق من الاتصال
+            // نستخدم POST إلى /api/receive-transfer مع بيانات اختبارية
+            // إذا استجاب النظام بـ 422 (validation error) أو 400، فهذا يعني أن الـ endpoint موجود والاتصال يعمل
+            $response = Http::timeout(10)
+                ->withHeaders([
+                    'API-Key' => $apiKey,
+                    'Content-Type' => 'application/json',
+                ])
+                ->post($domain . '/api/receive-transfer', [
+                    'amount' => 1,
+                    'sender_system_domain' => env('APP_URL'),
+                    'transfer_no' => 'test-connection-' . time()
+                ]);
+
+            $statusCode = $response->status();
+            
+            // 200 = نجاح
+            // 422 أو 400 = endpoint موجود ولكن البيانات غير صحيحة (وهذا جيد - يعني الاتصال يعمل و API key صحيح)
+            // 401 = API key خاطئ
+            if ($statusCode === 200) {
+                return Response::json([
+                    'success' => true,
+                    'message' => 'تم التحقق من الاتصال بنجاح'
+                ], 200);
+            } elseif ($statusCode === 422 || $statusCode === 400) {
+                // validation error يعني أن الـ endpoint موجود والاتصال يعمل
+                return Response::json([
+                    'success' => true,
+                    'message' => 'تم التحقق من الاتصال بنجاح'
+                ], 200);
+            } elseif ($statusCode === 401) {
+                return Response::json([
+                    'success' => false,
+                    'message' => 'فشل التحقق: API Key غير صحيح'
+                ], 200);
+            } else {
+                return Response::json([
+                    'success' => false,
+                    'message' => 'فشل الاتصال: كود الحالة ' . $statusCode
+                ], 200);
+            }
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            return Response::json([
+                'success' => false,
+                'message' => 'فشل الاتصال: لا يمكن الوصول إلى النظام الخارجي. تأكد من صحة الدومين والاتصال بالإنترنت'
+            ], 200);
+        } catch (\Exception $e) {
+            return Response::json([
+                'success' => false,
+                'message' => 'خطأ في الاتصال: ' . $e->getMessage()
+            ], 200);
+        }
+    }
 }

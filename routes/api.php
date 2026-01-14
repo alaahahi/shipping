@@ -182,6 +182,7 @@ Route::get('all-connected-systems', [TransfersController::class, 'getAllConnecte
 Route::post('connected-systems', [TransfersController::class, 'storeConnectedSystem'])->name('storeConnectedSystem');
 Route::put('connected-systems/{id}', [TransfersController::class, 'updateConnectedSystem'])->name('updateConnectedSystem');
 Route::delete('connected-systems/{id}', [TransfersController::class, 'deleteConnectedSystem'])->name('deleteConnectedSystem');
+Route::post('test-connection', [TransfersController::class, 'testConnection'])->name('test.connection');
 Route::post('send-external-transfer', [TransfersController::class, 'sendExternalTransfer'])->name('sendExternalTransfer');
 
 // System Config routes
