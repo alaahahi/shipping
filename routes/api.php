@@ -175,8 +175,10 @@ Route::post('unarchiveTransfer',[TransfersController::class, 'unarchiveTransfer'
 Route::middleware('api.key')->group(function () {
     Route::post('receive-transfer', [TransfersController::class, 'receiveExternalTransfer'])->name('receiveExternalTransfer');
     Route::post('confirm-external-transfer', [TransfersController::class, 'confirmExternalTransfer'])->name('confirmExternalTransfer');
-    Route::post('get-pending-transfers', [TransfersController::class, 'getPendingTransfers'])->name('getPendingTransfers');
 });
+
+// Route بدون middleware للاختبار
+Route::post('get-pending-transfers', [TransfersController::class, 'getPendingTransfers'])->name('getPendingTransfers');
 
 // Routes عادية للتحويلات الخارجية
 Route::get('connected-systems', [TransfersController::class, 'getConnectedSystems'])->name('getConnectedSystems');

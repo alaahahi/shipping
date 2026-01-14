@@ -16,9 +16,6 @@ class VerifyApiKey
      */
     public function handle(Request $request, Closure $next)
     {
-        // تم تعطيل الحماية مؤقتاً للاختبار
-        return $next($request);
-        
         // التحقق من API-Key header أو X-API-Key أو api_key parameter
         $apiKey = $request->header('API-Key') 
                 ?? $request->header('X-API-Key') 
