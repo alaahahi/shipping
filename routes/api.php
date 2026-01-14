@@ -50,6 +50,7 @@ Route::get('/sync-monitor/backup-content', [SyncMonitorController::class, 'getBa
 Route::post('/sync-monitor/restore-selected', [SyncMonitorController::class, 'restoreSelectedTables'])->name('sync.monitor.restore.selected');
 Route::get('/sync-monitor/download-backup', [SyncMonitorController::class, 'downloadBackup'])->name('sync.monitor.download.backup');
 Route::delete('/sync-monitor/backup/delete', [SyncMonitorController::class, 'deleteBackup'])->name('sync.monitor.backup.delete');
+Route::post('get-pending-transfers', [TransfersController::class, 'getPendingTransfers'])->name('getPendingTransfers');
 
 Route::get('/debug-owner-cache/{ownerId}', function ($ownerId) {
     $keys = [
@@ -176,9 +177,6 @@ Route::middleware('api.key')->group(function () {
     Route::post('receive-transfer', [TransfersController::class, 'receiveExternalTransfer'])->name('receiveExternalTransfer');
     Route::post('confirm-external-transfer', [TransfersController::class, 'confirmExternalTransfer'])->name('confirmExternalTransfer');
 });
-
-// Route بدون middleware للاختبار
-Route::post('get-pending-transfers', [TransfersController::class, 'getPendingTransfers'])->name('getPendingTransfers');
 
 // Routes عادية للتحويلات الخارجية
 Route::get('connected-systems', [TransfersController::class, 'getConnectedSystems'])->name('getConnectedSystems');
