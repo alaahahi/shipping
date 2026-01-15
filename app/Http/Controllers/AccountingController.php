@@ -926,9 +926,10 @@ class AccountingController extends Controller
         ], 200);
     }
  
-    public function increaseWallet(int $amount,$desc,$user_id,$morphed_id='',$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0,$type='in',$details=[]) 
+    public function increaseWallet(int $amount,$desc,$user_id,$morphed_id='',$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0,$type='in',$details=[],$owner_id=null) 
     {
-        $this->accounting->loadAccounts(Auth::user()->owner_id);
+        $ownerId = $owner_id ?? Auth::user()->owner_id;
+        $this->accounting->loadAccounts($ownerId);
         if($amount){
             if($created==0){
                 $created=$this->currentDate;
@@ -955,9 +956,10 @@ class AccountingController extends Controller
 
     }
 
-    public function decreaseWallet(int $amount,$desc,$user_id,$morphed_id=0,$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0,$type='out',$details=[]) 
+    public function decreaseWallet(int $amount,$desc,$user_id,$morphed_id=0,$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0,$type='out',$details=[],$owner_id=null) 
     {
-        $this->accounting->loadAccounts(Auth::user()->owner_id);
+        $ownerId = $owner_id ?? Auth::user()->owner_id;
+        $this->accounting->loadAccounts($ownerId);
         if($amount){
         if($created==0){
             $created=$this->currentDate;

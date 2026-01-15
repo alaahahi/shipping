@@ -340,7 +340,7 @@ class TransfersController extends Controller
         // تحديث الحسابات في النظام المرسل - سحب المبلغ من الصندوق
         $desc = ' تحويل إلى نظام خارجي مبلغ ' . $transfer->amount . ' ' . $transfer->sender_note . ' ' . $transfer->receiver_note . ' ' . 'أجور التحويل ' . $transfer->fee . ' المبلغ الصافي ' . ($transfer->amount - $transfer->fee) . ' دولار ';
         if ($transfer->sender_id) {
-            $this->accountingController->decreaseWallet($transfer->amount, $desc, $transfer->sender_id, $transfer->sender_id, 'App\Models\User');
+            $this->accountingController->decreaseWallet($transfer->amount, $desc, $transfer->sender_id, $transfer->sender_id, 'App\Models\User', 0, 0, '$', 0, 0, 'out', [], $owner_id);
         }
 
         $transfer->refresh();
