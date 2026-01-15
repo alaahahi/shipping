@@ -1121,23 +1121,39 @@ class AccountingController extends Controller
 
 
         }
-        $walletExpensesIds = [
-            $this->accounting->howler()->wallet->id,
-            $this->accounting->shippingCoc()->wallet->id,
-            $this->accounting->border()->wallet->id,
-            $this->accounting->iran()->wallet->id,
-            $this->accounting->dubai()->wallet->id,
-        ];
+        $walletExpensesIds = [];
+        if ($this->accounting->howler() && $this->accounting->howler()->wallet) {
+            $walletExpensesIds[] = $this->accounting->howler()->wallet->id;
+        }
+        if ($this->accounting->shippingCoc() && $this->accounting->shippingCoc()->wallet) {
+            $walletExpensesIds[] = $this->accounting->shippingCoc()->wallet->id;
+        }
+        if ($this->accounting->border() && $this->accounting->border()->wallet) {
+            $walletExpensesIds[] = $this->accounting->border()->wallet->id;
+        }
+        if ($this->accounting->iran() && $this->accounting->iran()->wallet) {
+            $walletExpensesIds[] = $this->accounting->iran()->wallet->id;
+        }
+        if ($this->accounting->dubai() && $this->accounting->dubai()->wallet) {
+            $walletExpensesIds[] = $this->accounting->dubai()->wallet->id;
+        }
         if (in_array($wallet_id, $walletExpensesIds)) {
             $expenses = Expenses::where('transaction_id',$firstTransaction->id);
             $expenses->delete();
         }
-        $walletContractsIds = [
-            $this->accounting->onlineContracts()->wallet->id,
-            $this->accounting->onlineContractsDinar()->wallet->id,
-            $this->accounting->debtOnlineContracts()->wallet->id,
-            $this->accounting->debtOnlineContractsDinar()->wallet->id
-        ];
+        $walletContractsIds = [];
+        if ($this->accounting->onlineContracts() && $this->accounting->onlineContracts()->wallet) {
+            $walletContractsIds[] = $this->accounting->onlineContracts()->wallet->id;
+        }
+        if ($this->accounting->onlineContractsDinar() && $this->accounting->onlineContractsDinar()->wallet) {
+            $walletContractsIds[] = $this->accounting->onlineContractsDinar()->wallet->id;
+        }
+        if ($this->accounting->debtOnlineContracts() && $this->accounting->debtOnlineContracts()->wallet) {
+            $walletContractsIds[] = $this->accounting->debtOnlineContracts()->wallet->id;
+        }
+        if ($this->accounting->debtOnlineContractsDinar() && $this->accounting->debtOnlineContractsDinar()->wallet) {
+            $walletContractsIds[] = $this->accounting->debtOnlineContractsDinar()->wallet->id;
+        }
         if (in_array($wallet_id, $walletContractsIds)) {
             $refundTransaction = 'مرتجع حذف حركة';
             $contract = Contract::where('car_id',$firstTransaction->morphed_id)->first();
