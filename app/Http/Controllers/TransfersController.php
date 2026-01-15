@@ -136,8 +136,16 @@ class TransfersController extends Controller
         if($transfer){
             $transfer->update(['fee'=>$transfer_fee,'receiver_id'=>$this->mainBox->where('owner_id',$owner_id)->first()->id,'receiver_note'=>$receiver_note, 'stauts'=>'تم الأستلام',]);
             $desc=' تحويل من فرع كركوك مبلغ '.$transfer->amount.' '.$transfer->sender_note.' '.$transfer->receiver_note.' '.'أجور التحويل '.$transfer->fee.' المبلغ الصافي '.$transfer->amount-$transfer->fee.' دولار ';
-            $this->accountingController->decreaseWallet($transfer->amount,$desc,$transfer->sender_id,$transfer->sender_id,'App\Models\User');
-            $this->accountingController->increaseWallet($transfer->amount-$transfer->fee,$desc,$transfer->receiver_id,$transfer->receiver_id,'App\Models\User');
+            
+            // إذا كان التحويل خارجي، فقط إضافة للمستقبل (السحب يتم في النظام المرسل)
+            if($transfer->is_external){
+                // فقط إضافة المبلغ للمستقبل
+                $this->accountingController->increaseWallet($transfer->amount-$transfer->fee,$desc,$transfer->receiver_id,$transfer->receiver_id,'App\Models\User');
+            } else {
+                // التحويلات الداخلية: سحب من المرسل وإضافة للمستقبل
+                $this->accountingController->decreaseWallet($transfer->amount,$desc,$transfer->sender_id,$transfer->sender_id,'App\Models\User');
+                $this->accountingController->increaseWallet($transfer->amount-$transfer->fee,$desc,$transfer->receiver_id,$transfer->receiver_id,'App\Models\User');
+            }
             
             // إذا كان تحويل خارجي وارد (ليس مرسل)، إرسال تأكيد للنظام المرسل
             if($transfer->is_external && $transfer->external_system_domain && $transfer->stauts == 'تم الأستلام'){
