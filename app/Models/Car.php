@@ -62,6 +62,10 @@ class Car extends Model
     
     // منع حفظ oldAttributes كعمود في قاعدة البيانات
     protected $guarded = ['oldAttributes'];
+    
+    protected $casts = [
+        'car_number' => 'string',
+    ];
     public function user()
     {
         return $this->belongsTo(User::class);

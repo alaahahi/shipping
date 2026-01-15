@@ -23,7 +23,7 @@ import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 const props = defineProps({
   client: Array,
-  config:Array
+  config: [Array, Object] // يمكن أن يكون array أو object
 });
 
 const toast = useToast();
@@ -47,20 +47,25 @@ function openModalEditCars(form = {}) {
   if (formData.value.expenses_s == 0) {
     formData.value.expenses_s = formData.value.expenses;
   }
+  // التعامل مع config كـ object أو array
+  const configData = Array.isArray(props.config) && props.config.length > 0 
+    ? props.config[0] 
+    : (props.config || {});
+  
   if (formData.value.dolar_price_s == 0) {
-    formData.value.dolar_price_s =     props.config[0].dolar_price;
+    formData.value.dolar_price_s = configData.dolar_price || 0;
   }
   if (formData.value.shipping_dolar_s == 0) {
-    formData.value.shipping_dolar_s =   props.config[0].shipping_dolar;
+    formData.value.shipping_dolar_s = configData.shipping_dolar || 0;
   }
   if (formData.value.coc_dolar_s == 0) {
-    formData.value.coc_dolar_s =  props.config[0].coc_dolar;
+    formData.value.coc_dolar_s = configData.coc_dolar || 0;
   }
   if (formData.value.checkout_s == 0) {
-    formData.value.checkout_s = props.config[0].checkout;
+    formData.value.checkout_s = configData.checkout || 0;
   }
   if (formData.value.land_shipping_s == 0) {
-    formData.value.land_shipping_s = props.config[0].land_shipping_s;
+    formData.value.land_shipping_s = configData.land_shipping_s || 0;
   }  
 
   showModalEditCars.value = true;
@@ -91,20 +96,25 @@ function openBulkEdit() {
   if (!initial.expenses_s || initial.expenses_s === 0) {
     initial.expenses_s = initial.expenses;
   }
+  // التعامل مع config كـ object أو array
+  const configData = Array.isArray(props.config) && props.config.length > 0 
+    ? props.config[0] 
+    : (props.config || {});
+  
   if (!initial.dolar_price_s || initial.dolar_price_s === 0) {
-    initial.dolar_price_s = props.config[0].dolar_price ?? initial.dolar_price_s;
+    initial.dolar_price_s = configData.dolar_price ?? initial.dolar_price_s;
   }
   if (!initial.shipping_dolar_s || initial.shipping_dolar_s === 0) {
-    initial.shipping_dolar_s = props.config[0].shipping_dolar ?? initial.shipping_dolar_s;
+    initial.shipping_dolar_s = configData.shipping_dolar ?? initial.shipping_dolar_s;
   }
   if (!initial.coc_dolar_s || initial.coc_dolar_s === 0) {
-    initial.coc_dolar_s = props.config[0].coc_dolar ?? initial.coc_dolar_s;
+    initial.coc_dolar_s = configData.coc_dolar ?? initial.coc_dolar_s;
   }
   if (!initial.checkout_s || initial.checkout_s === 0) {
-    initial.checkout_s = props.config[0].checkout ?? initial.checkout_s;
+    initial.checkout_s = configData.checkout ?? initial.checkout_s;
   }
   if (!initial.land_shipping_s || initial.land_shipping_s === 0) {
-    initial.land_shipping_s = props.config[0].land_shipping_s ?? initial.land_shipping_s;
+    initial.land_shipping_s = configData.land_shipping_s ?? initial.land_shipping_s;
   }
   delete initial.car_type;
   delete initial.car_color;

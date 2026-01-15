@@ -26,6 +26,9 @@ use App\Http\Controllers\SyncMonitorController;
 use App\Http\Controllers\LicenseController;
 use App\Http\Controllers\AdminLicenseController;
 use App\Http\Controllers\DatabaseStatusController;
+use App\Http\Controllers\StatisticsController;
+use App\Http\Controllers\SystemConfigController;
+use App\Http\Controllers\CarHistoryController;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Cache\FileStore;
@@ -35,6 +38,9 @@ Route::get('/sync-monitor/table/{tableName}', [SyncMonitorController::class, 'ta
 Route::post('/sync-monitor/sync', [SyncMonitorController::class, 'sync'])->name('sync.monitor.sync');
 Route::get('/sync-monitor/sync-progress', [SyncMonitorController::class, 'syncProgress'])->name('sync.monitor.sync.progress');
 Route::get('/sync-monitor/metadata', [SyncMonitorController::class, 'syncMetadata'])->name('sync.monitor.metadata');
+Route::get('/sync-monitor/migrations', [SyncMonitorController::class, 'getMigrations'])->name('sync.monitor.migrations');
+Route::post('/sync-monitor/check-migration', [SyncMonitorController::class, 'checkMigration'])->name('sync.monitor.check.migration');
+Route::post('/sync-monitor/run-migration', [SyncMonitorController::class, 'runMigration'])->name('sync.monitor.run.migration');
 Route::get('/sync-monitor/test/{tableName}', [SyncMonitorController::class, 'testSync'])->name('sync.monitor.test');
 Route::post('/sync-monitor/table/{tableName}/truncate', [SyncMonitorController::class, 'truncateTable'])->name('sync.monitor.table.truncate');
 Route::delete('/sync-monitor/table/{tableName}/delete', [SyncMonitorController::class, 'deleteTable'])->name('sync.monitor.table.delete');
@@ -44,7 +50,9 @@ Route::get('/sync-monitor/backup-content', [SyncMonitorController::class, 'getBa
 Route::post('/sync-monitor/restore-selected', [SyncMonitorController::class, 'restoreSelectedTables'])->name('sync.monitor.restore.selected');
 Route::get('/sync-monitor/download-backup', [SyncMonitorController::class, 'downloadBackup'])->name('sync.monitor.download.backup');
 Route::delete('/sync-monitor/backup/delete', [SyncMonitorController::class, 'deleteBackup'])->name('sync.monitor.backup.delete');
-
+Route::post('get-pending-transfers', [TransfersController::class, 'getPendingTransfers'])->name('getPendingTransfers');
+Route::post('receive-transfer', [TransfersController::class, 'receiveExternalTransfer'])->name('receiveExternalTransfer');
+Route::post('confirm-external-transfer', [TransfersController::class, 'confirmExternalTransfer'])->name('confirmExternalTransfer');
 Route::get('/debug-owner-cache/{ownerId}', function ($ownerId) {
     $keys = [
         'main_account', 'in_account', 'out_account', 'debt_account',
@@ -92,6 +100,18 @@ Route::get('clear-route-cache', function () {
     return response()->json(['message' => 'Route cache cleared successfully']);
 });
 
+// Statistics API - تم إزالة الحماية مؤقتاً للاختبار
+Route::get('statistics',[StatisticsController::class, 'getStatistics'])->name('statistics');
+Route::get('statistics/car-profit-stats',[StatisticsController::class, 'carProfitStats'])->name('statistics.carProfitStats');
+Route::get('statistics/discount-stats',[StatisticsController::class, 'discountStats'])->name('statistics.discountStats');
+Route::post('statistics/recalculate-profit',[StatisticsController::class, 'recalculateProfit'])->name('statistics.recalculateProfit');
+Route::get('statistics/traders-profit',[StatisticsController::class, 'tradersProfit'])->name('statistics.tradersProfit');
+Route::get('statistics/export-excel',[StatisticsController::class, 'exportExcel'])->name('statistics.exportExcel');
+Route::get('statistics/export-transfers-excel',[StatisticsController::class, 'exportTransfersExcel'])->name('statistics.exportTransfersExcel');
+Route::get('statistics/export-payments-excel',[StatisticsController::class, 'exportPaymentsExcel'])->name('statistics.exportPaymentsExcel');
+Route::get('statistics/check-traders-payments',[StatisticsController::class, 'checkTradersPayments'])->name('statistics.checkTradersPayments');
+Route::get('statistics/deleted-cars',[StatisticsController::class, 'getDeletedCars'])->name('statistics.getDeletedCars');
+
 Route::middleware('auth:sanctum')->group(function () {
 Route::apiResource('upload', UploadController::class);
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {return $request->user();});
@@ -122,6 +142,7 @@ Route::post('updateClientPhone',[UserController::class, 'updateClientPhone'])->n
 
 // Internal Sales Routes
 Route::post('toggleInternalSales',[UserController::class, 'toggleInternalSales'])->name('toggleInternalSales');
+Route::post('toggleShowInDashboard',[UserController::class, 'toggleShowInDashboard'])->name('toggleShowInDashboard');
 Route::get('getInternalSales',[UserController::class, 'getInternalSales'])->name('getInternalSales');
 Route::get('getUnsoldCars',[UserController::class, 'getUnsoldCars'])->name('getUnsoldCars');
 Route::get('getAllClients',[UserController::class, 'getAllClients'])->name('getAllClients');
@@ -148,6 +169,23 @@ Route::post('addTransfers',[TransfersController::class, 'addTransfers'])->name('
 Route::get('transfers',[TransfersController::class, 'index'])->name('transfers');
 Route::post('confirmTransfers',[TransfersController::class, 'confirmTransfers'])->name('confirmTransfers');
 Route::post('cancelTransfers',[TransfersController::class, 'cancelTransfers'])->name('cancelTransfers');
+Route::post('check-pending-external-transfers',[TransfersController::class, 'checkPendingExternalTransfers'])->name('checkPendingExternalTransfers');
+Route::post('archiveTransfer',[TransfersController::class, 'archiveTransfer'])->name('archiveTransfer');
+Route::post('unarchiveTransfer',[TransfersController::class, 'unarchiveTransfer'])->name('unarchiveTransfer');
+
+ 
+// Routes عادية للتحويلات الخارجية
+Route::get('connected-systems', [TransfersController::class, 'getConnectedSystems'])->name('getConnectedSystems');
+Route::get('all-connected-systems', [TransfersController::class, 'getAllConnectedSystems'])->name('getAllConnectedSystems');
+Route::post('connected-systems', [TransfersController::class, 'storeConnectedSystem'])->name('storeConnectedSystem');
+Route::put('connected-systems/{id}', [TransfersController::class, 'updateConnectedSystem'])->name('updateConnectedSystem');
+Route::delete('connected-systems/{id}', [TransfersController::class, 'deleteConnectedSystem'])->name('deleteConnectedSystem');
+Route::post('test-connection', [TransfersController::class, 'testConnection'])->name('test.connection');
+Route::post('send-external-transfer', [TransfersController::class, 'sendExternalTransfer'])->name('sendExternalTransfer');
+
+// System Config routes
+Route::get('system-config', [SystemConfigController::class, 'index'])->name('systemConfig.index');
+Route::put('system-config', [SystemConfigController::class, 'update'])->name('systemConfig.update');
 
 
 Route::get('getIndexAccountsSelas',[AccountingController::class, 'getIndexAccountsSelas'])->name('getIndexAccountsSelas');
@@ -315,6 +353,7 @@ Route::middleware('auth')->group(function () {
     Route::get('car/{carId}/history', [CarHistoryController::class, 'getHistory'])->name('car.history.api');
     Route::get('car/{carId}/history/{historyId}', [CarHistoryController::class, 'show'])->name('car.history.show.api');
     Route::post('car/{carId}/history/compare', [CarHistoryController::class, 'compare'])->name('car.history.compare');
+    Route::get('car/{carId}/history', [CarHistoryController::class, 'getHistory'])->name('car.history.get');
     Route::get('car-history/statistics', [CarHistoryController::class, 'statistics'])->name('car.history.statistics');
     Route::post('car-history/migrate-transactions', [CarHistoryController::class, 'migrateTransactions'])->name('car.history.migrate');
     Route::post('car-history/cleanup', [CarHistoryController::class, 'cleanup'])->name('car.history.cleanup');

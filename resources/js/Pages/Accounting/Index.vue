@@ -186,6 +186,10 @@ const props = defineProps({
   users:Array,
   accounts:Array,
   boxes:Array,
+  flaggedWallets: {
+    type: Array,
+    default: () => []
+  },
 });
 const search = async (q) => {
   user_id.value=0;
@@ -525,6 +529,20 @@ async function saveDescription(tran) {
     isSavingDescription.value = false;
   }
 }
+
+// دالة للحصول على لون البرتقالي بناءً على الفهرس
+function getOrangeColorClass(index) {
+  const orangeColors = [
+    'bg-orange-300',
+    'bg-orange-400',
+    'bg-orange-500',
+    'bg-orange-600',
+    'bg-orange-700',
+    'bg-orange-800',
+    'bg-orange-900'
+  ];
+  return orangeColors[index % orangeColors.length];
+}
  
  
 </script>
@@ -593,6 +611,7 @@ async function saveDescription(tran) {
             :GenExpenses="GenExpenses"
             :allTransfers="allTransfers"
             @a="conGenfirmExpenses($event)"
+            @refresh="getTransfers"
             @close="showModalExpensesFromOtherBransh = false">
         <template #header>
           </template>
@@ -828,76 +847,16 @@ async function saveDescription(tran) {
                           </button>
                         </div>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
-            <div>
-                           <Link
-                          v-if="$page.props.auth.user.owner_id==1"
-                            type="button"
-                          href="/wallet?id=2625"
-                            style="min-width:150px;"
-                            class="px-6 mb-6 py-2 font-bold text-white bg-orange-300 rounded  w-full mt-1 text-center">
-                                مروان
-                          </Link>
-              </div>
-              <div>
-                           <Link
-                          v-if="$page.props.auth.user.owner_id==1"
-                            type="button"
-                          href="/wallet?id=2692"
-                            style="min-width:150px;"
-                            class="px-6 mb-6 py-2 font-bold text-white bg-orange-400 rounded  w-full mt-1 text-center">
-                               شركة رزكه
-                          </Link>
-              </div>
-              <div>
-                           <Link
-                          v-if="$page.props.auth.user.owner_id==1"
-                            type="button"
-                          href="/wallet?id=2436"
-                            style="min-width:150px;"
-                            class="px-6 mb-6 py-2 font-bold text-white bg-orange-500 rounded  w-full mt-1 text-center">
-                               نقل محمد كيانبور
-                          </Link>
-              </div>
-              <div>
-                           <Link
-                          v-if="$page.props.auth.user.owner_id==1"
-                            type="button"
-                          href="/wallet?id=589"
-                            style="min-width:150px;"
-                            class="px-6 mb-6 py-2 font-bold text-white bg-orange-600 rounded  w-full mt-1 text-center">
-                               كارزان تسجيل سيارات
-                          </Link>
-              </div>
-              <div>
-                           <Link
-                          v-if="$page.props.auth.user.owner_id==1"
-                            type="button"
-                          href="/wallet?id=1333"
-                            style="min-width:150px;"
-                            class="px-6 mb-6 py-2 font-bold text-white bg-orange-700 rounded  w-full mt-1 text-center">
-                               ابو عباس كركوك
-                          </Link>
-              </div>
-              <div>
-                           <Link
-                          v-if="$page.props.auth.user.owner_id==1"
-                            type="button"
-                          href="/wallet?id=238"
-                            style="min-width:150px;"
-                            class="px-6 mb-6 py-2 font-bold text-white bg-orange-800 rounded  w-full mt-1 text-center">
-                              مام سلام
-                          </Link>
-              </div>
-              <div>
-                           <Link
-                          v-if="$page.props.auth.user.owner_id==1"
-                            type="button"
-                          href="/wallet?id=1719"
-                            style="min-width:150px;"
-                            class="px-6 mb-6 py-2 font-bold text-white bg-orange-900 rounded  w-full mt-1 text-center">
-                               رواتب الشركة
-                          </Link>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3" v-if="flaggedWallets && flaggedWallets.length > 0">
+              <div v-for="(wallet, index) in flaggedWallets" :key="wallet.id">
+                <Link
+                  v-if="$page.props.auth.user.owner_id==1"
+                  type="button"
+                  :href="`/wallet?id=${wallet.id}`"
+                  style="min-width:150px;"
+                  :class="`px-6 mb-6 py-2 font-bold text-white ${getOrangeColorClass(index)} rounded w-full mt-1 text-center`">
+                  {{ wallet.name }}
+                </Link>
               </div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3 lg:gap-3">

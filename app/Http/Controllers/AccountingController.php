@@ -110,8 +110,19 @@ class AccountingController extends Controller
         $owner_id=Auth::user()->owner_id;
         $boxes = User::with('wallet')->where('owner_id',$owner_id)->where('email', 'mainBox@account.com')->get();
         $this->accounting->loadAccounts(Auth::user()->owner_id);
+        
+        // جلب المحافظ المميزة للعرض في لوحة التحكم
+        $flaggedWallets = User::with('wallet')
+            ->where('owner_id', $owner_id)
+            ->where('show_in_dashboard', true)
+            ->whereHas('wallet')
+            ->get();
 
-        return Inertia::render('Accounting/Index', ['boxes'=>$boxes,'accounts'=>$this->accounting->mainAccount()]);
+        return Inertia::render('Accounting/Index', [
+            'boxes'=>$boxes,
+            'accounts'=>$this->accounting->mainAccount(),
+            'flaggedWallets'=>$flaggedWallets
+        ]);
     }
     public function wallet(Request $request)
     {  
@@ -140,7 +151,7 @@ class AccountingController extends Controller
          $transactions = Transactions ::with('TransactionsImages')->with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('id','desc');
      }
      if($q){
-        $transactions = Transactions::with('TransactionsImages')->where('wallet_id', $user->wallet->id)
+        $transactions = Transactions::with('TransactionsImages')->with('morphed')->where('wallet_id', $user->wallet->id)
         ->where(function ($query) use ($q) {
             $query->where('id', $q)
                   ->orWhere('description', 'LIKE', '%' . $q . '%');
@@ -915,9 +926,10 @@ class AccountingController extends Controller
         ], 200);
     }
  
-    public function increaseWallet(int $amount,$desc,$user_id,$morphed_id='',$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0,$type='in',$details=[]) 
+    public function increaseWallet(int $amount,$desc,$user_id,$morphed_id='',$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0,$type='in',$details=[],$owner_id=null) 
     {
-        $this->accounting->loadAccounts(Auth::user()->owner_id);
+        $ownerId = $owner_id ?? Auth::user()->owner_id;
+        $this->accounting->loadAccounts($ownerId);
         if($amount){
             if($created==0){
                 $created=$this->currentDate;
@@ -944,9 +956,10 @@ class AccountingController extends Controller
 
     }
 
-    public function decreaseWallet(int $amount,$desc,$user_id,$morphed_id=0,$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0,$type='out',$details=[]) 
+    public function decreaseWallet(int $amount,$desc,$user_id,$morphed_id=0,$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0,$type='out',$details=[],$owner_id=null) 
     {
-        $this->accounting->loadAccounts(Auth::user()->owner_id);
+        $ownerId = $owner_id ?? Auth::user()->owner_id;
+        $this->accounting->loadAccounts($ownerId);
         if($amount){
         if($created==0){
             $created=$this->currentDate;
@@ -1108,23 +1121,39 @@ class AccountingController extends Controller
 
 
         }
-        $walletExpensesIds = [
-            $this->accounting->howler()->wallet->id,
-            $this->accounting->shippingCoc()->wallet->id,
-            $this->accounting->border()->wallet->id,
-            $this->accounting->iran()->wallet->id,
-            $this->accounting->dubai()->wallet->id,
-        ];
+        $walletExpensesIds = [];
+        if ($this->accounting->howler() && $this->accounting->howler()->wallet) {
+            $walletExpensesIds[] = $this->accounting->howler()->wallet->id;
+        }
+        if ($this->accounting->shippingCoc() && $this->accounting->shippingCoc()->wallet) {
+            $walletExpensesIds[] = $this->accounting->shippingCoc()->wallet->id;
+        }
+        if ($this->accounting->border() && $this->accounting->border()->wallet) {
+            $walletExpensesIds[] = $this->accounting->border()->wallet->id;
+        }
+        if ($this->accounting->iran() && $this->accounting->iran()->wallet) {
+            $walletExpensesIds[] = $this->accounting->iran()->wallet->id;
+        }
+        if ($this->accounting->dubai() && $this->accounting->dubai()->wallet) {
+            $walletExpensesIds[] = $this->accounting->dubai()->wallet->id;
+        }
         if (in_array($wallet_id, $walletExpensesIds)) {
             $expenses = Expenses::where('transaction_id',$firstTransaction->id);
             $expenses->delete();
         }
-        $walletContractsIds = [
-            $this->accounting->onlineContracts()->wallet->id,
-            $this->accounting->onlineContractsDinar()->wallet->id,
-            $this->accounting->debtOnlineContracts()->wallet->id,
-            $this->accounting->debtOnlineContractsDinar()->wallet->id
-        ];
+        $walletContractsIds = [];
+        if ($this->accounting->onlineContracts() && $this->accounting->onlineContracts()->wallet) {
+            $walletContractsIds[] = $this->accounting->onlineContracts()->wallet->id;
+        }
+        if ($this->accounting->onlineContractsDinar() && $this->accounting->onlineContractsDinar()->wallet) {
+            $walletContractsIds[] = $this->accounting->onlineContractsDinar()->wallet->id;
+        }
+        if ($this->accounting->debtOnlineContracts() && $this->accounting->debtOnlineContracts()->wallet) {
+            $walletContractsIds[] = $this->accounting->debtOnlineContracts()->wallet->id;
+        }
+        if ($this->accounting->debtOnlineContractsDinar() && $this->accounting->debtOnlineContractsDinar()->wallet) {
+            $walletContractsIds[] = $this->accounting->debtOnlineContractsDinar()->wallet->id;
+        }
         if (in_array($wallet_id, $walletContractsIds)) {
             $refundTransaction = 'مرتجع حذف حركة';
             $contract = Contract::where('car_id',$firstTransaction->morphed_id)->first();

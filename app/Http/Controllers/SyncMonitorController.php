@@ -6,6 +6,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 use App\Services\DatabaseSyncService;
 
 class SyncMonitorController extends Controller
@@ -495,6 +497,300 @@ class SyncMonitorController extends Controller
             return response()->json([
                 'error' => $e->getMessage(),
                 'metadata' => []
+            ], 500);
+        }
+    }
+
+    /**
+     * جلب قائمة المايجريشنز المتاحة
+     */
+    public function getMigrations(Request $request): JsonResponse
+    {
+        try {
+            $showExecuted = filter_var($request->get('show_executed', false), FILTER_VALIDATE_BOOLEAN);
+            
+            $migrationsPath = database_path('migrations');
+            $files = File::files($migrationsPath);
+            
+            // جلب قائمة المايجريشنز المنفذة من قاعدة البيانات
+            $executedMigrations = [];
+            try {
+                if ($this->tableExists(DB::connection(), 'migrations', false)) {
+                    $executed = DB::table('migrations')->pluck('migration')->toArray();
+                    $executedMigrations = array_map(function($migration) {
+                        // إزالة التاريخ من اسم المايجريشن للحصول على الاسم فقط
+                        if (preg_match('/^\d{4}_\d{2}_\d{2}_\d{6}_(.+)$/', $migration, $matches)) {
+                            return $matches[1];
+                        }
+                        return $migration;
+                    }, $executed);
+                }
+            } catch (\Exception $e) {
+                Log::warning('Failed to get executed migrations', [
+                    'error' => $e->getMessage()
+                ]);
+            }
+            
+            $migrations = [];
+            foreach ($files as $file) {
+                $fileName = $file->getFilename();
+                // استخراج اسم المايجريشن من اسم الملف (بعد التاريخ)
+                if (preg_match('/^\d{4}_\d{2}_\d{2}_\d{6}_(.+?)\.php$/', $fileName, $matches)) {
+                    $migrationName = $matches[1];
+                    $isExecuted = in_array($migrationName, $executedMigrations);
+                    
+                    // إخفاء المايجريشنز المنفذة إذا لم يكن show_executed = true
+                    if ($isExecuted && !$showExecuted) {
+                        continue;
+                    }
+                    
+                    $migrations[] = [
+                        'file' => $fileName,
+                        'name' => $migrationName,
+                        'path' => $file->getPathname(),
+                        'date' => date('Y-m-d H:i:s', $file->getMTime()),
+                        'executed' => $isExecuted
+                    ];
+                }
+            }
+            
+            // ترتيب حسب التاريخ (الأحدث أولاً)
+            usort($migrations, function($a, $b) {
+                return strcmp($b['file'], $a['file']);
+            });
+            
+            return response()->json([
+                'migrations' => $migrations,
+                'total_executed' => count($executedMigrations),
+                'total_pending' => count($migrations)
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to get migrations', [
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'error' => $e->getMessage(),
+                'migrations' => []
+            ], 500);
+        }
+    }
+
+    /**
+     * فحص المايجريشن للتحقق من وجود بيانات قبل التنفيذ
+     */
+    public function checkMigration(Request $request): JsonResponse
+    {
+        try {
+            $migrationName = $request->get('migration_name');
+            
+            if (!$migrationName) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'اسم المايجريشن مطلوب'
+                ], 422);
+            }
+            
+            // البحث عن ملف المايجريشن
+            $migrationsPath = database_path('migrations');
+            $files = File::files($migrationsPath);
+            
+            $migrationFile = null;
+            $migrationPath = null;
+            foreach ($files as $file) {
+                $fileName = $file->getFilename();
+                if (str_contains($fileName, $migrationName)) {
+                    $migrationFile = $fileName;
+                    $migrationPath = $file->getPathname();
+                    break;
+                }
+            }
+            
+            if (!$migrationFile || !$migrationPath) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'المايجريشن غير موجود: ' . $migrationName
+                ], 404);
+            }
+            
+            // قراءة محتوى المايجريشن للتحقق من الجداول المتأثرة
+            $migrationContent = File::get($migrationPath);
+            
+            // استخراج أسماء الجداول من المايجريشن
+            $tables = [];
+            
+            // البحث عن dropIfExists أو drop
+            if (preg_match_all('/dropIfExists\([\'"]([^\'"]+)[\'"]\)|drop\([\'"]([^\'"]+)[\'"]\)/i', $migrationContent, $matches)) {
+                $tables = array_merge($tables, array_filter(array_merge($matches[1], $matches[2])));
+            }
+            
+            // البحث عن Schema::drop
+            if (preg_match_all('/Schema::drop\([\'"]([^\'"]+)[\'"]\)/i', $migrationContent, $matches)) {
+                $tables = array_merge($tables, $matches[1]);
+            }
+            
+            // البحث عن table() في down method
+            if (preg_match('/function\s+down\([^)]*\)\s*\{([^}]+)\}/is', $migrationContent, $downMatch)) {
+                if (preg_match_all('/table\([\'"]([^\'"]+)[\'"]\)/i', $downMatch[1], $tableMatches)) {
+                    $tables = array_merge($tables, $tableMatches[1]);
+                }
+            }
+            
+            $tables = array_unique(array_filter($tables));
+            
+            // التحقق من وجود بيانات في الجداول
+            $tablesWithData = [];
+            $totalRecords = 0;
+            
+            foreach ($tables as $table) {
+                try {
+                    $count = DB::table($table)->count();
+                    if ($count > 0) {
+                        $tablesWithData[] = [
+                            'name' => $table,
+                            'count' => $count
+                        ];
+                        $totalRecords += $count;
+                    }
+                } catch (\Exception $e) {
+                    // الجدول غير موجود - لا مشكلة
+                }
+            }
+            
+            return response()->json([
+                'success' => true,
+                'has_data' => count($tablesWithData) > 0,
+                'tables_with_data' => $tablesWithData,
+                'total_records' => $totalRecords,
+                'affected_tables' => $tables,
+                'migration_file' => $migrationFile
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to check migration', [
+                'migration_name' => $request->get('migration_name'),
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * تنفيذ migration محدد حسب الاسم
+     */
+    public function runMigration(Request $request): JsonResponse
+    {
+        try {
+            $migrationName = $request->get('migration_name');
+            $force = filter_var($request->get('force', false), FILTER_VALIDATE_BOOLEAN);
+            
+            if (!$migrationName) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'اسم المايجريشن مطلوب'
+                ], 422);
+            }
+            
+            // البحث عن ملف المايجريشن
+            $migrationsPath = database_path('migrations');
+            $files = File::files($migrationsPath);
+            
+            $migrationFile = null;
+            $migrationPath = null;
+            foreach ($files as $file) {
+                $fileName = $file->getFilename();
+                if (str_contains($fileName, $migrationName)) {
+                    $migrationFile = $fileName;
+                    $migrationPath = $file->getPathname();
+                    break;
+                }
+            }
+            
+            if (!$migrationFile || !$migrationPath) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'المايجريشن غير موجود: ' . $migrationName
+                ], 404);
+            }
+            
+            // فحص وجود بيانات إذا لم يكن force
+            if (!$force) {
+                $migrationContent = File::get($migrationPath);
+                $tables = [];
+                
+                // البحث عن dropIfExists أو drop
+                if (preg_match_all('/dropIfExists\([\'"]([^\'"]+)[\'"]\)|drop\([\'"]([^\'"]+)[\'"]\)/i', $migrationContent, $matches)) {
+                    $tables = array_merge($tables, array_filter(array_merge($matches[1], $matches[2])));
+                }
+                
+                // البحث عن Schema::drop
+                if (preg_match_all('/Schema::drop\([\'"]([^\'"]+)[\'"]\)/i', $migrationContent, $matches)) {
+                    $tables = array_merge($tables, $matches[1]);
+                }
+                
+                // البحث عن table() في down method
+                if (preg_match('/function\s+down\([^)]*\)\s*\{([^}]+)\}/is', $migrationContent, $downMatch)) {
+                    if (preg_match_all('/table\([\'"]([^\'"]+)[\'"]\)/i', $downMatch[1], $tableMatches)) {
+                        $tables = array_merge($tables, $tableMatches[1]);
+                    }
+                }
+                
+                $tables = array_unique(array_filter($tables));
+                
+                // التحقق من وجود بيانات
+                foreach ($tables as $table) {
+                    try {
+                        $count = DB::table($table)->count();
+                        if ($count > 0) {
+                            return response()->json([
+                                'success' => false,
+                                'error' => 'يوجد بيانات في الجداول المتأثرة. لا يمكن تنفيذ المايجريشن حفاظاً على البيانات.',
+                                'warning' => true,
+                                'table' => $table,
+                                'record_count' => $count,
+                                'message' => "يوجد {$count} سجل في جدول '{$table}'. استخدم force=true إذا كنت متأكداً من الحذف."
+                            ], 400);
+                        }
+                    } catch (\Exception $e) {
+                        // الجدول غير موجود - لا مشكلة
+                    }
+                }
+            }
+            
+            // تنفيذ المايجريشن
+            $exitCode = Artisan::call('migrate', [
+                '--path' => 'database/migrations/' . $migrationFile,
+                '--force' => true
+            ]);
+            
+            $output = Artisan::output();
+            
+            if ($exitCode === 0) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'تم تنفيذ المايجريشن بنجاح',
+                    'output' => $output,
+                    'migration' => $migrationFile
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'فشل تنفيذ المايجريشن',
+                    'output' => $output
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to run migration', [
+                'migration_name' => $request->get('migration_name'),
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
             ], 500);
         }
     }

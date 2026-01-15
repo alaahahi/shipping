@@ -78,7 +78,22 @@ class DashboardController extends Controller
             return $user;
         });
     
-        $config=SystemConfig::first()->default_price_p;
+        // الحصول على SystemConfig أو إنشاء واحد جديد إذا لم يكن موجوداً
+        $systemConfig = SystemConfig::first();
+        if (!$systemConfig) {
+            $systemConfig = SystemConfig::create([
+                'first_title_ar' => '',
+                'first_title_kr' => '',
+                'second_title_ar' => '',
+                'second_title_kr' => '',
+                'third_title_ar' => '',
+                'third_title_kr' => '',
+                'default_price_s' => [],
+                'default_price_p' => [],
+            ]);
+        }
+        
+        $config = $systemConfig->default_price_p ?? [];
         return Inertia::render('purchases', ['client'=>$client,'config'=>$config]);   
     }
     public function sales(Request $request)
@@ -94,7 +109,23 @@ class DashboardController extends Controller
             $user->name = "{$user->name}  {$user->phone}";
             return $user;
         });
-        $config=SystemConfig::first()->default_price_s;
+        
+        // الحصول على SystemConfig أو إنشاء واحد جديد إذا لم يكن موجوداً
+        $systemConfig = SystemConfig::first();
+        if (!$systemConfig) {
+            $systemConfig = SystemConfig::create([
+                'first_title_ar' => '',
+                'first_title_kr' => '',
+                'second_title_ar' => '',
+                'second_title_kr' => '',
+                'third_title_ar' => '',
+                'third_title_kr' => '',
+                'default_price_s' => [],
+                'default_price_p' => [],
+            ]);
+        }
+        
+        $config = $systemConfig->default_price_s ?? [];
 
         return Inertia::render('Sales', ['client'=>$client ,'config'=>$config]);   
     }
@@ -490,6 +521,11 @@ class DashboardController extends Controller
             }
         }
             $dataToUpdate = $request->all();
+            
+            // Ensure car_number is preserved as string (don't convert to integer)
+            if ($request->has('car_number')) {
+                $dataToUpdate['car_number'] = (string) $request->car_number;
+            }
 
             // If 'purchase_price' and 'paid_amount' are calculated separately, add them to $dataToUpdate
             $dataToUpdate['total']=$total;
@@ -559,6 +595,10 @@ class DashboardController extends Controller
         $this->accountingController->increaseWallet($total_s-$car->total_s, $descClient,$car->client_id,$car->id,'App\Models\User');
             // Extract the relevant fields from the $request object
             $dataToUpdate = $request->all();
+            // Ensure car_number is preserved as string (don't convert to integer)
+            if ($request->has('car_number')) {
+                $dataToUpdate['car_number'] = (string) $request->car_number;
+            }
             // If 'purchase_price' and 'paid_amount' are calculated separately, add them to $dataToUpdate
             $dataToUpdate['total_s']=$total_s;
             $dataToUpdate['profit']=$profit;
@@ -938,15 +978,28 @@ class DashboardController extends Controller
         $owner_id=Auth::user()->owner_id;
 
         $car=Car::with('client')->find($request->id);
-        $desc=' مرتج حذف سيارة'.$car->total;
+        
+        if (!$car) {
+            return Response::json(['error' => 'السيارة غير موجودة'], 404);
+        }
+        
+        if (!$car->client) {
+            return Response::json(['error' => 'بيانات التاجر غير موجودة'], 404);
+        }
+        
+        $desc=' مرتج حذف سيارة'.($car->total ?? 0);
         $wallet = Wallet::where('user_id',$car->client_id)->first();
-        $this->accountingController->increaseWallet($car->total, $desc,$this->accounting->mainAccount()->id,$car->id,'App\Models\Car');
-        if($car->results == 0 && $car->total_s!=0){
-            $trans = $this->accountingController->decreaseWallet($car->total_s , $desc,$car->client->id,$car->id,'App\Models\Car');
+        
+        if ($wallet) {
+            $this->accountingController->increaseWallet($car->total ?? 0, $desc,$this->accounting->mainAccount()->id,$car->id,'App\Models\Car');
+        }
+        
+        if($car->results == 0 && ($car->total_s ?? 0) !=0){
+            $trans = $this->accountingController->decreaseWallet($car->total_s ?? 0 , $desc,$car->client->id,$car->id,'App\Models\Car');
         }
         if($car->results == 1){
-            $trans = $this->accountingController->decreaseWallet($car->total_s-$car->paid , $desc,$car->client->id,$car->id,'App\Models\Car');
-            }
+            $trans = $this->accountingController->decreaseWallet(($car->total_s ?? 0)-($car->paid ?? 0) , $desc,$car->client->id,$car->id,'App\Models\Car');
+        }
         $car->delete();
         DB::statement('SET @row_number = 0');
         DB::table('car')

@@ -62,7 +62,7 @@ body {
     gap: 20px;
     padding-bottom: 16px;
     border-bottom: 1px solid #d6e0f0;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: #0f172a;
   }
@@ -71,6 +71,7 @@ body {
     align-items: center;
     gap: 8px;
     min-width: 0;
+    font-size: 11px;
   }
   .qr-header .info-item .label {
     color: #475569;
@@ -96,7 +97,7 @@ body {
     border: 1px solid #d6e0f0;
   }
   .qr-wrapper .qr-caption {
-    font-size: 9px;
+    font-size: 10px;
     color: #475569;
   }
   .party-grid {
@@ -192,7 +193,7 @@ body {
   }
   .terms-list li {
     counter-increment: term;
-    font-size: 12px;
+    font-size: 13px;
     color: #334155;
     margin-bottom: 10px;
     line-height: 1.6;
@@ -205,7 +206,7 @@ body {
     right: 0;
     top: 0;
     font-weight: 700;
-    color: #2563eb;
+    color: currentColor;
   }
   .highlight {
     color: #1d4ed8;
@@ -248,11 +249,58 @@ body {
     body {
       background: #ffffff;
     }
+    /* تقليل ارتفاع بانر أعلى الصفحة عند الطباعة */
+    body > img {
+      display: block;
+      width: 100% !important;
+      object-fit: cover;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
     .content {
       margin: 0;
       border-radius: 0;
       box-shadow: none;
-      padding: 24px 32px 32px;
+      /* توفير ~50px ارتفاع لتفادي الطباعة على ورقتين */
+      padding: 0 12px 0;
+    }
+    .qr-header {
+      padding-bottom: 10px; /* توفير إضافي */
+    }
+    .qr-wrapper img {
+      width: 72px;
+      height: 72px;
+    }
+   
+
+    .party-grid {
+      margin-top: 12px; /* كان 20px */
+      gap: 14px; /* كان 18px */
+    }
+    .party-card__body {
+      padding: 10px 12px; /* كان 14px 16px */
+    }
+    .info-row {
+      padding: 4px 0; /* كان 6px */
+      font-size: 12px; /* كان 12px */
+    }
+
+    .terms-list li {
+      margin-bottom: 10px; /* كان 10px */
+      line-height: 1.6; /* كان 1.6 */
+    }
+
+    .signature-row {
+      margin-top: 20px; /* كان 40px */
+    }
+
+    /* تجنّب تقسيم البلوكات بين الصفحات */
+    .party-card,
+    .terms-list,
+    .signature-row {
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
   }
   </style>
@@ -260,7 +308,7 @@ body {
   @if($config['second_title_ar']=='عين دبي')
   <img src="/img/bg1.jpg" width="100%" class="p-2 pb-0" />
   @else
-  <img src="/img/bg.jpg" width="100%" class="p-3" />
+  <img src="/img/bg.jpg" width="100%" class="p-2"  />
   @endif
   <div class="content">
     <div class="qr-header">
@@ -271,7 +319,7 @@ body {
       @if(!empty($verificationUrl))
       <div class="qr-wrapper">
         <img id="contract-qr" alt="QR" />
-        <span class="qr-caption">امسح QR للتحقق</span>
+        <div class="qr-caption text-center">intellij-app.com بواسطة  </div>
       </div>
       @endif
       <div class="info-item">
@@ -460,56 +508,29 @@ body {
         </div>
         
       </div>
-      <div class="pt-2 " style="color: brown;font-size: 11px">
-        3
-        .
-         علی البائع و المشتری تسجیل السیارة حسب قوانین مدیریة المرور العامة مع إجراء معاملة نقل الملکیة
-
-      </div>
-      <div class="pt-2 " style="color: brown;font-size: 11px">
-        4
-        .
-        علی المشتری فحص السیارة قبل الشراء و نحن غیر مسؤولین بعد توقیع عقد المعرض
-
-      </div>
-      <div class="pt-2 " style="color: brown;font-size: 11px">
-        5
-        .
-        الطرف الاول مسؤول عن کافة أنواع الغرامات قبل موعد الشراء
-
-      </div>
-      <div class="pt-2 " style="color: brown;font-size: 11px">
-        6
-        .
-        صاحب المعرض غیر مسؤول عن السیارة بعد البیع
-
-      </div>
-      <div class="pt-2 " style="color: brown;font-size: 11px">
-        7
-        .
-        علی المشتري تسجیل السیارة خلال شهر واحد
-
-      </div>
-      <div class="pt-2 " style="color: brown;font-size: 11px">
-        8
-        .
-         کتب هذا العقد بثالثة نسخ بتاریخ
-         <b class="px-2">
-          {{$data['created'] ?? ''}}
-        </b>
-        <span class="px-5">
-          الساعة
-        </span>
-        <b class="px-2">
-          {{ \Carbon\Carbon::parse($data['created_at'])->format('h:i:s A') }}
-        </b>
-      </div>
-      <div class="pt-2 " style="color: brown;font-size: 11px">
-        9
-        .
-        کل عقد غیر مختوم من المعرض یعتبر باطل
-      </div>
-
+      <ol class="terms-list" style="counter-reset: term 2;">
+        <li style="color: brown;font-size: 11px">
+          علی البائع و المشتری تسجیل السیارة حسب قوانین مدیریة المرور العامة مع إجراء معاملة نقل الملکیة
+        </li>
+        <li style="color: brown;font-size: 11px">
+          علی المشتری فحص السیارة قبل الشراء و نحن غیر مسؤولین بعد توقیع عقد المعرض
+        </li>
+        <li style="color: brown;font-size: 11px">
+          الطرف الاول مسؤول عن کافة أنواع الغرامات قبل موعد الشراء
+        </li>
+        <li style="color: brown;font-size: 11px">
+          صاحب المعرض غیر مسؤول عن السیارة بعد البیع و کل عقد غیر مختوم من المعرض یعتبر باطل
+        </li>
+        <li style="color: brown;font-size: 11px">
+          علی المشتري تسجیل السیارة خلال شهر واحد
+        </li>
+        <li style="color: brown;font-size: 11px">
+          کتب هذا العقد بثالثة نسخ بتاریخ
+          <b class="px-2">{{$data['created'] ?? ''}}</b>
+          <span class="px-5">الساعة</span>
+          <b class="px-2">{{ \Carbon\Carbon::parse($data['created_at'])->format('h:i:s A') }}</b>
+        </li>
+      </ol>
       <div class="d-flex justify-content-between  mt-3 pt-2">
         <div>
           بەلێن و رەزامەندی لایەنی یەکەم 
