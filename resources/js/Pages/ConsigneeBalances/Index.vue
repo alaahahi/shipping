@@ -67,10 +67,18 @@ const getBalanceBgClass = (balance) => {
 };
 
 // Open payment modal
-const openPaymentModal = (consignee) => {
-  selectedConsignee.value = consignee;
+const openPaymentModal = (balance) => {
+  selectedConsignee.value = balance;
+  // استخدام primary_consignee_id إذا كان متوفراً، وإلا استخدم أول consignee_id من القائمة
+  const consigneeId = balance.primary_consignee_id || balance.consignee_ids?.[0] || balance.consignee_id;
+  
+  if (!consigneeId) {
+    toast.error('لا يمكن إضافة دفعة: لا يوجد زبون مرتبط بهذه الشركة');
+    return;
+  }
+  
   paymentForm.value = {
-    consignee_id: consignee.consignee_id,
+    consignee_id: consigneeId,
     trip_id: null,
     amount: '',
     currency: 'dollar',
@@ -122,10 +130,18 @@ const deletePayment = async (paymentId) => {
 };
 
 // View payments for consignee
-const viewPayments = async (consignee) => {
-  selectedConsignee.value = consignee;
+const viewPayments = async (balance) => {
+  selectedConsignee.value = balance;
+  // استخدام primary_consignee_id إذا كان متوفراً، وإلا استخدم أول consignee_id من القائمة
+  const consigneeId = balance.primary_consignee_id || balance.consignee_ids?.[0] || balance.consignee_id;
+  
+  if (!consigneeId) {
+    toast.error('لا يمكن عرض الدفعات: لا يوجد زبون مرتبط بهذه الشركة');
+    return;
+  }
+  
   try {
-    const response = await axios.get(`/api/consignee-balances/${consignee.consignee_id}/payments`);
+    const response = await axios.get(`/api/consignee-balances/${consigneeId}/payments`);
     if (response.data.success) {
       selectedConsignee.value.payments = response.data.payments;
       showReceiptModal.value = true;
@@ -392,7 +408,7 @@ onMounted(() => {
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-bold text-gray-900 dark:text-white">
-            دفعات {{ selectedConsignee?.consignee_name }}
+            دفعات {{ selectedConsignee?.company_name || selectedConsignee?.consignee_name || 'الشركة' }}
           </h3>
           <button
             @click="showReceiptModal = false"

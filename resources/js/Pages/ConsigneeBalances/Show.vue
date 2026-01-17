@@ -173,36 +173,8 @@ const searchCars = debounce(() => {
 
 // Open payment modal
 const openPaymentModal = () => {
-  // استخدام أول زبون من السيارات المجمعة حسب الرحلة
-  let firstConsigneeId = null;
-  
-  if (props.carsByTrip && props.carsByTrip.length > 0) {
-    // البحث عن أول سيارة مع consignee_id
-    for (const tripGroup of props.carsByTrip) {
-      if (tripGroup.cars && tripGroup.cars.length > 0) {
-        const carWithConsignee = tripGroup.cars.find(car => car.consignee_id);
-        if (carWithConsignee && carWithConsignee.consignee_id) {
-          firstConsigneeId = carWithConsignee.consignee_id;
-          break;
-        }
-      }
-    }
-  } else if (props.cars && props.cars.length > 0) {
-    // Fallback: استخدام cars القديم
-    const carWithConsignee = props.cars.find(car => car.consignee_id);
-    firstConsigneeId = carWithConsignee?.consignee_id || null;
-  }
-  
-  // إذا لم نجد consignee_id، نستخدم consignee من props
-  if (!firstConsigneeId) {
-    firstConsigneeId = props.consignee?.id || null;
-  }
-  
-  if (!firstConsigneeId) {
-    toast.error('لا توجد سيارات مرتبطة بزبون لإضافة دفعة');
-    return;
-  }
-  
+  // استخدام أول زبون من السيارات إذا كان company موجوداً
+  const firstConsigneeId = props.cars && props.cars.length > 0 ? props.cars[0].consignee_id : (props.consignee?.id || null);
   paymentForm.value = {
     consignee_id: firstConsigneeId,
     trip_id: null,
@@ -216,11 +188,6 @@ const openPaymentModal = () => {
 
 // Add payment
 const addPayment = async () => {
-  if (!paymentForm.value.consignee_id) {
-    toast.error('يرجى اختيار زبون لإضافة الدفعة');
-    return;
-  }
-  
   if (!paymentForm.value.amount || parseFloat(paymentForm.value.amount) <= 0) {
     toast.error('يرجى إدخال مبلغ صحيح');
     return;

@@ -204,7 +204,7 @@ class ConsigneeBalanceController extends Controller
                 $shippingCost = $tripCompany->shipping_price_per_car * $carsCount;
                 
                 // جمع جميع الدفعات من الزبائن الذين لديهم سيارات في هذه الشركة
-                $consigneeIds = $cars->pluck('consignee_id')->unique();
+                $consigneeIds = $cars->pluck('consignee_id')->unique()->filter()->values();
                 $payments = ConsigneePayment::whereIn('consignee_id', $consigneeIds)
                     ->where('owner_id', $owner_id)
                     ->get();
@@ -250,6 +250,8 @@ class ConsigneeBalanceController extends Controller
                     'company_id' => $company->id,
                     'company_name' => $company->name,
                     'company_phone' => $company->phone ?? '',
+                    'consignee_ids' => $consigneeIds->toArray(), // قائمة بجميع الزبائن المرتبطين بهذه الشركة
+                    'primary_consignee_id' => $consigneeIds->first(), // أول زبون للاستخدام الافتراضي
                     'total_cars' => $carsCount,
                     'total_shipping_cost' => $shippingCost,
                     'total_shipping_cost_dinar' => 0,
