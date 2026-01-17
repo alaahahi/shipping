@@ -29,6 +29,7 @@ use App\Http\Controllers\DatabaseStatusController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\SystemConfigController;
 use App\Http\Controllers\CarHistoryController;
+use App\Http\Controllers\TripController;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Cache\FileStore;
@@ -369,6 +370,32 @@ Route::middleware('auth')->group(function () {
 Route::get('checkClientBalance',[AccountingController::class, 'checkClientBalance'])->name('checkClientBalance');
 
 Route::post('search-vins', [CarExpensesController::class, 'searchVINs'])->name('search-vins');
+
+// Trip APIs
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('trips/search-companies', [TripController::class, 'searchCompanies'])->name('trips.searchCompanies');
+    Route::get('trips/{tripId}/cars-summary', [TripController::class, 'getCarsSummary'])->name('trips.carsSummary');
+    Route::get('trips/{tripId}/consignee-balances', [TripController::class, 'getCarsSummary'])->name('trips.consigneeBalances');
+    Route::post('trips/{tripId}/expenses', [TripController::class, 'addExpense'])->name('trips.addExpense');
+    Route::put('trips/expenses/{expenseId}', [TripController::class, 'updateExpense'])->name('trips.updateExpense');
+    Route::delete('trips/expenses/{expenseId}', [TripController::class, 'deleteExpense'])->name('trips.deleteExpense');
+    Route::get('trips/{tripId}/expenses', [TripController::class, 'getExpenses'])->name('trips.getExpenses');
+    Route::post('trips/{tripId}/import-excel', [TripController::class, 'importExcelForCompany'])->name('trips.importExcelForCompany');
+    Route::get('trips/{tripId}/export-excel', [TripController::class, 'exportExcel'])->name('trips.exportExcel');
+    Route::get('trips/{tripId}/export-pdf', [TripController::class, 'exportPdf'])->name('trips.exportPdf');
+    Route::get('trips/{tripId}/companies/{tripCompanyId}/cars', [TripController::class, 'getCompanyCars'])->name('trips.getCompanyCars');
+    Route::put('trips/{tripId}/companies/{tripCompanyId}/shipping-price', [TripController::class, 'updateShippingPrice'])->name('trips.updateShippingPrice');
+    Route::post('trips/{tripId}/cars', [TripController::class, 'addCar'])->name('trips.addCar');
+    Route::put('trips/cars/{carId}', [TripController::class, 'updateCar'])->name('trips.updateCar');
+    Route::delete('trips/cars/{carId}', [TripController::class, 'deleteCar'])->name('trips.deleteCar');
+    
+    // Consignee Balances APIs
+    Route::get('consignee-balances', [\App\Http\Controllers\ConsigneeBalanceController::class, 'getBalances'])->name('consigneeBalances.getBalances');
+    Route::get('consignee-balances/{consigneeId}/payments', [\App\Http\Controllers\ConsigneeBalanceController::class, 'getPayments'])->name('consigneeBalances.getPayments');
+    Route::post('consignee-balances/payments', [\App\Http\Controllers\ConsigneeBalanceController::class, 'addPayment'])->name('consigneeBalances.addPayment');
+    Route::delete('consignee-balances/payments/{paymentId}', [\App\Http\Controllers\ConsigneeBalanceController::class, 'deletePayment'])->name('consigneeBalances.deletePayment');
+    Route::get('consignee-balances/payments/{paymentId}/receipt', [\App\Http\Controllers\ConsigneeBalanceController::class, 'printReceipt'])->name('consigneeBalances.printReceipt');
+});
 
 // License APIs - بدون middleware للسماح بالتفعيل قبل تسجيل الدخول
 Route::prefix('license')->group(function () {
