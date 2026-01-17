@@ -11,6 +11,8 @@ const props = defineProps({
   consignee: Object,
   cars: Array,
   carsByTrip: Array,
+  consignee_ids: Array,
+  primary_consignee_id: Number,
   payments: Array,
   trips: Array,
   stats: Object,
@@ -173,8 +175,39 @@ const searchCars = debounce(() => {
 
 // Open payment modal
 const openPaymentModal = () => {
-  // استخدام أول زبون من السيارات إذا كان company موجوداً
-  const firstConsigneeId = props.cars && props.cars.length > 0 ? props.cars[0].consignee_id : (props.consignee?.id || null);
+  // استخدام primary_consignee_id من props أو جلب أول consignee_id من السيارات
+  let firstConsigneeId = props.primary_consignee_id || null;
+  
+  // إذا لم يكن متوفراً، جرب من carsByTrip
+  if (!firstConsigneeId && props.carsByTrip && props.carsByTrip.length > 0) {
+    for (const tripGroup of props.carsByTrip) {
+      if (tripGroup.cars && tripGroup.cars.length > 0) {
+        firstConsigneeId = tripGroup.cars[0].consignee_id;
+        break;
+      }
+    }
+  }
+  
+  // Fallback إلى cars إذا كان متوفراً
+  if (!firstConsigneeId && props.cars && props.cars.length > 0) {
+    firstConsigneeId = props.cars[0].consignee_id;
+  }
+  
+  // Fallback إلى consignee.id
+  if (!firstConsigneeId) {
+    firstConsigneeId = props.consignee?.id || null;
+  }
+  
+  // Fallback إلى consignee_ids array
+  if (!firstConsigneeId && props.consignee_ids && props.consignee_ids.length > 0) {
+    firstConsigneeId = props.consignee_ids[0];
+  }
+  
+  if (!firstConsigneeId) {
+    toast.error('لا يمكن إضافة دفعة: لا يوجد زبون مرتبط بهذه الشركة');
+    return;
+  }
+  
   paymentForm.value = {
     consignee_id: firstConsigneeId,
     trip_id: null,

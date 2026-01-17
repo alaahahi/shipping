@@ -149,6 +149,9 @@ class ConsigneeBalanceController extends Controller
             $balanceDollar = $totalShippingCost - $totalPaidDollar;
             $balanceDinar = 0 - $totalPaidDinar;
 
+            // جمع جميع consignee_ids المرتبطين بهذه الشركة
+            $allConsigneeIds = $tripCars->pluck('consignee_id')->unique()->filter()->values();
+
             return inertia('ConsigneeBalances/Show', [
                 'company' => [
                     'id' => $company->id,
@@ -156,6 +159,8 @@ class ConsigneeBalanceController extends Controller
                     'phone' => $company->phone ?? '',
                 ],
                 'carsByTrip' => $carsByTripArray,
+                'consignee_ids' => $allConsigneeIds->toArray(),
+                'primary_consignee_id' => $allConsigneeIds->first(),
                 'payments' => $payments->values(),
                 'trips' => $trips,
                 'stats' => [

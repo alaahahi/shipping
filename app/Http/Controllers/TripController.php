@@ -125,10 +125,10 @@ class TripController extends Controller
             'total_expenses_dinar' => $trip->total_expenses_dinar,
         ];
 
-        // تجميع السيارات حسب CONSIGNEE
+        // تجميع السيارات حسب CONSIGNEE مع معلومات الشركة
         $carsByConsignee = TripCar::where('trip_id', $trip->id)
             ->whereNotNull('consignee_id')
-            ->with('consignee')
+            ->with(['consignee', 'tripCompany.company'])
             ->get()
             ->groupBy('consignee_id')
             ->map(function ($cars, $consigneeId) {
@@ -138,7 +138,17 @@ class TripController extends Controller
                 return [
                     'consignee' => $consignee,
                     'cars_count' => $cars->count(),
-                    'cars' => $cars,
+                    'cars' => $cars->map(function ($car) {
+                        return [
+                            'id' => $car->id,
+                            'weight' => $car->weight,
+                            'description' => $car->description,
+                            'chassis_no' => $car->chassis_no,
+                            'code' => $car->code,
+                            'company_name' => $car->tripCompany->company->name ?? 'غير محدد',
+                            'trip_company_id' => $car->trip_company_id,
+                        ];
+                    }),
                     'balance' => $wallet ? $wallet->balance : 0,
                 ];
             })

@@ -24,6 +24,7 @@ const showCarForm = ref(false);
 const selectedCarForm = ref({ tripCompanyId: null, car: null });
 const importFileInput = ref(null);
 const isImporting = ref(false);
+const carSearchQuery = ref('');
 
 // Load companies and expenses
 const loadCompanies = async () => {
@@ -338,6 +339,80 @@ const totalExpensesByType = computed(() => {
     totals[expense.expense_type][expense.currency] += parseFloat(expense.amount);
   });
   return totals;
+});
+
+// حساب إيرادات الشركات (مجموع سعر الشحن * عدد السيارات لكل شركة)
+const totalRevenue = computed(() => {
+  let revenue = 0;
+  companies.value.forEach(company => {
+    const price = parseFloat(company.shipping_price_per_car) || 0;
+    const count = parseInt(company.cars_count) || 0;
+    revenue += price * count;
+  });
+  return revenue;
+});
+
+// حساب مجموع المصاريف
+const totalExpensesSum = computed(() => {
+  let totalDollar = 0;
+  let totalDinar = 0;
+  expenses.value.forEach(expense => {
+    const amount = parseFloat(expense.amount) || 0;
+    if (expense.currency === 'dollar') {
+      totalDollar += amount;
+    } else if (expense.currency === 'dinar') {
+      totalDinar += amount;
+    }
+  });
+  return { dollar: totalDollar, dinar: totalDinar };
+});
+
+// حساب الربح (الإيرادات - المصاريف)
+const profit = computed(() => {
+  return totalRevenue.value - totalExpensesSum.value.dollar;
+});
+
+// فلترة السيارات حسب البحث
+const filteredCarsByConsignee = computed(() => {
+  if (!carSearchQuery.value || !props.carsByConsignee) {
+    return props.carsByConsignee;
+  }
+  
+  const query = carSearchQuery.value.toLowerCase().trim();
+  
+  return props.carsByConsignee
+    .map(group => {
+      const filteredCars = group.cars.filter(car => {
+        const companyName = (car.company_name || '').toLowerCase();
+        const weight = (car.weight || '').toString().toLowerCase();
+        const description = (car.description || '').toLowerCase();
+        const chassisNo = (car.chassis_no || '').toLowerCase();
+        const code = (car.code || '').toLowerCase();
+        
+        return companyName.includes(query) ||
+               weight.includes(query) ||
+               description.includes(query) ||
+               chassisNo.includes(query) ||
+               code.includes(query);
+      });
+      
+      if (filteredCars.length === 0) {
+        return null;
+      }
+      
+      return {
+        ...group,
+        cars: filteredCars,
+        cars_count: filteredCars.length,
+      };
+    })
+    .filter(group => group !== null);
+});
+
+// حساب عدد السيارات المفلترة
+const filteredCarsCount = computed(() => {
+  if (!filteredCarsByConsignee.value) return 0;
+  return filteredCarsByConsignee.value.reduce((total, group) => total + (group.cars_count || 0), 0);
 });
 </script>
 
@@ -779,9 +854,29 @@ const totalExpensesByType = computed(() => {
 
             <!-- Cars Tab -->
             <div v-show="activeTab === 'cars'">
-              <div v-if="carsByConsignee && carsByConsignee.length > 0" class="space-y-6">
+              <!-- Search Box -->
+              <div class="mb-6">
+                <div class="relative">
+                  <input
+                    v-model="carSearchQuery"
+                    type="text"
+                    placeholder="🔍 ابحث في السيارات (اسم الشركة، الوزن، الوصف، الشاسيه، الكود)..."
+                    class="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white text-right"
+                  />
+                  <svg v-if="carSearchQuery" @click="carSearchQuery = ''" class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Filtered Cars Count -->
+              <div v-if="carSearchQuery" class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                نتائج البحث: {{ filteredCarsCount }} سيارة
+              </div>
+
+              <div v-if="filteredCarsByConsignee && filteredCarsByConsignee.length > 0" class="space-y-6">
                 <div
-                  v-for="group in carsByConsignee"
+                  v-for="group in filteredCarsByConsignee"
                   :key="group.consignee.id"
                   class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 sm:p-6"
                 >
@@ -800,6 +895,7 @@ const totalExpensesByType = computed(() => {
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
                       <thead class="bg-gray-100 dark:bg-gray-800">
                         <tr>
+                          <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">الشركة</th>
                           <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">الوزن</th>
                           <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">الوصف</th>
                           <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">رقم الشاسيه</th>
@@ -808,6 +904,7 @@ const totalExpensesByType = computed(() => {
                       </thead>
                       <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                         <tr v-for="car in group.cars" :key="car.id">
+                          <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600 dark:text-blue-400">{{ car.company_name || '-' }}</td>
                           <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ car.weight || '-' }}</td>
                           <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">{{ car.description || '-' }}</td>
                           <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ car.chassis_no || '-' }}</td>
@@ -825,6 +922,82 @@ const totalExpensesByType = computed(() => {
 
             <!-- Expenses Tab -->
             <div v-show="activeTab === 'expenses'">
+              <!-- Summary Cards -->
+              <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Total Revenue Card -->
+                <div class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg shadow p-6 border-2 border-green-200 dark:border-green-700">
+                  <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-sm font-medium text-green-800 dark:text-green-300">إيرادات الشركات</h4>
+                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <p class="text-2xl font-bold text-green-900 dark:text-green-100">
+                    {{ formatCurrency(totalRevenue, 'dollar') }}
+                  </p>
+                  <p class="text-xs text-green-700 dark:text-green-400 mt-1">
+                    مجموع الشركات × عدد السيارات
+                  </p>
+                </div>
+
+                <!-- Total Expenses Card -->
+                <div class="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg shadow p-6 border-2 border-red-200 dark:border-red-700">
+                  <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-sm font-medium text-red-800 dark:text-red-300">مجموع المصاريف</h4>
+                    <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <p class="text-2xl font-bold text-red-900 dark:text-red-100">
+                    {{ formatCurrency(totalExpensesSum.dollar, 'dollar') }}
+                  </p>
+                  <p class="text-xs text-red-700 dark:text-red-400 mt-1">
+                    {{ formatCurrency(totalExpensesSum.dinar, 'dinar') }}
+                  </p>
+                </div>
+
+                <!-- Profit Card -->
+                <div :class="[
+                  'rounded-lg shadow p-6 border-2',
+                  profit >= 0 
+                    ? 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700'
+                    : 'bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border-orange-200 dark:border-orange-700'
+                ]">
+                  <div class="flex items-center justify-between mb-2">
+                    <h4 :class="[
+                      'text-sm font-medium',
+                      profit >= 0 
+                        ? 'text-blue-800 dark:text-blue-300'
+                        : 'text-orange-800 dark:text-orange-300'
+                    ]">الربح للرحلة</h4>
+                    <svg :class="[
+                      'w-6 h-6',
+                      profit >= 0 
+                        ? 'text-blue-600 dark:text-blue-400'
+                        : 'text-orange-600 dark:text-orange-400'
+                    ]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  </div>
+                  <p :class="[
+                    'text-2xl font-bold',
+                    profit >= 0 
+                      ? 'text-blue-900 dark:text-blue-100'
+                      : 'text-orange-900 dark:text-orange-100'
+                  ]">
+                    {{ formatCurrency(profit, 'dollar') }}
+                  </p>
+                  <p :class="[
+                    'text-xs mt-1',
+                    profit >= 0 
+                      ? 'text-blue-700 dark:text-blue-400'
+                      : 'text-orange-700 dark:text-orange-400'
+                  ]">
+                    {{ profit >= 0 ? 'ربح' : 'خسارة' }}
+                  </p>
+                </div>
+              </div>
+
               <div class="mb-6">
                 <TripExpenseForm :trip-id="trip.id" @expense-added="handleExpenseAdded" />
               </div>
