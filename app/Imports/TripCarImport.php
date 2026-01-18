@@ -28,6 +28,7 @@ class TripCarImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
     protected $accounting;
     protected $headerRow = null; // سيتم تحديده تلقائياً
     protected $filePath;
+    protected $fileExtension;
     public $skippedDuplicates = 0; // عدد السيارات المتخطاة بسبب التكرار
 
     public function __construct($tripId, $tripCompanyId, $ownerId, $filePath = null)
@@ -38,8 +39,9 @@ class TripCarImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
         $this->accounting = app(AccountingCacheService::class);
         $this->filePath = $filePath;
         
-        // البحث عن صف S.NO تلقائياً
+        // تحديد امتداد الملف
         if ($filePath) {
+            $this->fileExtension = pathinfo($filePath, PATHINFO_EXTENSION);
             $this->headerRow = $this->findSnoRow($filePath);
         }
     }
@@ -50,7 +52,11 @@ class TripCarImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
     protected function findSnoRow($filePath)
     {
         try {
-            $spreadsheet = IOFactory::load($filePath);
+            // تحديد نوع القارئ بشكل صريح لتجنب مشاكل الكشف التلقائي
+            $extension = $this->fileExtension ?? pathinfo($filePath, PATHINFO_EXTENSION);
+            $readerType = strtoupper($extension) === 'XLS' ? 'Xls' : 'Xlsx';
+            $reader = IOFactory::createReader($readerType);
+            $spreadsheet = $reader->load($filePath);
             $worksheet = $spreadsheet->getActiveSheet();
             
             // البحث في أول 30 صف

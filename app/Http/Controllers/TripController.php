@@ -221,7 +221,8 @@ class TripController extends Controller
 
             // حفظ الملف
             $file = $request->file('file');
-            $fileName = 'trip_' . $tripId . '_company_' . $validated['company_id'] . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $fileExtension = $file->getClientOriginalExtension();
+            $fileName = 'trip_' . $tripId . '_company_' . $validated['company_id'] . '_' . time() . '.' . $fileExtension;
             $filePath = $file->storeAs('trips/excel', $fileName, 'public');
 
             // البحث عن أو إنشاء TripCompany
@@ -243,7 +244,10 @@ class TripController extends Controller
             // استيراد البيانات - تمرير مسار الملف للبحث عن S.NO
             $fileRealPath = $file->getRealPath();
             $importer = new TripCarImport($trip->id, $tripCompany->id, $owner_id, $fileRealPath);
-            Excel::import($importer, $fileRealPath);
+            
+            // تحديد نوع الملف بشكل صريح لتجنب مشاكل الكشف التلقائي
+            $readerType = strtoupper($fileExtension) === 'XLS' ? \Maatwebsite\Excel\Excel::XLS : \Maatwebsite\Excel\Excel::XLSX;
+            Excel::import($importer, $fileRealPath, null, $readerType);
 
             DB::commit();
 
@@ -557,7 +561,8 @@ class TripController extends Controller
 
             // حفظ الملف
             $file = $request->file('file');
-            $fileName = 'trip_' . $tripId . '_company_' . $tripCompany->company_id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $fileExtension = $file->getClientOriginalExtension();
+            $fileName = 'trip_' . $tripId . '_company_' . $tripCompany->company_id . '_' . time() . '.' . $fileExtension;
             $filePath = $file->storeAs('trips/excel', $fileName, 'public');
 
             // تحديث مسار الملف في TripCompany
@@ -569,7 +574,10 @@ class TripController extends Controller
             // استيراد البيانات - تمرير مسار الملف للبحث عن S.NO
             $fileRealPath = $file->getRealPath();
             $importer = new TripCarImport($trip->id, $tripCompany->id, $owner_id, $fileRealPath);
-            Excel::import($importer, $fileRealPath);
+            
+            // تحديد نوع الملف بشكل صريح لتجنب مشاكل الكشف التلقائي
+            $readerType = strtoupper($fileExtension) === 'XLS' ? \Maatwebsite\Excel\Excel::XLS : \Maatwebsite\Excel\Excel::XLSX;
+            Excel::import($importer, $fileRealPath, null, $readerType);
 
             DB::commit();
 
@@ -688,13 +696,16 @@ class TripController extends Controller
         try {
             $file = $request->file('file');
             $filePath = $file->getRealPath();
+            $fileExtension = $file->getClientOriginalExtension();
             
-            // قراءة الملف
-            $spreadsheet = IOFactory::load($filePath);
+            // قراءة الملف مع تحديد النوع بشكل صريح
+            $readerType = strtoupper($fileExtension) === 'XLS' ? 'Xls' : 'Xlsx';
+            $reader = IOFactory::createReader($readerType);
+            $spreadsheet = $reader->load($filePath);
             $worksheet = $spreadsheet->getActiveSheet();
             
             // البحث عن صف S.NO
-            $snoRow = $this->findSnoRowInFile($filePath);
+            $snoRow = $this->findSnoRowInFile($filePath, $fileExtension);
             
             // قراءة أول 20 صف بعد S.NO
             $previewRows = [];
@@ -746,10 +757,13 @@ class TripController extends Controller
     /**
      * البحث عن صف S.NO في الملف
      */
-    protected function findSnoRowInFile($filePath)
+    protected function findSnoRowInFile($filePath, $fileExtension = 'xlsx')
     {
         try {
-            $spreadsheet = IOFactory::load($filePath);
+            // تحديد نوع القارئ بشكل صريح
+            $readerType = strtoupper($fileExtension) === 'XLS' ? 'Xls' : 'Xlsx';
+            $reader = IOFactory::createReader($readerType);
+            $spreadsheet = $reader->load($filePath);
             $worksheet = $spreadsheet->getActiveSheet();
             
             // البحث في أول 30 صف
