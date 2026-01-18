@@ -44,6 +44,211 @@ class TripCarImport implements ToCollection, WithStartRow, SkipsEmptyRows
             $this->headerRow = $this->findSnoRow($filePath);
         }
     }
+    
+    /**
+     * استيراد مباشر من الملف (نفس منطق المعاينة)
+     */
+    public function importDirectly()
+    {
+        if (!$this->filePath) {
+            throw new \Exception('File path is required for direct import');
+        }
+        
+        DB::beginTransaction();
+        
+        try {
+            // قراءة الملف
+            $readerType = strtoupper($this->fileExtension) === 'XLS' ? 'Xls' : 'Xlsx';
+            $reader = IOFactory::createReader($readerType);
+            $spreadsheet = $reader->load($this->filePath);
+            $worksheet = $spreadsheet->getActiveSheet();
+            
+            $userClientTypeId = $this->accounting->userClient();
+            $importedCount = 0;
+            $skippedCount = 0;
+            $skippedDuplicates = 0;
+            
+            $snoRow = $this->headerRow ?? 10;
+            $startRow = $snoRow + 1;
+            $maxRows = $worksheet->getHighestRow();
+            $maxCol = 'H'; // حتى العمود H (CODE)
+            
+            Log::info('Direct import starting', [
+                'trip_id' => $this->tripId,
+                'sno_row' => $snoRow,
+                'start_row' => $startRow,
+                'max_rows' => $maxRows,
+            ]);
+            
+            // قراءة كل صف
+            for ($row = $startRow; $row <= $maxRows; $row++) {
+                // قراءة البيانات من الأعمدة
+                $sno = trim((string)$worksheet->getCell('A' . $row)->getValue());
+                $weight = trim((string)$worksheet->getCell('B' . $row)->getValue());
+                $shipperName = trim((string)$worksheet->getCell('C' . $row)->getValue());
+                $description = trim((string)$worksheet->getCell('D' . $row)->getValue());
+                $chassisNo = trim((string)$worksheet->getCell('E' . $row)->getValue());
+                $consigneeName = trim((string)$worksheet->getCell('F' . $row)->getValue());
+                $companyName = trim((string)$worksheet->getCell('G' . $row)->getValue());
+                $code = trim((string)$worksheet->getCell('H' . $row)->getValue());
+                
+                // تخطي الصفوف الفارغة
+                if (empty($chassisNo) && empty($consigneeName) && empty($description)) {
+                    continue;
+                }
+                
+                // تنظيف رقم الشاسيه
+                if (!empty($chassisNo)) {
+                    $chassisNo = strtoupper(trim($chassisNo));
+                }
+                
+                // تخطي الصفوف التي فيها علامات اقتباس فقط
+                if ($this->isQuoteOnlyRow($shipperName, $consigneeName)) {
+                    Log::debug('Skipping row with quotes only', ['row' => $row]);
+                    $skippedCount++;
+                    continue;
+                }
+                
+                // التحقق من CONSIGNEE
+                if (empty($consigneeName)) {
+                    Log::warning('Skipping row: missing CONSIGNEE', [
+                        'row' => $row,
+                        'chassis' => $chassisNo,
+                    ]);
+                    $skippedCount++;
+                    continue;
+                }
+                
+                // استيراد السيارة
+                $result = $this->importCar([
+                    'weight' => $weight,
+                    'shipper_name' => $shipperName,
+                    'description' => $description,
+                    'chassis_no' => $chassisNo,
+                    'consignee_name' => $consigneeName,
+                    'code' => $code,
+                ], $userClientTypeId);
+                
+                if ($result === 'imported') {
+                    $importedCount++;
+                } elseif ($result === 'duplicate') {
+                    $skippedDuplicates++;
+                } else {
+                    $skippedCount++;
+                }
+            }
+            
+            $this->skippedDuplicates = $skippedDuplicates;
+            
+            DB::commit();
+            
+            Log::info('Direct import completed', [
+                'trip_id' => $this->tripId,
+                'imported' => $importedCount,
+                'skipped' => $skippedCount,
+                'duplicates' => $skippedDuplicates,
+                'total_rows' => $maxRows - $startRow + 1,
+            ]);
+            
+            return [
+                'imported' => $importedCount,
+                'skipped' => $skippedCount,
+                'duplicates' => $skippedDuplicates,
+            ];
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Direct import error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
+        }
+    }
+    
+    /**
+     * استيراد سيارة واحدة
+     */
+    protected function importCar($data, $userClientTypeId)
+    {
+        $chassisNo = $data['chassis_no'];
+        $consigneeName = $data['consignee_name'];
+        $weight = $data['weight'];
+        $shipperName = $data['shipper_name'];
+        $description = $data['description'];
+        $code = $data['code'];
+        
+        // البحث عن أو إنشاء Car
+        $car = null;
+        if (!empty($chassisNo)) {
+            $car = Car::where('owner_id', $this->ownerId)
+                ->where('vin', $chassisNo)
+                ->first();
+            
+            if (!$car) {
+                $car = Car::where('vin', $chassisNo)->first();
+            }
+        }
+        
+        // التحقق من التكرار
+        if (!empty($chassisNo)) {
+            $existingTripCar = TripCar::where('trip_id', $this->tripId)
+                ->where('chassis_no', $chassisNo)
+                ->first();
+            
+            if ($existingTripCar) {
+                Log::info('Skipping duplicate car', ['chassis' => $chassisNo]);
+                return 'duplicate';
+            }
+        }
+        
+        // إنشاء Car إذا لم تكن موجودة
+        if (!$car && !empty($chassisNo)) {
+            try {
+                $car = Car::create([
+                    'vin' => $chassisNo,
+                    'lotnumber' => null,
+                    'year' => null,
+                    'owner_id' => $this->ownerId,
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Could not create car', [
+                    'chassis' => $chassisNo,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+        
+        // البحث عن Consignee
+        $consignee = User::where('owner_id', $this->ownerId)
+            ->where('type_id', $userClientTypeId)
+            ->where('name', 'LIKE', '%' . $consigneeName . '%')
+            ->first();
+        
+        if (!$consignee) {
+            $consignee = User::create([
+                'name' => $consigneeName,
+                'type_id' => $userClientTypeId,
+                'owner_id' => $this->ownerId,
+            ]);
+        }
+        
+        // إنشاء TripCar
+        TripCar::create([
+            'trip_id' => $this->tripId,
+            'trip_company_id' => $this->tripCompanyId,
+            'car_id' => $car ? $car->id : null,
+            'weight' => !empty($weight) && is_numeric($weight) ? (float)$weight : null,
+            'shipper_name' => !empty($shipperName) ? $shipperName : 'Unknown',
+            'description' => $description,
+            'chassis_no' => $chassisNo,
+            'consignee_name' => $consigneeName,
+            'consignee_id' => $consignee->id,
+            'code' => $code,
+            'owner_id' => $this->ownerId,
+        ]);
+        
+        return 'imported';
+    }
 
     /**
      * البحث عن صف S.NO في الملف (صف الرأس)

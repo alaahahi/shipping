@@ -241,13 +241,12 @@ class TripController extends Controller
                 'uploaded_at' => now(),
             ]);
 
-            // استيراد البيانات - تمرير مسار الملف للبحث عن S.NO
+            // استيراد البيانات مباشرة من الملف (نفس منطق المعاينة)
             $fileRealPath = $file->getRealPath();
             $importer = new TripCarImport($trip->id, $tripCompany->id, $owner_id, $fileRealPath);
             
-            // تحديد نوع الملف بشكل صريح لتجنب مشاكل الكشف التلقائي
-            $readerType = strtoupper($fileExtension) === 'XLS' ? \Maatwebsite\Excel\Excel::XLS : \Maatwebsite\Excel\Excel::XLSX;
-            Excel::import($importer, $fileRealPath, null, $readerType);
+            // استيراد مباشر - يقرأ من Excel مباشرة بدون Laravel Excel package
+            $result = $importer->importDirectly();
 
             DB::commit();
 
@@ -571,13 +570,12 @@ class TripController extends Controller
                 'uploaded_at' => now(),
             ]);
 
-            // استيراد البيانات - تمرير مسار الملف للبحث عن S.NO
+            // استيراد البيانات مباشرة من الملف (نفس منطق المعاينة)
             $fileRealPath = $file->getRealPath();
             $importer = new TripCarImport($trip->id, $tripCompany->id, $owner_id, $fileRealPath);
             
-            // تحديد نوع الملف بشكل صريح لتجنب مشاكل الكشف التلقائي
-            $readerType = strtoupper($fileExtension) === 'XLS' ? \Maatwebsite\Excel\Excel::XLS : \Maatwebsite\Excel\Excel::XLSX;
-            Excel::import($importer, $fileRealPath, null, $readerType);
+            // استيراد مباشر - يقرأ من Excel مباشرة بدون Laravel Excel package
+            $result = $importer->importDirectly();
 
             DB::commit();
 
