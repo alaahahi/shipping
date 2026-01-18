@@ -699,8 +699,20 @@ class TripController extends Controller
             // قراءة الملف مع تحديد النوع بشكل صريح
             $readerType = strtoupper($fileExtension) === 'XLS' ? 'Xls' : 'Xlsx';
             $reader = IOFactory::createReader($readerType);
+            
+            // تعطيل التحقق من صحة XML لتجنب أخطاء empty document
+            if (method_exists($reader, 'setReadDataOnly')) {
+                $reader->setReadDataOnly(true);
+            }
+            
+            // قمع أخطاء XML
+            libxml_use_internal_errors(true);
+            
             $spreadsheet = $reader->load($filePath);
             $worksheet = $spreadsheet->getActiveSheet();
+            
+            // مسح أخطاء XML
+            libxml_clear_errors();
             
             // البحث عن صف S.NO
             $snoRow = $this->findSnoRowInFile($filePath, $fileExtension);
@@ -761,8 +773,20 @@ class TripController extends Controller
             // تحديد نوع القارئ بشكل صريح
             $readerType = strtoupper($fileExtension) === 'XLS' ? 'Xls' : 'Xlsx';
             $reader = IOFactory::createReader($readerType);
+            
+            // تعطيل التحقق من صحة XML
+            if (method_exists($reader, 'setReadDataOnly')) {
+                $reader->setReadDataOnly(true);
+            }
+            
+            // قمع أخطاء XML
+            libxml_use_internal_errors(true);
+            
             $spreadsheet = $reader->load($filePath);
             $worksheet = $spreadsheet->getActiveSheet();
+            
+            // مسح أخطاء XML
+            libxml_clear_errors();
             
             // البحث في أول 30 صف
             $maxRows = min(30, $worksheet->getHighestRow());

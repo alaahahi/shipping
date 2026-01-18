@@ -57,11 +57,28 @@ class TripCarImport implements ToCollection, WithStartRow, SkipsEmptyRows
         DB::beginTransaction();
         
         try {
-            // قراءة الملف
+            // التحقق من وجود الملف
+            if (!file_exists($this->filePath)) {
+                throw new \Exception('File not found: ' . $this->filePath);
+            }
+            
+            // قراءة الملف مع تعطيل التحقق من XML
             $readerType = strtoupper($this->fileExtension) === 'XLS' ? 'Xls' : 'Xlsx';
             $reader = IOFactory::createReader($readerType);
+            
+            // تعطيل التحقق من صحة XML لتجنب أخطاء الـ empty document
+            if (method_exists($reader, 'setReadDataOnly')) {
+                $reader->setReadDataOnly(true);
+            }
+            
+            // قمع أخطاء XML
+            libxml_use_internal_errors(true);
+            
             $spreadsheet = $reader->load($this->filePath);
             $worksheet = $spreadsheet->getActiveSheet();
+            
+            // مسح أخطاء XML
+            libxml_clear_errors();
             
             $userClientTypeId = $this->accounting->userClient();
             $importedCount = 0;
@@ -260,8 +277,20 @@ class TripCarImport implements ToCollection, WithStartRow, SkipsEmptyRows
             $extension = $this->fileExtension ?? pathinfo($filePath, PATHINFO_EXTENSION);
             $readerType = strtoupper($extension) === 'XLS' ? 'Xls' : 'Xlsx';
             $reader = IOFactory::createReader($readerType);
+            
+            // تعطيل التحقق من صحة XML
+            if (method_exists($reader, 'setReadDataOnly')) {
+                $reader->setReadDataOnly(true);
+            }
+            
+            // قمع أخطاء XML
+            libxml_use_internal_errors(true);
+            
             $spreadsheet = $reader->load($filePath);
             $worksheet = $spreadsheet->getActiveSheet();
+            
+            // مسح أخطاء XML
+            libxml_clear_errors();
             
             // البحث في أول 30 صف
             $maxRows = min(30, $worksheet->getHighestRow());
