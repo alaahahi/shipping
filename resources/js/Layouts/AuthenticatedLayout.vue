@@ -193,6 +193,14 @@ const switchLocale = (locale) => {
                   💰 أرصدة الزبائن
                 </NavLink>
               </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)">
+                <NavLink
+                  :href="route('companyBalances.index')"
+                  :active="route().current('companyBalances.index') || route().current('companyBalances.show')"
+                >
+                  🚢 حسابات الشركات
+                </NavLink>
+              </div>
               <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1">
                 <NavLink
                   :href="route('hunter')"
@@ -442,6 +450,13 @@ const switchLocale = (locale) => {
                 v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)"
               >
               💰 أرصدة الزبائن
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
+                :href="route('companyBalances.index')"
+                :active="route().current('companyBalances.index') || route().current('companyBalances.show')"
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)"
+              >
+              🚢 حسابات الشركات
               </ResponsiveNavLink>
               
               <!-- صفحة مراقبة المزامنة للهواتف -->

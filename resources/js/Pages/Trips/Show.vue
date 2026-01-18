@@ -12,6 +12,7 @@ const props = defineProps({
   trip: Object,
   stats: Object,
   carsByConsignee: Array,
+  exchangeRate: Number,
 });
 
 const toast = useToast();
@@ -25,6 +26,12 @@ const selectedCarForm = ref({ tripCompanyId: null, car: null });
 const importFileInput = ref(null);
 const isImporting = ref(false);
 const carSearchQuery = ref('');
+const editingCosts = ref(false);
+const tempCostData = ref({
+  cost_per_car_aed: 0,
+  captain_commission_aed: 0,
+  purchase_price_aed: 0,
+});
 
 // Load companies and expenses
 const loadCompanies = async () => {
@@ -35,6 +42,7 @@ const loadCompanies = async () => {
       showCars: company.showCars || false,
       editingPrice: false,
       tempShippingPrice: company.shipping_price_per_car || 0,
+      tempShippingPriceAed: company.shipping_price_aed || 0,
     }));
   } catch (error) {
     console.error(error);
@@ -47,10 +55,12 @@ const updateShippingPrice = async (company) => {
   try {
     const response = await axios.put(`/api/trips/${props.trip.id}/companies/${company.id}/shipping-price`, {
       shipping_price_per_car: company.tempShippingPrice || 0,
+      shipping_price_aed: company.tempShippingPriceAed || 0,
     });
 
     if (response.data.success) {
       company.shipping_price_per_car = company.tempShippingPrice;
+      company.shipping_price_aed = company.tempShippingPriceAed;
       company.editingPrice = false;
       toast.success('تم تحديث سعر الشحن بنجاح');
       await loadCompanies(); // تحديث القائمة
@@ -61,6 +71,51 @@ const updateShippingPrice = async (company) => {
     console.error(error);
     const errorMessage = error.response?.data?.message || 'حدث خطأ أثناء تحديث سعر الشحن';
     toast.error(errorMessage);
+  }
+};
+
+// تحويل من الدرهم إلى الدولار
+const convertAedToUsd = (company) => {
+  if (company.tempShippingPriceAed && props.exchangeRate) {
+    company.tempShippingPrice = (company.tempShippingPriceAed / props.exchangeRate).toFixed(2);
+  }
+};
+
+// تحويل من الدولار إلى الدرهم
+const convertUsdToAed = (company) => {
+  if (company.tempShippingPrice && props.exchangeRate) {
+    company.tempShippingPriceAed = (company.tempShippingPrice * props.exchangeRate).toFixed(2);
+  }
+};
+
+// حساب سعر الشراء من الكلفة والعمولة
+const calculatePurchasePrice = () => {
+  const cost = parseFloat(tempCostData.value.cost_per_car_aed) || 0;
+  const commission = parseFloat(tempCostData.value.captain_commission_aed) || 0;
+  tempCostData.value.purchase_price_aed = cost - commission;
+};
+
+// حفظ إعدادات الكلفة
+const saveCostConfiguration = async () => {
+  try {
+    const response = await axios.put(`/api/trips/${props.trip.id}/cost-configuration`, {
+      cost_per_car_aed: tempCostData.value.cost_per_car_aed,
+      captain_commission_aed: tempCostData.value.captain_commission_aed,
+      purchase_price_aed: tempCostData.value.purchase_price_aed,
+    });
+
+    if (response.data.success) {
+      Object.assign(props.trip, {
+        cost_per_car_aed: tempCostData.value.cost_per_car_aed,
+        captain_commission_aed: tempCostData.value.captain_commission_aed,
+        purchase_price_aed: tempCostData.value.purchase_price_aed,
+      });
+      editingCosts.value = false;
+      toast.success('تم حفظ إعدادات الكلفة بنجاح');
+    }
+  } catch (error) {
+    console.error(error);
+    toast.error('حدث خطأ أثناء حفظ إعدادات الكلفة');
   }
 };
 
@@ -709,41 +764,128 @@ const filteredCarsCount = computed(() => {
                         </label>
                         <button
                           v-if="!company.editingPrice"
-                          @click="company.editingPrice = true"
+                          @click="company.editingPrice = true; company.tempShippingPriceAed = company.shipping_price_aed || 0"
                           class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm"
                         >
                           {{ company.shipping_price_per_car ? 'تعديل' : 'إضافة' }}
                         </button>
                       </div>
-                      <div v-if="company.editingPrice" class="flex gap-2">
-                        <input
-                          v-model.number="company.tempShippingPrice"
-                          type="number"
-                           min="0"
-                          placeholder="0"
-                          class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
-                          @keyup.enter="updateShippingPrice(company)"
-                        />
-                        <button
-                          @click="updateShippingPrice(company)"
-                          class="px-3 py-2 text-sm text-white bg-green-600 rounded-md hover:bg-green-700"
-                        >
-                          حفظ
-                        </button>
-                        <button
-                          @click="company.editingPrice = false; company.tempShippingPrice = company.shipping_price_per_car"
-                          class="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
-                        >
-                          إلغاء
-                        </button>
+                      <div v-if="company.editingPrice" class="space-y-3">
+                        <!-- حقل الدرهم الإماراتي -->
+                        <div>
+                          <label class="text-xs text-gray-600 dark:text-gray-400 mb-1 block">
+                            💵 السعر بالدرهم الإماراتي (AED)
+                          </label>
+                          <div class="flex gap-2 items-center">
+                            <input
+                              v-model.number="company.tempShippingPriceAed"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="0.00"
+                              class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                              @input="convertAedToUsd(company)"
+                              @keyup.enter="updateShippingPrice(company)"
+                            />
+                            <span class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">درهم</span>
+                          </div>
+                        </div>
+                        
+                        <!-- حقل الدولار (محسوب تلقائياً) -->
+                        <div>
+                          <label class="text-xs text-gray-600 dark:text-gray-400 mb-1 block">
+                            💰 السعر بالدولار (USD) - محسوب تلقائياً
+                          </label>
+                          <div class="flex gap-2 items-center">
+                            <input
+                              v-model.number="company.tempShippingPrice"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="0.00"
+                              class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white bg-gray-50 dark:bg-gray-900"
+                              @input="convertUsdToAed(company)"
+                              @keyup.enter="updateShippingPrice(company)"
+                              readonly
+                            />
+                            <span class="text-sm text-gray-600 dark:text-gray-400">$</span>
+                          </div>
+                          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            سعر الصرف: 1 USD = {{ exchangeRate }} AED
+                          </p>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                          <button
+                            @click="updateShippingPrice(company)"
+                            class="flex-1 px-3 py-2 text-sm text-white bg-green-600 rounded-md hover:bg-green-700"
+                          >
+                            حفظ
+                          </button>
+                          <button
+                            @click="company.editingPrice = false; company.tempShippingPrice = company.shipping_price_per_car; company.tempShippingPriceAed = company.shipping_price_aed"
+                            class="flex-1 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+                          >
+                            إلغاء
+                          </button>
+                        </div>
                       </div>
-                      <div v-else class="flex items-center justify-between">
-                        <span class="text-lg font-bold" :class="getCompanyTextColor(company.cars_count)">
-                          {{ company.shipping_price_per_car ? formatCurrency(company.shipping_price_per_car) : 'غير محدد' }}
-                        </span>
-                        <span v-if="company.shipping_price_per_car && company.cars_count" class="text-sm font-semibold" :class="getCompanyTextColor(company.cars_count)">
-                          المجموع: {{ formatCurrency(company.shipping_price_per_car * company.cars_count)  }}
-                        </span> 
+                      <div v-else class="space-y-2">
+                        <div class="flex items-center justify-between">
+                          <span class="text-xs text-gray-600 dark:text-gray-400">بالدرهم:</span>
+                          <span class="text-lg font-bold text-green-600 dark:text-green-400">
+                            {{ company.shipping_price_aed ? company.shipping_price_aed.toLocaleString() + ' درهم' : 'غير محدد' }}
+                          </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                          <span class="text-xs text-gray-600 dark:text-gray-400">بالدولار:</span>
+                          <span class="text-lg font-bold" :class="getCompanyTextColor(company.cars_count)">
+                            {{ company.shipping_price_per_car ? formatCurrency(company.shipping_price_per_car) : 'غير محدد' }}
+                          </span>
+                        </div>
+                        <div v-if="company.shipping_price_per_car && company.cars_count" class="pt-2 border-t border-gray-200 dark:border-gray-600">
+                          <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">المجموع الكلي:</span>
+                            <span class="text-lg font-bold" :class="getCompanyTextColor(company.cars_count)">
+                              {{ formatCurrency(company.shipping_price_per_car * company.cars_count) }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Profit Section (if cost is configured) -->
+                    <div v-if="trip.purchase_price_aed && company.shipping_price_aed" class="mt-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border-2 border-green-200 dark:border-green-700">
+                      <h5 class="text-xs font-medium text-green-800 dark:text-green-300 mb-2">📊 تحليل الربح للشركة</h5>
+                      <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span class="text-gray-600 dark:text-gray-400">سعر البيع:</span>
+                          <p class="font-bold text-green-700 dark:text-green-300">{{ company.shipping_price_aed }} درهم</p>
+                        </div>
+                        <div>
+                          <span class="text-gray-600 dark:text-gray-400">سعر الشراء:</span>
+                          <p class="font-bold text-red-600 dark:text-red-400">{{ trip.purchase_price_aed }} درهم</p>
+                        </div>
+                        <div>
+                          <span class="text-gray-600 dark:text-gray-400">الربح لكل سيارة:</span>
+                          <p class="font-bold" :class="(company.shipping_price_aed - trip.purchase_price_aed) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                            {{ (company.shipping_price_aed - trip.purchase_price_aed).toFixed(2) }} درهم
+                          </p>
+                        </div>
+                        <div>
+                          <span class="text-gray-600 dark:text-gray-400">الربح الإجمالي:</span>
+                          <p class="font-bold text-lg" :class="((company.shipping_price_aed - trip.purchase_price_aed) * company.cars_count) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                            {{ ((company.shipping_price_aed - trip.purchase_price_aed) * company.cars_count).toLocaleString() }} درهم
+                          </p>
+                        </div>
+                      </div>
+                      <div class="mt-2 pt-2 border-t border-green-200 dark:border-green-700">
+                        <div class="flex justify-between items-center">
+                          <span class="text-xs text-gray-600 dark:text-gray-400">نسبة الربح:</span>
+                          <span class="font-bold" :class="((company.shipping_price_aed - trip.purchase_price_aed) / trip.purchase_price_aed * 100) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                            {{ (((company.shipping_price_aed - trip.purchase_price_aed) / trip.purchase_price_aed) * 100).toFixed(1) }}%
+                          </span>
+                        </div>
                       </div>
                     </div>
                     
@@ -922,6 +1064,117 @@ const filteredCarsCount = computed(() => {
 
             <!-- Expenses Tab -->
             <div v-show="activeTab === 'expenses'">
+              <!-- Cost Configuration Section -->
+              <div class="mb-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border-2 border-purple-200 dark:border-purple-700 p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-lg font-semibold text-purple-900 dark:text-purple-100 flex items-center">
+                    <svg class="w-6 h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    إعدادات الكلفة للرحلة (موحد لجميع الشركات)
+                  </h3>
+                  <button
+                    v-if="!editingCosts"
+                    @click="editingCosts = true; tempCostData = { cost_per_car_aed: trip.cost_per_car_aed || 0, captain_commission_aed: trip.captain_commission_aed || 0 }"
+                    class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm"
+                  >
+                    {{ trip.cost_per_car_aed ? 'تعديل' : 'إضافة' }}
+                  </button>
+                </div>
+
+                <div v-if="editingCosts" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-purple-900 dark:text-purple-100 mb-2">
+                      💰 سعر الكلفة الإجمالي لكل سيارة (AED)
+                    </label>
+                    <input
+                      v-model.number="tempCostData.cost_per_car_aed"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="مثال: 360"
+                      class="w-full px-3 py-2 border border-purple-300 dark:border-purple-600 rounded-md focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white"
+                      @input="calculatePurchasePrice"
+                    />
+                    <p class="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                      السعر الإجمالي شامل العمولة
+                    </p>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-purple-900 dark:text-purple-100 mb-2">
+                      🎁 عمولة القبطان لكل سيارة (AED)
+                    </label>
+                    <input
+                      v-model.number="tempCostData.captain_commission_aed"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="مثال: 20"
+                      class="w-full px-3 py-2 border border-purple-300 dark:border-purple-600 rounded-md focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white"
+                      @input="calculatePurchasePrice"
+                    />
+                    <p class="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                      عمولة القبطان من كل سيارة
+                    </p>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-purple-900 dark:text-purple-100 mb-2">
+                      📦 سعر الشراء الفعلي (محسوب)
+                    </label>
+                    <div class="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md">
+                      <span class="text-lg font-bold text-purple-900 dark:text-purple-100">
+                        {{ tempCostData.purchase_price_aed ? tempCostData.purchase_price_aed.toFixed(2) : '0.00' }} درهم
+                      </span>
+                    </div>
+                    <p class="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                      = الكلفة - العمولة
+                    </p>
+                  </div>
+
+                  <div class="md:col-span-3 flex gap-2 justify-end">
+                    <button
+                      @click="saveCostConfiguration"
+                      class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    >
+                      حفظ
+                    </button>
+                    <button
+                      @click="editingCosts = false"
+                      class="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
+                    >
+                      إلغاء
+                    </button>
+                  </div>
+                </div>
+
+                <div v-else-if="trip.cost_per_car_aed" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">سعر الكلفة الإجمالي</p>
+                    <p class="text-xl font-bold text-purple-900 dark:text-purple-100">{{ trip.cost_per_car_aed }} درهم</p>
+                  </div>
+                  <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">عمولة القبطان</p>
+                    <p class="text-xl font-bold text-purple-900 dark:text-purple-100">{{ trip.captain_commission_aed }} درهم</p>
+                  </div>
+                  <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">سعر الشراء الفعلي</p>
+                    <p class="text-xl font-bold text-green-600 dark:text-green-400">{{ trip.purchase_price_aed }} درهم</p>
+                  </div>
+                  <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">إجمالي كلفة {{ trip.total_cars }} سيارة</p>
+                    <p class="text-xl font-bold text-red-600 dark:text-red-400">
+                      {{ (trip.purchase_price_aed * trip.total_cars).toLocaleString() }} درهم
+                    </p>
+                  </div>
+                </div>
+
+                <div v-else class="text-center py-8 text-purple-600 dark:text-purple-400">
+                  <p class="text-sm">لم يتم تحديد أسعار الكلفة بعد. اضغط "إضافة" لتحديد الأسعار.</p>
+                </div>
+              </div>
+
               <!-- Summary Cards -->
               <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <!-- Total Revenue Card -->

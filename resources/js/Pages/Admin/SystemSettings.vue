@@ -23,6 +23,7 @@ const systemConfig = ref({
   third_title_kr: '',
   default_price_s: [],
   default_price_p: [],
+  usd_to_aed_rate: 3.6725,
 });
 
 // تحويل JSON arrays إلى arrays من objects {key, value}
@@ -451,6 +452,32 @@ function testConnection() {
                       class="mt-1 block w-full"
                       placeholder="العنوان الثالث بالكردية"
                     />
+                  </div>
+                </div>
+
+                <!-- سعر الصرف -->
+                <div class="mt-6 border-t pt-6">
+                  <h4 class="text-md font-semibold mb-4">إعدادات العملات</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <InputLabel for="usd_to_aed_rate" value="سعر صرف الدولار مقابل الدرهم الإماراتي (USD → AED)" />
+                      <div class="flex items-center gap-2">
+                        <span class="text-2xl">💵</span>
+                        <TextInput
+                          id="usd_to_aed_rate"
+                          v-model="systemConfig.usd_to_aed_rate"
+                          type="number"
+                          step="0.0001"
+                          min="0"
+                          class="mt-1 block w-full"
+                          placeholder="3.6725"
+                        />
+                        <span class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">درهم</span>
+                      </div>
+                      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        مثال: 1 دولار = {{ systemConfig.usd_to_aed_rate }} درهم إماراتي
+                      </p>
+                    </div>
                   </div>
                 </div>
 

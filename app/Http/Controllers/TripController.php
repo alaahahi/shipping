@@ -154,10 +154,15 @@ class TripController extends Controller
             })
             ->values();
 
+        // جلب سعر الصرف من إعدادات النظام
+        $systemConfig = \App\Models\SystemConfig::first();
+        $exchangeRate = $systemConfig ? $systemConfig->usd_to_aed_rate : 3.6725;
+
         return Inertia::render('Trips/Show', [
             'trip' => $trip,
             'stats' => $stats,
             'carsByConsignee' => $carsByConsignee,
+            'exchangeRate' => $exchangeRate,
         ]);
     }
 
@@ -789,6 +794,7 @@ class TripController extends Controller
     {
         $validated = $request->validate([
             'shipping_price_per_car' => 'required|numeric|min:0',
+            'shipping_price_aed' => 'nullable|numeric|min:0',
         ]);
 
         $owner_id = Auth::user()->owner_id;
@@ -804,6 +810,7 @@ class TripController extends Controller
         try {
             $tripCompany->update([
                 'shipping_price_per_car' => $validated['shipping_price_per_car'],
+                'shipping_price_aed' => $validated['shipping_price_aed'] ?? null,
             ]);
 
             return Response::json([
@@ -1084,6 +1091,43 @@ class TripController extends Controller
             return Response::json([
                 'success' => false,
                 'message' => 'حدث خطأ أثناء حذف السيارة: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * تحديث إعدادات الكلفة للرحلة
+     */
+    public function updateCostConfiguration(Request $request, $tripId)
+    {
+        $validated = $request->validate([
+            'cost_per_car_aed' => 'required|numeric|min:0',
+            'captain_commission_aed' => 'required|numeric|min:0',
+            'purchase_price_aed' => 'required|numeric|min:0',
+        ]);
+
+        $owner_id = Auth::user()->owner_id;
+        $trip = Trip::where('id', $tripId)
+            ->where('owner_id', $owner_id)
+            ->firstOrFail();
+
+        try {
+            $trip->update([
+                'cost_per_car_aed' => $validated['cost_per_car_aed'],
+                'captain_commission_aed' => $validated['captain_commission_aed'],
+                'purchase_price_aed' => $validated['purchase_price_aed'],
+            ]);
+
+            return Response::json([
+                'success' => true,
+                'message' => 'تم تحديث إعدادات الكلفة بنجاح',
+                'trip' => $trip,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating cost configuration: ' . $e->getMessage());
+            return Response::json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء تحديث إعدادات الكلفة: ' . $e->getMessage(),
             ], 500);
         }
     }

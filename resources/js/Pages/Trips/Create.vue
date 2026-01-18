@@ -7,13 +7,22 @@ import { useToast } from "vue-toastification";
 
 const toast = useToast();
 
+// الحصول على تاريخ اليوم بصيغة YYYY-MM-DD
+const getTodayDate = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const form = useForm({
-  sailing_date: '',
-  captain: '',
-  pol: '',
-  pod: '',
+  sailing_date: getTodayDate(), // تاريخ اليوم افتراضياً
+  captain: 'EMRAN ABDOLRAHMAN ZAREI', // القيمة الافتراضية للقبطان
+  pol: 'PORT RASHID DUBAI', // القيمة الافتراضية لميناء التحميل
+  pod: 'BANDAR SIRIK', // القيمة الافتراضية لميناء التفريغ
   flag: '',
-  ship_name: '',
+  ship_name: 'NOOR 91', // القيمة الافتراضية لاسم السفينة
   voy_no: '',
   note: '',
 });
@@ -78,7 +87,6 @@ const submit = () => {
                   v-model="form.ship_name"
                   type="text"
                   class="mt-1 block w-full"
-                  placeholder="مثال: NOOR 91"
                   required
                 />
                 <span v-if="form.errors.ship_name" class="mt-2 text-sm text-red-600">
@@ -93,7 +101,6 @@ const submit = () => {
                   v-model="form.voy_no"
                   type="text"
                   class="mt-1 block w-full"
-                  placeholder="مثال: 113574"
                 />
                 <span v-if="form.errors.voy_no" class="mt-2 text-sm text-red-600">
                   {{ form.errors.voy_no }}
@@ -110,7 +117,6 @@ const submit = () => {
                   v-model="form.captain"
                   type="text"
                   class="mt-1 block w-full"
-                  placeholder="مثال: EMRAN ABDOLRAHMAN ZAREI"
                 />
                 <span v-if="form.errors.captain" class="mt-2 text-sm text-red-600">
                   {{ form.errors.captain }}
@@ -140,7 +146,6 @@ const submit = () => {
                   v-model="form.pol"
                   type="text"
                   class="mt-1 block w-full"
-                  placeholder="مثال: PORT RASHID DUBAI"
                   required
                 />
                 <span v-if="form.errors.pol" class="mt-2 text-sm text-red-600">
@@ -155,7 +160,6 @@ const submit = () => {
                   v-model="form.pod"
                   type="text"
                   class="mt-1 block w-full"
-                  placeholder="مثال: BANDAR SIRIK"
                   required
                 />
                 <span v-if="form.errors.pod" class="mt-2 text-sm text-red-600">
@@ -172,7 +176,6 @@ const submit = () => {
                 v-model="form.note"
                 rows="4"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                placeholder="أي ملاحظات إضافية..."
               ></textarea>
               <span v-if="form.errors.note" class="mt-2 text-sm text-red-600">
                 {{ form.errors.note }}

@@ -23,12 +23,18 @@ class Trip extends Model
         'expenses_currency',
         'note',
         'owner_id',
+        'cost_per_car_aed',
+        'captain_commission_aed',
+        'purchase_price_aed',
     ];
 
     protected $casts = [
         'sailing_date' => 'date',
         'total_expenses' => 'decimal:2',
         'expenses_currency' => 'string',
+        'cost_per_car_aed' => 'decimal:2',
+        'captain_commission_aed' => 'decimal:2',
+        'purchase_price_aed' => 'decimal:2',
     ];
 
     // العلاقات

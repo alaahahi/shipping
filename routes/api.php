@@ -385,6 +385,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('trips/{tripId}/export-pdf', [TripController::class, 'exportPdf'])->name('trips.exportPdf');
     Route::get('trips/{tripId}/companies/{tripCompanyId}/cars', [TripController::class, 'getCompanyCars'])->name('trips.getCompanyCars');
     Route::put('trips/{tripId}/companies/{tripCompanyId}/shipping-price', [TripController::class, 'updateShippingPrice'])->name('trips.updateShippingPrice');
+    Route::put('trips/{tripId}/cost-configuration', [TripController::class, 'updateCostConfiguration'])->name('trips.updateCostConfiguration');
     Route::post('trips/{tripId}/cars', [TripController::class, 'addCar'])->name('trips.addCar');
     Route::put('trips/cars/{carId}', [TripController::class, 'updateCar'])->name('trips.updateCar');
     Route::delete('trips/cars/{carId}', [TripController::class, 'deleteCar'])->name('trips.deleteCar');
@@ -395,6 +396,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('consignee-balances/payments', [\App\Http\Controllers\ConsigneeBalanceController::class, 'addPayment'])->name('consigneeBalances.addPayment');
     Route::delete('consignee-balances/payments/{paymentId}', [\App\Http\Controllers\ConsigneeBalanceController::class, 'deletePayment'])->name('consigneeBalances.deletePayment');
     Route::get('consignee-balances/payments/{paymentId}/receipt', [\App\Http\Controllers\ConsigneeBalanceController::class, 'printReceipt'])->name('consigneeBalances.printReceipt');
+    
+    // Company Balances APIs
+    Route::put('company-shipments/{shipmentId}/fees', [\App\Http\Controllers\CompanyBalanceController::class, 'updateShipmentFees'])->name('companyBalances.updateFees');
+    Route::post('company-shipments/{shipmentId}/transport-payments', [\App\Http\Controllers\CompanyBalanceController::class, 'addTransportPayment'])->name('companyBalances.addTransportPayment');
+    Route::put('transport-payments/{paymentId}', [\App\Http\Controllers\CompanyBalanceController::class, 'updateTransportPayment'])->name('companyBalances.updateTransportPayment');
+    Route::delete('transport-payments/{paymentId}', [\App\Http\Controllers\CompanyBalanceController::class, 'deleteTransportPayment'])->name('companyBalances.deleteTransportPayment');
 });
 
 // License APIs - بدون middleware للسماح بالتفعيل قبل تسجيل الدخول

@@ -35,6 +35,42 @@ use App\Models\SystemConfig;
 
 Route::resource('/users', UserController::class)->middleware(['auth', 'verified']);
 
+// Test route للنظام
+Route::get('/test-system', function () {
+    $results = [];
+    $results['1_config'] = ['title' => '🔧 سعر الصرف'];
+    try {
+        $config = \App\Models\SystemConfig::first();
+        $results['1_config']['data'] = $config ? [
+            'status' => '✅',
+            'rate' => $config->usd_to_aed_rate . ' AED'
+        ] : ['status' => '❌'];
+    } catch (\Exception $e) {
+        $results['1_config']['data'] = ['status' => '❌', 'error' => $e->getMessage()];
+    }
+    
+    $results['2_trip'] = ['title' => '🚢 الرحلات'];
+    try {
+        $trip = \App\Models\Trip::latest()->first();
+        $results['2_trip']['data'] = $trip ? [
+            'status' => '✅',
+            'ship' => $trip->ship_name,
+            'cost' => $trip->cost_per_car_aed ?? 'غير محدد',
+            'commission' => $trip->captain_commission_aed ?? 'غير محدد',
+            'purchase' => $trip->purchase_price_aed ?? 'غير محدد'
+        ] : ['status' => '⚠️'];
+    } catch (\Exception $e) {
+        $results['2_trip']['data'] = ['status' => '❌', 'error' => $e->getMessage()];
+    }
+    
+    $results['3_example'] = [
+        'title' => '💰 مثال',
+        'data' => ['status' => '✅', 'cost' => 360, 'commission' => 20, 'purchase' => 340, 'sale' => 400, 'profit' => 60]
+    ];
+    
+    return response()->json($results, 200, [], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+});
+
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'config' => SystemConfig::first(),
@@ -259,6 +295,10 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
     // Consignee Balances Routes
     Route::get('consignee-balances',[\App\Http\Controllers\ConsigneeBalanceController::class, 'index'])->name('consigneeBalances.index');
     Route::get('consignee-balances/{consigneeId}',[\App\Http\Controllers\ConsigneeBalanceController::class, 'show'])->name('consigneeBalances.show');
+    
+    // Company Balances Routes
+    Route::get('company-balances',[\App\Http\Controllers\CompanyBalanceController::class, 'index'])->name('companyBalances.index');
+    Route::get('company-balances/{companyId}',[\App\Http\Controllers\CompanyBalanceController::class, 'show'])->name('companyBalances.show');
 
  });
 
