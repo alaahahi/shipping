@@ -9,7 +9,6 @@ use App\Models\Wallet;
 use App\Services\AccountingCacheService;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\WithLimit;
 use Maatwebsite\Excel\Concerns\WithStartRow;
@@ -20,7 +19,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
-class TripCarImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
+class TripCarImport implements ToCollection, WithStartRow, SkipsEmptyRows
 {
     protected $tripId;
     protected $tripCompanyId;
@@ -193,11 +192,12 @@ class TripCarImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
     }
 
     /**
-     * تحديد رقم الصف الذي يحتوي على أسماء الأعمدة
+     * تحديد رقم الصف الذي نبدأ منه القراءة (بعد صف الـ headers)
      */
-    public function headingRow(): int
+    public function startRow(): int
     {
-        return $this->headerRow ?? 10;
+        // نبدأ من الصف التالي بعد صف الـ headers
+        return ($this->headerRow ?? 10) + 1;
     }
 
     /**
@@ -229,33 +229,32 @@ class TripCarImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
             }
             
             foreach ($rows as $rowIndex => $row) {
-                // الحصول على البيانات من Excel
-                // الأعمدة المتوقعة: WEIGHT, SHIPPER, DESCRIPTION, CHASSIS NO, CONSIGNEE, CODE
-                $weight = $this->getValue($row, 'weight');
-                $shipperName = $this->getValue($row, 'shipper') ?? $this->getValue($row, 'shipper_name');
-                $description = $this->getValue($row, 'description');
-                $chassisNo = $this->getValue($row, 'chassis_no') ?? 
-                            $this->getValue($row, 'chassis no') ?? 
-                            $this->getValue($row, 'chassisno') ??
-                            $this->getValue($row, 'chassis');
+                // قراءة البيانات بالترتيب الثابت للأعمدة (لأن WithHeadingRow لا يعمل بشكل صحيح)
+                // الترتيب: S.NO(0), WEIGHT(1), SHIPPER(2), DESCRIPTION(3), CHASSIS NO(4), CONSIGNEE(5), COMPANY(6), CODE(7)
+                $rowArray = array_values($row->toArray()); // تحويل إلى array مرقم
+                
+                $weight = isset($rowArray[1]) ? trim((string)$rowArray[1]) : null;
+                $shipperName = isset($rowArray[2]) ? trim((string)$rowArray[2]) : null;
+                $description = isset($rowArray[3]) ? trim((string)$rowArray[3]) : null;
+                $chassisNo = isset($rowArray[4]) ? trim((string)$rowArray[4]) : null;
+                $consigneeName = isset($rowArray[5]) ? trim((string)$rowArray[5]) : null;
+                $code = isset($rowArray[7]) ? trim((string)$rowArray[7]) : null;
                 
                 // تنظيف رقم الشاسيه أولاً
                 if (!empty($chassisNo)) {
                     $chassisNo = strtoupper(trim((string) $chassisNo));
                 }
-                $consigneeName = $this->getValue($row, 'consignee') ?? $this->getValue($row, 'consignee_name');
-                $code = $this->getValue($row, 'code');
                 
                 // Debug logging for first row
                 if ($rowIndex === 0) {
-                    Log::info('TripCarImport: First row data', [
+                    Log::info('TripCarImport: First row data (by index)', [
+                        'rowArray' => $rowArray,
                         'weight' => $weight,
                         'shipperName' => $shipperName,
                         'description' => $description,
                         'chassisNo' => $chassisNo,
                         'consigneeName' => $consigneeName,
                         'code' => $code,
-                        'row_data' => $row->toArray(),
                     ]);
                 }
 
