@@ -90,11 +90,12 @@ class DashboardController extends Controller
                 'third_title_kr' => '',
                 'default_price_s' => [],
                 'default_price_p' => [],
+                'usd_to_aed_rate' => 3.6725,
+                'usd_to_dinar_rate' => 150.00,
             ]);
         }
         
-        $config = $systemConfig->default_price_p ?? [];
-        return Inertia::render('purchases', ['client'=>$client,'config'=>$config]);   
+        return Inertia::render('purchases', ['client'=>$client,'config'=>$systemConfig]);   
     }
     public function sales(Request $request)
     {
@@ -122,12 +123,12 @@ class DashboardController extends Controller
                 'third_title_kr' => '',
                 'default_price_s' => [],
                 'default_price_p' => [],
+                'usd_to_aed_rate' => 3.6725,
+                'usd_to_dinar_rate' => 150.00,
             ]);
         }
-        
-        $config = $systemConfig->default_price_s ?? [];
 
-        return Inertia::render('Sales', ['client'=>$client ,'config'=>$config]);   
+        return Inertia::render('Sales', ['client'=>$client ,'config'=>$systemConfig]);   
     }
     public function totalInfo(Request $request)
     {
