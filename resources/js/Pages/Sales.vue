@@ -322,6 +322,7 @@ function getDownloadUrl(name) {
     :formData="formData"
     :show="showModalEditCars ? true : false"
     :client="client"
+    :systemConfig="config"
     @a="confirmUpdateCar($event)"
     @close="showModalEditCars = false"
   >

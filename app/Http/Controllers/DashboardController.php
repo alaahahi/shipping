@@ -574,6 +574,8 @@ class DashboardController extends Controller
            
         }
         $images=[];
+        
+        // حساب المبيعات (Sales)
         $checkout_s=$request->checkout_s ;
         $shipping_dolar_s=$request->shipping_dolar_s ;
         $coc_dolar_s=$request->coc_dolar_s ;
@@ -590,7 +592,30 @@ class DashboardController extends Controller
             $dolar_price_s=$dolar_price_s;
         }
         $total_s = (($checkout_s+$shipping_dolar_s+ $coc_dolar_s +(int)($dinar_s / ($dolar_price_s))+(int)($land_shipping_dinar_s / ($dolar_price_s))+$expenses_s+$land_shipping_s) ??0);
-        $profit=$total_s-$car->total;
+        
+        // حساب المشتريات (Purchases) - إذا تم تعديل expenses
+        if($request->has('expenses')) {
+            $checkout=$request->checkout ?? $car->checkout;
+            $shipping_dolar=$request->shipping_dolar ?? $car->shipping_dolar;
+            $coc_dolar=$request->coc_dolar ?? $car->coc_dolar;
+            $dinar=$request->dinar ?? $car->dinar;
+            $land_shipping=$request->land_shipping ?? $car->land_shipping;
+            $land_shipping_dinar=$request->land_shipping_dinar ?? $car->land_shipping_dinar;
+            $expenses=($request->expenses??0);
+            $dolar_price=$request->dolar_price ?? $car->dolar_price;
+            
+            if($dolar_price==0){
+                $dolar_price=1;
+            }elseif($dolar_price > 9999){
+                $dolar_price=$dolar_price/100;
+            }
+            
+            $total = (($checkout+$shipping_dolar+$coc_dolar+(int)($dinar/($dolar_price))+(int)($land_shipping_dinar/($dolar_price))+$expenses+$land_shipping) ??0);
+        } else {
+            $total = $car->total;
+        }
+        
+        $profit=$total_s-$total;
         $descClient = trans('text.editExpenses').' '.$total_s-$car->total_s.' '.trans('text.for_car').$car->car_type.' '.$car->vin;
         $this->accountingController->increaseWallet($total_s-$car->total_s, $descClient,$car->client_id,$car->id,'App\Models\User');
             // Extract the relevant fields from the $request object
@@ -600,6 +625,7 @@ class DashboardController extends Controller
                 $dataToUpdate['car_number'] = (string) $request->car_number;
             }
             // If 'purchase_price' and 'paid_amount' are calculated separately, add them to $dataToUpdate
+            $dataToUpdate['total']=$total;
             $dataToUpdate['total_s']=$total_s;
             $dataToUpdate['profit']=$profit;
 

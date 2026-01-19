@@ -72,7 +72,8 @@ const props = defineProps({
   client_id: String,
   client: Object,
   q:String,
-  company_name: String
+  company_name: String,
+  config: [Array, Object]
 });
 
 const currentClientId = computed(() => {
@@ -1230,6 +1231,7 @@ async function savePaymentDescription(payment) {
       :formData="formData"
       :show="showModalEditCars ? true : false"
       :client="clients"
+      :systemConfig="config"
       @a="confirmUpdateCar($event)"
       @close="showModalEditCars = false"
     >

@@ -68,7 +68,8 @@ class UserController extends Controller
             $client->has_internal_sales = (bool)($client->has_internal_sales ?? false);
         }
         $this->accounting->loadAccounts(Auth::user()->owner_id);
-        return Inertia::render('Clients/Show', ['url'=>$this->url,'client'=>$client,'clients'=>$clients,'client_id'=>$id,'q'=>$q]);
+        $config = \App\Models\SystemConfig::first();
+        return Inertia::render('Clients/Show', ['url'=>$this->url,'client'=>$client,'clients'=>$clients,'client_id'=>$id,'q'=>$q,'config'=>$config]);
     }
 
     public function internalSales($id)

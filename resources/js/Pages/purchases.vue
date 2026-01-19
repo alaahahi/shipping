@@ -424,8 +424,6 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
             @a="confirmCar($event)"
             @close="showModalCar = false"
             >
-        <template #header>
-          </template>
     </ModalAddCar>
     <ModalEditCars
             :formData="formData"
@@ -434,8 +432,6 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
             @a="confirmUpdateCar($event)"
             @close="showModalEditCars = false"
             >
-        <template #header>
-          </template>
     </ModalEditCars>
     <ModalBulkEditCars
             :show="showModalBulkEdit ? true : false"
