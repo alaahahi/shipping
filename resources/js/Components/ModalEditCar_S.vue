@@ -253,9 +253,9 @@ watch(() => props.show, (newVal) => {
     if (activeTab.value === 'history') {
       loadCarHistory();
     }
-    // تحميل سعر الصرف الافتراضي
-    if (props.systemConfig?.usd_to_aed_rate) {
-      registrationData.value.exchangeRate = props.systemConfig.usd_to_aed_rate;
+    // تحميل سعر الصرف الافتراضي (100 دولار بالدينار)
+    if (props.systemConfig?.usd_to_dinar_rate) {
+      registrationData.value.exchangeRate = props.systemConfig.usd_to_dinar_rate;
     }
   }
 });
@@ -592,17 +592,17 @@ watch(() => activeTab.value, (newVal) => {
               <!-- سعر الصرف -->
               <div class="mb-4">
                 <label class="dark:text-gray-200 font-medium" for="reg_exchange_s">
-                  سعر الصرف
+                  سعر 100 دولار بالدينار
                 </label>
                 <input
                   id="reg_exchange_s"
                   type="number"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model.number="registrationData.exchangeRate"
-                  placeholder="من سعر الصرف الافتراضي"
+                  placeholder="150"
                 />
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  💡 يأتي من سعر الصرف الافتراضي
+                  💡 يأتي من الإعدادات (100 دولار = {{ registrationData.exchangeRate }} دينار)
                 </p>
               </div>
             </div>

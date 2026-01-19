@@ -22,6 +22,7 @@ class SystemConfig extends Model
         'default_price_s',
         'default_price_p',
         'usd_to_aed_rate',
+        'usd_to_dinar_rate',
     ];
     protected $casts = [
         'default_price_s' => 'array',

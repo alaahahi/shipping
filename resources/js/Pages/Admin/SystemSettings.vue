@@ -24,6 +24,7 @@ const systemConfig = ref({
   default_price_s: [],
   default_price_p: [],
   usd_to_aed_rate: 3.6725,
+  usd_to_dinar_rate: 150.00,
 });
 
 // تحويل JSON arrays إلى arrays من objects {key, value}
@@ -476,6 +477,26 @@ function testConnection() {
                       </div>
                       <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         مثال: 1 دولار = {{ systemConfig.usd_to_aed_rate }} درهم إماراتي
+                      </p>
+                    </div>
+
+                    <div>
+                      <InputLabel for="usd_to_dinar_rate" value="سعر 100 دولار بالدينار (USD → IQD)" />
+                      <div class="flex items-center gap-2">
+                        <span class="text-2xl">💰</span>
+                        <TextInput
+                          id="usd_to_dinar_rate"
+                          v-model="systemConfig.usd_to_dinar_rate"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          class="mt-1 block w-full"
+                          placeholder="150.00"
+                        />
+                        <span class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">دينار</span>
+                      </div>
+                      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        مثال: 100 دولار = {{ systemConfig.usd_to_dinar_rate }} دينار عراقي
                       </p>
                     </div>
                   </div>

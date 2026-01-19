@@ -154,9 +154,9 @@ class TripController extends Controller
             })
             ->values();
 
-        // جلب سعر الصرف من إعدادات النظام
+        // جلب سعر الصرف من إعدادات النظام (سعر 100 دولار بالدينار)
         $systemConfig = \App\Models\SystemConfig::first();
-        $exchangeRate = $systemConfig ? $systemConfig->usd_to_aed_rate : 3.6725;
+        $exchangeRate = $systemConfig ? $systemConfig->usd_to_dinar_rate : 150.00;
 
         return Inertia::render('Trips/Show', [
             'trip' => $trip,
