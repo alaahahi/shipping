@@ -45,6 +45,8 @@ class SystemConfigController extends Controller
             'third_title_kr' => 'nullable|string|max:255',
             'default_price_s' => 'nullable|array',
             'default_price_p' => 'nullable|array',
+            'usd_to_aed_rate' => 'nullable|numeric|min:0',
+            'usd_to_dinar_rate' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -66,6 +68,8 @@ class SystemConfigController extends Controller
                 'third_title_kr' => $request->third_title_kr ?? '',
                 'default_price_s' => $request->default_price_s ?? [],
                 'default_price_p' => $request->default_price_p ?? [],
+                'usd_to_aed_rate' => $request->usd_to_aed_rate ?? 3.6725,
+                'usd_to_dinar_rate' => $request->usd_to_dinar_rate ?? 150.00,
             ]);
         } else {
             $updateData = [];
@@ -77,6 +81,8 @@ class SystemConfigController extends Controller
             if ($request->has('third_title_kr')) $updateData['third_title_kr'] = $request->third_title_kr;
             if ($request->has('default_price_s')) $updateData['default_price_s'] = $request->default_price_s;
             if ($request->has('default_price_p')) $updateData['default_price_p'] = $request->default_price_p;
+            if ($request->has('usd_to_aed_rate')) $updateData['usd_to_aed_rate'] = $request->usd_to_aed_rate;
+            if ($request->has('usd_to_dinar_rate')) $updateData['usd_to_dinar_rate'] = $request->usd_to_dinar_rate;
             
             $config->update($updateData);
         }

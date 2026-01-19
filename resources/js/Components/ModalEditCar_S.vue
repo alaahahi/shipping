@@ -22,7 +22,9 @@ const registrationData = ref({
   expenses: 0,
   companyContract: 200000,
   exchangeRate: 0,
-  totalUSD: 0
+  additionalExpenses: 0, // مصروف إضافي بالدولار
+  totalUSD: 0,
+  noteToAdd: '' // الملاحظة التي سيتم إضافتها
 });
 
 // حساب المجموع تلقائياً
@@ -31,12 +33,20 @@ const calculateRegistrationTotal = computed(() => {
                 parseFloat(registrationData.value.expenses || 0) + 
                 parseFloat(registrationData.value.companyContract || 0);
   const rate = parseFloat(registrationData.value.exchangeRate || 1);
+  const additionalExpenses = parseFloat(registrationData.value.additionalExpenses || 0);
   
   if (rate > 0) {
     const result = total / (rate / 100);
-    return Math.round(result); // عدد صحيح
+    const totalUSD = Math.round(result) + additionalExpenses;
+    
+    // تحديث الملاحظة تلقائياً
+    registrationData.value.noteToAdd = `+ رسوم تسجيل ومصاريف ${totalUSD}$`;
+    
+    return totalUSD; // عدد صحيح + المصروف الإضافي بالدولار
   }
-  return 0;
+  
+  registrationData.value.noteToAdd = '';
+  return additionalExpenses;
 });
 
 // تطبيق رسوم التسجيل على المصاريف والملاحظة
@@ -50,12 +60,11 @@ function applyRegistrationFees() {
     // إضافة على المصاريف (المبيعات) - عدد صحيح مع التقريب
     props.formData.expenses_s = Math.round(parseFloat(props.formData.expenses_s || 0) + totalUSD);
     
-    // إضافة على الملاحظة
-    const registrationNote = `+ رسوم تسجيل ومصاريف ${totalUSD}$`;
+    // إضافة على الملاحظة (من الحقل القابل للتعديل)
     if (props.formData.note) {
-      props.formData.note += ' ' + registrationNote;
+      props.formData.note += ' ' + registrationData.value.noteToAdd;
     } else {
-      props.formData.note = registrationNote;
+      props.formData.note = registrationData.value.noteToAdd;
     }
     
     // إعادة تعيين حقول التسجيل
@@ -64,13 +73,27 @@ function applyRegistrationFees() {
       expenses: 0,
       companyContract: 200000,
       exchangeRate: registrationData.value.exchangeRate,
-      totalUSD: 0
+      additionalExpenses: 0,
+      totalUSD: 0,
+      noteToAdd: ''
     };
     
     // الرجوع للتاب الأساسي
     activeTab.value = 'edit';
     
-    alert('✅ تم إضافة رسوم التسجيل بنجاح!');
+    // استخدام toast بدلاً من alert
+    toast.success('✅ تم إضافة رسوم التسجيل بنجاح!', {
+      timeout: 3000,
+      position: 'bottom-right'
+    });
+    
+    // رسالة تذكير بتحميل المرفق
+    setTimeout(() => {
+      toast.info('📎 يرجى تحميل المرفق إذا موجود', {
+        timeout: 5000,
+        position: 'bottom-right'
+      });
+    }, 500);
   }
 }
 
@@ -605,6 +628,23 @@ watch(() => activeTab.value, (newVal) => {
                   💡 يأتي من الإعدادات (100 دولار = {{ registrationData.exchangeRate }} دينار)
                 </p>
               </div>
+
+              <!-- مصروف إضافي بالدولار -->
+              <div class="mb-4">
+                <label class="dark:text-gray-200 font-medium" for="reg_additional_s">
+                  مصروف إضافي (دولار) 💵
+                </label>
+                <input
+                  id="reg_additional_s"
+                  type="number"
+                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  v-model.number="registrationData.additionalExpenses"
+                  placeholder="0"
+                />
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  💰 يُضاف مباشرة للمجموع بالدولار
+                </p>
+              </div>
             </div>
 
             <!-- المجموع -->
@@ -615,13 +655,31 @@ watch(() => activeTab.value, (newVal) => {
                     المجموع بالدولار (عدد صحيح)
                   </h4>
                   <p class="text-sm text-green-600 dark:text-green-400 mt-1">
-                    الحساب: (التسجيل + المصروف + عقد الشركة) ÷ (سعر الصرف ÷ 100)
+                    الحساب: [(التسجيل + المصروف + عقد الشركة) ÷ (سعر الصرف ÷ 100)] + مصروف إضافي
                   </p>
                 </div>
                 <div class="text-3xl font-bold text-green-600 dark:text-green-400">
                   {{ calculateRegistrationTotal }} $
                 </div>
               </div>
+            </div>
+
+            <!-- الملاحظة التي سيتم إضافتها -->
+            <div class="mt-4">
+              <label class="dark:text-gray-200 font-medium flex items-center gap-2" for="reg_note">
+                <span>📝</span>
+                <span>الملاحظة التي سيتم إضافتها</span>
+              </label>
+              <textarea
+                id="reg_note"
+                v-model="registrationData.noteToAdd"
+                rows="2"
+                class="mt-2 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                placeholder="+ رسوم تسجيل ومصاريف XXX$"
+              ></textarea>
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                💡 يمكنك تعديل الملاحظة قبل تطبيق الرسوم
+              </p>
             </div>
 
             <!-- زر تطبيق الرسوم -->
