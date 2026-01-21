@@ -33,7 +33,11 @@ import debounce from 'lodash/debounce';
 const {t} = useI18n();
 
 
-const props = defineProps({client:Array,config:Array});
+const props = defineProps({
+  client: Array,
+  config: Array, // القيم الافتراضية (default_price_p)
+  systemConfig: Object // إعدادات النظام الكاملة
+});
 
 
 let data = ref({});

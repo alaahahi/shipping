@@ -23,7 +23,8 @@ import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 const props = defineProps({
   client: Array,
-  config: [Array, Object] // يمكن أن يكون array أو object
+  config: [Array, Object], // القيم الافتراضية (default_price_s)
+  systemConfig: Object // إعدادات النظام الكاملة
 });
 
 const toast = useToast();
@@ -322,7 +323,7 @@ function getDownloadUrl(name) {
     :formData="formData"
     :show="showModalEditCars ? true : false"
     :client="client"
-    :systemConfig="config"
+    :systemConfig="systemConfig"
     @a="confirmUpdateCar($event)"
     @close="showModalEditCars = false"
   >
