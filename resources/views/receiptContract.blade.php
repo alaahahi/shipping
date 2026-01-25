@@ -523,8 +523,7 @@ body {
     @endphp
     @if(!empty($contractTerms) && count($contractTerms) > 0)
 
-    <div class="terms-card">
-      <ul class="terms-list" style="counter-reset: term 2;">
+       <ul class="terms-list" style="counter-reset: term 2;">
         @foreach($contractTerms as $term)
           <li>{{ $term }}</li>
         @endforeach
@@ -532,8 +531,7 @@ body {
           تم إنشاء هذا العقد بتاريخ {{$data['created'] ?? ''}} في الساعة {{ \Carbon\Carbon::now()->format('H:i') }}
         </li>
       </ul>
-    </div>
-    @endif  
+     @endif  
       </div>
       <div class="d-flex justify-content-between  mt-3 pt-2">
         <div>
