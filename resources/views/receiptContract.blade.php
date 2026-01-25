@@ -506,7 +506,34 @@ body {
             {{$data['note'] ?? ''}}
           </b>
         </div>
-        
+        @php
+      // جلب الشروط من config (يدعم array و object)
+      $contractTerms = is_array($config) ? ($config['contract_terms'] ?? []) : ($config->contract_terms ?? []);
+      // التأكد من أن الشروط هي array
+      if (is_string($contractTerms)) {
+        $contractTerms = json_decode($contractTerms, true) ?? [];
+      }
+      if (!is_array($contractTerms)) {
+        $contractTerms = [];
+      }
+      // تصفية الشروط الفارغة
+      $contractTerms = array_filter($contractTerms, function($term) {
+        return !empty(trim($term));
+      });
+    @endphp
+    @if(!empty($contractTerms) && count($contractTerms) > 0)
+
+    <div class="terms-card">
+      <ul class="terms-list" style="counter-reset: term 2;">
+        @foreach($contractTerms as $term)
+          <li>{{ $term }}</li>
+        @endforeach
+        <li>
+          تم إنشاء هذا العقد بتاريخ {{$data['created'] ?? ''}} في الساعة {{ \Carbon\Carbon::now()->format('H:i') }}
+        </li>
+      </ul>
+    </div>
+    @endif  
       </div>
       <div class="d-flex justify-content-between  mt-3 pt-2">
         <div>
@@ -542,36 +569,7 @@ body {
       </div>
     </div>
     
-    @php
-      // جلب الشروط من config (يدعم array و object)
-      $contractTerms = is_array($config) ? ($config['contract_terms'] ?? []) : ($config->contract_terms ?? []);
-      // التأكد من أن الشروط هي array
-      if (is_string($contractTerms)) {
-        $contractTerms = json_decode($contractTerms, true) ?? [];
-      }
-      if (!is_array($contractTerms)) {
-        $contractTerms = [];
-      }
-      // تصفية الشروط الفارغة
-      $contractTerms = array_filter($contractTerms, function($term) {
-        return !empty(trim($term));
-      });
-    @endphp
-    @if(!empty($contractTerms) && count($contractTerms) > 0)
-    <div class="section-title">
-      شروط العقد / Terms and Conditions
-    </div>
-    <div class="terms-card">
-      <ul class="terms-list">
-        @foreach($contractTerms as $term)
-          <li>{{ $term }}</li>
-        @endforeach
-        <li>
-          تم إنشاء هذا العقد بتاريخ {{$data['created'] ?? ''}} في الساعة {{ \Carbon\Carbon::now()->format('H:i') }}
-        </li>
-      </ul>
-    </div>
-    @endif
+  
   </div>
 
 <script>
