@@ -47,6 +47,7 @@ class SystemConfigController extends Controller
             'default_price_p' => 'nullable|array',
             'usd_to_aed_rate' => 'nullable|numeric|min:0',
             'usd_to_dinar_rate' => 'nullable|numeric|min:0',
+            'contract_terms' => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
@@ -70,6 +71,7 @@ class SystemConfigController extends Controller
                 'default_price_p' => $request->default_price_p ?? [],
                 'usd_to_aed_rate' => $request->usd_to_aed_rate ?? 3.6725,
                 'usd_to_dinar_rate' => $request->usd_to_dinar_rate ?? 150.00,
+                'contract_terms' => $request->contract_terms ?? null,
             ]);
         } else {
             $updateData = [];
@@ -83,6 +85,7 @@ class SystemConfigController extends Controller
             if ($request->has('default_price_p')) $updateData['default_price_p'] = $request->default_price_p;
             if ($request->has('usd_to_aed_rate')) $updateData['usd_to_aed_rate'] = $request->usd_to_aed_rate;
             if ($request->has('usd_to_dinar_rate')) $updateData['usd_to_dinar_rate'] = $request->usd_to_dinar_rate;
+            if ($request->has('contract_terms')) $updateData['contract_terms'] = $request->contract_terms;
             
             $config->update($updateData);
         }
