@@ -40,8 +40,8 @@ let showModalCarSale = ref(false);
 let showModalDelCar = ref(false);
 let mainAccount = ref(0);
 let allCars = ref(0);
-let from = ref(getFirstDayOfMonth());
-let to = ref(getTodayDate());
+let from = ref('');
+let to = ref('');
 
 const formData = ref({});
 const car = ref([]);
@@ -51,23 +51,24 @@ let user_id = 0;
 let page = 1;
 let q = props.user;
 const refresh = () => {
-  page = 0;
+  page = 1;
   car.value.length = 0;
   resetData.value = !resetData.value;
 };
 const getResultsCar = async ($state) => {
   console.log($state);
   try {
-    const response = await axios.get(`/api/getIndexContractCar`, {
-      params: {
-        limit: 100,
-        page: page,
-        q: q,
-        from: from.value,
-        to: to.value,
-        user_id: user_id,
-      },
-    });
+    const params = {
+      limit: 100,
+      page: page,
+      q: q || undefined,
+      from: from.value || undefined,
+      to: to.value || undefined,
+    };
+    if (user_id && user_id !== 0) {
+      params.user_id = user_id;
+    }
+    const response = await axios.get(`/api/getIndexContractCar`, { params });
 
     const json = response.data;
 
@@ -143,8 +144,13 @@ function getFirstDayOfMonth() {
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
-  const firstDayOfMonth = "01"; // Set day to 01 for the first day of the month
+  const firstDayOfMonth = "01";
   return `${year}-${month}-${firstDayOfMonth}`;
+}
+function getFirstDayOfYear() {
+  const today = new Date();
+  const year = today.getFullYear();
+  return `${year}-01-01`;
 }
 function openModalDelCar(v) {
   formData.value = v;

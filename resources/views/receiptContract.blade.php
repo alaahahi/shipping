@@ -319,7 +319,7 @@ body {
       @if(!empty($verificationUrl))
       <div class="qr-wrapper">
         <img id="contract-qr" alt="QR" />
-        <div class="qr-caption text-center">intellij-app.com بواسطة  </div>
+        <div class="qr-caption text-center">من بواسطة intellij-app.com</div>
       </div>
       @endif
       <div class="info-item">
@@ -531,14 +531,14 @@ body {
           تم إنشاء هذا العقد بتاريخ {{$data['created'] ?? ''}} في الساعة {{ \Carbon\Carbon::now()->format('H:i') }}
         </li>
       </ul>
-     @endif  
+      @endif  
       </div>
       <div class="d-flex justify-content-between  mt-3 pt-2">
         <div>
           بەلێن و رەزامەندی لایەنی یەکەم 
           فرۆشیار
              (البائع)
-        </div>
+        </div>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
         <div>
           نووسەری پێشانگا
         </div>

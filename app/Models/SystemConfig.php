@@ -11,6 +11,7 @@ class SystemConfig extends Model
     use HasFactory;
    // use Searchable;
     protected $table = 'system_config';
+    public $timestamps = false;
     protected $fillable = [
         'id',
         'first_title_ar',
@@ -24,6 +25,7 @@ class SystemConfig extends Model
         'usd_to_aed_rate',
         'usd_to_dinar_rate',
         'contract_terms',
+        'contract_template',
     ];
     protected $casts = [
         'default_price_s' => 'array',

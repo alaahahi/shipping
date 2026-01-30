@@ -26,6 +26,7 @@ const systemConfig = ref({
   usd_to_aed_rate: 3.6725,
   usd_to_dinar_rate: 150.00,
   contract_terms: [],
+  contract_template: 1,
 });
 
 // تحويل JSON arrays إلى arrays من objects {key, value}
@@ -148,6 +149,7 @@ function saveSystemConfig() {
     default_price_s: priceS,
     default_price_p: priceP,
     contract_terms: terms,
+    contract_template: systemConfig.value.contract_template ?? 1,
   };
   
   saving.value = true;
@@ -548,6 +550,22 @@ function testConnection() {
                       </p>
                     </div>
                   </div>
+                </div>
+
+                <!-- قالب العقد -->
+                <div class="mt-6 border-t pt-6">
+                  <InputLabel for="contract_template" value="قالب العقد" class="mb-2" />
+                  <select
+                    id="contract_template"
+                    v-model.number="systemConfig.contract_template"
+                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                  >
+                    <option :value="1">قالب 1 (الافتراضي)</option>
+                    <option :value="2">قالب 2</option>
+                  </select>
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    يحدد شكل عقد البيع عند الطباعة.
+                  </p>
                 </div>
 
                 <!-- شروط العقد -->

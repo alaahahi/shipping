@@ -10,6 +10,17 @@ const DB_NAME = 'ShippingDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'contracts';
 
+function generateUuid() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+}
+
 export function useIndexedDB() {
     const isOnline = ref(navigator.onLine);
     const pendingCount = ref(0);
@@ -104,9 +115,11 @@ export function useIndexedDB() {
                     const transaction = db.transaction([STORE_NAME], 'readwrite');
                     const store = transaction.objectStore(STORE_NAME);
 
+                    const uuid = (contractData && contractData.uuid) ? contractData.uuid : generateUuid();
                     const contract = {
                         ...contractData,
-                        offline_id: `offline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                        uuid,
+                        offline_id: uuid,
                         timestamp: new Date().toISOString(),
                         synced: false,
                         created_offline: true
@@ -242,7 +255,7 @@ export function useIndexedDB() {
 
             for (const contract of contracts) {
                 try {
-                    // إزالة البيانات الخاصة بـ IndexedDB قبل الإرسال
+                    // إزالة البيانات الخاصة بـ IndexedDB قبل الإرسال (uuid يبقى في contractData للمزامنة)
                     const { id, offline_id, timestamp, synced: _, created_offline, ...contractData } = contract;
                     
                     await axios.post('/api/addCarContract', contractData);

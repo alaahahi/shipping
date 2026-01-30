@@ -24,11 +24,12 @@ export function useOfflineContracts() {
      */
     const saveContractOffline = async (contractData) => {
         try {
-            // إضافة metadata للعقد
+            const uuid = (contractData && contractData.uuid) ? contractData.uuid : generateUuid();
             const contract = {
                 ...contractData,
+                uuid,
                 _offline: true,
-                _id: generateOfflineId(),
+                _id: uuid,
                 _createdAt: new Date().toISOString(),
                 _status: 'pending',
                 _retryCount: 0
@@ -138,6 +139,7 @@ export function useOfflineContracts() {
             return {
                 success: true,
                 serverId: response.data.id,
+                uuid: response.data.uuid,
                 offlineId: contract._id
             };
         } catch (error) {
@@ -321,10 +323,17 @@ export function useOfflineContracts() {
     };
 
     /**
-     * توليد ID فريد للعقود المحلية
+     * توليد UUID للعقود (للمزامنة والأوفلاين)
      */
-    const generateOfflineId = () => {
-        return `offline_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const generateUuid = () => {
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+            return crypto.randomUUID();
+        }
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+            const r = (Math.random() * 16) | 0;
+            const v = c === 'x' ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+        });
     };
 
     /**

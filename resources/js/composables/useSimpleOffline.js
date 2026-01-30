@@ -6,6 +6,17 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
+function generateUuid() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+}
+
 export function useSimpleOffline() {
     const isOnline = ref(navigator.onLine);
     const pendingCount = ref(0);
@@ -36,10 +47,12 @@ export function useSimpleOffline() {
      * حفظ offline
      */
     const saveOffline = (contractData) => {
+        const uuid = (contractData && contractData.uuid) ? contractData.uuid : generateUuid();
         const contracts = getContracts();
         contracts.push({
             ...contractData,
-            _id: `offline_${Date.now()}`,
+            uuid,
+            _id: uuid,
             _offline: true,
             _timestamp: new Date().toISOString()
         });

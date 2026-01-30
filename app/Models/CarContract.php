@@ -13,6 +13,7 @@ class CarContract extends Model
 
     protected $fillable = [
         'id',
+        'uuid',
         'name_seller',
         'phone_seller',
         'address_seller',

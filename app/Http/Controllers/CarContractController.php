@@ -19,6 +19,7 @@ use App\Models\Transactions;
 use App\Models\Expenses;
 use App\Models\CarExpenses;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\SystemConfig;
 use App\Models\CarContract;
@@ -90,9 +91,11 @@ class CarContractController extends Controller
         }
         $owner_id=Auth::user()->owner_id;
         $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
-        $config=SystemConfig::first();
+        $config = SystemConfig::first();
         $verificationUrl = $data ? route('contract.verify', $data->verification_token) : null;
-        return view('receiptContract',compact('data','config','verificationUrl'));
+        $template = (int) ($request->query('template') ?? $config->contract_template ?? 1);
+        $viewName = $template === 2 ? 'receiptContract2' : 'receiptContract';
+        return view($viewName, compact('data', 'config', 'verificationUrl'));
     }
     public function index(Request $request)
     {
@@ -117,11 +120,15 @@ class CarContractController extends Controller
  
     public function addCarContract(Request $request)
     {
-        $contract= $request->all();
-        $owner_id=Auth::user()->owner_id;
-        $user_id=Auth::user()->id;
-        $year_date=Carbon::now()->format('Y');
-        $created= Carbon::now()->format('Y-m-d');
+        $raw = $request->all();
+        // Strip offline-only keys so they are not saved to DB
+        $offlineOnlyKeys = ['_id', '_offline', '_createdAt', '_status', '_lastAttempt', '_retryCount', '_timestamp'];
+        $contract = array_diff_key($raw, array_flip($offlineOnlyKeys));
+
+        $owner_id = Auth::user()->owner_id;
+        $user_id = Auth::user()->id;
+        $year_date = Carbon::now()->format('Y');
+        $created = Carbon::now()->format('Y-m-d');
 
         $tex_seller = $request->tex_seller;
         $tex_seller_dinar = $request->tex_seller_dinar;
@@ -132,44 +139,58 @@ class CarContractController extends Controller
         $tex_buyer_paid = $request->tex_buyer_paid;
         $tex_buyer_dinar_paid = $request->tex_buyer_dinar_paid;
 
-        // Perform your logic here using the values
-        // For example:
-        $status = 2; // Default status assuming all fields are equal
-
+        $status = 2;
         if ($tex_seller != $tex_seller_paid || $tex_seller_dinar != $tex_seller_dinar_paid || $tex_buyer != $tex_buyer_paid || $tex_buyer_dinar != $tex_buyer_dinar_paid) {
-            $status = 1; // Set status to 1 if any field is not equal to its corresponding _paid field
+            $status = 1;
+        }
+        if ($tex_seller_paid == 0 && $tex_seller_dinar_paid == 0 && $tex_buyer_paid == 0 && $tex_buyer_dinar_paid == 0) {
+            $status = 0;
+        }
+        $contract['status'] = $status;
+        $contract['owner_id'] = $owner_id;
+        $contract['user_id'] = $user_id;
+        $contract['year_date'] = $year_date;
+        $contract['created'] = $created;
+
+        $hasUuidColumn = Schema::hasColumn('car_contract', 'uuid');
+        $requestUuid = $request->input('uuid');
+        if (is_string($requestUuid)) {
+            $requestUuid = trim($requestUuid);
+        }
+        if (empty($requestUuid)) {
+            $requestUuid = null;
         }
 
-        // Check if all fields are 0
-        if ( $tex_seller_paid == 0 && $tex_seller_dinar_paid == 0 && $tex_buyer_paid == 0 && $tex_buyer_dinar_paid == 0) {
-            $status = 0; // Set status to 0 if all fields are 0
+        if ($hasUuidColumn && $requestUuid) {
+            $oldContract = CarContract::where('uuid', $requestUuid)->where('owner_id', $owner_id)->first();
+        } else {
+            $oldContract = CarContract::find($contract['id'] ?? 0);
         }
-        $contract['status']=$status;
-        $contract['owner_id']=$owner_id;
-        $contract['user_id']=$user_id;
-        $contract['year_date']=$year_date;
-        $contract['created']=$created;
-        $oldContract=CarContract::find($contract['id']??0);
-  
+
         if ($oldContract) {
+            $contractId = (int) $oldContract->id;
+            $contract['id'] = $contractId;
             $contract['created'] = (new Carbon($oldContract->created_at))->format('Y-m-d');
-            // Logic for update scenario
-            $desc = 'تم تعديل عقد بيع للسيارة ' . ($contract['car_name']) . ' البائع ' . ($contract['name_seller'] ?? 0) . ' دفع مبلغ ' . ($contract['tex_seller_paid'] ?? 0) . ' و المشتري ' . ($contract['tex_buyer_paid'] ?? 0) . ' دفع مبلغ ' . ($contract['name_buyer'] ?? 0).' رقم'. ($contract['vin']);
-    
-            // Handle changes in payments for dollar
-            $this->handlePaymentChange($contract['tex_seller_paid'], $oldContract['tex_seller_paid'], '$', $desc, $contract['id'],'seller');
-            $this->handlePaymentChange($contract['tex_buyer_paid'], $oldContract['tex_buyer_paid'], '$', $desc, $contract['id'],'buyer');
-        
-            // Handle changes in payments for dinar
-            $this->handlePaymentChange($contract['tex_seller_dinar_paid'], $oldContract['tex_seller_dinar_paid'], 'IQD', $desc, $contract['id'],'seller');
-            $this->handlePaymentChange($contract['tex_buyer_dinar_paid'], $oldContract['tex_buyer_dinar_paid'], 'IQD', $desc, $contract['id'],'buyer');
-        
-            // Add similar handling for other fields...
-        
-        } 
+            if ($hasUuidColumn && $requestUuid) {
+                $contract['uuid'] = $requestUuid;
+            }
+            $desc = 'تم تعديل عقد بيع للسيارة ' . ($contract['car_name']) . ' البائع ' . ($contract['name_seller'] ?? 0) . ' دفع مبلغ ' . ($contract['tex_seller_paid'] ?? 0) . ' و المشتري ' . ($contract['tex_buyer_paid'] ?? 0) . ' دفع مبلغ ' . ($contract['name_buyer'] ?? 0) . ' رقم' . ($contract['vin']);
+            $this->handlePaymentChange($contract['tex_seller_paid'], $oldContract['tex_seller_paid'], '$', $desc, $contractId, 'seller');
+            $this->handlePaymentChange($contract['tex_buyer_paid'], $oldContract['tex_buyer_paid'], '$', $desc, $contractId, 'buyer');
+            $this->handlePaymentChange($contract['tex_seller_dinar_paid'], $oldContract['tex_seller_dinar_paid'], 'IQD', $desc, $contractId, 'seller');
+            $this->handlePaymentChange($contract['tex_buyer_dinar_paid'], $oldContract['tex_buyer_dinar_paid'], 'IQD', $desc, $contractId, 'buyer');
+        } else {
+            if ($hasUuidColumn) {
+                $contract['uuid'] = $requestUuid ?: Str::uuid()->toString();
+            }
+            if (isset($contract['id']) && (int) $contract['id'] === 0) {
+                unset($contract['id']);
+            }
+        }
+
         $car = CarContract::updateOrCreate(
-            ['id' => $contract['id']??0], // Search criteria, usually the primary key
-            $contract // Data to be inserted or updated
+            ['id' => $contract['id'] ?? 0],
+            $contract
         );
 
         if ($car && empty($car->verification_token)) {
@@ -177,52 +198,51 @@ class CarContractController extends Controller
             $car->save();
         }
 
-        if(!$oldContract) {
-            // Logic for new entry scenario
-            $desc = ' عقد بيع للسيارة ' . ($contract['car_name']) . ' البائع ' . ($contract['name_seller'] ?? 0) . ' دفع مبلغ ' . ($contract['tex_seller_paid'] ?? 0) . ' و المشتري ' . ($contract['tex_buyer_paid'] ?? 0) . ' دفع مبلغ ' . ($contract['name_buyer'] ?? 0) .' رقم'. ($contract['vin']);
-        
-            // Handle payments for dollar
+        if (!$oldContract) {
+            $desc = ' عقد بيع للسيارة ' . ($contract['car_name']) . ' البائع ' . ($contract['name_seller'] ?? 0) . ' دفع مبلغ ' . ($contract['tex_seller_paid'] ?? 0) . ' و المشتري ' . ($contract['tex_buyer_paid'] ?? 0) . ' دفع مبلغ ' . ($contract['name_buyer'] ?? 0) . ' رقم' . ($contract['vin']);
             if (($contract['tex_seller_paid'] ?? 0) || ($contract['tex_buyer_paid'] ?? 0)) {
-                $transactionDollar = $this->increaseWallet(($contract['tex_seller_paid'] ?? 0) + ($contract['tex_buyer_paid'] ?? 0), $desc, $this->mainBoxContract->where('owner_id', $owner_id)->first()->id, $car->id, 'App\Models\CarContract', 0, 0, '$',0,0,'in',($contract['tex_seller_paid'] ?? 0),($contract['tex_buyer_paid'] ?? 0));
+                $this->increaseWallet(($contract['tex_seller_paid'] ?? 0) + ($contract['tex_buyer_paid'] ?? 0), $desc, $this->mainBoxContract->where('owner_id', $owner_id)->first()->id, $car->id, 'App\Models\CarContract', 0, 0, '$', 0, 0, 'in', ($contract['tex_seller_paid'] ?? 0), ($contract['tex_buyer_paid'] ?? 0));
             }
-        
-            // Handle payments for dinar
             if (($contract['tex_seller_dinar_paid'] ?? 0) || ($contract['tex_buyer_dinar_paid'] ?? 0)) {
-                $transactionDinar = $this->increaseWallet(($contract['tex_seller_dinar_paid'] ?? 0) + ($contract['tex_buyer_dinar_paid'] ?? 0), $desc, $this->mainBoxContract->where('owner_id', $owner_id)->first()->id, $car->id, 'App\Models\CarContract', 0, 0, 'IQD',0,0,'in',($contract['tex_seller_paid'] ?? 0),($contract['tex_buyer_paid'] ?? 0));
+                $this->increaseWallet(($contract['tex_seller_dinar_paid'] ?? 0) + ($contract['tex_buyer_dinar_paid'] ?? 0), $desc, $this->mainBoxContract->where('owner_id', $owner_id)->first()->id, $car->id, 'App\Models\CarContract', 0, 0, 'IQD', 0, 0, 'in', ($contract['tex_seller_paid'] ?? 0), ($contract['tex_buyer_paid'] ?? 0));
             }
         }
-         
 
         return Response::json([
             'success' => true,
             'id' => $car->id,
+            'uuid' => $hasUuidColumn ? ($car->uuid ?? null) : null,
             'message' => 'تم حفظ العقد بنجاح'
-        ], 200);    
+        ], 200);
     }
-    public function getIndexContractCar(Request $request){
-        $owner_id=Auth::user()->owner_id;
-        $current_user_id=Auth::user()->id;
-        $current_user_type_id=Auth::user()->type_id;
-        $car_have_expenses = $request->car_have_expenses ?? '';
-        $user_id =$_GET['user_id'] ?? '';
-        $q = $_GET['q']??'';
-        $from =  $_GET['from'] ?? 0;
-        $to =$_GET['to'] ?? 0;
-        $limit =$_GET['limit'] ?? 0;
- 
+    public function getIndexContractCar(Request $request)
+    {
+        if (!Auth::check()) {
+            return Response::json(['message' => 'Unauthenticated.', 'data' => [], 'total' => 0], 401);
+        }
+
+        $owner_id = Auth::user()->owner_id;
+        $current_user_id = Auth::user()->id;
+        $current_user_type_id = Auth::user()->type_id;
+        $q = $request->query('q', '');
+        $from = $request->query('from');
+        $to = $request->query('to');
+        $limit = (int) $request->query('limit', 100);
+        if ($limit < 1) {
+            $limit = 100;
+        }
+
         $data = CarContract::with('user')->where('owner_id', $owner_id)->orderBy('id', 'desc');
 
-        // إذا كان نوع المستخدم car_contract_user، يرى فقط العقود التي أنشأها
         if ($this->userCarContractUser && $current_user_type_id == $this->userCarContractUser) {
             $data->where('user_id', $current_user_id);
         }
-        // إذا كان نوع المستخدم car_contract، يرى كل العقود (الحالة الافتراضية)
 
         if ($from && $to) {
             $data->whereBetween('created', [$from, $to]);
         }
-        
-        if($q){
+
+        if ($q) {
             $data->where(function ($query) use ($q) {
                 $query->where('name_seller', 'LIKE', '%' . $q . '%')
                     ->orWhere('vin', 'LIKE', '%' . $q . '%')
@@ -231,7 +251,7 @@ class CarContractController extends Controller
             });
         }
 
-        $data =$data->paginate($limit)->toArray();
+        $data = $data->paginate($limit)->toArray();
         return Response::json($data, 200);
     }
     

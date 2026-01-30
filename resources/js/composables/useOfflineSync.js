@@ -6,6 +6,17 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
+function generateUuid() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+}
+
 export function useOfflineSync() {
     const isOnline = ref(navigator.onLine);
     const isSyncing = ref(false);
@@ -14,9 +25,13 @@ export function useOfflineSync() {
      * حفظ عقد - مباشرة في SQLite (Online أو Offline)
      */
     const saveContract = async (contractData) => {
+        const payload = { ...contractData };
+        if (!payload.uuid && (!payload.id || payload.id === 0)) {
+            payload.uuid = generateUuid();
+        }
         try {
             // محاولة الحفظ مباشرة - Laravel سيستخدم SQLite إذا كان Offline
-            const response = await axios.post('/api/addCarContract', contractData, {
+            const response = await axios.post('/api/addCarContract', payload, {
                 timeout: 10000, // 10 ثواني
                 headers: {
                     'Accept': 'application/json',
@@ -34,7 +49,7 @@ export function useOfflineSync() {
             if (error.code === 'NETWORK_ERROR' || !navigator.onLine) {
                 // محاولة مرة أخرى - Laravel يستخدم SQLite
                 try {
-                    const response = await axios.post('/api/addCarContract', contractData, {
+                    const response = await axios.post('/api/addCarContract', payload, {
                         timeout: 5000,
                         headers: {
                             'Accept': 'application/json',
