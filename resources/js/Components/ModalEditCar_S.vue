@@ -13,7 +13,89 @@ const props = defineProps({
   show: Boolean,
   formData: Object,
   client: Array,
+  systemConfig: Object,
 });
+
+// حقول التسجيل (Frontend فقط)
+const registrationData = ref({
+  fee: 0,
+  expenses: 0,
+  companyContract: 200000,
+  exchangeRate: 0,
+  additionalExpenses: 0, // مصروف إضافي بالدولار
+  totalUSD: 0,
+  noteToAdd: '' // الملاحظة التي سيتم إضافتها
+});
+
+// حساب المجموع تلقائياً
+const calculateRegistrationTotal = computed(() => {
+  const total = parseFloat(registrationData.value.fee || 0) + 
+                parseFloat(registrationData.value.expenses || 0) + 
+                parseFloat(registrationData.value.companyContract || 0);
+  const rate = parseFloat(registrationData.value.exchangeRate || 1);
+  const additionalExpenses = parseFloat(registrationData.value.additionalExpenses || 0);
+  
+  if (rate > 0) {
+    const result = total / (rate / 100);
+    const totalUSD = Math.round(result) + additionalExpenses;
+    
+    // تحديث الملاحظة تلقائياً
+    registrationData.value.noteToAdd = `+ رسوم تسجيل ومصاريف ${totalUSD}$`;
+    
+    return totalUSD; // عدد صحيح + المصروف الإضافي بالدولار
+  }
+  
+  registrationData.value.noteToAdd = '';
+  return additionalExpenses;
+});
+
+// تطبيق رسوم التسجيل على المصاريف والملاحظة
+function applyRegistrationFees() {
+  const totalUSD = calculateRegistrationTotal.value;
+  
+  if (totalUSD > 0) {
+    // إضافة على المصاريف (المشتريات) - عدد صحيح مع التقريب
+    props.formData.expenses = Math.round(parseFloat(props.formData.expenses || 0) + totalUSD);
+    
+    // إضافة على المصاريف (المبيعات) - عدد صحيح مع التقريب
+    props.formData.expenses_s = Math.round(parseFloat(props.formData.expenses_s || 0) + totalUSD);
+    
+    // إضافة على الملاحظة (من الحقل القابل للتعديل)
+    if (props.formData.note) {
+      props.formData.note += ' ' + registrationData.value.noteToAdd;
+    } else {
+      props.formData.note = registrationData.value.noteToAdd;
+    }
+    
+    // إعادة تعيين حقول التسجيل
+    registrationData.value = {
+      fee: 0,
+      expenses: 0,
+      companyContract: 200000,
+      exchangeRate: registrationData.value.exchangeRate,
+      additionalExpenses: 0,
+      totalUSD: 0,
+      noteToAdd: ''
+    };
+    
+    // الرجوع للتاب الأساسي
+    activeTab.value = 'edit';
+    
+    // استخدام toast بدلاً من alert
+    toast.success('✅ تم إضافة رسوم التسجيل بنجاح!', {
+      timeout: 3000,
+      position: 'bottom-right'
+    });
+    
+    // رسالة تذكير بتحميل المرفق
+    setTimeout(() => {
+      toast.info('📎 يرجى تحميل المرفق إذا موجود', {
+        timeout: 5000,
+        position: 'bottom-right'
+      });
+    }, 500);
+  }
+}
 
 function getTodayDate() {
   const today = new Date();
@@ -194,6 +276,10 @@ watch(() => props.show, (newVal) => {
     if (activeTab.value === 'history') {
       loadCarHistory();
     }
+    // تحميل سعر الصرف الافتراضي (100 دولار بالدينار)
+    if (props.systemConfig?.usd_to_dinar_rate) {
+      registrationData.value.exchangeRate = props.systemConfig.usd_to_dinar_rate;
+    }
   }
 });
 
@@ -229,6 +315,17 @@ watch(() => activeTab.value, (newVal) => {
                 ]"
               >
                 ✏️ تعديل
+              </button>
+              <button
+                @click="activeTab = 'registration'"
+                :class="[
+                  'py-2 px-4 text-sm font-medium border-b-2 transition-colors',
+                  activeTab === 'registration'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                ]"
+              >
+                📝 تسجيل
               </button>
               <button
                 @click="activeTab = 'history'"
@@ -456,6 +553,152 @@ watch(() => activeTab.value, (newVal) => {
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                 v-model="formData.note"
               />
+            </div>
+          </div>
+
+          <!-- Tab التسجيل -->
+          <div class="modal-body" v-if="activeTab === 'registration'">
+            <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
+              <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-2">
+                📋 حساب رسوم التسجيل والمصاريف
+              </h3>
+              <p class="text-sm text-blue-600 dark:text-blue-400">
+                املأ الحقول أدناه، سيتم الحساب تلقائياً وعند الضغط على "تطبيق الرسوم" سيتم إضافة المبلغ على المصاريف والملاحظة
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- التسجيل -->
+              <div class="mb-4">
+                <label class="dark:text-gray-200 font-medium" for="reg_fee_s">
+                  التسجيل (دينار)
+                </label>
+                <input
+                  id="reg_fee_s"
+                  type="number"
+                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  v-model.number="registrationData.fee"
+                  placeholder="0"
+                />
+              </div>
+
+              <!-- المصروف -->
+              <div class="mb-4">
+                <label class="dark:text-gray-200 font-medium" for="reg_expenses_s">
+                  المصروف (دينار)
+                </label>
+                <input
+                  id="reg_expenses_s"
+                  type="number"
+                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  v-model.number="registrationData.expenses"
+                  placeholder="0"
+                />
+              </div>
+
+              <!-- عقد الشركة -->
+              <div class="mb-4">
+                <label class="dark:text-gray-200 font-medium" for="reg_contract_s">
+                  عقد الشركة (دينار)
+                </label>
+                <input
+                  id="reg_contract_s"
+                  type="number"
+                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  v-model.number="registrationData.companyContract"
+                />
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  القيمة الافتراضية: 200,000 دينار
+                </p>
+              </div>
+
+              <!-- سعر الصرف -->
+              <div class="mb-4">
+                <label class="dark:text-gray-200 font-medium" for="reg_exchange_s">
+                  سعر 100 دولار بالدينار
+                </label>
+                <input
+                  id="reg_exchange_s"
+                  type="number"
+                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  v-model.number="registrationData.exchangeRate"
+                  placeholder="150"
+                />
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  💡 يأتي من الإعدادات (100 دولار = {{ registrationData.exchangeRate }} دينار)
+                </p>
+              </div>
+
+              <!-- مصروف إضافي بالدولار -->
+              <div class="mb-4">
+                <label class="dark:text-gray-200 font-medium" for="reg_additional_s">
+                  مصروف إضافي (دولار) 💵
+                </label>
+                <input
+                  id="reg_additional_s"
+                  type="number"
+                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  v-model.number="registrationData.additionalExpenses"
+                  placeholder="0"
+                />
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  💰 يُضاف مباشرة للمجموع بالدولار
+                </p>
+              </div>
+            </div>
+
+            <!-- المجموع -->
+            <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg mt-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="text-lg font-bold text-green-800 dark:text-green-300">
+                    المجموع بالدولار (عدد صحيح)
+                  </h4>
+                  <p class="text-sm text-green-600 dark:text-green-400 mt-1">
+                    الحساب: [(التسجيل + المصروف + عقد الشركة) ÷ (سعر الصرف ÷ 100)] + مصروف إضافي
+                  </p>
+                </div>
+                <div class="text-3xl font-bold text-green-600 dark:text-green-400">
+                  {{ calculateRegistrationTotal }} $
+                </div>
+              </div>
+            </div>
+
+            <!-- الملاحظة التي سيتم إضافتها -->
+            <div class="mt-4">
+              <label class="dark:text-gray-200 font-medium flex items-center gap-2" for="reg_note">
+                <span>📝</span>
+                <span>الملاحظة التي سيتم إضافتها</span>
+              </label>
+              <textarea
+                id="reg_note"
+                v-model="registrationData.noteToAdd"
+                rows="2"
+                class="mt-2 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                placeholder="+ رسوم تسجيل ومصاريف XXX$"
+              ></textarea>
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                💡 يمكنك تعديل الملاحظة قبل تطبيق الرسوم
+              </p>
+            </div>
+
+            <!-- زر تطبيق الرسوم -->
+            <div class="mt-6">
+              <button
+                @click="applyRegistrationFees"
+                :disabled="calculateRegistrationTotal <= 0"
+                :class="[
+                  'w-full py-3 px-4 rounded-lg font-semibold text-white transition-all',
+                  calculateRegistrationTotal > 0
+                    ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg'
+                    : 'bg-gray-400 cursor-not-allowed'
+                ]"
+              >
+                ✅ تطبيق الرسوم على المصاريف والملاحظة
+              </button>
+              <p class="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+                سيتم إضافة {{ calculateRegistrationTotal }}$ على المصاريف الموجودة
+              </p>
             </div>
           </div>
 

@@ -508,29 +508,6 @@ body {
         </div>
         
       </div>
-      <ol class="terms-list" style="counter-reset: term 2;">
-        <li style="color: brown;font-size: 11px">
-          علی البائع و المشتری تسجیل السیارة حسب قوانین مدیریة المرور العامة مع إجراء معاملة نقل الملکیة
-        </li>
-        <li style="color: brown;font-size: 11px">
-          علی المشتری فحص السیارة قبل الشراء و نحن غیر مسؤولین بعد توقیع عقد المعرض
-        </li>
-        <li style="color: brown;font-size: 11px">
-          الطرف الاول مسؤول عن کافة أنواع الغرامات قبل موعد الشراء
-        </li>
-        <li style="color: brown;font-size: 11px">
-          صاحب المعرض غیر مسؤول عن السیارة بعد البیع و کل عقد غیر مختوم من المعرض یعتبر باطل
-        </li>
-        <li style="color: brown;font-size: 11px">
-          علی المشتري تسجیل السیارة خلال شهر واحد
-        </li>
-        <li style="color: brown;font-size: 11px">
-          کتب هذا العقد بثالثة نسخ بتاریخ
-          <b class="px-2">{{$data['created'] ?? ''}}</b>
-          <span class="px-5">الساعة</span>
-          <b class="px-2">{{ \Carbon\Carbon::parse($data['created_at'])->format('h:i:s A') }}</b>
-        </li>
-      </ol>
       <div class="d-flex justify-content-between  mt-3 pt-2">
         <div>
           بەلێن و رەزامەندی لایەنی یەکەم 

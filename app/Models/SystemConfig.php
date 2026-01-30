@@ -21,10 +21,13 @@ class SystemConfig extends Model
         'third_title_kr',
         'default_price_s',
         'default_price_p',
+        'usd_to_aed_rate',
+        'usd_to_dinar_rate',
+        'contract_terms',
     ];
     protected $casts = [
         'default_price_s' => 'array',
         'default_price_p' => 'array',
-
+        'contract_terms' => 'array',
     ];
 }

@@ -33,7 +33,11 @@ import debounce from 'lodash/debounce';
 const {t} = useI18n();
 
 
-const props = defineProps({client:Array,config:Array});
+const props = defineProps({
+  client: Array,
+  config: Array, // القيم الافتراضية (default_price_p)
+  systemConfig: Object // إعدادات النظام الكاملة
+});
 
 
 let data = ref({});
@@ -121,15 +125,43 @@ function openBulkEdit() {
   showModalBulkEdit.value = true;
 }
 
+// دالة لتحويل JSON string إلى object/array
+function parseJsonField(field) {
+  // إذا كان null أو undefined، أرجع object فارغ
+  if (field === null || field === undefined) {
+    return {};
+  }
+  
+  // إذا كان string، حاول تحويله من JSON
+  if (typeof field === 'string') {
+    try {
+      const parsed = JSON.parse(field);
+      return parsed;
+    } catch (e) {
+      console.warn('Failed to parse JSON field:', e);
+      return {};
+    }
+  }
+  
+  // إذا كان array أو object بالفعل، استخدمه مباشرة
+  return field;
+}
+
 function openAddCar(form={}) {
     formData.value=form
-    formData.value.dolar_price= props.config[0].dolar_price;
-    formData.value.shipping_dolar= props.config[0].shipping_dolar;
-    formData.value.coc_dolar= props.config[0].coc_dolar;
-    formData.value.checkout= props.config[0].checkout;
-    formData.value.land_shipping= props.config[0].land_shipping;
-    formData.value.land_shipping_dinar= props.config[0].land_shipping_dinar;
-    formData.value.days= props.config[0].days;
+    
+    // تحويل config من JSON string إلى object إذا لزم الأمر
+    const config = Array.isArray(props.config) && props.config.length > 0 
+      ? parseJsonField(props.config[0]) 
+      : parseJsonField(props.config) || {};
+    
+    formData.value.dolar_price= config.dolar_price;
+    formData.value.shipping_dolar= config.shipping_dolar;
+    formData.value.coc_dolar= config.coc_dolar;
+    formData.value.checkout= config.checkout;
+    formData.value.land_shipping= config.land_shipping;
+    formData.value.land_shipping_dinar= config.land_shipping_dinar;
+    formData.value.days= config.days;
 
     showModalCar.value = true;
 }
@@ -396,8 +428,6 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
             @a="confirmCar($event)"
             @close="showModalCar = false"
             >
-        <template #header>
-          </template>
     </ModalAddCar>
     <ModalEditCars
             :formData="formData"
@@ -406,8 +436,6 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
             @a="confirmUpdateCar($event)"
             @close="showModalEditCars = false"
             >
-        <template #header>
-          </template>
     </ModalEditCars>
     <ModalBulkEditCars
             :show="showModalBulkEdit ? true : false"

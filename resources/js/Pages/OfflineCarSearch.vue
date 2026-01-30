@@ -13,7 +13,7 @@
             :disabled="isLoading"
           >
             <span v-if="!isLoading">📥 تحميل البيانات</span>
-            <span v-else">⏳ جاري التحميل...</span>
+            <span v-else>⏳ جاري التحميل...</span>
           </button>
           
           <div class="px-4 py-2 rounded"
@@ -62,7 +62,7 @@
               <input
                 v-model="searchGeneral"
                 type="text"
-                @keyup.enter="searchGeneral"
+                @keyup.enter="performGeneralSearch"
                 placeholder="ابحث في كل الحقول"
                 class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
               />
@@ -486,7 +486,7 @@ const saveWithdrawal = async () => {
     return;
   }
 
-  isSaving.value = false;
+  isSaving.value = true;
 
   try {
     if (window.$db) {
@@ -516,9 +516,10 @@ const viewCarDetails = (car) => {
 };
 
 // تنسيق العملة
-const formatCurrency = (value) => {
-  if (!value) return '$0.00';
-  return `$${parseFloat(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const formatCurrency = (amount, currency = 'dollar') => {
+  if (!amount) return '0';
+  const formatted = parseFloat(amount).toLocaleString('en-US', { maximumFractionDigits: 0 });
+  return formatted + ' ' + (currency === 'dollar' ? '$' : 'دينار');
 };
 
 // مراقبة حالة الاتصال
@@ -543,8 +544,7 @@ onMounted(() => {
 input:focus, textarea:focus {
   outline: none;
   border-color: #3b82f6;
-  ring: 2px;
-  ring-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
 }
 </style>
 

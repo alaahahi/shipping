@@ -23,11 +23,15 @@ const systemConfig = ref({
   third_title_kr: '',
   default_price_s: [],
   default_price_p: [],
+  usd_to_aed_rate: 3.6725,
+  usd_to_dinar_rate: 150.00,
+  contract_terms: [],
 });
 
 // تحويل JSON arrays إلى arrays من objects {key, value}
 const defaultPriceSItems = ref([]);
 const defaultPricePItems = ref([]);
+const contractTermsItems = ref([]);
 
 // Connected Systems
 const systems = ref([]);
@@ -85,15 +89,35 @@ function loadSystemConfig() {
       // تحويل JSON arrays إلى items للعرض
       const priceS = systemConfig.value.default_price_s || [];
       const priceP = systemConfig.value.default_price_p || [];
+      const terms = systemConfig.value.contract_terms || [];
       
       console.log('Loaded default_price_s:', priceS);
       console.log('Loaded default_price_p:', priceP);
+      console.log('Loaded contract_terms:', terms);
       
       defaultPriceSItems.value = convertArrayToItems(priceS);
       defaultPricePItems.value = convertArrayToItems(priceP);
       
+      // تحميل الشروط كـ array من strings
+      if (Array.isArray(terms) && terms.length > 0) {
+        contractTermsItems.value = terms.map((term, index) => ({
+          id: Date.now() + index,
+          text: term
+        }));
+      } else {
+        // القيم الافتراضية
+        contractTermsItems.value = [
+          { id: 1, text: 'علی البائع و المشتری تسجیل السیارة حسب قوانین مدیریة المرور العامة مع إجراء معاملة نقل الملکیة' },
+          { id: 2, text: 'علی المشتری فحص السیارة قبل الشراء و نحن غیر مسؤولین بعد توقیع عقد المعرض' },
+          { id: 3, text: 'الطرف الاول مسؤول عن کافة أنواع الغرامات قبل موعد الشراء' },
+          { id: 4, text: 'صاحب المعرض غیر مسؤول عن السیارة بعد البیع و کل عقد غیر مختوم من المعرض یعتبر باطل' },
+          { id: 5, text: 'علی المشتري تسجیل السیارة خلال شهر واحد' },
+        ];
+      }
+      
       console.log('Converted S items:', defaultPriceSItems.value);
       console.log('Converted P items:', defaultPricePItems.value);
+      console.log('Contract terms items:', contractTermsItems.value);
     })
     .catch(error => {
       console.error('Error loading system config:', error);
@@ -114,10 +138,16 @@ function saveSystemConfig() {
   const priceS = convertItemsToArray(defaultPriceSItems.value);
   const priceP = convertItemsToArray(defaultPricePItems.value);
   
+  // تحويل الشروط إلى array من strings
+  const terms = contractTermsItems.value
+    .filter(item => item.text && item.text.trim())
+    .map(item => item.text.trim());
+  
   const dataToSave = {
     ...systemConfig.value,
     default_price_s: priceS,
     default_price_p: priceP,
+    contract_terms: terms,
   };
   
   saving.value = true;
@@ -131,6 +161,15 @@ function saveSystemConfig() {
       systemConfig.value = response.data.config;
       defaultPriceSItems.value = convertArrayToItems(systemConfig.value.default_price_s || []);
       defaultPricePItems.value = convertArrayToItems(systemConfig.value.default_price_p || []);
+      
+      // تحديث الشروط
+      const terms = systemConfig.value.contract_terms || [];
+      if (Array.isArray(terms) && terms.length > 0) {
+        contractTermsItems.value = terms.map((term, index) => ({
+          id: Date.now() + index,
+          text: term
+        }));
+      }
     })
     .catch(error => {
       console.error('Error saving system config:', error);
@@ -288,6 +327,17 @@ function toggleActive(system) {
         rtl: true,
       });
     });
+}
+
+function addContractTerm() {
+  contractTermsItems.value.push({
+    id: Date.now(),
+    text: ''
+  });
+}
+
+function removeContractTerm(index) {
+  contractTermsItems.value.splice(index, 1);
 }
 
 const testingConnection = ref(false);
@@ -452,6 +502,95 @@ function testConnection() {
                       placeholder="العنوان الثالث بالكردية"
                     />
                   </div>
+                </div>
+
+                <!-- سعر الصرف -->
+                <div class="mt-6 border-t pt-6">
+                  <h4 class="text-md font-semibold mb-4">إعدادات العملات</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <InputLabel for="usd_to_aed_rate" value="سعر صرف الدولار مقابل الدرهم الإماراتي (USD → AED)" />
+                      <div class="flex items-center gap-2">
+                        <span class="text-2xl">💵</span>
+                        <TextInput
+                          id="usd_to_aed_rate"
+                          v-model="systemConfig.usd_to_aed_rate"
+                          type="number"
+                          step="0.0001"
+                          min="0"
+                          class="mt-1 block w-full"
+                          placeholder="3.6725"
+                        />
+                        <span class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">درهم</span>
+                      </div>
+                      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        مثال: 1 دولار = {{ systemConfig.usd_to_aed_rate }} درهم إماراتي
+                      </p>
+                    </div>
+
+                    <div>
+                      <InputLabel for="usd_to_dinar_rate" value="سعر 100 دولار بالدينار (USD → IQD)" />
+                      <div class="flex items-center gap-2">
+                        <span class="text-2xl">💰</span>
+                        <TextInput
+                          id="usd_to_dinar_rate"
+                          v-model="systemConfig.usd_to_dinar_rate"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          class="mt-1 block w-full"
+                          placeholder="150.00"
+                        />
+                        <span class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">دينار</span>
+                      </div>
+                      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        مثال: 100 دولار = {{ systemConfig.usd_to_dinar_rate }} دينار عراقي
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- شروط العقد -->
+                <div class="mt-6 border-t pt-6">
+                  <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-md font-semibold">شروط العقد</h4>
+                    <button
+                      @click="addContractTerm"
+                      type="button"
+                      class="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                    >
+                      إضافة شرط جديد
+                    </button>
+                  </div>
+                  <div class="space-y-3">
+                    <div
+                      v-for="(term, index) in contractTermsItems"
+                      :key="term.id || index"
+                      class="flex gap-2 items-start"
+                    >
+                      <div class="flex-1">
+                        <textarea
+                          v-model="term.text"
+                          rows="2"
+                          class="w-full text-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm px-3 py-2"
+                          :placeholder="`الشرط ${index + 1}`"
+                        ></textarea>
+                      </div>
+                      <button
+                        @click="removeContractTerm(index)"
+                        type="button"
+                        class="px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 mt-1"
+                      >
+                        حذف
+                      </button>
+                    </div>
+                    <p v-if="contractTermsItems.length === 0" class="text-sm text-gray-500 text-center py-4">
+                      لا توجد شروط. اضغط "إضافة شرط جديد" لإضافة شرط.
+                    </p>
+                  </div>
+                  <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    💡 هذه الشروط ستظهر في نهاية عقد البيع. الشرط الأخير (التاريخ والوقت) يُضاف تلقائياً.
+                  </p>
                 </div>
 
                 <div class="mt-6 border-t pt-6">

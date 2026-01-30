@@ -177,6 +177,30 @@ const switchLocale = (locale) => {
                 {{ $t("CompanyExpenses") }}
                 </NavLink>
               </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)">
+                <NavLink
+                  :href="route('trips')"
+                  :active="route().current('trips') || route().current('trips.create') || route().current('trips.show')"
+                >
+                  🚢 الرحلات
+                </NavLink>
+              </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)">
+                <NavLink
+                  :href="route('consigneeBalances.index')"
+                  :active="route().current('consigneeBalances.index')"
+                >
+                  💰 أرصدة الزبائن
+                </NavLink>
+              </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)">
+                <NavLink
+                  :href="route('companyBalances.index')"
+                  :active="route().current('companyBalances.index') || route().current('companyBalances.show')"
+                >
+                  🚢 حسابات الشركات
+                </NavLink>
+              </div>
               <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1">
                 <NavLink
                   :href="route('hunter')"
@@ -412,6 +436,27 @@ const switchLocale = (locale) => {
                 v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6)"
               >
               المحاسبة  
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
+                :href="route('trips')"
+                :active="route().current('trips') || route().current('trips.create') || route().current('trips.show')"
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)"
+              >
+              🚢 الرحلات
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
+                :href="route('consigneeBalances.index')"
+                :active="route().current('consigneeBalances.index')"
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)"
+              >
+              💰 أرصدة الزبائن
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
+                :href="route('companyBalances.index')"
+                :active="route().current('companyBalances.index') || route().current('companyBalances.show')"
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)"
+              >
+              🚢 حسابات الشركات
               </ResponsiveNavLink>
               
               <!-- صفحة مراقبة المزامنة للهواتف -->
