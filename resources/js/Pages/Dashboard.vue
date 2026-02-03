@@ -9,7 +9,8 @@ import { Link } from "@inertiajs/inertia-vue3";
 const props = defineProps({
   auth: Object,
   apiKey: String,
-  company_name: String
+  company_name: String,
+  showBrokerage: { type: Boolean, default: false }
 });
 
 const {t} = useI18n();
@@ -32,6 +33,8 @@ const laravelDataO = ref({});
 
 const laravelData1 = ref({});
 const laravelData2 = ref({});
+const completedContractsThisMonth = ref(0);
+const recentContracts = ref([]);
 let  controller = new AbortController(); // Create a new AbortController
 
 const getResults = async (page = 1) => {
@@ -47,7 +50,9 @@ const getResults = async (page = 1) => {
   }
   if(userType.value==8){
     laravelData1.value =  response.data.data1
-      laravelData2.value =  response.data.data2
+    laravelData2.value =  response.data.data2
+    completedContractsThisMonth.value = response.data.completedContractsThisMonth ?? 0
+    recentContracts.value = response.data.recentContracts ?? []
   }
 
 
@@ -500,6 +505,29 @@ function getResultsCarSearchLocal () {
                 <div class="p-6  dark:bg-gray-900">
                     <div class="flex flex-col">
                       <div>
+                          <!-- إحصائيات وعقود حديثة -->
+                          <div class="mb-6 p-4 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
+                            <h2 class="text-lg font-semibold dark:text-white mb-3">عقود هذا الشهر والإحصائيات</h2>
+                            <div class="flex items-center gap-6 mb-4">
+                              <div class="flex items-center gap-2">
+                                <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{{ completedContractsThisMonth }}</span>
+                                <span class="text-gray-600 dark:text-gray-300">عقد منجز هذا الشهر</span>
+                              </div>
+                            </div>
+                            <div v-if="recentContracts && recentContracts.length" class="mt-4">
+                              <h3 class="text-sm font-medium dark:text-gray-300 mb-2">آخر العقود</h3>
+                              <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                                <Link v-for="c in recentContracts" :key="c.id" :href="`/contract/${c.id}`" class="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition">
+                                  <div class="text-right">
+                                    <div class="font-medium dark:text-white">{{ c.car_name || c.no || '—' }}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ c.name_seller }} → {{ c.name_buyer }}</div>
+                                    <div class="text-xs text-indigo-600 dark:text-indigo-400">{{ c.car_price }} $ · {{ c.created }}</div>
+                                  </div>
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+                          <template v-if="showBrokerage">
                           <h2 class="my-3 dark:text-white" v-if="laravelData1">دين البائع</h2>
                           <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
                           <Link @dblclick="sendWhatsAppMessage(user.phone)"  v-for="(user,i) in laravelData1" :key="i" class="flex items-start rounded-xl text-gray-200  dark:text-gray-300  p-4 shadow-lg"  :href="route('car_contract', {   q:  user.name_seller })"   :class="changeColor(user.tex_seller -  user.tex_seller_paid)">
@@ -538,6 +566,7 @@ function getResultsCarSearchLocal () {
 
  
                         </div>
+                          </template>
                       </div>
                       </div>
                     </div>

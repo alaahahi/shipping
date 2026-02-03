@@ -1,7 +1,7 @@
 @php
 use App\Helpers\Help as MyHelp;
 $Help = new MyHelp();
-$contractTerms = is_array($config) ? ($config['contract_terms'] ?? []) : ($config->contract_terms ?? []);
+$contractTerms = is_array($config) ? ($config['contract_terms_2'] ?? $config['contract_terms'] ?? []) : ($config->contract_terms_2 ?? $config->contract_terms ?? []);
 if (is_string($contractTerms)) {
   $contractTerms = json_decode($contractTerms, true) ?? [];
 }

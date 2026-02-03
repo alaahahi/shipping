@@ -62,7 +62,8 @@ class DashboardController extends Controller
         $config=SystemConfig::first();
         $apiKey =$config->api_key;
 
-        return Inertia::render('Dashboard', ['apiKey'=>$apiKey]);   
+        $showBrokerage = filter_var(config('car_contract.show_brokerage', false), FILTER_VALIDATE_BOOLEAN);
+        return Inertia::render('Dashboard', ['apiKey'=>$apiKey, 'showBrokerage'=>$showBrokerage]);   
     }
     public function purchases(Request $request)
     {

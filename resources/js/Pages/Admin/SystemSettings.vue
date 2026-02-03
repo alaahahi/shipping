@@ -26,6 +26,7 @@ const systemConfig = ref({
   usd_to_aed_rate: 3.6725,
   usd_to_dinar_rate: 150.00,
   contract_terms: [],
+  contract_terms_2: [],
   contract_template: 1,
 });
 
@@ -33,6 +34,7 @@ const systemConfig = ref({
 const defaultPriceSItems = ref([]);
 const defaultPricePItems = ref([]);
 const contractTermsItems = ref([]);
+const contractTerms2Items = ref([]);
 
 // Connected Systems
 const systems = ref([]);
@@ -91,22 +93,15 @@ function loadSystemConfig() {
       const priceS = systemConfig.value.default_price_s || [];
       const priceP = systemConfig.value.default_price_p || [];
       const terms = systemConfig.value.contract_terms || [];
-      
-      console.log('Loaded default_price_s:', priceS);
-      console.log('Loaded default_price_p:', priceP);
-      console.log('Loaded contract_terms:', terms);
+      const terms2 = systemConfig.value.contract_terms_2 || [];
       
       defaultPriceSItems.value = convertArrayToItems(priceS);
       defaultPricePItems.value = convertArrayToItems(priceP);
       
-      // تحميل الشروط كـ array من strings
+      // تحميل شروط قالب 1
       if (Array.isArray(terms) && terms.length > 0) {
-        contractTermsItems.value = terms.map((term, index) => ({
-          id: Date.now() + index,
-          text: term
-        }));
+        contractTermsItems.value = terms.map((term, index) => ({ id: Date.now() + index, text: term }));
       } else {
-        // القيم الافتراضية
         contractTermsItems.value = [
           { id: 1, text: 'علی البائع و المشتری تسجیل السیارة حسب قوانین مدیریة المرور العامة مع إجراء معاملة نقل الملکیة' },
           { id: 2, text: 'علی المشتری فحص السیارة قبل الشراء و نحن غیر مسؤولین بعد توقیع عقد المعرض' },
@@ -115,10 +110,13 @@ function loadSystemConfig() {
           { id: 5, text: 'علی المشتري تسجیل السیارة خلال شهر واحد' },
         ];
       }
+      // تحميل شروط قالب 2
+      if (Array.isArray(terms2) && terms2.length > 0) {
+        contractTerms2Items.value = terms2.map((term, index) => ({ id: Date.now() + index + 1000, text: term }));
+      } else {
+        contractTerms2Items.value = [];
+      }
       
-      console.log('Converted S items:', defaultPriceSItems.value);
-      console.log('Converted P items:', defaultPricePItems.value);
-      console.log('Contract terms items:', contractTermsItems.value);
     })
     .catch(error => {
       console.error('Error loading system config:', error);
@@ -139,8 +137,10 @@ function saveSystemConfig() {
   const priceS = convertItemsToArray(defaultPriceSItems.value);
   const priceP = convertItemsToArray(defaultPricePItems.value);
   
-  // تحويل الشروط إلى array من strings
   const terms = contractTermsItems.value
+    .filter(item => item.text && item.text.trim())
+    .map(item => item.text.trim());
+  const terms2 = contractTerms2Items.value
     .filter(item => item.text && item.text.trim())
     .map(item => item.text.trim());
   
@@ -149,6 +149,7 @@ function saveSystemConfig() {
     default_price_s: priceS,
     default_price_p: priceP,
     contract_terms: terms,
+    contract_terms_2: terms2,
     contract_template: systemConfig.value.contract_template ?? 1,
   };
   
@@ -164,13 +165,15 @@ function saveSystemConfig() {
       defaultPriceSItems.value = convertArrayToItems(systemConfig.value.default_price_s || []);
       defaultPricePItems.value = convertArrayToItems(systemConfig.value.default_price_p || []);
       
-      // تحديث الشروط
       const terms = systemConfig.value.contract_terms || [];
+      const terms2 = systemConfig.value.contract_terms_2 || [];
       if (Array.isArray(terms) && terms.length > 0) {
-        contractTermsItems.value = terms.map((term, index) => ({
-          id: Date.now() + index,
-          text: term
-        }));
+        contractTermsItems.value = terms.map((term, index) => ({ id: Date.now() + index, text: term }));
+      }
+      if (Array.isArray(terms2) && terms2.length > 0) {
+        contractTerms2Items.value = terms2.map((term, index) => ({ id: Date.now() + index + 1000, text: term }));
+      } else {
+        contractTerms2Items.value = [];
       }
     })
     .catch(error => {
@@ -340,6 +343,12 @@ function addContractTerm() {
 
 function removeContractTerm(index) {
   contractTermsItems.value.splice(index, 1);
+}
+function addContractTerm2() {
+  contractTerms2Items.value.push({ id: Date.now(), text: '' });
+}
+function removeContractTerm2(index) {
+  contractTerms2Items.value.splice(index, 1);
 }
 
 const testingConnection = ref(false);
@@ -568,10 +577,10 @@ function testConnection() {
                   </p>
                 </div>
 
-                <!-- شروط العقد -->
+                <!-- شروط قالب 1 -->
                 <div class="mt-6 border-t pt-6">
                   <div class="flex justify-between items-center mb-4">
-                    <h4 class="text-md font-semibold">شروط العقد</h4>
+                    <h4 class="text-md font-semibold">شروط قالب 1</h4>
                     <button
                       @click="addContractTerm"
                       type="button"
@@ -607,7 +616,50 @@ function testConnection() {
                     </p>
                   </div>
                   <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    💡 هذه الشروط ستظهر في نهاية عقد البيع. الشرط الأخير (التاريخ والوقت) يُضاف تلقائياً.
+                    💡 شروط قالب العقد الأول. الشرط الأخير (التاريخ والوقت) يُضاف تلقائياً.
+                  </p>
+                </div>
+
+                <!-- شروط قالب 2 -->
+                <div class="mt-6 border-t pt-6">
+                  <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-md font-semibold">شروط قالب 2</h4>
+                    <button
+                      @click="addContractTerm2"
+                      type="button"
+                      class="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                    >
+                      إضافة شرط جديد
+                    </button>
+                  </div>
+                  <div class="space-y-3">
+                    <div
+                      v-for="(term, index) in contractTerms2Items"
+                      :key="term.id || index"
+                      class="flex gap-2 items-start"
+                    >
+                      <div class="flex-1">
+                        <textarea
+                          v-model="term.text"
+                          rows="2"
+                          class="w-full text-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm px-3 py-2"
+                          :placeholder="`الشرط ${index + 1}`"
+                        ></textarea>
+                      </div>
+                      <button
+                        @click="removeContractTerm2(index)"
+                        type="button"
+                        class="px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 mt-1"
+                      >
+                        حذف
+                      </button>
+                    </div>
+                    <p v-if="contractTerms2Items.length === 0" class="text-sm text-gray-500 text-center py-4">
+                      لا توجد شروط لقالب 2. اضغط "إضافة شرط جديد" لإضافة شرط.
+                    </p>
+                  </div>
+                  <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    💡 شروط قالب العقد الثاني. إذا كانت فارغة، يُستخدم قالب 1 كبديل.
                   </p>
                 </div>
 

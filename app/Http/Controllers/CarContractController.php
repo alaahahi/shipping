@@ -685,7 +685,23 @@ class CarContractController extends Controller
         } 
         $data1 = $dataQuery1->get();
         $data2 = $dataQuery2->get();
-        return Response::json(['data1'=>$data1,'data2'=>$data2], 200);
+
+        // إحصائيات العقود المنجزة هذا الشهر + آخر العقود (عند q=debit)
+        $statsQuery = CarContract::where('owner_id', $owner_id);
+        if ($this->userCarContractUser && $current_user_type_id == $this->userCarContractUser) {
+            $statsQuery->where('user_id', $current_user_id);
+        }
+        $startOfMonth = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $endOfMonth = Carbon::now()->endOfMonth()->format('Y-m-d');
+        $completedThisMonth = (clone $statsQuery)->whereBetween('created', [$startOfMonth, $endOfMonth])->count();
+        $recentContracts = (clone $statsQuery)->orderBy('id', 'desc')->limit(8)->get(['id', 'no', 'car_name', 'name_seller', 'name_buyer', 'car_price', 'created']);
+
+        return Response::json([
+            'data1' => $data1,
+            'data2' => $data2,
+            'completedContractsThisMonth' => $completedThisMonth,
+            'recentContracts' => $recentContracts,
+        ], 200);
     }
     public function contract_account_report()
     {

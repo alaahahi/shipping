@@ -456,6 +456,7 @@ body {
           {{ $Help->numberToWords(($data['car_price']??0)-($data['car_paid'] ?? 0) ??0)}}
         </div>
       </div>
+      @if(!empty($data['vin_s']))
       <div>
         <div class="pt-3">
         2.
@@ -506,6 +507,8 @@ body {
             {{$data['note'] ?? ''}}
           </b>
         </div>
+      </div>
+      @endif
         @php
       // جلب الشروط من config (يدعم array و object)
       $contractTerms = is_array($config) ? ($config['contract_terms'] ?? []) : ($config->contract_terms ?? []);

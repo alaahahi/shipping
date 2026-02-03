@@ -25,11 +25,13 @@ class SystemConfig extends Model
         'usd_to_aed_rate',
         'usd_to_dinar_rate',
         'contract_terms',
+        'contract_terms_2',
         'contract_template',
     ];
     protected $casts = [
         'default_price_s' => 'array',
         'default_price_p' => 'array',
         'contract_terms' => 'array',
+        'contract_terms_2' => 'array',
     ];
 }

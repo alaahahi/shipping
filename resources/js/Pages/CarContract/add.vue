@@ -722,13 +722,13 @@ function VinApi1 (v){
                             @click="
                               showClientB = true;
                               form.name_buyer = '';
-                              form.phone_seller = '';
-                              form.address_seller = '';
+                              form.phone_buyer = '';
+                              form.address_buyer = '';
                             "
                             v-if="!showClientB"
                             class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-green-500 rounded-tl-lg rounded-bl-lg"
                           >
-                            بائع جديد
+                            مشتري جديد
                           </button>
                         </div>
                         <div  v-if="showClientB">
@@ -744,13 +744,13 @@ function VinApi1 (v){
                             @click="
                               showClientB = false;
                               form.name_buyer = '';
-                              form.phone_seller = '';
-                              form.address_seller = '';
+                              form.phone_buyer = '';
+                              form.address_buyer = '';
                             "
                             v-if="showClientB"
                             class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-pink-500 rounded-tl-lg rounded-bl-lg"
                           >
-                            تحديد بائع
+                            تحديد مشتري
                           </button>
                         </div>
 
