@@ -64,11 +64,11 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 .t2-notes-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 8px; border: 1px dotted #000; padding: 6px 10px; min-height: 32px; background: #fff; border-radius: var(--t2-radius); }
 .t2-notes-row .label { font-weight: 700; color: #000; white-space: nowrap; }
 .t2-notes-row .value { flex: 1; min-height: 20px; color: #000; }
-.t2-terms-title { color: #c00; font-weight: 700; font-size: 13px; margin: 8px 0 4px; padding: 4px 0; border-bottom: 2px solid #c00; border-radius: 2px; }
+.t2-terms-title { color: #c00; font-weight: 700; font-size: 17px; margin: 8px 0 4px; padding: 4px 0; border-bottom: 2px solid #c00; border-radius: 2px; }
 .t2-terms-wrap { position: relative; margin-bottom: 6px; }
 .t2-terms-wrap.has-qr { padding-left: 88px; }
 .t2-terms-list { margin: 0; padding: 6px 8px 6px 14px; list-style: none; border: 1px solid #c00; background: #fff; border-radius: var(--t2-radius); }
-.t2-terms-list li { font-size: 10px; margin-bottom: 2px; line-height: 1.4; position: relative; padding-right: 4px; color: #000; }
+.t2-terms-list li { font-size: 12px; margin-bottom: 3px; line-height: 1.5; position: relative; padding-right: 6px; color: #000; }
 .t2-terms-list li::before { content: "* "; color: #c00; font-weight: 700; }
 .t2-terms-qr { position: absolute; left: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .t2-terms-qr img { width: 72px; height: 72px; border: 1px solid #c00; background: #fff; display: block; border-radius: var(--t2-radius); }
