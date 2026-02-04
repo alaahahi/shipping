@@ -176,17 +176,17 @@ html, body { width: 210mm; margin: 0; padding: 0; }
         <div class="item">
           <span class="label">بدل سعر وقدره /</span>
           <span class="value">{{ number_format($priceVal) }}{{ $sym }}</span>
-          <span class="words">فقط {{ $Help->numberToWords($priceVal, $wordsCurrency) }} لا غير</span>
+          <span class="words">{{ $Help->numberToWords($priceVal, $wordsCurrency) }}</span>
         </div>
         <div class="item">
           <span class="label">الواصل /</span>
           <span class="value">{{ number_format($paidVal) }}{{ $sym }}</span>
-          <span class="words">فقط {{ $Help->numberToWords($paidVal, $wordsCurrency) }} لا غير</span>
+          <span class="words">{{ $Help->numberToWords($paidVal, $wordsCurrency) }}</span>
         </div>
         <div class="item">
           <span class="label">المتبقي /</span>
           <span class="value">{{ number_format($remainVal) }}{{ $sym }}</span>
-          <span class="words">فقط {{ $Help->numberToWords($remainVal, $wordsCurrency) }} لا غير</span>
+          <span class="words">{{ $Help->numberToWords($remainVal, $wordsCurrency) }}</span>
         </div>
       </div>
     </div>
