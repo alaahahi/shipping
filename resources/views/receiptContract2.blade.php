@@ -61,6 +61,8 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 .t2-money-inline .item { display: flex; align-items: baseline; gap: 4px; }
 .t2-money-inline .item .label { color: #000; font-weight: 600; }
 .t2-money-inline .item .value { font-weight: 700; color: #000; }
+.t2-money-with-words .item { display: flex; flex-direction: column; gap: 2px; }
+.t2-money-with-words .item .words { font-size: 11px; color: #333; font-weight: 500; }
 .t2-notes-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 8px; border: 1px dotted #000; padding: 6px 10px; min-height: 32px; background: #fff; border-radius: var(--t2-radius); }
 .t2-notes-row .label { font-weight: 700; color: #000; white-space: nowrap; }
 .t2-notes-row .value { flex: 1; min-height: 20px; color: #000; }
@@ -161,18 +163,32 @@ html, body { width: 210mm; margin: 0; padding: 0; }
         $paidVal = round($paid * ($rate / 100));
         $remainVal = round($remain * ($rate / 100));
         $sym = ' د.ع';
+        $wordsCurrency = 'iqd';
       } else {
         $priceVal = $price;
         $paidVal = $paid;
         $remainVal = $remain;
         $sym = ' $';
+        $wordsCurrency = 'usd';
       }
     @endphp
     <div class="t2-section">
-      <div class="t2-money-inline">
-        <div class="item"><span class="label">بدل سعر وقدره /</span><span class="value">{{ number_format($priceVal) }}{{ $sym }}</span></div>
-        <div class="item"><span class="label">الواصل /</span><span class="value">{{ number_format($paidVal) }}{{ $sym }}</span></div>
-        <div class="item"><span class="label">المتبقي /</span><span class="value">{{ number_format($remainVal) }}{{ $sym }}</span></div>
+      <div class="t2-money-inline t2-money-with-words">
+        <div class="item">
+          <span class="label">بدل سعر وقدره /</span>
+          <span class="value">{{ number_format($priceVal) }}{{ $sym }}</span>
+          <span class="words">{{ $Help->numberToWords($priceVal, $wordsCurrency) }}</span>
+        </div>
+        <div class="item">
+          <span class="label">الواصل /</span>
+          <span class="value">{{ number_format($paidVal) }}{{ $sym }}</span>
+          <span class="words">{{ $Help->numberToWords($paidVal, $wordsCurrency) }}</span>
+        </div>
+        <div class="item">
+          <span class="label">المتبقي /</span>
+          <span class="value">{{ number_format($remainVal) }}{{ $sym }}</span>
+          <span class="words">{{ $Help->numberToWords($remainVal, $wordsCurrency) }}</span>
+        </div>
       </div>
     </div>
 

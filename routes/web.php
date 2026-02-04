@@ -18,6 +18,7 @@ use App\Http\Controllers\CarDamageReportController;
 use App\Http\Controllers\HunterController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\TripController;
+use App\Http\Controllers\LogViewerController;
 
 
 use App\Models\SystemConfig;
@@ -112,6 +113,10 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
     Route::get('connected-systems', function () {
         return Inertia::render('Admin/ConnectedSystems');
     })->name('connectedSystems');
+
+    Route::get('log-viewer', [LogViewerController::class, 'index'])->name('logViewer');
+    Route::get('log-viewer/content', [LogViewerController::class, 'getLog'])->name('logViewer.content');
+    Route::post('log-viewer/clear', [LogViewerController::class, 'clearLog'])->name('logViewer.clear');
     
     Route::get('dashboard/statistics',[StatisticsController::class,'index'])->name('dashboard.statistics');
     

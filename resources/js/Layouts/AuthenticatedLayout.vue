@@ -200,7 +200,7 @@ const switchLocale = (locale) => {
                   🚢 حسابات الشركات
                 </NavLink>
               </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1">
                 <NavLink
                   :href="route('hunter')"
                   :active="route().current('hunter')"
@@ -215,6 +215,14 @@ const switchLocale = (locale) => {
                   :active="route().current('systemSettings')"
                 >
                   إعدادات النظام
+                </NavLink>
+              </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1">
+                <NavLink
+                  :href="route('logViewer')"
+                  :active="route().current('logViewer')"
+                >
+                  📋 لوغ الأخطاء
                 </NavLink>
               </div>
               <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
@@ -528,7 +536,7 @@ const switchLocale = (locale) => {
               <ResponsiveNavLink
                 :href="route('hunter')"
                 :active="route().current('hunter')"
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==7)"
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6)"
               >
               عاطل 
               </ResponsiveNavLink>
@@ -538,6 +546,13 @@ const switchLocale = (locale) => {
                 v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1"
               >
               إعدادات النظام
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
+                :href="route('logViewer')"
+                :active="route().current('logViewer')"
+                v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1"
+              >
+              📋 لوغ الأخطاء
               </ResponsiveNavLink>
 
               <ResponsiveNavLink
