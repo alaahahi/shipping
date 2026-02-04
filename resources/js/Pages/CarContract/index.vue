@@ -40,8 +40,21 @@ let showModalCarSale = ref(false);
 let showModalDelCar = ref(false);
 let mainAccount = ref(0);
 let allCars = ref(0);
-let from = ref('');
-let to = ref('');
+function getTodayDate() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+function getFirstDayOfMonth() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}-01`;
+}
+let from = ref(getFirstDayOfMonth());
+let to = ref(getTodayDate());
 
 const formData = ref({});
 const car = ref([]);
@@ -133,20 +146,19 @@ function confirmDelCarContract(V) {
 
 const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce delay (in milliseconds) as needed
 
-function getTodayDate() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+function setFilterThisMonth() {
+  from.value = getFirstDayOfMonth();
+  to.value = getTodayDate();
+  refresh();
+  getcountTotalInfo();
 }
-function getFirstDayOfMonth() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const firstDayOfMonth = "01";
-  return `${year}-${month}-${firstDayOfMonth}`;
+function setFilterAll() {
+  from.value = '';
+  to.value = '';
+  refresh();
+  getcountTotalInfo();
 }
+
 function getFirstDayOfYear() {
   const today = new Date();
   const year = today.getFullYear();
@@ -238,6 +250,25 @@ function openModalDelCar(v) {
                       class="mt-1 block w-full"
                       v-model="to"
                     />
+                  </div>
+                </div>
+                <div class="px-4 print:hidden flex flex-col gap-1">
+                  <InputLabel value="اختصارات" />
+                  <div class="flex gap-2">
+                    <button
+                      type="button"
+                      @click="setFilterThisMonth"
+                      class="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500"
+                    >
+                      هذا الشهر
+                    </button>
+                    <button
+                      type="button"
+                      @click="setFilterAll"
+                      class="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500"
+                    >
+                      عرض الكل
+                    </button>
                   </div>
                 </div>
                 <div className=" mr-5 print:hidden">
