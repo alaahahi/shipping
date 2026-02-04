@@ -424,9 +424,9 @@ class UserController extends Controller
             ->where('owner_id', Auth::user()->owner_id)
             ->firstOrFail();
 
-        // Get all cars for this merchant (total = تكلفة الشراء/رأس المال، total_s = سعر البيع)
+        // Get all cars for this merchant
         $allCars = Car::where('client_id', $merchant_id)
-            ->select('id', 'car_type', 'year', 'vin', 'car_number', 'total', 'total_s', 'car_price', 'expenses')
+            ->select('id', 'car_type', 'year', 'vin', 'car_number', 'total_s', 'car_price')
             ->get();
 
         // Get cars that already have internal sales (regardless of who bought them)
@@ -439,19 +439,16 @@ class UserController extends Controller
             return !in_array($car->id, $soldCarIds);
         })->values();
 
-        // Ensure total_s, total, car_price are returned as numbers (total = رأس المال/التكلفة)
+        // Ensure total_s and car_price are returned as numbers
         $unsoldCarsData = $unsoldCars->map(function($car) {
-            $cost = (float) ($car->total ?? 0);
             return [
                 'id' => $car->id,
                 'car_type' => $car->car_type,
                 'year' => $car->year,
                 'vin' => $car->vin,
                 'car_number' => $car->car_number,
-                'total' => $cost,
                 'total_s' => (float) ($car->total_s ?? 0),
-                'car_price' => (float) (($car->car_price && $car->car_price > 0) ? $car->car_price : $cost),
-                'expenses' => (float) ($car->expenses ?? 0),
+                'car_price' => (float) ($car->car_price ?? 0),
             ];
         });
 
@@ -619,13 +616,11 @@ class UserController extends Controller
                 ], 400);
             }
             
-            // رأس المال = تكلفة الشراء (car.total) وليس سعر البيع (total_s)
-            $carCost = (float) ($car->total ?? 0);
             $sale = InternalSale::create([
                 'client_id' => $client_id,
                 'car_id' => $validated['car_id'],
-                'car_price' => isset($validated['car_price']) && $validated['car_price'] > 0 ? (float) $validated['car_price'] : $carCost,
-                'shipping' => (float) ($validated['shipping'] ?? 0),
+                'car_price' => $validated['car_price'] ?? ($car->total_s ?? 0),
+                'shipping' => $validated['shipping'] ?? ($car->total_s ?? 0),
                 'sale_price' => $validated['sale_price'],
                 'paid_amount' => $validated['paid_amount'] ?? 0,
                 'expenses' => $validated['expenses'] ?? 0,
@@ -798,16 +793,14 @@ class UserController extends Controller
                     continue; // تخطي هذه السيارة
                 }
 
-                // رأس المال = تكلفة الشراء (car.total) وليس سعر البيع (total_s)
-                $carCost = (float) ($car->total ?? 0);
                 $sale = InternalSale::create([
                     'client_id' => $client_id,
                     'car_id' => $carData['car_id'],
-                    'car_price' => isset($carData['car_price']) && $carData['car_price'] > 0 ? (float) $carData['car_price'] : $carCost,
+                    'car_price' => $car->total_s ?? 0, // سعر السيارة من total_s
                     'shipping' => 0,
                     'sale_price' => $carData['sale_price'],
                     'paid_amount' => $carData['paid_amount'] ?? 0,
-                    'expenses' => (float) ($carData['expenses'] ?? ($car->expenses ?? 0)),
+                    'expenses' => $carData['expenses'] ?? ($car->total_s ?? 0),
                     'additional_expenses' => $carData['additional_expenses'] ?? 0,
                     'note' => '',
                     'sale_date' => $saleDate,

@@ -126,7 +126,7 @@ function close() {
         </div>
 
         <div>
-          <InputLabel for="edit_car_price" value="رأس المال / تكلفة السيارة ($)" />
+          <InputLabel for="edit_car_price" value="سعر السيارة ($)" />
           <TextInput
             id="edit_car_price"
             type="number"
