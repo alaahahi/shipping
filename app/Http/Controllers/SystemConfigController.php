@@ -50,6 +50,7 @@ class SystemConfigController extends Controller
             'contract_terms' => 'nullable|array',
             'contract_terms_2' => 'nullable|array',
             'contract_template' => 'nullable|in:1,2',
+            'contract_currency' => 'nullable|in:usd,dinar',
         ]);
 
         if ($validator->fails()) {
@@ -92,6 +93,7 @@ class SystemConfigController extends Controller
             if ($request->has('contract_terms')) $updateData['contract_terms'] = $request->contract_terms;
             if ($request->has('contract_terms_2')) $updateData['contract_terms_2'] = $request->contract_terms_2;
             if ($request->has('contract_template')) $updateData['contract_template'] = (int) $request->contract_template;
+            if ($request->has('contract_currency')) $updateData['contract_currency'] = $request->contract_currency;
             
             $config->update($updateData);
         }

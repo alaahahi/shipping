@@ -28,6 +28,7 @@ const systemConfig = ref({
   contract_terms: [],
   contract_terms_2: [],
   contract_template: 1,
+  contract_currency: 'usd',
 });
 
 // تحويل JSON arrays إلى arrays من objects {key, value}
@@ -151,6 +152,7 @@ function saveSystemConfig() {
     contract_terms: terms,
     contract_terms_2: terms2,
     contract_template: systemConfig.value.contract_template ?? 1,
+    contract_currency: systemConfig.value.contract_currency ?? 'usd',
   };
   
   saving.value = true;
@@ -574,6 +576,22 @@ function testConnection() {
                   </select>
                   <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     يحدد شكل عقد البيع عند الطباعة.
+                  </p>
+                </div>
+
+                <!-- عملة العقد -->
+                <div class="mt-4">
+                  <InputLabel for="contract_currency" value="عملة عرض السعر والدفع في العقد" class="mb-2" />
+                  <select
+                    id="contract_currency"
+                    v-model="systemConfig.contract_currency"
+                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                  >
+                    <option value="usd">دولار أمريكي ($)</option>
+                    <option value="dinar">دينار عراقي (د.ع)</option>
+                  </select>
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    عند اختيار الدينار، يُستخدم سعر 100 دولار بالدينار من الإعدادات للتحويل.
                   </p>
                 </div>
 

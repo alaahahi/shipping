@@ -27,6 +27,7 @@ class SystemConfig extends Model
         'contract_terms',
         'contract_terms_2',
         'contract_template',
+        'contract_currency',
     ];
     protected $casts = [
         'default_price_s' => 'array',

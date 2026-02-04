@@ -57,6 +57,10 @@ html, body { width: 210mm; min-height: 297mm; margin: 0; padding: 0; }
 .t2-money-row { display: flex; align-items: baseline; margin-bottom: 8px; font-size: 12px; border-bottom: 1px dotted #000; padding-bottom: 4px; }
 .t2-money-row .label { min-width: 130px; color: #000; }
 .t2-money-row .value { flex: 1; margin-right: 8px; min-height: 20px; font-weight: 700; }
+.t2-money-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; font-size: 12px; border-bottom: 1px dotted #000; padding-bottom: 8px; }
+.t2-money-inline .item { display: flex; align-items: baseline; gap: 4px; }
+.t2-money-inline .item .label { color: #000; font-weight: 600; }
+.t2-money-inline .item .value { font-weight: 700; color: #000; }
 .t2-notes-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 12px; border: 1px dotted #000; padding: 8px 12px; min-height: 36px; background: #fff; border-radius: var(--t2-radius); }
 .t2-notes-row .label { font-weight: 700; color: #000; white-space: nowrap; }
 .t2-notes-row .value { flex: 1; min-height: 20px; color: #000; }
@@ -143,10 +147,32 @@ html, body { width: 210mm; min-height: 297mm; margin: 0; padding: 0; }
       </div>
     </div>
 
+    @php
+      $cfg = is_array($config) ? $config : (array) $config;
+      $currency = $cfg['contract_currency'] ?? 'usd';
+      $rate = (float) ($cfg['usd_to_dinar_rate'] ?? 0);
+      if ($rate < 100) { $rate = 150000; }
+      $price = (float) ($data['car_price'] ?? 0);
+      $paid = (float) ($data['car_paid'] ?? 0);
+      $remain = $price - $paid;
+      if ($currency === 'dinar') {
+        $priceVal = round($price * ($rate / 100));
+        $paidVal = round($paid * ($rate / 100));
+        $remainVal = round($remain * ($rate / 100));
+        $sym = ' د.ع';
+      } else {
+        $priceVal = $price;
+        $paidVal = $paid;
+        $remainVal = $remain;
+        $sym = ' $';
+      }
+    @endphp
     <div class="t2-section">
-      <div class="t2-money-row"><span class="label">بدل سعر وقدره /</span><span class="value">{{ $data['car_price'] ?? 0 }} $</span></div>
-      <div class="t2-money-row"><span class="label">الواصل /</span><span class="value">{{ $data['car_paid'] ?? 0 }} $</span></div>
-      <div class="t2-money-row"><span class="label">المتبقي /</span><span class="value">{{ ($data['car_price'] ?? 0) - ($data['car_paid'] ?? 0) }} $</span></div>
+      <div class="t2-money-inline">
+        <div class="item"><span class="label">بدل سعر وقدره /</span><span class="value">{{ number_format($priceVal) }}{{ $sym }}</span></div>
+        <div class="item"><span class="label">الواصل /</span><span class="value">{{ number_format($paidVal) }}{{ $sym }}</span></div>
+        <div class="item"><span class="label">المتبقي /</span><span class="value">{{ number_format($remainVal) }}{{ $sym }}</span></div>
+      </div>
     </div>
 
     <div class="t2-section">

@@ -2,6 +2,26 @@
 @php
 use App\Helpers\Help as MyHelp;
 $Help = new MyHelp();
+$cfg = is_array($config ?? null) ? ($config ?? []) : (array) ($config ?? new stdClass);
+$contractCurrency = $cfg['contract_currency'] ?? 'usd';
+$usdToDinarRate = (float) ($cfg['usd_to_dinar_rate'] ?? 0);
+if ($usdToDinarRate < 100) { $usdToDinarRate = 150000; }
+$priceUsd = (float) ($data['car_price'] ?? 0);
+$paidUsd = (float) ($data['car_paid'] ?? 0);
+$remainUsd = $priceUsd - $paidUsd;
+if ($contractCurrency === 'dinar') {
+  $priceVal = round($priceUsd * ($usdToDinarRate / 100));
+  $paidVal = round($paidUsd * ($usdToDinarRate / 100));
+  $remainVal = round($remainUsd * ($usdToDinarRate / 100));
+  $priceSym = ' د.ع';
+  $wordsCurrency = 'iqd';
+} else {
+  $priceVal = $priceUsd;
+  $paidVal = $paidUsd;
+  $remainVal = $remainUsd;
+  $priceSym = ' $';
+  $wordsCurrency = 'usd';
+}
 @endphp
 <!DOCTYPE html>
 <html>
@@ -433,27 +453,27 @@ body {
           : 
           
           <b class="px-3 fs-6">
-            {{$data['car_price'] ?? 0}} $
+            {{ number_format($priceVal) }}{{ $priceSym }}
           </b>
-          {{ $Help->numberToWords($data['car_price']??0)}}
+          {{ $Help->numberToWords($priceVal, $wordsCurrency)}}
         </div>
         <div class="pt-2">
           فرۆشیار وەری گرت بڕی پارە 
           (وقد قبض)
             :
           <b class="px-3 fs-6">
-            {{$data['car_paid'] ?? 0}} $
+            {{ number_format($paidVal) }}{{ $priceSym }}
           </b>
-          {{ $Help->numberToWords($data['car_paid']??0)}}
+          {{ $Help->numberToWords($paidVal, $wordsCurrency)}}
         </div>
         <div class="pt-2">
           ئەو برەی ماوەتەوە 
           (الباقی)
             :
           <b class="px-3 fs-6">
-            {{($data['car_price']??0)-($data['car_paid'] ?? 0)}} $
+            {{ number_format($remainVal) }}{{ $priceSym }}
           </b>
-          {{ $Help->numberToWords(($data['car_price']??0)-($data['car_paid'] ?? 0) ??0)}}
+          {{ $Help->numberToWords($remainVal, $wordsCurrency)}}
         </div>
       </div>
       @if(!empty($data['vin_s']))

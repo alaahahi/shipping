@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from "vue";
-import ApplicationLogo from "@/Components/ApplicationLogo.vue";
 import Dropdown from "@/Components/Dropdown.vue";
 import DropdownLink from "@/Components/DropdownLink.vue";
 import NavLink from "@/Components/NavLink.vue";
@@ -35,9 +34,9 @@ const switchLocale = (locale) => {
           <div class="flex justify-between h-16">
             <div class="flex">
               <!-- Logo -->
-              <div class="shrink-0 flex items-center" v-if="false">
-                <Link :href="route('dashboard')">
-                  <ApplicationLogo class="block h-9 w-auto" />
+              <div class="shrink-0 flex items-center">
+                <Link :href="route('dashboard')" class="flex items-center">
+                  <img src="/img/logo.png" alt="Logo" class="h-9 w-auto object-contain" onerror="this.src='/img/logo.jpg'; this.onerror=null;" />
                 </Link>
               </div>
               <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
