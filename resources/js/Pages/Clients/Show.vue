@@ -1052,6 +1052,7 @@ function getDownloadUrl(name) {
 const distributedBalance = computed(() => {
   try {
     const paymentsTotal = Number(calculateTotalFilteredAmount().totalAmount || 0);
+    console.log(paymentsTotal);
     const carsDiscount = Number(laravelData.value?.cars_discount || 0);
     const carsPaid = Number(laravelData.value?.cars_paid || 0);
     return (paymentsTotal * -1 - carsDiscount) - carsPaid;
