@@ -866,21 +866,52 @@ class AccountingController extends Controller
           return Response::json($transactionDinar, 200);    
 
     }
+    /**
+     * تصحيح الرصيد غير الموزع - حل جذري
+     * الرصيد = مجموع السيارات - مجموع المدفوع - الخصومات
+     * عندما يكون المدفوع + الخصومات = مجموع السيارات → الرصيد = 0
+     */
     public function checkClientBalance(Request $request)
     {
         $this->accounting->loadAccounts(Auth::user()->owner_id);
-        $userId= $request->userId;
-        $currentBalance= $request->currentBalance;
-        $user = User::with('wallet')->where('id',$userId)->first();
-        $systemBalance=$user->wallet->balance;
-        if($systemBalance==$currentBalance){
-            return Response::json('balance is good', 200);
-        }else{
-            $wallet = Wallet::find($user->wallet->id);
-            $wallet->update(['balance' => $currentBalance]);
-            return Response::json($systemBalance,201);
+        $userId = $request->userId;
+        $from = $request->from && $request->from !== '0' && $request->from !== '' ? $request->from : null;
+        $to = $request->to && $request->to !== '0' && $request->to !== '' ? $request->to : null;
+
+        $user = User::with('wallet')->where('id', $userId)->first();
+        if (!$user || !$user->wallet) {
+            return Response::json(['error' => 'المستخدم أو المحفظة غير موجودة'], 404);
         }
-        return Response::json('balance is good',200);
+
+        // حساب من جدول السيارات (المصدر الصحيح)
+        $carsQuery = Car::where('client_id', $userId);
+        if ($from && $to) {
+            $carsQuery->whereBetween('date', [$from, $to]);
+        }
+        $carsSum = (float) $carsQuery->sum('total_s');
+        $carsPaid = (float) $carsQuery->sum('paid');
+        $carsDiscount = (float) $carsQuery->sum('discount');
+
+        // الرصيد = مجموع السيارات - المدفوع - الخصومات (عندما = 0 يكون الحساب متوازن)
+        $correctBalance = $carsSum - $carsPaid - $carsDiscount;
+
+        $systemBalance = (float) $user->wallet->balance;
+
+        if (abs($systemBalance - $correctBalance) < 0.01) {
+            return Response::json(['message' => 'balance is good', 'balance' => $correctBalance], 200);
+        }
+
+        $wallet = Wallet::find($user->wallet->id);
+        $wallet->update(['balance' => $correctBalance]);
+
+        return Response::json([
+            'message' => 'تم تصحيح الرصيد',
+            'old_balance' => $systemBalance,
+            'new_balance' => $correctBalance,
+            'cars_sum' => $carsSum,
+            'cars_paid' => $carsPaid,
+            'cars_discount' => $carsDiscount,
+        ], 201);
     }
 
     public function updateTransactionDescription(Request $request)

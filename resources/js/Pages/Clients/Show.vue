@@ -64,6 +64,7 @@ let client_Select = ref(0);
 let showReceiveBtn = ref(0);
 let showModalAddPayFromBalanceCar = ref(false);
 let showModalDelPayFromBalanceCar = ref(false);
+let isCorrectingBalance = ref(false);
 
 // يجب تعريف props قبل استخدامها في أي مكان
 const props = defineProps({
@@ -306,7 +307,7 @@ let getResults = async (page = 1, shouldCheckBalance = true) => {
       syncClientPhone(response.data?.client?.phone);
       cancelEditingPaymentDescription();
       if (shouldCheckBalance && !isFilterActive.value) {
-        checkClientBalance(response.data.cars_sum);
+        checkClientBalance();
       }
       isDataLoaded.value = true;
 
@@ -403,7 +404,7 @@ const getResultsSelect = async (page = 1) => {
       syncClientPhone(response.data?.client?.phone);
       cancelEditingPaymentDescription();
       if (!isFilterActive.value) {
-        checkClientBalance(response.data.cars_sum);
+        checkClientBalance();
       }
 
       if (props.q) {
@@ -826,45 +827,50 @@ function confirmAddExitCar(v){
   
 }
 
-function checkClientBalance(v){
+function checkClientBalance() {
     if (isFilterActive.value) {
+      toast.warning('يرجى إلغاء الفلتر أولاً لتصحيح الرصيد', { timeout: 3000, position: 'bottom-right', rtl: true });
       return;
     }
     const userId = currentClientId.value;
     if (!userId) {
+      toast.error('لم يتم تحديد العميل', { timeout: 3000, position: 'bottom-right', rtl: true });
       return;
     }
-    const transactionsTotal = Number(calculateTotalFilteredAmount().totalAmount || 0);
-    const currentBalance = Number(v || 0) + transactionsTotal;
+    isCorrectingBalance.value = true;
     const params = new URLSearchParams({
       userId: userId,
-      currentBalance: currentBalance,
       from: from.value || "",
       to: to.value || ""
     }).toString();
 
     axios.get(`/api/checkClientBalance?${params}`)
     .then(response => {
-      console.log(response)
-      if(response.status==201){
-        toast.success( " تم مراجعة الحساب بنجاح  "+ response.data, {
-            timeout: 5000,
-            position: "bottom-right",
-            rtl: true
-
-          });
+      if (response.status === 201 && response.data?.message) {
+        const msg = response.data.new_balance != null
+          ? `تم تصحيح الرصيد: ${response.data.old_balance} → ${response.data.new_balance}`
+          : response.data.message;
+        toast.success('تم مراجعة الحساب بنجاح - ' + msg, {
+          timeout: 5000,
+          position: 'bottom-right',
+          rtl: true
+        });
+        getResultsSelect();
+      } else if (response.status === 200) {
+        toast.success('الرصيد صحيح', { timeout: 2000, position: 'bottom-right', rtl: true });
       }
     })
     .catch(error => {
-        console.error(error);
-      toast.error( "لم يتم اعادة فحص الحساب  بنجاح ", {
-            timeout: 5000,
-            position: "bottom-right",
-            rtl: true
-
-          });
-
+      console.error('checkClientBalance error:', error);
+      toast.error(error.response?.data?.error || 'لم يتم تصحيح الحساب بنجاح', {
+        timeout: 5000,
+        position: 'bottom-right',
+        rtl: true
+      });
     })
+    .finally(() => {
+      isCorrectingBalance.value = false;
+    });
 }
 
 function confirmAddDriving(v){
@@ -1049,12 +1055,14 @@ function getDownloadUrl(name) {
       return `/public/uploads/${name}`;
     }
 
+// الرصيد غير الموزع = الدفعات المستلمة - المدفوع على السيارات - الخصومات
+// عندما لا توجد دفعات = 0
 const distributedBalance = computed(() => {
   try {
-    const paymentsTotal = Number(calculateTotalFilteredAmount().totalAmount || 0);
-    const carsDiscount = Number(laravelData.value?.cars_discount || 0);
+    const paymentsTotal = Number(calculateTotalFilteredAmount().totalAmount || 0) * -1;
     const carsPaid = Number(laravelData.value?.cars_paid || 0);
-    return (paymentsTotal * -1 - carsDiscount) - carsPaid;
+    const carsDiscount = Number(laravelData.value?.cars_discount || 0);
+    return paymentsTotal - carsPaid - carsDiscount;
   } catch (error) {
     return 0;
   }
@@ -1420,7 +1428,7 @@ async function savePaymentDescription(payment) {
                 id="cars_paid"
                 type="number"
                 class="mt-1 block w-full"
-                :value="parseFloat(laravelData?.cars_sum)-(parseFloat(laravelData?.client?.wallet?.balance)+parseFloat(laravelData?.cars_discount))"
+                :value="laravelData?.cars_paid ?? 0"
                 disabled
               />
             </div>
@@ -1436,17 +1444,25 @@ async function savePaymentDescription(payment) {
             </div>
            
             <div className="mb-4  mr-5">
-              <InputLabel for="cars_need_paid" value="  الرصيد بالدولار" />
+              <InputLabel for="cars_need_paid" value="الرصيد بالدولار (الدين)" />
               <TextInput
                 id="cars_need_paid"
                 type="number"
                 class="mt-1 block w-full"
-                :value="((calculateTotalFilteredAmount().totalAmount)*-1)-(laravelData?.cars_sum)"
+                :value="(parseFloat(laravelData?.cars_sum) || 0) - (parseFloat(laravelData?.cars_paid) || 0) - (parseFloat(laravelData?.cars_discount) || 0)"
                 disabled
               />
+              <button
+                type="button"
+                @click="checkClientBalance()"
+                :disabled="!currentClientId || isFilterActive || isCorrectingBalance"
+                class="mt-2 w-full px-4 py-2 text-sm font-bold text-white bg-amber-600 rounded hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {{ isCorrectingBalance ? 'جاري التصحيح...' : 'تصحيح الرصيد' }}
+              </button>
             </div>
        
-            <div className="mb-4  mr-5 print:hidden"   v-if="((calculateTotalFilteredAmount().totalAmount)*-1)-(laravelData?.cars_sum) !=0">
+            <div className="mb-4  mr-5 print:hidden"   v-if="((parseFloat(laravelData?.cars_sum) || 0) - (parseFloat(laravelData?.cars_paid) || 0) - (parseFloat(laravelData?.cars_discount) || 0)) != 0">
               <InputLabel for="pay" value="اضافة دفعة" />
               <button
                 @click.prevent="showAddPaymentTotal()"
@@ -1505,13 +1521,13 @@ async function savePaymentDescription(payment) {
               </p>
             </div>
             <div className="mb-4  mr-5">
-              <InputLabel for="cars_need_paid" value="الرصيد غير موزع بالدولار" />
+              <InputLabel for="unallocated_balance" value="الرصيد غير موزع بالدولار (الدفعات غير الموزعة على السيارات)" />
               <TextInput
-                id="cars_need_paid"
+                id="unallocated_balance"
                 type="number"
                 class="mt-1 block w-full"
-               
-                :value="distributedBalance || 0"
+                :value="distributedBalance ?? 0"
+                disabled
               />
             </div>
 

@@ -114,7 +114,9 @@ const availableCars = computed(() => {
       car_type: car.car_type || '',
       year: car.year || '',
       total_s: car.total_s || 0,
-      car_price: car.car_price || 0
+      total: car.total || 0,
+      car_price: car.car_price || car.total || 0,
+      expenses: car.expenses || 0
     }));
   }
   return [];
@@ -191,23 +193,13 @@ const filteredUnsoldCars = computed(() => {
 function onCarSelected() {
   const selectedCar = availableCars.value.find(c => c.value === internalSaleForm.value.car_id);
   if (selectedCar) {
-    // أخذ سعر السيارة من بيانات السيارة (يتم تخزينه في expenses حسب طلب العميل)
-    internalSaleForm.value.car_price = 0; 
-    // أخذ النقل من total_s - التأكد من أن القيمة موجودة
+    // رأس المال = تكلفة الشراء (total) من بيانات السيارة
+    internalSaleForm.value.car_price = selectedCar.car_price || selectedCar.total || 0;
+    internalSaleForm.value.shipping = 0;
     const totalS = selectedCar.total_s;
-    internalSaleForm.value.shipping = 0; // تعيين الشحن 0، لأن التكلفة الكلية ستوضع في المصاريف
     
-    // إذا كان total_s 0 أو null، جلب القيمة من unsoldCars مباشرة
-    let finalTotalS = totalS;
-    if (!totalS || totalS === 0) {
-      const carFromList = unsoldCars.value.find(c => c.id === internalSaleForm.value.car_id);
-      if (carFromList && carFromList.total_s) {
-        finalTotalS = carFromList.total_s;
-      }
-    }
-    
-    // وضع التكلفة الكلية (Total S) في حقل المصاريف
-    internalSaleForm.value.expenses = finalTotalS || 0;
+    // المصاريف = مصاريف السيارة (شحن، كوك، إلخ) وليس سعر البيع
+    internalSaleForm.value.expenses = selectedCar.expenses || 0;
   }
 }
 
@@ -388,11 +380,11 @@ async function openAddInternalSale(car = null) {
       client_name: '',
       client_phone: '',
       car_id: car.id,
-      car_price: 0,
+      car_price: selectedCar?.car_price || selectedCar?.total || car.total || 0,
       shipping: 0,
-      sale_price: 0,
+      sale_price: selectedCar?.total_s || car.total_s || 0,
       paid_amount: 0,
-      expenses: selectedCar?.total_s || car.total_s || 0,
+      expenses: selectedCar?.expenses || car.expenses || 0,
       additional_expenses: 0,
       note: '',
       payment_note: '',
@@ -422,11 +414,11 @@ async function openAddInternalSale(car = null) {
       client_name: '',
       client_phone: '',
       car_id: car.id,
-      car_price: 0,
+      car_price: selectedCar.car_price || selectedCar.total || 0,
       shipping: 0,
-      sale_price: 0,
+      sale_price: selectedCar.total_s || 0,
       paid_amount: 0,
-      expenses: selectedCar.total_s || 0,
+      expenses: selectedCar.expenses || 0,
       additional_expenses: 0,
       note: '',
       payment_note: '',
@@ -1220,13 +1212,18 @@ onMounted(() => {
                 />
               </div>
               <div>
-                <!-- تم إخفاء سعر السيارة حسب طلب العميل -->
-                <input
-                  type="hidden"
+                <InputLabel for="car_price" value="رأس المال / تكلفة السيارة ($)" />
+                <TextInput
+                  id="car_price"
+                  type="number"
+                  step="0.01"
                   v-model="internalSaleForm.car_price"
+                  class="mt-1 block w-full"
+                  placeholder="يُملأ تلقائياً من تكلفة الشراء"
                 />
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">قابل للتعديل عند الحاجة</p>
               </div>
-              <!-- حقل النقل مخفي - تم دمج التكلفة في المصاريف -->
+              <!-- حقل النقل مخفي -->
               <input
                 type="hidden"
                 v-model="internalSaleForm.shipping"
@@ -1371,7 +1368,7 @@ onMounted(() => {
                   <th class="px-2 py-3">اسم الزبون المشتري</th>
                   <th class="px-2 py-3">السيارة</th>
                   <th class="px-2 py-3">الشانصي (VIN)</th>
-                  <th class="px-2 py-3">سعر السيارة</th>
+                  <th class="px-2 py-3">رأس المال</th>
                   <th class="px-2 py-3">سعر البيع</th>
                   <th class="px-2 py-3">المبلغ المدفوع</th>
                   <th class="px-2 py-3">المصاريف</th>
