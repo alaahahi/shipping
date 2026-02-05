@@ -95,7 +95,8 @@ class CarContractController extends Controller
         $verificationUrl = $data ? route('contract.verify', $data->verification_token) : null;
         $template = (int) ($request->query('template') ?? $config->contract_template ?? 1);
         $viewName = $template === 2 ? 'receiptContract2' : 'receiptContract';
-        return view($viewName, compact('data', 'config', 'verificationUrl'));
+        $contractOrganizer = Auth::user()->name ?? ($config->contract_organizer_name ?? '');
+        return view($viewName, compact('data', 'config', 'verificationUrl', 'contractOrganizer'));
     }
     public function index(Request $request)
     {

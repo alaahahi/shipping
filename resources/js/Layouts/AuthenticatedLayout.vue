@@ -9,6 +9,7 @@ import { useI18n } from "vue-i18n";
 import DarkModeToggle from '@/Components/DarkToggle.vue';
 import SyncStatusBar from '@/Components/SyncStatusBar.vue';
 import WiFiIcon from '@/Components/WiFiIcon.vue';
+import OnlineUsersIndicator from '@/Components/OnlineUsersIndicator.vue';
 
 const showingNavigationDropdown = ref(false);
 const i18n = useI18n();
@@ -268,7 +269,8 @@ const switchLocale = (locale) => {
                 </NavLink>
               </div> -->
             </div>
-            <div class="hidden sm:flex sm:items-center sm:ml-6">
+            <div class="hidden sm:flex sm:items-center sm:ml-6 gap-4">
+              <OnlineUsersIndicator />
               <div class="ml-3 relative">
                 <Dropdown align="right" width="48">
                   <template #trigger>

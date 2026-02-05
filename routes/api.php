@@ -188,6 +188,9 @@ Route::post('send-external-transfer', [TransfersController::class, 'sendExternal
 Route::get('system-config', [SystemConfigController::class, 'index'])->name('systemConfig.index');
 Route::put('system-config', [SystemConfigController::class, 'update'])->name('systemConfig.update');
 
+// Online users (المستخدمون المتصلون)
+Route::get('online-users', [\App\Http\Controllers\OnlineUsersController::class, 'index'])->name('api.onlineUsers');
+
 
 Route::get('getIndexAccountsSelas',[AccountingController::class, 'getIndexAccountsSelas'])->name('getIndexAccountsSelas');
 

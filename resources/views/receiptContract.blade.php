@@ -579,7 +579,7 @@ body {
         </div>
         <div class="text-center" style="width: 184px">
           <b>
-            كاتب المعرض
+            {{ $contractOrganizer ?? 'كاتب المعرض' }}
           </b>
         </div>
         <div class="text-center" style="width: 184px">

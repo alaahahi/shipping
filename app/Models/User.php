@@ -34,7 +34,8 @@ class User extends Authenticatable
         'show_in_dashboard',
         'device',
         'created',
-        'year_date'
+        'year_date',
+        'last_activity',
     ];
 
     /**

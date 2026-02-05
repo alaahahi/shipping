@@ -3,7 +3,7 @@ use App\Helpers\Help as MyHelp;
 $Help = new MyHelp();
 $contractTerms = is_array($config) ? ($config['contract_terms_2'] ?? $config['contract_terms'] ?? []) : ($config->contract_terms_2 ?? $config->contract_terms ?? []);
 $primaryColor = is_array($config) ? ($config['primary_color'] ?? '#c00') : ($config->primary_color ?? '#c00');
-$contractOrganizer = is_array($config) ? ($config['contract_organizer_name'] ?? '') : ($config->contract_organizer_name ?? '');
+$contractOrganizer = $contractOrganizer ?? (is_array($config) ? ($config['contract_organizer_name'] ?? '') : ($config->contract_organizer_name ?? ''));
 if (is_string($contractTerms)) {
   $contractTerms = json_decode($contractTerms, true) ?? [];
 }
@@ -51,7 +51,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 .t2-party-box:last-child .t2-section-title {text-align: center; background: var(--t2-primary); color: #fff; border: 1px solid var(--t2-primary); border-radius: var(--t2-radius);font-size: 16px; }
 .t2-dotted-row { display: flex; align-items: baseline; margin-bottom: 6px; font-size: 12px; color: #000; }
 .t2-dotted-row .label {  color: #000; font-weight: 600; }
-.t2-dotted-row .value { flex: 1; border-bottom: 1px dotted #000; margin-right: 4px; min-height: 20px; background: #fcfcfc; padding: 0 4px; border-radius: 2px; }
+.t2-dotted-row .value { flex: 1; border-bottom: 1px dotted #000; margin-right: 4px; min-height: 20px; background: #fcfcfc; padding: 0 4px; border-radius: 2px;font-weight: 700; }
 .t2-car-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 14px; font-size: 12px; }
 .t2-car-item { display: flex; gap: 8px; color: #000; }
 .t2-car-item .label { color: #000; font-weight: 600; }
