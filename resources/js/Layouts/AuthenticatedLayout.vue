@@ -270,7 +270,6 @@ const switchLocale = (locale) => {
               </div> -->
             </div>
             <div class="hidden sm:flex sm:items-center sm:ml-6 gap-4">
-              <OnlineUsersIndicator />
               <div class="ml-3 relative">
                 <Dropdown align="right" width="48">
                   <template #trigger>
@@ -349,7 +348,8 @@ const switchLocale = (locale) => {
                   </template>
                 </Dropdown>
               </div>
-                <DarkModeToggle></DarkModeToggle>
+              <OnlineUsersIndicator />
+              <DarkModeToggle></DarkModeToggle>
             </div>
 
             <!-- Hamburger -->
