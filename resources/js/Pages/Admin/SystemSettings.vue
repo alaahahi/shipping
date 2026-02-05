@@ -29,6 +29,8 @@ const systemConfig = ref({
   contract_terms_2: [],
   contract_template: 1,
   contract_currency: 'usd',
+  primary_color: '#c00',
+  contract_organizer_name: '',
 });
 
 // تحويل JSON arrays إلى arrays من objects {key, value}
@@ -153,6 +155,8 @@ function saveSystemConfig() {
     contract_terms_2: terms2,
     contract_template: systemConfig.value.contract_template ?? 1,
     contract_currency: systemConfig.value.contract_currency ?? 'usd',
+    primary_color: systemConfig.value.primary_color ?? '#c00',
+    contract_organizer_name: systemConfig.value.contract_organizer_name ?? '',
   };
   
   saving.value = true;
@@ -577,6 +581,46 @@ function testConnection() {
                   <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     يحدد شكل عقد البيع عند الطباعة.
                   </p>
+                </div>
+
+                <!-- اللون الأساسي واسم منظم العقد -->
+                <div class="mt-6 border-t pt-6">
+                  <h4 class="text-md font-semibold mb-4">إعدادات مظهر العقد</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <InputLabel for="primary_color" value="اللون الأساسي للعقود" class="mb-2" />
+                      <div class="flex items-center gap-2">
+                        <input
+                          id="primary_color"
+                          v-model="systemConfig.primary_color"
+                          type="color"
+                          class="h-10 w-16 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                        />
+                        <TextInput
+                          v-model="systemConfig.primary_color"
+                          type="text"
+                          class="mt-1 block flex-1"
+                          placeholder="#c00"
+                        />
+                      </div>
+                      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        اللون المستخدم في حدود وعناوين العقود (مثل #c00 للأحمر)
+                      </p>
+                    </div>
+                    <div>
+                      <InputLabel for="contract_organizer_name" value="اسم منظم العقد" class="mb-2" />
+                      <TextInput
+                        id="contract_organizer_name"
+                        v-model="systemConfig.contract_organizer_name"
+                        type="text"
+                        class="mt-1 block w-full"
+                        placeholder="اسم منظم العقد"
+                      />
+                      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        يظهر في توقيعات عقد البيع (قالب 2)
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- عملة العقد -->

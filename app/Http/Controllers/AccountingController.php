@@ -486,6 +486,14 @@ class AccountingController extends Controller
             $cars_need_paid=$cars_sum-($cars_paid+$cars_discount);
         }
 
+        // مجموع الدفعات بالدولار (type=out, is_pay=1, currency=$) - للمطابقة مع cars_paid
+        $payments_sum_dollar = (clone $transactions)
+            ->where('type', 'out')
+            ->where('is_pay', 1)
+            ->where('currency', '$')
+            ->where('amount', '<', 0)
+            ->sum('amount');
+
         //$data = $transactions->paginate(10);
  
 
@@ -585,6 +593,7 @@ class AccountingController extends Controller
             'cars_paid'=>$cars_paid,
             'cars_discount'=>$cars_discount,
             'cars_need_paid'=>$cars_need_paid,
+            'payments_sum_dollar'=>$payments_sum_dollar,
             'transactions'=>$transactions->get(),
             'date'=> Carbon::now()->format('Y-m-d')
         ];

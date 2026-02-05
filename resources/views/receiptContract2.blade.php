@@ -2,6 +2,8 @@
 use App\Helpers\Help as MyHelp;
 $Help = new MyHelp();
 $contractTerms = is_array($config) ? ($config['contract_terms_2'] ?? $config['contract_terms'] ?? []) : ($config->contract_terms_2 ?? $config->contract_terms ?? []);
+$primaryColor = is_array($config) ? ($config['primary_color'] ?? '#c00') : ($config->primary_color ?? '#c00');
+$contractOrganizer = is_array($config) ? ($config['contract_organizer_name'] ?? '') : ($config->contract_organizer_name ?? '');
 if (is_string($contractTerms)) {
   $contractTerms = json_decode($contractTerms, true) ?? [];
 }
@@ -21,35 +23,35 @@ $contractTerms = array_filter($contractTerms, function($t) { return !empty(trim(
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <style>
-:root { --t2-radius: 8px; }
+:root { --t2-radius: 8px; --t2-primary: {{ $primaryColor }}; }
 @font-face { font-family: 'Peshang'; src: url('/Peshang.ttf') format('truetype'); }
 body { font-family: 'Peshang', sans-serif; background: #fff; direction: rtl; color: #000; }
 @page { size: A4; margin: 0; }
 html, body { width: 210mm; margin: 0; padding: 0; }
 .t2-page { padding: 10mm 13mm; max-width: 210mm; margin: 0 auto; background: #fff; border-radius: var(--t2-radius); }
-.t2-meta { display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-bottom: 8px; color: #000; border: 1px solid #c00; padding: 6px 12px; background: #fff; border-radius: var(--t2-radius); }
-.t2-header { display: flex; justify-content: space-between; align-items: flex-start; border: 2px solid #000; border-bottom: 3px solid #c00; padding: 10px 12px; margin-bottom: 10px; background: #fff; border-radius: var(--t2-radius); }
+.t2-meta { display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-bottom: 8px; color: #000; border: 1px solid var(--t2-primary); padding: 6px 12px; background: #fff; border-radius: var(--t2-radius); }
+.t2-header { display: flex; justify-content: space-between; align-items: flex-start; border: 2px solid #000; padding: 10px 12px; margin-bottom: 10px; background: #fff; border-radius: var(--t2-radius); }
 .t2-header-right { text-align: right; }
 .t2-company { font-weight: 700; font-size: 15px; color: #000; }
-.t2-badge { display: inline-block; background: #f5c542; color: #000; width: 32px; height: 32px; line-height: 32px; text-align: center; font-weight: 700; font-size: 18px; margin-left: 6px; vertical-align: middle; border: 1px solid #c00; border-radius: var(--t2-radius); }
+.t2-badge { display: inline-block; background: #f5c542; color: #000; width: 32px; height: 32px; line-height: 32px; text-align: center; font-weight: 700; font-size: 18px; margin-left: 6px; vertical-align: middle; border-radius: var(--t2-radius); }
 .t2-address { font-size: 12px; color: #000; margin-top: 4px; }
 .t2-header-left { text-align: left; display: flex; align-items: flex-start; gap: 12px; }
 .t2-logo-wrap { border: 1px solid #000; padding: 5px; margin-bottom: 6px; background: #fff; display: inline-block; border-radius: var(--t2-radius); overflow: hidden; }
 .t2-logo { max-height: 50px; display: block; border-radius: 4px; }
 .t2-header-qr { display: flex; flex-direction: column; align-items: center; gap: 2px; border: none; }
 .t2-header-qr img { width: 50px; height: 50px; display: block; }
-.t2-header-qr .t2-qr-caption { font-size: 10px; color: #c00; font-weight: 700; }
-.t2-phones { font-size: 11px; color: #c00; font-weight: 600; }
+.t2-header-qr .t2-qr-caption { font-size: 10px; color: var(--t2-primary); font-weight: 700; }
+.t2-phones { font-size: 11px; color: var(--t2-primary); font-weight: 600; }
 .t2-phones span { display: block; margin-bottom: 2px; }
 .t2-section { margin-bottom: 10px; }
-.t2-section-title { font-weight: 700; font-size: 13px; margin-bottom: 6px; padding: 5px 8px; border: 1px solid #c00; color: #000; border-radius: var(--t2-radius); }
+.t2-section-title { font-weight: 700; font-size: 13px; margin-bottom: 6px; padding: 5px 8px; border: 1px solid var(--t2-primary); color: #000; border-radius: var(--t2-radius); }
 .t2-party-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.t2-party-box { border: 1px solid #c00; padding: 10px 12px; background: #fff; border-radius: var(--t2-radius); }
-.t2-party-box:first-child .t2-section-title { background: #f5c542; color: #000; border: 1px solid #c00; border-radius: var(--t2-radius); }
-.t2-party-box:last-child .t2-section-title { background: #c00; color: #fff; border: 1px solid #c00; border-radius: var(--t2-radius); }
+.t2-party-box { border: 1px solid var(--t2-primary); padding: 10px 12px; background: #fff; border-radius: var(--t2-radius); }
+.t2-party-box:first-child .t2-section-title {text-align: center; background: var(--t2-primary); color: #fff; border: 1px solid var(--t2-primary); border-radius: var(--t2-radius);font-size: 16px; }
+.t2-party-box:last-child .t2-section-title {text-align: center; background: var(--t2-primary); color: #fff; border: 1px solid var(--t2-primary); border-radius: var(--t2-radius);font-size: 16px; }
 .t2-dotted-row { display: flex; align-items: baseline; margin-bottom: 6px; font-size: 12px; color: #000; }
-.t2-dotted-row .label { min-width: 110px; color: #000; font-weight: 600; }
-.t2-dotted-row .value { flex: 1; border-bottom: 1px dotted #000; margin-right: 8px; min-height: 20px; background: #fcfcfc; padding: 0 4px; border-radius: 2px; }
+.t2-dotted-row .label {  color: #000; font-weight: 600; }
+.t2-dotted-row .value { flex: 1; border-bottom: 1px dotted #000; margin-right: 4px; min-height: 20px; background: #fcfcfc; padding: 0 4px; border-radius: 2px; }
 .t2-car-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 14px; font-size: 12px; }
 .t2-car-item { display: flex; gap: 8px; color: #000; }
 .t2-car-item .label { color: #000; font-weight: 600; }
@@ -65,16 +67,16 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 .t2-notes-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 8px; border: 1px dotted #000; padding: 6px 10px; min-height: 32px; background: #fff; border-radius: var(--t2-radius); }
 .t2-notes-row .label { font-weight: 700; color: #000; white-space: nowrap; }
 .t2-notes-row .value { flex: 1; min-height: 20px; color: #000; }
-.t2-terms-title { color: #c00; font-weight: 700; font-size: 17px; margin: 8px 0 4px; padding: 4px 0; border-bottom: 2px solid #c00; border-radius: 2px; }
+.t2-terms-title { color: var(--t2-primary); font-weight: 700; font-size: 17px; margin: 8px 0 4px; padding: 4px 0; border-bottom: 2px solid var(--t2-primary); border-radius: 2px; }
 .t2-terms-wrap { position: relative; margin-bottom: 6px; }
 .t2-terms-wrap.has-qr { padding-left: 88px; }
-.t2-terms-list { margin: 0; padding: 6px 8px 6px 14px; list-style: none; border: 1px solid #c00; background: #fff; border-radius: var(--t2-radius); }
+.t2-terms-list { margin: 0; padding: 6px 8px 6px 14px; list-style: none; border: 1px solid var(--t2-primary); background: #fff; border-radius: var(--t2-radius); }
 .t2-terms-list li { font-size: 12px; margin-bottom: 3px; line-height: 1.5; position: relative; padding-right: 6px; color: #000; }
-.t2-terms-list li::before { content: "* "; color: #c00; font-weight: 700; }
+.t2-terms-list li::before { content: "* "; color: var(--t2-primary); font-weight: 700; }
 .t2-terms-qr { position: absolute; left: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.t2-terms-qr img { width: 72px; height: 72px; border: 1px solid #c00; background: #fff; display: block; border-radius: var(--t2-radius); }
-.t2-terms-qr .t2-qr-caption { font-size: 12px; color: #c00; font-weight: 700; }
-.t2-signatures { display: flex; justify-content: space-between; margin-top: 18px; padding-top: 12px; border-top: 2px solid #c00; font-size: 12px; border-radius: 0 0 var(--t2-radius) var(--t2-radius); }
+.t2-terms-qr img { width: 72px; height: 72px; border: 1px solid var(--t2-primary); background: #fff; display: block; border-radius: var(--t2-radius); }
+.t2-terms-qr .t2-qr-caption { font-size: 12px; color: var(--t2-primary); font-weight: 700; }
+.t2-signatures { display: flex; justify-content: space-between; margin-top: 18px; padding-top: 12px; border-top: 2px solid var(--t2-primary); font-size: 12px; border-radius: 0 0 var(--t2-radius) var(--t2-radius); }
 .t2-sig-col { text-align: center; flex: 1; color: #000; }
 .t2-sig-label { font-weight: 700; margin-bottom: 22px; color: #000; }
 @media print {
@@ -93,8 +95,8 @@ html, body { width: 210mm; margin: 0; padding: 0; }
     <div class="t2-header">
       <div class="t2-header-right">
         <div class="t2-company">
-          <span class="t2-badge">2</span>
           {{ $config['second_title_ar'] ?? $config['first_title_ar'] ?? config('app.company_name') }}
+          <span class="t2-badge">2</span>
         </div>
         <div class="t2-address">العنوان / {{ $config['third_title_ar'] ?? '—' }}</div>
       </div>
@@ -123,29 +125,30 @@ html, body { width: 210mm; margin: 0; padding: 0; }
     <div class="t2-section t2-party-grid">
       <div class="t2-party-box">
         <div class="t2-section-title">الطرف الاول</div>
-        <div class="t2-dotted-row"><span class="label">اسم البائع</span><span class="value">{{ $data['name_seller'] ?? '' }}</span></div>
-        <div class="t2-dotted-row"><span class="label">رقم الهوية</span><span class="value">{{ $data['seller_id_number'] ?? '' }}</span></div>
-        <div class="t2-dotted-row"><span class="label">عنوان السكن</span><span class="value">{{ $data['address_seller'] ?? '' }}</span></div>
-        <div class="t2-dotted-row"><span class="label">رقم الهاتف</span><span class="value">{{ $data['phone_seller'] ?? '' }}</span></div>
+        <div class="t2-dotted-row"><span class="label">اسم البائع:</span><span class="value">{{ $data['name_seller'] ?? '' }}</span></div>
+        <div class="t2-dotted-row"><span class="label">رقم الهوية:</span><span class="value">{{ $data['seller_id_number'] ?? '' }}</span></div>
+        <div class="t2-dotted-row"><span class="label">عنوان السكن:</span><span class="value">{{ $data['address_seller'] ?? '' }}</span></div>
+        <div class="t2-dotted-row"><span class="label">رقم الهاتف:</span><span class="value">{{ $data['phone_seller'] ?? '' }}</span></div>
       </div>
       <div class="t2-party-box">
         <div class="t2-section-title">الطرف الثاني</div>
-        <div class="t2-dotted-row"><span class="label">اسم المشتري</span><span class="value">{{ $data['name_buyer'] ?? '' }}</span></div>
-        <div class="t2-dotted-row"><span class="label">رقم الهوية</span><span class="value">{{ $data['buyer_id_number'] ?? '' }}</span></div>
-        <div class="t2-dotted-row"><span class="label">عنوان السكن</span><span class="value">{{ $data['address_buyer'] ?? '' }}</span></div>
-        <div class="t2-dotted-row"><span class="label">رقم الهاتف</span><span class="value">{{ $data['phone_buyer'] ?? '' }}</span></div>
+        <div class="t2-dotted-row"><span class="label">اسم المشتري:</span><span class="value">{{ $data['name_buyer'] ?? '' }}</span></div>
+        <div class="t2-dotted-row"><span class="label">رقم الهوية:</span><span class="value">{{ $data['buyer_id_number'] ?? '' }}</span></div>
+        <div class="t2-dotted-row"><span class="label">عنوان السكن:</span><span class="value">{{ $data['address_buyer'] ?? '' }}</span></div>
+        <div class="t2-dotted-row"><span class="label">رقم الهاتف:</span><span class="value">{{ $data['phone_buyer'] ?? '' }}</span></div>
       </div>
     </div>
 
     <div class="t2-section">
       <div class="t2-section-title">تفاصيل السيارة</div>
       <div class="t2-car-grid">
-        <div class="t2-car-item"><span class="label">رقم السيارة</span><span class="value">{{ $data['no'] ?? '' }}</span></div>
-        <div class="t2-car-item"><span class="label">نوع السيارة</span><span class="value">{{ $data['car_name'] ?? '' }}</span></div>
-        <div class="t2-car-item"><span class="label">لون السيارة</span><span class="value">{{ $data['color'] ?? '' }}</span></div>
-        <div class="t2-car-item"><span class="label">رقم الشاصي</span><span class="value">{{ $data['vin'] ?? '' }}</span></div>
-        <div class="t2-car-item"><span class="label">الموديل</span><span class="value">{{ $data['modal'] ?? '' }}</span></div>
-        <div class="t2-car-item"><span class="label">رقم السنوية</span><span class="value">{{ $data['year_date'] ?? '' }}</span></div>
+        <div class="t2-car-item"><span class="label">نوع السيارة:</span><span class="value">{{ $data['car_name'] ?? '' }}</span></div>
+        <div class="t2-car-item"><span class="label">رقم السيارة:</span><span class="value">{{ $data['no'] ?? '' }}</span></div>
+        <div class="t2-car-item"><span class="label">رقم الشاصي:</span><span class="value">{{ $data['vin'] ?? '' }}</span></div>
+
+        <div class="t2-car-item"><span class="label">لون السيارة:</span><span class="value">{{ $data['color'] ?? '' }}</span></div>
+        <div class="t2-car-item"><span class="label">الموديل:</span><span class="value">{{ $data['modal'] ?? '' }}</span></div>
+        <div class="t2-car-item"><span class="label">رقم السنوية:</span><span class="value">{{ $data['year_date'] ?? '' }}</span></div>
       </div>
     </div>
 
@@ -174,18 +177,15 @@ html, body { width: 210mm; margin: 0; padding: 0; }
     <div class="t2-section">
       <div class="t2-money-inline">
         <div class="item">
-          <span class="label">بدل سعر وقدره /</span>
-          <span class="value">{{ number_format($priceVal) }}{{ $sym }}</span>
+          <span class="label">بدل سعر وقدره /<span class="value">{{ number_format($priceVal) }}{{ $sym }}</span></span>
           <span class="words">{{ $Help->numberToWords($priceVal, $wordsCurrency) }}</span>
         </div>
         <div class="item">
-          <span class="label">الواصل /</span>
-          <span class="value">{{ number_format($paidVal) }}{{ $sym }}</span>
+          <span class="label">الواصل /<span class="value">{{ number_format($paidVal) }}{{ $sym }}</span></span>
           <span class="words">{{ $Help->numberToWords($paidVal, $wordsCurrency) }}</span>
         </div>
         <div class="item">
-          <span class="label">المتبقي /</span>
-          <span class="value">{{ number_format($remainVal) }}{{ $sym }}</span>
+          <span class="label">المتبقي / <span class="value">{{ number_format($remainVal) }}{{ $sym }}</span></span>
           <span class="words">{{ $Help->numberToWords($remainVal, $wordsCurrency) }}</span>
         </div>
       </div>
@@ -210,7 +210,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 
     <div class="t2-signatures">
       <div class="t2-sig-col"><div class="t2-sig-label">الطرف الأول (البائع)</div><div>{{ $data['name_seller'] ?? '' }}</div></div>
-      <div class="t2-sig-col"><div class="t2-sig-label">منظم العقد</div><div>—</div></div>
+      <div class="t2-sig-col"><div class="t2-sig-label">منظم العقد</div><div>{{ $contractOrganizer ?: '—' }}</div></div>
       <div class="t2-sig-col"><div class="t2-sig-label">الطرف الثاني (المشتري)</div><div>{{ $data['name_buyer'] ?? '' }}</div></div>
     </div>
   </div>
