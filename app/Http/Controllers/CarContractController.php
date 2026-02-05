@@ -103,9 +103,13 @@ class CarContractController extends Controller
         $owner_id=Auth::user()->owner_id;
         $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
         $q= $_GET['q'] ?? '';
+        // المستخدمون الذين أنشأوا عقوداً (للفلتر)
+        $creatorIds = CarContract::where('owner_id', $owner_id)->whereNotNull('user_id')->distinct()->pluck('user_id');
+        $contractCreators = User::whereIn('id', $creatorIds)->orderBy('name')->get(['id', 'name']);
         return Inertia::render('CarContract/index', [
             'client'=>$client,
             'user'=>$q,
+            'contractCreators'=>$contractCreators,
             'showBrokerage' => $this->showBrokerage,
         ]);
     }
@@ -228,6 +232,7 @@ class CarContractController extends Controller
         $q = $request->query('q', '');
         $from = $request->query('from');
         $to = $request->query('to');
+        $user_id_filter = $request->query('user_id');
         $limit = (int) $request->query('limit', 100);
         if ($limit < 1) {
             $limit = 100;
@@ -237,6 +242,10 @@ class CarContractController extends Controller
 
         if ($this->userCarContractUser && $current_user_type_id == $this->userCarContractUser) {
             $data->where('user_id', $current_user_id);
+        }
+
+        if ($user_id_filter && (int) $user_id_filter > 0) {
+            $data->where('user_id', (int) $user_id_filter);
         }
 
         if ($from && $to) {
@@ -310,9 +319,14 @@ class CarContractController extends Controller
 
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
+        $user_id_filter = $_GET['user_id'] ?? null;
 
         if ($from && $to) {
             $allContract->whereBetween('created', [$from, $to]);
+        }
+
+        if ($user_id_filter && (int) $user_id_filter > 0) {
+            $allContract->where('user_id', (int) $user_id_filter);
         }
 
         

@@ -25,6 +25,7 @@ const { t } = useI18n();
 const props = defineProps({
   client: Array,
   user: String,
+  contractCreators: { type: Array, default: () => [] },
   showBrokerage: {
     type: Boolean,
     default: false,
@@ -60,7 +61,7 @@ const formData = ref({});
 const car = ref([]);
 
 let resetData = ref(false);
-let user_id = 0;
+let createdByUserId = ref('');
 let page = 1;
 let q = props.user;
 const refresh = () => {
@@ -78,8 +79,8 @@ const getResultsCar = async ($state) => {
       from: from.value || undefined,
       to: to.value || undefined,
     };
-    if (user_id && user_id !== 0) {
-      params.user_id = user_id;
+    if (createdByUserId.value && createdByUserId.value !== '' && createdByUserId.value !== '0') {
+      params.user_id = createdByUserId.value;
     }
     const response = await axios.get(`/api/getIndexContractCar`, { params });
 
@@ -250,6 +251,20 @@ function openModalDelCar(v) {
                       class="mt-1 block w-full"
                       v-model="to"
                     />
+                  </div>
+                </div>
+                <div class="px-4" v-if="contractCreators && contractCreators.length > 0">
+                  <div>
+                    <InputLabel for="createdBy" value="حساب المستخدم المنشأة" />
+                    <select
+                      id="createdBy"
+                      v-model="createdByUserId"
+                      @change="refresh()"
+                      class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                    >
+                      <option value="">الكل</option>
+                      <option v-for="u in contractCreators" :key="u.id" :value="u.id">{{ u.name }}</option>
+                    </select>
                   </div>
                 </div>
                 <div class="px-4 print:hidden flex flex-col gap-1">
