@@ -19,6 +19,7 @@ use App\Http\Controllers\HunterController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\LogViewerController;
+use App\Http\Controllers\OnlineUsersController;
 
 
 use App\Models\SystemConfig;
@@ -99,6 +100,9 @@ Route::get('sync-monitor', function () {
 })->name('sync.monitor');
 
 Route::group(['middleware' => ['auth','verified', 'check.license']], function () {
+
+    // المستخدمون المتصلون (JSON - يستخدم جلسة الويب)
+    Route::get('online-users', [OnlineUsersController::class, 'index'])->name('onlineUsers');
 
     Route::get('dashboard',[DashboardController::class,'index'])->middleware(['auth', 'verified'])->name('dashboard');
     Route::get('sales',[DashboardController::class,'sales'])->name('sales');

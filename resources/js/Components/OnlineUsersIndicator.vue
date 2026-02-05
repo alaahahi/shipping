@@ -1,17 +1,18 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
-import { usePage } from '@inertiajs/inertia-vue3';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import axios from 'axios';
 
-const page = usePage();
-const onlineUsers = ref([]);
-const loading = ref(false);
-const POLL_INTERVAL = 15000; // 15 ثانية
+const props = defineProps({
+  user: { type: Object, default: null }
+});
+
+const displayUsers = ref([]);
+const POLL_INTERVAL = 15000;
 let pollTimer = null;
 
 function getInitials(name) {
   if (!name || typeof name !== 'string') return '?';
-  const n = name.trim();
+  const n = String(name).trim();
   if (!n) return '?';
   const parts = n.split(/\s+/);
   if (parts.length >= 2) {
@@ -20,54 +21,62 @@ function getInitials(name) {
   return n.substring(0, 2) || '?';
 }
 
-// عرض أولي: المستخدم الحالي من الصفحة (يظهر فوراً قبل استجابة API)
-const currentUserDisplay = computed(() => {
-  const u = page.props?.auth?.user;
+function buildUserFromAuth(u) {
   if (!u) return null;
   return {
     id: u.id,
     name: 'أنت (' + (u.name || '') + ')',
     initials: getInitials(u.name || ''),
-    is_me: true,
   };
-});
+}
 
-const displayUsers = computed(() => {
-  if (onlineUsers.value.length > 0) return onlineUsers.value;
-  if (currentUserDisplay.value) return [currentUserDisplay.value];
-  return [];
-});
+function updateFromUser() {
+  const me = buildUserFromAuth(props.user);
+  if (me && displayUsers.value.length === 0) {
+    displayUsers.value = [me];
+  }
+}
 
 function fetchOnlineUsers() {
-  if (!page.props?.auth?.user?.id) return;
-  loading.value = true;
-  axios.get('/api/online-users', { withCredentials: true })
+  if (!props.user?.id) return;
+  axios.get('/online-users', { withCredentials: true })
     .then(res => {
-      onlineUsers.value = res.data?.online_users || [];
+      const list = res.data?.online_users || [];
+      displayUsers.value = list.length > 0 ? list : [buildUserFromAuth(props.user)];
     })
     .catch(() => {
-      onlineUsers.value = currentUserDisplay.value ? [currentUserDisplay.value] : [];
-    })
-    .finally(() => {
-      loading.value = false;
+      displayUsers.value = [buildUserFromAuth(props.user)];
     });
 }
 
 onMounted(() => {
+  updateFromUser();
   fetchOnlineUsers();
   pollTimer = setInterval(fetchOnlineUsers, POLL_INTERVAL);
 });
 
+watch(() => props.user, (user) => {
+  if (user && displayUsers.value.length === 0) {
+    displayUsers.value = [buildUserFromAuth(user)];
+  }
+}, { immediate: true });
+
 onUnmounted(() => {
   if (pollTimer) clearInterval(pollTimer);
+});
+
+// دائماً نعرض قائمة: إما من API أو المستخدم الحالي على الأقل
+const listToShow = computed(() => {
+  if (displayUsers.value.length > 0) return displayUsers.value;
+  return props.user ? [buildUserFromAuth(props.user)] : [];
 });
 </script>
 
 <template>
-  <div v-if="displayUsers.length > 0" class="online-users-indicator flex items-center gap-2 print:hidden">
+  <div v-if="user" class="online-users-indicator flex items-center gap-2 print:hidden shrink-0">
     <div class="flex items-center -space-x-3">
       <div
-        v-for="user in displayUsers"
+        v-for="user in listToShow"
         :key="user.id"
         class="online-user-avatar group relative"
         :title="user.name"
