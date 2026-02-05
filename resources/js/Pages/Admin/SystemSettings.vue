@@ -608,7 +608,7 @@ function testConnection() {
                       </p>
                     </div>
                     <div>
-                      <InputLabel for="contract_organizer_name" value="اسم منظم العقد" class="mb-2" />
+                      <InputLabel for="contract_organizer_name" value="اسم منظم العقد (الافتراضي)" class="mb-2" />
                       <TextInput
                         id="contract_organizer_name"
                         v-model="systemConfig.contract_organizer_name"
@@ -617,7 +617,7 @@ function testConnection() {
                         placeholder="اسم منظم العقد"
                       />
                       <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        يظهر في توقيعات عقد البيع (قالب 2)
+                        القيمة الافتراضية لجميع العقود الجديدة. يظهر في توقيع العقد المطبوع. يمكن تغييره لكل عقد عند الإنشاء.
                       </p>
                     </div>
                   </div>

@@ -48,6 +48,7 @@ class CarContract extends Model
         'vin_s',
         'created',
         'user_id',
+        'organizer_name',
         'owner_id',
         'year_date',
         'status',

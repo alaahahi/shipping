@@ -253,7 +253,7 @@ function openModalDelCar(v) {
                     />
                   </div>
                 </div>
-                <div class="px-4" v-if="contractCreators && contractCreators.length > 0">
+                <div class="px-4" v-if="$page.props.auth.user.type_id == 1 && contractCreators && contractCreators.length > 0">
                   <div>
                     <InputLabel for="createdBy" value="حساب المستخدم المنشأة" />
                     <select
@@ -372,6 +372,7 @@ function openModalDelCar(v) {
                           {{ $t("note") }}
                         </th>
                         <th scope="col" class="px-1 py-3 text-base">بتاريخ</th>
+                        <th scope="col" class="px-1 py-3 text-base">المنشئ</th>
 
                         <th
                           scope="col"
@@ -488,6 +489,12 @@ function openModalDelCar(v) {
                           className="border dark:border-gray-800 text-center px-1 py-2 "
                         >
                           {{ car.created_at.slice(0, 10) }}
+                        </td>
+
+                        <td
+                          className="border dark:border-gray-800 text-center px-1 py-2"
+                        >
+                          {{ car.user?.name || '—' }}
                         </td>
 
                         <td

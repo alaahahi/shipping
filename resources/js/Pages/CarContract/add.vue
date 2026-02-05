@@ -35,6 +35,7 @@ const props = defineProps({
   client1: Array,
   client2: Array,
   data:Object,
+  defaultOrganizerName: { type: String, default: '' },
   showBrokerage: {
     type: Boolean,
     default: false,
@@ -261,6 +262,7 @@ const createEmptyForm = () => ({
   size_s: "",
 
   system_note: "",
+  organizer_name: "",
   car_price: 0,
   car_paid: 0,
   tex_seller_paid: 0,
@@ -277,7 +279,10 @@ if (props.data) {
     ...props.data,
     seller_id_number: props.data.seller_id_number ?? "",
     buyer_id_number: props.data.buyer_id_number ?? "",
+    organizer_name: props.data.organizer_name ?? props.defaultOrganizerName ?? "",
   };
+} else if (props.defaultOrganizerName) {
+  form.value.organizer_name = props.defaultOrganizerName;
 }
 
 
@@ -858,6 +863,17 @@ function VinApi1 (v){
                       class="mt-1 block w-full"
                       v-model="form.system_note"
                     />
+                  </div>
+                  <div className="mb-4">
+                    <InputLabel for="organizer_name" value="اسم منظم العقد (كاتب العقد)" />
+                    <TextInput
+                      id="organizer_name"
+                      type="text"
+                      class="mt-1 block w-full"
+                      v-model="form.organizer_name"
+                      :placeholder="props.defaultOrganizerName || 'يظهر في توقيع العقد'"
+                    />
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">منفصل عن المستخدم المنشئ - يظهر في توقيع العقد المطبوع</p>
                   </div>
                 </div>
               </div>
