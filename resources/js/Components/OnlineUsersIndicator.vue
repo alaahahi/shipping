@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { usePage } from '@inertiajs/inertia-vue3';
 import axios from 'axios';
 
@@ -9,6 +9,35 @@ const loading = ref(false);
 const POLL_INTERVAL = 15000; // 15 ثانية
 let pollTimer = null;
 
+function getInitials(name) {
+  if (!name || typeof name !== 'string') return '?';
+  const n = name.trim();
+  if (!n) return '?';
+  const parts = n.split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] || '') + (parts[1][0] || '');
+  }
+  return n.substring(0, 2) || '?';
+}
+
+// عرض أولي: المستخدم الحالي من الصفحة (يظهر فوراً قبل استجابة API)
+const currentUserDisplay = computed(() => {
+  const u = page.props?.auth?.user;
+  if (!u) return null;
+  return {
+    id: u.id,
+    name: 'أنت (' + (u.name || '') + ')',
+    initials: getInitials(u.name || ''),
+    is_me: true,
+  };
+});
+
+const displayUsers = computed(() => {
+  if (onlineUsers.value.length > 0) return onlineUsers.value;
+  if (currentUserDisplay.value) return [currentUserDisplay.value];
+  return [];
+});
+
 function fetchOnlineUsers() {
   if (!page.props?.auth?.user?.id) return;
   loading.value = true;
@@ -17,7 +46,7 @@ function fetchOnlineUsers() {
       onlineUsers.value = res.data?.online_users || [];
     })
     .catch(() => {
-      onlineUsers.value = [];
+      onlineUsers.value = currentUserDisplay.value ? [currentUserDisplay.value] : [];
     })
     .finally(() => {
       loading.value = false;
@@ -35,11 +64,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="onlineUsers.length > 0" class="online-users-indicator flex items-center gap-1.5">
+  <div v-if="displayUsers.length > 0" class="online-users-indicator flex items-center gap-1.5 print:hidden">
     <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">متصلون:</span>
     <div class="flex items-center -space-x-2">
       <div
-        v-for="user in onlineUsers"
+        v-for="user in displayUsers"
         :key="user.id"
         class="online-user-avatar group relative"
         :title="user.name"

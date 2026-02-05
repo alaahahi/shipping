@@ -25,8 +25,8 @@ class OnlineUsersController extends Controller
 
         $threshold = now()->subMinutes(self::ONLINE_MINUTES);
 
-        $onlineUsers = User::where('owner_id', $user->owner_id)
-            ->where('id', '!=', $user->id) // استبعاد المستخدم الحالي
+        $others = User::where('owner_id', $user->owner_id)
+            ->where('id', '!=', $user->id)
             ->whereNotNull('last_activity')
             ->where('last_activity', '>=', $threshold)
             ->select('id', 'name')
@@ -37,8 +37,19 @@ class OnlineUsersController extends Controller
                     'id' => $u->id,
                     'name' => $u->name,
                     'initials' => $this->getInitials($u->name),
+                    'is_me' => false,
                 ];
             });
+
+        // إضافة المستخدم الحالي أولاً (دائماً يظهر)
+        $currentUser = [
+            'id' => $user->id,
+            'name' => 'أنت (' . $user->name . ')',
+            'initials' => $this->getInitials($user->name),
+            'is_me' => true,
+        ];
+
+        $onlineUsers = collect([$currentUser])->merge($others->values())->values()->all();
 
         return response()->json(['online_users' => $onlineUsers]);
     }
