@@ -425,18 +425,19 @@ const updateSeller = (v) => {
 
       if (selectedClient) {
         form.value.phone_seller = selectedClient?.phone_seller || 0;
-        form.value.address_seller = selectedClient?.address_seller||0;
+        form.value.address_seller = selectedClient?.address_seller || '';
+        form.value.seller_id_number = selectedClient?.seller_id_number || '';
       }
     }
 const updateBuyer = (v) => {
       const selectedClient = props.client2.find(
         (client) => client.name_buyer ===  v
       );
-      console.log(selectedClient)
 
       if (selectedClient) {
-        form.value.phone_buyer = selectedClient?.phone_buyer;
-        form.value.address_buyer = selectedClient?.address_buyer;
+        form.value.phone_buyer = selectedClient?.phone_buyer || '';
+        form.value.address_buyer = selectedClient?.address_buyer || '';
+        form.value.buyer_id_number = selectedClient?.buyer_id_number || '';
       }
     }
 const validTexSeller = (v) =>{

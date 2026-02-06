@@ -67,11 +67,11 @@ class CarContractController extends Controller
         $data = CarContract::find($id);
         $owner_id=Auth::user()->owner_id;
         $client1 = CarContract::where('owner_id', $owner_id)
-        ->select('name_seller', DB::raw('MAX(phone_seller) as phone_seller'), DB::raw('MAX(address_seller) as address_seller'))
+        ->select('name_seller', DB::raw('MAX(phone_seller) as phone_seller'), DB::raw('MAX(address_seller) as address_seller'), DB::raw('MAX(seller_id_number) as seller_id_number'))
         ->groupBy('name_seller')
         ->get();
         $client2 = CarContract::where('owner_id', $owner_id)
-        ->select('name_buyer', DB::raw('MAX(phone_buyer) as phone_buyer'), DB::raw('MAX(address_buyer) as address_buyer'))
+        ->select('name_buyer', DB::raw('MAX(phone_buyer) as phone_buyer'), DB::raw('MAX(address_buyer) as address_buyer'), DB::raw('MAX(buyer_id_number) as buyer_id_number'))
         ->groupBy('name_buyer')
         ->get();
         $defaultOrganizer = Auth::user()->organizer_name ?? '';
