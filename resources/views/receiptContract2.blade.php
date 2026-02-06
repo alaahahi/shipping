@@ -44,7 +44,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 .t2-phones { font-size: 11px; color: var(--t2-primary); font-weight: 600; }
 .t2-phones span { display: block; margin-bottom: 2px; }
 .t2-section { margin-bottom: 10px; }
-.t2-section-title { font-weight: 700; font-size: 13px; margin-bottom: 6px; padding: 5px 8px; border: 1px solid var(--t2-primary); color: #000; border-radius: var(--t2-radius); }
+.t2-section-title { font-weight: 700; font-size: 13px; margin-bottom: 6px;  }
 .t2-party-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .t2-party-box { border: 1px solid var(--t2-primary); padding: 10px 12px; background: #fff; border-radius: var(--t2-radius); }
 .t2-party-box:first-child .t2-section-title {text-align: center; background: var(--t2-primary); color: #fff; border: 1px solid var(--t2-primary); border-radius: var(--t2-radius);font-size: 16px; }
@@ -109,13 +109,14 @@ html, body { width: 210mm; margin: 0; padding: 0; }
         </div>
         <div class="t2-address">العنوان / {{ $config['third_title_ar'] ?? '—' }}</div>
       </div>
+      @if(!empty($verificationUrl))
+      <div class="t2-header-qr">
+        <img id="t2-qr-img" alt="QR" style="display:none;" />
+        <span class="t2-qr-caption">امسح QR للتحقق</span>
+      </div>
+      @endif
       <div class="t2-header-left">
-        @if(!empty($verificationUrl))
-        <div class="t2-header-qr">
-          <img id="t2-qr-img" alt="QR" style="display:none;" />
-          <span class="t2-qr-caption">امسح QR للتحقق</span>
-        </div>
-        @endif
+ 
         <div class="t2-logo-wrap">
           <img src="{{ asset('img/logo.png') }}" alt="Logo" class="t2-logo" onerror="this.src='{{ asset('img/logo.jpg') }}'; this.onerror=null;" />
         </div>
@@ -150,7 +151,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 
     <div class="t2-section">
       <div class="t2-section-title">تفاصيل السيارة</div>
-      <div class="t2-car-grid">
+      <div class="t2-car-grid" style=" padding: 5px 8px;border: 1px solid var(--t2-primary); color: #000; border-radius: var(--t2-radius);">
         <div class="t2-car-item"><span class="label">نوع السيارة:</span><span class="value">{{ $data['car_name'] ?? '' }}</span></div>
         <div class="t2-car-item"><span class="label">رقم السيارة:</span><span class="value">{{ $data['no'] ?? '' }}</span></div>
         <div class="t2-car-item"><span class="label">رقم الشاصي:</span><span class="value">{{ $data['vin'] ?? '' }}</span></div>
