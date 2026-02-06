@@ -253,9 +253,9 @@ function openModalDelCar(v) {
                     />
                   </div>
                 </div>
-                <div class="px-4" v-if="$page.props.auth.user.type_id == 1 && contractCreators && contractCreators.length > 0">
+                <div class="px-4" v-if="$page.props.auth.user.type_id == 8 && contractCreators && contractCreators.length > 0">
                   <div>
-                    <InputLabel for="createdBy" value="حساب المستخدم المنشأة" />
+                    <InputLabel for="createdBy" value="منشئ العقد" />
                     <select
                       id="createdBy"
                       v-model="createdByUserId"

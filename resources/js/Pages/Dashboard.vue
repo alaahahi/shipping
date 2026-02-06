@@ -34,6 +34,8 @@ const laravelDataO = ref({});
 const laravelData1 = ref({});
 const laravelData2 = ref({});
 const completedContractsThisMonth = ref(0);
+const completedContractsLastMonth = ref(0);
+const completedContractsThisYear = ref(0);
 const recentContracts = ref([]);
 let  controller = new AbortController(); // Create a new AbortController
 
@@ -52,6 +54,8 @@ const getResults = async (page = 1) => {
     laravelData1.value =  response.data.data1
     laravelData2.value =  response.data.data2
     completedContractsThisMonth.value = response.data.completedContractsThisMonth ?? 0
+    completedContractsLastMonth.value = response.data.completedContractsLastMonth ?? 0
+    completedContractsThisYear.value = response.data.completedContractsThisYear ?? 0
     recentContracts.value = response.data.recentContracts ?? []
   }
 
@@ -508,10 +512,18 @@ function getResultsCarSearchLocal () {
                           <!-- إحصائيات وعقود حديثة -->
                           <div class="mb-6 p-4 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
                             <h2 class="text-lg font-semibold dark:text-white mb-3">عقود هذا الشهر والإحصائيات</h2>
-                            <div class="flex items-center gap-6 mb-4">
+                            <div class="flex flex-wrap items-center gap-6 mb-4">
                               <div class="flex items-center gap-2">
                                 <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{{ completedContractsThisMonth }}</span>
                                 <span class="text-gray-600 dark:text-gray-300">عقد منجز هذا الشهر</span>
+                              </div>
+                              <div class="flex items-center gap-2">
+                                <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ completedContractsLastMonth }}</span>
+                                <span class="text-gray-600 dark:text-gray-300">عقد منجز الشهر الماضي</span>
+                              </div>
+                              <div class="flex items-center gap-2">
+                                <span class="text-2xl font-bold text-green-600 dark:text-green-400">{{ completedContractsThisYear }}</span>
+                                <span class="text-gray-600 dark:text-gray-300">عقد منجز هذه السنة</span>
                               </div>
                             </div>
                             <div v-if="recentContracts && recentContracts.length" class="mt-4">

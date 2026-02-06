@@ -712,13 +712,22 @@ class CarContractController extends Controller
         }
         $startOfMonth = Carbon::now()->startOfMonth()->format('Y-m-d');
         $endOfMonth = Carbon::now()->endOfMonth()->format('Y-m-d');
+        $startOfLastMonth = Carbon::now()->subMonth()->startOfMonth()->format('Y-m-d');
+        $endOfLastMonth = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
+        $startOfYear = Carbon::now()->startOfYear()->format('Y-m-d');
+        $endOfYear = Carbon::now()->endOfYear()->format('Y-m-d');
+
         $completedThisMonth = (clone $statsQuery)->whereBetween('created', [$startOfMonth, $endOfMonth])->count();
+        $completedLastMonth = (clone $statsQuery)->whereBetween('created', [$startOfLastMonth, $endOfLastMonth])->count();
+        $completedThisYear = (clone $statsQuery)->whereBetween('created', [$startOfYear, $endOfYear])->count();
         $recentContracts = (clone $statsQuery)->orderBy('id', 'desc')->limit(8)->get(['id', 'no', 'car_name', 'name_seller', 'name_buyer', 'car_price', 'created']);
 
         return Response::json([
             'data1' => $data1,
             'data2' => $data2,
             'completedContractsThisMonth' => $completedThisMonth,
+            'completedContractsLastMonth' => $completedLastMonth,
+            'completedContractsThisYear' => $completedThisYear,
             'recentContracts' => $recentContracts,
         ], 200);
     }
