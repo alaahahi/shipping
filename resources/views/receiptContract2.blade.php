@@ -178,15 +178,15 @@ html, body { width: 210mm; margin: 0; padding: 0; }
       <div class="t2-money-inline">
         <div class="item">
           <span class="label">بدل سعر وقدره /<span class="value">{{ number_format($priceVal) }}{{ $sym }}</span></span>
-          <span class="words">{{ $Help->numberToWords($priceVal, $wordsCurrency) }}</span>
+          <span class="words">بدل سعر كتابةّ:{{ $Help->numberToWords($priceVal, $wordsCurrency) }}</span>
         </div>
         <div class="item">
           <span class="label">الواصل /<span class="value">{{ number_format($paidVal) }}{{ $sym }}</span></span>
-          <span class="words">{{ $Help->numberToWords($paidVal, $wordsCurrency) }}</span>
+          <span class="words">الواصل كتابةّ:{{ $Help->numberToWords($paidVal, $wordsCurrency) }}</span>
         </div>
         <div class="item">
           <span class="label">المتبقي / <span class="value">{{ number_format($remainVal) }}{{ $sym }}</span></span>
-          <span class="words">{{ $Help->numberToWords($remainVal, $wordsCurrency) }}</span>
+          <span class="words">المتبقي كتابةّ:{{ $Help->numberToWords($remainVal, $wordsCurrency) }}</span>
         </div>
       </div>
     </div>
