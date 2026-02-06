@@ -30,7 +30,6 @@ const systemConfig = ref({
   contract_template: 1,
   contract_currency: 'usd',
   primary_color: '#c00',
-  contract_organizer_name: '',
 });
 
 // تحويل JSON arrays إلى arrays من objects {key, value}
@@ -156,7 +155,6 @@ function saveSystemConfig() {
     contract_template: systemConfig.value.contract_template ?? 1,
     contract_currency: systemConfig.value.contract_currency ?? 'usd',
     primary_color: systemConfig.value.primary_color ?? '#c00',
-    contract_organizer_name: systemConfig.value.contract_organizer_name ?? '',
   };
   
   saving.value = true;
@@ -583,7 +581,7 @@ function testConnection() {
                   </p>
                 </div>
 
-                <!-- اللون الأساسي واسم منظم العقد -->
+                <!-- اللون الأساسي للعقود -->
                 <div class="mt-6 border-t pt-6">
                   <h4 class="text-md font-semibold mb-4">إعدادات مظهر العقد</h4>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -605,19 +603,6 @@ function testConnection() {
                       </div>
                       <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         اللون المستخدم في حدود وعناوين العقود (مثل #c00 للأحمر)
-                      </p>
-                    </div>
-                    <div>
-                      <InputLabel for="contract_organizer_name" value="اسم منظم العقد (الافتراضي)" class="mb-2" />
-                      <TextInput
-                        id="contract_organizer_name"
-                        v-model="systemConfig.contract_organizer_name"
-                        type="text"
-                        class="mt-1 block w-full"
-                        placeholder="اسم منظم العقد"
-                      />
-                      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        القيمة الافتراضية لجميع العقود الجديدة. يظهر في توقيع العقد المطبوع. يمكن تغييره لكل عقد عند الإنشاء.
                       </p>
                     </div>
                   </div>

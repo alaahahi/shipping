@@ -74,8 +74,7 @@ class CarContractController extends Controller
         ->select('name_buyer', DB::raw('MAX(phone_buyer) as phone_buyer'), DB::raw('MAX(address_buyer) as address_buyer'))
         ->groupBy('name_buyer')
         ->get();
-        $config = SystemConfig::first();
-        $defaultOrganizer = $config->contract_organizer_name ?? '';
+        $defaultOrganizer = Auth::user()->organizer_name ?? '';
         return Inertia::render('CarContract/add', [
             'client1'=>$client1,
             'data'=>$data,
@@ -87,7 +86,7 @@ class CarContractController extends Controller
     public function contract_print(Request $request)
     {
         $id=$request->id;
-        $data = CarContract::find($id);
+        $data = CarContract::with('user')->find($id);
         if ($data && empty($data->verification_token)) {
             $data->verification_token = Str::uuid()->toString();
             $data->save();
@@ -98,8 +97,9 @@ class CarContractController extends Controller
         $verificationUrl = $data ? route('contract.verify', $data->verification_token) : null;
         $template = (int) ($request->query('template') ?? $config->contract_template ?? 1);
         $viewName = $template === 2 ? 'receiptContract2' : 'receiptContract';
-        // أولوية: organizer_name في العقد ← إعدادات النظام فقط (بدون اسم المستخدم)
-        $contractOrganizer = $data->organizer_name ?? ($config->contract_organizer_name ?? '');
+        // أولوية: organizer_name في العقد ← اسم منظم العقد من المستخدم المنشئ (users.organizer_name)
+        $creatorOrganizer = $data->user?->organizer_name ?? '';
+        $contractOrganizer = $data->organizer_name ?? $creatorOrganizer;
         return view($viewName, compact('data', 'config', 'verificationUrl', 'contractOrganizer'));
     }
     public function index(Request $request)

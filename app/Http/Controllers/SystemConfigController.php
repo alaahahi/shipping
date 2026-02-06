@@ -52,7 +52,6 @@ class SystemConfigController extends Controller
             'contract_template' => 'nullable|in:1,2',
             'contract_currency' => 'nullable|in:usd,dinar',
             'primary_color' => 'nullable|string|max:20',
-            'contract_organizer_name' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -81,7 +80,6 @@ class SystemConfigController extends Controller
                 'contract_template' => $request->contract_template ?? 1,
                 'contract_currency' => $request->contract_currency ?? 'usd',
                 'primary_color' => $request->primary_color ?? '#c00',
-                'contract_organizer_name' => $request->contract_organizer_name ?? null,
             ]);
         } else {
             $updateData = [];
@@ -100,7 +98,6 @@ class SystemConfigController extends Controller
             if ($request->has('contract_template')) $updateData['contract_template'] = (int) $request->contract_template;
             if ($request->has('contract_currency')) $updateData['contract_currency'] = $request->contract_currency;
             if ($request->has('primary_color')) $updateData['primary_color'] = $request->primary_color ?: '#c00';
-            if ($request->has('contract_organizer_name')) $updateData['contract_organizer_name'] = $request->contract_organizer_name;
             
             $config->update($updateData);
         }

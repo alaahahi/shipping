@@ -24,6 +24,7 @@ const form = useForm({
     userType:props.user.userType,
     parent_id:props.user.parent_id,
     percentage:props.user.percentage,
+    organizer_name: props.user.organizer_name ?? '',
 });
 
 const submit = () => {
@@ -85,6 +86,17 @@ const submit = () => {
                                         <span className="text-red-600" v-if="form.errors.email">
                                             Sorry,Username is not available
                                         </span>
+                                    </div>
+                                    <div className="mb-4">
+                                    <InputLabel for="organizer_name" value="اسم منظم العقد" />
+                                    <TextInput 
+                                        id="organizer_name" 
+                                        type="text" 
+                                        class="mt-1 block w-full" 
+                                        v-model="form.organizer_name"
+                                        placeholder="يظهر في توقيع العقود"
+                                    />
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">اسم منظم العقد - يظهر في توقيع العقد المطبوع حسب المستخدم المسجل</p>
                                     </div>
                                     <div className="mb-4">
 

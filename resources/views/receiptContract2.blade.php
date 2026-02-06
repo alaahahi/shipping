@@ -3,7 +3,7 @@ use App\Helpers\Help as MyHelp;
 $Help = new MyHelp();
 $contractTerms = is_array($config) ? ($config['contract_terms_2'] ?? $config['contract_terms'] ?? []) : ($config->contract_terms_2 ?? $config->contract_terms ?? []);
 $primaryColor = is_array($config) ? ($config['primary_color'] ?? '#c00') : ($config->primary_color ?? '#c00');
-$contractOrganizer = $contractOrganizer ?? (is_array($config) ? ($config['contract_organizer_name'] ?? '') : ($config->contract_organizer_name ?? ''));
+$contractOrganizer = $contractOrganizer ?? '';
 if (is_string($contractTerms)) {
   $contractTerms = json_decode($contractTerms, true) ?? [];
 }

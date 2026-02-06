@@ -1536,7 +1536,8 @@ class UserController extends Controller
                     $user = User::find($id)->update([
                         'name' => $request->name,
                         'password' => Hash::make($request->password),
-                        'percentage' => $request->percentage
+                        'percentage' => $request->percentage,
+                        'organizer_name' => $request->organizer_name,
                     ]);
                 } else {
                     $request->validate([
@@ -1544,7 +1545,8 @@ class UserController extends Controller
                     ]);
                     $user = User::find($id)->update([
                         'name' => $request->name,
-                        'percentage' => $request->percentage
+                        'percentage' => $request->percentage,
+                        'organizer_name' => $request->organizer_name,
                     ]);
                 }
                 break;
@@ -1558,6 +1560,7 @@ class UserController extends Controller
                     $user = User::find($id)->update([
                         'name' => $request->name,
                         'email' => $request->email,
+                        'organizer_name' => $request->organizer_name,
                     ]);
                 } else {
                     $request->validate([
@@ -1569,6 +1572,7 @@ class UserController extends Controller
                         'name' => $request->name,
                         'email' => $request->email,
                         'password' => Hash::make($request->password),
+                        'organizer_name' => $request->organizer_name,
                     ]);
                 }
                 break;

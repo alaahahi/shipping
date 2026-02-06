@@ -29,7 +29,6 @@ class SystemConfig extends Model
         'contract_template',
         'contract_currency',
         'primary_color',
-        'contract_organizer_name',
     ];
     protected $casts = [
         'default_price_s' => 'array',
