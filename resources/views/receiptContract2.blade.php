@@ -64,6 +64,15 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 .t2-money-inline .item .label { color: #000; font-weight: 600; }
 .t2-money-inline .item .value { font-weight: 700; color: #000; }
 .t2-money-inline .item .words { font-size: 11px; color: #333; font-weight: 500; }
+/* صندوق السعر والواصل والباقي - شكل العقود الرسمي */
+.t2-money-box { border: 1px solid var(--t2-primary); padding: 10px 12px; background: #fff; border-radius: var(--t2-radius); }
+.t2-money-line { display: flex; align-items: center; margin-bottom: 8px; font-size: 12px; direction: rtl; }
+.t2-money-line:last-child { margin-bottom: 0; }
+.t2-money-line > span { line-height: 20px; }
+.t2-money-line .t2-ml-label { color: var(--t2-primary); font-weight: 700; white-space: nowrap; margin-right: 4px; }
+.t2-money-line .t2-ml-num { flex: 0 0 28%; min-width: 80px; border-bottom: 1px dotted #333; margin: 0 4px; min-height: 20px; font-weight: 700; }
+.t2-money-line .t2-ml-written { color: var(--t2-primary); font-weight: 600; font-size: 11px; margin: 0 4px; white-space: nowrap; line-height: 20px; }
+.t2-money-line .t2-ml-words { flex: 1; border-bottom: 1px dotted #333; margin-right: 4px; min-height: 20px; font-weight: 700; }
 .t2-notes-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 8px; border: 1px dotted #000; padding: 6px 10px; min-height: 32px; background: #fff; border-radius: var(--t2-radius); }
 .t2-notes-row .label { font-weight: 700; color: #000; white-space: nowrap; }
 .t2-notes-row .value { flex: 1; min-height: 20px; color: #000; }
@@ -148,7 +157,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 
         <div class="t2-car-item"><span class="label">لون السيارة:</span><span class="value">{{ $data['color'] ?? '' }}</span></div>
         <div class="t2-car-item"><span class="label">الموديل:</span><span class="value">{{ $data['modal'] ?? '' }}</span></div>
-        <div class="t2-car-item"><span class="label">رقم السنوية:</span><span class="value">{{ $data['year_date'] ?? '' }}</span></div>
+        <div class="t2-car-item"><span class="label">صاحب السنوية:</span><span class="value">{{ $data['year_date'] ?? '' }}</span></div>
       </div>
     </div>
 
@@ -175,18 +184,28 @@ html, body { width: 210mm; margin: 0; padding: 0; }
       }
     @endphp
     <div class="t2-section">
-      <div class="t2-money-inline">
-        <div class="item">
-          <span class="label">بدل سعر وقدره /<span class="value">{{ number_format($priceVal) }}{{ $sym }}</span></span>
-          <span class="words">بدل سعر كتابةّ:{{ $Help->numberToWords($priceVal, $wordsCurrency) }}</span>
+      <div class="t2-money-box">
+        <div class="t2-money-line">
+          <span class="t2-ml-label">سعر البيع</span>
+          <span class="t2-ml-num">/ {{ number_format($priceVal) }}{{ $sym }}</span>
+          <span class="t2-ml-written">كتابتاً</span>
+          <span class="t2-ml-words">/ {{ $Help->numberToWords($priceVal, $wordsCurrency) }}</span>
         </div>
-        <div class="item">
-          <span class="label">الواصل /<span class="value">{{ number_format($paidVal) }}{{ $sym }}</span></span>
-          <span class="words">الواصل كتابةّ:{{ $Help->numberToWords($paidVal, $wordsCurrency) }}</span>
+        <div class="t2-money-line">
+          <span class="t2-ml-label" style="
+              width: 36px;
+          ">الواصل</span>
+          <span class="t2-ml-num">/ {{ number_format($paidVal) }}{{ $sym }}</span>
+          <span class="t2-ml-written">كتابتاً</span>
+          <span class="t2-ml-words">/ {{ $Help->numberToWords($paidVal, $wordsCurrency) }}</span>
         </div>
-        <div class="item">
-          <span class="label">المتبقي / <span class="value">{{ number_format($remainVal) }}{{ $sym }}</span></span>
-          <span class="words">المتبقي كتابةّ:{{ $Help->numberToWords($remainVal, $wordsCurrency) }}</span>
+        <div class="t2-money-line">
+          <span class="t2-ml-label" style="
+              width: 36px;
+          ">الباقي</span>
+          <span class="t2-ml-num">/ {{ number_format($remainVal) }}{{ $sym }}</span>
+          <span class="t2-ml-written">كتابتاً</span>
+          <span class="t2-ml-words">/ {{ $Help->numberToWords($remainVal, $wordsCurrency) }}</span>
         </div>
       </div>
     </div>
