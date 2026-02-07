@@ -121,7 +121,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
           <img src="{{ asset('img/logo.png') }}" alt="Logo" class="t2-logo" onerror="this.src='{{ asset('img/logo.jpg') }}'; this.onerror=null;" />
         </div>
       
-        <div class="t2-phones mt-2">
+        <div class="t2-phones mt-1">
           @php
             $phones = $config['phones'] ?? ['07701575738','07707588987','07718456595'];
             if (is_string($phones)) { $phones = array_filter(array_map('trim', explode(',', $phones))); }
