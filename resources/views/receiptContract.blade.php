@@ -448,14 +448,6 @@ body {
           </b>
         </div>
         <div class="pt-2">
-          تێبینی
-          (ملاحظة)
-            :
-          <b class="px-3">
-            {{ $data['note'] ?? '' }}
-          </b>
-        </div>
-        <div class="pt-2">
           لە جیاتی / بڕی پارە 
           (بمبلغ قدره)
           : 
@@ -555,6 +547,14 @@ body {
         </li>
       </ul>
       @endif  
+      <div class="pt-2">
+        تێبینی
+        (ملاحظة)
+          :
+        <b class="px-3">
+          {{ $data['note'] ?? '' }}
+        </b>
+      </div>
       </div>
       <div class="d-flex justify-content-between  mt-3 pt-2">
         <div>
