@@ -41,7 +41,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 .t2-header-qr { display: flex; flex-direction: column; align-items: center; gap: 2px; border: none; }
 .t2-header-qr img { width: 50px; height: 50px; display: block; }
 .t2-header-qr .t2-qr-caption { font-size: 10px; color: var(--t2-primary); font-weight: 700; }
-.t2-phones { font-size: 11px; color: var(--t2-primary); font-weight: 600; }
+.t2-phones { font-size: 11px; color: #000; font-weight: 600; }
 .t2-phones span { display: block; margin-bottom: 2px; }
 .t2-section { margin-bottom: 10px; }
 .t2-section-title { font-weight: 700; font-size: 13px; margin-bottom: 6px;  }
@@ -121,7 +121,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
           <img src="{{ asset('img/logo.png') }}" alt="Logo" class="t2-logo" onerror="this.src='{{ asset('img/logo.jpg') }}'; this.onerror=null;" />
         </div>
       
-        <div class="t2-phones">
+        <div class="t2-phones mt-2">
           @php
             $phones = $config['phones'] ?? ['07701575738','07707588987','07718456595'];
             if (is_string($phones)) { $phones = array_filter(array_map('trim', explode(',', $phones))); }
