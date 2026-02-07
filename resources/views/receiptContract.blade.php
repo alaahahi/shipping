@@ -448,6 +448,14 @@ body {
           </b>
         </div>
         <div class="pt-2">
+          تێبینی
+          (ملاحظة)
+            :
+          <b class="px-3">
+            {{ $data['note'] ?? '' }}
+          </b>
+        </div>
+        <div class="pt-2">
           لە جیاتی / بڕی پارە 
           (بمبلغ قدره)
           : 
@@ -517,14 +525,6 @@ body {
             :
           <b class="px-3">
             {{$data['vin_s'] ?? ''}}
-          </b>
-        </div>
-        <div class="pt-2">
-          تێبینی
-          (ملاحظة)
-            :
-          <b class="px-3">
-            {{$data['note'] ?? ''}}
           </b>
         </div>
       </div>
