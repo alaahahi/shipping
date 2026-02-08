@@ -158,7 +158,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 
         <div class="t2-car-item"><span class="label">لون السيارة:</span><span class="value">{{ $data['color'] ?? '' }}</span></div>
         <div class="t2-car-item"><span class="label">الموديل:</span><span class="value">{{ $data['modal'] ?? '' }}</span></div>
-        <div class="t2-car-item"><span class="label">صاحب السنوية:</span><span class="value">{{ $data['year_date'] ?? '' }}</span></div>
+        <div class="t2-car-item"><span class="label">صاحب السنوية:</span><span class="value">{{ $data['annual_owner_name'] ?? '' }}</span></div>
       </div>
     </div>
 

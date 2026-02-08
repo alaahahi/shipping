@@ -28,6 +28,7 @@ class CarContract extends Model
         'color',
         'size',
         'no',
+        'annual_owner_name',
         'note',
         'system_note',
         'car_price',

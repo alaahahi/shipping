@@ -250,6 +250,7 @@ const createEmptyForm = () => ({
   tex_buyer_dinar: 0,
   vin: "",
   car_name: "",
+  annual_owner_name: "",
   modal: "",
   color: "",
   size: "",
@@ -906,6 +907,17 @@ function VinApi1 (v){
                           type="text"
                           class="mt-1 block w-full"
                           v-model="form.car_name"
+                        />
+                      </div>
+                    </div>
+                    <div class="md:w-1/3 w-full">
+                      <div className="mb-4 mx-5">
+                        <InputLabel for="annual_owner_name" value="صاحب السنوية" />
+                        <TextInput
+                          id="annual_owner_name"
+                          type="text"
+                          class="mt-1 block w-full"
+                          v-model="form.annual_owner_name"
                         />
                       </div>
                     </div>
