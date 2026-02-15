@@ -106,7 +106,7 @@ test('صفحة sync-monitor متاحة بدون تسجيل دخول', function()
     try {
         // Simple curl simulation
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, 'http://127.0.0.1:8000/sync-monitor');
+        curl_setopt($ch, CURLOPT_URL, rtrim(config('app.url'), '/') . '/sync-monitor');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         $response = curl_exec($ch);
@@ -128,7 +128,7 @@ test('API car history يتطلب مصادقة', function() {
 
     try {
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, "http://127.0.0.1:8000/api/car/{$car->id}/history");
+        curl_setopt($ch, CURLOPT_URL, rtrim(config('app.url'), '/') . "/api/car/{$car->id}/history");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false); // لا تتبع redirects

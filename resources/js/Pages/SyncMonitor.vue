@@ -105,21 +105,13 @@
               </div>
             </div>
 
-            <!-- إحصائيات تاريخ السيارات -->
-            <div class="bg-green-50 dark:bg-green-900 p-4 rounded-lg">
-              <h4 class="text-md font-semibold mb-3 text-green-900 dark:text-green-100">🚗 تاريخ السيارات</h4>
+            <!-- جداول MySQL غير الموجودة في SQLite -->
+            <div class="bg-amber-50 dark:bg-amber-900 p-4 rounded-lg">
+              <h4 class="text-md font-semibold mb-3 text-amber-900 dark:text-amber-100">⚠️ في MySQL فقط</h4>
               <div class="space-y-2 text-sm">
                 <div class="flex justify-between">
-                  <span class="text-green-700 dark:text-green-300">الإجمالي:</span>
-                  <span class="font-bold text-green-900 dark:text-green-100">{{ migrationStats.total_transactions || 0 }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-green-700 dark:text-green-300">مُنقل:</span>
-                  <span class="font-bold text-green-900 dark:text-green-100">{{ migrationStats.migrated || 0 }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-green-700 dark:text-green-300">متبقي:</span>
-                  <span class="font-bold text-green-900 dark:text-green-100">{{ migrationStats.remaining || 0 }}</span>
+                  <span class="text-amber-700 dark:text-amber-300">عدد الجداول:</span>
+                  <span class="font-bold text-amber-900 dark:text-amber-100">{{ mysqlOnlyTables.length }}</span>
                 </div>
               </div>
             </div>
@@ -282,7 +274,7 @@
                 📋 الجداول المزامنة ({{ syncedTables.length }})
               </h3>
               <button
-                @click="loadTables"
+                @click="loadSyncedTables"
                 class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
               >
                 🔄 تحديث
@@ -334,7 +326,54 @@
           </div>
         </div>
 
-        <!-- إدارة نقل تاريخ السيارات -->
+        <!-- جداول MySQL غير الموجودة في SQLite -->
+        <div class="mb-6 bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+          <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-center">
+              <h3 class="text-lg font-semibold dark:text-gray-200">
+                ⚠️ الجداول الموجودة في MySQL وغير موجودة في SQLite ({{ mysqlOnlyTables.length }})
+              </h3>
+              <button
+                @click="loadTablesComparison"
+                :disabled="loadingTablesComparison"
+                class="px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-50"
+              >
+                <span v-if="!loadingTablesComparison">🔄 تحديث</span>
+                <span v-else>⏳ جاري...</span>
+              </button>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              هذه الجداول موجودة في MySQL ولا توجد في SQLite المحلي - يمكن مزامنتها (Pull) لنقلها
+            </p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead class="bg-amber-50 dark:bg-amber-900/30">
+                <tr>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-amber-800 dark:text-amber-200 uppercase">الجدول</th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-amber-800 dark:text-amber-200 uppercase">عدد السجلات في MySQL</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tr v-for="t in mysqlOnlyTables" :key="t.name" class="hover:bg-amber-50/50 dark:hover:bg-amber-900/10">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-200">
+                    {{ t.name }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    {{ (t.count || 0).toLocaleString() }}
+                  </td>
+                </tr>
+                <tr v-if="mysqlOnlyTables.length === 0 && !loadingTablesComparison">
+                  <td colspan="2" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                    لا توجد جداول - جميع جداول MySQL موجودة في SQLite
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- إدارة العمليات والمايجريشنز -->
         <div class="mb-6 bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
           <div class="border-b border-gray-200 dark:border-gray-700">
             <div class="flex">
@@ -348,17 +387,6 @@
                 ]"
               >
                 📋 العمليات
-              </button>
-              <button
-                @click="activeTab = 'carHistory'"
-                :class="[
-                  'px-6 py-3 text-sm font-medium border-b-2 transition-colors',
-                  activeTab === 'carHistory'
-                    ? 'border-green-500 text-green-600 dark:text-green-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                ]"
-              >
-                🚗 نقل تاريخ السيارات
               </button>
               <button
                 @click="activeTab = 'system'"
@@ -479,141 +507,6 @@
                   </tr>
                 </tbody>
               </table>
-            </div>
-          </div>
-
-          <!-- تبويب نقل تاريخ السيارات -->
-          <div v-if="activeTab === 'carHistory'" class="p-6">
-            <div class="flex justify-between items-center mb-6">
-              <div>
-                <h3 class="text-xl font-semibold dark:text-gray-200 mb-2">
-                  🚗 نقل معاملات السيارات إلى نظام التاريخ الجديد
-                </h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">
-                  نقل البيانات من جدول transactions إلى جدول car_history الجديد
-                </p>
-              </div>
-              <div class="flex gap-2">
-                <button
-                  @click="runCarHistoryMigration"
-                  :disabled="migrationRunning"
-                  class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <span v-if="!migrationRunning">▶️ تشغيل النقل</span>
-                  <span v-else>⏳ جاري النقل...</span>
-                </button>
-                <button
-                  @click="loadMigrationStats"
-                  class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  📊 تحديث الإحصائيات
-                </button>
-              </div>
-            </div>
-
-            <!-- إحصائيات النقل -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                <div class="text-2xl font-bold text-blue-600">{{ migrationStats.total_transactions || 0 }}</div>
-                <div class="text-sm text-gray-600 dark:text-gray-400">إجمالي المعاملات</div>
-              </div>
-              <div class="bg-green-50 dark:bg-green-900 p-4 rounded-lg">
-                <div class="text-2xl font-bold text-green-600">{{ migrationStats.migrated || 0 }}</div>
-                <div class="text-sm text-gray-600 dark:text-gray-400">تم النقل</div>
-              </div>
-              <div class="bg-yellow-50 dark:bg-yellow-900 p-4 rounded-lg">
-                <div class="text-2xl font-bold text-yellow-600">{{ migrationStats.remaining || 0 }}</div>
-                <div class="text-sm text-gray-600 dark:text-gray-400">متبقي</div>
-              </div>
-              <div class="bg-red-50 dark:bg-red-900 p-4 rounded-lg">
-                <div class="text-2xl font-bold text-red-600">{{ migrationStats.errors || 0 }}</div>
-                <div class="text-sm text-gray-600 dark:text-gray-400">أخطاء</div>
-              </div>
-            </div>
-
-            <!-- إعدادات النقل -->
-            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-6">
-              <h4 class="text-lg font-semibold mb-4 dark:text-gray-200">⚙️ إعدادات النقل</h4>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    حجم الدفعة
-                  </label>
-                  <select
-                    v-model="migrationSettings.batchSize"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800 dark:text-gray-200"
-                  >
-                    <option :value="50">50</option>
-                    <option :value="100">100</option>
-                    <option :value="200">200</option>
-                    <option :value="500">500</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    تأخير بين الدفعات (ثانية)
-                  </label>
-                  <select
-                    v-model="migrationSettings.delay"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800 dark:text-gray-200"
-                  >
-                    <option :value="0">0</option>
-                    <option :value="1">1</option>
-                    <option :value="2">2</option>
-                    <option :value="5">5</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    حذف البيانات القديمة
-                  </label>
-                  <div class="flex items-center">
-                    <input
-                      type="checkbox"
-                      v-model="migrationSettings.deleteOldData"
-                      class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    >
-                    <span class="mr-2 text-sm text-gray-600 dark:text-gray-400">
-                      حذف المعاملات المُنقلة من جدول transactions
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- سجل النقل -->
-            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg">
-              <div class="p-4 border-b border-gray-200 dark:border-gray-600">
-                <h4 class="text-lg font-semibold dark:text-gray-200">📝 سجل النقل</h4>
-              </div>
-              <div class="p-4 max-h-64 overflow-y-auto">
-                <div v-if="migrationLogs.length === 0" class="text-center text-gray-500 dark:text-gray-400 py-8">
-                  لا توجد سجلات نقل بعد
-                </div>
-                <div v-else class="space-y-2">
-                  <div
-                    v-for="(log, index) in migrationLogs"
-                    :key="index"
-                    class="flex items-start space-x-3 text-sm"
-                  >
-                    <span
-                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                      :class="{
-                        'bg-blue-100 text-blue-800': log.type === 'info',
-                        'bg-green-100 text-green-800': log.type === 'success',
-                        'bg-yellow-100 text-yellow-800': log.type === 'warning',
-                        'bg-red-100 text-red-800': log.type === 'error'
-                      }"
-                    >
-                      {{ getLogIcon(log.type) }}
-                    </span>
-                    <div class="flex-1">
-                      <p class="text-gray-900 dark:text-gray-200">{{ log.message }}</p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(log.timestamp) }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -1844,7 +1737,6 @@ const selectedBackupFile = ref(null);
 const filter = ref('all');
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
-let refreshInterval = null;
 let connectionApiRef = null;
 
 // Modals
@@ -1863,6 +1755,8 @@ const errorModal = ref({
 // الجداول المزامنة
 const syncedTables = ref([]);
 const loadingTables = ref(false);
+const mysqlOnlyTables = ref([]);
+const loadingTablesComparison = ref(false);
 const syncing = ref(false);
 const selectedDatabase = ref('auto'); // 'auto', 'mysql', 'sync_sqlite'
 const currentViewingConnection = ref('mysql');
@@ -1874,21 +1768,6 @@ const restoringBackup = ref(false);
 
 // تبويبات النظام
 const activeTab = ref('operations');
-
-// نظام نقل تاريخ السيارات
-const migrationRunning = ref(false);
-const migrationStats = ref({
-  total_transactions: 0,
-  migrated: 0,
-  remaining: 0,
-  errors: 0
-});
-const migrationLogs = ref([]);
-const migrationSettings = ref({
-  batchSize: 100,
-  delay: 1,
-  deleteOldData: false
-});
 
 // Database Migrations
 const migrations = ref([]);
@@ -2025,7 +1904,7 @@ const refreshData = async () => {
     if (window.$db) {
       localDataCounts.value = {
         cars: (await window.$db.getAll('cars')).length,
-        contracts: (await window.$db.getAll('contracts')).length,
+        contracts: 0, // لم نعد نخزن العقود في الفرونت
         transactions: (await window.$db.getAll('transactions')).length
       };
     }
@@ -2035,6 +1914,13 @@ const refreshData = async () => {
       const status = await window.$api.getSyncStatus();
       syncStatus.value.pendingCount = status.pendingCount;
     }
+    
+    await loadSyncedTables();
+    await loadTablesComparison();
+    await loadMigrations();
+    await loadDatabaseInfo();
+    await loadBackups();
+    await loadSyncMetadata();
     
     toast.success('تم تحديث البيانات', { timeout: 2000 });
   } catch (error) {
@@ -2309,21 +2195,12 @@ const handleOnline = () => {
   connectionStatus.value.online = true;
   updateConnectionInfo();
   toast.success('🌐 عاد الاتصال!');
-  refreshData();
-  
-  // مزامنة تلقائية
-  setTimeout(() => {
-    if (syncStatus.value.pendingCount > 0) {
-      syncAll();
-    }
-  }, 1000);
 };
 
 const handleOffline = () => {
   connectionStatus.value.online = false;
   updateConnectionInfo();
   toast.warning('📴 فقدان الاتصال - وضع Offline');
-  refreshData();
 };
 
 // دوال الجداول المزامنة
@@ -2958,18 +2835,12 @@ const startSync = async () => {
   }
 };
 
-// Lifecycle
+// Lifecycle - بدون تحميل تلقائي، كل شيء عبر الأزرار فقط
 onMounted(() => {
-  refreshData();
   updateConnectionInfo();
-  loadSyncedTables();
-  loadBackups();
-  loadSyncMetadata();
 
   window.addEventListener('online', handleOnline);
   window.addEventListener('offline', handleOffline);
-
-  refreshInterval = setInterval(refreshData, 10000);
 
   connectionApiRef = getNavigatorConnection();
   if (connectionApiRef?.addEventListener) {
@@ -2982,11 +2853,6 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('online', handleOnline);
   window.removeEventListener('offline', handleOffline);
-
-  if (refreshInterval) {
-    clearInterval(refreshInterval);
-    refreshInterval = null;
-  }
 
   if (connectionApiRef?.removeEventListener) {
     connectionApiRef.removeEventListener('change', updateConnectionInfo);
@@ -3072,94 +2938,16 @@ function getNavigatorConnection() {
   return navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
 }
 
-// وظائف نقل تاريخ السيارات
-const runCarHistoryMigration = async () => {
-  if (migrationRunning.value) return;
-
-  if (!confirm('هل أنت متأكد من تشغيل عملية نقل تاريخ السيارات؟\n\nهذا قد يستغرق وقتاً طويلاً حسب حجم البيانات.')) {
-    return;
-  }
-
-  migrationRunning.value = true;
-  migrationLogs.value = [];
-  let offset = 0;
-  let hasMore = true;
-
-  addMigrationLog('info', 'بدء عملية نقل تاريخ السيارات');
-
+const loadTablesComparison = async () => {
+  loadingTablesComparison.value = true;
   try {
-    while (hasMore && migrationRunning.value) {
-      addMigrationLog('info', `معالجة الدفعة ${offset / migrationSettings.value.batchSize + 1}...`);
-
-      const response = await axios.post('/api/car-history/migrate-transactions', {
-        limit: migrationSettings.value.batchSize,
-        confirm_delete: migrationSettings.value.deleteOldData,
-        offset: offset
-      }, { withCredentials: true });
-
-      const stats = response.data.stats;
-
-      // تحديث الإحصائيات
-      migrationStats.value.migrated += stats.migrated;
-      migrationStats.value.errors += stats.errors;
-
-      addMigrationLog('success', `تم نقل ${stats.migrated} معاملة، فشل ${stats.errors}، تم حذف ${stats.deleted}`);
-
-      if (!response.data.next_offset) {
-        hasMore = false;
-        addMigrationLog('success', 'انتهت عملية النقل بنجاح');
-      } else {
-        offset = response.data.next_offset;
-
-        // تأخير بين الدفعات
-        if (migrationSettings.value.delay > 0) {
-          await new Promise(resolve => setTimeout(resolve, migrationSettings.value.delay * 1000));
-        }
-      }
-    }
-
-    // تحديث الإحصائيات النهائية
-    await loadMigrationStats();
-
+    const response = await axios.get('/api/sync-monitor/tables-comparison', { withCredentials: true });
+    mysqlOnlyTables.value = response.data.mysql_only || [];
   } catch (error) {
-    addMigrationLog('error', 'فشلت عملية النقل: ' + (error.response?.data?.message || error.message));
+    console.error('فشل تحميل مقارنة الجداول:', error);
+    mysqlOnlyTables.value = [];
   } finally {
-    migrationRunning.value = false;
-  }
-};
-
-const loadMigrationStats = async () => {
-  try {
-    // محاكاة للحصول على إحصائيات النقل
-    const response = await axios.get('/api/sync-monitor/tables', { withCredentials: true });
-    const tables = response.data.tables || [];
-
-    // البحث عن إحصائيات جدول transactions و car_history
-    const transactionsTable = tables.find(t => t.name === 'transactions');
-    const carHistoryTable = tables.find(t => t.name === 'car_history');
-
-    migrationStats.value = {
-      total_transactions: transactionsTable?.count || 0,
-      migrated: carHistoryTable?.count || 0,
-      remaining: Math.max(0, (transactionsTable?.count || 0) - (carHistoryTable?.count || 0)),
-      errors: 0 // يمكن تحسين هذا لاحقاً
-    };
-
-  } catch (error) {
-    console.error('فشل تحميل إحصائيات النقل:', error);
-  }
-};
-
-const addMigrationLog = (type, message) => {
-  migrationLogs.value.unshift({
-    type,
-    message,
-    timestamp: new Date().toISOString()
-  });
-
-  // الاحتفاظ بآخر 50 سجلاً فقط
-  if (migrationLogs.value.length > 50) {
-    migrationLogs.value = migrationLogs.value.slice(0, 50);
+    loadingTablesComparison.value = false;
   }
 };
 
@@ -3348,12 +3136,7 @@ const formatBytes = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-// تهيئة البيانات عند تحميل الصفحة
-onMounted(async () => {
-  await loadMigrations();
-  await loadMigrationStats();
-  await loadDatabaseInfo();
-});
+// لا تحميل تلقائي - يتم التحميل عبر زر "تحديث" فقط
 
 // دوال استعادة النسخ الاحتياطية المحددة
 const loadBackupTables = async (backupFile) => {

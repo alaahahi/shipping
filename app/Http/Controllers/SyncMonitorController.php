@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
@@ -13,14 +14,68 @@ use App\Services\DatabaseSyncService;
 class SyncMonitorController extends Controller
 {
     /**
+     * هل يجب إعادة توجيه طلب MySQL إلى السيرفر الموجود في ONLINE_URL؟
+     * (عند العمل محلياً لا يوجد MySQL حقيقي - نطلب من الباك إند للسيرفر)
+     */
+    protected function shouldProxyToOnline(string $forceConnection): bool
+    {
+        if ($forceConnection !== 'mysql') {
+            return false;
+        }
+        return env('LOCAL_NO_REMOTE', false) || app()->environment('local');
+    }
+
+    /**
+     * إعادة توجيه الطلب إلى API السيرفر (ONLINE_URL)
+     */
+    protected function proxyToOnlineServer(Request $request, string $path, string $method = 'GET'): JsonResponse
+    {
+        $baseUrl = rtrim(env('ONLINE_URL', ''), '/');
+        if (empty($baseUrl)) {
+            return response()->json(['error' => 'ONLINE_URL غير محدد في .env'], 500);
+        }
+
+        $url = $baseUrl . '/api/' . ltrim($path, '/');
+        $queryParams = $request->query();
+        if (!empty($queryParams)) {
+            $url .= (str_contains($url, '?') ? '&' : '?') . http_build_query($queryParams);
+        }
+
+        $headers = [
+            'Accept' => 'application/json',
+            'X-Requested-With' => 'XMLHttpRequest',
+        ];
+        if ($apiKey = env('API_KEY')) {
+            $headers['X-API-Key'] = $apiKey;
+            $headers['Authorization'] = 'Bearer ' . $apiKey;
+        }
+
+        try {
+            if ($method === 'GET') {
+                $response = Http::timeout(30)->withHeaders($headers)->get($url);
+            } else {
+                $response = Http::timeout(30)->withHeaders($headers)->{$method}($url, $request->all());
+            }
+
+            $status = $response->successful() ? 200 : $response->status();
+            return response()->json($response->json() ?? ['error' => $response->body()], $status);
+        } catch (\Throwable $e) {
+            Log::error('Proxy to online server failed', ['url' => $url, 'error' => $e->getMessage()]);
+            return response()->json(['error' => 'فشل الاتصال بالسيرفر: ' . $e->getMessage()], 502);
+        }
+    }
+
+    /**
      * إرجاع قائمة الجداول مع عدد السجلات واتصال القاعدة الحالي.
      */
     public function tables(Request $request): JsonResponse
     {
         try {
-            // السماح باختيار الاتصال يدوياً (force_connection)
             $forceConnection = $request->get('force_connection');
-            
+            if ($this->shouldProxyToOnline($forceConnection)) {
+                return $this->proxyToOnlineServer($request, 'sync-monitor/tables', 'GET');
+            }
+
             if ($forceConnection === 'sync_sqlite') {
                 $connection = 'sync_sqlite';
                 $isUsingFallback = true;
@@ -63,14 +118,59 @@ class SyncMonitorController extends Controller
     }
 
     /**
+     * جداول MySQL الموجودة وغير الموجودة في SQLite
+     */
+    public function tablesComparison(Request $request): JsonResponse
+    {
+        try {
+            if ($this->shouldProxyToOnline('mysql')) {
+                return $this->proxyToOnlineServer($request, 'sync-monitor/tables-comparison', 'GET');
+            }
+
+            $mysqlDb = DB::connection('mysql');
+            $sqliteDb = DB::connection('sync_sqlite');
+
+            $mysqlTables = $this->fetchTableNames($mysqlDb, false);
+            $sqliteTables = $this->fetchTableNames($sqliteDb, true);
+
+            $mysqlOnly = array_values(array_diff($mysqlTables, $sqliteTables));
+            $sqliteOnly = array_values(array_diff($sqliteTables, $mysqlTables));
+            $inBoth = array_values(array_intersect($mysqlTables, $sqliteTables));
+
+            // إحصائيات لكل جدول في MySQL فقط
+            $mysqlOnlyWithCount = [];
+            foreach ($mysqlOnly as $table) {
+                try {
+                    $count = $mysqlDb->table($table)->count();
+                    $mysqlOnlyWithCount[] = ['name' => $table, 'count' => $count];
+                } catch (\Throwable $e) {
+                    $mysqlOnlyWithCount[] = ['name' => $table, 'count' => 0];
+                }
+            }
+
+            return response()->json([
+                'mysql_tables' => $mysqlTables,
+                'sqlite_tables' => $sqliteTables,
+                'mysql_only' => $mysqlOnlyWithCount,
+                'sqlite_only' => $sqliteOnly,
+                'in_both' => $inBoth,
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json(['error' => $th->getMessage()], 500);
+        }
+    }
+
+    /**
      * عرض تفاصيل جدول معين (الأعمدة + بيانات محدودة).
      */
     public function tableDetails(string $tableName, Request $request): JsonResponse
     {
         try {
-            // السماح باختيار الاتصال يدوياً (force_connection)
             $forceConnection = $request->get('force_connection');
-            
+            if ($this->shouldProxyToOnline($forceConnection)) {
+                return $this->proxyToOnlineServer($request, "sync-monitor/table/{$tableName}", 'GET');
+            }
+
             if ($forceConnection === 'sync_sqlite') {
                 $connection = 'sync_sqlite';
                 $isUsingFallback = true;
@@ -140,11 +240,20 @@ class SyncMonitorController extends Controller
     }
 
     /**
+     * التحقق مما إذا كان الاتصال فعلياً SQLite (حتى لو كان اسمه mysql)
+     */
+    protected function isConnectionSqlite($db): bool
+    {
+        return ($db->getDriverName() ?? '') === 'sqlite';
+    }
+
+    /**
      * جلب أسماء الجداول من الاتصال الحالي (MySQL أو SQLite).
+     * يستخدم السائق الفعلي للاتصال وليس اسمه - لأن mysql قد يشير إلى SQLite في الوضع المحلي.
      */
     protected function fetchTableNames($db, bool $isUsingFallback): array
     {
-        if ($isUsingFallback) {
+        if ($this->isConnectionSqlite($db)) {
             $tables = $db->select("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name");
             return array_map(fn ($table) => $table->name, $tables);
         }
@@ -168,7 +277,7 @@ class SyncMonitorController extends Controller
             return [];
         }
 
-        if ($isUsingFallback) {
+        if ($this->isConnectionSqlite($db)) {
             // SQLite: استخدام PRAGMA table_info مع التحقق من الاسم
             try {
                 $columns = $db->select("PRAGMA table_info(`{$tableName}`)");
@@ -211,7 +320,7 @@ class SyncMonitorController extends Controller
         }
 
         try {
-            if ($isUsingFallback) {
+            if ($this->isConnectionSqlite($db)) {
                 // SQLite: استخدام PRAGMA table_info
                 $columns = $db->select("PRAGMA table_info(`{$tableName}`)");
                 return collect($columns)->contains('name', $columnName);
@@ -1264,10 +1373,10 @@ class SyncMonitorController extends Controller
     /**
      * التحقق من وجود جدول
      */
-    protected function tableExists($db, string $tableName, bool $isSQLite): bool
+    protected function tableExists($db, string $tableName, bool $isSQLite = null): bool
     {
         try {
-            if ($isSQLite) {
+            if ($this->isConnectionSqlite($db)) {
                 $result = $db->select("SELECT name FROM sqlite_master WHERE type='table' AND name=?", [$tableName]);
                 return !empty($result);
             }

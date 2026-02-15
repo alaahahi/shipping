@@ -26,61 +26,46 @@ class Kernel extends ConsoleKernel
         }
 
         // ============================================
-        // المزامنة في البيئة المحلية (Local)
+        // المزامنة في البيئة المحلية (Local) - نمط Git: Pull ثم Push
         // ============================================
         if (env('APP_ENV') === 'local') {
-            // مزامنة من MySQL إلى SQLite كل 5 دقائق (فقط في البيئة المحلية)
+            // مزامنة مجمّعة على نمط Git: 1) Pull (MySQL→SQLite) 2) sync_queue 3) Push (SQLite→MySQL)
             $schedule->call(function () {
+                $syncService = app(\App\Services\DatabaseSyncService::class);
+                $log = \Illuminate\Support\Facades\Log::class;
+
+                // 1. Pull: سحب التحديثات من السيرفر أولاً
                 try {
-                    $syncService = app(\App\Services\DatabaseSyncService::class);
-                    $results = $syncService->syncFromMySQLToSQLite();
-                    
-                    \Illuminate\Support\Facades\Log::info('Auto sync MySQL → SQLite completed (Local)', [
-                        'total_synced' => $results['total_synced'] ?? 0,
-                        'success_count' => count($results['success'] ?? []),
-                        'failed_count' => count($results['failed'] ?? [])
+                    $pull = $syncService->syncFromMySQLToSQLite();
+                    $log::info('Auto sync Pull (MySQL → SQLite) completed', [
+                        'total_synced' => $pull['total_synced'] ?? 0,
                     ]);
                 } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Auto sync MySQL → SQLite failed (Local)', [
-                        'error' => $e->getMessage()
-                    ]);
+                    $log::error('Auto sync Pull failed', ['error' => $e->getMessage()]);
+                    return; // لا نكمل إذا فشل Pull
                 }
-            })
-                ->name('sync-mysql-to-sqlite-local')
-                ->everyFiveMinutes()
-                ->withoutOverlapping()
-                ->appendOutputTo(storage_path('logs/sync.log'));
 
-            // مزامنة من sync_queue إلى MySQL كل 5 دقائق (فقط في البيئة المحلية)
-            // تعمل في الخلفية تلقائياً - مزامنة التغييرات المحلية فقط
-            $schedule->command('db:sync-queue --clean')
-                ->name('sync-queue-to-mysql-local')
-                ->everyFiveMinutes()
-                ->withoutOverlapping()
-                ->appendOutputTo(storage_path('logs/sync.log'));
-
-            // مزامنة احتياطية من SQLite إلى MySQL كل 10 دقائق (فقط في البيئة المحلية)
-            $schedule->call(function () {
+                // 2. مزامنة sync_queue (التغييرات التدريجية)
                 try {
-                    $syncService = app(\App\Services\DatabaseSyncService::class);
+                    \Illuminate\Support\Facades\Artisan::call('db:sync-queue', ['--clean' => true]);
+                } catch (\Exception $e) {
+                    $log::warning('sync-queue warning', ['error' => $e->getMessage()]);
+                }
+
+                // 3. Push: رفع التعديلات المحلية للسيرفر
+                try {
                     $importantTables = ['car', 'car_contract', 'transactions', 'wallets', 'users'];
-                    $results = $syncService->syncFromSQLiteToMySQL($importantTables, false, false, false);
-                    
-                    \Illuminate\Support\Facades\Log::info('Auto sync SQLite → MySQL completed (Local Backup)', [
-                        'total_synced' => $results['total_synced'] ?? 0,
-                        'success_count' => count($results['success'] ?? []),
-                        'failed_count' => count($results['failed'] ?? []),
-                        'tables' => $importantTables
+                    $push = $syncService->syncFromSQLiteToMySQL($importantTables, false, false, false);
+                    $log::info('Auto sync Push (SQLite → MySQL) completed', [
+                        'total_synced' => $push['total_synced'] ?? 0,
                     ]);
                 } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Auto sync SQLite → MySQL failed (Local Backup)', [
-                        'error' => $e->getMessage()
-                    ]);
+                    $log::error('Auto sync Push failed', ['error' => $e->getMessage()]);
                 }
             })
-                ->name('sync-sqlite-to-mysql-local-backup')
-                ->everyTenMinutes()
-                ->withoutOverlapping()
+                ->name('sync-git-style-local')
+                ->everyFiveMinutes()
+                ->withoutOverlapping(10) // منع التداخل لمدة 10 دقائق
                 ->appendOutputTo(storage_path('logs/sync.log'));
         }
 

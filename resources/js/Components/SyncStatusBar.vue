@@ -230,7 +230,7 @@ const switchToLocal = () => {
     window.switchToLocal();
   } else {
     // استخدام URL من connectionInfo إذا كان متاحاً
-    const localUrl = window.connectionInfo?.local_url || "http://127.0.0.1:8000/";
+    const localUrl = window.connectionInfo?.local_url || (window.location.origin + '/');
     window.location.href = localUrl;
   }
 };

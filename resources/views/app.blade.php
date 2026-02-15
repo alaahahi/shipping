@@ -113,11 +113,11 @@
             (function() {
                 // قراءة URLs من Laravel
                 const connectionInfo = @json($connection ?? [
-                    'online_url' => 'https://system.intellijapp.com/dashboard',
-                    'local_url' => 'http://127.0.0.1:8000/'
+                    'online_url' => config('app.url') . '/dashboard',
+                    'local_url' => rtrim(config('app.url'), '/') . '/'
                 ]);
-                const onlineUrl = connectionInfo.online_url || "https://system.intellijapp.com/dashboard";
-                const localUrl = connectionInfo.local_url || "http://127.0.0.1:8000/";
+                const onlineUrl = connectionInfo.online_url || (window.location.origin + '/dashboard');
+                const localUrl = connectionInfo.local_url || (window.location.origin + '/');
                 let isChecking = false;
                 let lastCheckTime = 0;
                 const CHECK_INTERVAL = 5000; // 5 ثوانٍ

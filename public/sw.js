@@ -173,53 +173,44 @@ self.addEventListener('sync', (event) => {
   }
 });
 
-// دالة المزامنة في الخلفية - SQLite -> MySQL ثم MySQL -> SQLite
+// دالة المزامنة على نمط Git: Pull أولاً (من السيرفر) ثم Push (إلى السيرفر)
 async function syncDatabase() {
   try {
-    console.log('🔄 بدء مزامنة قاعدة البيانات في الخلفية...');
+    console.log('🔄 بدء مزامنة قاعدة البيانات (نمط Git: Pull ثم Push)...');
     
-    // 1. أولاً: مزامنة من SQLite إلى MySQL (نقل البيانات المحلية للسيرفر)
-    console.log('📤 مزامنة من SQLite إلى MySQL...');
-    const responseUp = await fetch('/api/sync-monitor/sync', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        direction: 'up', // من SQLite إلى MySQL
-        safe_mode: true, // Safe Mode: إضافة فقط، لا تحديث
-        create_backup: true // إنشاء نسخة احتياطية
-      })
-    });
-    
-    if (!responseUp.ok) {
-      console.error('❌ فشلت المزامنة من SQLite إلى MySQL:', responseUp.status);
-      throw new Error('فشلت المزامنة من SQLite إلى MySQL');
-    }
-    
-    const resultUp = await responseUp.json();
-    console.log('✅ تمت المزامنة من SQLite إلى MySQL:', resultUp);
-    
-    // 2. ثانياً: مزامنة من MySQL إلى SQLite (للتأكد من التحديثات)
-    console.log('📥 مزامنة من MySQL إلى SQLite...');
+    // 1. Pull: MySQL → SQLite (سحب التحديثات من السيرفر أولاً)
+    console.log('📥 Pull: جلب التحديثات من MySQL...');
     const responseDown = await fetch('/api/sync-monitor/sync', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        direction: 'down' // من MySQL إلى SQLite
-      })
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ direction: 'down' })
     });
     
     if (!responseDown.ok) {
-      console.error('❌ فشلت المزامنة من MySQL إلى SQLite:', responseDown.status);
-      // لا نرمي خطأ هنا لأن المزامنة الأولى نجحت
+      console.error('❌ فشل Pull:', responseDown.status);
+      throw new Error('فشل سحب التحديثات من السيرفر');
+    }
+    const resultDown = await responseDown.json();
+    console.log('✅ تم Pull بنجاح:', resultDown);
+    
+    // 2. Push: SQLite → MySQL (رفع التعديلات المحلية)
+    console.log('📤 Push: رفع التعديلات المحلية إلى MySQL...');
+    const responseUp = await fetch('/api/sync-monitor/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        direction: 'up',
+        safe_mode: true,
+        create_backup: true
+      })
+    });
+    
+    let resultUp = null;
+    if (!responseUp.ok) {
+      console.error('❌ فشل Push:', responseUp.status);
     } else {
-      const resultDown = await responseDown.json();
-      console.log('✅ تمت المزامنة من MySQL إلى SQLite:', resultDown);
+      resultUp = await responseUp.json();
+      console.log('✅ تم Push بنجاح:', resultUp);
     }
     
     // إرسال رسالة للتطبيق
@@ -228,10 +219,7 @@ async function syncDatabase() {
       client.postMessage({
         type: 'SYNC_COMPLETE',
         success: true,
-        data: {
-          up: resultUp,
-          down: resultDown
-        }
+        data: { pull: resultDown, push: resultUp }
       });
     });
     

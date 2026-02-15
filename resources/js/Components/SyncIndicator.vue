@@ -287,7 +287,7 @@ const switchToLocal = () => {
     if (window.switchToLocal) {
         window.switchToLocal();
     } else {
-        const localUrl = window.connectionInfo?.local_url || "http://127.0.0.1:8000/";
+        const localUrl = window.connectionInfo?.local_url || (window.location.origin + '/');
         window.location.href = localUrl;
     }
 };

@@ -147,11 +147,22 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureDatabaseFailover(): void
     {
+        $fallbackConnection = env('DB_FALLBACK_CONNECTION', 'sync_sqlite');
+
+        // الأولوية 0: لا اتصال ريموتلي عند العمل محلياً
+        if (env('LOCAL_NO_REMOTE', false)) {
+            config(['database.default' => $fallbackConnection]);
+            Log::channel(env('LOG_CHANNEL', 'stack'))->info('Database: SQLite only (LOCAL_NO_REMOTE=true)', [
+                'fallback' => $fallbackConnection,
+                'mode' => 'local_no_remote',
+            ]);
+            return;
+        }
+
         if (!env('DB_FAILOVER_ENABLED', false)) {
             return;
         }
 
-        $fallbackConnection = env('DB_FALLBACK_CONNECTION', 'sync_sqlite');
         $primaryConnection = env('DB_PRIMARY_CONNECTION', 'mysql');
         
         // الأولوية 1: في البيئة المحلية (Local)، استخدم SQLite دائماً حتى مع وجود اتصال

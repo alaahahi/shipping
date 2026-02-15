@@ -4,7 +4,7 @@
  */
 
 const DB_NAME = 'ShippingSystemDB';
-const DB_VERSION = 2; // تم تحديث النسخة لإضافة فهارس البحث ومخزن الدفعات
+const DB_VERSION = 3; // إزالة تخزين العقود من الفرونت
 
 class LocalDatabase {
     constructor() {
@@ -45,11 +45,7 @@ class LocalDatabase {
                     carsStore.createIndex('user_id', 'user_id', { unique: false }); // للبحث بالعميل
                 }
 
-                if (!db.objectStoreNames.contains('contracts')) {
-                    const contractsStore = db.createObjectStore('contracts', { keyPath: 'id', autoIncrement: true });
-                    contractsStore.createIndex('car_id', 'car_id', { unique: false });
-                    contractsStore.createIndex('status', 'status', { unique: false });
-                }
+                // تم إلغاء تخزين العقود في الفرونت - العقود تُحفظ عبر API فقط
 
                 if (!db.objectStoreNames.contains('transactions')) {
                     const transactionsStore = db.createObjectStore('transactions', { keyPath: 'id', autoIncrement: true });
@@ -284,7 +280,6 @@ class LocalDatabase {
     getEndpointForStore(storeName) {
         const endpoints = {
             'cars': '/api/cars',
-            'contracts': '/api/contracts',
             'transactions': '/api/transactions'
         };
         return endpoints[storeName] || '/api/sync';

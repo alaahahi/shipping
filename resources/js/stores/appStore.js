@@ -289,7 +289,7 @@ export const useAppStore = defineStore('app', {
         async loadLocalData() {
             try {
                 this.localData.cars = await db.getAll('cars') || [];
-                this.localData.contracts = await db.getAll('contracts') || [];
+                this.localData.contracts = []; // لم نعد نخزن العقود في الفرونت
                 this.localData.transactions = await db.getAll('transactions') || [];
                 
                 console.log('✅ تم تحميل البيانات المحلية');

@@ -6,6 +6,21 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
+/**
+ * مزامنة على نمط Git: Pull أولاً (سحب من السيرفر) ثم Push (رفع التعديلات المحلية)
+ */
+async function runGitStyleSync(axios) {
+    const opts = { timeout: 60000, headers: { 'Accept': 'application/json' } };
+    // 1. Pull: MySQL → SQLite (سحب التحديثات من السيرفر أولاً)
+    await axios.post('/api/sync-monitor/sync', { direction: 'down' }, opts);
+    // 2. Push: SQLite → MySQL (رفع التعديلات المحلية)
+    await axios.post('/api/sync-monitor/sync', {
+        direction: 'up',
+        safe_mode: true,
+        create_backup: true
+    }, opts);
+}
+
 function generateUuid() {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
         return crypto.randomUUID();
@@ -93,36 +108,10 @@ export function useOfflineSync() {
                     console.log('✅ Background Sync registered - سيتم المزامنة تلقائياً');
                 } catch (error) {
                     console.log('⚠️ Background Sync غير مدعوم، استخدام المزامنة العادية');
-                    // Fallback: مزامنة عادية - من SQLite إلى MySQL أولاً (مع Safe Mode)
-                    await axios.post('/api/sync-monitor/sync', {
-                        direction: 'up', // من SQLite إلى MySQL (نقل البيانات المحلية للسيرفر)
-                        safe_mode: true, // Safe Mode: إضافة فقط، لا تحديث
-                        create_backup: true // إنشاء نسخة احتياطية
-                    }, {
-                        timeout: 60000
-                    });
-                    // ثم مزامنة من MySQL إلى SQLite للتأكد من التحديثات
-                    await axios.post('/api/sync-monitor/sync', {
-                        direction: 'down' // من MySQL إلى SQLite
-                    }, {
-                        timeout: 60000
-                    });
+                    await runGitStyleSync(axios);
                 }
             } else {
-                // Fallback: مزامنة عادية - من SQLite إلى MySQL أولاً (مع Safe Mode)
-                await axios.post('/api/sync-monitor/sync', {
-                    direction: 'up', // من SQLite إلى MySQL (نقل البيانات المحلية للسيرفر)
-                    safe_mode: true, // Safe Mode: إضافة فقط، لا تحديث
-                    create_backup: true // إنشاء نسخة احتياطية
-                }, {
-                    timeout: 60000
-                });
-                // ثم مزامنة من MySQL إلى SQLite للتأكد من التحديثات
-                await axios.post('/api/sync-monitor/sync', {
-                    direction: 'down' // من MySQL إلى SQLite
-                }, {
-                    timeout: 60000
-                });
+                await runGitStyleSync(axios);
                 console.log('✅ تمت المزامنة التلقائية بنجاح');
             }
         } catch (error) {

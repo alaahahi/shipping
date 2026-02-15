@@ -35,6 +35,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Cache\FileStore;
 use Illuminate\Filesystem\Filesystem;
 Route::get('/sync-monitor/tables', [SyncMonitorController::class, 'tables'])->name('sync.monitor.tables');
+Route::get('/sync-monitor/tables-comparison', [SyncMonitorController::class, 'tablesComparison'])->name('sync.monitor.tables.comparison');
 Route::get('/sync-monitor/table/{tableName}', [SyncMonitorController::class, 'tableDetails'])->name('sync.monitor.table.details');
 Route::post('/sync-monitor/sync', [SyncMonitorController::class, 'sync'])->name('sync.monitor.sync');
 Route::get('/sync-monitor/sync-progress', [SyncMonitorController::class, 'syncProgress'])->name('sync.monitor.sync.progress');

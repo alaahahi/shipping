@@ -7,8 +7,7 @@ import ResponsiveNavLink from "@/Components/ResponsiveNavLink.vue";
 import { Link } from "@inertiajs/inertia-vue3";
 import { useI18n } from "vue-i18n";
 import DarkModeToggle from '@/Components/DarkToggle.vue';
-import SyncStatusBar from '@/Components/SyncStatusBar.vue';
-import WiFiIcon from '@/Components/WiFiIcon.vue';
+import SyncStatusBadge from '@/Components/SyncStatusBadge.vue';
 import OnlineUsersIndicator from '@/Components/OnlineUsersIndicator.vue';
 
 const showingNavigationDropdown = ref(false);
@@ -22,11 +21,8 @@ const switchLocale = (locale) => {
 
 <template>
   <div>
-    <!-- شريط حالة المزامنة -->
-    <SyncStatusBar />
-    
-    <!-- أيقونة WiFi للتبديل السريع -->
-    <WiFiIcon />
+    <!-- مؤشر حالة المزامنة المختصر -->
+    <SyncStatusBadge />
     
     <div class="min-h-screen bg-gray-100 dark:bg-gray-800">
       <nav class="bg-white border-gray-100 dark:bg-gray-900  print:hidden">

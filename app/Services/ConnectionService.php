@@ -38,7 +38,7 @@ class ConnectionService
      */
     public static function getLocalUrl(): string
     {
-        return env('LOCAL_URL', env('APP_URL', 'http://127.0.0.1:8000'));
+        return rtrim(env('LOCAL_URL', env('APP_URL', config('app.url'))), '/');
     }
 
     /**
