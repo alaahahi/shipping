@@ -440,7 +440,7 @@ function getDownloadUrl(name) {
                         <td
                           className="border dark:border-gray-800 text-center px-1 py-2 "
                         >
-                          {{ index + 1 }}
+                          {{car.id }}
                         </td>
 
                         <td

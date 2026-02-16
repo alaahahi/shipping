@@ -32,13 +32,13 @@ class ConnectionService
     }
 
     /**
-     * الحصول على URL المحلي من .env
+     * الحصول على URL المحلي من APP_URL في .env (وليس قيمة ثابتة)
      *
      * @return string
      */
     public static function getLocalUrl(): string
     {
-        return rtrim(env('LOCAL_URL', env('APP_URL', config('app.url'))), '/');
+        return rtrim(config('app.url'), '/');
     }
 
     /**
