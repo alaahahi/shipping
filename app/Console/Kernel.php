@@ -136,6 +136,14 @@ class Kernel extends ConsoleKernel
                 ->appendOutputTo(storage_path('logs/sync.log'));
         }
 
+        // حذف ملف لوغ Laravel أسبوعياً (عند تشغيل الـ worker)
+        $schedule->call(function () {
+            $logFile = storage_path('logs/laravel.log');
+            if (file_exists($logFile) && is_writable($logFile)) {
+                file_put_contents($logFile, '');
+            }
+        })->weekly()->name('clear-laravel-log');
+
         // ============================================
         // المزامنة على السيرفر (Server/Production)
         // ============================================

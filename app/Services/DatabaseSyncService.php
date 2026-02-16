@@ -1209,18 +1209,6 @@ class DatabaseSyncService
             $lastUpdatedAt = $metadataLastUpdatedAt;
         }
 
-        Log::info("Smart sync reverse metadata", [
-            'table' => $tableName,
-            'local_max_id' => $localMaxId,
-            'metadata_last_synced_id' => $metadataLastSyncedId,
-            'using_last_synced_id' => $lastSyncedId,
-            'local_max_updated_at' => $localMaxUpdatedAt,
-            'metadata_last_updated_at' => $metadataLastUpdatedAt,
-            'using_last_updated_at' => $lastUpdatedAt,
-            'safe_mode' => $safeMode,
-            'force_full_sync' => $forceFullSync
-        ]);
-
         // بناء الاستعلام الذكي - فقط السجلات الجديدة أو المحدثة
         $query = $sqliteDb->table($tableName);
         
