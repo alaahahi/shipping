@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use App\Services\DatabaseSyncService;
 use App\Services\SyncQueueService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class SyncQueue extends Command
 {
@@ -33,6 +34,13 @@ class SyncQueue extends Command
             $this->warn("⚠️  هذا الأمر يعمل فقط في البيئة المحلية.");
             $this->info("💡 على السيرفر: المزامنة تعمل مباشرة بدون sync_queue.");
             return 0; // لا نعتبره خطأ، فقط معلومات
+        }
+
+        // التحقق من وجود جدول sync_queue
+        if (!Schema::hasTable('sync_queue')) {
+            $this->warn("⚠️  جدول sync_queue غير موجود.");
+            $this->info("💡 نفّذ: php artisan migrate --path=database/migrations/2025_12_08_150000_create_sync_queue_table.php");
+            return 0;
         }
 
         // إعادة محاولة السجلات الفاشلة

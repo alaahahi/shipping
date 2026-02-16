@@ -11,11 +11,11 @@ use Exception;
 class DatabaseSyncService
 {
     /**
-     * قائمة الجداول المستثناة من المزامنة
+     * قائمة الجداول المستثناة من المزامنة (الرفع والتنزيل)
      * هذه الجداول لا تحتاج إلى مزامنة لأنها:
      * - جداول نظام Laravel (migrations, jobs, etc.)
      * - جداول أدوات التطوير (telescope, debugbar, etc.)
-     * - جداول مؤقتة أو للـ logging فقط
+     * - جداول مؤقتة أو للـ logging أو المراقبة فقط
      */
     protected array $excludedTables = [
         // جداول Laravel النظامية
@@ -26,7 +26,7 @@ class DatabaseSyncService
         'sessions',
         'cache',
         'cache_locks',
-        'password_resets', // جدول مؤقت لإعادة تعيين كلمات المرور
+        'password_resets',
         
         // جداول Telescope (أدوات التطوير)
         'telescope_entries',
@@ -37,9 +37,14 @@ class DatabaseSyncService
         'sqlite_sequence',
         'sqlite_master',
         
-        // جداول أخرى للـ logging والتطوير
-        'sync_metadata', // جدول metadata المزامنة نفسه
-        'sync_jobs', // جدول مهام المزامنة
+        // جداول المزامنة نفسها
+        'sync_metadata',
+        'sync_jobs',
+        'sync_queue',
+        
+        // جداول المصادقة والترخيص (تسبب تعارضات محلية/سيرفر)
+        'personal_access_tokens',
+        'licenses',
     ];
 
     /**
@@ -67,7 +72,7 @@ class DatabaseSyncService
             $backupFile = $backupDir . '/backup_' . date('Y-m-d_His') . '.json';
             
             // نسخ احتياطي للجداول المهمة فقط
-            $importantTables = ['car_contract', 'car', 'users', 'transactions', 'wallets', 'accounting_journals', 'accounting_ledgers'];
+            $importantTables = ['car_contract', 'car', 'users', 'transactions', 'transactions_contract', 'wallets', 'accounting_journals', 'accounting_ledgers'];
             $backupData = [
                 'created_at' => now()->toDateTimeString(),
                 'database' => config('database.connections.mysql.database'),
@@ -894,11 +899,19 @@ class DatabaseSyncService
     }
 
     /**
-     * التحقق من وجود جدول
+     * التحقق مما إذا كان الاتصال فعلياً SQLite (حتى لو اسمه mysql - عند LOCAL_NO_REMOTE)
      */
-    protected function tableExists($db, string $tableName, bool $isSQLite): bool
+    protected function isConnectionSqlite($db): bool
     {
-        if ($isSQLite) {
+        return ($db->getDriverName() ?? $db->getConfig('driver') ?? '') === 'sqlite';
+    }
+
+    /**
+     * التحقق من وجود جدول - يستخدم السائق الفعلي للاتصال
+     */
+    protected function tableExists($db, string $tableName, bool $isSQLite = null): bool
+    {
+        if ($this->isConnectionSqlite($db)) {
             $result = $db->select("SELECT name FROM sqlite_master WHERE type='table' AND name = ?", [$tableName]);
             return !empty($result);
         }
@@ -912,11 +925,11 @@ class DatabaseSyncService
     }
 
     /**
-     * الحصول على جميع الجداول
+     * الحصول على جميع الجداول - يستخدم السائق الفعلي للاتصال
      */
-    protected function getAllTables($db, bool $isSQLite): array
+    protected function getAllTables($db, bool $isSQLite = null): array
     {
-        if ($isSQLite) {
+        if ($this->isConnectionSqlite($db)) {
             $tables = $db->select("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name");
             return array_map(fn($t) => $t->name, $tables);
         }
@@ -964,12 +977,19 @@ class DatabaseSyncService
 
     /**
      * الحصول على metadata المزامنة
+     * sync_metadata قد لا يكون موجوداً في SQLite المحلي - نتخطى بدون تسجيل أخطاء
      */
     protected function getSyncMetadata(string $tableName, string $direction): array
     {
+        $emptyResult = ['last_synced_id' => 0, 'last_synced_at' => null, 'last_updated_at' => null, 'total_synced' => 0];
+        $db = DB::connection('mysql');
+
         try {
-            // استخدام MySQL كقاعدة بيانات للـ metadata
-            $metadata = DB::connection('mysql')->table('sync_metadata')
+            if (!$this->tableExists($db, 'sync_metadata', null)) {
+                return $emptyResult;
+            }
+
+            $metadata = $db->table('sync_metadata')
                 ->where('table_name', $tableName)
                 ->where('direction', $direction)
                 ->first();
@@ -983,20 +1003,13 @@ class DatabaseSyncService
                 ];
             }
         } catch (Exception $e) {
-            // إذا لم يكن الجدول موجوداً بعد، نعيد القيم الافتراضية
-            Log::debug("Sync metadata table not found or error", [
-                'table' => $tableName,
-                'direction' => $direction,
-                'error' => $e->getMessage()
-            ]);
+            // عدم تسجيل "no such table" - متوقع عند استخدام SQLite دون sync_metadata
+            if (strpos($e->getMessage(), 'no such table') === false) {
+                Log::debug("Sync metadata read", ['table' => $tableName, 'error' => $e->getMessage()]);
+            }
         }
 
-        return [
-            'last_synced_id' => 0,
-            'last_synced_at' => null,
-            'last_updated_at' => null,
-            'total_synced' => 0
-        ];
+        return $emptyResult;
     }
 
     /**
@@ -1004,8 +1017,12 @@ class DatabaseSyncService
      */
     protected function updateSyncMetadata(string $tableName, string $direction, int $lastSyncedId, ?string $lastUpdatedAt, int $syncedCount): void
     {
+        $db = DB::connection('mysql');
+        if (!$this->tableExists($db, 'sync_metadata', null)) {
+            return;
+        }
         try {
-            DB::connection('mysql')->table('sync_metadata')->updateOrInsert(
+            $db->table('sync_metadata')->updateOrInsert(
                 [
                     'table_name' => $tableName,
                     'direction' => $direction
@@ -1019,12 +1036,14 @@ class DatabaseSyncService
                 ]
             );
         } catch (Exception $e) {
-            // إذا لم يكن الجدول موجوداً، نحاول إنشاؤه
-            Log::warning("Failed to update sync metadata", [
-                'table' => $tableName,
-                'direction' => $direction,
-                'error' => $e->getMessage()
-            ]);
+            // عدم تسجيل "no such table" - متوقع عند SQLite المحلي دون sync_metadata
+            if (strpos($e->getMessage(), 'no such table') === false) {
+                Log::warning("Failed to update sync metadata", [
+                    'table' => $tableName,
+                    'direction' => $direction,
+                    'error' => $e->getMessage()
+                ]);
+            }
         }
     }
 
@@ -1675,18 +1694,12 @@ class DatabaseSyncService
     protected function filterExcludedTables(array $tables): array
     {
         return array_filter($tables, function ($tableName) {
-            // تخطي الجداول المستثناة
             if (in_array($tableName, $this->excludedTables)) {
-                Log::debug("Skipping excluded table from sync", ['table' => $tableName]);
                 return false;
             }
-            
-            // تخطي الجداول التي تبدأ بـ telescope_ (للتأكد من تغطية جميع جداول Telescope)
             if (strpos($tableName, 'telescope_') === 0) {
-                Log::debug("Skipping Telescope table from sync", ['table' => $tableName]);
                 return false;
             }
-            
             return true;
         });
     }
@@ -1702,6 +1715,10 @@ class DatabaseSyncService
             'total_synced' => 0,
             'queue_processed' => 0
         ];
+
+        if (!Schema::hasTable('sync_queue')) {
+            return $results;
+        }
 
         try {
             $syncQueueService = app(\App\Services\SyncQueueService::class);

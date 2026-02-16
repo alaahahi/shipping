@@ -141,13 +141,14 @@ class DashboardController extends Controller
     }
     public function totalInfo(Request $request)
     {
-        $owner_id=Auth::user()->owner_id;
-        $this->accounting->loadAccounts($owner_id);
-        $from =  $_GET['from'] ?? Carbon::now()->format('Y-m-d');
-        $to =$_GET['to'] ?? Carbon::now()->format('Y-m-d');
-        $mainBoxId=$this->accounting->mainBox()->wallet->id;
+        try {
+            $owner_id=Auth::user()->owner_id;
+            $this->accounting->loadAccounts($owner_id);
+            $from =  $_GET['from'] ?? Carbon::now()->format('Y-m-d');
+            $to =$_GET['to'] ?? Carbon::now()->format('Y-m-d');
+            $mainBoxId=$this->accounting->mainBox()->wallet->id;
        
-        $transactionIn = (int) Transactions::where('wallet_id', $mainBoxId)
+            $transactionIn = (int) Transactions::where('wallet_id', $mainBoxId)
         ->where('currency', '$')
         ->whereIn('type', ['in', 'inUserBox'])
         ->sum('amount');
@@ -221,8 +222,19 @@ class DashboardController extends Controller
 
         
         ];
-        return response()->json(['data'=>$data]); 
-
+            return response()->json(['data'=>$data]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (str_contains($e->getMessage(), 'no such table')) {
+                return response()->json(['data' => [
+                    'mainAccount' => 0, 'howler' => 0, 'shippingCoc' => 0, 'border' => 0, 'iran' => 0, 'dubai' => 0,
+                    'sumTotal' => 0, 'sumPaid' => 0, 'sumDebit' => 0, 'sumProfit' => 0, 'allCars' => 0,
+                    'purchasesCost' => 0, 'clientPaid' => 0, 'clientDebit' => 0, 'mainBoxDollar' => 0, 'mainBoxDinar' => 0,
+                    'mainBoxDollarNew' => 0, 'transactionInTodayDollar' => 0, 'transactionOutTodayDollar' => 0,
+                    'transactionInTodayDinar' => 0, 'transactionOutTodayDinar' => 0,
+                ]]);
+            }
+            throw $e;
+        }
     }
     public function client(Request $request)
     {

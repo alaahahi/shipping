@@ -11,8 +11,10 @@ import print from "@/Components/icon/print.vue";
 import pay from "@/Components/icon/pay.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
+import imags from "@/Components/icon/imags.vue";
 
 import ModalDelCar from "@/Components/ModalDelCar.vue";
+import ModalContractUploader from "@/Components/ModalContractUploader.vue";
 import ModalEditCars from "@/Components/ModalEditCar_S.vue";
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
@@ -39,6 +41,7 @@ let showModal = ref(false);
 let showModalCar = ref(false);
 let showModalCarSale = ref(false);
 let showModalDelCar = ref(false);
+let showModalContractUploader = ref(false);
 let mainAccount = ref(0);
 let allCars = ref(0);
 function getTodayDate() {
@@ -62,6 +65,7 @@ const car = ref([]);
 
 let resetData = ref(false);
 let createdByUserId = ref('');
+let deletedOnly = ref(false);
 let page = 1;
 let q = props.user;
 const refresh = () => {
@@ -81,6 +85,9 @@ const getResultsCar = async ($state) => {
     };
     if (createdByUserId.value && createdByUserId.value !== '' && createdByUserId.value !== '0') {
       params.user_id = createdByUserId.value;
+    }
+    if (deletedOnly.value) {
+      params.deleted_only = '1';
     }
     const response = await axios.get(`/api/getIndexContractCar`, { params });
 
@@ -150,14 +157,21 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
 function setFilterThisMonth() {
   from.value = getFirstDayOfMonth();
   to.value = getTodayDate();
+  deletedOnly.value = false;
   refresh();
   getcountTotalInfo();
 }
 function setFilterAll() {
   from.value = '';
   to.value = '';
+  deletedOnly.value = false;
   refresh();
   getcountTotalInfo();
+}
+
+function setFilterDeletedOnly() {
+  deletedOnly.value = true;
+  refresh();
 }
 
 function getFirstDayOfYear() {
@@ -168,6 +182,20 @@ function getFirstDayOfYear() {
 function openModalDelCar(v) {
   formData.value = v;
   showModalDelCar.value = true;
+}
+
+let contractUploaderData = ref({});
+function openModalContractUploader(carItem) {
+  contractUploaderData.value = carItem;
+  showModalContractUploader.value = true;
+}
+
+function getImageUrl(name) {
+  return `/public/uploadsResized/${name}`;
+}
+
+function getDownloadUrl(name) {
+  return `/public/uploads/${name}`;
 }
 </script>
 
@@ -184,6 +212,13 @@ function openModalDelCar(v) {
       <h2 class="my-5 dark:text-white text-center">هل متأكد من حذف العقد ؟</h2>
     </template>
   </ModalDelCar>
+
+  <ModalContractUploader
+    :show="showModalContractUploader"
+    :formData="contractUploaderData"
+    @close="showModalContractUploader = false"
+    @refresh="refresh()"
+  />
 
   <AuthenticatedLayout>
     <div class="py-2" v-if="$page.props.auth.user.type_id == 8||$page.props.auth.user.type_id==10">
@@ -269,7 +304,7 @@ function openModalDelCar(v) {
                 </div>
                 <div class="px-4 print:hidden flex flex-col gap-1">
                   <InputLabel value="اختصارات" />
-                  <div class="flex gap-2">
+                  <div class="flex gap-2 flex-wrap">
                     <button
                       type="button"
                       @click="setFilterThisMonth"
@@ -283,6 +318,14 @@ function openModalDelCar(v) {
                       class="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500"
                     >
                       عرض الكل
+                    </button>
+                    <button
+                      v-if="$page.props.auth.user.type_id == 8"
+                      type="button"
+                      @click="setFilterDeletedOnly"
+                      :class="deletedOnly ? 'px-3 py-2 text-sm font-medium rounded text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700' : 'px-3 py-2 text-sm font-medium rounded text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'"
+                    >
+                      العقود المحذوفة فقط
                     </button>
                   </div>
                 </div>
@@ -373,11 +416,12 @@ function openModalDelCar(v) {
                         </th>
                         <th scope="col" class="px-1 py-3 text-base">بتاريخ</th>
                         <th scope="col" class="px-1 py-3 text-base">المنشئ</th>
+                        <th scope="col" class="px-1 py-3 text-base">المرفقات</th>
 
                         <th
                           scope="col"
                           class="px-1 py-3 text-base"
-                          style="width: 150px"
+                          style="width: 180px"
                         >
                           {{ $t("execute") }}
                         </th>
@@ -387,13 +431,10 @@ function openModalDelCar(v) {
                       <tr
                         v-for="(car, index) in car"
                         :key="car.id"
-                        :class="
-                          car.status == 0
-                            ? ''
-                            : car.status == 1
-                            ? 'bg-red-100 dark:bg-red-900'
-                            : 'bg-green-100 dark:bg-green-900'
-                        "
+                        :class="[
+                          deletedOnly ? 'bg-amber-50 dark:bg-amber-900/20' : '',
+                          car.status == 0 ? '' : car.status == 1 ? 'bg-red-100 dark:bg-red-900' : 'bg-green-100 dark:bg-green-900'
+                        ]"
                         class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600"
                       >
                         <td
@@ -498,8 +539,41 @@ function openModalDelCar(v) {
                         </td>
 
                         <td
+                          className="border dark:border-gray-800 text-center px-1 py-2"
+                        >
+                          <div class="flex flex-wrap justify-center gap-1">
+                            <a
+                              v-for="(image, index) in car.contract_images || []"
+                              :key="index"
+                              :href="getDownloadUrl(image.name)"
+                              style="cursor: pointer;"
+                              target="_blank"
+                              class="inline-block"
+                            >
+                              <img
+                                :src="getImageUrl(image.name)"
+                                alt=""
+                                class="rounded"
+                                style="max-width: 50px; max-height: 50px; display: inline;"
+                              />
+                            </a>
+                            <span v-if="!car.contract_images || car.contract_images.length === 0" class="text-gray-400 text-xs">
+                              لا يوجد
+                            </span>
+                          </div>
+                        </td>
+
+                        <td
                           className="border dark:border-gray-800 text-start px-1 py-2"
                         >
+                          <button
+                            tabIndex="1"
+                            class="px-1 py-1 text-white mx-1 bg-purple-600 rounded inline-flex"
+                            @click="openModalContractUploader(car)"
+                            title="مرفقات العقد"
+                          >
+                            <imags />
+                          </button>
                           <Link
                             tabIndex="1"
                             class="px-1 py-1 text-white mx-1 bg-slate-500 rounded inline-flex"
@@ -509,6 +583,7 @@ function openModalDelCar(v) {
                           </Link>
 
                           <button
+                            v-if="$page.props.auth.user && $page.props.auth.user.type_id != 10 && !deletedOnly"
                             tabIndex="1"
                             class="px-1 py-1 text-white mx-1 bg-orange-500 rounded"
                             @click="openModalDelCar(car)"

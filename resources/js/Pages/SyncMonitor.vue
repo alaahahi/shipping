@@ -17,12 +17,12 @@
           </button>
           
           <button
-            v-if="syncStatus.pendingCount > 0 && connectionStatus.online"
             @click="syncAll"
             class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-            :disabled="isSyncing"
+            :disabled="!connectionStatus.online || isSyncing"
+            title="أولاً: سحب البيانات من السيرفر، ثانياً: رفع البيانات المحلية للسيرفر"
           >
-            <span v-if="!isSyncing">✅ مزامنة الكل</span>
+            <span v-if="!isSyncing">🔄 مزامنة الكل</span>
             <span v-else>⏳ جاري المزامنة...</span>
           </button>
 
@@ -61,7 +61,33 @@
             <p class="mt-4 text-gray-600 dark:text-gray-400">جاري تحميل معلومات قاعدة البيانات...</p>
           </div>
 
-          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <template v-else>
+          <!-- مراقبة المزامنة التلقائية -->
+          <div class="mb-4 p-3 rounded-lg bg-gray-100 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600">
+            <div class="flex items-center justify-between gap-4 flex-wrap">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">⏱️ المزامنة التلقائية:</span>
+                <span :class="['text-sm font-semibold', autoSyncStatusFormatted.class]">
+                  {{ autoSyncStatusFormatted.icon }} {{ autoSyncStatusFormatted.text }}
+                </span>
+              </div>
+              <button
+                type="button"
+                :disabled="runningSchedule"
+                class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                @click="triggerScheduleRun"
+              >
+                <span v-if="runningSchedule" class="animate-spin">⏳</span>
+                <span v-else>▶</span>
+                {{ runningSchedule ? 'جاري التشغيل...' : 'تشغيل المهام المجدولة' }}
+              </button>
+            </div>
+            <p v-if="autoSyncStatus.error" class="mt-1 text-xs text-red-600 dark:text-red-400 truncate" :title="autoSyncStatus.error">
+              {{ autoSyncStatus.error }}
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <!-- معلومات قاعدة البيانات الرئيسية -->
             <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
               <h4 class="text-md font-semibold mb-3 text-gray-900 dark:text-gray-100">📊 قاعدة البيانات</h4>
@@ -124,6 +150,7 @@
                   @click="syncAll"
                   :disabled="!connectionStatus.online || isSyncing"
                   class="w-full px-3 py-2 bg-green-600 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50"
+                  title="أولاً: سحب من السيرفر، ثانياً: رفع المحلي"
                 >
                   🔄 مزامنة الكل
                 </button>
@@ -136,117 +163,7 @@
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- تفاصيل الاتصال التقنية -->
-        <div class="mb-6 bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-semibold dark:text-gray-200">🌐 تفاصيل الاتصال التقنية</h3>
-            <span
-              class="px-3 py-1 rounded-full text-sm font-semibold"
-              :class="connectionInfo.isLocal
-                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100'
-                : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100'"
-            >
-              {{ connectionInfo.environmentLabel }}
-            </span>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm dark:text-gray-200">
-            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded">
-              <p class="text-gray-600 dark:text-gray-400 text-xs">المضيف والمنفذ</p>
-              <p class="font-semibold text-sm">
-                {{ connectionInfo.host || 'غير محدد' }}<span v-if="connectionInfo.port">:{{ connectionInfo.port }}</span>
-              </p>
-            </div>
-
-            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded">
-              <p class="text-gray-600 dark:text-gray-400 text-xs">نوع الشبكة</p>
-              <p class="font-semibold text-sm">{{ connectionInfo.networkType || 'غير محدد' }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">سرعة: {{ connectionInfo.effectiveType || 'غير محدد' }}</p>
-            </div>
-
-            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded">
-              <p class="text-gray-600 dark:text-gray-400 text-xs">الأداء التقني</p>
-              <p class="font-semibold text-sm">
-                {{ connectionInfo.downlink ? connectionInfo.downlink + ' Mbps' : 'غير محدد' }}
-              </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">RTT: {{ connectionInfo.rtt ? connectionInfo.rtt + 'ms' : 'غير محدد' }}</p>
-            </div>
-
-            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded">
-              <p class="text-gray-600 dark:text-gray-400 text-xs">عنوان API</p>
-              <p class="font-semibold text-xs truncate" :title="connectionInfo.apiBaseUrl">
-                {{ connectionInfo.apiBaseUrl || 'غير محدد' }}
-              </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                {{ connectionInfo.protocol || 'غير محدد' }} • {{ connectionInfo.secure ? '🔒 آمن' : '⚠️ غير آمن' }}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- تفاصيل الاتصال الحالية -->
-        <div class="mb-6 bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
-          <div class="flex flex-wrap justify-between items-start gap-4">
-            <div>
-              <h3 class="text-lg font-semibold dark:text-gray-200">ℹ️ تفاصيل الاتصال الحالية</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                {{ connectionInfo.tip }}
-              </p>
-            </div>
-            <span
-              class="px-3 py-1 rounded-full text-sm font-semibold"
-              :class="connectionInfo.isLocal
-                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100'
-                : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100'"
-            >
-              {{ connectionInfo.environmentLabel }}
-            </span>
-          </div>
-
-          <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm dark:text-gray-200">
-            <div>
-              <p class="text-gray-500 dark:text-gray-400">المضيف / المنفذ</p>
-              <p class="font-semibold">
-                {{ connectionInfo.host }}<span v-if="connectionInfo.port">:{{ connectionInfo.port }}</span>
-              </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                {{ connectionInfo.protocol }} • {{ connectionInfo.secure ? '🔒 اتصال آمن' : '⚠️ اتصال غير مشفر' }}
-              </p>
-            </div>
-            <div>
-              <p class="text-gray-500 dark:text-gray-400">نوع الشبكة</p>
-              <p class="font-semibold">{{ connectionInfo.networkType }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                Effective: {{ connectionInfo.effectiveType }}
-              </p>
-            </div>
-            <div>
-              <p class="text-gray-500 dark:text-gray-400">سرعة تقريبية</p>
-              <p class="font-semibold">
-                {{ connectionInfo.downlink ? connectionInfo.downlink + ' Mbps' : 'غير متاح' }}
-              </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                RTT: {{ connectionInfo.rtt ? connectionInfo.rtt + ' ms' : 'غير متاح' }}
-              </p>
-            </div>
-            <div>
-              <p class="text-gray-500 dark:text-gray-400">عنوان API / المزامنة</p>
-              <p class="font-semibold truncate" :title="connectionInfo.apiBaseUrl">
-                {{ connectionInfo.apiBaseUrl }}
-              </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                آخر تحديث: {{ connectionInfo.lastUpdated || '—' }}
-              </p>
-            </div>
-          </div>
-
-          <div class="mt-4 text-xs text-gray-600 dark:text-gray-400">
-            <span class="font-mono bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded inline-block break-all w-full md:w-auto">
-              {{ connectionInfo.origin }}
-            </span>
-          </div>
+          </template>
         </div>
 
         <!-- رسالة Offline -->
@@ -343,7 +260,7 @@
               </button>
             </div>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              هذه الجداول موجودة في MySQL ولا توجد في SQLite المحلي - يمكن مزامنتها (Pull) لنقلها
+              هذه الجداول موجودة في MySQL ولا توجد في SQLite المحلي
             </p>
           </div>
           <div class="overflow-x-auto">
@@ -373,32 +290,10 @@
           </div>
         </div>
 
-        <!-- إدارة العمليات والمايجريشنز -->
+        <!-- إدارة المايجريشنز -->
         <div class="mb-6 bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
           <div class="border-b border-gray-200 dark:border-gray-700">
             <div class="flex">
-              <button
-                @click="activeTab = 'operations'"
-                :class="[
-                  'px-6 py-3 text-sm font-medium border-b-2 transition-colors',
-                  activeTab === 'operations'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                ]"
-              >
-                📋 العمليات
-              </button>
-              <button
-                @click="activeTab = 'system'"
-                :class="[
-                  'px-6 py-3 text-sm font-medium border-b-2 transition-colors',
-                  activeTab === 'system'
-                    ? 'border-purple-500 text-purple-600 dark:text-purple-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                ]"
-              >
-                🔧 النظام
-              </button>
               <button
                 @click="activeTab = 'migrations'"
                 :class="[
@@ -410,103 +305,6 @@
               >
                 📦 المايجريشنز
               </button>
-            </div>
-          </div>
-
-          <!-- تبويب العمليات -->
-          <div v-if="activeTab === 'operations'" class="p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-semibold dark:text-gray-200">
-                📋 قائمة العمليات ({{ queueItems.length }})
-              </h3>
-
-              <!-- فلاتر -->
-              <div class="flex gap-2">
-                <select
-                  v-model="filter"
-                  class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-gray-200"
-                >
-                  <option value="all">الكل</option>
-                  <option value="pending">في الانتظار</option>
-                  <option value="synced">تمت المزامنة</option>
-                  <option value="failed">فشلت</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- جدول العمليات -->
-            <div class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      #
-                    </th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      العملية
-                    </th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      التاريخ
-                    </th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      الحالة
-                    </th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      الإجراءات
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  <tr v-for="(item, index) in filteredItems" :key="item.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
-                      {{ index + 1 }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="text-sm font-medium text-gray-900 dark:text-gray-200">
-                        {{ item.operation }}
-                      </div>
-                      <div class="text-sm text-gray-500 dark:text-gray-400">
-                        {{ item.details || 'بدون تفاصيل' }}
-                      </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {{ formatDate(item.created_at) }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <span
-                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                        :class="{
-                          'bg-yellow-100 text-yellow-800': item.status === 'pending',
-                          'bg-green-100 text-green-800': item.status === 'synced',
-                          'bg-red-100 text-red-800': item.status === 'failed'
-                        }"
-                      >
-                        {{ getStatusText(item.status) }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <button
-                        v-if="item.status === 'pending' && connectionStatus.online"
-                        @click="retryItem(item)"
-                        class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                      >
-                        إعادة المحاولة
-                      </button>
-                      <button
-                        @click="deleteItem(item)"
-                        class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                      >
-                        حذف
-                      </button>
-                    </td>
-                  </tr>
-                  <tr v-if="filteredItems.length === 0">
-                    <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                      لا توجد عمليات
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
           </div>
 
@@ -689,301 +487,6 @@
             </div>
           </div>
 
-          <!-- تبويب النظام -->
-          <div v-if="activeTab === 'system'" class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <!-- معلومات النظام -->
-              <div class="bg-white dark:bg-gray-700 p-6 rounded-lg">
-                <h4 class="text-lg font-semibold mb-4 dark:text-gray-200">🖥️ معلومات النظام</h4>
-                <div class="space-y-3">
-                  <div class="flex justify-between">
-                    <span class="text-gray-600 dark:text-gray-400">إصدار PHP:</span>
-                    <span class="font-mono text-sm">{{ systemInfo.php_version || 'غير معروف' }}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-gray-600 dark:text-gray-400">إصدار Laravel:</span>
-                    <span class="font-mono text-sm">{{ systemInfo.laravel_version || 'غير معروف' }}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-gray-600 dark:text-gray-400">قاعدة البيانات:</span>
-                    <span class="font-mono text-sm">{{ systemInfo.database || 'غير معروف' }}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-gray-600 dark:text-gray-400">مساحة التخزين:</span>
-                    <span class="font-mono text-sm">{{ systemInfo.storage_used || 'غير معروف' }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- أدوات النظام -->
-              <div class="bg-white dark:bg-gray-700 p-6 rounded-lg">
-                <h4 class="text-lg font-semibold mb-4 dark:text-gray-200">🔧 أدوات النظام</h4>
-                <div class="space-y-3">
-                  <button
-                    @click="clearCache"
-                    :disabled="cacheClearing"
-                    class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    <span v-if="!cacheClearing">🧹 مسح الـ Cache</span>
-                    <span v-else>⏳ جاري المسح...</span>
-                  </button>
-
-                  <button
-                    @click="optimizeDatabase"
-                    :disabled="optimizing"
-                    class="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
-                  >
-                    <span v-if="!optimizing">⚡ تحسين قاعدة البيانات</span>
-                    <span v-else>⏳ جاري التحسين...</span>
-                  </button>
-
-                  <button
-                    @click="generateBackup"
-                    :disabled="backingUp"
-                    class="w-full px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:opacity-50"
-                  >
-                    <span v-if="!backingUp">💾 إنشاء نسخة احتياطية</span>
-                    <span v-else>⏳ جاري النسخ...</span>
-                  </button>
-
-                  <button
-                    @click="checkSystemHealth"
-                    :disabled="checkingHealth"
-                    class="w-full px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
-                  >
-                    <span v-if="!checkingHealth">🏥 فحص صحة النظام</span>
-                    <span v-else>⏳ جاري الفحص...</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- سجل العمليات -->
-            <div class="mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg">
-              <div class="p-4 border-b border-gray-200 dark:border-gray-600">
-                <h4 class="text-lg font-semibold dark:text-gray-200">📋 سجل عمليات النظام</h4>
-              </div>
-              <div class="p-4 max-h-64 overflow-y-auto">
-                <div v-if="systemLogs.length === 0" class="text-center text-gray-500 dark:text-gray-400 py-8">
-                  لا توجد عمليات نظام بعد
-                </div>
-                <div v-else class="space-y-2">
-                  <div
-                    v-for="(log, index) in systemLogs"
-                    :key="index"
-                    class="flex items-start space-x-3 text-sm"
-                  >
-                    <span
-                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                      :class="{
-                        'bg-blue-100 text-blue-800': log.type === 'info',
-                        'bg-green-100 text-green-800': log.type === 'success',
-                        'bg-yellow-100 text-yellow-800': log.type === 'warning',
-                        'bg-red-100 text-red-800': log.type === 'error'
-                      }"
-                    >
-                      {{ getLogIcon(log.type) }}
-                    </span>
-                    <div class="flex-1">
-                      <p class="text-gray-900 dark:text-gray-200">{{ log.message }}</p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(log.timestamp) }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- قائمة الجداول المزامنة -->
-        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
-          <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-            <div class="flex justify-between items-center">
-              <h3 class="text-lg font-semibold dark:text-gray-200">
-                📋 قائمة العمليات ({{ queueItems.length }})
-              </h3>
-              
-              <!-- فلاتر -->
-              <div class="flex gap-2">
-                <select 
-                  v-model="filter"
-                  class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-gray-200"
-                >
-                  <option value="all">الكل</option>
-                  <option value="pending">في الانتظار</option>
-                  <option value="synced">تمت المزامنة</option>
-                  <option value="failed">فشلت</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- جدول العمليات -->
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead class="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    #
-                  </th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    النوع
-                  </th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    العملية
-                  </th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    البيانات
-                  </th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    المحاولات
-                  </th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    الوقت
-                  </th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    الحالة
-                  </th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    الإجراءات
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                <tr v-if="filteredItems.length === 0">
-                  <td colspan="8" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                    <div class="text-5xl mb-2">📭</div>
-                    <p class="text-lg">لا توجد عمليات {{ filterText }}</p>
-                  </td>
-                </tr>
-                
-                <tr v-for="(item, index) in filteredItems" :key="item.id"
-                    class="hover:bg-gray-50 dark:hover:bg-gray-700"
-                    :class="{
-                      'bg-yellow-50 dark:bg-yellow-900': !item.synced && item.retries < 3,
-                      'bg-red-50 dark:bg-red-900': item.retries >= 3,
-                      'bg-green-50 dark:bg-green-900': item.synced
-                    }">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-gray-300">
-                    {{ index + 1 }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300">
-                    <span class="px-2 py-1 text-xs font-semibold rounded-full"
-                          :class="getStoreTypeClass(item.storeName)">
-                      {{ getStoreTypeName(item.storeName) }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300">
-                    <span class="px-2 py-1 text-xs font-semibold rounded-full"
-                          :class="getActionClass(item.action)">
-                      {{ getActionName(item.action) }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 dark:text-gray-300">
-                    <button 
-                      @click="showDataDetails(item)"
-                      class="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-sm underline"
-                    >
-                      عرض التفاصيل
-                    </button>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-gray-300">
-                    <div class="flex items-center gap-1">
-                      <span>{{ item.retries || 0 }}</span>
-                      <span class="text-xs text-gray-500">/ 3</span>
-                      <div v-if="item.retries >= 3" class="text-red-600 text-lg">⚠️</div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-gray-300">
-                    {{ formatTime(item.timestamp) }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span v-if="item.synced" class="flex items-center text-green-600 dark:text-green-400">
-                      <svg class="w-5 h-5 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                      </svg>
-                      تمت المزامنة
-                    </span>
-                    <span v-else-if="item.retries >= 3" class="flex items-center text-red-600 dark:text-red-400">
-                      <svg class="w-5 h-5 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                      </svg>
-                      فشلت
-                    </span>
-                    <span v-else class="flex items-center text-yellow-600 dark:text-yellow-400">
-                      <svg class="w-5 h-5 ml-1 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      في الانتظار
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div class="flex gap-2">
-                      <!-- إعادة المحاولة -->
-                      <button
-                        v-if="!item.synced && connectionStatus.online"
-                        @click="retryItem(item)"
-                        class="text-green-600 hover:text-green-900 dark:text-green-400"
-                        :disabled="retryingItems.has(item.id)"
-                        title="إعادة المحاولة"
-                      >
-                        <svg class="w-5 h-5" :class="{ 'animate-spin': retryingItems.has(item.id) }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                        </svg>
-                      </button>
-                      
-                      <!-- حذف -->
-                      <button
-                        @click="deleteItem(item)"
-                        class="text-red-600 hover:text-red-900 dark:text-red-400"
-                        title="حذف"
-                      >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                      </button>
-
-                      <!-- عرض الخطأ -->
-                      <button
-                        v-if="item.error"
-                        @click="showError(item)"
-                        class="text-orange-600 hover:text-orange-900 dark:text-orange-400"
-                        title="عرض الخطأ"
-                      >
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Pagination -->
-          <div v-if="queueItems.length > itemsPerPage" class="px-6 py-4 bg-gray-50 dark:bg-gray-700 flex justify-between items-center">
-            <div class="text-sm text-gray-700 dark:text-gray-300">
-              عرض {{ (currentPage - 1) * itemsPerPage + 1 }} إلى {{ Math.min(currentPage * itemsPerPage, filteredItems.length) }} من {{ filteredItems.length }}
-            </div>
-            <div class="flex gap-2">
-              <button
-                @click="currentPage--"
-                :disabled="currentPage === 1"
-                class="px-3 py-1 border rounded disabled:opacity-50 dark:text-gray-200 dark:border-gray-600"
-              >
-                السابق
-              </button>
-              <button
-                @click="currentPage++"
-                :disabled="currentPage >= totalPages"
-                class="px-3 py-1 border rounded disabled:opacity-50 dark:text-gray-200 dark:border-gray-600"
-              >
-                التالي
-              </button>
-            </div>
-          </div>
         </div>
 
         <!-- معلومات IndexedDB -->
@@ -1001,342 +504,6 @@
             <div class="border dark:border-gray-700 rounded p-4">
               <p class="text-sm text-gray-600 dark:text-gray-400">المعاملات المحفوظة</p>
               <p class="text-2xl font-bold dark:text-gray-200">{{ localDataCounts.transactions }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- الجداول المزامنة -->
-        <div class="mt-6 bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
-          <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-            <div class="flex justify-between items-center flex-wrap gap-4">
-              <h3 class="text-lg font-semibold dark:text-gray-200">
-                📊 الجداول المزامنة ({{ syncedTables.length }})
-              </h3>
-              <div class="flex gap-2 items-center flex-wrap">
-                <select
-                  v-model="selectedDatabase"
-                  @change="loadSyncedTables"
-                  class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-gray-200 text-sm"
-                >
-                  <option value="auto">🔄 تلقائي (حسب الاتصال الحالي)</option>
-                  <option value="mysql">☁️ MySQL سيرفر</option>
-                  <option value="sync_sqlite">🖥️ SQLite محلي</option>
-                </select>
-                <span
-                  class="px-3 py-1 rounded-full text-sm font-semibold"
-                  :class="currentViewingConnection === 'sync_sqlite'
-                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100'
-                    : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100'"
-                >
-                  {{ currentViewingConnection === 'sync_sqlite' ? '🖥️ SQLite محلي' : '☁️ MySQL سيرفر' }}
-                </span>
-                <button
-                  @click="loadSyncedTables"
-                  class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-                  :disabled="loadingTables"
-                >
-                  <span v-if="!loadingTables">🔄 تحديث</span>
-                  <span v-else>⏳ جاري...</span>
-                </button>
-                <button
-                  @click="startSync"
-                  class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
-                  :disabled="syncing"
-                >
-                  <span v-if="!syncing">🔄 مزامنة ثنائية الاتجاه</span>
-                  <span v-else>⏳ جاري المزامنة...</span>
-                </button>
-
-                <!-- أزرار اختيار اتجاه المزامنة -->
-            <button
-              @click="syncDirection('up')"
-              class="px-3 py-2 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 ml-2"
-              :disabled="isSyncing"
-              title="نقل البيانات الأساسية من SQLite المحلي إلى MySQL السيرفر"
-            >
-              <span v-if="!isSyncing">📤 الجداول الأساسية ↑</span>
-              <span v-else>⏳ جاري...</span>
-            </button>
-
-            <button
-              @click="syncDirection('down')"
-              class="px-3 py-2 bg-purple-500 text-white text-sm rounded hover:bg-purple-600 ml-2"
-              :disabled="isSyncing"
-              title="تحديث البيانات الأساسية من MySQL السيرفر إلى SQLite المحلي"
-            >
-              <span v-if="!isSyncing">📥 الجداول الأساسية ↓</span>
-              <span v-else>⏳ جاري...</span>
-            </button>
-
-            <button
-              @click="syncAllTables('up')"
-              class="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 ml-2"
-              :disabled="isSyncing"
-              title="نقل جميع الجداول من SQLite المحلي إلى MySQL السيرفر"
-            >
-              <span v-if="!isSyncing">🔄 الكل ↑</span>
-              <span v-else>⏳ جاري...</span>
-            </button>
-
-            <button
-              @click="syncAllTables('down')"
-              class="px-3 py-2 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 ml-2"
-              :disabled="isSyncing"
-              title="تحديث جميع الجداول من MySQL السيرفر إلى SQLite المحلي"
-            >
-              <span v-if="!isSyncing">🔄 الكل ↓</span>
-              <span v-else>⏳ جاري...</span>
-            </button>
-
-            <button
-              @click="syncSelectedTables"
-              class="px-3 py-2 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 ml-2"
-              :disabled="isSyncing"
-              title="استعادة جداول محددة (سيارات + صور + دفعات + محافظ + مستخدمين)"
-            >
-              <span v-if="!isSyncing">🚗 مختارة ↑</span>
-              <span v-else>⏳ جاري...</span>
-            </button>
-
-            <button
-              @click="syncCheckedTables"
-              class="px-3 py-2 bg-teal-600 text-white text-sm rounded hover:bg-teal-700 ml-2"
-              :disabled="isSyncing || checkedTables.length === 0"
-              title="استعادة الجداول المحددة من القائمة أدناه"
-            >
-              <span v-if="!isSyncing">✅ المحددة ↑</span>
-              <span v-else>⏳ جاري...</span>
-            </button>
-
-            <button
-              @click="syncVisibleTables"
-              class="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 ml-2"
-              :disabled="isSyncing"
-              title="مزامنة جميع الجداول المعروضة حالياً (38 جدول)"
-            >
-              <span v-if="!isSyncing">📋 المعروضة ↑</span>
-              <span v-else>⏳ جاري...</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="loadingTables" class="p-8 text-center">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p class="mt-2 text-gray-600 dark:text-gray-400">جاري تحميل الجداول...</p>
-          </div>
-
-          <div v-else-if="syncedTables.length === 0" class="p-8 text-center">
-            <div class="text-5xl mb-2">📭</div>
-            <p class="text-gray-600 dark:text-gray-400">لا توجد جداول متاحة</p>
-          </div>
-
-          <div v-else class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead class="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    اسم الجدول
-                  </th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    عدد السجلات
-                  </th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    الاتصال
-                  </th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    الإجراءات
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                <tr
-                  v-for="table in syncedTables"
-                  :key="table.name"
-                  class="hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="text-sm font-medium dark:text-gray-200">{{ table.name }}</span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="text-sm dark:text-gray-300">{{ table.count.toLocaleString() }}</span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span
-                      class="px-2 py-1 text-xs font-semibold rounded-full"
-                      :class="table.connection === 'sync_sqlite'
-                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                        : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'"
-                    >
-                      {{ table.connection === 'sync_sqlite' ? 'SQLite' : 'MySQL' }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div class="flex gap-2 items-center">
-                      <button
-                        @click="viewTableDetails(table.name, table.connection)"
-                        class="text-blue-600 hover:text-blue-900 dark:text-blue-400"
-                      >
-                        عرض التفاصيل
-                      </button>
-
-                      <!-- قائمة منسدلة للإجراءات - SQLite فقط -->
-                      <div v-if="table.connection === 'sync_sqlite'" class="relative inline-block">
-                        <button
-                          @click="toggleTableMenu(table.name)"
-                          class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-                          :class="{ 'bg-gray-100 dark:bg-gray-700': activeMenu === table.name }"
-                        >
-                          ⋮
-                        </button>
-
-                        <!-- القائمة المنسدلة -->
-                        <div
-                          v-if="activeMenu === table.name"
-                          class="absolute right-0 mt-1 w-36 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700"
-                          @click.stop
-                        >
-                          <button
-                            @click="syncSingleTable(table.name); activeMenu = null"
-                            class="block w-full text-left px-3 py-2 text-sm text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900"
-                            :disabled="syncingTable === table.name"
-                          >
-                            <span v-if="syncingTable === table.name">⏳ جاري...</span>
-                            <span v-else>📤 مزامنة</span>
-                          </button>
-                          <button
-                            @click="truncateTable(table.name); activeMenu = null"
-                            class="block w-full text-left px-3 py-2 text-sm text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900"
-                          :disabled="truncatingTable === table.name"
-                        >
-                            <span v-if="truncatingTable === table.name">⏳ جاري...</span>
-                            <span v-else>🗑️ تفريغ</span>
-                        </button>
-                        <button
-                            @click="deleteTable(table.name); activeMenu = null"
-                            class="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900"
-                          :disabled="deletingTable === table.name"
-                        >
-                            <span v-if="deletingTable === table.name">⏳ جاري...</span>
-                            <span v-else>❌ حذف</span>
-                        </button>
-                        </div>
-                      </div>
-
-                      <!-- خلفية لإغلاق القائمة -->
-                      <div
-                        v-if="activeMenu === table.name"
-                        @click="activeMenu = null"
-                        class="fixed inset-0 z-5"
-                      ></div>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- جدول Sync Metadata -->
-        <div class="mt-6 bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
-          <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-            <div class="flex justify-between items-center">
-              <h3 class="text-lg font-semibold dark:text-gray-200">
-                📊 بيانات المزامنة الذكية (sync_metadata)
-              </h3>
-              <button
-                @click="loadSyncMetadata"
-                class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-                :disabled="loadingMetadata"
-              >
-                <span v-if="!loadingMetadata">🔄 تحديث</span>
-                <span v-else>⏳ جاري...</span>
-              </button>
-            </div>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
-              يعرض آخر ID و updated_at المزامن لكل جدول واتجاه المزامنة
-            </p>
-          </div>
-
-          <div v-if="loadingMetadata" class="p-8 text-center">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p class="mt-2 text-gray-600 dark:text-gray-400">جاري تحميل بيانات المزامنة...</p>
-          </div>
-
-          <div v-else-if="syncMetadata.error" class="p-4 bg-red-50 dark:bg-red-900 border-l-4 border-red-500">
-            <p class="text-red-800 dark:text-red-200">{{ syncMetadata.error }}</p>
-          </div>
-
-          <div v-else-if="syncMetadata.data.length === 0" class="p-8 text-center">
-            <div class="text-5xl mb-2">📋</div>
-            <p class="text-gray-600 dark:text-gray-400">لا توجد بيانات مزامنة</p>
-            <p class="text-xs mt-2 text-gray-500">قم بتشغيل المزامنة أولاً لبدء تتبع البيانات</p>
-          </div>
-
-          <div v-else>
-            <!-- إحصائيات -->
-            <div v-if="syncMetadata.stats" class="p-4 bg-blue-50 dark:bg-blue-900 border-b border-gray-200 dark:border-gray-700">
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                <div>
-                  <p class="text-2xl font-bold dark:text-gray-200">{{ syncMetadata.stats.total_tables }}</p>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">عدد الجداول</p>
-                </div>
-                <div>
-                  <p class="text-2xl font-bold dark:text-gray-200">{{ syncMetadata.stats.total_records }}</p>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">عدد السجلات المزامنة</p>
-                </div>
-                <div>
-                  <p class="text-2xl font-bold dark:text-gray-200">{{ syncMetadata.stats.total_synced_records?.toLocaleString() || 0 }}</p>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">إجمالي السجلات المزامنة</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">اسم الجدول</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">الاتجاه</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">آخر ID مزامن</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">آخر updated_at</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">آخر مزامنة</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">إجمالي المزامن</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">آخر تحديث</th>
-                  </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  <tr v-for="item in syncMetadata.data" :key="`${item.table_name}-${item.direction}`" 
-                      class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium dark:text-gray-200">
-                      {{ item.table_name }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <span class="px-2 py-1 text-xs font-semibold rounded-full"
-                            :class="item.direction === 'down' 
-                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                              : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'">
-                        {{ item.direction_label }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-gray-300">
-                      {{ item.last_synced_id?.toLocaleString() || 0 }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-gray-300">
-                      {{ item.last_updated_at || '-' }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-gray-300">
-                      {{ item.last_synced_at || '-' }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-gray-300">
-                      {{ item.total_synced?.toLocaleString() || 0 }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-gray-300">
-                      {{ item.updated_at || '-' }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
           </div>
         </div>
@@ -1418,37 +585,6 @@
                 </tr>
               </tbody>
             </table>
-          </div>
-        </div>
-
-        <!-- أدوات المطور -->
-        <div class="mt-6 bg-gray-50 dark:bg-gray-900 shadow-sm rounded-lg p-6">
-          <h3 class="text-lg font-semibold mb-4 dark:text-gray-200">🛠️ أدوات المطور</h3>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <button
-              @click="testOfflineMode"
-              class="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600"
-            >
-              🧪 اختبار Offline
-            </button>
-            <button
-              @click="clearCache"
-              class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
-            >
-              🗑️ مسح Cache
-            </button>
-            <button
-              @click="exportLogs"
-              class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
-            >
-              📥 تصدير Logs
-            </button>
-            <button
-              @click="showDatabaseInfo"
-              class="px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600"
-            >
-              📊 معلومات DB
-            </button>
           </div>
         </div>
 
@@ -1767,7 +903,7 @@ const loadingBackups = ref(false);
 const restoringBackup = ref(false);
 
 // تبويبات النظام
-const activeTab = ref('operations');
+const activeTab = ref('migrations');
 
 // Database Migrations
 const migrations = ref([]);
@@ -1792,6 +928,8 @@ const systemLogs = ref([]);
 // معلومات قاعدة البيانات
 const databaseInfo = ref({});
 const loadingDatabaseInfo = ref(false);
+const autoSyncStatus = ref({ ok: null, last_run: null, error: null, pull_synced: 0, push_synced: 0 });
+const runningSchedule = ref(false);
 const showAllTables = ref(false);
 const truncatingTable = ref(null);
 const syncingTable = ref(null);
@@ -1921,6 +1059,7 @@ const refreshData = async () => {
     await loadDatabaseInfo();
     await loadBackups();
     await loadSyncMetadata();
+    await loadAutoSyncStatus();
     
     toast.success('تم تحديث البيانات', { timeout: 2000 });
   } catch (error) {
@@ -1931,6 +1070,7 @@ const refreshData = async () => {
   }
 };
 
+// مزامنة الكل: أولاً Pull (سحب من السيرفر) ثم Push (رفع المحلي للسيرفر)
 const syncAll = async () => {
   if (!connectionStatus.value.online) {
     toast.warning('لا يمكن المزامنة - غير متصل بالإنترنت');
@@ -1943,21 +1083,49 @@ const syncAll = async () => {
   try {
     toast.info('🔄 بدء المزامنة...', { timeout: 3000 });
     
-    if (window.$api) {
-      await window.$api.syncNow();
+    // 1. Pull أولاً: سحب البيانات والجداول الناقصة من السيرفر
+    toast.info('📥 جلب البيانات من السيرفر...', { timeout: 3000 });
+    const responseDown = await axios.post('/api/sync-monitor/sync', {
+      direction: 'down',
+      tables: null,
+      force_full_sync: false
+    }, { withCredentials: true });
+    
+    let downSynced = 0;
+    if (responseDown.data.success) {
+      downSynced = responseDown.data.results?.total_synced ?? 0;
       syncStatus.value.lastSync = Date.now();
+    } else {
+      toast.warning('تحذير: فشل السحب - ' + (responseDown.data.error || ''));
     }
     
-    if (window.$db) {
-      await window.$db.processSyncQueue();
+    // 2. Push ثانياً: رفع أي بيانات محلية غير موجودة في السيرفر
+    toast.info('📤 رفع البيانات المحلية للسيرفر...', { timeout: 3000 });
+    const responseUp = await axios.post('/api/sync-monitor/sync', {
+      direction: 'up',
+      tables: null,
+      safe_mode: true,
+      create_backup: true,
+      force_full_sync: false
+    }, { withCredentials: true });
+    
+    let upSynced = 0;
+    if (responseUp.data.success) {
+      upSynced = responseUp.data.results?.total_synced ?? 0;
+    } else {
+      toast.warning('تحذير: فشل الرفع - ' + (responseUp.data.error || ''));
     }
     
-    await refreshData();
+    await loadSyncedTables();
+    await loadDatabaseInfo();
     
-    toast.success('✅ تمت المزامنة بنجاح!', { timeout: 3000 });
+    let message = '✅ تمت المزامنة بنجاح!\n';
+    message += `📥 سحب من السيرفر: ${downSynced} سجل\n`;
+    message += `📤 رفع للسيرفر: ${upSynced} سجل`;
+    toast.success(message, { timeout: 4000 });
   } catch (error) {
     console.error('فشلت المزامنة:', error);
-    toast.error('❌ فشلت المزامنة: ' + error.message);
+    toast.error('❌ فشلت المزامنة: ' + (error.response?.data?.error || error.message));
   } finally {
     isSyncing.value = false;
     connectionStatus.value.syncing = false;
@@ -3108,6 +2276,7 @@ const loadDatabaseInfo = async () => {
     };
 
     addSystemLog('info', 'تم تحديث معلومات قاعدة البيانات');
+    await loadAutoSyncStatus();
 
   } catch (error) {
     console.error('فشل تحميل معلومات قاعدة البيانات:', error);
@@ -3126,6 +2295,54 @@ const loadDatabaseInfo = async () => {
     loadingDatabaseInfo.value = false;
   }
 };
+
+// تحميل حالة المزامنة التلقائية
+const loadAutoSyncStatus = async () => {
+  try {
+    const response = await axios.get('/api/sync-monitor/auto-sync-status', { withCredentials: true });
+    autoSyncStatus.value = response.data;
+  } catch (e) {
+    autoSyncStatus.value = { ok: null, last_run: null, error: 'فشل جلب الحالة' };
+  }
+};
+
+// تشغيل المهام المجدولة فوراً (schedule:run)
+const triggerScheduleRun = async () => {
+  if (runningSchedule.value) return;
+  runningSchedule.value = true;
+  try {
+    const response = await axios.post('/api/sync-monitor/run-schedule', {}, { withCredentials: true });
+    if (response.data.success) {
+      toast.success('تم تشغيل المهام المجدولة');
+      await loadAutoSyncStatus();
+    } else {
+      toast.warning(response.data.message || 'انتهى مع أخطاء');
+    }
+  } catch (e) {
+    toast.error(e.response?.data?.error || e.message || 'فشل تشغيل المهام المجدولة');
+  } finally {
+    runningSchedule.value = false;
+  }
+};
+
+const autoSyncStatusFormatted = computed(() => {
+  const s = autoSyncStatus.value;
+  if (s.running) return { text: 'جاري المزامنة...', class: 'text-blue-600 dark:text-blue-400', icon: '🔄' };
+  if (s.ok === null && !s.last_run && !s.error) return { text: 'لم تُشغّل بعد', class: 'text-amber-600', icon: '⚠️' };
+  if (s.ok === true) {
+    const last = s.last_run ? new Date(s.last_run) : null;
+    let ago = '—';
+    if (last) {
+      const diff = Date.now() - last;
+      const m = Math.floor(diff / 60000);
+      const h = Math.floor(diff / 3600000);
+      ago = m < 60 ? `منذ ${m} دقيقة` : `منذ ${h} ساعة`;
+    }
+    const extra = (s.pull_synced || s.push_synced) ? ` (سحب: ${s.pull_synced || 0} | رفع: ${s.push_synced || 0})` : '';
+    return { text: `تعمل بشكل جيد | آخر تشغيل: ${ago}${extra}`, class: 'text-green-600', icon: '✅' };
+  }
+  return { text: s.error || 'فشل', class: 'text-red-600', icon: '❌' };
+});
 
 // دالة مساعدة لتنسيق حجم الملف
 const formatBytes = (bytes) => {

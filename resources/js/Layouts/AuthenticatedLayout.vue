@@ -206,7 +206,7 @@ const switchLocale = (locale) => {
                 عاطل
                 </NavLink>
               </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1 && $page.props.auth.user.type_id!=10">
                 <NavLink
                   :href="route('systemSettings')"
                   :active="route().current('systemSettings')"
@@ -214,7 +214,7 @@ const switchLocale = (locale) => {
                   إعدادات النظام
                 </NavLink>
               </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1">
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1 && $page.props.auth.user.type_id!=10">
                 <NavLink
                   :href="route('logViewer')"
                   :active="route().current('logViewer')"
@@ -543,14 +543,14 @@ const switchLocale = (locale) => {
               <ResponsiveNavLink
                 :href="route('systemSettings')"
                 :active="route().current('systemSettings')"
-                v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1"
+                v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1 && $page.props.auth.user.type_id!=10"
               >
               إعدادات النظام
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('logViewer')"
                 :active="route().current('logViewer')"
-                v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1"
+                v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1 && $page.props.auth.user.type_id!=10"
               >
               📋 لوغ الأخطاء
               </ResponsiveNavLink>

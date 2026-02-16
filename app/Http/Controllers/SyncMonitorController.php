@@ -17,7 +17,7 @@ class SyncMonitorController extends Controller
      * هل يجب إعادة توجيه طلب MySQL إلى السيرفر الموجود في ONLINE_URL؟
      * (عند العمل محلياً لا يوجد MySQL حقيقي - نطلب من الباك إند للسيرفر)
      */
-    protected function shouldProxyToOnline(string $forceConnection): bool
+    protected function shouldProxyToOnline(?string $forceConnection): bool
     {
         if ($forceConnection !== 'mysql') {
             return false;
@@ -63,6 +63,177 @@ class SyncMonitorController extends Controller
             Log::error('Proxy to online server failed', ['url' => $url, 'error' => $e->getMessage()]);
             return response()->json(['error' => 'فشل الاتصال بالسيرفر: ' . $e->getMessage()], 502);
         }
+    }
+
+    /**
+     * مزامنة من السيرفر (ONLINE_URL) إلى SQLite المحلي عبر API - عند LOCAL_NO_REMOTE
+     * public للسماح للـ Scheduler باستدعائها
+     */
+    public function syncFromOnlineServer(?array $tablesArray, bool $forceFullSync): array
+    {
+        $baseUrl = rtrim(env('ONLINE_URL', ''), '/');
+        if (empty($baseUrl)) {
+            throw new \Exception('ONLINE_URL غير محدد في .env');
+        }
+
+        $headers = ['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'];
+        if ($apiKey = env('API_KEY')) {
+            $headers['X-API-Key'] = $apiKey;
+            $headers['Authorization'] = 'Bearer ' . $apiKey;
+        }
+
+        $excluded = [
+            'migrations', 'jobs', 'job_batches', 'failed_jobs', 'sessions', 'cache', 'cache_locks',
+            'sqlite_sequence', 'sqlite_master', 'sync_metadata', 'sync_jobs', 'sync_queue',
+            'password_resets', 'personal_access_tokens', 'licenses',
+            'telescope_entries', 'telescope_entries_tags', 'telescope_monitoring',
+        ];
+
+        $results = ['success' => [], 'failed' => [], 'total_synced' => 0];
+
+        $tablesResponse = Http::timeout(30)->withHeaders($headers)->get($baseUrl . '/api/sync-monitor/tables', ['force_connection' => 'mysql']);
+        if (!$tablesResponse->successful()) {
+            throw new \Exception('فشل جلب قائمة الجداول من السيرفر: ' . ($tablesResponse->body() ?: $tablesResponse->status()));
+        }
+
+        $data = $tablesResponse->json();
+        $tableInfos = $data['tables'] ?? [];
+        $tables = $tablesArray ?? array_column($tableInfos, 'name');
+        $tables = array_filter($tables, fn ($t) => !in_array($t, $excluded));
+
+        $sqliteDb = DB::connection('sync_sqlite');
+        $sqliteDb->statement('PRAGMA foreign_keys = OFF');
+
+        foreach ($tables as $tableName) {
+            try {
+                $synced = $this->syncTableFromOnline($baseUrl, $headers, $sqliteDb, $tableName, $forceFullSync);
+                $results['success'][$tableName] = $synced;
+                $results['total_synced'] += $synced;
+            } catch (\Throwable $e) {
+                $results['failed'][$tableName] = $e->getMessage();
+                Log::error("Sync from online failed: {$tableName}", ['error' => $e->getMessage()]);
+            }
+        }
+
+        $sqliteDb->statement('PRAGMA foreign_keys = ON');
+        return $results;
+    }
+
+    protected function syncTableFromOnline(string $baseUrl, array $headers, $sqliteDb, string $tableName, bool $forceFullSync): int
+    {
+        $limit = 2000;
+        $offset = 0;
+        $totalSynced = 0;
+        $tableCreated = false;
+        $localColumns = null;
+
+        do {
+            $url = "{$baseUrl}/api/sync-monitor/table/{$tableName}?force_connection=mysql&limit={$limit}&offset={$offset}";
+            $resp = Http::timeout(60)->withHeaders($headers)->get($url);
+            if (!$resp->successful()) {
+                throw new \Exception('فشل جلب البيانات: ' . $resp->status());
+            }
+
+            $data = $resp->json();
+            $rows = $data['data'] ?? [];
+            $total = (int) ($data['total'] ?? 0);
+
+            if (empty($rows) && $offset === 0) {
+                break;
+            }
+
+            if (!empty($rows) && !$tableCreated) {
+                $columns = array_keys($rows[0]);
+                $this->ensureSqliteTableExists($sqliteDb, $tableName, $columns);
+                $tableCreated = true;
+            }
+
+            $localColumns = $localColumns ?? $this->getSqliteTableColumns($sqliteDb, $tableName);
+
+            if ($forceFullSync && $offset === 0) {
+                try {
+                    $sqliteDb->statement("DELETE FROM \"{$tableName}\"");
+                } catch (\Throwable $e) {
+                    // جدول فارغ أو غير موجود
+                }
+            }
+
+            foreach (array_chunk($rows, 100) as $chunk) {
+                $filteredChunk = array_map(fn ($row) => $this->filterRowToColumns($row, $localColumns), $chunk);
+                try {
+                    $sqliteDb->table($tableName)->insert($filteredChunk);
+                    $totalSynced += count($filteredChunk);
+                } catch (\Throwable $e) {
+                    foreach ($filteredChunk as $row) {
+                        try {
+                            if (isset($row['id'])) {
+                                $sqliteDb->table($tableName)->updateOrInsert(['id' => $row['id']], $row);
+                            } else {
+                                $sqliteDb->table($tableName)->insert($row);
+                            }
+                            $totalSynced++;
+                        } catch (\Throwable $e2) {
+                            Log::debug("Skip row in {$tableName}", ['error' => $e2->getMessage()]);
+                        }
+                    }
+                }
+            }
+
+            $offset += $limit;
+        } while ($offset < $total);
+
+        return $totalSynced;
+    }
+
+    /**
+     * جلب أعمدة جدول SQLite المحلي
+     */
+    protected function getSqliteTableColumns($db, string $tableName): array
+    {
+        try {
+            $result = $db->select("PRAGMA table_info(\"{$tableName}\")");
+            return array_map(fn ($c) => $c->name, $result);
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    /**
+     * تصفية الصف ليشمل فقط الأعمدة الموجودة في الجدول المحلي (لتجنب التعارض مع الأعمدة الناقصة)
+     */
+    protected function filterRowToColumns(array $row, array $allowedColumns): array
+    {
+        if (empty($allowedColumns)) {
+            return $row;
+        }
+        $allowed = array_flip($allowedColumns);
+        return array_intersect_key($row, $allowed);
+    }
+
+    protected function ensureSqliteTableExists($db, string $tableName, array $columnNames): void
+    {
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $tableName)) {
+            return;
+        }
+        $exists = $db->select("SELECT name FROM sqlite_master WHERE type='table' AND name=?", [$tableName]);
+        if (!empty($exists)) {
+            return;
+        }
+        $cols = [];
+        $hasId = false;
+        foreach ($columnNames as $i => $name) {
+            $safe = preg_replace('/[^a-zA-Z0-9_]/', '', (string) $name) ?: 'col_' . $i;
+            if (strtolower($safe) === 'id') {
+                $cols[] = "\"{$safe}\" INTEGER PRIMARY KEY";
+                $hasId = true;
+            } else {
+                $cols[] = "\"{$safe}\" TEXT";
+            }
+        }
+        if (empty($cols)) {
+            $cols[] = '"id" INTEGER PRIMARY KEY';
+        }
+        $db->statement('CREATE TABLE IF NOT EXISTS "' . $tableName . '" (' . implode(', ', $cols) . ')');
     }
 
     /**
@@ -119,33 +290,60 @@ class SyncMonitorController extends Controller
 
     /**
      * جداول MySQL الموجودة وغير الموجودة في SQLite
+     * عند LOCAL_NO_REMOTE: يقارن MySQL البعيد (السيرفر) مع SQLite المحلي
      */
     public function tablesComparison(Request $request): JsonResponse
     {
         try {
-            if ($this->shouldProxyToOnline('mysql')) {
-                return $this->proxyToOnlineServer($request, 'sync-monitor/tables-comparison', 'GET');
-            }
-
-            $mysqlDb = DB::connection('mysql');
+            $mysqlTables = [];
+            $mysqlTableCounts = [];
             $sqliteDb = DB::connection('sync_sqlite');
-
-            $mysqlTables = $this->fetchTableNames($mysqlDb, false);
             $sqliteTables = $this->fetchTableNames($sqliteDb, true);
+
+            if ($this->shouldProxyToOnline('mysql')) {
+                // محلياً: جلب جداول MySQL من السيرفر البعيد ومقارنتها مع SQLite المحلي
+                $baseUrl = rtrim(env('ONLINE_URL', ''), '/');
+                if (empty($baseUrl)) {
+                    return response()->json(['error' => 'ONLINE_URL غير محدد في .env'], 500);
+                }
+                $url = $baseUrl . '/api/sync-monitor/tables?force_connection=mysql';
+                $headers = ['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'];
+                if ($apiKey = env('API_KEY')) {
+                    $headers['X-API-Key'] = $apiKey;
+                    $headers['Authorization'] = 'Bearer ' . $apiKey;
+                }
+                $response = Http::timeout(30)->withHeaders($headers)->get($url);
+                if (!$response->successful()) {
+                    return response()->json(['error' => 'فشل جلب جداول MySQL من السيرفر'], 502);
+                }
+                $data = $response->json();
+                $tableInfos = $data['tables'] ?? [];
+                foreach ($tableInfos as $t) {
+                    $mysqlTables[] = $t['name'] ?? $t;
+                    $mysqlTableCounts[$t['name'] ?? $t] = $t['count'] ?? 0;
+                }
+            } else {
+                $mysqlDb = DB::connection('mysql');
+                $mysqlTables = $this->fetchTableNames($mysqlDb, false);
+                foreach ($mysqlTables as $table) {
+                    try {
+                        $mysqlTableCounts[$table] = $mysqlDb->table($table)->count();
+                    } catch (\Throwable $e) {
+                        $mysqlTableCounts[$table] = 0;
+                    }
+                }
+            }
 
             $mysqlOnly = array_values(array_diff($mysqlTables, $sqliteTables));
             $sqliteOnly = array_values(array_diff($sqliteTables, $mysqlTables));
             $inBoth = array_values(array_intersect($mysqlTables, $sqliteTables));
 
-            // إحصائيات لكل جدول في MySQL فقط
             $mysqlOnlyWithCount = [];
             foreach ($mysqlOnly as $table) {
-                try {
-                    $count = $mysqlDb->table($table)->count();
-                    $mysqlOnlyWithCount[] = ['name' => $table, 'count' => $count];
-                } catch (\Throwable $e) {
-                    $mysqlOnlyWithCount[] = ['name' => $table, 'count' => 0];
-                }
+                $mysqlOnlyWithCount[] = [
+                    'name' => $table,
+                    'count' => $mysqlTableCounts[$table] ?? 0,
+                ];
             }
 
             return response()->json([
@@ -386,11 +584,15 @@ class SyncMonitorController extends Controller
             ], 300); // 5 دقائق
 
             if ($direction === 'down') {
-                // من MySQL إلى SQLite (آمن دائماً)
-                $results = $syncService->syncFromMySQLToSQLite(
-                    $tablesArray,
-                    filter_var($forceFullSync, FILTER_VALIDATE_BOOLEAN) // Force Full Sync
-                );
+                // عند LOCAL_NO_REMOTE: جلب البيانات من ONLINE_URL عبر API (لا اتصال MySQL محلي)
+                if (env('LOCAL_NO_REMOTE', false) || app()->environment('local')) {
+                    $results = $this->syncFromOnlineServer($tablesArray, filter_var($forceFullSync, FILTER_VALIDATE_BOOLEAN));
+                } else {
+                    $results = $syncService->syncFromMySQLToSQLite(
+                        $tablesArray,
+                        filter_var($forceFullSync, FILTER_VALIDATE_BOOLEAN)
+                    );
+                }
             } else {
                 // من SQLite إلى MySQL (يحتاج حماية)
                 $results = $syncService->syncFromSQLiteToMySQL(
@@ -606,6 +808,68 @@ class SyncMonitorController extends Controller
             return response()->json([
                 'error' => $e->getMessage(),
                 'metadata' => []
+            ], 500);
+        }
+    }
+
+    /**
+     * تشغيل المهام المجدولة مرة واحدة (schedule:run)
+     * يُنفّذ المزامنة التلقائية فوراً دون انتظار الـ cron
+     */
+    public function runSchedule(): JsonResponse
+    {
+        try {
+            $exitCode = Artisan::call('schedule:run');
+            $output = trim(Artisan::output());
+
+            return response()->json([
+                'success' => $exitCode === 0,
+                'message' => $exitCode === 0 ? 'تم تشغيل المهام المجدولة' : 'انتهى مع أخطاء',
+                'output' => $output,
+                'exit_code' => $exitCode,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Run schedule failed', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'message' => 'فشل تشغيل المهام المجدولة',
+            ], 500);
+        }
+    }
+
+    /**
+     * حالة المزامنة التلقائية (من scheduler)
+     */
+    public function autoSyncStatus(): JsonResponse
+    {
+        $file = storage_path('app/sync_auto_status.json');
+        if (!File::exists($file)) {
+            return response()->json([
+                'ok' => null,
+                'last_run' => null,
+                'message' => 'لم يتم تشغيل المزامنة التلقائية بعد - تأكد من تشغيل run-scheduler.bat',
+                'pull_synced' => 0,
+                'push_synced' => 0,
+                'error' => null,
+            ]);
+        }
+        try {
+            $data = json_decode(File::get($file), true) ?: [];
+            return response()->json([
+                'ok' => $data['ok'] ?? null,
+                'last_run' => $data['last_run'] ?? null,
+                'pull_synced' => $data['pull_synced'] ?? 0,
+                'push_synced' => $data['push_synced'] ?? 0,
+                'error' => $data['error'] ?? null,
+                'running' => $data['running'] ?? false,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'ok' => null,
+                'last_run' => null,
+                'error' => 'فشل قراءة الحالة: ' . $e->getMessage(),
             ], 500);
         }
     }

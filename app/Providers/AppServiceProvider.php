@@ -152,10 +152,6 @@ class AppServiceProvider extends ServiceProvider
         // الأولوية 0: لا اتصال ريموتلي عند العمل محلياً
         if (env('LOCAL_NO_REMOTE', false)) {
             config(['database.default' => $fallbackConnection]);
-            Log::channel(env('LOG_CHANNEL', 'stack'))->info('Database: SQLite only (LOCAL_NO_REMOTE=true)', [
-                'fallback' => $fallbackConnection,
-                'mode' => 'local_no_remote',
-            ]);
             return;
         }
 

@@ -36,6 +36,9 @@ class SystemConfigController extends Controller
      */
     public function update(Request $request)
     {
+        if (auth()->user() && auth()->user()->type_id == 10) {
+            return Response::json(['error' => 'غير مسموح الوصول'], 403);
+        }
         $validator = Validator::make($request->all(), [
             'first_title_ar' => 'nullable|string|max:255',
             'first_title_kr' => 'nullable|string|max:255',

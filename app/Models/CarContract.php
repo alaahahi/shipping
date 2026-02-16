@@ -65,6 +65,11 @@ class CarContract extends Model
         return $this->hasOne(User::class, 'id', 'user_id');
     }
 
+    public function contractImages()
+    {
+        return $this->hasMany(CarContractImage::class, 'car_contract_id');
+    }
+
     // public function car()
     // {
     //     // Define a one-to-one relationship with the Car model

@@ -111,6 +111,9 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
     Route::get('accounting',[AccountingController::class,'index'])->name('accounting');
     
     Route::get('system-settings', function () {
+        if (auth()->user() && auth()->user()->type_id == 10) {
+            return redirect()->route('dashboard')->with('error', 'غير مسموح الوصول');
+        }
         return Inertia::render('Admin/SystemSettings');
     })->name('systemSettings');
     

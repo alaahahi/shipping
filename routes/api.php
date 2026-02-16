@@ -40,6 +40,8 @@ Route::get('/sync-monitor/table/{tableName}', [SyncMonitorController::class, 'ta
 Route::post('/sync-monitor/sync', [SyncMonitorController::class, 'sync'])->name('sync.monitor.sync');
 Route::get('/sync-monitor/sync-progress', [SyncMonitorController::class, 'syncProgress'])->name('sync.monitor.sync.progress');
 Route::get('/sync-monitor/metadata', [SyncMonitorController::class, 'syncMetadata'])->name('sync.monitor.metadata');
+Route::get('/sync-monitor/auto-sync-status', [SyncMonitorController::class, 'autoSyncStatus'])->name('sync.monitor.auto_sync_status');
+Route::post('/sync-monitor/run-schedule', [SyncMonitorController::class, 'runSchedule'])->name('sync.monitor.run_schedule');
 Route::get('/sync-monitor/migrations', [SyncMonitorController::class, 'getMigrations'])->name('sync.monitor.migrations');
 Route::post('/sync-monitor/check-migration', [SyncMonitorController::class, 'checkMigration'])->name('sync.monitor.check.migration');
 Route::post('/sync-monitor/run-migration', [SyncMonitorController::class, 'runMigration'])->name('sync.monitor.run.migration');
@@ -266,6 +268,8 @@ Route::middleware('auth')->group(function () {
 
 Route::post('TransactionsUpload',[AccountingController::class, 'TransactionsUpload'])->name('TransactionsUpload');
 Route::get('TransactionsImageDel',[AccountingController::class, 'TransactionsImageDel'])->name('TransactionsImageDel');
+Route::post('ContractUpload',[CarContractController::class, 'ContractUpload'])->name('ContractUpload');
+Route::get('ContractImageDel',[CarContractController::class, 'ContractImageDel'])->name('ContractImageDel');
 
 Route::get('getIndexExpenses',[DashboardController::class, 'getIndexExpenses'])->name('getIndexExpenses');
 Route::get('showCar',[CarConfigController::class, 'showCar']);

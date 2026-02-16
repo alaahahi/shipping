@@ -23,10 +23,13 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\SystemConfig;
 use App\Models\CarContract;
+use App\Models\CarContractImage;
 use App\Models\TransactionsContract;
 use Carbon\Carbon;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
+use Intervention\Image\Facades\Image;
+use Illuminate\Support\Facades\File;
 
 class CarContractController extends Controller
 {
@@ -237,12 +240,15 @@ class CarContractController extends Controller
         $from = $request->query('from');
         $to = $request->query('to');
         $user_id_filter = $request->query('user_id');
+        $deleted_only = filter_var($request->query('deleted_only', false), FILTER_VALIDATE_BOOLEAN);
         $limit = (int) $request->query('limit', 100);
         if ($limit < 1) {
             $limit = 100;
         }
 
-        $data = CarContract::with('user')->where('owner_id', $owner_id)->orderBy('id', 'desc');
+        $data = $deleted_only
+            ? CarContract::onlyTrashed()->with(['user', 'contractImages'])->where('owner_id', $owner_id)->orderBy('id', 'desc')
+            : CarContract::with(['user', 'contractImages'])->where('owner_id', $owner_id)->orderBy('id', 'desc');
 
         if ($this->userCarContractUser && $current_user_type_id == $this->userCarContractUser) {
             $data->where('user_id', $current_user_id);
@@ -268,9 +274,57 @@ class CarContractController extends Controller
         $data = $data->paginate($limit)->toArray();
         return Response::json($data, 200);
     }
+
+    public function ContractUpload(Request $request)
+    {
+        $carContractId = $request->carContractId;
+        $path1 = public_path('uploads');
+        $path2 = public_path('uploadsResized');
+
+        if (!file_exists($path1)) {
+            mkdir($path1, 0777, true);
+        }
+        if (!file_exists($path2)) {
+            mkdir($path2, 0777, true);
+        }
+
+        $file = $request->file('image');
+        $name = uniqid();
+
+        $file->move($path1, $name);
+
+        $image = Image::make(public_path('uploads/' . $name));
+        $image->resize(50, 50, function ($constraint) {
+            $constraint->aspectRatio();
+            $constraint->upsize();
+        });
+        $image->save(public_path('uploadsResized/' . $name));
+
+        $contractImage = CarContractImage::create([
+            'name' => $name,
+            'car_contract_id' => $carContractId,
+        ]);
+
+        return response()->json($contractImage, 200);
+    }
+
+    public function ContractImageDel(Request $request)
+    {
+        $name = $request->name;
+
+        File::delete(public_path('uploads/' . $name));
+        File::delete(public_path('uploadsResized/' . $name));
+
+        CarContractImage::where('name', $name)->delete();
+
+        return Response::json('deleted is done', 200);
+    }
     
     public function DelCarContract(Request $request){
         try {
+            if (Auth::user()->type_id == 10) {
+                return response()->json(['error' => 'غير مسموح بحذف العقود'], 403);
+            }
             $contract = CarContract::findOrFail($request->id);
             $owner_id=Auth::user()->owner_id;
 
@@ -310,7 +364,8 @@ class CarContractController extends Controller
         }
     }
     public function totalInfoContract(Request $request){
-        $owner_id=Auth::user()->owner_id;
+        try {
+            $owner_id=Auth::user()->owner_id;
         $current_user_id=Auth::user()->id;
         $current_user_type_id=Auth::user()->type_id;
 
@@ -380,35 +435,51 @@ class CarContractController extends Controller
             'sumTransactionsDinar'=> $sumTransactionsDinar
         ];
 
-        return Response::json($data, 200);
-
+            return Response::json($data, 200);
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (str_contains($e->getMessage(), 'no such table')) {
+                return Response::json([
+                    'contract' => 0, 'sumTransactionsIn' => 0, 'sumTransactionsOut' => 0,
+                    'sumTransactionsDinarIn' => 0, 'sumTransactionsDinarOut' => 0,
+                    'sum_contract' => 0, 'sum_contract_debit' => 0, 'sum_contract_dinar' => 0, 'sum_contract_debit_dinar' => 0,
+                    'sumTransactions' => 0, 'sumTransactionsDinar' => 0,
+                ], 200);
+            }
+            throw $e;
+        }
     }
 
     public function getListTransactionsContract(Request $request){
-        $owner_id=Auth::user()->owner_id;
-        $car_have_expenses = $request->car_have_expenses ?? '';
-        $user_id =$_GET['user_id'] ?? '';
-        $q = $_GET['q']??'';
-        $from =  $_GET['from'] ?? 0;
-        $to =$_GET['to'] ?? 0;
-        $limit =$_GET['limit'] ?? 0;
- 
-        $data = TransactionsContract::orderBy('id', 'desc');;
+        try {
+            $owner_id=Auth::user()->owner_id;
+            $car_have_expenses = $request->car_have_expenses ?? '';
+            $user_id =$_GET['user_id'] ?? '';
+            $q = $_GET['q']??'';
+            $from =  $_GET['from'] ?? 0;
+            $to =$_GET['to'] ?? 0;
+            $limit =$_GET['limit'] ?? 0;
 
-        if ($from && $to) {
-            $data->whereBetween('created', [$from, $to]);
-        }
-        
-        if($q){
-            $data->where(function ($query) use ($q) {
-                $query->where('description', 'LIKE', '%' . $q . '%')
-                    ->orWhere('amount', 'LIKE', '%' . $q . '%')
-                   ;
-            });
-        }
+            $data = TransactionsContract::orderBy('id', 'desc');
 
-        $data =$data->paginate($limit)->toArray();
-        return Response::json($data, 200);
+            if ($from && $to) {
+                $data->whereBetween('created', [$from, $to]);
+            }
+
+            if($q){
+                $data->where(function ($query) use ($q) {
+                    $query->where('description', 'LIKE', '%' . $q . '%')
+                        ->orWhere('amount', 'LIKE', '%' . $q . '%');
+                });
+            }
+
+            $data =$data->paginate($limit)->toArray();
+            return Response::json($data, 200);
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (str_contains($e->getMessage(), 'no such table')) {
+                return Response::json(['data' => [], 'current_page' => 1, 'last_page' => 1, 'per_page' => 15, 'total' => 0], 200);
+            }
+            throw $e;
+        }
     }
     public function addToBoxContract(Request $request)
     {

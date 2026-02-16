@@ -21,6 +21,9 @@ class LogViewerController extends Controller
      */
     public function index()
     {
+        if (auth()->user() && auth()->user()->type_id == 10) {
+            return redirect()->route('dashboard')->with('error', 'غير مسموح الوصول');
+        }
         return Inertia::render('Admin/LogViewer', [
             'logFiles' => $this->getLogFiles(),
         ]);
@@ -54,6 +57,9 @@ class LogViewerController extends Controller
      */
     public function getLog(Request $request)
     {
+        if (auth()->user() && auth()->user()->type_id == 10) {
+            return Response::json(['error' => 'غير مسموح الوصول'], 403);
+        }
         $file = $request->get('file', 'laravel.log');
         if (!preg_match('/^[\w\-\.]+\.log$/', $file)) {
             return Response::json(['error' => 'اسم ملف غير صالح'], 400);
@@ -83,6 +89,9 @@ class LogViewerController extends Controller
      */
     public function clearLog(Request $request)
     {
+        if (auth()->user() && auth()->user()->type_id == 10) {
+            return Response::json(['error' => 'غير مسموح الوصول'], 403);
+        }
         $file = $request->input('file', $request->get('file', 'laravel.log'));
         if (!preg_match('/^[\w\-\.]+\.log$/', $file)) {
             return Response::json(['error' => 'اسم ملف غير صالح'], 400);
