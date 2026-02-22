@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 
 let props = defineProps({
   show: Boolean,
@@ -8,7 +8,19 @@ let props = defineProps({
 
 const emit = defineEmits(['close', 'save']);
 
-const carsInfo = ref(props.formDamage?.cars_info || []);
+// نسخ عميق لتفادي تعديل الـ props مباشرة
+function deepCopyCarsInfo(cars) {
+  if (!Array.isArray(cars) || cars.length === 0) return [];
+  return cars.map((car) => ({
+    car: car.car ?? '',
+    vin: car.vin ?? '',
+    model: car.model ?? '',
+    color: car.color ?? '',
+    damage: car.damage ?? '',
+  }));
+}
+
+const carsInfo = ref([]);
 const totalDamage = ref(0);
 
 // حساب مجموع الضرر
@@ -26,7 +38,7 @@ const addCar = () => {
     vin: '',
     model: '',
     color: '',
-    damage: ''
+    damage: '',
   });
 };
 
@@ -36,22 +48,36 @@ const removeCar = (index) => {
   calculateTotal();
 };
 
-// مراقبة التغييرات في قائمة السيارات
+// مراقبة التغييرات في قائمة السيارات لتحديث المجموع فقط (لا نعدّل الـ props هنا)
 watch(carsInfo, () => {
   calculateTotal();
-  props.formDamage.cars_count = carsInfo.value.length;
-  props.formDamage.total_damage = totalDamage.value;
-  props.formDamage.cars_info = carsInfo.value;
 }, { deep: true });
 
-// تهيئة القائمة إذا كانت فارغة
-if (carsInfo.value.length === 0 && (!props.formDamage?.cars_info || props.formDamage.cars_info.length === 0)) {
-  addCar();
-} else if (props.formDamage?.cars_info && props.formDamage.cars_info.length > 0) {
-  carsInfo.value = props.formDamage.cars_info;
-}
+// عند فتح النافذة: تهيئة carsInfo من نسخة من formDamage
+watch(
+  () => props.show,
+  (isShow) => {
+    if (!isShow || !props.formDamage) return;
+    const source = props.formDamage.cars_info;
+    carsInfo.value = deepCopyCarsInfo(source);
+    if (carsInfo.value.length === 0) {
+      addCar();
+    }
+    calculateTotal();
+  },
+  { immediate: true }
+);
 
-calculateTotal();
+// عند الحفظ: إرسال formDamage مع cars_info الحالية
+function doSave() {
+  const payload = {
+    ...props.formDamage,
+    cars_count: carsInfo.value.length,
+    total_damage: totalDamage.value,
+    cars_info: deepCopyCarsInfo(carsInfo.value),
+  };
+  emit('save', payload);
+}
 </script>
 
 <template>
@@ -203,7 +229,7 @@ calculateTotal();
               <div class="basis-1/2 px-4">
                 <button
                   class="modal-default-button py-3 bg-rose-500 rounded col-6"
-                  @click="$emit('save', formDamage)"
+                  @click="doSave"
                   :disabled="!formDamage.driver_name || !formDamage.cmr_number || carsInfo.length === 0"
                 >
                   حفظ

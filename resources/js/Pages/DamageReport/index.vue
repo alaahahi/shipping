@@ -36,14 +36,14 @@ let reports = ref([]);
 let from = ref('');
 let to = ref('');
 let q = ref('');
-let resetData = ref(false);
+let resetData = ref(0);
 let page = 1;
 let allReports = ref(0);
 
 const refresh = () => {
   page = 1;
   reports.value = [];
-  resetData.value = !resetData.value;
+  resetData.value += 1;
 };
 
 const getResultsReports = async ($state) => {
@@ -369,7 +369,7 @@ const debouncedRefresh = debounce(refresh, 500);
                   </tr>
                 </tbody>
               </table>
-              <InfiniteLoading @infinite="getResultsReports" :reset="resetData">
+              <InfiniteLoading :key="resetData" @infinite="getResultsReports" :reset="resetData">
                 <template #spinner>
                   <div class="text-center py-4">جاري التحميل...</div>
                 </template>

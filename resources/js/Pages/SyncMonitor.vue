@@ -489,23 +489,25 @@
 
         </div>
 
-        <!-- معلومات IndexedDB -->
+        <!-- جدول التعديلات المعلقة للمزامنة (قاعدة البيانات) -->
         <div class="mt-6 bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
-          <h3 class="text-lg font-semibold mb-4 dark:text-gray-200">💾 معلومات التخزين المحلي</h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <h3 class="text-lg font-semibold mb-4 dark:text-gray-200">📋 التعديلات المعلقة للمزامنة</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">جدول <code class="px-1 bg-gray-100 dark:bg-gray-700 rounded">sync_queue</code> يخزن إدراج/تحديث/حذف من السيارات والعقود ليُرفع للسيرفر عند تشغيل المزامنة</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="border dark:border-gray-700 rounded p-4">
-              <p class="text-sm text-gray-600 dark:text-gray-400">السيارات المحفوظة</p>
-              <p class="text-2xl font-bold dark:text-gray-200">{{ localDataCounts.cars }}</p>
+              <p class="text-sm text-gray-600 dark:text-gray-400">عدد التعديلات المعلقة</p>
+              <p class="text-2xl font-bold dark:text-gray-200">{{ backendSyncQueue.pending_count }}</p>
             </div>
-            <div class="border dark:border-gray-700 rounded p-4">
-              <p class="text-sm text-gray-600 dark:text-gray-400">العقود المحفوظة</p>
-              <p class="text-2xl font-bold dark:text-gray-200">{{ localDataCounts.contracts }}</p>
-            </div>
-            <div class="border dark:border-gray-700 rounded p-4">
-              <p class="text-sm text-gray-600 dark:text-gray-400">المعاملات المحفوظة</p>
-              <p class="text-2xl font-bold dark:text-gray-200">{{ localDataCounts.transactions }}</p>
+            <div class="border dark:border-gray-700 rounded p-4" v-if="Object.keys(backendSyncQueue.by_table || {}).length">
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">تفصيل حسب الجدول</p>
+              <div class="text-sm dark:text-gray-300">
+                <span v-for="(cnt, key) in backendSyncQueue.by_table" :key="key" class="inline-block mr-2 mb-1">
+                  {{ key }}: <strong>{{ cnt }}</strong>
+                </span>
+              </div>
             </div>
           </div>
+          <p v-if="!backendSyncQueue.exists" class="text-sm text-amber-600 dark:text-amber-400 mt-2">جدول sync_queue غير موجود أو غير متاح</p>
         </div>
 
         <!-- النسخ الاحتياطية -->
@@ -839,10 +841,12 @@ const syncStatus = ref({
   pendingCount: 0,
   lastSync: null
 });
-const localDataCounts = ref({
-  cars: 0,
-  contracts: 0,
-  transactions: 0
+const localDataCounts = ref({ cars: 0, contracts: 0, transactions: 0 });
+const backendSyncQueue = ref({
+  exists: false,
+  pending_count: 0,
+  items: [],
+  by_table: {}
 });
 const defaultConnectionInfo = {
   environmentLabel: 'غير معروف',
@@ -1038,13 +1042,12 @@ const refreshData = async () => {
       syncStatus.value.pendingCount = queue.filter(item => !item.synced).length;
     }
     
-    // جلب معلومات البيانات المحلية
-    if (window.$db) {
-      localDataCounts.value = {
-        cars: (await window.$db.getAll('cars')).length,
-        contracts: 0, // لم نعد نخزن العقود في الفرونت
-        transactions: (await window.$db.getAll('transactions')).length
-      };
+    // جلب حالة جدول sync_queue (التعديلات المعلقة للمزامنة من قاعدة البيانات)
+    try {
+      const qResp = await axios.get('/api/sync-monitor/sync-queue-status', { withCredentials: true });
+      backendSyncQueue.value = qResp.data;
+    } catch (e) {
+      backendSyncQueue.value = { exists: false, pending_count: 0, items: [], by_table: {} };
     }
     
     // جلب حالة المزامنة

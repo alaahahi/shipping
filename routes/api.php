@@ -41,6 +41,7 @@ Route::post('/sync-monitor/sync', [SyncMonitorController::class, 'sync'])->name(
 Route::get('/sync-monitor/sync-progress', [SyncMonitorController::class, 'syncProgress'])->name('sync.monitor.sync.progress');
 Route::get('/sync-monitor/metadata', [SyncMonitorController::class, 'syncMetadata'])->name('sync.monitor.metadata');
 Route::get('/sync-monitor/auto-sync-status', [SyncMonitorController::class, 'autoSyncStatus'])->name('sync.monitor.auto_sync_status');
+Route::get('/sync-monitor/sync-queue-status', [SyncMonitorController::class, 'syncQueueStatus'])->name('sync.monitor.sync_queue_status');
 Route::post('/sync-monitor/run-schedule', [SyncMonitorController::class, 'runSchedule'])->name('sync.monitor.run_schedule');
 Route::get('/sync-monitor/migrations', [SyncMonitorController::class, 'getMigrations'])->name('sync.monitor.migrations');
 Route::post('/sync-monitor/check-migration', [SyncMonitorController::class, 'checkMigration'])->name('sync.monitor.check.migration');

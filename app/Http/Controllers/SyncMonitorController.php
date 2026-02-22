@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Artisan;
@@ -870,6 +871,65 @@ class SyncMonitorController extends Controller
                 'ok' => null,
                 'last_run' => null,
                 'error' => 'فشل قراءة الحالة: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * جلب حالة جدول sync_queue (التعديلات المعلقة للمزامنة)
+     * الجدول يخزن إدراج/تحديث/حذف من Car و CarContract ليُرفع للسيرفر عند المزامنة
+     */
+    public function syncQueueStatus(): JsonResponse
+    {
+        try {
+            $conn = config('database.default');
+            if (!Schema::connection($conn)->hasTable('sync_queue')) {
+                if ($conn !== 'sync_sqlite' && Schema::connection('sync_sqlite')->hasTable('sync_queue')) {
+                    $conn = 'sync_sqlite';
+                } else {
+                    return response()->json([
+                        'exists' => false,
+                        'pending_count' => 0,
+                        'items' => [],
+                        'by_table' => [],
+                    ]);
+                }
+            }
+            $db = DB::connection($conn);
+            $pending = $db->table('sync_queue')
+                ->where('status', 'pending')
+                ->orderBy('created_at', 'asc')
+                ->limit(200)
+                ->get()
+                ->map(fn ($r) => [
+                    'id' => $r->id,
+                    'table_name' => $r->table_name,
+                    'record_id' => (int) $r->record_id,
+                    'action' => $r->action,
+                    'created_at' => $r->created_at,
+                ]);
+            $byTable = $db->table('sync_queue')
+                ->where('status', 'pending')
+                ->selectRaw('table_name, action, COUNT(*) as count')
+                ->groupBy('table_name', 'action')
+                ->get()
+                ->mapWithKeys(fn ($r) => ["{$r->table_name}:{$r->action}" => $r->count]);
+            $pendingCount = $db->table('sync_queue')->where('status', 'pending')->count();
+
+            return response()->json([
+                'exists' => true,
+                'pending_count' => $pendingCount,
+                'items' => $pending,
+                'by_table' => $byTable,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('syncQueueStatus failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'exists' => false,
+                'pending_count' => 0,
+                'items' => [],
+                'by_table' => [],
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

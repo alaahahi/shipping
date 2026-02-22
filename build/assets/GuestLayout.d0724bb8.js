@@ -1,1 +1,0 @@
-import{_ as t}from"./_plugin-vue_export-helper.cdc0426e.js";import{N as n,o as r,a as s,g as a,d as c}from"./app.1cee0d8b.js";const l={};function _(e,d){const o=n("Head");return r(),s("div",null,[a(o,{title:"\u0645\u0631\u0627\u0642\u0628\u0629 \u0627\u0644\u0645\u0632\u0627\u0645\u0646\u0629"}),c(e.$slots,"default")])}const p=t(l,[["render",_]]);export{p as G};

@@ -30,6 +30,13 @@ function getTodayDate() {
   return `${year}-${month}-${day}`;
 }
 
+function formatDateForInput(dateVal) {
+  if (!dateVal) return getTodayDate();
+  if (typeof dateVal === 'string' && dateVal.includes('T')) return dateVal.split('T')[0];
+  if (typeof dateVal === 'string') return dateVal;
+  return getTodayDate();
+}
+
 onMounted(() => {
   if (props.data) {
     formDamage.value = {
@@ -38,8 +45,16 @@ onMounted(() => {
       cmr_number: props.data.cmr_number || '',
       cars_count: props.data.cars_count || 0,
       total_damage: props.data.total_damage || 0,
-      cars_info: props.data.cars_info || [],
-      created: props.data.created || getTodayDate(),
+      cars_info: Array.isArray(props.data.cars_info)
+        ? props.data.cars_info.map((c) => ({
+            car: c.car ?? '',
+            vin: c.vin ?? '',
+            model: c.model ?? '',
+            color: c.color ?? '',
+            damage: c.damage ?? '',
+          }))
+        : [],
+      created: formatDateForInput(props.data.created),
     };
     showModalDamageReport.value = true;
   }

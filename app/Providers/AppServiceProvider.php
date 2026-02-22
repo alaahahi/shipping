@@ -34,6 +34,9 @@ class AppServiceProvider extends ServiceProvider
         if (class_exists(\App\Models\Car::class)) {
             \App\Models\Car::observe(\App\Observers\CarObserver::class);
         }
+        if (class_exists(\App\Models\CarContract::class)) {
+            \App\Models\CarContract::observe(\App\Observers\CarContractObserver::class);
+        }
         
         // التحقق من الترخيص عند بدء التطبيق (إذا كان مفعلاً)
         if (config('license.enabled') && !$this->app->runningInConsole()) {
