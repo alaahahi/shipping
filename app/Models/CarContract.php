@@ -47,6 +47,7 @@ class CarContract extends Model
         'size_s',
         'color_s',
         'vin_s',
+        'annual_owner_name_s',
         'created',
         'user_id',
         'organizer_name',

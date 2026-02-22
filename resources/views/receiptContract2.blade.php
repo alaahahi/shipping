@@ -162,6 +162,20 @@ html, body { width: 210mm; margin: 0; padding: 0; }
       </div>
     </div>
 
+    @if(!empty($data['vin_s'] ?? null))
+    <div class="t2-section">
+      <div class="t2-section-title">السيارة البديلة</div>
+      <div class="t2-car-grid" style=" padding: 5px 8px;border: 1px solid var(--t2-primary); color: #000; border-radius: var(--t2-radius);">
+        <div class="t2-car-item"><span class="label">نوع السيارة:</span><span class="value">{{ $data['car_name_s'] ?? '' }}</span></div>
+        <div class="t2-car-item"><span class="label">رقم السيارة:</span><span class="value">{{ $data['no_s'] ?? '' }}</span></div>
+        <div class="t2-car-item"><span class="label">رقم الشاصي:</span><span class="value">{{ $data['vin_s'] ?? '' }}</span></div>
+        <div class="t2-car-item"><span class="label">لون السيارة:</span><span class="value">{{ $data['color_s'] ?? '' }}</span></div>
+        <div class="t2-car-item"><span class="label">الموديل:</span><span class="value">{{ $data['modal_s'] ?? '' }}</span></div>
+        <div class="t2-car-item"><span class="label">صاحب السنوية:</span><span class="value">{{ $data['annual_owner_name_s'] ?? '' }}</span></div>
+      </div>
+    </div>
+    @endif
+
     @php
       $cfg = is_array($config) ? $config : (array) $config;
       $currency = $cfg['contract_currency'] ?? 'usd';
