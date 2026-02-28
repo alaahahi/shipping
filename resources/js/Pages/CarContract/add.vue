@@ -382,19 +382,24 @@ const submit = async (V, shouldPrint = true) => {
         }, 1000);
       }
     } else {
-      // فشل الحفظ
-      console.error('❌❌❌ result.success = false!', result);
-      toast.error('❌ فشل حفظ العقد', {
-        timeout: 3000,
+      // فشل الحفظ (تحقق أو خطأ من السيرفر) — لا نحدّث الصفحة لتبقى البيانات في النموذج
+      const msg = result.validation && result.errors
+        ? (typeof result.errors === 'object'
+            ? Object.values(result.errors).flat().join(' ')
+            : result.errors)
+        : (result.message || 'فشل حفظ العقد');
+      toast.error('❌ ' + msg, {
+        timeout: 5000,
         position: 'bottom-right',
         rtl: true
       });
       isLoading.value = false;
     }
   } catch (error) {
-    console.error('❌❌❌ خطأ في حفظ العقد:', error);
-    toast.error('❌ حدث خطأ أثناء الحفظ: ' + error.message, {
-      timeout: 3000,
+    // لا نحدّث الصفحة أبداً عند الخطأ — تبقى البيانات في النموذج
+    console.error('❌ خطأ في حفظ العقد:', error);
+    toast.error('❌ حدث خطأ أثناء الحفظ: ' + (error.message || 'حدث خطأ'), {
+      timeout: 4000,
       position: 'bottom-right',
       rtl: true
     });
@@ -540,7 +545,7 @@ function VinApi1 (v){
         </div>
       </div>
     </div>
-    <form name="createForm">
+    <form name="createForm" @submit.prevent="submit(form.value, false)">
       <div class="flex flex-wrap my-6">
           <div class="md:w-1/2 w-full">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -1109,6 +1114,7 @@ function VinApi1 (v){
         </Link>
 
         <button
+          type="button"
           @click="submitOnly"
           :disabled="isLoading"
           class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-600"
@@ -1118,6 +1124,7 @@ function VinApi1 (v){
         </button>
 
         <button
+          type="button"
           @click="submitAndPrint"
           :disabled="isLoading"
           class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-rose-500 rounded hover:bg-rose-600"

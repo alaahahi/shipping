@@ -60,6 +60,15 @@ export function useOfflineSync() {
                 id: response.data?.id || response.data?.data?.id 
             };
         } catch (error) {
+            // أخطاء التحقق (422): إرجاع النتيجة بدون رمي حتى لا تُحدَّث الصفحة ولا تُفقد البيانات
+            if (error.response && error.response.status === 422) {
+                return {
+                    success: false,
+                    validation: true,
+                    errors: error.response.data.errors || error.response.data.message || {}
+                };
+            }
+
             // إذا فشل، Laravel سيعيد استخدام SQLite تلقائياً
             if (error.code === 'NETWORK_ERROR' || !navigator.onLine) {
                 // محاولة مرة أخرى - Laravel يستخدم SQLite
@@ -78,11 +87,21 @@ export function useOfflineSync() {
                         id: response.data?.id || response.data?.data?.id 
                     };
                 } catch (retryError) {
-                    throw new Error('فشل الحفظ في SQLite المحلي');
+                    return {
+                        success: false,
+                        validation: false,
+                        errors: {},
+                        message: 'فشل الحفظ في SQLite المحلي'
+                    };
                 }
             }
             
-            throw error;
+            return {
+                success: false,
+                validation: false,
+                errors: error.response?.data?.errors || {},
+                message: error.response?.data?.message || error.message || 'حدث خطأ أثناء الحفظ'
+            };
         }
     };
 
