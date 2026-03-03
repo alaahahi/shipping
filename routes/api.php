@@ -200,6 +200,12 @@ Route::get('getIndexAccountsSelas',[AccountingController::class, 'getIndexAccoun
 
 Route::post('deleteTransactions',[AccountingController::class, 'delTransactions'])->name('deleteTransactions');
 Route::post('updateTransactionDescription',[AccountingController::class, 'updateTransactionDescription'])->name('updateTransactionDescription');
+Route::post('updateTransaction',[AccountingController::class, 'updateTransaction'])->name('updateTransaction');
+Route::get('paymentTags',[AccountingController::class, 'getPaymentTags'])->name('getPaymentTags');
+Route::post('paymentTags',[AccountingController::class, 'storePaymentTag'])->name('storePaymentTag');
+Route::post('deletePaymentTag',[AccountingController::class, 'deletePaymentTag'])->name('deletePaymentTag');
+Route::post('createDriverLoan',[AccountingController::class, 'createDriverLoan'])->name('createDriverLoan');
+Route::post('createDriverLoanRepayment',[AccountingController::class, 'createDriverLoanRepayment'])->name('createDriverLoanRepayment');
 
 
 Route::get('carConfig',[CarConfigController::class, 'index'])->name('carConfig');

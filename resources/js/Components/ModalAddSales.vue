@@ -7,9 +7,15 @@ const props = defineProps({
   show: Boolean,
   data: Array,
   accounts: Array,
+  tagOptions: { type: Array, default: () => [] },
 });
 const form = ref({
-  date:getTodayDate(),
+  date: getTodayDate(),
+  cars_count: '',
+  cmr: '',
+  driver_name: '',
+  entry_date: '',
+  tag: '',
 });
 function getTodayDate() {
   const today = new Date();
@@ -18,10 +24,15 @@ function getTodayDate() {
   const day = String(today.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
-const restform =()=>{
+const restform = () => {
   form.value = {
-  date:getTodayDate(),
-};
+    date: getTodayDate(),
+    cars_count: '',
+    cmr: '',
+    driver_name: '',
+    entry_date: '',
+    tag: '',
+  };
 }
 
 </script>
@@ -78,6 +89,31 @@ const restform =()=>{
                           type="date"
                           class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.date"   />
+                        </div>
+
+                        <div className="mb-4 mx-5">
+                          <label for="cars_count">عدد السيارات</label>
+                          <input id="cars_count" type="number" min="0" class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm" v-model="form.cars_count" />
+                        </div>
+                        <div className="mb-4 mx-5">
+                          <label for="cmr">رقم CMR</label>
+                          <input id="cmr" type="text" class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm" v-model="form.cmr" />
+                        </div>
+                        <div className="mb-4 mx-5">
+                          <label for="driver_name">اسم السائق</label>
+                          <input id="driver_name" type="text" class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm" v-model="form.driver_name" />
+                        </div>
+                        <div className="mb-4 mx-5">
+                          <label for="entry_date">تاريخ الدخول</label>
+                          <input id="entry_date" type="date" class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm" v-model="form.entry_date" />
+                        </div>
+                        <div className="mb-4 mx-5 lg:col-span-2">
+                          <label for="tag">التاغ</label>
+                          <input v-if="!tagOptions.length" id="tag" type="text" class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm" v-model="form.tag" placeholder="اختياري" />
+                          <select v-else id="tag" class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm" v-model="form.tag">
+                            <option value="">— بدون تاغ —</option>
+                            <option v-for="t in tagOptions" :key="t.id" :value="t.name">{{ t.name }}</option>
+                          </select>
                         </div>
 
                         </div>

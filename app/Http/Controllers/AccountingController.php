@@ -27,6 +27,7 @@ use App\Models\Car;
 use App\Models\ExpensesType;
 use App\Models\Expenses;
 use App\Models\TransactionsImages;
+use App\Models\PaymentTag;
 use App\Helpers\UploadHelper;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\File;
@@ -158,6 +159,27 @@ class AccountingController extends Controller
         })
         ->orderBy('id', 'desc');
     }
+     $tag_filter = $request->get('tag');
+     if ($tag_filter !== null && $tag_filter !== '') {
+         $transactions = $transactions->where('tag', $tag_filter);
+     }
+     $driver_q = $request->get('driver_name') ?: $request->get('q_driver');
+     if ($driver_q !== null && $driver_q !== '') {
+         $driverLike = '%' . $driver_q . '%';
+         if (DB::connection()->getDriverName() === 'sqlite') {
+             $transactions = $transactions->whereRaw("json_extract(details, '$.driver_name') LIKE ?", [$driverLike]);
+         } else {
+             $transactions = $transactions->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(details, '$.driver_name')) LIKE ?", [$driverLike]);
+         }
+     }
+     $loans_only = $request->get('loans_only');
+     if ($loans_only) {
+         if (DB::connection()->getDriverName() === 'sqlite') {
+             $transactions = $transactions->whereRaw("json_extract(details, '$.loan') = 1");
+         } else {
+             $transactions = $transactions->whereRaw("JSON_EXTRACT(details, '$.loan') = true");
+         }
+     }
      if($type=='wallet'){
         $allTransactions = $transactions
         ->whereIn('type', ['inUser', 'outUser', 'inUserAmanah', 'outUserAmanah'])
@@ -205,6 +227,19 @@ class AccountingController extends Controller
          'sumOutTransactionsUserAmanah' =>  $sumOutTransactionsUserAmanah,
          'sumOutTransactionsDinarUserAmanah' => $sumOutTransactionsDinarUserAmanah
      ];
+     if ($request->get('group_by_driver') && $user && $user->wallet) {
+         $walletTrans = Transactions::where('wallet_id', $user->wallet->id)
+             ->whereIn('type', ['inUser', 'outUser', 'inUserAmanah', 'outUserAmanah'])
+             ->get();
+         $data['drivers_summary'] = $walletTrans->groupBy(function ($t) {
+             $d = $t->details;
+             return (is_array($d) && !empty($d['driver_name'])) ? $d['driver_name'] : '—';
+         })->map(function ($items, $driverName) {
+             $in = $items->whereIn('type', ['inUser', 'inUserAmanah'])->sum('amount');
+             $out = $items->whereIn('type', ['outUser', 'outUserAmanah'])->sum('amount');
+             return ['driver_name' => $driverName, 'total_in' => round($in, 2), 'total_out' => round($out, 2), 'count' => $items->count()];
+         })->values()->toArray();
+     }
      if($print==1){
          $config=SystemConfig::first();
          return view('receiptPaymentTotal',compact('data','config'));
@@ -394,21 +429,29 @@ class AccountingController extends Controller
 
         $desc="وصل قبض مباشر"." ".' قاسه'.' '.$user->name.' '.$note;
         $date= $request->date??0;
-            
+
+        $details = array_filter([
+            'cars_count' => $request->input('cars_count'),
+            'cmr' => $request->input('cmr'),
+            'driver_name' => $request->input('driver_name'),
+            'entry_date' => $request->input('entry_date'),
+        ], function ($v) { return $v !== null && $v !== ''; });
+        $tag = $request->input('tag') ? trim($request->input('tag')) : null;
+
         if($amountDollar){
-            $transactiond=$this->increaseWallet($amountDollar,$desc,$this->accounting->mainBox()->id,$user_id,'App\Models\User',0,0,'$',$date,0,'inUserBox');
-            $transactionDetilsd = ['type' => 'inUser','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDollar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'$','parent_id'=>$transactiond->id];
+            $transactiond=$this->increaseWallet($amountDollar,$desc,$this->accounting->mainBox()->id,$user_id,'App\Models\User',0,0,'$',$date,0,'inUserBox',$details);
+            $transactionDetilsd = ['type' => 'inUser','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDollar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'$','parent_id'=>$transactiond->id,'details'=>$details,'tag'=>$tag];
             $transaction = Transactions::create($transactionDetilsd);
         }
         if($amountDinar){
-            $transactionq=$this->increaseWallet($amountDinar,$desc,$this->accounting->mainBox()->id,$user_id,'App\Models\User',0,0,'IQD',$date,0,'inUserBox');
-            $transactionDetilsq = ['type' => 'inUser','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDinar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'IQD','parent_id'=>$transactionq->id];
+            $transactionq=$this->increaseWallet($amountDinar,$desc,$this->accounting->mainBox()->id,$user_id,'App\Models\User',0,0,'IQD',$date,0,'inUserBox',$details);
+            $transactionDetilsq = ['type' => 'inUser','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDinar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'IQD','parent_id'=>$transactionq->id,'details'=>$details,'tag'=>$tag];
             $transaction = Transactions::create($transactionDetilsq);
 
         }
- 
+
         return Response::json($transaction, 200);
-    
+
         }
        public function receiptArrivedUserAmanah(Request $request)
        {
@@ -423,20 +466,28 @@ class AccountingController extends Controller
 
         $desc="وصل قبض أمانة"." ".' قاسه'.' '.$user->name.' '.$note;
         $date= $request->date??0;
-            
+
+        $details = array_filter([
+            'cars_count' => $request->input('cars_count'),
+            'cmr' => $request->input('cmr'),
+            'driver_name' => $request->input('driver_name'),
+            'entry_date' => $request->input('entry_date'),
+        ], function ($v) { return $v !== null && $v !== ''; });
+        $tag = $request->input('tag') ? trim($request->input('tag')) : null;
+
         if($amountDollar){
             // الأمانة لا تؤثر على balance - balance فقط للسيارات
-            $transactionDetilsd = ['type' => 'inUserAmanah','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDollar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'$','parent_id'=>0];
+            $transactionDetilsd = ['type' => 'inUserAmanah','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDollar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'$','parent_id'=>0,'details'=>$details,'tag'=>$tag];
             $transaction = Transactions::create($transactionDetilsd);
         }
         if($amountDinar){
             // الأمانة لا تؤثر على balance - balance فقط للسيارات
-            $transactionDetilsq = ['type' => 'inUserAmanah','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDinar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'IQD','parent_id'=>0];
+            $transactionDetilsq = ['type' => 'inUserAmanah','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDinar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'IQD','parent_id'=>0,'details'=>$details,'tag'=>$tag];
             $transaction = Transactions::create($transactionDetilsq);
         }
- 
+
         return Response::json($transaction, 200);
-    
+
         }
     public function getIndexAccountsSelas()
     { 
@@ -934,7 +985,211 @@ class AccountingController extends Controller
             ],
         ], 200);
     }
- 
+
+    /**
+     * Update transaction: description, tag, and details (cars_count, cmr, driver_name, entry_date).
+     */
+    public function updateTransaction(Request $request)
+    {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
+
+        $validated = $request->validate([
+            'transaction_id' => ['required', 'integer', 'exists:transactions,id'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'tag' => ['nullable', 'string', 'max:255'],
+            'details' => ['nullable', 'array'],
+            'details.cars_count' => ['nullable'],
+            'details.cmr' => ['nullable', 'string', 'max:255'],
+            'details.driver_name' => ['nullable', 'string', 'max:255'],
+            'details.entry_date' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $transaction = Transactions::with(['wallet.user'])->find($validated['transaction_id']);
+
+        if (!$transaction) {
+            return Response::json(['message' => 'لم يتم العثور على الحركة المطلوبة'], 404);
+        }
+
+        $walletUser = optional($transaction->wallet)->user;
+
+        if (!$walletUser || $walletUser->owner_id !== Auth::user()->owner_id) {
+            return Response::json(['message' => 'غير مصرح بتعديل هذه الحركة'], 403);
+        }
+
+        if (array_key_exists('description', $validated) && $validated['description'] !== null) {
+            $description = trim($validated['description']);
+            if ($description === '') {
+                return Response::json([
+                    'errors' => ['description' => ['الوصف مطلوب إذا تم إرساله']],
+                ], 422);
+            }
+            $transaction->description = $description;
+        }
+
+        if (array_key_exists('tag', $validated)) {
+            $transaction->tag = $validated['tag'] ? trim($validated['tag']) : null;
+        }
+
+        if (!empty($validated['details'])) {
+            $current = is_array($transaction->details) ? $transaction->details : [];
+            $allowed = ['cars_count', 'cmr', 'driver_name', 'entry_date', 'loan'];
+            foreach ($allowed as $key) {
+                if (array_key_exists($key, $validated['details'])) {
+                    $current[$key] = $validated['details'][$key];
+                }
+            }
+            $transaction->details = $current;
+        }
+
+        $transaction->save();
+
+        return Response::json([
+            'message' => 'تم تحديث الحركة بنجاح',
+            'transaction' => [
+                'id' => $transaction->id,
+                'description' => $transaction->description,
+                'tag' => $transaction->tag,
+                'details' => $transaction->details,
+            ],
+        ], 200);
+    }
+
+    public function getPaymentTags(Request $request)
+    {
+        $owner_id = Auth::user()->owner_id;
+        $tags = PaymentTag::where('owner_id', $owner_id)->orderBy('name')->get(['id', 'name']);
+        return Response::json($tags, 200);
+    }
+
+    public function storePaymentTag(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+        ]);
+        $owner_id = Auth::user()->owner_id;
+        $tag = PaymentTag::create([
+            'owner_id' => $owner_id,
+            'name' => trim($validated['name']),
+        ]);
+        return Response::json($tag, 201);
+    }
+
+    public function deletePaymentTag(Request $request)
+    {
+        $id = $request->input('id');
+        $tag = PaymentTag::find($id);
+        if (!$tag || $tag->owner_id !== Auth::user()->owner_id) {
+            return Response::json(['message' => 'غير مصرح'], 403);
+        }
+        $name = $tag->name;
+        $tag->delete();
+        Transactions::where('tag', $name)->update(['tag' => null]);
+        return Response::json(['message' => 'تم حذف التاغ'], 200);
+    }
+
+    public function createDriverLoan(Request $request)
+    {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
+        $request->validate([
+            'id' => 'required|exists:users,id',
+            'amountDollar' => 'nullable|numeric|min:0',
+            'amountDinar' => 'nullable|numeric|min:0',
+            'driver_name' => 'required|string|max:255',
+            'date' => 'nullable|string',
+            'note' => 'nullable|string|max:500',
+            'cmr' => 'nullable|string|max:255',
+        ]);
+        $user_id = $request->id;
+        $user = User::with('wallet')->find($user_id);
+        if (!$user || $user->owner_id !== Auth::user()->owner_id) {
+            return Response::json(['message' => 'غير مصرح'], 403);
+        }
+        $amountDollar = $request->amountDollar ?? 0;
+        $amountDinar = $request->amountDinar ?? 0;
+        if (!$amountDollar && !$amountDinar) {
+            return Response::json(['errors' => ['amount' => ['المبلغ مطلوب']]], 422);
+        }
+        $date = $request->date ?: $this->currentDate;
+        $driver_name = trim($request->driver_name);
+        $details = [
+            'loan' => true,
+            'driver_name' => $driver_name,
+            'entry_date' => $request->entry_date ?: $date,
+            'cmr' => $request->cmr ? trim($request->cmr) : null,
+        ];
+        $note = $request->note ? trim($request->note) : '';
+        $desc = 'قرض سائق - ' . $driver_name . ($note ? ' - ' . $note : '');
+        $transaction = null;
+        if ($amountDollar) {
+            $transactiond = $this->debtWallet($amountDollar, $desc, $this->accounting->mainBox()->id, $user_id, 'App\Models\User', 0, 0, '$', $date, 0, 'outUserBox');
+            $transaction = Transactions::create([
+                'type' => 'outUser', 'wallet_id' => $user->wallet->id, 'description' => $desc, 'amount' => $amountDollar * -1,
+                'is_pay' => 1, 'morphed_id' => $user_id, 'morphed_type' => 'App\Models\User', 'user_added' => 0, 'created' => $date,
+                'discount' => 0, 'currency' => '$', 'parent_id' => $transactiond->id, 'details' => $details,
+            ]);
+        }
+        if ($amountDinar) {
+            $transactionq = $this->debtWallet($amountDinar, $desc, $this->accounting->mainBox()->id, $user_id, 'App\Models\User', 0, 0, 'IQD', $date, 0, 'outUserBox');
+            $transaction = Transactions::create([
+                'type' => 'outUser', 'wallet_id' => $user->wallet->id, 'description' => $desc, 'amount' => $amountDinar * -1,
+                'is_pay' => 1, 'morphed_id' => $user_id, 'morphed_type' => 'App\Models\User', 'user_added' => 0, 'created' => $date,
+                'discount' => 0, 'currency' => 'IQD', 'parent_id' => $transactionq->id, 'details' => $details,
+            ]);
+        }
+        return Response::json(['message' => 'تم تسجيل القرض', 'transaction' => $transaction], 201);
+    }
+
+    public function createDriverLoanRepayment(Request $request)
+    {
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
+        $request->validate([
+            'parent_id' => 'required|integer|exists:transactions,id',
+            'amountDollar' => 'nullable|numeric|min:0',
+            'amountDinar' => 'nullable|numeric|min:0',
+            'date' => 'nullable|string',
+        ]);
+        $loanTran = Transactions::with('wallet.user')->find($request->parent_id);
+        if (!$loanTran || $loanTran->type !== 'outUser') {
+            return Response::json(['message' => 'حركة القرض غير موجودة'], 404);
+        }
+        $details = is_array($loanTran->details) ? $loanTran->details : [];
+        if (empty($details['loan'])) {
+            return Response::json(['message' => 'هذه الحركة ليست قرضاً'], 400);
+        }
+        $walletUser = $loanTran->wallet->user;
+        if (!$walletUser || $walletUser->owner_id !== Auth::user()->owner_id) {
+            return Response::json(['message' => 'غير مصرح'], 403);
+        }
+        $user_id = $walletUser->id;
+        $user = User::with('wallet')->find($user_id);
+        $amountDollar = $request->amountDollar ?? 0;
+        $amountDinar = $request->amountDinar ?? 0;
+        if (!$amountDollar && !$amountDinar) {
+            return Response::json(['errors' => ['amount' => ['المبلغ مطلوب']]], 422);
+        }
+        $date = $request->date ?: $this->currentDate;
+        $driver_name = $details['driver_name'] ?? 'سائق';
+        $desc = 'دفعة إرجاع قرض - ' . $driver_name;
+        $transaction = null;
+        if ($amountDollar) {
+            $transactiond = $this->increaseWallet($amountDollar, $desc, $this->accounting->mainBox()->id, $user_id, 'App\Models\User', 0, 0, '$', $date, 0, 'inUserBox', []);
+            $transaction = Transactions::create([
+                'type' => 'inUser', 'wallet_id' => $user->wallet->id, 'description' => $desc, 'amount' => $amountDollar,
+                'is_pay' => 1, 'morphed_id' => $user_id, 'morphed_type' => 'App\Models\User', 'user_added' => 0, 'created' => $date,
+                'discount' => 0, 'currency' => '$', 'parent_id' => $loanTran->id, 'details' => ['driver_name' => $driver_name],
+            ]);
+        }
+        if ($amountDinar) {
+            $transactionq = $this->increaseWallet($amountDinar, $desc, $this->accounting->mainBox()->id, $user_id, 'App\Models\User', 0, 0, 'IQD', $date, 0, 'inUserBox', []);
+            $transaction = Transactions::create([
+                'type' => 'inUser', 'wallet_id' => $user->wallet->id, 'description' => $desc, 'amount' => $amountDinar,
+                'is_pay' => 1, 'morphed_id' => $user_id, 'morphed_type' => 'App\Models\User', 'user_added' => 0, 'created' => $date,
+                'discount' => 0, 'currency' => 'IQD', 'parent_id' => $loanTran->id, 'details' => ['driver_name' => $driver_name],
+            ]);
+        }
+        return Response::json(['message' => 'تم تسجيل دفعة الإرجاع', 'transaction' => $transaction], 201);
+    }
+
     public function increaseWallet(int $amount,$desc,$user_id,$morphed_id='',$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0,$type='in',$details=[],$owner_id=null) 
     {
         $ownerId = $owner_id ?? Auth::user()->owner_id;
