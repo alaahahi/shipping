@@ -76,7 +76,7 @@ async function save() {
   <Transition name="modal">
     <div v-if="show" class="modal-mask">
       <div class="modal-wrapper max-h-[90vh]">
-        <div class="modal-container dark:bg-gray-900 max-h-[90vh] overflow-auto">
+        <div class="modal-container bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-auto">
           <div class="modal-header text-center py-4 dark:text-gray-300">تعديل الحركة</div>
           <div class="modal-body px-5 pb-4">
             <p v-if="error" class="text-red-600 dark:text-red-400 text-sm mb-2">{{ error }}</p>
@@ -124,7 +124,7 @@ async function save() {
 <style scoped>
 .modal-mask { position: fixed; z-index: 9998; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: table; transition: opacity 0.3s ease; }
 .modal-wrapper { display: table-cell; vertical-align: middle; }
-.modal-container { width: 90%; max-width: 500px; margin: 0 auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.33); }
+.modal-container { width: 90%; max-width: 500px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.33); }
 .modal-header { font-weight: 700; }
 .modal-enter-from, .modal-leave-to { opacity: 0; }
 .modal-enter-from .modal-container, .modal-leave-to .modal-container { transform: scale(0.95); }

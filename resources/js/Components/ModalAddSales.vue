@@ -8,6 +8,7 @@ const props = defineProps({
   data: Array,
   accounts: Array,
   tagOptions: { type: Array, default: () => [] },
+  showExtendedFields: { type: Boolean, default: true },
 });
 const form = ref({
   date: getTodayDate(),
@@ -41,11 +42,11 @@ const restform = () => {
     <Transition name="modal">
       <div v-if="show" class="modal-mask ">
         <div class="modal-wrapper  max-h-[80vh]">
-          <div class="modal-container">
-            <div class="modal-header">
+          <div class="modal-container bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+            <div class="modal-header text-gray-900 dark:text-gray-100">
               <slot name="header"></slot>
             </div>
-            <div class="modal-body">
+            <div class="modal-body text-gray-800 dark:text-gray-200">
                         <h2 class="text-center pb-5">
                          وصل قبض
                         </h2>
@@ -54,31 +55,29 @@ const restform = () => {
    
 
                         <div className="mb-4 mx-5">
-                        <label for="card" >المبلغ بالدولار</label>
+                        <label for="card" class="dark:text-gray-200">المبلغ بالدولار</label>
                         <input
                           id="card"
                           type="number"
-
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm"
                           v-model="form.amountDollar"   />
                         </div>
 
                         <div className="mb-4 mx-5">
-                        <label for="card" >المبلغ بالدينار</label>
+                        <label for="card" class="dark:text-gray-200">المبلغ بالدينار</label>
                         <input
                           id="card"
                           type="number"
-
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm"
                           v-model="form.amountDinar"   />
                         </div>
                      
                         <div className="mb-4 mx-5">
-                        <label for="card" >ملاحظة</label>
+                        <label for="card" class="dark:text-gray-200">ملاحظة</label>
                         <input
                           id="card"
                           type="text"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm"
                           v-model="form.amountNote"   />
                         </div>
 
@@ -87,34 +86,36 @@ const restform = () => {
                           <input
                           id="card"
                           type="date"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.date"   />
                         </div>
 
-                        <div className="mb-4 mx-5">
-                          <label for="cars_count">عدد السيارات</label>
-                          <input id="cars_count" type="number" min="0" class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm" v-model="form.cars_count" />
-                        </div>
-                        <div className="mb-4 mx-5">
-                          <label for="cmr">رقم CMR</label>
-                          <input id="cmr" type="text" class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm" v-model="form.cmr" />
-                        </div>
-                        <div className="mb-4 mx-5">
-                          <label for="driver_name">اسم السائق</label>
-                          <input id="driver_name" type="text" class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm" v-model="form.driver_name" />
-                        </div>
-                        <div className="mb-4 mx-5">
-                          <label for="entry_date">تاريخ الدخول</label>
-                          <input id="entry_date" type="date" class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm" v-model="form.entry_date" />
-                        </div>
-                        <div className="mb-4 mx-5 lg:col-span-2">
-                          <label for="tag">التاغ</label>
-                          <input v-if="!tagOptions.length" id="tag" type="text" class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm" v-model="form.tag" placeholder="اختياري" />
-                          <select v-else id="tag" class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm" v-model="form.tag">
-                            <option value="">— بدون تاغ —</option>
-                            <option v-for="t in tagOptions" :key="t.id" :value="t.name">{{ t.name }}</option>
-                          </select>
-                        </div>
+                        <template v-if="showExtendedFields">
+                          <div className="mb-4 mx-5">
+                            <label for="cars_count" class="dark:text-gray-200">عدد السيارات</label>
+                            <input id="cars_count" type="number" min="0" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.cars_count" />
+                          </div>
+                          <div className="mb-4 mx-5">
+                            <label for="cmr" class="dark:text-gray-200">رقم CMR</label>
+                            <input id="cmr" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.cmr" />
+                          </div>
+                          <div className="mb-4 mx-5">
+                            <label for="driver_name" class="dark:text-gray-200">اسم السائق</label>
+                            <input id="driver_name" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.driver_name" />
+                          </div>
+                          <div className="mb-4 mx-5">
+                            <label for="entry_date" class="dark:text-gray-200">تاريخ الدخول</label>
+                            <input id="entry_date" type="date" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.entry_date" />
+                          </div>
+                          <div className="mb-4 mx-5 lg:col-span-2">
+                            <label for="tag" class="dark:text-gray-200">التاغ</label>
+                            <input v-if="!tagOptions.length" id="tag" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.tag" placeholder="اختياري" />
+                            <select v-else id="tag" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.tag">
+                              <option value="">— بدون تاغ —</option>
+                              <option v-for="t in tagOptions" :key="t.id" :value="t.name">{{ t.name }}</option>
+                            </select>
+                          </div>
+                        </template>
 
                         </div>
 

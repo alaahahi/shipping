@@ -134,6 +134,24 @@ class AccountingController extends Controller
 
         return Inertia::render('Accounting/Wallet', ['boxes'=>$boxes,'accounts'=>$this->accounting->mainAccount()]);
     }
+
+    public function toggleWalletTags(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+            'has_wallet_tags' => 'required|boolean',
+        ]);
+        $user = User::where('id', $validated['user_id'])
+            ->where('owner_id', Auth::user()->owner_id)
+            ->firstOrFail();
+        $user->has_wallet_tags = $validated['has_wallet_tags'];
+        $user->save();
+        return Response::json([
+            'message' => 'تم تحديث تفعيل إدارة التاغات',
+            'has_wallet_tags' => (bool) $user->has_wallet_tags,
+        ], 200);
+    }
+
     public function getIndexAccounting(Request $request)
     {
      $owner_id=Auth::user()->owner_id;

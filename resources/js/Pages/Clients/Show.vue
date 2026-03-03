@@ -1060,6 +1060,13 @@ const distributedBalance = computed(() => {
     return 0;
   }
 });
+
+/** عدد السيارات بدون خروجية (محسوب في الفرونت من البيانات المعروضة) */
+const carsCountWithoutExit = computed(() => {
+  const cars = laravelData.value?.data;
+  if (!Array.isArray(cars)) return 0;
+  return cars.filter((car) => !car?.is_exit).length;
+});
  
 
 
@@ -1403,8 +1410,17 @@ async function savePaymentDescription(payment) {
                 disabled
               />
             </div>
- 
- 
+            <div className="mb-4  mr-5">
+              <InputLabel for="cars_without_exit" value="مجموع السيارات بدون خروجية" />
+              <TextInput
+                id="cars_without_exit"
+                type="text"
+                class="mt-1 block w-full"
+                :value="carsCountWithoutExit"
+                disabled
+              />
+            </div>
+
             <div className="mb-4  mr-5">
               <InputLabel for="cars_sum" :value="$t('Total_in_dollars')+' جمرك ' " />
               <TextInput

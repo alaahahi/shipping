@@ -2,7 +2,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
 import { Head, Link, useForm } from "@inertiajs/inertia-vue3";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import ModalAddSales from "@/Components/ModalAddSales.vue";
  import ModalAddExpensesWallet from "@/Components/ModalAddExpensesWallet.vue";
 import InputLabel from "@/Components/InputLabel.vue";
@@ -161,8 +161,24 @@ function openModalEditTransaction(tran) {
 
 const props = defineProps({
   url: String,
-  boxes:Object,
+  boxes: Object,
 });
+
+const hasWalletTags = ref(!!props.boxes?.has_wallet_tags);
+watch(() => props.boxes?.has_wallet_tags, (v) => { hasWalletTags.value = !!v; }, { immediate: true });
+
+async function toggleWalletTagsFlag() {
+  if (!props.boxes?.id) return;
+  try {
+    const { data } = await axios.post('/api/toggleWalletTags', {
+      user_id: props.boxes.id,
+      has_wallet_tags: !hasWalletTags.value,
+    });
+    hasWalletTags.value = data.has_wallet_tags;
+  } catch (e) {
+    console.error(e);
+  }
+}
 const search = async (q) => {
   user_id.value=0;
   laravelData.value = [];
@@ -498,6 +514,7 @@ function openRepaymentModal(loanTran) {
     <ModalAddSales
             :show="showModalAddSales ? true : false"
             :tagOptions="tagOptions"
+            :showExtendedFields="hasWalletTags"
             @a="confirm($event)"
             @close="showModalAddSales = false"
             >
@@ -523,6 +540,7 @@ function openRepaymentModal(loanTran) {
       <ModalAddSales
             :show="showModalAddSalesAmanah ? true : false"
             :tagOptions="tagOptions"
+            :showExtendedFields="hasWalletTags"
             @a="confirmAmanah($event)"
             @close="showModalAddSalesAmanah = false"
             >
@@ -580,27 +598,39 @@ function openRepaymentModal(loanTran) {
     <div>
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
         <div class="overflow-hidden shadow-sm sm:rounded-lg">
-          <div class="border-b border-gray-200 dark:border-gray-700 mb-4">
+          <div class="border-b border-gray-200 dark:border-gray-700 mb-4 flex flex-wrap items-center justify-between gap-2">
             <div class="flex gap-2 print:hidden">
+              <template v-if="hasWalletTags">
+                <button
+                  type="button"
+                  class="px-4 py-2 rounded-t font-medium"
+                  :class="activeTab === 'payments' ? 'bg-white dark:bg-gray-800 border border-b-0 border-gray-200 dark:border-gray-700 text-indigo-600 dark:text-indigo-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'"
+                  @click="setActiveTab('payments')"
+                >
+                  الدفعات
+                </button>
+                <button
+                  type="button"
+                  class="px-4 py-2 rounded-t font-medium"
+                  :class="activeTab === 'tags' ? 'bg-white dark:bg-gray-800 border border-b-0 border-gray-200 dark:border-gray-700 text-indigo-600 dark:text-indigo-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'"
+                  @click="setActiveTab('tags')"
+                >
+                  إدارة التاغات
+                </button>
+              </template>
+            </div>
+            <div class="print:hidden" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5">
               <button
                 type="button"
-                class="px-4 py-2 rounded-t font-medium"
-                :class="activeTab === 'payments' ? 'bg-white dark:bg-gray-800 border border-b-0 border-gray-200 dark:border-gray-700 text-indigo-600 dark:text-indigo-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'"
-                @click="setActiveTab('payments')"
+                class="px-3 py-1.5 rounded text-sm font-medium border transition"
+                :class="hasWalletTags ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-500 hover:bg-gray-300 dark:hover:bg-gray-500'"
+                @click="toggleWalletTagsFlag"
               >
-                الدفعات
-              </button>
-              <button
-                type="button"
-                class="px-4 py-2 rounded-t font-medium"
-                :class="activeTab === 'tags' ? 'bg-white dark:bg-gray-800 border border-b-0 border-gray-200 dark:border-gray-700 text-indigo-600 dark:text-indigo-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'"
-                @click="setActiveTab('tags')"
-              >
-                التاغات
+                {{ hasWalletTags ? 'إدارة التاغات مفعّلة' : 'تفعيل إدارة التاغات لهذه القاسة' }}
               </button>
             </div>
           </div>
-          <div v-if="activeTab === 'payments'" class=" border-b border-gray-200">
+          <div v-if="!hasWalletTags || activeTab === 'payments'" class=" border-b border-gray-200 dark:border-gray-700">
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-3 mb-4">
               <div class="pt-5 print:hidden">
                 <button style="width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5" 
@@ -649,7 +679,7 @@ function openRepaymentModal(loanTran) {
                   طباعة الصندوق
                 </button>
               </div>
-              <div class="pt-5 print:hidden" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5">
+              <div class="pt-5 print:hidden" v-if="hasWalletTags && ($page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5)">
                 <button style="width: 100%; margin-top: 4px;" 
                         class="px-4 py-2 text-white bg-purple-600 rounded-md focus:outline-none hover:bg-purple-700 transition font-semibold"
                         @click="showModalDriverLoan = true">
@@ -744,29 +774,31 @@ function openRepaymentModal(loanTran) {
                   @input="debouncedGetResultsCar"
                 />
               </div>
-              <div>
-                <InputLabel for="q_driver" value="بحث باسم السائق" />
-                <TextInput
-                  id="q_driver"
-                  type="text"
-                  class="mt-1 block w-full"
-                  v-model="qDriver"
-                  placeholder="اسم السائق..."
-                  @input="debouncedGetResultsCar"
-                />
-              </div>
-              <div v-if="tagOptions.length">
-                <InputLabel for="filter_tag" value="فلتر التاغ" />
-                <select id="filter_tag" v-model="filterTag" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" @change="debouncedGetResultsCar()">
-                  <option value="">— الكل —</option>
-                  <option v-for="t in tagOptions" :key="t.id" :value="t.name">{{ t.name }}</option>
-                </select>
-              </div>
-              <div class="flex items-end">
-                <button type="button" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700" @click="loadDriversSummary()">ملخص السائقين</button>
-              </div>
+              <template v-if="hasWalletTags">
+                <div>
+                  <InputLabel for="q_driver" value="بحث باسم السائق" />
+                  <TextInput
+                    id="q_driver"
+                    type="text"
+                    class="mt-1 block w-full"
+                    v-model="qDriver"
+                    placeholder="اسم السائق..."
+                    @input="debouncedGetResultsCar"
+                  />
+                </div>
+                <div v-if="tagOptions.length">
+                  <InputLabel for="filter_tag" value="فلتر التاغ" />
+                  <select id="filter_tag" v-model="filterTag" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" @change="debouncedGetResultsCar()">
+                    <option value="">— الكل —</option>
+                    <option v-for="t in tagOptions" :key="t.id" :value="t.name">{{ t.name }}</option>
+                  </select>
+                </div>
+                <div class="flex items-end">
+                  <button type="button" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700" @click="loadDriversSummary()">ملخص السائقين</button>
+                </div>
+              </template>
             </div>
-            <div class="mx-4 mb-4">
+            <div v-if="hasWalletTags" class="mx-4 mb-4">
               <button type="button" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 mb-2" @click="loadLoanTransactions()">عرض قروض السائقين</button>
               <div v-if="loanTransactionsLoaded" class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
                 <h4 class="font-semibold dark:text-white mb-2">قروض السائقين</h4>
@@ -799,7 +831,7 @@ function openRepaymentModal(loanTran) {
                 </div>
               </div>
             </div>
-            <div v-if="driversSummary.length" class="mx-4 mb-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div v-if="hasWalletTags && driversSummary.length" class="mx-4 mb-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
               <h4 class="font-semibold dark:text-white mb-2">مجموع التوصيلات حسب السائق</h4>
               <div class="overflow-x-auto">
                 <table class="w-full text-sm text-right border dark:border-gray-700">
@@ -832,7 +864,7 @@ function openRepaymentModal(loanTran) {
                     <th className="px-2 py-2">رقم الوصل</th>
                     <th className="px-2 py-2">التاريخ</th>
                     <th className="px-2 py-2">الوصف</th>
-                    <th className="px-2 py-2">التاغ / التفاصيل</th>
+                    <th v-if="hasWalletTags" className="px-2 py-2">التاغ / التفاصيل</th>
                     <th className="px-2 py-2">ايداع</th>
                     <th className="px-2 py-2">سحب</th>
                     <th className="px-2 py-2">الرصيد</th>
@@ -859,7 +891,7 @@ function openRepaymentModal(loanTran) {
                   
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ formatBaghdadTimestamp(tran?.created_at) }}</td>
                   <th className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.description }}</th>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1 text-sm">
+                  <td v-if="hasWalletTags" className="border dark:border-gray-800 text-center px-2 py-1 text-sm">
                     <span v-if="tran.tag" class="inline-block px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">{{ tran.tag }}</span>
                     <template v-if="tran.details && (tran.details.driver_name || tran.details.cmr || tran.details.entry_date || tran.details.cars_count)">
                       <div class="mt-1 text-gray-600 dark:text-gray-400">
@@ -907,6 +939,7 @@ function openRepaymentModal(loanTran) {
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
                     <div class="action-group">
                       <button
+                        v-if="hasWalletTags"
                         class="action-btn bg-amber-600 hover:bg-amber-700"
                         @click="openModalEditTransaction(tran)"
                         title="تعديل الحركة"
@@ -975,7 +1008,7 @@ function openRepaymentModal(loanTran) {
 
           </div>
 
-          <div v-if="activeTab === 'tags'" class="p-4">
+          <div v-if="hasWalletTags && activeTab === 'tags'" class="p-4">
             <div class="mb-4 flex flex-wrap items-center gap-2">
               <input v-model="newTagName" type="text" class="rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 px-3 py-2" placeholder="اسم التاغ الجديد" @keyup.enter="addTag" />
               <button type="button" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700" @click="addTag">إضافة تاغ</button>

@@ -201,6 +201,7 @@ Route::get('getIndexAccountsSelas',[AccountingController::class, 'getIndexAccoun
 Route::post('deleteTransactions',[AccountingController::class, 'delTransactions'])->name('deleteTransactions');
 Route::post('updateTransactionDescription',[AccountingController::class, 'updateTransactionDescription'])->name('updateTransactionDescription');
 Route::post('updateTransaction',[AccountingController::class, 'updateTransaction'])->name('updateTransaction');
+Route::post('toggleWalletTags',[AccountingController::class, 'toggleWalletTags'])->name('toggleWalletTags');
 Route::get('paymentTags',[AccountingController::class, 'getPaymentTags'])->name('getPaymentTags');
 Route::post('paymentTags',[AccountingController::class, 'storePaymentTag'])->name('storePaymentTag');
 Route::post('deletePaymentTag',[AccountingController::class, 'deletePaymentTag'])->name('deletePaymentTag');

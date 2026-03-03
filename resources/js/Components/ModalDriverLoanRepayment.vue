@@ -50,7 +50,7 @@ async function save() {
   <Transition name="modal">
     <div v-if="show && loanTransaction" class="modal-mask">
       <div class="modal-wrapper">
-        <div class="modal-container dark:bg-gray-900">
+        <div class="modal-container bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
           <div class="modal-header text-center py-4 dark:text-gray-300">دفعة إرجاع قرض - {{ loanTransaction.details?.driver_name || 'سائق' }}</div>
           <div class="modal-body px-5 pb-4 space-y-3">
             <p v-if="error" class="text-red-600 dark:text-red-400 text-sm">{{ error }}</p>
@@ -82,6 +82,6 @@ async function save() {
 <style scoped>
 .modal-mask { position: fixed; z-index: 9998; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: table; transition: opacity 0.3s ease; }
 .modal-wrapper { display: table-cell; vertical-align: middle; }
-.modal-container { width: 90%; max-width: 380px; margin: 0 auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.33); }
+.modal-container { width: 90%; max-width: 380px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.33); }
 .modal-header { font-weight: 700; }
 </style>

@@ -32,6 +32,7 @@ class User extends Authenticatable
         'is_band',
         'phone',
         'has_internal_sales',
+        'has_wallet_tags',
         'show_in_dashboard',
         'device',
         'created',
