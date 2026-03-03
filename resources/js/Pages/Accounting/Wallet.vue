@@ -2,7 +2,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
 import { Head, Link, useForm } from "@inertiajs/inertia-vue3";
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import ModalAddSales from "@/Components/ModalAddSales.vue";
  import ModalAddExpensesWallet from "@/Components/ModalAddExpensesWallet.vue";
 import InputLabel from "@/Components/InputLabel.vue";
@@ -452,6 +452,23 @@ function loadLoanTransactions() {
 function openRepaymentModal(loanTran) {
   loanForRepayment.value = loanTran;
   showModalDriverLoanRepayment.value = true;
+}
+
+/** ملخص دفعات التاغ: مجموع عدد السيارات والرصيد (إيداع يزيد، سحب ينقص) */
+const tagSummary = computed(() => {
+  const list = transactionsByTag.value || [];
+  let totalCars = 0;
+  let balance = 0;
+  for (const tran of list) {
+    totalCars += Number(tran.details?.cars_count) || 0;
+    balance += Number(tran.amount) || 0;
+  }
+  return { totalCars, balance };
+});
+
+function printTagDetails() {
+  if (!selectedTagName.value || !props.boxes?.id) return;
+  window.open(`/getIndexAccounting?user_id=${props.boxes.id}&type=wallet&tag=${encodeURIComponent(selectedTagName.value)}&print=8`, '_blank');
 }
 
 </script>
@@ -1029,7 +1046,10 @@ function openRepaymentModal(loanTran) {
                 </button>
               </div>
               <div v-if="selectedTagName" class="mt-4">
-                <h3 class="text-lg font-semibold dark:text-white mb-2">دفعات تاغ: {{ selectedTagName }}</h3>
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <h3 class="text-lg font-semibold dark:text-white">دفعات تاغ: {{ selectedTagName }}</h3>
+                  <button type="button" class="px-3 py-1.5 bg-gray-600 text-white rounded text-sm hover:bg-gray-700" @click="printTagDetails">طباعة تفاصيل التاغ</button>
+                </div>
                 <div class="overflow-x-auto">
                   <table class="w-full text-right text-sm text-gray-500 dark:text-gray-400 text-center border dark:border-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
@@ -1037,6 +1057,7 @@ function openRepaymentModal(loanTran) {
                         <th class="px-2 py-2">رقم</th>
                         <th class="px-2 py-2">التاريخ</th>
                         <th class="px-2 py-2">الوصف</th>
+                        <th class="px-2 py-2">عدد السيارات</th>
                         <th class="px-2 py-2">المبلغ</th>
                         <th class="px-2 py-2">تنفيذ</th>
                       </tr>
@@ -1046,6 +1067,7 @@ function openRepaymentModal(loanTran) {
                         <td class="px-2 py-1">{{ tran.id }}</td>
                         <td class="px-2 py-1">{{ formatBaghdadTimestamp(tran?.created_at) }}</td>
                         <td class="px-2 py-1">{{ tran.description }}</td>
+                        <td class="px-2 py-1">{{ tran.details?.cars_count ?? '—' }}</td>
                         <td class="px-2 py-1">{{ tran.amount }} {{ tran.currency ?? '$' }}</td>
                         <td class="px-2 py-1">
                           <button type="button" class="px-2 py-1 bg-amber-600 text-white rounded text-xs" @click="openModalEditTransaction(tran)">تعديل</button>
@@ -1053,7 +1075,13 @@ function openRepaymentModal(loanTran) {
                         </td>
                       </tr>
                       <tr v-if="transactionsByTag.length === 0">
-                        <td colspan="5" class="px-2 py-4 text-gray-400">لا توجد دفعات لهذا التاغ</td>
+                        <td colspan="6" class="px-2 py-4 text-gray-400">لا توجد دفعات لهذا التاغ</td>
+                      </tr>
+                      <tr v-else class="bg-gray-100 dark:bg-gray-700 font-semibold text-gray-800 dark:text-gray-200">
+                        <td colspan="3" class="px-2 py-2 text-left">المجموع</td>
+                        <td class="px-2 py-2">{{ tagSummary.totalCars }}</td>
+                        <td class="px-2 py-2">الرصيد: {{ tagSummary.balance }} $</td>
+                        <td class="px-2 py-2">—</td>
                       </tr>
                     </tbody>
                   </table>

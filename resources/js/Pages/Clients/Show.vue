@@ -1061,11 +1061,14 @@ const distributedBalance = computed(() => {
   }
 });
 
-/** عدد السيارات بدون خروجية (محسوب في الفرونت من البيانات المعروضة) */
-const carsCountWithoutExit = computed(() => {
+/** مجموع سعر السيارات التي لم يتم تخريجها (محسوب في الفرونت من البيانات المعروضة) */
+const carsTotalPriceWithoutExit = computed(() => {
   const cars = laravelData.value?.data;
   if (!Array.isArray(cars)) return 0;
-  return cars.filter((car) => !car?.is_exit).length;
+  const sum = cars
+    .filter((car) => !car?.is_exit)
+    .reduce((acc, car) => acc + (Number(car?.total_s) || 0), 0);
+  return sum.toFixed(0);
 });
  
 
@@ -1410,16 +1413,6 @@ async function savePaymentDescription(payment) {
                 disabled
               />
             </div>
-            <div className="mb-4  mr-5">
-              <InputLabel for="cars_without_exit" value="مجموع السيارات بدون خروجية" />
-              <TextInput
-                id="cars_without_exit"
-                type="text"
-                class="mt-1 block w-full"
-                :value="carsCountWithoutExit"
-                disabled
-              />
-            </div>
 
             <div className="mb-4  mr-5">
               <InputLabel for="cars_sum" :value="$t('Total_in_dollars')+' جمرك ' " />
@@ -1567,6 +1560,16 @@ async function savePaymentDescription(payment) {
                 type="number"
                 class="mt-1 block w-full"
                 :value="laravelData?.contract_total_debit_Dollar"
+                disabled
+              />
+            </div>
+            <div className="mb-4  mr-5">
+              <InputLabel for="cars_total_without_exit" value="مجموع سعر السيارات التي لم يتم تخريجها" />
+              <TextInput
+                id="cars_total_without_exit"
+                type="text"
+                class="mt-1 block w-full"
+                :value="carsTotalPriceWithoutExit"
                 disabled
               />
             </div>
