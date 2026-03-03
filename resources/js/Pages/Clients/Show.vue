@@ -1564,7 +1564,7 @@ async function savePaymentDescription(payment) {
               />
             </div>
             <div className="mb-4  mr-5">
-              <InputLabel for="cars_total_without_exit" value="مجموع سعر السيارات التي لم يتم تخريجها" />
+              <InputLabel for="cars_total_without_exit" value="مجموع السيارات بدون خروجية" />
               <TextInput
                 id="cars_total_without_exit"
                 type="text"
