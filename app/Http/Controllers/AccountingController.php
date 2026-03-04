@@ -209,6 +209,8 @@ class AccountingController extends Controller
          else{
         $allTransactions = $transactions->paginate(100);
      }
+     // التأكد من تحميل المرفقات (TransactionsImages) في كل الحالات بما فيها عند الفلترة بالتاريخ
+     $allTransactions->getCollection()->load('TransactionsImages');
      $sumAllTransactions = $allTransactions->where('currency','$')->sum('amount');
      $sumDebitTransactions = $allTransactions->where('currency','$')->whereIn('type', ['debt','outUserBox'])->sum('amount');
      $sumInTransactions = $allTransactions->where('currency','$')->whereIn('type', ['in', 'inUserBox'])->sum('amount');

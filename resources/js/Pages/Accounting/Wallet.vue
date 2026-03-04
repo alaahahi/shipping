@@ -287,7 +287,10 @@ function getTodayDate() {
   return `${year}-${month}-${day}`;
 }
 function delTransactions(id){
-  axios.post(`/api/delTransactions?id=${id.id}`)
+  // في صفحة القاصة، أغلب الحركات المرتبطة بالمحاسبة يكون لها parent_id (حركة الصندوق الرئيسي)
+  // حتى يتم حذف الحركة من صفحة المحاسبة أيضاً، نرسل رقم حركة الأصل إن وجد، وإلا نستخدم نفس رقم الحركة
+  const targetId = id.parent_id && id.parent_id !== 0 ? id.parent_id : id.id;
+  axios.post(`/api/delTransactions?id=${targetId}`)
   .then(response => {
     refresh();
     showModalDel.value=false;

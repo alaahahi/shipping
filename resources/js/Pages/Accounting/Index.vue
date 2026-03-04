@@ -1083,7 +1083,7 @@ function getOrangeColorClass(index) {
                    </td>
                   <td>
                     <a
-                      v-for="(image, index) in tran.transactions_images"
+                      v-for="(image, index) in (tran.transactions_images || [])"
                       :key="index"
                       :href="getDownloadUrl(image.name)"
                       style="cursor: pointer;"
