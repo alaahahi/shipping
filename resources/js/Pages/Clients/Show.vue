@@ -1981,7 +1981,7 @@ async function savePaymentDescription(payment) {
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
-                      {{ item.data.total_s.toFixed(0) }}
+                      {{ (Number(item.data.total_s) || 0).toFixed(0) }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"
