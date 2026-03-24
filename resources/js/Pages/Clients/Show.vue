@@ -331,23 +331,24 @@ let getResults = async (page = 1, shouldCheckBalance = true) => {
     });
 };
 function calculateTotalFilteredAmount() {
-  let filteredTransactions ='';
-  let totalAmount ='';
   try {
-    filteredTransactions = laravelData.value.transactions.filter(user =>
-    user.type === 'out' && user.amount < 0 && user.is_pay === 1
-  );
+    const transactions = Array.isArray(laravelData.value?.transactions)
+      ? laravelData.value.transactions
+      : [];
 
+    const filteredTransactions = transactions.filter((user) => {
+      const amount = Number(user?.amount) || 0;
+      return user?.type === "out" && amount < 0 && Number(user?.is_pay) === 1;
+    });
+
+    const totalAmount = filteredTransactions.reduce((sum, user) => {
+      return sum + (Number(user?.amount) || 0);
+    }, 0);
+
+    return { totalAmount };
   } catch (error) {
-
+    return { totalAmount: 0 };
   }
-  try {
-    totalAmount = filteredTransactions.reduce((sum, user) => sum + user.amount, 0);
-
-  } catch (error) {
-
-  }
-  return {  totalAmount };
 }
 
 const paymentsCount = computed(() => {
@@ -1430,7 +1431,7 @@ async function savePaymentDescription(payment) {
                 id="cars_paid"
                 type="number"
                 class="mt-1 block w-full"
-                :value="parseFloat(laravelData?.cars_sum)-(parseFloat(laravelData?.client?.wallet?.balance)+parseFloat(laravelData?.cars_discount))"
+                :value="Number(laravelData?.cars_paid) || 0"
                 disabled
               />
             </div>
