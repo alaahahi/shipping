@@ -981,9 +981,9 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.expenses}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.land_shipping}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.land_shipping_dinar}}</td>
-                                      <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ (car.total).toFixed(0)  }}</td>
+                                      <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ (Number(car.total) || 0).toFixed(0)  }}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.paid}}</td>
-                                      <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ (car.total_s-car.total).toFixed(0) }}</td>
+                                      <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ ((Number(car.total_s) || 0) - (Number(car.total) || 0)).toFixed(0) }}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.date  }}</td>
                                       <td className="border dark:border-gray-800 text-start px-1 py-2">
                                         <button

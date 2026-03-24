@@ -693,7 +693,7 @@ function getDownloadUrl(name) {
                         <td
                           className="border dark:border-gray-800 text-center px-1 py-2 "
                         >
-                          {{ car.total_s.toFixed(0) }}
+                          {{ (Number(car.total_s) || 0).toFixed(0) }}
                         </td>
                         <td
                           className="border dark:border-gray-800 text-center px-1 py-2 "
