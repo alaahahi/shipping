@@ -2215,7 +2215,7 @@ async function savePaymentDescription(payment) {
                     </td>
                     <!-- 2-17. باقي الأعمدة -->
                     <td colspan="16" className="border dark:border-gray-800 text-start px-4 py-3">
-                      <span class="text-xl font-bold text-amber-800 dark:text-amber-200">💰 الرصيد غير الموزع على السيارات:</span>
+                      <span class="text-xl font-bold text-amber-800 dark:text-amber-200"> الرصيد غير الموزع على السيارات:</span>
                     </td>
                     <!-- 18. total -->
                     <td className="border dark:border-gray-800 text-center px-2 py-3"></td>
@@ -2247,19 +2247,6 @@ async function savePaymentDescription(payment) {
             />
           </div>
         </div>
-      </div>
-    </div>
-    <div
-      class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 dark:text-gray-400 hidden print:block"
-    >
-      <div class="flex flex-row">
-        <div class="basis-1/2">
-          توقيع صاحب الحساب
-          <br />
-          {{ laravelData.client?.name }}
-        </div>
-        <div class="basis-1/2 text-center">توقيع قسم المحاسبة</div>
-        <div class="basis-1/2 text-end">توقيع المدير</div>
       </div>
     </div>
   </AuthenticatedLayout>
