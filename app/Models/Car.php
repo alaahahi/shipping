@@ -70,6 +70,7 @@ class Car extends Model
         'amount' => 'integer',
         'paid' => 'integer',
         'profit' => 'integer',
+        'year_date' => 'integer',
         'discount' => 'integer',
         'expenses' => 'integer',
         'expenses_s' => 'integer',
