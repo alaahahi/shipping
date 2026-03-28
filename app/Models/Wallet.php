@@ -15,6 +15,10 @@ class Wallet extends Model
         'card'
     ];
 
+    protected $casts = [
+        'balance_dinar' => 'integer',
+        'balance' => 'integer',
+    ];
     public function user()
     {
         return $this->belongsTo(User::class);

@@ -58,6 +58,20 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'is_band' => 'boolean',
+        'has_internal_sales' => 'boolean',
+        'has_wallet_tags' => 'boolean',
+        'show_in_dashboard' => 'boolean',
+        'created' => 'datetime',
+        'year_date' => 'datetime',
+        'last_activity' => 'datetime',
+        'device' => 'string',
+        'phone' => 'string',
+        'owner_id' => 'integer',
+        'publickey_receiver' => 'string',
+        'parent_id' => 'integer',
+        'type_id' => 'integer',
+        'public_key' => 'string',
     ];
 
     public function morphed()
