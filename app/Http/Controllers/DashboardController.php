@@ -348,7 +348,7 @@ class DashboardController extends Controller
     public function addCars(Request $request)
     {
         $owner_id = Auth::user()->owner_id;
-        $year_date = Carbon::now()->format('Y');
+        $year_date = 2026;
         $client_id = $request->client_id;
         $maxNo = Car::max('no') ?? 0;
         $results = 0;
