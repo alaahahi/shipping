@@ -65,6 +65,33 @@ class Car extends Model
     
     protected $casts = [
         'car_number' => 'string',
+        'is_exit' => 'boolean',
+        'total_s' => 'integer',
+        'amount' => 'integer',
+        'paid' => 'integer',
+        'profit' => 'integer',
+        'discount' => 'integer',
+        'expenses' => 'integer',
+        'expenses_s' => 'integer',
+        'land_shipping' => 'integer',
+        'land_shipping_s' => 'integer',
+        'land_shipping_dinar' => 'integer',
+        'land_shipping_dinar_s' => 'integer',
+        'car_price' => 'integer',
+        'car_color' => 'string',
+        'year' => 'integer',
+        'car_type' => 'string',
+        'vin' => 'string',
+        'car_number' => 'string',
+        'dinar' => 'integer',
+        'dolar_price' => 'integer',
+        'dolar_custom' => 'integer',
+        'checkout' => 'integer',
+        'shipping_dolar' => 'integer',
+        'coc_dolar' => 'integer',
+        'total' => 'integer',
+        'paid' => 'integer',
+        'profit' => 'integer',
     ];
     public function user()
     {
