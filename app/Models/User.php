@@ -63,7 +63,7 @@ class User extends Authenticatable
         'has_wallet_tags' => 'boolean',
         'show_in_dashboard' => 'boolean',
         'created' => 'datetime',
-        'year_date' => 'datetime',
+        'year_date' => 'integer',
         'last_activity' => 'datetime',
         'device' => 'string',
         'phone' => 'string',
