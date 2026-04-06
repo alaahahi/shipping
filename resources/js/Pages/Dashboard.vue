@@ -106,7 +106,7 @@ const message = `السلام عليكم: ${props.company_name || 'شركة سل
     phoneNumbers.forEach((phoneNumber) => {
       if (phoneNumber) {
         promise = promise.then(() => {
-          const url = `${baseUrl}?recipient=+964${phoneNumber}&apikey=${apiKey}&text=${encodeURIComponent(textMessage)}&json=yes`;
+          const url = `${baseUrl}?recipient=+964${phoneNumber}&apikey=${apiKey}&text=${encodeURIComponent(message)}&json=yes`;
           return axios.get(url)
           
             .then(() => {
