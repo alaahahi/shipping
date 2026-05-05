@@ -391,22 +391,6 @@ function getTagLabel(tagValue) {
                 </select>
                 <button type="button" class="px-3 py-1 bg-indigo-600 text-white rounded" @click="addSelectedTag">إضافة</button>
               </div>
-              <div class="mt-2 flex gap-2">
-                <input
-                  type="text"
-                  class="block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  placeholder="أضف تاغ جديد ثم Enter"
-                  v-model="tagInput"
-                  @keyup.enter.prevent="addTagFromInput"
-                />
-                <button
-                  type="button"
-                  class="px-3 py-1 bg-emerald-600 text-white rounded"
-                  @click="addTagFromInput"
-                >
-                  إضافة جديد
-                </button>
-              </div>
               <div class="mt-3 flex flex-wrap gap-2">
                 <span
                   v-for="tag in (formData.tags || [])"

@@ -1158,8 +1158,32 @@ class DashboardController extends Controller
     public function getCarTags(Request $request)
     {
         $owner_id = Auth::user()->owner_id;
-        $tags = CarTag::where('owner_id', $owner_id)->orderBy('name')->get(['id', 'name']);
+        $tags = CarTag::where('owner_id', $owner_id)
+            ->withCount('cars as cars_count')
+            ->orderBy('name')
+            ->get(['id', 'name']);
         return Response::json($tags, 200);
+    }
+
+    public function printCarTagDetails(Request $request)
+    {
+        $owner_id = Auth::user()->owner_id;
+        $tag_id = (int) $request->get('tag_id', 0);
+        if ($tag_id <= 0) {
+            abort(404);
+        }
+
+        $tag = CarTag::where('owner_id', $owner_id)->findOrFail($tag_id);
+        $tag->loadCount('cars');
+
+        $cars = $tag->cars()
+            ->with(['client:id,name'])
+            ->orderBy('id', 'desc')
+            ->get(['id', 'car_type', 'vin', 'car_number', 'client_id', 'date', 'year', 'total_s', 'paid', 'discount']);
+
+        $config = SystemConfig::first();
+
+        return view('carTagDetails', compact('config', 'tag', 'cars'));
     }
 
     public function storeCarTag(Request $request)

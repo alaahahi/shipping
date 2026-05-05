@@ -214,6 +214,7 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
     Route::get('payCar',[DashboardController::class, 'payCar'])->name('payCar');
     Route::get('getIndexCar',[DashboardController::class, 'getIndexCar'])->name('getIndexCar');
     Route::get('getIndexCarSearch',[DashboardController::class, 'getIndexCarSearch'])->name('getIndexCarSearch');
+    Route::get('printCarTagDetails',[DashboardController::class, 'printCarTagDetails'])->name('printCarTagDetails');
 
     Route::get('addExpenses',[DashboardController::class, 'addExpenses'])->name('addExpenses');
     Route::get('addPaymentCar',[DashboardController::class, 'addPaymentCar'])->name('addPaymentCar');
