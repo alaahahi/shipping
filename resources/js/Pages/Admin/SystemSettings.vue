@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/inertia-vue3';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { useToast } from "vue-toastification";
@@ -356,6 +356,18 @@ function removeContractTerm2(index) {
 }
 
 const testingConnection = ref(false);
+const showTagManagerModal = ref(false);
+const managingTagsLoading = ref(false);
+const carSearch = ref('');
+const carsForTagMgmt = ref([]);
+const carTagOptions = ref([]);
+const selectedCarId = ref(null);
+const selectedTagId = ref(null);
+const newTagName = ref('');
+
+const selectedCarForTagMgmt = computed(() => {
+  return carsForTagMgmt.value.find((car) => car.id === selectedCarId.value) || null;
+});
 
 function testConnection() {
   if (!formData.value.domain || !formData.value.api_key) {
@@ -400,6 +412,145 @@ function testConnection() {
     testingConnection.value = false;
   });
 }
+
+function openTagManagerModal() {
+  showTagManagerModal.value = true;
+  carSearch.value = '';
+  selectedCarId.value = null;
+  selectedTagId.value = null;
+  newTagName.value = '';
+  loadCarsForTagManagement();
+  loadCarTagOptions();
+}
+
+function closeTagManagerModal() {
+  showTagManagerModal.value = false;
+  selectedCarId.value = null;
+  selectedTagId.value = null;
+  newTagName.value = '';
+}
+
+function loadCarsForTagManagement() {
+  managingTagsLoading.value = true;
+  axios.get('/api/carsForTagManagement', {
+    params: { q: carSearch.value || '', limit: 150 }
+  })
+    .then((response) => {
+      carsForTagMgmt.value = response.data || [];
+      if (selectedCarId.value) {
+        const stillExists = carsForTagMgmt.value.some((car) => car.id === selectedCarId.value);
+        if (!stillExists) {
+          selectedCarId.value = null;
+        }
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      toast.error('حدث خطأ أثناء تحميل السيارات', {
+        timeout: 2500,
+        position: "bottom-right",
+        rtl: true,
+      });
+    })
+    .finally(() => {
+      managingTagsLoading.value = false;
+    });
+}
+
+function loadCarTagOptions() {
+  axios.get('/api/carTags')
+    .then((response) => {
+      carTagOptions.value = response.data || [];
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+}
+
+function addTagToSelectedCar() {
+  if (!selectedCarId.value) {
+    toast.warning('اختر سيارة أولاً', {
+      timeout: 2000,
+      position: "bottom-right",
+      rtl: true,
+    });
+    return;
+  }
+
+  const payload = { car_id: selectedCarId.value };
+  const tagName = newTagName.value ? newTagName.value.trim() : '';
+
+  if (selectedTagId.value) {
+    payload.tag_id = selectedTagId.value;
+  } else if (tagName) {
+    payload.tag_name = tagName;
+  } else {
+    toast.warning('اختر تاغ من القائمة أو اكتب تاغ جديد', {
+      timeout: 2200,
+      position: "bottom-right",
+      rtl: true,
+    });
+    return;
+  }
+
+  axios.post('/api/addTagToCar', payload)
+    .then((response) => {
+      const updated = response.data?.car;
+      if (updated) {
+        const idx = carsForTagMgmt.value.findIndex((c) => c.id === updated.id);
+        if (idx !== -1) {
+          carsForTagMgmt.value[idx] = updated;
+        }
+      }
+      loadCarTagOptions();
+      selectedTagId.value = null;
+      newTagName.value = '';
+      toast.success('تمت إضافة التاغ للسيارة', {
+        timeout: 2000,
+        position: "bottom-right",
+        rtl: true,
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      toast.error('تعذر إضافة التاغ للسيارة', {
+        timeout: 2500,
+        position: "bottom-right",
+        rtl: true,
+      });
+    });
+}
+
+function removeTagFromSelectedCar(tagId) {
+  if (!selectedCarId.value || !tagId) return;
+
+  axios.post('/api/removeTagFromCar', {
+    car_id: selectedCarId.value,
+    tag_id: tagId,
+  })
+    .then((response) => {
+      const updated = response.data?.car;
+      if (updated) {
+        const idx = carsForTagMgmt.value.findIndex((c) => c.id === updated.id);
+        if (idx !== -1) {
+          carsForTagMgmt.value[idx] = updated;
+        }
+      }
+      toast.success('تمت إزالة التاغ من السيارة', {
+        timeout: 1800,
+        position: "bottom-right",
+        rtl: true,
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      toast.error('تعذر إزالة التاغ من السيارة', {
+        timeout: 2300,
+        position: "bottom-right",
+        rtl: true,
+      });
+    });
+}
 </script>
 
 <template>
@@ -441,8 +592,15 @@ function testConnection() {
 
             <!-- System Config Tab -->
             <div v-show="activeTab === 'system-config'" class="space-y-6">
-              <div class="mb-4">
+              <div class="mb-4 flex justify-between items-center">
                 <h3 class="text-lg font-semibold mb-4">إعدادات العناوين</h3>
+                <button
+                  @click="openTagManagerModal"
+                  type="button"
+                  class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                >
+                  إدارة تاغات السيارات
+                </button>
               </div>
 
               <div v-if="loading" class="text-center py-8">
@@ -861,6 +1019,140 @@ function testConnection() {
                     </tr>
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Car Tag Manager Modal -->
+    <div
+      v-if="showTagManagerModal"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+      @click.self="closeTagManagerModal"
+    >
+      <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white dark:bg-gray-800">
+        <div class="mt-1">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+              إدارة التاغات على السيارات
+            </h3>
+            <button
+              @click="closeTagManagerModal"
+              type="button"
+              class="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
+            >
+              إغلاق
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <div>
+              <InputLabel value="بحث عن سيارة" />
+              <div class="flex gap-2">
+                <TextInput
+                  v-model="carSearch"
+                  type="text"
+                  class="mt-1 block w-full"
+                  placeholder="VIN أو رقم السيارة أو اسم الزبون"
+                />
+                <button
+                  @click="loadCarsForTagManagement"
+                  type="button"
+                  class="mt-1 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  بحث
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <InputLabel value="اختيار السيارة" />
+              <select
+                v-model.number="selectedCarId"
+                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+              >
+                <option :value="null">-- اختر سيارة --</option>
+                <option v-for="car in carsForTagMgmt" :key="car.id" :value="car.id">
+                  #{{ car.id }} - {{ car.car_type || '-' }} - {{ car.vin || '-' }} - {{ car.client?.name || 'بدون زبون' }}
+                </option>
+              </select>
+            </div>
+
+            <div class="flex items-end">
+              <button
+                @click="loadCarsForTagManagement"
+                :disabled="managingTagsLoading"
+                type="button"
+                class="w-full px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-800 disabled:opacity-50"
+              >
+                {{ managingTagsLoading ? 'جاري التحميل...' : 'تحديث قائمة السيارات' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4 border-t pt-4">
+            <div>
+              <InputLabel value="اختيار تاغ موجود" />
+              <select
+                v-model.number="selectedTagId"
+                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+              >
+                <option :value="null">-- اختر تاغ --</option>
+                <option v-for="tag in carTagOptions" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
+              </select>
+            </div>
+
+            <div>
+              <InputLabel value="أو إضافة تاغ جديد" />
+              <TextInput
+                v-model="newTagName"
+                type="text"
+                class="mt-1 block w-full"
+                placeholder="اكتب اسم التاغ الجديد"
+              />
+            </div>
+
+            <div class="flex items-end">
+              <button
+                @click="addTagToSelectedCar"
+                type="button"
+                class="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                إضافة التاغ للسيارة
+              </button>
+            </div>
+          </div>
+
+          <div class="border rounded p-4">
+            <h4 class="font-semibold mb-2">تاغات السيارة المختارة</h4>
+            <p v-if="!selectedCarForTagMgmt" class="text-sm text-gray-500">
+              اختر سيارة أولاً لعرض التاغات الخاصة بها.
+            </p>
+            <div v-else>
+              <div class="mb-2 text-sm text-gray-600 dark:text-gray-300">
+                السيارة: #{{ selectedCarForTagMgmt.id }} - {{ selectedCarForTagMgmt.car_type || '-' }} - {{ selectedCarForTagMgmt.vin || '-' }}
+              </div>
+              <div v-if="!selectedCarForTagMgmt.tags || selectedCarForTagMgmt.tags.length === 0" class="text-sm text-gray-500">
+                لا يوجد تاغات على هذه السيارة.
+              </div>
+              <div v-else class="flex flex-wrap gap-2">
+                <span
+                  v-for="tag in selectedCarForTagMgmt.tags"
+                  :key="tag.id"
+                  class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-100"
+                >
+                  {{ tag.name }}
+                  <button
+                    @click="removeTagFromSelectedCar(tag.id)"
+                    type="button"
+                    class="text-red-600 dark:text-red-300 hover:text-red-800"
+                    title="إزالة التاغ من السيارة"
+                  >
+                    ×
+                  </button>
+                </span>
               </div>
             </div>
           </div>

@@ -229,6 +229,9 @@ Route::post('bulkUpdateCarsS',[DashboardController::class, 'bulkUpdateCarsS'])->
 Route::get('carTags',[DashboardController::class, 'getCarTags'])->name('getCarTags');
 Route::post('carTags',[DashboardController::class, 'storeCarTag'])->name('storeCarTag');
 Route::post('deleteCarTag',[DashboardController::class, 'deleteCarTag'])->name('deleteCarTag');
+Route::get('carsForTagManagement',[DashboardController::class, 'getCarsForTagManagement'])->name('carsForTagManagement');
+Route::post('addTagToCar',[DashboardController::class, 'addTagToCar'])->name('addTagToCar');
+Route::post('removeTagFromCar',[DashboardController::class, 'removeTagFromCar'])->name('removeTagFromCar');
 
 Route::get('/getcount', [DashboardController::class, 'getcount'])->name('getcount');
 

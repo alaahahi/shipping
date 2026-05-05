@@ -1187,5 +1187,90 @@ class DashboardController extends Controller
         $tag->delete();
         return Response::json(['message' => 'تم حذف التاغ'], 200);
     }
+
+    public function getCarsForTagManagement(Request $request)
+    {
+        $owner_id = Auth::user()->owner_id;
+        $q = trim((string) $request->get('q', ''));
+        $limit = (int) $request->get('limit', 100);
+        if ($limit < 1 || $limit > 500) {
+            $limit = 100;
+        }
+
+        $query = Car::with(['client:id,name', 'tags:id,name'])
+            ->where('owner_id', $owner_id)
+            ->orderBy('id', 'desc');
+
+        if ($q !== '') {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('vin', 'LIKE', '%' . $q . '%')
+                    ->orWhere('car_number', 'LIKE', '%' . $q . '%')
+                    ->orWhere('car_type', 'LIKE', '%' . $q . '%')
+                    ->orWhereHas('client', function ($c) use ($q) {
+                        $c->where('name', 'LIKE', '%' . $q . '%');
+                    });
+            });
+        }
+
+        $cars = $query->limit($limit)->get([
+            'id', 'car_type', 'vin', 'car_number', 'client_id', 'date', 'year'
+        ]);
+
+        return Response::json($cars, 200);
+    }
+
+    public function addTagToCar(Request $request)
+    {
+        $owner_id = Auth::user()->owner_id;
+        $validated = $request->validate([
+            'car_id' => ['required', 'integer', 'exists:car,id'],
+            'tag_id' => ['nullable', 'integer'],
+            'tag_name' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $car = Car::where('id', (int) $validated['car_id'])->where('owner_id', $owner_id)->firstOrFail();
+
+        $tagId = isset($validated['tag_id']) ? (int) $validated['tag_id'] : 0;
+        $tagName = isset($validated['tag_name']) ? trim((string) $validated['tag_name']) : '';
+
+        if (!$tagId && $tagName === '') {
+            return Response::json(['message' => 'يرجى اختيار أو كتابة التاغ'], 422);
+        }
+
+        if ($tagId) {
+            $tag = CarTag::where('id', $tagId)->where('owner_id', $owner_id)->firstOrFail();
+        } else {
+            $tag = CarTag::firstOrCreate(
+                ['owner_id' => $owner_id, 'name' => $tagName],
+                ['owner_id' => $owner_id, 'name' => $tagName]
+            );
+        }
+
+        $car->tags()->syncWithoutDetaching([$tag->id]);
+
+        return Response::json([
+            'message' => 'تمت إضافة التاغ للسيارة',
+            'car' => $car->fresh()->load(['tags:id,name', 'client:id,name']),
+        ], 200);
+    }
+
+    public function removeTagFromCar(Request $request)
+    {
+        $owner_id = Auth::user()->owner_id;
+        $validated = $request->validate([
+            'car_id' => ['required', 'integer', 'exists:car,id'],
+            'tag_id' => ['required', 'integer', 'exists:car_tags,id'],
+        ]);
+
+        $car = Car::where('id', (int) $validated['car_id'])->where('owner_id', $owner_id)->firstOrFail();
+        $tag = CarTag::where('id', (int) $validated['tag_id'])->where('owner_id', $owner_id)->firstOrFail();
+
+        $car->tags()->detach($tag->id);
+
+        return Response::json([
+            'message' => 'تمت إزالة التاغ من السيارة',
+            'car' => $car->fresh()->load(['tags:id,name', 'client:id,name']),
+        ], 200);
+    }
     
 }
