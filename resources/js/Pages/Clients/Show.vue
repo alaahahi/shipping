@@ -55,6 +55,8 @@ let showModalShowDriving = ref(false);
 let total = ref(0);
 let formData = ref({});
 let formDriving = ref({});
+let filterTag = ref('');
+let tagOptions = ref([]);
 
 let discount= ref(0);
 let note = ref('');
@@ -299,7 +301,7 @@ let getResults = async (page = 1, shouldCheckBalance = true) => {
     return;
   }
   axios
-    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${userId}&from=${from.value || ""}&to=${to.value || ""}`)
+    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${userId}&from=${from.value || ""}&to=${to.value || ""}&tag=${filterTag.value || ""}`)
     .then((response) => {
       laravelData.value = response.data;
       client_Select.value = response.data.client.id
@@ -397,7 +399,7 @@ const getResultsSelect = async (page = 1) => {
     return;
   }
   axios
-    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${userId}&from=${from.value || ""}&to=${to.value || ""}`)
+    .get(`/api/getIndexAccountsSelas?page=${page}&user_id=${userId}&from=${from.value || ""}&to=${to.value || ""}&tag=${filterTag.value || ""}`)
     .then((response) => {
       laravelData.value = response.data;
       client_Select.value = response.data.client.id
@@ -428,6 +430,11 @@ const getResultsSelect = async (page = 1) => {
 
 // استدعاء getResults عند تحميل الصفحة
 onMounted(() => {
+  axios.get('/api/carTags').then((response) => {
+    tagOptions.value = response.data || [];
+  }).catch((error) => {
+    console.error(error);
+  });
   getResults();
 });
 
@@ -1375,6 +1382,20 @@ async function savePaymentDescription(payment) {
                 />
               </div>
             </div>
+            <div class="px-2 flex flex-col justify-end">
+              <div class="mb-4">
+                <InputLabel for="tag_filter" value="فلتر التاغ" />
+                <select
+                  id="tag_filter"
+                  v-model="filterTag"
+                  @change="getResults(1, false)"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+                >
+                  <option value="">كل التاغات</option>
+                  <option v-for="tag in tagOptions" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
+                </select>
+              </div>
+            </div>
             <div class="mb-4 mr-5 print:hidden flex flex-col gap-2">
               <InputLabel for="pay" value="فلترة" />
               <button
@@ -1387,7 +1408,7 @@ async function savePaymentDescription(payment) {
             <div class="mb-4 mr-5 print:hidden flex flex-col gap-2">
               <InputLabel for="pay" value="طباعة" />
               <a
-                :href="`/api/getIndexAccountsSelas?user_id=${client_Select}&from=${from}&to=${to}&print=1&showComplatedCars=${ showComplatedCars ? 0:1}`"
+                :href="`/api/getIndexAccountsSelas?user_id=${client_Select}&from=${from}&to=${to}&tag=${filterTag || ''}&print=1&showComplatedCars=${ showComplatedCars ? 0:1}`"
                 target="_blank"
                 class="w-full px-6 py-2 mt-1 font-bold text-white bg-orange-500 rounded block text-center"
               >
@@ -1397,7 +1418,7 @@ async function savePaymentDescription(payment) {
             <div class="mb-4 mr-5 print:hidden flex flex-col gap-2">
               <InputLabel for="pay" value="طباعة" />
               <a
-                :href="`/api/getIndexAccountsSelas?user_id=${client_Select}&from=${from}&to=${to}&print=1&printExcel=1&showComplatedCars=${ showComplatedCars ? 0:1}`"
+                :href="`/api/getIndexAccountsSelas?user_id=${client_Select}&from=${from}&to=${to}&tag=${filterTag || ''}&print=1&printExcel=1&showComplatedCars=${ showComplatedCars ? 0:1}`"
                 target="_blank"
                 class="w-full px-6 py-2 mt-1 font-bold text-white bg-green-500 rounded block text-center"
               >
@@ -1797,6 +1818,9 @@ async function savePaymentDescription(payment) {
                       {{ $t("car_number") }}
                     </th>
                     <th scope="col" class="px-1 py-2 text-base">
+                      التاغات
+                    </th>
+                    <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("dinar") }}
                     </th>
                     <th scope="col" class="px-1 py-2 text-base">
@@ -1922,6 +1946,9 @@ async function savePaymentDescription(payment) {
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
                       {{ item.data.car_number }}
+                    </td>
+                    <td className="border dark:border-gray-800 text-center px-2 py-1">
+                      {{ (item.data.tags || []).map(t => t.name).join('، ') }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"

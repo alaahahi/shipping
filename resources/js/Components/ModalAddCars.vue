@@ -8,8 +8,13 @@ const props = defineProps({
   show: Boolean,
   formData: Object,
   client: Array,
+  tagOptions: {
+    type: Array,
+    default: () => [],
+  },
 });
 const emit = defineEmits(["close", "a"]);
+const tagInput = ref("");
 
 const carEntries = ref([]);
 let carEntryUid = 0;
@@ -47,6 +52,10 @@ watch(
   (show) => {
     if (show) {
       initializeCars();
+      if (props.formData) {
+        const currentTags = Array.isArray(props.formData.tags) ? props.formData.tags : [];
+        props.formData.tags = currentTags.map((t) => (typeof t === "object" ? t.id : t)).filter(Boolean);
+      }
       if (props.formData?.client_id) {
         showClient.value = false;
       }
@@ -207,6 +216,19 @@ function handleSubmit() {
     car_number: carsPayload[0]?.car_number ?? "",
   };
   emit("a", payload);
+}
+
+function addTagFromInput() {
+  const name = tagInput.value ? tagInput.value.trim() : "";
+  if (!name || !props.formData) return;
+  if (!Array.isArray(props.formData.tags)) {
+    props.formData.tags = [];
+  }
+  const exists = props.formData.tags.some((t) => String(t).toLowerCase() === name.toLowerCase());
+  if (!exists) {
+    props.formData.tags.push(name);
+  }
+  tagInput.value = "";
 }
 </script>
   <template>
@@ -542,6 +564,31 @@ function handleSubmit() {
               </div>
             </div>
 
+            <div className="mb-4 mx-1">
+              <label class="dark:text-gray-200" for="car_tags">
+                تاغات السيارة
+              </label>
+              <select
+                id="car_tags"
+                multiple
+                class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 min-h-[90px]"
+                v-model="formData.tags"
+              >
+                <option v-for="tag in tagOptions" :key="tag.id" :value="tag.id">
+                  {{ tag.name }}
+                </option>
+              </select>
+              <div class="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  class="block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  placeholder="أضف تاغ جديد ثم Enter (مثل: تركيا)"
+                  v-model="tagInput"
+                  @keyup.enter.prevent="addTagFromInput"
+                />
+                <button type="button" class="px-3 py-1 bg-indigo-600 text-white rounded" @click="addTagFromInput">إضافة</button>
+              </div>
+            </div>
             <div className="mb-4 mx-1">
               <label class="dark:text-gray-200" for="note">
                 {{$t("note")}}

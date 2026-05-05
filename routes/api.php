@@ -226,6 +226,9 @@ Route::post('updateCarsS',[DashboardController::class, 'updateCarsS'])->name('up
 Route::post('updateCarsP',[DashboardController::class, 'updateCarsP'])->name('updateCarsP');
 Route::post('bulkUpdateCarsP',[DashboardController::class, 'bulkUpdateCarsP'])->name('bulkUpdateCarsP');
 Route::post('bulkUpdateCarsS',[DashboardController::class, 'bulkUpdateCarsS'])->name('bulkUpdateCarsS');
+Route::get('carTags',[DashboardController::class, 'getCarTags'])->name('getCarTags');
+Route::post('carTags',[DashboardController::class, 'storeCarTag'])->name('storeCarTag');
+Route::post('deleteCarTag',[DashboardController::class, 'deleteCarTag'])->name('deleteCarTag');
 
 Route::get('/getcount', [DashboardController::class, 'getcount'])->name('getcount');
 

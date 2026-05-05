@@ -209,6 +209,8 @@ let resetData = ref(false);
 let user_id = 0;
 let page = 1;
 let q = '';
+let filterTag = ref('');
+let tagOptions = ref([]);
 let json  =ref({});
 const refresh = () => {
   page = 0;
@@ -230,7 +232,8 @@ const getResultsCar = async ($state) => {
         q: q,
         user_id: user_id,
         from:from.value,
-        to:to.value
+        to:to.value,
+        tag: filterTag.value || ''
       }
     });
 
@@ -253,6 +256,16 @@ const getResultsCar = async ($state) => {
     //$state.error();
   }
 };
+
+const loadCarTags = async () => {
+  try {
+    const response = await axios.get('/api/carTags');
+    tagOptions.value = response.data || [];
+  } catch (error) {
+    console.error(error);
+  }
+};
+loadCarTags();
 
 
 const getcountTotalInfo = async () => {
@@ -425,6 +438,7 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
             :formData="formData"
             :show="showModalCar ? true : false"
             :client="client"
+            :tagOptions="tagOptions"
             @a="confirmCar($event)"
             @close="showModalCar = false"
             >
@@ -433,6 +447,7 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
             :formData="formData"
             :show="showModalEditCars ? true : false"
             :client="client"
+            :tagOptions="tagOptions"
             @a="confirmUpdateCar($event)"
             @close="showModalEditCars = false"
             >
@@ -441,6 +456,7 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
             :show="showModalBulkEdit ? true : false"
             :baseData="bulkFormData"
             :client="client"
+            :tagOptions="tagOptions"
             :selected-count="selectedCarIds.length"
             @confirm="confirmBulkUpdate"
             @close="showModalBulkEdit = false"
@@ -855,6 +871,12 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                 <option v-for="(user, index) in client" :key="index" :value="user.id">{{ user.name }}</option>
                               </select>
                           </div>
+                          <div>
+                            <select @change="refresh()" v-model="filterTag" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                              <option value="">كل التاغات</option>
+                              <option v-for="tag in tagOptions" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
+                            </select>
+                          </div>
                           <div class="text-center">
                             <button
                               type="button"
@@ -904,6 +926,9 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                         </th>
                                         <th scope="col" class="px-1 py-3 text-base">
                                           {{ $t('car_number') }}
+                                        </th>
+                                        <th scope="col" class="px-1 py-3 text-base">
+                                          التاغات
                                         </th>
                                         <th scope="col" class="px-1 py-3 text-base">
                                           {{ $t('dinar') }}
@@ -971,6 +996,9 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_color }}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.vin }}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_number }}</td> 
+                                      <td className="border dark:border-gray-800 text-center px-1 py-2 ">
+                                        {{ (car.tags || []).map(t => t.name).join('، ') }}
+                                      </td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.dinar  }}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.dolar_price}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ ((car.dinar/car.dolar_price)*100)?.toFixed(0)||0}}</td> 

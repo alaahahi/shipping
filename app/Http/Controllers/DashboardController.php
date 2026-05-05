@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Http;
 use App\Models\Info;
 use App\Models\User;
 use App\Models\Car;
+use App\Models\CarTag;
 use App\Models\ExitCar;
 use App\Models\Contract;
 use App\Models\Wallet;
@@ -40,6 +41,82 @@ class DashboardController extends Controller
     $this->accounting = $accounting;
      $this->currentDate = Carbon::now()->format('Y-m-d');
 
+    }
+
+    private function parseTagInputs($rawTags): array
+    {
+        if (!is_array($rawTags)) {
+            return [];
+        }
+
+        $parsed = [];
+        foreach ($rawTags as $tag) {
+            if (is_array($tag)) {
+                if (isset($tag['id'])) {
+                    $id = (int) $tag['id'];
+                    if ($id > 0) {
+                        $parsed[] = ['id' => $id];
+                    }
+                    continue;
+                }
+                if (isset($tag['name'])) {
+                    $name = trim((string) $tag['name']);
+                    if ($name !== '') {
+                        $parsed[] = ['name' => $name];
+                    }
+                }
+                continue;
+            }
+
+            if (is_numeric($tag)) {
+                $id = (int) $tag;
+                if ($id > 0) {
+                    $parsed[] = ['id' => $id];
+                }
+                continue;
+            }
+
+            $name = trim((string) $tag);
+            if ($name !== '') {
+                $parsed[] = ['name' => $name];
+            }
+        }
+
+        return collect($parsed)->unique(function ($item) {
+            return isset($item['id']) ? 'id:' . $item['id'] : 'name:' . mb_strtolower($item['name']);
+        })->values()->all();
+    }
+
+    private function resolveTagIdsForOwner(array $parsedTags, int $ownerId): array
+    {
+        $tagIds = [];
+
+        foreach ($parsedTags as $item) {
+            if (isset($item['id'])) {
+                $tag = CarTag::where('id', $item['id'])->where('owner_id', $ownerId)->first();
+                if ($tag) {
+                    $tagIds[] = $tag->id;
+                }
+                continue;
+            }
+
+            if (isset($item['name'])) {
+                $tag = CarTag::firstOrCreate(
+                    ['owner_id' => $ownerId, 'name' => trim($item['name'])],
+                    ['owner_id' => $ownerId, 'name' => trim($item['name'])]
+                );
+                $tagIds[] = $tag->id;
+            }
+        }
+
+        return array_values(array_unique($tagIds));
+    }
+
+    private function syncCarTags(Car $car, $rawTags, int $ownerId): void
+    {
+        $parsedTags = $this->parseTagInputs($rawTags);
+        $tagIds = $this->resolveTagIdsForOwner($parsedTags, $ownerId);
+        $car->tags()->sync($tagIds);
     }
      
     public function __invoke(Request $request)
@@ -412,6 +489,7 @@ class DashboardController extends Controller
         }
 
         $createdCars = collect();
+        $incomingTags = $request->get('tags', []);
 
         DB::transaction(function () use (
             $request,
@@ -472,6 +550,8 @@ class DashboardController extends Controller
                         'App\Models\Car'
                     );
                 }
+
+                $this->syncCarTags($car, $incomingTags, $owner_id);
 
                 $createdCars->push($car);
             }
@@ -573,6 +653,7 @@ class DashboardController extends Controller
 
             //$this->accountingController->increaseWallet(($total-$car->total), $descClient,$car->client_id,$car->id,'App\Models\User');
             $car->update($dataToUpdate);
+            $this->syncCarTags($car, $request->get('tags', []), $owner_id);
 
 
         return Response::json('ok', 200);    
@@ -664,6 +745,7 @@ class DashboardController extends Controller
 
             // Update the car model
             $car->update($dataToUpdate);
+            $this->syncCarTags($car, $request->get('tags', []), $owner_id);
             
 
         return Response::json('ok', 200);    
@@ -760,6 +842,9 @@ class DashboardController extends Controller
             }
 
             $car->update($dataToUpdate);
+            if ($request->has('tags')) {
+                $this->syncCarTags($car, $request->get('tags', []), $owner_id);
+            }
         }
 
         return Response::json('ok', 200);
@@ -840,6 +925,9 @@ class DashboardController extends Controller
             }
 
             $car->update($dataToUpdate);
+            if ($request->has('tags')) {
+                $this->syncCarTags($car, $request->get('tags', []), $owner_id);
+            }
         }
 
         return Response::json('ok', 200);
@@ -900,6 +988,7 @@ class DashboardController extends Controller
         $limit = $request->get('limit') ?? 15;
         $printExcel = $request->get('printExcel') ?? 0;
         $online_contract = $request->get('online_contract') ?? 0;
+        $tag = $request->get('tag') ?? '';
         // بناء الاستعلام الأساسي مع تحسين الأداء
         $baseQuery = Car::query()->where('owner_id', $owner_id);
         
@@ -914,6 +1003,15 @@ class DashboardController extends Controller
         
         if ($user_id) {
             $baseQuery->where('client_id', $user_id);
+        }
+        if ($tag !== null && $tag !== '') {
+            $baseQuery->whereHas('tags', function ($query) use ($tag) {
+                if (is_numeric($tag)) {
+                    $query->where('car_tags.id', (int) $tag);
+                } else {
+                    $query->where('car_tags.name', trim((string) $tag));
+                }
+            });
         }
         
         // تطبيق البحث النصي المحسن
@@ -938,19 +1036,19 @@ class DashboardController extends Controller
         // جلب البيانات مع العلاقات المطلوبة فقط
         if($get_image){
             // جلب البيانات مع الصور (أبطأ لكن يحتوي على الصور)
-            $data = $baseQuery->with(['client:id,name', 'CarImages'])
+            $data = $baseQuery->with(['client:id,name', 'CarImages', 'tags:id,name'])
                              ->orderBy('no', 'DESC')
                              ->paginate($limit)
                              ->toArray();
         } else if($online_contract){
-            $data = $baseQuery->with(['client:id,name', 'contract','exitcar'])
+            $data = $baseQuery->with(['client:id,name', 'contract','exitcar', 'tags:id,name'])
                              ->orderBy('no', 'DESC')
                              ->paginate($limit)
                              ->toArray();
         }
         else {
             // جلب البيانات بدون الصور (أسرع للأداء)
-            $data = $baseQuery->with(['client:id,name'])
+            $data = $baseQuery->with(['client:id,name', 'tags:id,name'])
                              ->orderBy('no', 'DESC')
                              ->paginate($limit)
                              ->toArray();
@@ -1055,6 +1153,39 @@ class DashboardController extends Controller
             ->orderBy('id') // Assuming 'id' is the primary key column
             ->update(['no' => DB::raw('(@row_number:=@row_number + 1)')]);
         return Response::json('delete is done', 200);
+    }
+
+    public function getCarTags(Request $request)
+    {
+        $owner_id = Auth::user()->owner_id;
+        $tags = CarTag::where('owner_id', $owner_id)->orderBy('name')->get(['id', 'name']);
+        return Response::json($tags, 200);
+    }
+
+    public function storeCarTag(Request $request)
+    {
+        $owner_id = Auth::user()->owner_id;
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+        ]);
+        $name = trim($validated['name']);
+        $tag = CarTag::firstOrCreate(
+            ['owner_id' => $owner_id, 'name' => $name],
+            ['owner_id' => $owner_id, 'name' => $name]
+        );
+        return Response::json($tag, 201);
+    }
+
+    public function deleteCarTag(Request $request)
+    {
+        $owner_id = Auth::user()->owner_id;
+        $id = (int) $request->input('id');
+        $tag = CarTag::where('id', $id)->where('owner_id', $owner_id)->first();
+        if (!$tag) {
+            return Response::json(['message' => 'غير مصرح'], 403);
+        }
+        $tag->delete();
+        return Response::json(['message' => 'تم حذف التاغ'], 200);
     }
     
 }

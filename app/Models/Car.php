@@ -177,6 +177,11 @@ class Car extends Model
         return $this->hasOne(CarSale::class, 'car_id');
     }
 
+    public function tags()
+    {
+        return $this->belongsToMany(CarTag::class, 'car_tag_pivot', 'car_id', 'tag_id');
+    }
+
     public function history(): HasMany
     {
         return $this->hasMany(CarHistory::class)->orderBy('created_at', 'desc');

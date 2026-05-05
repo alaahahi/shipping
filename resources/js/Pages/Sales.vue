@@ -141,6 +141,8 @@ let resetData = ref(false);
 let user_id = 0;
 let page = 1;
 let q = "";
+let filterTag = ref("");
+let tagOptions = ref([]);
 const refresh = () => {
   page = 0;
   car.value.length = 0;
@@ -159,6 +161,7 @@ const getResultsCar = async ($state) => {
         from: from.value,
         to: to.value,
         get_image: 1,
+        tag: filterTag.value || "",
       },
     });
 
@@ -178,6 +181,16 @@ const getResultsCar = async ($state) => {
     //$state.error();
   }
 };
+
+const loadCarTags = async () => {
+  try {
+    const response = await axios.get('/api/carTags');
+    tagOptions.value = response.data || [];
+  } catch (error) {
+    console.error(error);
+  }
+};
+loadCarTags();
 
 const getcountTotalInfo = async () => {
   axios
@@ -324,6 +337,7 @@ function getDownloadUrl(name) {
     :show="showModalEditCars ? true : false"
     :client="client"
     :systemConfig="systemConfig"
+    :tagOptions="tagOptions"
     @a="confirmUpdateCar($event)"
     @close="showModalEditCars = false"
   >
@@ -333,6 +347,7 @@ function getDownloadUrl(name) {
   <ModalBulkEditCarSales
     :show="showModalBulkEdit ? true : false"
     :baseData="bulkFormData"
+    :tagOptions="tagOptions"
     :selected-count="selectedCarIds.length"
     @confirm="confirmBulkUpdate"
     @close="showModalBulkEdit = false"
@@ -435,6 +450,18 @@ function getDownloadUrl(name) {
                     </option>
                   </select>
                 </div>
+                <div>
+                  <InputLabel class="mb-1" for="tagFilter" value="فلتر التاغ" />
+                  <select
+                    @change="refresh()"
+                    v-model="filterTag"
+                    id="tagFilter"
+                    class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  >
+                    <option value="">كل التاغات</option>
+                    <option v-for="tag in tagOptions" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
+                  </select>
+                </div>
                 <div class="px-2">
                   <div className="mb-4">
                     <InputLabel for="from" :value="$t('from_date')" />
@@ -471,7 +498,7 @@ function getDownloadUrl(name) {
                 <div className="mb-4  mr-5 print:hidden">
                   <InputLabel for="pay" value="طباعة" />
                   <a
-                    :href="`/api/getIndexCar?user_id=${user_id}&from=${from}&to=${to}&print=1&printExcel=1`"
+                    :href="`/api/getIndexCar?user_id=${user_id}&from=${from}&to=${to}&tag=${filterTag || ''}&print=1&printExcel=1`"
                     target="_blank"
                     class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-green-500 rounded block text-center"
                     style="width: 100%"
@@ -483,7 +510,7 @@ function getDownloadUrl(name) {
                   <InputLabel for="pay" value="طباعة" />
                   <a
                     target="_blank"
-                    :href="`api/getIndexAccountsSelas?user_id=${user_id}&from=${from}&to=${to}&print=1&showComplatedCars=0`"
+                    :href="`api/getIndexAccountsSelas?user_id=${user_id}&from=${from}&to=${to}&tag=${filterTag || ''}&print=1&showComplatedCars=0`"
                     class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded d-block"
                     style="width: 100%; display: block; text-align: center"
                   >
@@ -536,6 +563,9 @@ function getDownloadUrl(name) {
                         </th>
                         <th scope="col" class="px-1 py-3 text-base">
                           {{ $t("car_number") }}
+                        </th>
+                        <th scope="col" class="px-1 py-3 text-base">
+                          التاغات
                         </th>
                         <th scope="col" class="px-1 py-3 text-base">
                           {{ $t("dinar") }}
@@ -639,6 +669,9 @@ function getDownloadUrl(name) {
                           className="border dark:border-gray-800 text-center px-1 py-2 "
                         >
                           {{ car.car_number }}
+                        </td>
+                        <td className="border dark:border-gray-800 text-center px-1 py-2 ">
+                          {{ (car.tags || []).map(t => t.name).join('، ') }}
                         </td>
                         <td
                           className="border dark:border-gray-800 text-center px-1 py-2 "

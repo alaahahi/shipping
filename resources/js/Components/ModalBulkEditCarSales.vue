@@ -11,11 +11,16 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  tagOptions: {
+    type: Array,
+    default: () => [],
+  },
 });
 const emit = defineEmits(["close", "confirm"]);
 
 const formData = ref({});
 const exchangeRateError = ref(false);
+const tagInput = ref("");
 
 function cloneBaseData() {
   const data = {
@@ -72,6 +77,19 @@ function handleSubmit() {
     return;
   }
   emit("confirm", { ...formData.value });
+}
+
+function addTagFromInput() {
+  const name = tagInput.value ? tagInput.value.trim() : "";
+  if (!name) return;
+  if (!Array.isArray(formData.value.tags)) {
+    formData.value.tags = [];
+  }
+  const exists = formData.value.tags.some((t) => String(t).toLowerCase() === name.toLowerCase());
+  if (!exists) {
+    formData.value.tags.push(name);
+  }
+  tagInput.value = "";
 }
 </script>
 
@@ -188,6 +206,31 @@ function handleSubmit() {
               </div>
             </div>
 
+            <div className="mb-4 mx-1">
+              <label class="dark:text-gray-200" for="bulk_sales_car_tags">
+                تاغات السيارات (تُطبق على المحدد)
+              </label>
+              <select
+                id="bulk_sales_car_tags"
+                multiple
+                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 min-h-[90px]"
+                v-model="formData.tags"
+              >
+                <option v-for="tag in tagOptions" :key="tag.id" :value="tag.id">
+                  {{ tag.name }}
+                </option>
+              </select>
+              <div class="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  class="block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  placeholder="أضف تاغ جديد ثم Enter"
+                  v-model="tagInput"
+                  @keyup.enter.prevent="addTagFromInput"
+                />
+                <button type="button" class="px-3 py-1 bg-indigo-600 text-white rounded" @click="addTagFromInput">إضافة</button>
+              </div>
+            </div>
             <div className="mb-4 mx-1">
               <label class="dark:text-gray-200" for="note">
                 {{ $t("note") }}
