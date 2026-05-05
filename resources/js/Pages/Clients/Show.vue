@@ -1411,20 +1411,6 @@ async function savePaymentDescription(payment) {
                 <span>Excel</span>
               </a>
             </div>
-            <div class="px-2 flex flex-col justify-end">
-              <div class="mb-4">
-                <InputLabel for="tag_filter" value="فلتر التاغ" />
-                <select
-                  id="tag_filter"
-                  v-model="filterTag"
-                  @change="getResults(1, false)"
-                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
-                >
-                  <option value="">كل التاغات</option>
-                  <option v-for="tag in tagOptions" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
-                </select>
-              </div>
-            </div>
             <div className="mb-4  mr-5">
               <InputLabel for="car_total" value="مجموع السيارات" />
               <TextInput
@@ -1594,6 +1580,20 @@ async function savePaymentDescription(payment) {
                 :value="carsTotalPriceWithoutExit"
                 disabled
               />
+            </div>
+            <div class="px-2 flex flex-col justify-end">
+              <div class="mb-4">
+                <InputLabel for="tag_filter" value="فلتر التاغ" />
+                <select
+                  id="tag_filter"
+                  v-model="filterTag"
+                  @change="getResults(1, false)"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+                >
+                  <option value="">كل التاغات</option>
+                  <option v-for="tag in tagOptions" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
+                </select>
+              </div>
             </div>
           </div>
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 lg:gap-1" v-if="showPaymentForm">
