@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from "vue";
 const tagInput = ref("");
+const selectedTagToAdd = ref("");
 import { ModelListSelect } from "vue-search-select"
   // Import everythModelSelecting
 import "vue-search-select/dist/VueSearchSelect.css"
@@ -59,6 +60,37 @@ function addTagFromInput() {
     props.formData.tags.push(name);
   }
   tagInput.value = "";
+}
+
+function ensureTagsArray() {
+  if (!Array.isArray(props.formData.tags)) {
+    props.formData.tags = [];
+  }
+}
+
+function addSelectedTag() {
+  if (!selectedTagToAdd.value) return;
+  ensureTagsArray();
+  const idVal = Number(selectedTagToAdd.value) || selectedTagToAdd.value;
+  if (!props.formData.tags.includes(idVal)) {
+    props.formData.tags.push(idVal);
+  }
+  selectedTagToAdd.value = "";
+}
+
+function removeTag(tagValue) {
+  const label = getTagLabel(tagValue);
+  if (!confirm(`هل تريد حذف التاغ "${label}"؟`)) {
+    return;
+  }
+  ensureTagsArray();
+  props.formData.tags = props.formData.tags.filter((t) => t !== tagValue);
+}
+
+function getTagLabel(tagValue) {
+  const idVal = Number(tagValue);
+  const found = props.tagOptions.find((tag) => Number(tag.id) === idVal);
+  return found ? found.name : tagValue;
 }
 </script>
   <template>
@@ -327,37 +359,6 @@ function addTagFromInput() {
               </div>
             </div>
 
-            <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="car_tags">
-                  تاغات السيارة
-                </label>
-                <select
-                  id="car_tags"
-                  multiple
-                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 min-h-[90px]"
-                  v-model="formData.tags"
-                >
-                  <option v-for="tag in tagOptions" :key="tag.id" :value="tag.id">
-                    {{ tag.name }}
-                  </option>
-                </select>
-                <div class="mt-2 flex gap-2">
-                  <input
-                    type="text"
-                    class="block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                    placeholder="أضف تاغ جديد ثم Enter"
-                    v-model="tagInput"
-                    @keyup.enter.prevent="addTagFromInput"
-                  />
-                  <button
-                    type="button"
-                    class="px-3 py-1 bg-indigo-600 text-white rounded"
-                    @click="addTagFromInput"
-                  >
-                    إضافة
-                  </button>
-                </div>
-              </div>
               <div className="mb-4 mx-1">
               <label class="dark:text-gray-200" for="note">
                 {{$t("note")}}
@@ -368,6 +369,54 @@ function addTagFromInput() {
                 class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                 v-model="formData.note"
               />
+            </div>
+            <div className="mb-4 mx-1">
+              <label class="dark:text-gray-200" for="car_tags">
+                تاغات السيارة
+              </label>
+              <div class="mt-2 flex gap-2">
+                <select
+                  id="car_tags"
+                  v-model="selectedTagToAdd"
+                  class="block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                >
+                  <option value="">اختر تاغ من القائمة</option>
+                  <option
+                    v-for="tag in tagOptions.filter((opt) => !(formData.tags || []).includes(opt.id))"
+                    :key="tag.id"
+                    :value="tag.id"
+                  >
+                    {{ tag.name }}
+                  </option>
+                </select>
+                <button type="button" class="px-3 py-1 bg-indigo-600 text-white rounded" @click="addSelectedTag">إضافة</button>
+              </div>
+              <div class="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  class="block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  placeholder="أضف تاغ جديد ثم Enter"
+                  v-model="tagInput"
+                  @keyup.enter.prevent="addTagFromInput"
+                />
+                <button
+                  type="button"
+                  class="px-3 py-1 bg-emerald-600 text-white rounded"
+                  @click="addTagFromInput"
+                >
+                  إضافة جديد
+                </button>
+              </div>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <span
+                  v-for="tag in (formData.tags || [])"
+                  :key="String(tag)"
+                  class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-100"
+                >
+                  {{ getTagLabel(tag) }}
+                  <button type="button" class="text-red-600 font-bold" @click="removeTag(tag)">×</button>
+                </span>
+              </div>
             </div>
           </div>
 
