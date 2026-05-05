@@ -928,9 +928,6 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                           {{ $t('car_number') }}
                                         </th>
                                         <th scope="col" class="px-1 py-3 text-base">
-                                          التاغات
-                                        </th>
-                                        <th scope="col" class="px-1 py-3 text-base">
                                           {{ $t('dinar') }}
                                         </th>
                                         <th scope="col" class="px-1 py-3 text-base">
@@ -972,6 +969,9 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                         <th scope="col" class="px-1 py-3 text-base">
                                           {{ $t('date') }}
                                         </th>
+                                        <th scope="col" class="px-1 py-3 text-base">
+                                          التاغات
+                                        </th>
                   
                                         <th scope="col" class="px-1 py-3 text-base" style="width: 150px;">
                                           {{ $t('execute') }}
@@ -996,9 +996,6 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_color }}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.vin }}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.car_number }}</td> 
-                                      <td className="border dark:border-gray-800 text-center px-1 py-2 ">
-                                        {{ (car.tags || []).map(t => t.name).join('، ') }}
-                                      </td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.dinar  }}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.dolar_price}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ ((car.dinar/car.dolar_price)*100)?.toFixed(0)||0}}</td> 
@@ -1013,6 +1010,9 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.paid}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ ((Number(car.total_s) || 0) - (Number(car.total) || 0)).toFixed(0) }}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.date  }}</td>
+                                      <td className="border dark:border-gray-800 text-center px-1 py-2 ">
+                                        {{ (car.tags || []).map(t => t.name).join('، ') }}
+                                      </td>
                                       <td className="border dark:border-gray-800 text-start px-1 py-2">
                                         <button
                                         tabIndex="1"

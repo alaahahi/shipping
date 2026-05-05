@@ -565,9 +565,6 @@ function getDownloadUrl(name) {
                           {{ $t("car_number") }}
                         </th>
                         <th scope="col" class="px-1 py-3 text-base">
-                          التاغات
-                        </th>
-                        <th scope="col" class="px-1 py-3 text-base">
                           {{ $t("dinar") }}
                         </th>
                         <th scope="col" class="px-1 py-3 text-base">
@@ -606,6 +603,9 @@ function getDownloadUrl(name) {
                         </th>
                         <th scope="col" class="px-1 py-3 text-base">
                           {{ $t("date") }}
+                        </th>
+                        <th scope="col" class="px-1 py-3 text-base">
+                          التاغات
                         </th>
 
                         <th
@@ -669,9 +669,6 @@ function getDownloadUrl(name) {
                           className="border dark:border-gray-800 text-center px-1 py-2 "
                         >
                           {{ car.car_number }}
-                        </td>
-                        <td className="border dark:border-gray-800 text-center px-1 py-2 ">
-                          {{ (car.tags || []).map(t => t.name).join('، ') }}
                         </td>
                         <td
                           className="border dark:border-gray-800 text-center px-1 py-2 "
@@ -743,6 +740,9 @@ function getDownloadUrl(name) {
                           className="border dark:border-gray-800 text-center px-1 py-2 "
                         >
                           {{ car.date }}
+                        </td>
+                        <td className="border dark:border-gray-800 text-center px-1 py-2 ">
+                          {{ (car.tags || []).map(t => t.name).join('، ') }}
                         </td>
                         <td
                           className="border dark:border-gray-800 text-start px-1 py-2"
