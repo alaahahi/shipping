@@ -1,7 +1,9 @@
 <script setup>
 import { ref, computed } from "vue";
+import axios from "axios";
 const tagInput = ref("");
 const selectedTagToAdd = ref("");
+const tagActionLoading = ref(false);
 import { ModelListSelect } from "vue-search-select"
   // Import everythModelSelecting
 import "vue-search-select/dist/VueSearchSelect.css"
@@ -52,14 +54,18 @@ if (props.formData) {
 function addTagFromInput() {
   const name = tagInput.value ? tagInput.value.trim() : "";
   if (!name || !props.formData) return;
-  if (!Array.isArray(props.formData.tags)) {
-    props.formData.tags = [];
+  if (props.formData.id) {
+    addTagToCar({ tagName: name });
+  } else {
+    if (!Array.isArray(props.formData.tags)) {
+      props.formData.tags = [];
+    }
+    const exists = props.formData.tags.some((t) => String(t).toLowerCase() === name.toLowerCase());
+    if (!exists) {
+      props.formData.tags.push(name);
+    }
+    tagInput.value = "";
   }
-  const exists = props.formData.tags.some((t) => String(t).toLowerCase() === name.toLowerCase());
-  if (!exists) {
-    props.formData.tags.push(name);
-  }
-  tagInput.value = "";
 }
 
 function ensureTagsArray() {
@@ -70,17 +76,25 @@ function ensureTagsArray() {
 
 function addSelectedTag() {
   if (!selectedTagToAdd.value) return;
-  ensureTagsArray();
-  const idVal = Number(selectedTagToAdd.value) || selectedTagToAdd.value;
-  if (!props.formData.tags.includes(idVal)) {
-    props.formData.tags.push(idVal);
+  if (props.formData?.id) {
+    addTagToCar({ tagId: selectedTagToAdd.value });
+  } else {
+    ensureTagsArray();
+    const idVal = Number(selectedTagToAdd.value) || selectedTagToAdd.value;
+    if (!props.formData.tags.includes(idVal)) {
+      props.formData.tags.push(idVal);
+    }
+    selectedTagToAdd.value = "";
   }
-  selectedTagToAdd.value = "";
 }
 
-function removeTag(tagValue) {
+async function removeTag(tagValue) {
   const label = getTagLabel(tagValue);
   if (!confirm(`هل تريد حذف التاغ "${label}"؟`)) {
+    return;
+  }
+  if (props.formData?.id) {
+    await removeTagFromCar(tagValue);
     return;
   }
   ensureTagsArray();
@@ -91,6 +105,57 @@ function getTagLabel(tagValue) {
   const idVal = Number(tagValue);
   const found = props.tagOptions.find((tag) => Number(tag.id) === idVal);
   return found ? found.name : tagValue;
+}
+
+function syncTagsFromCarResponse(car) {
+  if (!car || !Array.isArray(car.tags) || !props.formData) return;
+  props.formData.tags = car.tags.map((tag) => tag.id).filter(Boolean);
+}
+
+function extractApiError(error, fallback) {
+  return error?.response?.data?.message || fallback;
+}
+
+async function addTagToCar({ tagId = null, tagName = "" } = {}) {
+  if (!props.formData?.id || tagActionLoading.value) return;
+  tagActionLoading.value = true;
+  try {
+    const payload = { car_id: props.formData.id };
+    if (tagId) {
+      payload.tag_id = Number(tagId);
+    } else if (tagName) {
+      payload.tag_name = tagName;
+    }
+    const response = await axios.post("/api/addTagToCar", payload);
+    syncTagsFromCarResponse(response?.data?.car);
+    tagInput.value = "";
+    selectedTagToAdd.value = "";
+  } catch (error) {
+    alert(extractApiError(error, "تعذر إضافة التاغ الآن"));
+  } finally {
+    tagActionLoading.value = false;
+  }
+}
+
+async function removeTagFromCar(tagValue) {
+  if (!props.formData?.id || tagActionLoading.value) return;
+  const tagId = Number(tagValue);
+  if (!tagId) {
+    alert("لا يمكن حذف تاغ غير محفوظ من السيارة الحالية");
+    return;
+  }
+  tagActionLoading.value = true;
+  try {
+    const response = await axios.post("/api/removeTagFromCar", {
+      car_id: props.formData.id,
+      tag_id: tagId,
+    });
+    syncTagsFromCarResponse(response?.data?.car);
+  } catch (error) {
+    alert(extractApiError(error, "تعذر حذف التاغ الآن"));
+  } finally {
+    tagActionLoading.value = false;
+  }
 }
 </script>
   <template>
