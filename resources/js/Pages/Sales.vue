@@ -18,7 +18,7 @@ import "v3-infinite-loading/lib/style.css";
 import debounce from "lodash/debounce";
 import { useToast } from "vue-toastification";
 import axios from "axios";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 const props = defineProps({
@@ -143,6 +143,10 @@ let page = 1;
 let q = "";
 let filterTag = ref("");
 let tagOptions = ref([]);
+const showTagManagerModal = ref(false);
+const tagModalCar = ref(null);
+const tagModalSelectedTagId = ref("");
+const tagModalLoading = ref(false);
 const refresh = () => {
   page = 0;
   car.value.length = 0;
@@ -318,6 +322,66 @@ function confirmAddPayment(V) {
     });
 }
 
+function openTagManagerModal(carItem = null) {
+  if (!carItem || !carItem.id) return;
+  tagModalCar.value = carItem;
+  tagModalSelectedTagId.value = "";
+  showTagManagerModal.value = true;
+}
+
+function closeTagManagerModal() {
+  showTagManagerModal.value = false;
+  tagModalCar.value = null;
+  tagModalSelectedTagId.value = "";
+}
+
+const availableTagOptionsForModal = computed(() => {
+  const used = new Set(((tagModalCar.value?.tags) || []).map((t) => Number(t?.id)));
+  return (tagOptions.value || []).filter((tag) => !used.has(Number(tag.id)));
+});
+
+async function addTagFromListModal() {
+  if (!tagModalCar.value?.id || !tagModalSelectedTagId.value || tagModalLoading.value) return;
+  tagModalLoading.value = true;
+  try {
+    const response = await axios.post("/api/addTagToCar", {
+      car_id: tagModalCar.value.id,
+      tag_id: Number(tagModalSelectedTagId.value),
+    });
+    if (Array.isArray(response?.data?.car?.tags)) {
+      tagModalCar.value.tags = response.data.car.tags;
+    }
+    tagModalSelectedTagId.value = "";
+    toast.success("تمت إضافة التاغ");
+  } catch (error) {
+    toast.error(error?.response?.data?.message || "تعذر إضافة التاغ");
+  } finally {
+    tagModalLoading.value = false;
+  }
+}
+
+async function removeTagFromListModal(tag) {
+  if (!tagModalCar.value?.id || !tag?.id || tagModalLoading.value) return;
+  if (!confirm(`هل تريد حذف التاغ "${tag.name}"؟`)) return;
+  tagModalLoading.value = true;
+  try {
+    const response = await axios.post("/api/removeTagFromCar", {
+      car_id: tagModalCar.value.id,
+      tag_id: Number(tag.id),
+    });
+    if (Array.isArray(response?.data?.car?.tags)) {
+      tagModalCar.value.tags = response.data.car.tags;
+    } else {
+      tagModalCar.value.tags = (tagModalCar.value.tags || []).filter((t) => Number(t.id) !== Number(tag.id));
+    }
+    toast.success("تم حذف التاغ");
+  } catch (error) {
+    toast.error(error?.response?.data?.message || "تعذر حذف التاغ");
+  } finally {
+    tagModalLoading.value = false;
+  }
+}
+
 const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce delay (in milliseconds) as needed
 function getImageUrl(name) {
   // Provide the base URL for your images
@@ -343,6 +407,54 @@ function getDownloadUrl(name) {
   >
     <template #header> </template>
   </ModalEditCars>
+  <div
+    v-if="showTagManagerModal"
+    class="fixed inset-0 z-[10000] bg-black/50 flex items-center justify-center p-4"
+    @click.self="closeTagManagerModal"
+  >
+    <div class="w-full max-w-lg rounded-lg bg-white dark:bg-gray-900 p-4 shadow-xl">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-semibold dark:text-gray-100">إدارة تاغات السيارة</h3>
+        <button class="text-gray-500 hover:text-gray-700 dark:text-gray-300" @click="closeTagManagerModal">✕</button>
+      </div>
+      <div class="mb-3 text-sm text-gray-600 dark:text-gray-300">
+        <span class="font-semibold">السيارة:</span>
+        {{ tagModalCar?.car_type }} - {{ tagModalCar?.car_number }}
+      </div>
+      <div class="flex gap-2 mb-3">
+        <select
+          v-model="tagModalSelectedTagId"
+          class="block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+          :disabled="tagModalLoading"
+        >
+          <option value="">اختر تاغ</option>
+          <option v-for="tag in availableTagOptionsForModal" :key="tag.id" :value="tag.id">
+            {{ tag.name }}
+          </option>
+        </select>
+        <button
+          class="px-3 py-2 text-white bg-indigo-600 rounded disabled:opacity-60"
+          :disabled="!tagModalSelectedTagId || tagModalLoading"
+          @click="addTagFromListModal"
+        >
+          إضافة
+        </button>
+      </div>
+      <div class="flex flex-wrap gap-2 min-h-[36px]">
+        <template v-if="(tagModalCar?.tags || []).length">
+          <span
+            v-for="tag in (tagModalCar?.tags || [])"
+            :key="tag.id || tag.name"
+            class="inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-100"
+          >
+            {{ tag.name }}
+            <button class="text-red-600 font-bold" :disabled="tagModalLoading" @click="removeTagFromListModal(tag)">×</button>
+          </span>
+        </template>
+        <span v-else class="text-sm text-gray-400">لا توجد تاغات</span>
+      </div>
+    </div>
+  </div>
 
   <ModalBulkEditCarSales
     :show="showModalBulkEdit ? true : false"
@@ -741,8 +853,21 @@ function getDownloadUrl(name) {
                         >
                           {{ car.date }}
                         </td>
-                        <td className="border dark:border-gray-800 text-center px-1 py-2 ">
-                          {{ (car.tags || []).map(t => t.name).join('، ') }}
+                        <td
+                          className="border dark:border-gray-800 text-center px-1 py-2 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                          title="اضغط لإدارة التاغات"
+                          @click="openTagManagerModal(car)"
+                        >
+                          <div v-if="(car.tags || []).length" class="flex flex-wrap justify-center gap-1">
+                            <span
+                              v-for="tag in (car.tags || [])"
+                              :key="tag.id || tag.name"
+                              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-100"
+                            >
+                              {{ tag.name }}
+                            </span>
+                          </div>
+                          <span v-else class="text-gray-400">-</span>
                         </td>
                         <td
                           className="border dark:border-gray-800 text-start px-1 py-2"

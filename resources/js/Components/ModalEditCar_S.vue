@@ -674,38 +674,6 @@ async function removeTagFromCar(tagValue) {
                 v-model="formData.note"
               />
             </div>
-            <div className="mb-4 mx-1">
-              <label class="dark:text-gray-200" for="car_tags">
-                تاغات السيارة
-              </label>
-              <div class="mt-2 flex gap-2">
-                <select
-                  id="car_tags"
-                  v-model="selectedTagToAdd"
-                  class="block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                >
-                  <option value="">اختر تاغ من القائمة</option>
-                  <option
-                    v-for="tag in tagOptions.filter((opt) => !(formData.tags || []).includes(opt.id))"
-                    :key="tag.id"
-                    :value="tag.id"
-                  >
-                    {{ tag.name }}
-                  </option>
-                </select>
-                <button type="button" class="px-3 py-1 bg-indigo-600 text-white rounded" @click="addSelectedTag">إضافة</button>
-              </div>
-              <div class="mt-3 flex flex-wrap gap-2">
-                <span
-                  v-for="tag in (formData.tags || [])"
-                  :key="String(tag)"
-                  class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-100"
-                >
-                  {{ getTagLabel(tag) }}
-                  <button type="button" class="text-red-600 font-bold" @click="removeTag(tag)">×</button>
-                </span>
-              </div>
-            </div>
           </div>
 
           <!-- Tab التسجيل -->
@@ -964,6 +932,39 @@ async function removeTagFromCar(tagValue) {
                     />
                 </div>
                 <p v-if="errors?.media" class="text-danger">{{ errors?.media[0] }}</p>
+            </div>
+
+            <div class="mb-4 mx-1">
+              <label class="dark:text-gray-200" for="car_tags">
+                تاغات السيارة
+              </label>
+              <div class="mt-2 flex gap-2">
+                <select
+                  id="car_tags"
+                  v-model="selectedTagToAdd"
+                  class="block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                >
+                  <option value="">اختر تاغ من القائمة</option>
+                  <option
+                    v-for="tag in tagOptions.filter((opt) => !(formData.tags || []).includes(opt.id))"
+                    :key="tag.id"
+                    :value="tag.id"
+                  >
+                    {{ tag.name }}
+                  </option>
+                </select>
+                <button type="button" class="px-3 py-1 bg-indigo-600 text-white rounded" @click="addSelectedTag">إضافة</button>
+              </div>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <span
+                  v-for="tag in (formData.tags || [])"
+                  :key="String(tag)"
+                  class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-100"
+                >
+                  {{ getTagLabel(tag) }}
+                  <button type="button" class="text-red-600 font-bold" @click="removeTag(tag)">×</button>
+                </span>
+              </div>
             </div>
              </div>
 
