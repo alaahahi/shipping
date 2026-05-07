@@ -515,6 +515,7 @@ class DashboardController extends Controller
             $coc_dolar,
             $dinar,
             $dolar_price_input,
+            $calc_rate,
             $expenses,
             $land_shipping,
             $land_shipping_dinar,
@@ -552,8 +553,12 @@ class DashboardController extends Controller
                 ]);
 
                 $carExpenses = $carData['expenses'] ?? $expenses;
-                $dolar_custom = (int) ($dinar / ($calc_rate)) ?? 0;
-                $land_shipping_dinar_custom = (int) ($land_shipping_dinar / ($calc_rate)) ?? 0;
+                $effectiveRate = (float) $calc_rate;
+                if ($effectiveRate <= 0) {
+                    $effectiveRate = 1.0;
+                }
+                $dolar_custom = (int) ($dinar / $effectiveRate);
+                $land_shipping_dinar_custom = (int) ($land_shipping_dinar / $effectiveRate);
                 $total_amount = $checkout + $shipping_dolar + $carExpenses + $coc_dolar + $dolar_custom + $land_shipping + $land_shipping_dinar_custom;
                 $car->update([
                     'total' => $total_amount,
