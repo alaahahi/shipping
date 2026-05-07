@@ -67,6 +67,8 @@ let GenExpenses = ref({});
 let isLoading=ref(false);
 let from = ref('');
 let to = ref('');
+let tagFrom = ref('');
+let tagTo = ref('');
 let mainAccount= ref(0)
 let onlineContracts= ref(0)
 let howler= ref(0)
@@ -431,7 +433,25 @@ function deleteTag(tag) {
 
 function selectTag(name) {
   selectedTagName.value = name;
-  axios.get('/getIndexAccounting', { params: { user_id: props.boxes.id, type: 'wallet', tag: name, limit: 1000 } }).then(r => {
+  fetchTagTransactions();
+}
+
+function fetchTagTransactions() {
+  if (!selectedTagName.value || !props.boxes?.id) {
+    transactionsByTag.value = [];
+    return;
+  }
+  const params = {
+    user_id: props.boxes.id,
+    type: 'wallet',
+    tag: selectedTagName.value,
+    limit: 1000,
+  };
+  if (tagFrom.value && tagTo.value) {
+    params.from = tagFrom.value;
+    params.to = tagTo.value;
+  }
+  axios.get('/getIndexAccounting', { params }).then(r => {
     transactionsByTag.value = r.data.transactions?.data || [];
   }).catch(() => { transactionsByTag.value = []; });
 }
@@ -471,7 +491,17 @@ const tagSummary = computed(() => {
 
 function printTagDetails() {
   if (!selectedTagName.value || !props.boxes?.id) return;
-  window.open(`/getIndexAccounting?user_id=${props.boxes.id}&type=wallet&tag=${encodeURIComponent(selectedTagName.value)}&print=8`, '_blank');
+  const query = new URLSearchParams({
+    user_id: String(props.boxes.id),
+    type: 'wallet',
+    tag: selectedTagName.value,
+    print: '8',
+  });
+  if (tagFrom.value && tagTo.value) {
+    query.set('from', tagFrom.value);
+    query.set('to', tagTo.value);
+  }
+  window.open(`/getIndexAccounting?${query.toString()}`, '_blank');
 }
 
 </script>
@@ -1051,7 +1081,12 @@ function printTagDetails() {
               <div v-if="selectedTagName" class="mt-4">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
                   <h3 class="text-lg font-semibold dark:text-white">دفعات تاغ: {{ selectedTagName }}</h3>
-                  <button type="button" class="px-3 py-1.5 bg-gray-600 text-white rounded text-sm hover:bg-gray-700" @click="printTagDetails">طباعة تفاصيل التاغ</button>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <input v-model="tagFrom" type="date" class="rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 px-2 py-1.5 text-sm" />
+                    <input v-model="tagTo" type="date" class="rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 px-2 py-1.5 text-sm" />
+                    <button type="button" class="px-3 py-1.5 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700" @click="fetchTagTransactions">فلترة</button>
+                    <button type="button" class="px-3 py-1.5 bg-gray-600 text-white rounded text-sm hover:bg-gray-700" @click="printTagDetails">طباعة تفاصيل التاغ</button>
+                  </div>
                 </div>
                 <div class="overflow-x-auto">
                   <table class="w-full text-right text-sm text-gray-500 dark:text-gray-400 text-center border dark:border-gray-700">
