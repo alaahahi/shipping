@@ -454,6 +454,9 @@ class DashboardController extends Controller
                     'car_number' => isset($car['car_number']) && $car['car_number'] !== null
                         ? trim($car['car_number'])
                         : null,
+                    'year' => isset($car['year']) && $car['year'] !== ''
+                        ? (int) $car['year']
+                        : null,
                     'car_type' => isset($car['car_type']) && $car['car_type'] !== null
                         ? trim($car['car_type'])
                         : null,
@@ -473,6 +476,7 @@ class DashboardController extends Controller
             $carsPayload = collect([[
                 'vin' => trim($request->vin),
                 'car_number' => $request->car_number ? trim($request->car_number) : null,
+                'year' => $request->year !== null ? (int) $request->year : null,
                 'car_type' => $request->car_type ? trim($request->car_type) : null,
                 'car_color' => $request->car_color ? trim($request->car_color) : null,
                 'expenses' => $request->expenses !== null ? (float) $request->expenses : null,
@@ -534,7 +538,7 @@ class DashboardController extends Controller
                     'coc_dolar' => $coc_dolar,
                     'checkout' => $checkout,
                     'total' => 0,
-                    'year' => $request->year,
+                    'year' => $carData['year'] ?? $request->year,
                     'year_date' => $year_date,
                     'car_color' => $carData['car_color'] ?: $request->car_color,
                     'date' => $request->date,

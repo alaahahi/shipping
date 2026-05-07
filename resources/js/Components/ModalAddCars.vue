@@ -27,7 +27,7 @@ function createCarEntry(data = {}) {
   return {
     id: carEntryUid,
     vin: data.vin ?? "",
-    car_number: data.car_number ?? "",
+    year: data.year ?? "",
     car_type: data.car_type ?? "",
     car_color: data.car_color ?? "",
     expenses: data.expenses ?? "",
@@ -40,7 +40,7 @@ function initializeCars() {
     ? props.formData.cars
     : [{
         vin: props.formData?.vin ?? "",
-        car_number: props.formData?.car_number ?? "",
+        year: props.formData?.year ?? "",
       }];
 
   const prepared = baseEntries
@@ -77,15 +77,15 @@ watch(
     if (!props.formData) {
       return;
     }
-    props.formData.cars = entries.map(({ vin, car_number, car_type, car_color, expenses }) => ({
+    props.formData.cars = entries.map(({ vin, year, car_type, car_color, expenses }) => ({
       vin: vin ?? "",
-      car_number: car_number ?? "",
+      year: year ?? "",
       car_type: car_type ?? "",
       car_color: car_color ?? "",
       expenses: expenses ?? "",
     }));
     props.formData.vin = entries[0]?.vin ?? "";
-    props.formData.car_number = entries[0]?.car_number ?? "";
+    props.formData.year = entries[0]?.year ?? "";
   },
   { deep: true }
 );
@@ -137,7 +137,7 @@ function addCarEntry() {
 function removeCarEntry(index) {
   if (carEntries.value.length === 1) {
     carEntries.value[0].vin = "";
-    carEntries.value[0].car_number = "";
+    carEntries.value[0].year = "";
     carEntries.value[0].error = false;
     return;
   }
@@ -207,9 +207,9 @@ const isSubmitDisabled = computed(() => {
 });
 function prepareCarsPayload() {
   return carEntries.value
-    .map(({ vin, car_number, car_type, car_color, expenses }) => ({
+    .map(({ vin, year, car_type, car_color, expenses }) => ({
       vin: vin ? vin.trim() : "",
-      car_number: car_number ? String(car_number).trim() : null,
+      year: year !== "" && year !== null && year !== undefined ? Number(year) : null,
       car_type: car_type ? String(car_type).trim() : null,
       car_color: car_color ? String(car_color).trim() : null,
       expenses: expenses !== "" && expenses !== null && expenses !== undefined ? Number(expenses) : null,
@@ -257,14 +257,14 @@ function importCarsFromExcel(event) {
       const imported = rows
         .map((row) => {
           const vin = getMappedValue(row, ["vin", "chassis", "chassisno", "رقمالشاصي", "الشاصي"]);
-          const carType = getMappedValue(row, ["car_type", "cartype", "name", "model", "اسم السيارة", "السيارة"]);
+          const carType = getMappedValue(row, ["car_type", "cartype", "name", "اسم السيارة", "السيارة"]);
+          const carModel = getMappedValue(row, ["model", "year", "موديل", "الموديل", "السنة"]);
           const carColor = getMappedValue(row, ["car_color", "carcolor", "color", "اللون"]);
           const expenses = getMappedValue(row, ["expenses", "expense", "مصاريف", "المصاريف"]);
-          const carNumber = getMappedValue(row, ["car_number", "carnumber", "number", "رقمالسيارة"]);
           if (!vin || !String(vin).trim()) return null;
           return createCarEntry({
             vin: String(vin).trim(),
-            car_number: carNumber ? String(carNumber).trim() : "",
+            year: carModel !== null && carModel !== undefined && String(carModel).trim() !== "" ? Number(carModel) : "",
             car_type: carType ? String(carType).trim() : "",
             car_color: carColor ? String(carColor).trim() : "",
             expenses: expenses !== "" && expenses !== null && expenses !== undefined ? Number(expenses) : "",
@@ -289,25 +289,11 @@ function importCarsFromExcel(event) {
 }
 
 function downloadExcelTemplate() {
-  const templateRows = [
-    {
-      vin: "1HGCM82633A123456",
-      name: "Camry",
-      color: "White",
-      expenses: 120,
-      car_number: "45",
-    },
-    {
-      vin: "JH4KA9650MC012345",
-      name: "Sonata",
-      color: "Black",
-      expenses: 95,
-      car_number: "77",
-    },
-  ];
-  const worksheet = XLSX.utils.json_to_sheet(templateRows);
+  const worksheet = XLSX.utils.aoa_to_sheet([
+    ["رقم الشاصي", "اسم السيارة", "الموديل", "اللون", "مصاريف"],
+  ]);
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "cars_template");
+  XLSX.utils.book_append_sheet(workbook, worksheet, "قالب_السيارات");
   XLSX.writeFile(workbook, "cars_import_template.xlsx");
 }
 function handleSubmit() {
@@ -319,7 +305,7 @@ function handleSubmit() {
     ...props.formData,
     cars: carsPayload,
     vin: carsPayload[0]?.vin ?? "",
-    car_number: carsPayload[0]?.car_number ?? "",
+    year: carsPayload[0]?.year ?? props.formData.year ?? "",
   };
   emit("a", payload);
 }
@@ -615,14 +601,14 @@ async function removeTagFromCar(tagValue) {
                       </div>
                     </div>
                     <div>
-                      <label class="dark:text-gray-200 block text-sm" :for="`car_number_${entry.id}`">
-                        {{ $t("car_number") }}
+                      <label class="dark:text-gray-200 block text-sm" :for="`year_${entry.id}`">
+                        موديل الصف
                       </label>
                       <input
-                        :id="`car_number_${entry.id}`"
-                        type="text"
+                        :id="`year_${entry.id}`"
+                        type="number"
                         class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                        v-model="entry.car_number"
+                        v-model="entry.year"
                       />
                     </div>
                     <div>
