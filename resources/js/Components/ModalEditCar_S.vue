@@ -280,10 +280,6 @@ function getFieldLabel(fieldName) {
 // Watch for modal open and load history
 watch(() => props.show, (newVal) => {
   if (newVal && props.formData?.id) {
-    if (props.formData) {
-      const currentTags = Array.isArray(props.formData.tags) ? props.formData.tags : [];
-      props.formData.tags = currentTags.map((t) => (typeof t === "object" ? t.id : t)).filter(Boolean);
-    }
     if (activeTab.value === 'history') {
       loadCarHistory();
     }
