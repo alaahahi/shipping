@@ -519,6 +519,7 @@ class DashboardController extends Controller
             $expenses,
             $land_shipping,
             $land_shipping_dinar,
+            $incomingTags,
             &$maxNo,
             &$createdCars
         ) {
