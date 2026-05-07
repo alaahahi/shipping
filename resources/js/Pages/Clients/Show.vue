@@ -591,6 +591,7 @@ async function addTagFromListModal() {
     }
     tagModalSelectedTagId.value = "";
     toast.success("تمت إضافة التاغ");
+    closeTagManagerModal();
   } catch (error) {
     toast.error(error?.response?.data?.message || "تعذر إضافة التاغ");
   } finally {
