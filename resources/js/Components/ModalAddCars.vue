@@ -2,6 +2,7 @@
 import { ref, computed, watch } from "vue";
 import axios from 'axios';
 import { ModelListSelect } from "vue-search-select"
+import * as XLSX from "xlsx";
   // Import everythModelSelecting
 import "vue-search-select/dist/VueSearchSelect.css"
 const props = defineProps({
@@ -27,6 +28,9 @@ function createCarEntry(data = {}) {
     id: carEntryUid,
     vin: data.vin ?? "",
     car_number: data.car_number ?? "",
+    car_type: data.car_type ?? "",
+    car_color: data.car_color ?? "",
+    expenses: data.expenses ?? "",
     error: false,
   };
 }
@@ -73,9 +77,12 @@ watch(
     if (!props.formData) {
       return;
     }
-    props.formData.cars = entries.map(({ vin, car_number }) => ({
+    props.formData.cars = entries.map(({ vin, car_number, car_type, car_color, expenses }) => ({
       vin: vin ?? "",
       car_number: car_number ?? "",
+      car_type: car_type ?? "",
+      car_color: car_color ?? "",
+      expenses: expenses ?? "",
     }));
     props.formData.vin = entries[0]?.vin ?? "";
     props.formData.car_number = entries[0]?.car_number ?? "";
@@ -200,11 +207,108 @@ const isSubmitDisabled = computed(() => {
 });
 function prepareCarsPayload() {
   return carEntries.value
-    .map(({ vin, car_number }) => ({
+    .map(({ vin, car_number, car_type, car_color, expenses }) => ({
       vin: vin ? vin.trim() : "",
       car_number: car_number ? String(car_number).trim() : null,
+      car_type: car_type ? String(car_type).trim() : null,
+      car_color: car_color ? String(car_color).trim() : null,
+      expenses: expenses !== "" && expenses !== null && expenses !== undefined ? Number(expenses) : null,
     }))
     .filter((entry) => entry.vin);
+}
+
+const excelLoading = ref(false);
+
+function normalizeHeader(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_\-]+/g, "");
+}
+
+function getMappedValue(row, keys = []) {
+  const map = {};
+  Object.keys(row || {}).forEach((key) => {
+    map[normalizeHeader(key)] = row[key];
+  });
+  for (const key of keys) {
+    const value = map[normalizeHeader(key)];
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      return value;
+    }
+  }
+  return null;
+}
+
+function importCarsFromExcel(event) {
+  const file = event?.target?.files?.[0];
+  if (!file) return;
+
+  excelLoading.value = true;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = e.target.result;
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+      const imported = rows
+        .map((row) => {
+          const vin = getMappedValue(row, ["vin", "chassis", "chassisno", "رقمالشاصي", "الشاصي"]);
+          const carType = getMappedValue(row, ["car_type", "cartype", "name", "model", "اسم السيارة", "السيارة"]);
+          const carColor = getMappedValue(row, ["car_color", "carcolor", "color", "اللون"]);
+          const expenses = getMappedValue(row, ["expenses", "expense", "مصاريف", "المصاريف"]);
+          const carNumber = getMappedValue(row, ["car_number", "carnumber", "number", "رقمالسيارة"]);
+          if (!vin || !String(vin).trim()) return null;
+          return createCarEntry({
+            vin: String(vin).trim(),
+            car_number: carNumber ? String(carNumber).trim() : "",
+            car_type: carType ? String(carType).trim() : "",
+            car_color: carColor ? String(carColor).trim() : "",
+            expenses: expenses !== "" && expenses !== null && expenses !== undefined ? Number(expenses) : "",
+          });
+        })
+        .filter(Boolean);
+
+      if (!imported.length) {
+        alert("لم يتم العثور على صفوف صالحة. تأكد من وجود عمود VIN/رقم الشاصي.");
+      } else {
+        carEntries.value = imported;
+      }
+    } catch (error) {
+      console.error(error);
+      alert("تعذر قراءة ملف Excel");
+    } finally {
+      excelLoading.value = false;
+      event.target.value = "";
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function downloadExcelTemplate() {
+  const templateRows = [
+    {
+      vin: "1HGCM82633A123456",
+      name: "Camry",
+      color: "White",
+      expenses: 120,
+      car_number: "45",
+    },
+    {
+      vin: "JH4KA9650MC012345",
+      name: "Sonata",
+      color: "Black",
+      expenses: 95,
+      car_number: "77",
+    },
+  ];
+  const worksheet = XLSX.utils.json_to_sheet(templateRows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "cars_template");
+  XLSX.writeFile(workbook, "cars_import_template.xlsx");
 }
 function handleSubmit() {
   props.formData.date = props.formData.date
@@ -419,13 +523,32 @@ async function removeTagFromCar(tagValue) {
                   <label class="dark:text-gray-200" for="vin">
                     {{ $t("vin") }}
                   </label>
-                  <button
-                    type="button"
-                    class="px-2 py-1 text-white bg-green-600 rounded-md text-sm font-semibold"
-                    @click="addCarEntry"
-                  >
-                    +
-                  </button>
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      class="px-2 py-1 text-white bg-slate-600 rounded-md text-sm font-semibold"
+                      @click="downloadExcelTemplate"
+                    >
+                      تحميل قالب
+                    </button>
+                    <label class="px-2 py-1 text-white bg-indigo-600 rounded-md text-sm font-semibold cursor-pointer">
+                      {{ excelLoading ? "جاري القراءة..." : "استيراد Excel" }}
+                      <input
+                        type="file"
+                        class="hidden"
+                        accept=".xlsx,.xls"
+                        :disabled="excelLoading"
+                        @change="importCarsFromExcel"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      class="px-2 py-1 text-white bg-green-600 rounded-md text-sm font-semibold"
+                      @click="addCarEntry"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
                 <div
                   v-for="(entry, index) in carEntries"
@@ -444,9 +567,7 @@ async function removeTagFromCar(tagValue) {
                       &minus;
                     </button>
                   </div>
-                  <div
-                    class="grid grid-cols-1 md:grid-cols-2 gap-2"
-                  >
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
                     <div>
                       <label class="dark:text-gray-200 block text-sm" :for="`vin_${entry.id}`">
                         {{ $t("vin") }}
@@ -502,6 +623,33 @@ async function removeTagFromCar(tagValue) {
                         type="text"
                         class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                         v-model="entry.car_number"
+                      />
+                    </div>
+                    <div>
+                      <label class="dark:text-gray-200 block text-sm" :for="`car_type_${entry.id}`">اسم السيارة</label>
+                      <input
+                        :id="`car_type_${entry.id}`"
+                        type="text"
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                        v-model="entry.car_type"
+                      />
+                    </div>
+                    <div>
+                      <label class="dark:text-gray-200 block text-sm" :for="`car_color_${entry.id}`">اللون</label>
+                      <input
+                        :id="`car_color_${entry.id}`"
+                        type="text"
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                        v-model="entry.car_color"
+                      />
+                    </div>
+                    <div>
+                      <label class="dark:text-gray-200 block text-sm" :for="`expenses_${entry.id}`">مصاريف الصف</label>
+                      <input
+                        :id="`expenses_${entry.id}`"
+                        type="number"
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                        v-model="entry.expenses"
                       />
                     </div>
                   </div>

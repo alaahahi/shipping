@@ -454,6 +454,15 @@ class DashboardController extends Controller
                     'car_number' => isset($car['car_number']) && $car['car_number'] !== null
                         ? trim($car['car_number'])
                         : null,
+                    'car_type' => isset($car['car_type']) && $car['car_type'] !== null
+                        ? trim($car['car_type'])
+                        : null,
+                    'car_color' => isset($car['car_color']) && $car['car_color'] !== null
+                        ? trim($car['car_color'])
+                        : null,
+                    'expenses' => isset($car['expenses']) && $car['expenses'] !== ''
+                        ? (float) $car['expenses']
+                        : null,
                 ];
             })
             ->filter(function ($car) {
@@ -464,16 +473,15 @@ class DashboardController extends Controller
             $carsPayload = collect([[
                 'vin' => trim($request->vin),
                 'car_number' => $request->car_number ? trim($request->car_number) : null,
+                'car_type' => $request->car_type ? trim($request->car_type) : null,
+                'car_color' => $request->car_color ? trim($request->car_color) : null,
+                'expenses' => $request->expenses !== null ? (float) $request->expenses : null,
             ]]);
         }
 
         if ($carsPayload->isEmpty()) {
             return Response::json(['message' => 'VIN is required'], 422);
         }
-
-        $dolar_custom = (int) ($dinar / ($calc_rate)) ?? 0;
-        $land_shipping_dinar_custom = (int) ($land_shipping_dinar / ($calc_rate)) ?? 0;
-        $total_amount = $checkout + $shipping_dolar + $expenses + $coc_dolar + $dolar_custom + $land_shipping + $land_shipping_dinar_custom;
 
         if (empty($client_id) || $client_id == 0) {
             $client = new User;
@@ -506,7 +514,6 @@ class DashboardController extends Controller
             $expenses,
             $land_shipping,
             $land_shipping_dinar,
-            $total_amount,
             &$maxNo,
             &$createdCars
         ) {
@@ -517,7 +524,7 @@ class DashboardController extends Controller
                     'note' => $request->note ?? '',
                     'no' => $maxNo,
                     'car_owner' => $request->car_owner,
-                    'car_type' => $request->car_type,
+                    'car_type' => $carData['car_type'] ?: $request->car_type,
                     'vin' => $carData['vin'],
                     'car_number' => $carData['car_number'],
                     'dinar' => $dinar,
@@ -526,17 +533,26 @@ class DashboardController extends Controller
                     'shipping_dolar' => $shipping_dolar,
                     'coc_dolar' => $coc_dolar,
                     'checkout' => $checkout,
-                    'total' => $total_amount,
+                    'total' => 0,
                     'year' => $request->year,
                     'year_date' => $year_date,
-                    'car_color' => $request->car_color,
+                    'car_color' => $carData['car_color'] ?: $request->car_color,
                     'date' => $request->date,
-                    'expenses' => $expenses,
+                    'expenses' => $carData['expenses'] ?? $expenses,
                     'client_id' => $client_id,
                     'results' => $results,
                     'owner_id' => $owner_id,
                     'land_shipping' => $land_shipping,
                     'land_shipping_dinar' => $land_shipping_dinar,
+                    'profit' => 0,
+                ]);
+
+                $carExpenses = $carData['expenses'] ?? $expenses;
+                $dolar_custom = (int) ($dinar / ($calc_rate)) ?? 0;
+                $land_shipping_dinar_custom = (int) ($land_shipping_dinar / ($calc_rate)) ?? 0;
+                $total_amount = $checkout + $shipping_dolar + $carExpenses + $coc_dolar + $dolar_custom + $land_shipping + $land_shipping_dinar_custom;
+                $car->update([
+                    'total' => $total_amount,
                     'profit' => ($total_amount * -1),
                 ]);
 
