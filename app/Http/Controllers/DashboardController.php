@@ -1185,6 +1185,8 @@ class DashboardController extends Controller
     {
         $owner_id = Auth::user()->owner_id;
         $tag_id = (int) $request->get('tag_id', 0);
+        $from = $request->get('from');
+        $to = $request->get('to');
         if ($tag_id <= 0) {
             abort(404);
         }
@@ -1192,14 +1194,19 @@ class DashboardController extends Controller
         $tag = CarTag::where('owner_id', $owner_id)->findOrFail($tag_id);
         $tag->loadCount('cars');
 
-        $cars = $tag->cars()
+        $carsQuery = $tag->cars()
             ->with(['client:id,name'])
-            ->orderBy('id', 'desc')
-            ->get(['id', 'car_type', 'vin', 'car_number', 'client_id', 'date', 'year', 'total_s', 'paid', 'discount']);
+            ->orderBy('id', 'desc');
+
+        if (!empty($from) && !empty($to)) {
+            $carsQuery->whereBetween('date', [$from, $to]);
+        }
+
+        $cars = $carsQuery->get(['id', 'car_type', 'vin', 'car_number', 'client_id', 'date', 'year', 'total_s', 'paid', 'discount']);
 
         $config = SystemConfig::first();
 
-        return view('carTagDetails', compact('config', 'tag', 'cars'));
+        return view('carTagDetails', compact('config', 'tag', 'cars', 'from', 'to'));
     }
 
     public function storeCarTag(Request $request)

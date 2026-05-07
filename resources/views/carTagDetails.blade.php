@@ -39,6 +39,10 @@
     <div class="col">
       تاريخ الطباعة: {{ date('Y-m-d') }}
     </div>
+    <div class="col">
+      الفترة:
+      <strong>{{ !empty($from) && !empty($to) ? ($from . ' → ' . $to) : 'كل الفترات' }}</strong>
+    </div>
   </div>
 
   <div class="row text-center py-2">

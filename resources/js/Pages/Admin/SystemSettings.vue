@@ -365,6 +365,8 @@ const tagSearch = ref('');
 const selectedCarId = ref(null);
 const selectedTagId = ref(null);
 const newTagName = ref('');
+const tagFromDate = ref('');
+const tagToDate = ref('');
 
 const selectedCarForTagMgmt = computed(() => {
   return carsForTagMgmt.value.find((car) => car.id === selectedCarId.value) || null;
@@ -427,6 +429,8 @@ function openTagManagerModal() {
   selectedCarId.value = null;
   selectedTagId.value = null;
   newTagName.value = '';
+  tagFromDate.value = '';
+  tagToDate.value = '';
   loadCarTagOptions();
 }
 
@@ -531,7 +535,12 @@ function deleteCarTagMaster(tag) {
 
 function printCarTagDetails(tag) {
   if (!tag?.id) return;
-  window.open(`/printCarTagDetails?tag_id=${tag.id}`, '_blank');
+  const query = new URLSearchParams({ tag_id: String(tag.id) });
+  if (tagFromDate.value && tagToDate.value) {
+    query.set('from', tagFromDate.value);
+    query.set('to', tagToDate.value);
+  }
+  window.open(`/printCarTagDetails?${query.toString()}`, '_blank');
 }
 </script>
 
@@ -1056,6 +1065,25 @@ function printCarTagDetails(tag) {
                 type="text"
                 class="mt-1 block w-full"
                 placeholder="اكتب اسم التاغ للبحث"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+            <div>
+              <InputLabel value="من تاريخ (للطباعة)" />
+              <TextInput
+                v-model="tagFromDate"
+                type="date"
+                class="mt-1 block w-full"
+              />
+            </div>
+            <div>
+              <InputLabel value="إلى تاريخ (للطباعة)" />
+              <TextInput
+                v-model="tagToDate"
+                type="date"
+                class="mt-1 block w-full"
               />
             </div>
           </div>
