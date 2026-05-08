@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\UserController;
@@ -71,6 +72,17 @@ Route::get('/test-system', function () {
     ];
     
     return response()->json($results, 200, [], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+});
+
+Route::get('/db-status', function () {
+    $threads = DB::select("SHOW STATUS LIKE 'Threads_connected'");
+    $processes = DB::select('SHOW PROCESSLIST');
+
+    return [
+        'threads_connected' => $threads,
+        'process_count' => count($processes),
+        'processes' => $processes,
+    ];
 });
 
 Route::get('/', function () {
