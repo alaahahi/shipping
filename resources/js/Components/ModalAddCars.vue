@@ -27,11 +27,11 @@ function createCarEntry(data = {}) {
   return {
     id: carEntryUid,
     vin: data.vin ?? "",
-    year: data.year ?? "",
-    car_type: data.car_type ?? "",
-    car_color: data.car_color ?? "",
+    car_number: data.car_number ?? "",
+    dinar: data.dinar ?? "",
     expenses: data.expenses ?? "",
     error: false,
+    hunterWarning: false,
   };
 }
 
@@ -40,7 +40,6 @@ function initializeCars() {
     ? props.formData.cars
     : [{
         vin: props.formData?.vin ?? "",
-        year: props.formData?.year ?? "",
       }];
 
   const prepared = baseEntries
@@ -77,15 +76,13 @@ watch(
     if (!props.formData) {
       return;
     }
-    props.formData.cars = entries.map(({ vin, year, car_type, car_color, expenses }) => ({
+    props.formData.cars = entries.map(({ vin, car_number, dinar, expenses }) => ({
       vin: vin ?? "",
-      year: year ?? "",
-      car_type: car_type ?? "",
-      car_color: car_color ?? "",
+      car_number: car_number ?? "",
+      dinar: dinar ?? "",
       expenses: expenses ?? "",
     }));
     props.formData.vin = entries[0]?.vin ?? "";
-    props.formData.year = entries[0]?.year ?? "";
   },
   { deep: true }
 );
@@ -137,8 +134,11 @@ function addCarEntry() {
 function removeCarEntry(index) {
   if (carEntries.value.length === 1) {
     carEntries.value[0].vin = "";
-    carEntries.value[0].year = "";
+    carEntries.value[0].car_number = "";
+    carEntries.value[0].dinar = "";
+    carEntries.value[0].expenses = "";
     carEntries.value[0].error = false;
+    carEntries.value[0].hunterWarning = false;
     return;
   }
   carEntries.value.splice(index, 1);
@@ -147,18 +147,25 @@ function checkVin(entry) {
   const vin = entry.vin ? entry.vin.trim() : "";
   if (!vin) {
     entry.error = false;
+    entry.hunterWarning = false;
     return;
   }
   axios
     .get(`/api/check_vin?car_vin=${vin}`)
     .then((response) => {
-      entry.error = response.data || false;
+      const data = response.data;
+      if (data && data.price_s !== undefined && !data.client_id) {
+        entry.error = false;
+        entry.hunterWarning = data;
+      } else {
+        entry.error = data || false;
+        entry.hunterWarning = false;
+      }
     })
     .catch((error) => {
       console.error(error);
-      entry.error = {
-        serverError: true,
-      };
+      entry.error = { serverError: true };
+      entry.hunterWarning = false;
     });
 }
 const duplicateVinMap = computed(() => {
@@ -207,12 +214,13 @@ const isSubmitDisabled = computed(() => {
 });
 function prepareCarsPayload() {
   return carEntries.value
-    .map(({ vin, year, car_type, car_color, expenses }) => ({
+    .map(({ vin, car_number, dinar, expenses, hunterWarning }) => ({
       vin: vin ? vin.trim() : "",
-      year: year !== "" && year !== null && year !== undefined ? Number(year) : null,
-      car_type: car_type ? String(car_type).trim() : null,
-      car_color: car_color ? String(car_color).trim() : null,
+      car_number: car_number ? String(car_number).trim() : null,
+      dinar: dinar !== "" && dinar !== null && dinar !== undefined ? Number(dinar) : null,
       expenses: expenses !== "" && expenses !== null && expenses !== undefined ? Number(expenses) : null,
+      hunter_price_p: hunterWarning ? hunterWarning.price_p : null,
+      hunter_price_s: hunterWarning ? hunterWarning.price_s : null,
     }))
     .filter((entry) => entry.vin);
 }
@@ -257,16 +265,14 @@ function importCarsFromExcel(event) {
       const imported = rows
         .map((row) => {
           const vin = getMappedValue(row, ["vin", "chassis", "chassisno", "رقمالشاصي", "الشاصي"]);
-          const carType = getMappedValue(row, ["car_type", "cartype", "name", "اسم السيارة", "السيارة"]);
-          const carModel = getMappedValue(row, ["model", "year", "موديل", "الموديل", "السنة"]);
-          const carColor = getMappedValue(row, ["car_color", "carcolor", "color", "اللون"]);
+          const carNumber = getMappedValue(row, ["car_number", "carnumber", "رقمالسيارة", "رقم السيارة"]);
+          const dinar = getMappedValue(row, ["dinar", "الدينار", "مبلغالدينار", "مبلغ الدينار"]);
           const expenses = getMappedValue(row, ["expenses", "expense", "مصاريف", "المصاريف"]);
           if (!vin || !String(vin).trim()) return null;
           return createCarEntry({
             vin: String(vin).trim(),
-            year: carModel !== null && carModel !== undefined && String(carModel).trim() !== "" ? Number(carModel) : "",
-            car_type: carType ? String(carType).trim() : "",
-            car_color: carColor ? String(carColor).trim() : "",
+            car_number: carNumber ? String(carNumber).trim() : "",
+            dinar: dinar !== "" && dinar !== null && dinar !== undefined ? Number(dinar) : "",
             expenses: expenses !== "" && expenses !== null && expenses !== undefined ? Number(expenses) : "",
           });
         })
@@ -290,7 +296,7 @@ function importCarsFromExcel(event) {
 
 function downloadExcelTemplate() {
   const worksheet = XLSX.utils.aoa_to_sheet([
-    ["رقم الشاصي", "اسم السيارة", "الموديل", "اللون", "مصاريف"],
+    ["رقم الشاصي", "رقم السيارة", "مبلغ الدينار", "مصاريف"],
   ]);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "قالب_السيارات");
@@ -305,7 +311,6 @@ function handleSubmit() {
     ...props.formData,
     cars: carsPayload,
     vin: carsPayload[0]?.vin ?? "",
-    year: carsPayload[0]?.year ?? props.formData.year ?? "",
   };
   emit("a", payload);
 }
@@ -553,7 +558,7 @@ async function removeTagFromCar(tagValue) {
                       &minus;
                     </button>
                   </div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
                     <div>
                       <label class="dark:text-gray-200 block text-sm" :for="`vin_${entry.id}`">
                         {{ $t("vin") }}
@@ -575,17 +580,15 @@ async function removeTagFromCar(tagValue) {
                         {{ entry.error.date }}
                       </div>
                       <div
-                        class="text-red-700 text-sm mt-2"
-                        v-else-if="entry.error && entry.error.price_s"
+                        class="text-amber-600 text-sm mt-2"
+                        v-else-if="entry.hunterWarning"
                       >
-                        رقم الشاصي عاطل - {{ entry.error.car_type }} -
-                        {{ entry.error.year }}
+                        سيارة عاطل - {{ entry.hunterWarning.car_type }} -
+                        {{ entry.hunterWarning.year }}
                         <br />
-                        سعر المشتريات {{ entry.error.price_p }}
-                        و سعر المبيعات {{ entry.error.price_s }}
-                        -
-                        بتاريخ
-                        {{ entry.error.date }}
+                        سعر مشتريات {{ entry.hunterWarning.price_p }}
+                        / مبيعات {{ entry.hunterWarning.price_s }}
+                        — سيتم تحديث الأسعار عند الحفظ
                       </div>
                       <div
                         class="text-red-700 text-sm mt-2"
@@ -601,32 +604,21 @@ async function removeTagFromCar(tagValue) {
                       </div>
                     </div>
                     <div>
-                      <label class="dark:text-gray-200 block text-sm" :for="`year_${entry.id}`">
-                        موديل الصف
-                      </label>
+                      <label class="dark:text-gray-200 block text-sm" :for="`car_number_${entry.id}`">رقم السيارة</label>
                       <input
-                        :id="`year_${entry.id}`"
+                        :id="`car_number_${entry.id}`"
+                        type="text"
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                        v-model="entry.car_number"
+                      />
+                    </div>
+                    <div>
+                      <label class="dark:text-gray-200 block text-sm" :for="`dinar_${entry.id}`">مبلغ الدينار</label>
+                      <input
+                        :id="`dinar_${entry.id}`"
                         type="number"
-                        class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                        v-model="entry.year"
-                      />
-                    </div>
-                    <div>
-                      <label class="dark:text-gray-200 block text-sm" :for="`car_type_${entry.id}`">اسم السيارة</label>
-                      <input
-                        :id="`car_type_${entry.id}`"
-                        type="text"
                         class="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                        v-model="entry.car_type"
-                      />
-                    </div>
-                    <div>
-                      <label class="dark:text-gray-200 block text-sm" :for="`car_color_${entry.id}`">اللون</label>
-                      <input
-                        :id="`car_color_${entry.id}`"
-                        type="text"
-                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                        v-model="entry.car_color"
+                        v-model="entry.dinar"
                       />
                     </div>
                     <div>
@@ -675,18 +667,7 @@ async function removeTagFromCar(tagValue) {
                 />
               </div>
 
-       
-              <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="dinar">
-                  {{ $t("dinar") }}</label
-                >
-                <input
-                  id="dinar"
-                  type="number"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="formData.dinar"
-                />
-              </div>
+
               <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="dolar_price">
                   {{ $t("dolar_price") }}</label
@@ -733,17 +714,6 @@ async function removeTagFromCar(tagValue) {
                   type="number"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.checkout"
-                />
-              </div>
-              <div className="mb-4 mx-1">
-                <label class="dark:text-gray-200" for="expenses">
-                  {{ $t("expenses") }}</label
-                >
-                <input
-                  id="expenses"
-                  type="number"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="formData.expenses"
                 />
               </div>
 

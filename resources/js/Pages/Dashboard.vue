@@ -209,11 +209,7 @@ const getResultsCarSearch = (q = '', page = 1) => {
 }
 //
 const getcountTotalInfo = async () => {
-  axios.get('/api/totalInfo', {
-    headers: {
-        Authorization: 'Bearer ' + props.auth.accessToken,
-    },
-})
+  axios.get('/api/totalInfo')
   .then(response => {
     mainAccount.value = response.data.data.mainAccount;
     onlineContracts.value=  response.data.data.onlineContracts

@@ -23,7 +23,7 @@ class SyncMonitorController extends Controller
         if ($forceConnection !== 'mysql') {
             return false;
         }
-        return env('LOCAL_NO_REMOTE', false) || app()->environment('local');
+        return filter_var(env('LOCAL_NO_REMOTE', false), FILTER_VALIDATE_BOOLEAN);
     }
 
     /**
@@ -48,7 +48,6 @@ class SyncMonitorController extends Controller
         ];
         if ($apiKey = env('API_KEY')) {
             $headers['X-API-Key'] = $apiKey;
-            $headers['Authorization'] = 'Bearer ' . $apiKey;
         }
 
         try {
@@ -80,7 +79,6 @@ class SyncMonitorController extends Controller
         $headers = ['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'];
         if ($apiKey = env('API_KEY')) {
             $headers['X-API-Key'] = $apiKey;
-            $headers['Authorization'] = 'Bearer ' . $apiKey;
         }
 
         $excluded = [
@@ -311,7 +309,6 @@ class SyncMonitorController extends Controller
                 $headers = ['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'];
                 if ($apiKey = env('API_KEY')) {
                     $headers['X-API-Key'] = $apiKey;
-                    $headers['Authorization'] = 'Bearer ' . $apiKey;
                 }
                 $response = Http::timeout(30)->withHeaders($headers)->get($url);
                 if (!$response->successful()) {
@@ -549,15 +546,6 @@ class SyncMonitorController extends Controller
      */
     public function sync(Request $request, DatabaseSyncService $syncService): JsonResponse
     {
-        // تعطيل المزامنة على السيرفر - تعمل فقط في البيئة المحلية
-        if (env('APP_ENV') === 'server' || env('APP_ENV') === 'production') {
-            return response()->json([
-                'success' => false,
-                'message' => 'المزامنة معطلة على السيرفر. تعمل فقط في البيئة المحلية.',
-                'error' => 'Sync is disabled on server environment'
-            ], 403);
-        }
-
         try {
             $direction = $request->get('direction', 'down'); // down = MySQL->SQLite, up = SQLite->MySQL
             $tables = $request->get('tables'); // comma-separated list
@@ -586,7 +574,7 @@ class SyncMonitorController extends Controller
 
             if ($direction === 'down') {
                 // عند LOCAL_NO_REMOTE: جلب البيانات من ONLINE_URL عبر API (لا اتصال MySQL محلي)
-                if (env('LOCAL_NO_REMOTE', false) || app()->environment('local')) {
+                if (filter_var(env('LOCAL_NO_REMOTE', false), FILTER_VALIDATE_BOOLEAN)) {
                     $results = $this->syncFromOnlineServer($tablesArray, filter_var($forceFullSync, FILTER_VALIDATE_BOOLEAN));
                 } else {
                     $results = $syncService->syncFromMySQLToSQLite(

@@ -35,19 +35,11 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request)
     {
-        $accessToken = null;
-
-        // Check if the user is authenticated
         $user = $request->user();
-        if ($user) {
-            // If using Laravel Passport, get the access token
-            $accessToken = $user->createToken('Token Name')->accessToken;
-        }
 
         return array_merge(parent::share($request), [
             'auth' => [
                 'user' => $user,
-                'accessToken' => $accessToken?->token,
             ],
             'ziggy' => function () use ($request) {
                 return array_merge((new Ziggy)->toArray(), [

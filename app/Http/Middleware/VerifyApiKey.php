@@ -14,8 +14,15 @@ class VerifyApiKey
      * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next, string $mode = 'required')
     {
+        $optionalMode = $mode === 'optional';
+        $requireSyncApiKey = filter_var(env('SYNC_REQUIRE_API_KEY', false), FILTER_VALIDATE_BOOLEAN);
+
+        if ($optionalMode && !$requireSyncApiKey) {
+            return $next($request);
+        }
+
         // التحقق من API-Key header أو X-API-Key أو api_key parameter
         $apiKey = $request->header('API-Key') 
                 ?? $request->header('X-API-Key') 

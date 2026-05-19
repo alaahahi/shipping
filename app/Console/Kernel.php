@@ -26,10 +26,10 @@ class Kernel extends ConsoleKernel
         }
 
         // ============================================
-        // المزامنة التلقائية في البيئة المحلية (Local)
+        // المزامنة التلقائية لكل البيئات (باستخدام Feature Flag)
         // تعمل كل 5 دقائق عند توفر الإنترنت - لا تتوقف أبداً
         // ============================================
-        if (env('APP_ENV') === 'local') {
+        if (filter_var(env('SYNC_AUTO_ENABLED', true), FILTER_VALIDATE_BOOLEAN)) {
             $schedule->call(function () {
                 $log = \Illuminate\Support\Facades\Log::class;
                 $statusFile = storage_path('app/sync_auto_status.json');
@@ -144,11 +144,7 @@ class Kernel extends ConsoleKernel
             }
         })->weekly()->name('clear-laravel-log');
 
-        // ============================================
-        // المزامنة على السيرفر (Server/Production)
-        // ============================================
-        // على السيرفر: المزامنة تعمل مباشرة بدون sync_queue
-        // (لا حاجة لجدول sync_queue لأن التعديلات تحدث مباشرة على MySQL)
+        // ملاحظة: تم توحيد السلوك بين local/server عبر SYNC_AUTO_ENABLED.
     }
 
     /**

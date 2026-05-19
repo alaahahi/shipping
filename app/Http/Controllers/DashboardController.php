@@ -466,6 +466,11 @@ class DashboardController extends Controller
                     'expenses' => isset($car['expenses']) && $car['expenses'] !== ''
                         ? (float) $car['expenses']
                         : null,
+                    'dinar' => isset($car['dinar']) && $car['dinar'] !== '' && $car['dinar'] !== null
+                        ? (float) $car['dinar']
+                        : null,
+                    'hunter_price_p' => $car['hunter_price_p'] ?? null,
+                    'hunter_price_s' => $car['hunter_price_s'] ?? null,
                 ];
             })
             ->filter(function ($car) {
@@ -526,6 +531,8 @@ class DashboardController extends Controller
             foreach ($carsPayload as $carData) {
                 $maxNo += 1;
 
+                $carDinar = $carData['dinar'] ?? $dinar;
+
                 $car = Car::create([
                     'note' => $request->note ?? '',
                     'no' => $maxNo,
@@ -533,8 +540,7 @@ class DashboardController extends Controller
                     'car_type' => $carData['car_type'] ?: $request->car_type,
                     'vin' => $carData['vin'],
                     'car_number' => $carData['car_number'],
-                    'dinar' => $dinar,
-                    // store the entered exchange rate as-is
+                    'dinar' => $carDinar,
                     'dolar_price' => $dolar_price_input,
                     'shipping_dolar' => $shipping_dolar,
                     'coc_dolar' => $coc_dolar,
@@ -553,12 +559,22 @@ class DashboardController extends Controller
                     'profit' => 0,
                 ]);
 
+                if (!empty($carData['hunter_price_p']) || !empty($carData['hunter_price_s'])) {
+                    $hunter = \App\Models\Hunter::where('vin', $carData['vin'])->where('status', 2)->first();
+                    if ($hunter) {
+                        $hunter->update([
+                            'price_p' => $carData['hunter_price_p'] ?? $hunter->price_p,
+                            'price_s' => $carData['hunter_price_s'] ?? $hunter->price_s,
+                        ]);
+                    }
+                }
+
                 $carExpenses = $carData['expenses'] ?? $expenses;
                 $effectiveRate = (float) $calc_rate;
                 if ($effectiveRate <= 0) {
                     $effectiveRate = 1.0;
                 }
-                $dolar_custom = (int) ($dinar / $effectiveRate);
+                $dolar_custom = (int) ($carDinar / $effectiveRate);
                 $land_shipping_dinar_custom = (int) ($land_shipping_dinar / $effectiveRate);
                 $total_amount = $checkout + $shipping_dolar + $carExpenses + $coc_dolar + $dolar_custom + $land_shipping + $land_shipping_dinar_custom;
                 $car->update([
@@ -1051,7 +1067,13 @@ class DashboardController extends Controller
                       });
             });
         }
-        
+
+        if ($printExcel) {
+            $filename = trim(($from ?: 'all') . '_' . ($to ?: 'all')) . '_cars.xlsx';
+
+            return Excel::download(new Exportcar($from, $to, $user_id, $owner_id, $tag, $q), $filename);
+        }
+
         // حساب الإحصائيات بعد تطبيق الفلاتر (تحسين مهم)
         $resultsDinar = $baseQuery->sum('dinar');
         $resultsDollar = $baseQuery->sum('total');
@@ -1090,10 +1112,6 @@ class DashboardController extends Controller
         $data['resultsTotalS'] = $resultsTotalS;
 
         $config = SystemConfig::first();
-
-        if ($printExcel) {
-            return Excel::download(new Exportcar($from, $to, $user_id, $owner_id), $from . ' ' . $to . '.xlsx');
-        }
 
         return Response::json($data, 200);
     }

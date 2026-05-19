@@ -34,6 +34,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Cache\FileStore;
 use Illuminate\Filesystem\Filesystem;
+Route::middleware('api.key:optional')->group(function () {
 Route::get('/sync-monitor/tables', [SyncMonitorController::class, 'tables'])->name('sync.monitor.tables');
 Route::get('/sync-monitor/tables-comparison', [SyncMonitorController::class, 'tablesComparison'])->name('sync.monitor.tables.comparison');
 Route::get('/sync-monitor/table/{tableName}', [SyncMonitorController::class, 'tableDetails'])->name('sync.monitor.table.details');
@@ -55,6 +56,7 @@ Route::get('/sync-monitor/backup-content', [SyncMonitorController::class, 'getBa
 Route::post('/sync-monitor/restore-selected', [SyncMonitorController::class, 'restoreSelectedTables'])->name('sync.monitor.restore.selected');
 Route::get('/sync-monitor/download-backup', [SyncMonitorController::class, 'downloadBackup'])->name('sync.monitor.download.backup');
 Route::delete('/sync-monitor/backup/delete', [SyncMonitorController::class, 'deleteBackup'])->name('sync.monitor.backup.delete');
+});
 Route::post('get-pending-transfers', [TransfersController::class, 'getPendingTransfers'])->name('getPendingTransfers');
 Route::post('receive-transfer', [TransfersController::class, 'receiveExternalTransfer'])->name('receiveExternalTransfer');
 Route::post('confirm-external-transfer', [TransfersController::class, 'confirmExternalTransfer'])->name('confirmExternalTransfer');
@@ -157,6 +159,7 @@ Route::post('updateInternalSale',[UserController::class, 'updateInternalSale'])-
 Route::post('bulkUpdateInternalSales',[UserController::class, 'bulkUpdateInternalSales'])->name('bulkUpdateInternalSales');
 Route::post('addPaymentToBuyer',[UserController::class, 'addPaymentToBuyer'])->name('addPaymentToBuyer');
 Route::get('getBuyerPaymentDetails',[UserController::class, 'getBuyerPaymentDetails'])->name('getBuyerPaymentDetails');
+Route::get('printBuyerPaymentReceipt',[UserController::class, 'printBuyerPaymentReceipt'])->name('printBuyerPaymentReceipt');
 Route::post('deletePayment',[UserController::class, 'deletePayment'])->name('deletePayment');
 Route::post('deleteInternalSale',[UserController::class, 'deleteInternalSale'])->name('deleteInternalSale');
 Route::get('getInternalSalesBuyers',[UserController::class, 'getInternalSalesBuyers'])->name('getInternalSalesBuyers');

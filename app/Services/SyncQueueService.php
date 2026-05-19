@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\SyncDataJob;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -46,9 +47,10 @@ class SyncQueueService
                         'error_message' => null,
                         'updated_at' => now()
                     ]);
+                $queueId = (int) $existing->id;
             } else {
                 // إضافة سجل جديد
-                DB::table('sync_queue')->insert([
+                $queueId = (int) DB::table('sync_queue')->insertGetId([
                     'table_name' => $tableName,
                     'record_id' => $recordId,
                     'action' => $action,
@@ -60,6 +62,7 @@ class SyncQueueService
                 ]);
             }
 
+            $this->dispatchSyncJob($queueId);
             return true;
         } catch (\Exception $e) {
             Log::error('Failed to queue sync change', [
@@ -198,7 +201,7 @@ class SyncQueueService
                 ->where('synced_at', '<', now()->subHours($hoursOld))
                 ->delete();
 
-            Log::info('Cleaned synced records from sync_queue', [
+            Log::debug('Cleaned synced records from sync_queue', [
                 'deleted_count' => $deleted,
                 'hours_old' => $hoursOld
             ]);
@@ -233,6 +236,80 @@ class SyncQueueService
                 'error' => $e->getMessage()
             ]);
             return 0;
+        }
+    }
+
+    /**
+     * معالجة عنصر واحد من sync_queue باستخدام queue id.
+     */
+    public function processQueueRecordById(int $queueId): bool
+    {
+        $change = DB::table('sync_queue')
+            ->where('id', $queueId)
+            ->first();
+
+        if (!$change || $change->status !== 'pending') {
+            return false;
+        }
+
+        try {
+            DB::table('sync_queue')
+                ->where('id', $queueId)
+                ->update(['status' => 'syncing', 'updated_at' => now()]);
+
+            $mysqlDb = DB::connection('mysql');
+            $data = $change->data ? json_decode($change->data, true) : null;
+            $success = false;
+
+            switch ($change->action) {
+                case 'insert':
+                case 'update':
+                    if ($data) {
+                        if ($mysqlDb->table($change->table_name)->where('id', $change->record_id)->exists()) {
+                            $updateData = $data;
+                            unset($updateData['id']);
+                            $mysqlDb->table($change->table_name)
+                                ->where('id', $change->record_id)
+                                ->update($updateData);
+                        } else {
+                            $mysqlDb->table($change->table_name)->insert($data);
+                        }
+                        $success = true;
+                    }
+                    break;
+                case 'delete':
+                    $mysqlDb->table($change->table_name)
+                        ->where('id', $change->record_id)
+                        ->delete();
+                    $success = true;
+                    break;
+            }
+
+            if ($success) {
+                return $this->markAsSynced($queueId);
+            }
+
+            $this->markAsFailed($queueId, 'Unknown action or missing data');
+            return false;
+        } catch (\Exception $e) {
+            $this->markAsFailed($queueId, $e->getMessage());
+            Log::error('Failed to process queue item', [
+                'queue_id' => $queueId,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    protected function dispatchSyncJob(int $queueId): void
+    {
+        try {
+            SyncDataJob::dispatch('sync_queue', ['queue_id' => $queueId])->onQueue('sync');
+        } catch (\Throwable $e) {
+            Log::warning('Failed to dispatch sync job', [
+                'queue_id' => $queueId,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 }

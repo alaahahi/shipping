@@ -453,11 +453,14 @@ class DatabaseSyncService
         $maxId = $lastSyncedId;
         $maxUpdatedAt = $lastUpdatedAt;
 
+        $sqliteColumns = $this->getTableColumns($sqliteDb, $tableName);
+
         foreach ($chunks as $chunkIndex => $chunk) {
             // التأكد من تحويل جميع العناصر إلى arrays
             $insertData = [];
             foreach ($chunk as $item) {
-                $insertData[] = is_array($item) ? $item : (array) $item;
+                $row = is_array($item) ? $item : (array) $item;
+                $insertData[] = $this->filterRowByColumns($row, $sqliteColumns);
             }
 
             // التحقق من السجلات الموجودة مسبقاً (batch check)
@@ -1690,6 +1693,47 @@ class DatabaseSyncService
             }
             return true;
         });
+    }
+
+    /**
+     * جلب أسماء الأعمدة الفعلية من الجدول المستهدف
+     */
+    protected function getTableColumns($db, string $tableName): array
+    {
+        try {
+            if ($this->isConnectionSqlite($db)) {
+                $columns = $db->select("PRAGMA table_info(`{$tableName}`)");
+                return array_map(fn ($column) => $column->name, $columns);
+            }
+
+            $database = config('database.connections.mysql.database');
+            $columns = $db->select(
+                "SELECT COLUMN_NAME as name FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?",
+                [$database, $tableName]
+            );
+
+            return array_map(fn ($column) => $column->name, $columns);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to read table columns for filtering', [
+                'table' => $tableName,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
+    }
+
+    /**
+     * حذف أي أعمدة غير موجودة فعليًا في الجدول الهدف
+     */
+    protected function filterRowByColumns(array $row, array $allowedColumns): array
+    {
+        if (empty($allowedColumns)) {
+            return $row;
+        }
+
+        $allowed = array_flip($allowedColumns);
+        return array_intersect_key($row, $allowed);
     }
 
     /**

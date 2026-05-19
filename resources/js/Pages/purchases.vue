@@ -206,9 +206,9 @@ const formatter = ref({
   month: 'MM'
 })
 let resetData = ref(false);
-let user_id = 0;
+const user_id = ref('');
 let page = 1;
-let q = '';
+const q = ref('');
 let filterTag = ref('');
 let tagOptions = ref([]);
 const showTagManagerModal = ref(false);
@@ -233,8 +233,8 @@ const getResultsCar = async ($state) => {
       params: {
         limit: 100,
         page: page,
-        q: q,
-        user_id: user_id,
+        q: q.value,
+        user_id: user_id.value,
         from:from.value,
         to:to.value,
         tag: filterTag.value || ''
@@ -482,6 +482,30 @@ async function removeTagFromListModal(tag) {
   }
 }
 const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce delay (in milliseconds) as needed
+
+/** رابط تصدير Excel بنفس فلاتر الصفحة (تاريخ، زبون، تاغ، بحث) */
+const excelPurchasesExportUrl = computed(() => {
+  const params = new URLSearchParams();
+  params.set('printExcel', '1');
+  if (from.value) {
+    params.set('from', from.value);
+  }
+  if (to.value) {
+    params.set('to', to.value);
+  }
+  const uid = user_id.value;
+  if (uid !== '' && uid !== null && uid !== undefined) {
+    params.set('user_id', String(uid));
+  }
+  if (filterTag.value !== '' && filterTag.value !== null && filterTag.value !== undefined) {
+    params.set('tag', String(filterTag.value));
+  }
+  const search = String(q.value || '').trim();
+  if (search !== '') {
+    params.set('q', search);
+  }
+  return `/api/getIndexCar?${params.toString()}`;
+});
 
 </script>
 
@@ -885,6 +909,19 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
                             >
                               <span>فلترة</span>
                             </button>
+                          </div>
+                          <div className="mb-4 mr-2 print:hidden">
+                            <InputLabel for="excel-export-purchases" value="Excel" />
+                            <a
+                              id="excel-export-purchases"
+                              :href="excelPurchasesExportUrl"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-green-600 rounded block text-center"
+                              style="width: 100%"
+                            >
+                              <span>تصدير Excel</span>
+                            </a>
                           </div>
                           <div className="mb-4  mr-2  hidden">
                             <InputLabel for="pay" value="طباعة" />

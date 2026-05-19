@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Services\SyncQueueService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -41,23 +42,13 @@ class SyncDataJob implements ShouldQueue
     public function handle()
     {
         try {
-            Log::info("معالجة مزامنة البيانات من نوع: {$this->type}");
-
             switch ($this->type) {
-                case 'car':
-                    $this->syncCar();
-                    break;
-                case 'contract':
-                    $this->syncContract();
-                    break;
-                case 'transaction':
-                    $this->syncTransaction();
+                case 'sync_queue':
+                    $this->syncQueueItem();
                     break;
                 default:
                     Log::warning("نوع غير معروف: {$this->type}");
             }
-
-            Log::info("تمت مزامنة {$this->type} بنجاح");
         } catch (\Exception $e) {
             Log::error("فشل مزامنة {$this->type}: " . $e->getMessage());
             throw $e; // لإعادة المحاولة
@@ -67,26 +58,21 @@ class SyncDataJob implements ShouldQueue
     /**
      * مزامنة السيارة
      */
-    protected function syncCar()
+    protected function syncQueueItem(): void
     {
-        // منطق مزامنة السيارة
-        // يمكن تخصيصه حسب الحاجة
-    }
+        $queueId = (int) ($this->data['queue_id'] ?? 0);
+        if ($queueId <= 0) {
+            Log::warning('Sync queue job skipped: missing queue_id');
+            return;
+        }
 
-    /**
-     * مزامنة العقد
-     */
-    protected function syncContract()
-    {
-        // منطق مزامنة العقد
-    }
+        /** @var SyncQueueService $queueService */
+        $queueService = app(SyncQueueService::class);
+        $processed = $queueService->processQueueRecordById($queueId);
 
-    /**
-     * مزامنة المعاملة
-     */
-    protected function syncTransaction()
-    {
-        // منطق مزامنة المعاملة
+        if (!$processed) {
+            throw new \RuntimeException("Queue item {$queueId} was not processed");
+        }
     }
 
     /**
