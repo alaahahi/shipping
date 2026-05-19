@@ -1349,6 +1349,45 @@ class UserController extends Controller
         ], 200);
     }
 
+    public function printBuyerPaymentReceipt(Request $request)
+    {
+        $owner_id = Auth::user()->owner_id;
+        $sale_id = $request->input('sale_id');
+        $payment_id = $request->input('payment_id');
+        $buyer_id = $request->input('buyer_id');
+        $merchant_id = $request->input('merchant_id');
+
+        if (!$sale_id || !$payment_id || !$buyer_id || !$merchant_id) {
+            abort(400, 'Missing required parameters');
+        }
+
+        $payment = BuyerPayment::where('internal_sale_id', $sale_id)
+            ->where('buyer_id', $buyer_id)
+            ->where('merchant_id', $merchant_id)
+            ->where('owner_id', $owner_id)
+            ->where(function ($query) use ($payment_id) {
+                $query->where('payment_id', $payment_id)
+                    ->orWhere('id', $payment_id);
+            })
+            ->firstOrFail();
+
+        $sale = InternalSale::with('car')
+            ->where('id', $sale_id)
+            ->where('client_id', $buyer_id)
+            ->firstOrFail();
+
+        if (!$sale->car || (int) $sale->car->client_id !== (int) $merchant_id) {
+            abort(403);
+        }
+
+        $buyer = User::where('id', $buyer_id)->where('owner_id', $owner_id)->firstOrFail();
+        $merchant = User::where('id', $merchant_id)->where('owner_id', $owner_id)->firstOrFail();
+        $config = SystemConfig::first();
+        $car = $sale->car;
+
+        return view('receiptBuyerPayment', compact('payment', 'buyer', 'merchant', 'config', 'car'));
+    }
+
     public function deletePayment(Request $request)
     {
         $validated = Validator::make($request->all(), [

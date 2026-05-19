@@ -4,6 +4,7 @@ import { ref, watch, defineProps, defineEmits } from 'vue';
 import axios from "axios";
 import { useToast } from "vue-toastification";
 import trash from "@/Components/icon/trash.vue";
+import print from "@/Components/icon/print.vue";
 
 const toast = useToast();
 
@@ -111,6 +112,19 @@ async function deletePayment(payment) {
 function handleClose() {
   emit('close');
 }
+
+function printReceiptUrl(payment) {
+  if (!props.buyer?.id || !props.merchantId || !payment.sale_id) {
+    return '#';
+  }
+  const params = new URLSearchParams({
+    sale_id: String(payment.sale_id),
+    payment_id: String(payment.id),
+    buyer_id: String(props.buyer.id),
+    merchant_id: String(props.merchantId),
+  });
+  return `/api/printBuyerPaymentReceipt?${params.toString()}`;
+}
 </script>
 
 <template>
@@ -154,6 +168,14 @@ function handleClose() {
               <td class="px-2 py-3">{{ formatDate(payment.date) }}</td>
               <td class="px-2 py-3 text-sm">{{ payment.note || '-' }}</td>
               <td class="px-2 py-3">
+                <a
+                  :href="printReceiptUrl(payment)"
+                  target="_blank"
+                  class="inline-block px-2 py-1 text-white bg-blue-500 rounded hover:bg-blue-600 mr-1"
+                  title="طباعة وصل الدفعة"
+                >
+                  <print class="w-4 h-4 inline" />
+                </a>
                 <button
                   @click="deletePayment(payment)"
                   class="px-2 py-1 text-white bg-red-500 rounded hover:bg-red-600"
