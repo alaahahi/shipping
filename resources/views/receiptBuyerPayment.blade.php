@@ -10,7 +10,6 @@ $receiptNoFull = (string) ($payment->payment_id ?? $payment->id);
 $receiptNo = strlen($receiptNoFull) > 8 ? substr($receiptNoFull, -8) : $receiptNoFull;
 $amountFormatted = rtrim(rtrim(number_format($amount, 2, '.', ''), '0'), '.');
 $buyerName = $buyer->name ?? '';
-$merchantName = $merchant->name ?? '';
 $vin = $car->vin ?? $car->car_number ?? '-';
 $carLabel = trim(($car->car_type ?? '') . ' ' . ($car->year ?? ''));
 $note = $payment->note ?? '';
@@ -50,9 +49,6 @@ $note = $payment->note ?? '';
     </div>
     <div class="row p-2" style="font-size: 14px">
         <div class="col-12 p-2 pe-5">الزبون / Buyer: {{ $buyerName }}</div>
-        @if($merchantName)
-        <div class="col-12 p-2 pe-5">التاجر / Merchant: {{ $merchantName }}</div>
-        @endif
         <div class="col-12 p-2 pe-5">السيارة: {{ $carLabel }}</div>
         <div class="col-12 p-2 pe-5"><strong>رقم الشاصي / VIN:</strong> {{ $vin }}</div>
         <div class="col-12 p-2 pe-5">استلمت مبلغ قدره: {{ $Help->numberToWords($amount, $currency) }}</div>
