@@ -6,7 +6,9 @@ $amount = (float) ($payment->amount ?? 0);
 $created = $payment->payment_date
     ? \Carbon\Carbon::parse($payment->payment_date)->format('Y-m-d')
     : ($payment->created_at ? $payment->created_at->format('Y-m-d') : '');
-$receiptNo = $payment->payment_id ?? $payment->id;
+$receiptNoFull = (string) ($payment->payment_id ?? $payment->id);
+$receiptNo = strlen($receiptNoFull) > 8 ? substr($receiptNoFull, -8) : $receiptNoFull;
+$amountFormatted = rtrim(rtrim(number_format($amount, 2, '.', ''), '0'), '.');
 $buyerName = $buyer->name ?? '';
 $merchantName = $merchant->name ?? '';
 $vin = $car->vin ?? $car->car_number ?? '-';
@@ -61,7 +63,7 @@ $note = $payment->note ?? '';
     <div class="row text-center" style="font-size: 14px">
         <div class="col-1"></div>
         <div class="col-1 alert-primary border p-2">المبلغ</div>
-        <div class="col-1 alert-primary border p-2">{{ number_format($amount, 2) }}</div>
+        <div class="col-1 alert-primary border p-2">{{ $amountFormatted }}</div>
         <div class="col-1 alert-primary border p-2">{{ $currency }}</div>
         <div class="col-8 text-start ps-5">اسم وتوقيع المستلم</div>
     </div>
