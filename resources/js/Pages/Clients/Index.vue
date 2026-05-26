@@ -312,6 +312,7 @@ function confirmDelClient(V) {
                             <select  v-model="q" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
                               <option value="0">{{ $t("allOwners") }}</option>
                               <option value="debit">يوجد دين</option>
+                              <option value="box_movement">حركة على القاسة</option>
                             </select>
                         </div>
                         <div class="text-center px-4">

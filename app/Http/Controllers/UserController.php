@@ -141,8 +141,8 @@ class UserController extends Controller
                 DB::raw('(SELECT COALESCE(balance, 0) FROM wallets WHERE user_id = users.id LIMIT 1) as balance')
             ]);
             
-            // تطبيق البحث المحسن - فقط عند الحاجة
-            if ($q && $q !== 'debit') {
+            // تطبيق البحث المحسن - فقط عند الحاجة (مع استثناء فلاتر الخيارات الجاهزة)
+            if ($q && !in_array($q, ['debit', 'box_movement'])) {
                 $baseQuery->where(function ($query) use ($q) {
                     $query->where('users.name', 'LIKE', '%' . $q . '%')
                           ->orWhereExists(function ($subQuery) use ($q) {
@@ -156,9 +156,27 @@ class UserController extends Controller
                           });
                 });
             }
+
+            // فلتر: التجار الذين عندهم حركة على القاسة (وليس على المحفظة)
+            // الحركات على القاسة هي transactions من نوع inUserBox / outUserBox
+            // والتي تكون مرتبطة بالتاجر عبر morphed_id
+            if ($q === 'box_movement') {
+                $baseQuery->whereExists(function ($subQuery) use ($from, $to) {
+                    $subQuery->select(DB::raw(1))
+                            ->from('transactions')
+                            ->whereColumn('transactions.morphed_id', 'users.id')
+                            ->where('transactions.morphed_type', 'App\\Models\\User')
+                            ->whereIn('transactions.type', ['inUserBox', 'outUserBox'])
+                            ->whereNull('transactions.deleted_at');
+
+                    if ($from && $to) {
+                        $subQuery->whereBetween('transactions.created_at', [$from, $to]);
+                    }
+                });
+            }
             
-            // تطبيق فلترة التاريخ
-            if ($from && $to) {
+            // تطبيق فلترة التاريخ (فقط في الفلاتر غير الخاصة بالقاسة، لأنها مطبقة داخل subquery)
+            if ($from && $to && $q !== 'box_movement') {
                 $baseQuery->whereBetween('users.created_at', [$from, $to]);
             }
             
@@ -189,8 +207,8 @@ class UserController extends Controller
             
             return response()->json(['data' => $data], 200);
         }
-        
-        // تطبيق التصفح السريع
+
+        // تطبيق التصفح السريع (يشمل فلتر القاسة لتوافق InfiniteLoading)
         $paginationLimit = 25;
         $currentPage = max(1, (int)$page);
         
