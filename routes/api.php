@@ -265,6 +265,34 @@ Route::post('updateCarsHunter',[HunterController::class, 'updateCarsHunter'])->n
 Route::post('delCarsHunterr',[HunterController::class, 'delCarsHunterr'])->name('delCarsHunterr');
 Route::get('checkCarInCars',[HunterController::class, 'checkCarInCars'])->name('checkCarInCars');
 Route::post('updateCarExpenses',[HunterController::class, 'updateCarExpenses'])->name('updateCarExpenses'); 
+
+// Iran Invoices (standalone module - isolated from legacy accounting)
+Route::get('iran-invoices',[\App\Http\Controllers\IranInvoiceController::class, 'getInvoices'])->name('iranInvoices.list');
+Route::get('iran-invoices/{id}',[\App\Http\Controllers\IranInvoiceController::class, 'getInvoice'])->name('iranInvoices.get');
+Route::post('iran-invoices',[\App\Http\Controllers\IranInvoiceController::class, 'storeInvoice'])->name('iranInvoices.store');
+Route::post('iran-invoices/{id}',[\App\Http\Controllers\IranInvoiceController::class, 'updateInvoice'])->name('iranInvoices.update');
+Route::post('iran-invoices/{id}/archive',[\App\Http\Controllers\IranInvoiceController::class, 'archiveInvoice'])->name('iranInvoices.archive');
+Route::post('iran-invoices/{id}/unarchive',[\App\Http\Controllers\IranInvoiceController::class, 'unarchiveInvoice'])->name('iranInvoices.unarchive');
+Route::post('iran-invoices/{id}/delete',[\App\Http\Controllers\IranInvoiceController::class, 'destroyInvoice'])->name('iranInvoices.delete');
+
+Route::get('iran-invoice-cars',[\App\Http\Controllers\IranInvoiceController::class, 'getCars'])->name('iranInvoiceCars.list');
+Route::post('iran-invoice-cars',[\App\Http\Controllers\IranInvoiceController::class, 'storeCar'])->name('iranInvoiceCars.store');
+Route::post('iran-invoice-cars/{id}',[\App\Http\Controllers\IranInvoiceController::class, 'updateCar'])->name('iranInvoiceCars.update');
+Route::post('iran-invoice-cars/{id}/delete',[\App\Http\Controllers\IranInvoiceController::class, 'destroyCar'])->name('iranInvoiceCars.delete');
+
+Route::post('iran-invoice-attachments',[\App\Http\Controllers\IranInvoiceController::class, 'uploadAttachment'])->name('iranInvoiceAttachments.upload');
+Route::post('iran-invoice-attachments/delete',[\App\Http\Controllers\IranInvoiceController::class, 'deleteAttachment'])->name('iranInvoiceAttachments.delete');
+
+Route::get('iran-invoice-transfers',[\App\Http\Controllers\IranInvoiceController::class, 'getTransfers'])->name('iranInvoiceTransfers.list');
+Route::post('iran-invoice-transfers',[\App\Http\Controllers\IranInvoiceController::class, 'storeTransfer'])->name('iranInvoiceTransfers.store');
+Route::post('iran-invoice-transfers/{id}',[\App\Http\Controllers\IranInvoiceController::class, 'updateTransfer'])->name('iranInvoiceTransfers.update');
+Route::post('iran-invoice-transfers/{id}/archive',[\App\Http\Controllers\IranInvoiceController::class, 'archiveTransfer'])->name('iranInvoiceTransfers.archive');
+Route::post('iran-invoice-transfers/{id}/delete',[\App\Http\Controllers\IranInvoiceController::class, 'destroyTransfer'])->name('iranInvoiceTransfers.delete');
+
+Route::get('iran-invoice-carriers',[\App\Http\Controllers\IranInvoiceController::class, 'getCarriers'])->name('iranInvoiceCarriers.list');
+Route::post('iran-invoice-carriers',[\App\Http\Controllers\IranInvoiceController::class, 'storeCarrier'])->name('iranInvoiceCarriers.store');
+Route::get('iran-invoice-consignees',[\App\Http\Controllers\IranInvoiceController::class, 'getConsignees'])->name('iranInvoiceConsignees.list');
+Route::post('iran-invoice-consignees',[\App\Http\Controllers\IranInvoiceController::class, 'storeConsignee'])->name('iranInvoiceConsignees.store');
 });
 
 // External APIs (without auth, but with API key)

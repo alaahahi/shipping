@@ -270,7 +270,7 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
     
     
     Route::get('dubai',[TransfersController::class, 'dubai'])->name('dubai');
-    Route::get('iran',[TransfersController::class, 'iran'])->name('iran');
+    Route::get('iran',[\App\Http\Controllers\IranInvoiceController::class, 'index'])->name('iran');
     Route::get('border',[TransfersController::class, 'border'])->name('border');
     Route::get('coc',[TransfersController::class, 'coc'])->name('coc');
     Route::get('howler',[TransfersController::class, 'howler'])->name('howler');
@@ -324,6 +324,12 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
     // Company Balances Routes
     Route::get('company-balances',[\App\Http\Controllers\CompanyBalanceController::class, 'index'])->name('companyBalances.index');
     Route::get('company-balances/{companyId}',[\App\Http\Controllers\CompanyBalanceController::class, 'show'])->name('companyBalances.show');
+
+    // Iran Invoices Routes (standalone module)
+    Route::get('iran-invoices',[\App\Http\Controllers\IranInvoiceController::class, 'index'])->name('iranInvoices.index');
+    Route::get('iran-invoices/create',[\App\Http\Controllers\IranInvoiceController::class, 'create'])->name('iranInvoices.create');
+    Route::get('iran-invoices/{id}/edit',[\App\Http\Controllers\IranInvoiceController::class, 'edit'])->name('iranInvoices.edit');
+    Route::get('iran-invoices/{id}/print',[\App\Http\Controllers\IranInvoiceController::class, 'printInvoice'])->name('iranInvoices.print');
 
  });
 
