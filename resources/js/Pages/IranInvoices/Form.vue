@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { Head, Link, router } from "@inertiajs/inertia-vue3";
+import { Head, Link } from "@inertiajs/inertia-vue3";
+import { Inertia } from "@inertiajs/inertia";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import { ref, onMounted, computed } from "vue";
@@ -135,21 +136,27 @@ const save = async () => {
     return;
   }
   saving.value = true;
+  let succeeded = false;
   try {
     const payload = { ...form.value };
     if (isEdit.value) {
       await axios.post(`/api/iran-invoices/${props.invoice_id}`, payload);
-      toast.success("تم تحديث الفاتورة");
     } else {
       await axios.post("/api/iran-invoices", payload);
-      toast.success("تم حفظ الفاتورة");
     }
-    router.visit(route("iranInvoices.index"));
+    succeeded = true;
   } catch (error) {
     console.error(error);
     toast.error("تعذر حفظ الفاتورة");
   } finally {
     saving.value = false;
+  }
+
+  // Navigation/toast kept outside the try so a navigation error never
+  // triggers the failure toast after a successful save (200).
+  if (succeeded) {
+    toast.success(isEdit.value ? "تم تحديث الفاتورة" : "تم حفظ الفاتورة");
+    Inertia.visit(route("iranInvoices.index"));
   }
 };
 
@@ -253,14 +260,14 @@ onMounted(async () => {
               <tbody>
                 <tr v-for="(item, index) in form.items" :key="index" class="border-t dark:border-gray-700">
                   <td class="px-2 py-1">{{ index + 1 }}</td>
-                  <td class="px-2 py-1"><input v-model="item.chassis_no" class="w-28 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 text-sm" /></td>
-                  <td class="px-2 py-1"><input v-model="item.make" class="w-24 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 text-sm" /></td>
-                  <td class="px-2 py-1"><input v-model="item.model" class="w-24 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 text-sm" /></td>
-                  <td class="px-2 py-1"><input v-model="item.year" class="w-16 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 text-sm" /></td>
-                  <td class="px-2 py-1"><input v-model="item.color" class="w-20 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 text-sm" /></td>
-                  <td class="px-2 py-1"><input v-model="item.weight" class="w-16 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 text-sm" /></td>
-                  <td class="px-2 py-1"><input v-model="item.unit_price" type="number" step="0.01" placeholder="فارغ" class="w-20 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 text-sm" /></td>
-                  <td class="px-2 py-1"><input v-model="item.notes" class="w-28 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 text-sm" /></td>
+                  <td class="px-2 py-1"><input v-model="item.chassis_no" class="w-28 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
+                  <td class="px-2 py-1"><input v-model="item.make" class="w-24 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
+                  <td class="px-2 py-1"><input v-model="item.model" class="w-24 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
+                  <td class="px-2 py-1"><input v-model="item.year" class="w-16 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
+                  <td class="px-2 py-1"><input v-model="item.color" class="w-20 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
+                  <td class="px-2 py-1"><input v-model="item.weight" class="w-16 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
+                  <td class="px-2 py-1"><input v-model="item.unit_price" type="number" step="0.01" placeholder="فارغ" class="w-20 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
+                  <td class="px-2 py-1"><input v-model="item.notes" class="w-28 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
                   <td class="px-2 py-1">
                     <button type="button" @click="removeItem(index)" class="px-2 py-1 bg-red-500 text-white rounded text-xs">حذف</button>
                   </td>
