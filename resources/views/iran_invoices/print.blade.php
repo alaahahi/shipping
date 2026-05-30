@@ -173,13 +173,13 @@
                     <tbody>
                         @foreach($invoice->items as $index => $item)
                             <tr>
-                                <td>{{ $index + 1 }}</td>
+                                <td class="no">{{ $index + 1 }}</td>
                                 <td class="carname">{{ strtoupper(trim(($item->make ?? '') . ' ' . ($item->model ?? ''))) }}</td>
-                                <td>{{ $item->year }}</td>
-                                <td>{{ strtoupper($item->color ?? '') }}</td>
+                                <td class="year">{{ $item->year }}</td>
+                                <td class="color">{{ strtoupper($item->color ?? '') }}</td>
                                 <td class="vin">{{ $item->chassis_no }}</td>
-                                <td>{{ $item->weight }}</td>
-                                <td>{{ $formatPrice($item->unit_price) }}</td>
+                                <td class="weight">{{ $item->weight }}</td>
+                                <td class="unit_price">{{ $formatPrice($item->unit_price) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
