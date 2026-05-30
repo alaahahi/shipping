@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Intervention\Image\Facades\Image;
 use Carbon\Carbon;
 use Inertia\Inertia;
@@ -217,9 +218,24 @@ class IranInvoiceController extends Controller
             abort(404);
         }
 
-        $config = SystemConfig::first();
+        $this->ensureVerificationToken($invoice);
 
-        return view('iran_invoices.print', compact('invoice', 'config'));
+        $config = SystemConfig::first();
+        $verificationUrl = route('iranInvoices.verify', $invoice->verification_token);
+
+        return view('iran_invoices.print', compact('invoice', 'config', 'verificationUrl'));
+    }
+
+    public function verifyInvoice($token)
+    {
+        $invoice = IranInvoice::with(['items', 'carrier', 'consignee'])
+            ->where('verification_token', $token)
+            ->firstOrFail();
+
+        $config = SystemConfig::first();
+        $verificationUrl = route('iranInvoices.verify', $invoice->verification_token);
+
+        return view('iran_invoices.verify', compact('invoice', 'config', 'verificationUrl'));
     }
 
     // ---------------------------------------------------------------------
@@ -692,5 +708,15 @@ class IranInvoiceController extends Controller
             File::delete(public_path('uploads/' . $attachment->file_name));
             File::delete(public_path('uploadsResized/' . $attachment->file_name));
         }
+    }
+
+    private function ensureVerificationToken(IranInvoice $invoice): void
+    {
+        if (!empty($invoice->verification_token)) {
+            return;
+        }
+
+        $invoice->verification_token = Str::uuid()->toString();
+        $invoice->save();
     }
 }

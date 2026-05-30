@@ -113,7 +113,45 @@
     border: 1px solid;}
 
         .summary-wrap { width: 100%; margin-top: 14px; margin-bottom: 48px; overflow: hidden; }
-        table.summary { border-collapse: collapse; font-size: 13px; float: right; min-width: 360px;    text-align: center; }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 24px;
+        }
+        .summary-side-left {
+            flex: 0 0 auto;
+            text-align: center;
+            min-width: 150px;
+        }
+        .summary-side-left .stamp-img {
+            width: 140px;
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        .summary-side-left .qr-box {
+            margin-top: 10px;
+            text-align: center;
+        }
+        .summary-side-left .qr-box svg,
+        .summary-side-left .qr-box img {
+            display: block;
+            margin: 0 auto;
+        }
+        .summary-side-left .qr-label {
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 5px;
+            letter-spacing: 0.3px;
+        }
+        .summary-side-left .qr-caption {
+            font-size: 9px;
+            color: #555;
+            margin-top: 2px;
+        }
+        table.summary { border-collapse: collapse; font-size: 13px; min-width: 360px; text-align: center; margin-left: auto; }
         table.summary td.skey {       font-size: medium;  padding: 5px;background: #1f3864; color: #fff; font-weight: bold; width: 180px; }
         table.summary td.destination { border: 1px solid #2b2b2b; padding: 6px 10px;font-size: medium; }
         table.summary td.total_units { border: 1px solid #2b2b2b; padding: 6px 10px;font-size: medium; }
@@ -196,9 +234,18 @@
                     </tbody>
                 </table>
 
-                <!-- Summary -->
+                <!-- Summary + Stamp + QR -->
                 <div class="summary-wrap">
-                    <table class="summary">
+                    <div class="summary-row">
+                        <div class="summary-side-left">
+                            <img src="/public/img/iran_stamp.png" alt="Official Stamp" class="stamp-img">
+                            <div class="qr-box">
+                                {!! QrCode::size(88)->generate($verificationUrl ?? $invoice->invoice_no) !!}
+                                <div class="qr-label">{{ $invoice->invoice_no }}</div>
+                                <div class="qr-caption">Scan to verify</div>
+                            </div>
+                        </div>
+                        <table class="summary">
                         <tr>
                             <td class="skey">TOTAL UNITS IN CAR</td>
                             <td class="total_units">{{ $totalUnits }}</td>
@@ -216,6 +263,7 @@
                             <td class="destination">{{ strtoupper($destination) }}</td>
                         </tr>
                     </table>
+                    </div>
                 </div>
             </td></tr>
         </tbody>

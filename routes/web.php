@@ -335,6 +335,7 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
 
 Route::get('contract/verify/{token}', [CarContractController::class, 'verify'])->name('contract.verify');
 Route::get('damage_report/verify/{token}', [CarDamageReportController::class, 'verify'])->name('damage_report.verify');
+Route::get('iran-invoice/verify/{token}', [\App\Http\Controllers\IranInvoiceController::class, 'verifyInvoice'])->name('iranInvoices.verify');
 Route::get('makeDrivingDocumentPdf',[CarContractController::class, 'makeDrivingDocumentPdf'])->name('makeDrivingDocumentPdf');
 
 

@@ -15,6 +15,7 @@ class IranInvoice extends Model
 
     protected $fillable = [
         'invoice_no',
+        'verification_token',
         'invoice_date',
         'carrier_id',
         'consignee_id',
