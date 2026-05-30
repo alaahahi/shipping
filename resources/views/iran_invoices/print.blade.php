@@ -116,27 +116,30 @@
         .summary-row {
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
+            align-items: center;
             gap: 24px;
         }
         .summary-side-left {
             flex: 0 0 auto;
             text-align: center;
-            min-width: 150px;
+            width: 88px;
         }
         .summary-side-left .stamp-img {
-            width: 140px;
-            max-width: 100%;
+            width: 88px;
+            max-width: 88px;
             height: auto;
             display: block;
             margin: 0 auto;
         }
         .summary-side-left .qr-box {
-            margin-top: 10px;
+            width: 88px;
+            margin: 10px auto 0;
             text-align: center;
         }
         .summary-side-left .qr-box svg,
         .summary-side-left .qr-box img {
+            width: 88px !important;
+            height: 88px !important;
             display: block;
             margin: 0 auto;
         }
