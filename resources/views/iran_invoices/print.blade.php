@@ -36,7 +36,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        @page { size: A4; margin: 10mm 10mm 30mm 10mm; }
+        @page { size: A4; margin: 10mm; }
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; }
         body {
@@ -45,7 +45,6 @@
             direction: ltr;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
-            padding-bottom: 58px;
         }
         .red { color: #d11212; }
 
@@ -71,34 +70,21 @@
         .company-name { font-size: 24px; font-weight: bold; margin: 2px 0; letter-spacing: .5px; }
         .company-sub { font-style: italic; font-size: 12px; margin: 1px 0; }
 
-        /* Fixed footer - bottom of every page */
+        /* Footer - flows after content */
         .print-footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 99;
-            background: #fff;
             text-align: center;
             font-size: 11px;
-            padding-top: 6px;
-            padding-bottom: 3mm;
-            min-height: 14mm;
+            padding-top: 18px;
+            margin-top: 20px;
+            background: #fff;
         }
         .print-footer .line { border-top: 2px solid #d11212; margin-bottom: 5px; }
         .print-footer .red { color: #d11212; font-weight: bold; }
 
         /* Main content inside layout tbody */
-        table.layout > tbody td { padding: 0; border: 0; padding-bottom: 12mm; }
+        table.layout > tbody td { padding: 0; border: 0; }
 
         @media print {
-            .print-footer {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                display: block !important;
-            }
             .summary-wrap {
                 page-break-inside: avoid;
             }
@@ -127,7 +113,7 @@
     padding: 5px;
     border: 1px solid;}
 
-        .summary-wrap { width: 100%; margin-top: 14px; margin-bottom: 14mm; }
+        .summary-wrap { width: 100%; margin-top: 14px; margin-bottom: 0; }
         .summary-top-row {
             display: flex;
             justify-content: space-between;
@@ -186,12 +172,6 @@
 </head>
 <body>
     <div class="watermark"><img src="/img/logo.jpg" alt=""></div>
-
-    <div class="print-footer">
-        <div class="line"></div>
-        <div>100 Street, Salam Jalal Office, Erbil, Iraq</div>
-        <div class="red">+964 7704459964 | +964 7504544320 | info@salam-jalal-co.intellij-app.com</div>
-    </div>
 
     <table class="layout">
         <thead>
@@ -293,6 +273,12 @@
                     <div class="summary-stamp-row">
                         <img src="/public/img/iran_stamp.png" alt="Official Stamp" class="stamp-img">
                     </div>
+                </div>
+
+                <div class="print-footer">
+                    <div class="line"></div>
+                    <div>100 Street, Salam Jalal Office, Erbil, Iraq</div>
+                    <div class="red">+964 7704459964 | +964 7504544320 | info@salam-jalal-co.intellij-app.com</div>
                 </div>
             </td></tr>
         </tbody>
