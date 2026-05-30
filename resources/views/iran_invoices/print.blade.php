@@ -36,7 +36,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        @page { size: A4; margin: 32mm 10mm 20mm 10mm; }
+        @page { size: A4; margin: 10mm 10mm 22mm 10mm; }
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; }
         body {
@@ -60,18 +60,13 @@
         }
         .watermark img { width: 65%; max-width: 520px; opacity: 0.06; }
 
-        /* Fixed header - top of every page */
-        .print-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 2;
-            background: #fff;
-            text-align: center;
-            padding-bottom: 4px;
-        }
-        .print-header img { max-height: 78px; margin-bottom: 2px; }
+        /* Layout table: thead repeats company header on every page */
+        table.layout { width: 100%; border-collapse: collapse; position: relative; z-index: 1; }
+        table.layout > thead { display: table-header-group; }
+        table.layout > thead td { padding: 0; border: 0; }
+
+        .doc-header { text-align: center; padding-bottom: 6px; background: #fff; }
+        .doc-header img { max-height: 78px; margin-bottom: 2px; }
         .company-name { font-size: 24px; font-weight: bold; margin: 2px 0; letter-spacing: .5px; }
         .company-sub { font-style: italic; font-size: 12px; margin: 1px 0; }
 
@@ -91,11 +86,8 @@
         .print-footer .line { border-top: 2px solid #d11212; margin-bottom: 5px; }
         .print-footer .red { color: #d11212; font-weight: bold; }
 
-        /* Main content area (page margins reserve header/footer space) */
-        .print-content {
-            position: relative;
-            z-index: 1;
-        }
+        /* Main content inside layout tbody */
+        table.layout > tbody td { padding: 0; border: 0; }
 
         table.items thead { display: table-header-group; }
         table.items tr { page-break-inside: avoid; }
@@ -120,7 +112,7 @@
     padding: 5px;
     border: 1px solid;}
 
-        .summary-wrap { width: 100%; margin-top: 14px; overflow: hidden; }
+        .summary-wrap { width: 100%; margin-top: 14px; margin-bottom: 48px; overflow: hidden; }
         table.summary { border-collapse: collapse; font-size: 13px; float: right; min-width: 360px;    text-align: center; }
         table.summary td.skey {       font-size: medium;  padding: 5px;background: #1f3864; color: #fff; font-weight: bold; width: 180px; }
         table.summary td.destination { border: 1px solid #2b2b2b; padding: 6px 10px;font-size: medium; }
@@ -132,21 +124,26 @@
 <body>
     <div class="watermark"><img src="/img/logo.jpg" alt=""></div>
 
-    <div class="print-header">
-        <img src="/img/logo.jpg" alt="logo">
-        <div class="company-name">SALAM JALAL AYOUB Co.</div>
-        <div class="company-sub">For Individual Car Trading</div>
-        <div class="company-sub red">Erbil, Iraq</div>
-        <div class="company-sub red">Commercial Registration No. 298</div>
-    </div>
-
     <div class="print-footer">
         <div class="line"></div>
         <div>100 Street, Salam Jalal Office, Erbil, Iraq</div>
         <div class="red">+964 7704459964 | +964 7504544320 | info@salam-jalal-co.intellij-app.com</div>
     </div>
 
-    <div class="print-content">
+    <table class="layout">
+        <thead>
+            <tr><td>
+                <div class="doc-header">
+                    <img src="/img/logo.jpg" alt="logo">
+                    <div class="company-name">SALAM JALAL AYOUB Co.</div>
+                    <div class="company-sub">For Individual Car Trading</div>
+                    <div class="company-sub red">Erbil, Iraq</div>
+                    <div class="company-sub red">Commercial Registration No. 298</div>
+                </div>
+            </td></tr>
+        </thead>
+        <tbody>
+            <tr><td>
                 <!-- Invoice meta -->
                 <table class="meta">
                     <tr>
@@ -220,7 +217,9 @@
                         </tr>
                     </table>
                 </div>
-    </div>
+            </td></tr>
+        </tbody>
+    </table>
 
     <script>
         window.onload = function () { window.print(); };
