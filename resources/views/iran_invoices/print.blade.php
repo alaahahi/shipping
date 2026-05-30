@@ -101,7 +101,7 @@
         .summary-wrap { width: 100%; margin-top: 14px; overflow: hidden; }
         table.summary { border-collapse: collapse; font-size: 13px; float: right; min-width: 360px;    text-align: center; }
         table.summary td.skey {       font-size: medium;  padding: 5px;background: #1f3864; color: #fff; font-weight: bold; width: 180px; }
-        table.summary td.data { border: 1px solid #2b2b2b; padding: 6px 10px;font-size: medium; }
+        table.summary td.destination { border: 1px solid #2b2b2b; padding: 6px 10px;font-size: medium; }
         table.summary td.total_units { border: 1px solid #2b2b2b; padding: 6px 10px;font-size: medium; }
         table.summary td.total_weight { border: 1px solid #2b2b2b; padding: 6px 10px;font-size: medium; }
         table.summary td.total_price { border: 1px solid #2b2b2b; padding: 6px 10px;font-size: medium; }
