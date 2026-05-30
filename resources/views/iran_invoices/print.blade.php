@@ -140,13 +140,13 @@
             display: block;
         }
         .summary-qr-col .qr-box {
-            width: 200px;
+            width: 100px;
             text-align: center;
         }
         .summary-qr-col .qr-box svg,
         .summary-qr-col .qr-box img {
-            width: 200px !important;
-            height: 200px !important;
+            width: 100px !important;
+            height: 100px !important;
             display: block;
             margin: 0 auto;
         }
@@ -249,7 +249,7 @@
                     <div class="summary-top-row">
                         <div class="summary-qr-col">
                             <div class="qr-box">
-                                {!! QrCode::size(200)->generate($verificationUrl ?? $invoice->invoice_no) !!}
+                                {!! QrCode::size(100)->generate($verificationUrl ?? $invoice->invoice_no) !!}
                                 <div class="qr-label">{{ $invoice->invoice_no }}</div>
                                 <div class="qr-caption">Scan to verify</div>
                             </div>
