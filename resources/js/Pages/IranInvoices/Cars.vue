@@ -81,23 +81,29 @@ const deleteCar = async (car) => {
 };
 
 const uploadAttachment = async (car, event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-  const data = new FormData();
-  data.append("type", "car");
-  data.append("id", car.id);
-  data.append("file", file);
-  try {
-    await axios.post("/api/iran-invoice-attachments", data, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    toast.success("تم رفع المرفق");
-    fetchCars();
-  } catch (error) {
-    toast.error("تعذر رفع المرفق");
-  } finally {
-    event.target.value = "";
+  const files = event.target.files;
+  if (!files?.length) return;
+  let uploaded = 0;
+  for (const file of files) {
+    const data = new FormData();
+    data.append("type", "car");
+    data.append("id", car.id);
+    data.append("file", file);
+    try {
+      await axios.post("/api/iran-invoice-attachments", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      uploaded++;
+    } catch (error) {
+      toast.error("تعذر رفع أحد المرفقات");
+      break;
+    }
   }
+  if (uploaded) {
+    toast.success(`تم رفع ${uploaded} مرفق`);
+    fetchCars();
+  }
+  event.target.value = "";
 };
 
 const deleteAttachment = async (attachment) => {
@@ -191,7 +197,7 @@ onMounted(() => fetchCars());
                 </a>
                 <label class="px-2 py-1 bg-indigo-500 text-white rounded text-xs cursor-pointer">
                   +
-                  <input type="file" class="hidden" @change="uploadAttachment(car, $event)" />
+                  <input type="file" class="hidden" accept="image/*,.pdf" multiple @change="uploadAttachment(car, $event)" />
                 </label>
               </div>
             </td>

@@ -101,7 +101,7 @@ class IranInvoiceController extends Controller
 
     public function getInvoice($id)
     {
-        $invoice = IranInvoice::with(['items', 'carrier', 'consignee', 'attachments'])
+        $invoice = IranInvoice::with(['items.attachments', 'carrier', 'consignee', 'attachments'])
             ->where('owner_id', Auth::user()->owner_id)
             ->find($id);
 
@@ -146,12 +146,11 @@ class IranInvoiceController extends Controller
 
         DB::transaction(function () use ($request, $owner_id, $invoice) {
             $invoice->update($this->invoiceAttributes($request, $owner_id, false));
-            $invoice->items()->delete();
             $this->syncItems($invoice, $request->get('items', []));
             $this->applyTotalPrice($request, $invoice);
         });
 
-        return Response::json($invoice->fresh('items'), 200);
+        return Response::json($invoice->fresh(['items.attachments']), 200);
     }
 
     public function archiveInvoice(Request $request, $id)
@@ -279,7 +278,7 @@ class IranInvoiceController extends Controller
     public function uploadAttachment(Request $request)
     {
         Validator::make($request->all(), [
-            'type' => 'required|in:invoice,car',
+            'type' => 'required|in:invoice,car,item',
             'id' => 'required|integer',
             'file' => 'required|file|max:10240',
         ])->validate();
@@ -517,14 +516,16 @@ class IranInvoiceController extends Controller
 
     private function syncItems(IranInvoice $invoice, array $items): void
     {
+        $keepIds = [];
         $sort = 0;
+
         foreach ($items as $item) {
             $unitPrice = $item['unit_price'] ?? null;
             if ($unitPrice === '' || $unitPrice === false) {
                 $unitPrice = null;
             }
 
-            $invoice->items()->create([
+            $attributes = [
                 'car_id' => $item['car_id'] ?? null,
                 'chassis_no' => $item['chassis_no'] ?? null,
                 'make' => $item['make'] ?? null,
@@ -535,7 +536,26 @@ class IranInvoiceController extends Controller
                 'unit_price' => $unitPrice,
                 'notes' => $item['notes'] ?? null,
                 'sort_order' => $sort++,
-            ]);
+            ];
+
+            if (!empty($item['id'])) {
+                $existing = $invoice->items()->where('id', $item['id'])->first();
+                if ($existing) {
+                    $existing->update($attributes);
+                    $keepIds[] = (int) $existing->id;
+                    continue;
+                }
+            }
+
+            $created = $invoice->items()->create($attributes);
+            $keepIds[] = (int) $created->id;
+        }
+
+        $removed = $invoice->items()->whereNotIn('id', $keepIds)->get();
+        foreach ($removed as $row) {
+            $this->deleteAttachmentFiles($row->attachments);
+            $row->attachments()->delete();
+            $row->delete();
         }
     }
 
@@ -605,6 +625,20 @@ class IranInvoiceController extends Controller
             return IranInvoice::where('owner_id', $owner_id)->find($id);
         }
 
+        if ($type === 'item') {
+            return IranInvoiceItem::whereHas('invoice', function ($query) use ($owner_id) {
+                $query->where('owner_id', $owner_id);
+            })->find($id);
+        }
+
         return IranInvoiceCar::where('owner_id', $owner_id)->find($id);
+    }
+
+    private function deleteAttachmentFiles($attachments): void
+    {
+        foreach ($attachments as $attachment) {
+            File::delete(public_path('uploads/' . $attachment->file_name));
+            File::delete(public_path('uploadsResized/' . $attachment->file_name));
+        }
     }
 }

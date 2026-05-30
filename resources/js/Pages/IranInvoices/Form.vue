@@ -35,6 +35,7 @@ const form = ref({
 const isEdit = computed(() => !!props.invoice_id);
 
 const emptyItem = () => ({
+  id: null,
   car_id: null,
   chassis_no: "",
   make: "",
@@ -44,6 +45,7 @@ const emptyItem = () => ({
   weight: "",
   unit_price: "",
   notes: "",
+  attachments: [],
 });
 
 const addItem = () => {
@@ -88,6 +90,7 @@ const fetchInvoice = async () => {
       notes: data.notes || "",
       total_price: data.total_price ?? "",
       items: (data.items || []).map((i) => ({
+        id: i.id,
         car_id: i.car_id,
         chassis_no: i.chassis_no || "",
         make: i.make || "",
@@ -97,6 +100,7 @@ const fetchInvoice = async () => {
         weight: i.weight || "",
         unit_price: i.unit_price ?? "",
         notes: i.notes || "",
+        attachments: i.attachments || [],
       })),
     };
     attachments.value = data.attachments || [];
@@ -138,22 +142,62 @@ const thumbUrl = (name) => `/uploadsResized/${name}`;
 const isImageFile = (name) => /\.(jpe?g|png|gif|webp|bmp)$/i.test(name || "");
 
 const uploadAttachment = async (event) => {
-  const file = event.target.files[0];
-  if (!file || !props.invoice_id) return;
-  const data = new FormData();
-  data.append("type", "invoice");
-  data.append("id", props.invoice_id);
-  data.append("file", file);
+  const files = event.target.files;
+  if (!files?.length || !props.invoice_id) return;
+  let uploaded = 0;
+  for (const file of files) {
+    const data = new FormData();
+    data.append("type", "invoice");
+    data.append("id", props.invoice_id);
+    data.append("file", file);
+    try {
+      const response = await axios.post("/api/iran-invoice-attachments", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      attachments.value.push(response.data);
+      uploaded++;
+    } catch (error) {
+      toast.error("تعذر رفع أحد المرفقات");
+      break;
+    }
+  }
+  if (uploaded) toast.success(`تم رفع ${uploaded} مرفق`);
+  event.target.value = "";
+};
+
+const uploadItemAttachment = async (item, event) => {
+  const files = event.target.files;
+  if (!files?.length || !item.id) return;
+  if (!item.attachments) item.attachments = [];
+  let uploaded = 0;
+  for (const file of files) {
+    const data = new FormData();
+    data.append("type", "item");
+    data.append("id", item.id);
+    data.append("file", file);
+    try {
+      const response = await axios.post("/api/iran-invoice-attachments", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      item.attachments.push(response.data);
+      uploaded++;
+    } catch (error) {
+      toast.error("تعذر رفع أحد المرفقات");
+      break;
+    }
+  }
+  if (uploaded) toast.success(`تم رفع ${uploaded} مرفق`);
+  event.target.value = "";
+};
+
+const deleteItemAttachment = async (item, attachment) => {
+  if (!confirm("حذف المرفق؟")) return;
   try {
-    const response = await axios.post("/api/iran-invoice-attachments", data, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    attachments.value.push(response.data);
-    toast.success("تم رفع المرفق");
+    await axios.post("/api/iran-invoice-attachments/delete", { id: attachment.id });
+    item.attachments = (item.attachments || []).filter((a) => a.id !== attachment.id);
+    toast.success("تم حذف المرفق");
   } catch (error) {
-    toast.error("تعذر رفع المرفق");
-  } finally {
-    event.target.value = "";
+    toast.error("تعذر حذف المرفق");
   }
 };
 
@@ -176,7 +220,21 @@ const save = async () => {
   saving.value = true;
   let succeeded = false;
   try {
-    const payload = { ...form.value };
+    const payload = {
+      ...form.value,
+      items: form.value.items.map((item) => ({
+        id: item.id || undefined,
+        car_id: item.car_id,
+        chassis_no: item.chassis_no,
+        make: item.make,
+        model: item.model,
+        year: item.year,
+        color: item.color,
+        weight: item.weight,
+        unit_price: item.unit_price,
+        notes: item.notes,
+      })),
+    };
     if (isEdit.value) {
       await axios.post(`/api/iran-invoices/${props.invoice_id}`, payload);
     } else {
@@ -292,11 +350,12 @@ onMounted(async () => {
                   <th class="px-2 py-2">Weight</th>
                   <th class="px-2 py-2">Unit Price</th>
                   <th class="px-2 py-2">Notes</th>
+                  <th v-if="isEdit" class="px-2 py-2 print:hidden">صور السيارة</th>
                   <th class="px-2 py-2"></th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(item, index) in form.items" :key="index" class="border-t dark:border-gray-700">
+                <tr v-for="(item, index) in form.items" :key="item.id || `new-${index}`" class="border-t dark:border-gray-700">
                   <td class="px-2 py-1">{{ index + 1 }}</td>
                   <td class="px-2 py-1"><input v-model="item.chassis_no" class="w-28 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
                   <td class="px-2 py-1"><input v-model="item.make" class="w-24 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
@@ -306,12 +365,42 @@ onMounted(async () => {
                   <td class="px-2 py-1"><input v-model="item.weight" class="w-16 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
                   <td class="px-2 py-1"><input v-model="item.unit_price" type="number" step="0.01" placeholder="فارغ" class="w-20 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
                   <td class="px-2 py-1"><input v-model="item.notes" class="w-28 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
+                  <td v-if="isEdit" class="px-2 py-1 print:hidden">
+                    <div v-if="item.id" class="flex flex-wrap gap-1 justify-center items-center max-w-[140px] mx-auto">
+                      <a
+                        v-for="att in (item.attachments || [])"
+                        :key="att.id"
+                        :href="fileUrl(att.file_name)"
+                        target="_blank"
+                        class="relative inline-block"
+                        :title="att.original_name || att.file_name"
+                      >
+                        <img
+                          v-if="isImageFile(att.file_name)"
+                          :src="thumbUrl(att.file_name)"
+                          class="h-10 w-10 object-cover rounded border dark:border-gray-600"
+                          @error="(e) => { e.target.src = fileUrl(att.file_name); }"
+                        />
+                        <span v-else class="inline-flex h-10 w-10 items-center justify-center bg-gray-200 dark:bg-gray-600 rounded text-xs">📎</span>
+                        <button
+                          type="button"
+                          @click.prevent="deleteItemAttachment(item, att)"
+                          class="absolute -top-1 -right-1 h-4 w-4 bg-red-600 text-white rounded-full text-xs leading-none"
+                        >×</button>
+                      </a>
+                      <label class="h-10 w-10 flex items-center justify-center bg-indigo-500 text-white rounded cursor-pointer text-lg" title="إرفاق صور">
+                        +
+                        <input type="file" class="hidden" accept="image/*,.pdf" multiple @change="uploadItemAttachment(item, $event)" />
+                      </label>
+                    </div>
+                    <span v-else class="text-xs text-gray-400">احفظ أولاً</span>
+                  </td>
                   <td class="px-2 py-1">
                     <button type="button" @click="removeItem(index)" class="px-2 py-1 bg-red-500 text-white rounded text-xs">حذف</button>
                   </td>
                 </tr>
                 <tr v-if="form.items.length === 0">
-                  <td colspan="10" class="py-6 text-gray-400">لا توجد سيارات - اضغط "إضافة سيارة"</td>
+                  <td :colspan="isEdit ? 11 : 10" class="py-6 text-gray-400">لا توجد سيارات - اضغط "إضافة سيارة"</td>
                 </tr>
               </tbody>
             </table>
@@ -328,7 +417,7 @@ onMounted(async () => {
               <h3 class="font-semibold text-gray-700 dark:text-gray-200">المرفقات (صور / ملفات)</h3>
               <label class="px-3 py-1 bg-indigo-600 text-white rounded text-sm cursor-pointer">
                 + إرفاق ملف
-                <input type="file" class="hidden" accept="image/*,.pdf" @change="uploadAttachment" />
+                <input type="file" class="hidden" accept="image/*,.pdf" multiple @change="uploadAttachment" />
               </label>
             </div>
             <div class="overflow-x-auto border rounded-lg dark:border-gray-700">
