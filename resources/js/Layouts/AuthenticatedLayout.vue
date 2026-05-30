@@ -465,13 +465,6 @@ const switchLocale = (locale) => {
               >
               🚢 حسابات الشركات
               </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('iranInvoices.index')"
-                :active="route().current('iranInvoices.index') || route().current('iranInvoices.create') || route().current('iranInvoices.edit')"
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6)"
-              >
-              🧾 فواتير إيران
-              </ResponsiveNavLink>
               
               <!-- صفحة مراقبة المزامنة للهواتف -->
               <ResponsiveNavLink
