@@ -146,8 +146,8 @@ const addConsigneeInline = async () => {
   }
 };
 
-const fileUrl = (name) => (name ? `/uploads/${encodeURIComponent(name)}` : "");
-const thumbUrl = (name) => (name ? `/uploadsResized/${encodeURIComponent(name)}` : "");
+const fileUrl = (name) => (name ? `/public/uploads/${encodeURIComponent(name)}` : "");
+const thumbUrl = (name) => (name ? `/public/uploadsResized/${encodeURIComponent(name)}` : "");
 
 const isImageFile = (name) => /\.(jpe?g|png|gif|webp|bmp)$/i.test(name || "");
 

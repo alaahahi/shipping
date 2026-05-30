@@ -83,7 +83,7 @@ const formatPrice = (value) => {
   return Number(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
-const fileUrl = (name) => (name ? `/uploads/${encodeURIComponent(name)}` : "");
+const fileUrl = (name) => (name ? `/public/uploads/${encodeURIComponent(name)}` : "");
 
 const uploadAttachment = async (invoice, event) => {
   const file = event.target.files[0];
