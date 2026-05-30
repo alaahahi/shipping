@@ -117,44 +117,51 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 24px;
+            gap: 16px;
         }
-        .summary-side-left {
-            flex: 0 0 auto;
+        .summary-qr-col {
+            flex: 0 0 88px;
             text-align: center;
-            width: 88px;
         }
-        .summary-side-left .stamp-img {
+        .summary-stamp-col {
+            flex: 1 1 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 88px;
+        }
+        .summary-stamp-col .stamp-img {
             width: 88px;
             max-width: 88px;
             height: auto;
             display: block;
-            margin: 0 auto;
         }
-        .summary-side-left .qr-box {
+        .summary-table-col {
+            flex: 0 0 auto;
+        }
+        .summary-qr-col .qr-box {
             width: 88px;
-            margin: 10px auto 0;
             text-align: center;
         }
-        .summary-side-left .qr-box svg,
-        .summary-side-left .qr-box img {
+        .summary-qr-col .qr-box svg,
+        .summary-qr-col .qr-box img {
             width: 88px !important;
             height: 88px !important;
             display: block;
             margin: 0 auto;
         }
-        .summary-side-left .qr-label {
+        .summary-qr-col .qr-label {
             font-size: 11px;
             font-weight: bold;
             margin-top: 5px;
             letter-spacing: 0.3px;
         }
-        .summary-side-left .qr-caption {
+        .summary-qr-col .qr-caption {
             font-size: 9px;
             color: #555;
             margin-top: 2px;
         }
-        table.summary { border-collapse: collapse; font-size: 13px; min-width: 360px; text-align: center; margin-left: auto; }
+        table.summary { border-collapse: collapse; font-size: 13px; min-width: 360px; text-align: center; }
         table.summary td.skey {       font-size: medium;  padding: 5px;background: #1f3864; color: #fff; font-weight: bold; width: 180px; }
         table.summary td.destination { border: 1px solid #2b2b2b; padding: 6px 10px;font-size: medium; }
         table.summary td.total_units { border: 1px solid #2b2b2b; padding: 6px 10px;font-size: medium; }
@@ -240,14 +247,17 @@
                 <!-- Summary + Stamp + QR -->
                 <div class="summary-wrap">
                     <div class="summary-row">
-                        <div class="summary-side-left">
-                            <img src="/public/img/iran_stamp.png" alt="Official Stamp" class="stamp-img">
+                        <div class="summary-qr-col">
                             <div class="qr-box">
                                 {!! QrCode::size(88)->generate($verificationUrl ?? $invoice->invoice_no) !!}
                                 <div class="qr-label">{{ $invoice->invoice_no }}</div>
                                 <div class="qr-caption">Scan to verify</div>
                             </div>
                         </div>
+                        <div class="summary-stamp-col">
+                            <img src="/public/img/iran_stamp.png" alt="Official Stamp" class="stamp-img">
+                        </div>
+                        <div class="summary-table-col">
                         <table class="summary">
                         <tr>
                             <td class="skey">TOTAL UNITS IN CAR</td>
@@ -266,6 +276,7 @@
                             <td class="destination">{{ strtoupper($destination) }}</td>
                         </tr>
                     </table>
+                        </div>
                     </div>
                 </div>
             </td></tr>
