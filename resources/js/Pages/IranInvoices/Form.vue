@@ -23,6 +23,7 @@ const form = ref({
   invoice_date: new Date().toISOString().slice(0, 10),
   carrier_id: "",
   consignee_id: "",
+  destination: "",
   currency: "USD",
   notes: "",
   total_price: "",
@@ -80,6 +81,7 @@ const fetchInvoice = async () => {
       invoice_date: data.invoice_date ? String(data.invoice_date).slice(0, 10) : "",
       carrier_id: data.carrier_id || "",
       consignee_id: data.consignee_id || "",
+      destination: data.destination || "",
       currency: data.currency || "USD",
       notes: data.notes || "",
       total_price: data.total_price ?? "",
@@ -216,6 +218,10 @@ onMounted(async () => {
                 </select>
                 <button type="button" @click="addConsigneeInline" class="px-3 bg-indigo-600 text-white rounded">+</button>
               </div>
+            </div>
+            <div>
+              <InputLabel for="destination" value="الوجهة (TRANSIT TO / Destination CIP)" />
+              <TextInput id="destination" type="text" class="mt-1 block w-full" v-model="form.destination" placeholder="ANZALI HASSAN ROAD" />
             </div>
             <div>
               <InputLabel for="total_price" value="الإجمالي (اختياري - يُحسب تلقائياً)" />

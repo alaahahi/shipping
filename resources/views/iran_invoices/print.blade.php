@@ -1,135 +1,182 @@
 @php
-    $currencyLabel = $invoice->currency ?: 'USD';
     $invoiceDate = $invoice->invoice_date
-        ? \Carbon\Carbon::parse($invoice->invoice_date)->format('Y-m-d')
+        ? \Carbon\Carbon::parse($invoice->invoice_date)->format('d/m/Y')
         : '';
-    $hasAnyPrice = $invoice->items->contains(function ($item) {
-        return $item->unit_price !== null && $item->unit_price !== '';
-    }) || ($invoice->total_price !== null && $invoice->total_price !== '');
-    $formatPrice = function ($value) {
+
+    $toNumber = function ($value) {
         if ($value === null || $value === '') {
-            return '—';
+            return null;
         }
-        return number_format((float) $value, 2);
+        $clean = preg_replace('/[^0-9.\-]/', '', (string) $value);
+        return $clean === '' ? null : (float) $clean;
     };
+
+    $totalUnits = $invoice->items->count();
+
+    $totalWeight = 0;
+    foreach ($invoice->items as $line) {
+        $w = $toNumber($line->weight);
+        if ($w !== null) {
+            $totalWeight += $w;
+        }
+    }
+
+    $formatPrice = function ($value) use ($toNumber) {
+        $num = $toNumber($value);
+        return $num === null ? '' : number_format($num, 2);
+    };
+
+    $totalPrice = $invoice->total_price;
+    $destination = $invoice->destination ?? '';
 @endphp
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
-    <title>{{ $config->first_title_en ?? config('app.company_name') }}</title>
+    <title>Invoice {{ $invoice->invoice_no }}</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        @page { size: auto; margin: 15px; margin-top: 40px; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .invoice-box { border: 2px solid #222; padding: 0; }
-        .muted { color: #666; }
-        table.items th, table.items td { font-size: 13px; vertical-align: middle; }
+        @page { size: A4; margin: 12mm; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: Arial, 'Segoe UI', Tahoma, sans-serif;
+            color: #111;
+            margin: 0;
+            direction: ltr;
+        }
+        .wrap { width: 100%; }
+        .center { text-align: center; }
+        .red { color: #d11212; }
+        .navy { background: #1f3864; color: #fff; }
+
+        .header { text-align: center; }
+        .header img { max-height: 90px; margin-bottom: 4px; }
+        .company-name { font-size: 26px; font-weight: bold; margin: 2px 0; letter-spacing: .5px; }
+        .company-sub { font-style: italic; font-size: 13px; margin: 1px 0; }
+
+        .meta { width: 100%; margin-top: 18px; font-size: 15px; }
+        .meta td { vertical-align: top; padding: 1px 0; }
+        .meta .label { font-weight: bold; }
+
+        .title { text-align: center; font-size: 26px; font-weight: bold; margin: 22px 0 14px; letter-spacing: 1px; }
+
+        table.items { width: 100%; border-collapse: collapse; font-size: 12px; }
+        table.items th, table.items td { border: 1px solid #2b2b2b; padding: 8px 6px; text-align: center; }
+        table.items thead th { background: #1f3864; color: #fff; font-weight: bold; border-color: #1f3864; }
+        table.items td.carname { font-weight: bold; }
+        table.items td.vin { font-weight: bold; letter-spacing: .3px; }
+
+        .summary-wrap { width: 100%; margin-top: 14px; }
+        table.summary { border-collapse: collapse; font-size: 13px; float: right; min-width: 360px; }
+        table.summary td { border: 1px solid #2b2b2b; padding: 6px 10px; }
+        table.summary td.skey { background: #1f3864; color: #fff; font-weight: bold; width: 180px; }
+
+        .footer { clear: both; text-align: center; font-size: 12px; margin-top: 60px; }
+        .footer .line { border-top: 2px solid #d11212; margin-bottom: 6px; }
+        .footer .red { color: #d11212; font-weight: bold; }
     </style>
 </head>
-<body style="direction: ltr;">
-<div class="container-fluid mt-2 invoice-box">
-    <div class="row">
-        <div class="col-4 text-center py-3">
-            <h5 class="pt-3">{{ $config->first_title_en ?? ($config->first_title_ar ?? '') }}</h5>
-            <h6 class="muted">{{ $config->second_title_en ?? ($config->second_title_ar ?? '') }}</h6>
-        </div>
-        <div class="col-4 text-center py-3">
-            <h4 class="pt-3">INVOICE</h4>
-            <h6 class="muted">Iran Branch</h6>
-        </div>
-        <div class="col-4 text-center py-3">
-            @include('Components.logo')
-        </div>
+<body>
+<div class="wrap">
+    <!-- Company header -->
+    <div class="header">
+        <img src="/img/logo.jpg" alt="logo">
+        <div class="company-name">SALAM JALAL AYOUB Co.</div>
+        <div class="company-sub">For Individual Car Trading</div>
+        <div class="company-sub red">Erbil, Iraq</div>
+        <div class="company-sub red">Commercial Registration No. 298</div>
     </div>
 
-    <div class="row p-2 text-center border-top border-bottom" style="font-size: 14px">
-        <div class="col-6 text-start ps-4">Invoice No: <strong>{{ $invoice->invoice_no }}</strong></div>
-        <div class="col-6 text-end pe-4">Date: <strong>{{ $invoiceDate }}</strong></div>
+    <!-- Invoice meta -->
+    <table class="meta">
+        <tr>
+            <td style="width: 55%">
+                <span class="label">INVOICE NO:</span> {{ $invoice->invoice_no }}
+            </td>
+            <td>
+                <span class="label">FROM:</span> IRAQ - ERBIL
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span class="label">DATE:</span> &nbsp; {{ $invoiceDate }}
+            </td>
+            <td>SALAM JALAL AYOUB CO.</td>
+        </tr>
+        <tr>
+            <td colspan="2" class="label" style="padding-top:6px;">
+                {{ $invoice->carrier_name ?? optional($invoice->carrier)->name }}
+            </td>
+        </tr>
+        @if($destination)
+        <tr>
+            <td colspan="2" class="label">TRANSIT TO {{ strtoupper($destination) }}</td>
+        </tr>
+        @endif
+    </table>
+
+    <!-- Title -->
+    <div class="title">INVOICE AND PACKING LIST</div>
+
+    <!-- Items table -->
+    <table class="items">
+        <thead>
+            <tr>
+                <th style="width: 38px">NO</th>
+                <th>CAR NAME</th>
+                <th style="width: 60px">YEAR</th>
+                <th style="width: 70px">COLOR</th>
+                <th>VIN</th>
+                <th style="width: 70px">KG</th>
+                <th style="width: 90px">PRICE</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($invoice->items as $index => $item)
+                <tr>
+                    <td>{{ $index + 1 }}</td>
+                    <td class="carname">{{ strtoupper(trim(($item->make ?? '') . ' ' . ($item->model ?? ''))) }}</td>
+                    <td>{{ $item->year }}</td>
+                    <td>{{ strtoupper($item->color ?? '') }}</td>
+                    <td class="vin">{{ $item->chassis_no }}</td>
+                    <td>{{ $item->weight }}</td>
+                    <td>{{ $formatPrice($item->unit_price) }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+
+    <!-- Summary -->
+    <div class="summary-wrap">
+        <table class="summary">
+            <tr>
+                <td class="skey">TOTAL UNITS IN CAR</td>
+                <td>{{ $totalUnits }}</td>
+            </tr>
+            <tr>
+                <td class="skey">TOTAL WEIGHT</td>
+                <td>{{ $totalWeight > 0 ? number_format($totalWeight) . 'KGS' : '' }}</td>
+            </tr>
+            <tr>
+                <td class="skey">TOTAL PRICE</td>
+                <td>{{ $formatPrice($totalPrice) }}</td>
+            </tr>
+            <tr>
+                <td class="skey">DESTINATION CIP</td>
+                <td>{{ strtoupper($destination) }}</td>
+            </tr>
+        </table>
     </div>
 
-    <div class="row p-2" style="font-size: 14px">
-        <div class="col-6 p-2 ps-4">
-            <strong>Carrier:</strong> {{ $invoice->carrier_name ?? optional($invoice->carrier)->name ?? '—' }}
-            @if(optional($invoice->carrier)->phone)
-                <div class="muted">Phone: {{ $invoice->carrier->phone }}</div>
-            @endif
-            @if(optional($invoice->carrier)->address)
-                <div class="muted">Address: {{ $invoice->carrier->address }}</div>
-            @endif
-        </div>
-        <div class="col-6 p-2 ps-4">
-            <strong>Consignee / User:</strong> {{ $invoice->consignee_name ?? optional($invoice->consignee)->name ?? '—' }}
-            @if(optional($invoice->consignee)->phone)
-                <div class="muted">Phone: {{ $invoice->consignee->phone }}</div>
-            @endif
-            @if(optional($invoice->consignee)->address)
-                <div class="muted">Address: {{ $invoice->consignee->address }}</div>
-            @endif
-        </div>
-    </div>
-
-    <div class="row px-2 pb-2">
-        <div class="col-12">
-            <table class="table table-bordered text-center items">
-                <thead class="table-light">
-                    <tr>
-                        <th style="width: 40px">#</th>
-                        <th>Chassis No</th>
-                        <th>Make / Model</th>
-                        <th>Year</th>
-                        <th>Color</th>
-                        <th>Weight</th>
-                        @if($hasAnyPrice)
-                            <th>Unit Price</th>
-                        @endif
-                        <th>Notes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($invoice->items as $index => $item)
-                        <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td>{{ $item->chassis_no ?: '—' }}</td>
-                            <td>{{ trim(($item->make ?? '') . ' ' . ($item->model ?? '')) ?: '—' }}</td>
-                            <td>{{ $item->year ?: '—' }}</td>
-                            <td>{{ $item->color ?: '—' }}</td>
-                            <td>{{ $item->weight ?: '—' }}</td>
-                            @if($hasAnyPrice)
-                                <td>{{ $formatPrice($item->unit_price) }}</td>
-                            @endif
-                            <td>{{ $item->notes ?: '—' }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-                @if($hasAnyPrice)
-                    <tfoot>
-                        <tr>
-                            <td colspan="{{ 6 }}" class="text-end"><strong>Total ({{ $currencyLabel }})</strong></td>
-                            <td><strong>{{ $formatPrice($invoice->total_price) }}</strong></td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                @endif
-            </table>
-        </div>
-    </div>
-
-    @if($invoice->notes)
-        <div class="row px-2 pb-2" style="font-size: 14px">
-            <div class="col-12 ps-4"><strong>Notes:</strong> {{ $invoice->notes }}</div>
-        </div>
-    @endif
-
-    <div class="row p-2 border-top mt-3" style="font-size: 13px">
-        <div class="col-6 ps-4 muted">Authorized Signature</div>
-        <div class="col-6 pe-4 text-end muted">Received By</div>
+    <!-- Footer -->
+    <div class="footer">
+        <div class="line"></div>
+        <div>100 Street, Salam Jalal Office, Erbil, Iraq</div>
+        <div class="red">+964 7704459964 | +964 7504544320 | info@salam-jalal-co.intellij-app.com</div>
     </div>
 </div>
 <script>
-    $(document).ready(function() { window.print(); });
+    window.onload = function () { window.print(); };
 </script>
 </body>
 </html>

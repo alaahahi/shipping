@@ -502,6 +502,7 @@ class IranInvoiceController extends Controller
             'consignee_id' => $request->get('consignee_id'),
             'carrier_name' => $carrierName,
             'consignee_name' => $consigneeName,
+            'destination' => $request->get('destination'),
             'notes' => $request->get('notes'),
             'currency' => $request->get('currency', 'USD'),
         ];

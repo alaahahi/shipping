@@ -20,6 +20,7 @@ class IranInvoice extends Model
         'consignee_id',
         'carrier_name',
         'consignee_name',
+        'destination',
         'notes',
         'total_price',
         'currency',
