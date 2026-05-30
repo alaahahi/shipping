@@ -92,8 +92,8 @@
 
         .summary-wrap { width: 100%; margin-top: 14px; overflow: hidden; }
         table.summary { border-collapse: collapse; font-size: 13px; float: right; min-width: 360px;    text-align: center; }
+        table.summary td.skey {     padding: 5px;background: #1f3864; color: #fff; font-weight: bold; width: 180px; }
         table.summary td { border: 1px solid #2b2b2b; padding: 6px 10px; }
-        table.summary td.skey { background: #1f3864; color: #fff; font-weight: bold; width: 180px; }
     </style>
 </head>
 <body>
