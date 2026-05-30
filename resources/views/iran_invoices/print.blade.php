@@ -100,8 +100,11 @@
 
         .summary-wrap { width: 100%; margin-top: 14px; overflow: hidden; }
         table.summary { border-collapse: collapse; font-size: 13px; float: right; min-width: 360px;    text-align: center; }
-        table.summary td.skey {     padding: 5px;background: #1f3864; color: #fff; font-weight: bold; width: 180px; }
-        table.summary td { border: 1px solid #2b2b2b; padding: 6px 10px; }
+        table.summary td.skey {       font-size: medium;  padding: 5px;background: #1f3864; color: #fff; font-weight: bold; width: 180px; }
+        table.summary td.data { border: 1px solid #2b2b2b; padding: 6px 10px;font-size: medium; }
+        table.summary td.total_units { border: 1px solid #2b2b2b; padding: 6px 10px;font-size: medium; }
+        table.summary td.total_weight { border: 1px solid #2b2b2b; padding: 6px 10px;font-size: medium; }
+        table.summary td.total_price { border: 1px solid #2b2b2b; padding: 6px 10px;font-size: medium; }
     </style>
 </head>
 <body>
@@ -164,7 +167,7 @@
                             <th style="width: 38px">NO</th>
                             <th>CAR NAME</th>
                             <th style="width: 60px">YEAR</th>
-                            <th style="width: 70px">COLOR</th>
+                            <th style="width: 115px">COLOR</th>
                             <th>VIN</th>
                             <th style="width: 70px">KG</th>
                             <th style="width: 90px">PRICE</th>
@@ -190,19 +193,19 @@
                     <table class="summary">
                         <tr>
                             <td class="skey">TOTAL UNITS IN CAR</td>
-                            <td>{{ $totalUnits }}</td>
+                            <td class="total_units">{{ $totalUnits }}</td>
                         </tr>
                         <tr>
                             <td class="skey">TOTAL WEIGHT</td>
-                            <td>{{ $totalWeight > 0 ? number_format($totalWeight) . 'KGS' : '' }}</td>
+                            <td class="total_weight">{{ $totalWeight > 0 ? number_format($totalWeight) . 'KGS' : '' }}</td>
                         </tr>
                         <tr>
                             <td class="skey">TOTAL PRICE</td>
-                            <td>{{ $formatPrice($totalPrice) }}</td>
+                            <td class="total_price">{{ $formatPrice($totalPrice) }}</td>
                         </tr>
                         <tr>
                             <td class="skey">DESTINATION CIP</td>
-                            <td>{{ strtoupper($destination) }}</td>
+                            <td class="destination">{{ strtoupper($destination) }}</td>
                         </tr>
                     </table>
                 </div>
