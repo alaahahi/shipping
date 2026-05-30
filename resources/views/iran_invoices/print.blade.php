@@ -85,10 +85,18 @@
         .title { text-align: center; font-size: 25px; font-weight: bold; margin: 20px 0 12px; letter-spacing: 1px; }
 
         table.items { width: 100%; border-collapse: collapse; font-size: 12px; }
-        table.items th, table.items td { border: 1px solid #2b2b2b; padding: 8px 6px; text-align: center; }
-        table.items thead th { background: #1f3864; color: #fff; font-weight: bold; border-color: #1f3864; }
-        table.items td.carname { font-weight: bold; }
-        table.items td.vin { font-weight: bold; letter-spacing: .3px; }
+        table.items th, table.items td { border: 1px solid #2b2b2b; padding: 8px 6px; text-align: center;     font-size: medium;
+    padding: 5px;
+    border: 1px solid;}
+        table.items thead th { background: #1f3864; color: #fff; font-weight: bold; border-color: #1f3864;     font-size: medium;
+    padding: 5px;
+    border: 1px solid;}
+        table.items td.carname { font-weight: bold;     font-size: medium;
+    padding: 5px;
+    border: 1px solid;  }
+        table.items td.vin { font-weight: bold; letter-spacing: .3px; text-align: center;     font-size: medium;
+    padding: 5px;
+    border: 1px solid;}
 
         .summary-wrap { width: 100%; margin-top: 14px; overflow: hidden; }
         table.summary { border-collapse: collapse; font-size: 13px; float: right; min-width: 360px;    text-align: center; }
