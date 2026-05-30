@@ -18,6 +18,7 @@ const toast = useToast();
 const carriers = ref([]);
 const consignees = ref([]);
 const saving = ref(false);
+const attachments = ref([]);
 
 const form = ref({
   invoice_no: "",
@@ -98,6 +99,7 @@ const fetchInvoice = async () => {
         notes: i.notes || "",
       })),
     };
+    attachments.value = data.attachments || [];
   } catch (error) {
     console.error(error);
     toast.error("تعذر تحميل الفاتورة");
@@ -127,6 +129,42 @@ const addConsigneeInline = async () => {
     toast.success("تمت إضافة المستفيد");
   } catch (error) {
     toast.error("تعذر إضافة المستفيد");
+  }
+};
+
+const fileUrl = (name) => `/uploads/${name}`;
+const thumbUrl = (name) => `/uploadsResized/${name}`;
+
+const isImageFile = (name) => /\.(jpe?g|png|gif|webp|bmp)$/i.test(name || "");
+
+const uploadAttachment = async (event) => {
+  const file = event.target.files[0];
+  if (!file || !props.invoice_id) return;
+  const data = new FormData();
+  data.append("type", "invoice");
+  data.append("id", props.invoice_id);
+  data.append("file", file);
+  try {
+    const response = await axios.post("/api/iran-invoice-attachments", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    attachments.value.push(response.data);
+    toast.success("تم رفع المرفق");
+  } catch (error) {
+    toast.error("تعذر رفع المرفق");
+  } finally {
+    event.target.value = "";
+  }
+};
+
+const deleteAttachment = async (attachment) => {
+  if (!confirm("حذف المرفق؟")) return;
+  try {
+    await axios.post("/api/iran-invoice-attachments/delete", { id: attachment.id });
+    attachments.value = attachments.value.filter((a) => a.id !== attachment.id);
+    toast.success("تم حذف المرفق");
+  } catch (error) {
+    toast.error("تعذر حذف المرفق");
   }
 };
 
@@ -283,6 +321,64 @@ onMounted(async () => {
             <InputLabel for="notes" value="ملاحظات الفاتورة" />
             <textarea id="notes" v-model="form.notes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"></textarea>
           </div>
+
+          <!-- Attachments (edit only — not included on printed invoice) -->
+          <div v-if="isEdit" class="mt-6 print:hidden">
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="font-semibold text-gray-700 dark:text-gray-200">المرفقات (صور / ملفات)</h3>
+              <label class="px-3 py-1 bg-indigo-600 text-white rounded text-sm cursor-pointer">
+                + إرفاق ملف
+                <input type="file" class="hidden" accept="image/*,.pdf" @change="uploadAttachment" />
+              </label>
+            </div>
+            <div class="overflow-x-auto border rounded-lg dark:border-gray-700">
+              <table class="w-full text-sm text-center">
+                <thead class="bg-gray-50 dark:bg-gray-900 text-xs uppercase text-gray-500 dark:text-gray-400">
+                  <tr>
+                    <th class="px-3 py-2 w-20">معاينة</th>
+                    <th class="px-3 py-2">اسم الملف</th>
+                    <th class="px-3 py-2 w-28">تاريخ الرفع</th>
+                    <th class="px-3 py-2 w-24">تنفيذ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-if="attachments.length === 0">
+                    <td colspan="4" class="py-6 text-gray-400">لا توجد مرفقات — اضغط «إرفاق ملف»</td>
+                  </tr>
+                  <tr
+                    v-for="att in attachments"
+                    :key="att.id"
+                    class="border-t dark:border-gray-700"
+                  >
+                    <td class="px-3 py-2">
+                      <a :href="fileUrl(att.file_name)" target="_blank" class="inline-block">
+                        <img
+                          v-if="isImageFile(att.file_name)"
+                          :src="thumbUrl(att.file_name)"
+                          :alt="att.original_name"
+                          class="h-14 w-14 object-cover rounded border dark:border-gray-600 mx-auto"
+                          @error="(e) => { e.target.src = fileUrl(att.file_name); }"
+                        />
+                        <span v-else class="text-2xl">📎</span>
+                      </a>
+                    </td>
+                    <td class="px-3 py-2 text-start dark:text-gray-200">
+                      <a :href="fileUrl(att.file_name)" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                        {{ att.original_name || att.file_name }}
+                      </a>
+                    </td>
+                    <td class="px-3 py-2 text-gray-500 dark:text-gray-400">{{ att.created_at ? String(att.created_at).slice(0, 10) : "—" }}</td>
+                    <td class="px-3 py-2">
+                      <button type="button" @click="deleteAttachment(att)" class="px-2 py-1 bg-red-500 text-white rounded text-xs">حذف</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p v-else class="mt-4 text-sm text-gray-500 dark:text-gray-400 print:hidden">
+            يمكن إرفاق الصور والملفات بعد حفظ الفاتورة من صفحة التعديل.
+          </p>
 
           <div class="mt-6 flex justify-end gap-3">
             <Link :href="route('iranInvoices.index')" class="px-5 py-2 bg-gray-300 dark:bg-gray-600 rounded">إلغاء</Link>

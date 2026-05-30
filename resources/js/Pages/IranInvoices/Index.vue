@@ -83,6 +83,40 @@ const formatPrice = (value) => {
   return Number(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
+const fileUrl = (name) => `/uploads/${name}`;
+
+const uploadAttachment = async (invoice, event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  const data = new FormData();
+  data.append("type", "invoice");
+  data.append("id", invoice.id);
+  data.append("file", file);
+  try {
+    const response = await axios.post("/api/iran-invoice-attachments", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    if (!invoice.attachments) invoice.attachments = [];
+    invoice.attachments.push(response.data);
+    toast.success("تم رفع المرفق");
+  } catch (error) {
+    toast.error("تعذر رفع المرفق");
+  } finally {
+    event.target.value = "";
+  }
+};
+
+const deleteAttachment = async (invoice, attachment) => {
+  if (!confirm("حذف المرفق؟")) return;
+  try {
+    await axios.post("/api/iran-invoice-attachments/delete", { id: attachment.id });
+    invoice.attachments = (invoice.attachments || []).filter((a) => a.id !== attachment.id);
+    toast.success("تم حذف المرفق");
+  } catch (error) {
+    toast.error("تعذر حذف المرفق");
+  }
+};
+
 watch([showArchived, q, from, to], () => {
   if (activeTab.value === "invoices") {
     fetchInvoices();
@@ -191,15 +225,16 @@ onMounted(() => {
                   <th class="px-3 py-3">Consignee</th>
                   <th class="px-3 py-3">Cars</th>
                   <th class="px-3 py-3">Total</th>
+                  <th class="px-3 py-3 print:hidden">المرفقات</th>
                   <th class="px-3 py-3 print:hidden">تنفيذ</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-if="loading">
-                  <td colspan="7" class="py-8 text-gray-400">جاري التحميل...</td>
+                  <td colspan="8" class="py-8 text-gray-400">جاري التحميل...</td>
                 </tr>
                 <tr v-else-if="!invoices.data || invoices.data.length === 0">
-                  <td colspan="7" class="py-8 text-gray-400">لا توجد فواتير</td>
+                  <td colspan="8" class="py-8 text-gray-400">لا توجد فواتير</td>
                 </tr>
                 <tr
                   v-for="invoice in invoices.data"
@@ -212,6 +247,24 @@ onMounted(() => {
                   <td class="px-3 py-2">{{ invoice.consignee_name || invoice.consignee?.name || "—" }}</td>
                   <td class="px-3 py-2">{{ invoice.items_count }}</td>
                   <td class="px-3 py-2">{{ formatPrice(invoice.total_price) }} {{ invoice.currency }}</td>
+                  <td class="px-3 py-2 print:hidden">
+                    <div class="flex flex-wrap gap-1 justify-center items-center">
+                      <a
+                        v-for="att in (invoice.attachments || [])"
+                        :key="att.id"
+                        :href="fileUrl(att.file_name)"
+                        target="_blank"
+                        class="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded text-xs inline-flex items-center gap-1"
+                      >
+                        📎
+                        <button @click.prevent="deleteAttachment(invoice, att)" class="text-red-600 font-bold">×</button>
+                      </a>
+                      <label class="px-2 py-1 bg-indigo-500 text-white rounded text-xs cursor-pointer">
+                        +
+                        <input type="file" class="hidden" accept="image/*,.pdf" @change="uploadAttachment(invoice, $event)" />
+                      </label>
+                    </div>
+                  </td>
                   <td class="px-3 py-2 print:hidden">
                     <div class="flex justify-center gap-1 flex-wrap">
                       <a

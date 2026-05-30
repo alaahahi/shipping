@@ -75,7 +75,7 @@ class IranInvoiceController extends Controller
         $archived = $request->get('archived', 0);
         $limit = (int) $request->get('limit', 25);
 
-        $query = IranInvoice::with(['carrier', 'consignee'])
+        $query = IranInvoice::with(['carrier', 'consignee', 'attachments'])
             ->withCount('items')
             ->where('owner_id', $owner_id)
             ->where('is_archived', $archived ? 1 : 0)
