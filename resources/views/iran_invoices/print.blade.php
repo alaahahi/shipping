@@ -113,51 +113,51 @@
     border: 1px solid;}
 
         .summary-wrap { width: 100%; margin-top: 14px; margin-bottom: 48px; overflow: hidden; }
-        .summary-row {
+        .summary-top-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            gap: 16px;
+            align-items: flex-start;
+            gap: 20px;
         }
         .summary-qr-col {
-            flex: 0 0 88px;
+            flex: 0 0 auto;
             text-align: center;
-        }
-        .summary-stamp-col {
-            flex: 1 1 auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 88px;
-        }
-        .summary-stamp-col .stamp-img {
-            width: 88px;
-            max-width: 88px;
-            height: auto;
-            display: block;
         }
         .summary-table-col {
             flex: 0 0 auto;
+            margin-left: auto;
+        }
+        .summary-stamp-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 16px;
+        }
+        .summary-stamp-row .stamp-img {
+            width: 250px;
+            max-width: 250px;
+            height: auto;
+            display: block;
         }
         .summary-qr-col .qr-box {
-            width: 88px;
+            width: 200px;
             text-align: center;
         }
         .summary-qr-col .qr-box svg,
         .summary-qr-col .qr-box img {
-            width: 88px !important;
-            height: 88px !important;
+            width: 200px !important;
+            height: 200px !important;
             display: block;
             margin: 0 auto;
         }
         .summary-qr-col .qr-label {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
-            margin-top: 5px;
+            margin-top: 6px;
             letter-spacing: 0.3px;
         }
         .summary-qr-col .qr-caption {
-            font-size: 9px;
+            font-size: 10px;
             color: #555;
             margin-top: 2px;
         }
@@ -246,37 +246,37 @@
 
                 <!-- Summary + Stamp + QR -->
                 <div class="summary-wrap">
-                    <div class="summary-row">
+                    <div class="summary-top-row">
                         <div class="summary-qr-col">
                             <div class="qr-box">
-                                {!! QrCode::size(88)->generate($verificationUrl ?? $invoice->invoice_no) !!}
+                                {!! QrCode::size(200)->generate($verificationUrl ?? $invoice->invoice_no) !!}
                                 <div class="qr-label">{{ $invoice->invoice_no }}</div>
                                 <div class="qr-caption">Scan to verify</div>
                             </div>
                         </div>
-                        <div class="summary-stamp-col">
-                            <img src="/public/img/iran_stamp.png" alt="Official Stamp" class="stamp-img">
-                        </div>
                         <div class="summary-table-col">
-                        <table class="summary">
-                        <tr>
-                            <td class="skey">TOTAL UNITS IN CAR</td>
-                            <td class="total_units">{{ $totalUnits }}</td>
-                        </tr>
-                        <tr>
-                            <td class="skey">TOTAL WEIGHT</td>
-                            <td class="total_weight">{{ $totalWeight > 0 ? number_format($totalWeight) . 'KGS' : '' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="skey">TOTAL PRICE</td>
-                            <td class="total_price">{{ $formatPrice($totalPrice) }}</td>
-                        </tr>
-                        <tr>
-                            <td class="skey">DESTINATION CIP</td>
-                            <td class="destination">{{ strtoupper($destination) }}</td>
-                        </tr>
-                    </table>
+                            <table class="summary">
+                                <tr>
+                                    <td class="skey">TOTAL UNITS IN CAR</td>
+                                    <td class="total_units">{{ $totalUnits }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="skey">TOTAL WEIGHT</td>
+                                    <td class="total_weight">{{ $totalWeight > 0 ? number_format($totalWeight) . 'KGS' : '' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="skey">TOTAL PRICE</td>
+                                    <td class="total_price">{{ $formatPrice($totalPrice) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="skey">DESTINATION CIP</td>
+                                    <td class="destination">{{ strtoupper($destination) }}</td>
+                                </tr>
+                            </table>
                         </div>
+                    </div>
+                    <div class="summary-stamp-row">
+                        <img src="/public/img/iran_stamp.png" alt="Official Stamp" class="stamp-img">
                     </div>
                 </div>
             </td></tr>
