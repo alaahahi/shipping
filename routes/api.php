@@ -268,6 +268,7 @@ Route::post('updateCarExpenses',[HunterController::class, 'updateCarExpenses'])-
 
 // Iran Invoices (standalone module - isolated from legacy accounting)
 Route::get('iran-invoices',[\App\Http\Controllers\IranInvoiceController::class, 'getInvoices'])->name('iranInvoices.list');
+Route::get('iran-invoices/next-no',[\App\Http\Controllers\IranInvoiceController::class, 'getNextInvoiceNo'])->name('iranInvoices.nextNo');
 Route::get('iran-invoices/{id}',[\App\Http\Controllers\IranInvoiceController::class, 'getInvoice'])->name('iranInvoices.get');
 Route::post('iran-invoices',[\App\Http\Controllers\IranInvoiceController::class, 'storeInvoice'])->name('iranInvoices.store');
 Route::post('iran-invoices/{id}',[\App\Http\Controllers\IranInvoiceController::class, 'updateInvoice'])->name('iranInvoices.update');

@@ -19,6 +19,7 @@ const carriers = ref([]);
 const consignees = ref([]);
 const saving = ref(false);
 const attachments = ref([]);
+const nextInvoiceNo = ref("");
 
 const form = ref({
   invoice_no: "",
@@ -70,6 +71,15 @@ const fetchLookups = async () => {
     ]);
     carriers.value = c.data || [];
     consignees.value = cn.data || [];
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const fetchNextInvoiceNo = async () => {
+  try {
+    const response = await axios.get("/api/iran-invoices/next-no");
+    nextInvoiceNo.value = response.data.invoice_no || "";
   } catch (error) {
     console.error(error);
   }
@@ -136,8 +146,8 @@ const addConsigneeInline = async () => {
   }
 };
 
-const fileUrl = (name) => `/uploads/${name}`;
-const thumbUrl = (name) => `/uploadsResized/${name}`;
+const fileUrl = (name) => (name ? `/uploads/${encodeURIComponent(name)}` : "");
+const thumbUrl = (name) => (name ? `/uploadsResized/${encodeURIComponent(name)}` : "");
 
 const isImageFile = (name) => /\.(jpe?g|png|gif|webp|bmp)$/i.test(name || "");
 
@@ -235,6 +245,9 @@ const save = async () => {
         notes: item.notes,
       })),
     };
+    if (!String(payload.invoice_no || "").trim()) {
+      delete payload.invoice_no;
+    }
     if (isEdit.value) {
       await axios.post(`/api/iran-invoices/${props.invoice_id}`, payload);
     } else {
@@ -262,6 +275,7 @@ onMounted(async () => {
     await fetchInvoice();
   } else {
     addItem();
+    await fetchNextInvoiceNo();
   }
 });
 </script>
@@ -287,7 +301,16 @@ onMounted(async () => {
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
               <InputLabel for="invoice_no" value="رقم الفاتورة (اختياري - يُولّد تلقائياً)" />
-              <TextInput id="invoice_no" type="text" class="mt-1 block w-full" v-model="form.invoice_no" />
+              <TextInput
+                id="invoice_no"
+                type="text"
+                class="mt-1 block w-full"
+                v-model="form.invoice_no"
+                :placeholder="isEdit ? '' : (nextInvoiceNo || 'IR-2026-0001')"
+              />
+              <p v-if="!isEdit && nextInvoiceNo" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                الرقم التالي: {{ nextInvoiceNo }}
+              </p>
             </div>
             <div>
               <InputLabel for="invoice_date" value="التاريخ" />

@@ -131,6 +131,15 @@ class IranInvoiceController extends Controller
         return Response::json($invoice->load('items'), 200);
     }
 
+    public function getNextInvoiceNo()
+    {
+        $owner_id = Auth::user()->owner_id;
+
+        return Response::json([
+            'invoice_no' => $this->nextInvoiceNo($owner_id, false),
+        ], 200);
+    }
+
     public function updateInvoice(Request $request, $id)
     {
         $owner_id = Auth::user()->owner_id;
@@ -145,7 +154,7 @@ class IranInvoiceController extends Controller
         ])->validate();
 
         DB::transaction(function () use ($request, $owner_id, $invoice) {
-            $invoice->update($this->invoiceAttributes($request, $owner_id, false));
+            $invoice->update($this->invoiceAttributes($request, $owner_id, false, $invoice));
             $this->syncItems($invoice, $request->get('items', []));
             $this->applyTotalPrice($request, $invoice);
         });
@@ -301,18 +310,25 @@ class IranInvoiceController extends Controller
 
         $file = $request->file('file');
         $originalName = trim($file->getClientOriginalName());
-        $name = uniqid('iran_') . '_' . $originalName;
+        $extension = strtolower($file->getClientOriginalExtension() ?: 'bin');
+        $extension = preg_replace('/[^a-z0-9]/', '', $extension) ?: 'bin';
+        // Safe disk name only (no spaces) — original_name kept for display.
+        $name = uniqid('iran_') . '.' . $extension;
         $file->move($path1, $name);
 
         // Only image files get a resized thumbnail; PDFs and others are stored as-is.
         $isImage = @getimagesize(public_path('uploads/' . $name)) !== false;
         if ($isImage) {
-            $image = Image::make(public_path('uploads/' . $name));
-            $image->resize(200, 200, function ($constraint) {
-                $constraint->aspectRatio();
-                $constraint->upsize();
-            });
-            $image->save(public_path('uploadsResized/' . $name));
+            try {
+                $image = Image::make(public_path('uploads/' . $name));
+                $image->resize(200, 200, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                });
+                $image->save(public_path('uploadsResized/' . $name));
+            } catch (\Throwable $e) {
+                // Keep original upload even if thumbnail generation fails.
+            }
         }
 
         $attachment = $model->attachments()->create([
@@ -482,7 +498,7 @@ class IranInvoiceController extends Controller
     // Helpers
     // ---------------------------------------------------------------------
 
-    private function invoiceAttributes(Request $request, $owner_id, bool $isNew): array
+    private function invoiceAttributes(Request $request, $owner_id, bool $isNew, ?IranInvoice $existing = null): array
     {
         $carrierName = $request->get('carrier_name');
         if (!$carrierName && $request->get('carrier_id')) {
@@ -495,7 +511,7 @@ class IranInvoiceController extends Controller
         }
 
         $attributes = [
-            'invoice_no' => $request->get('invoice_no') ?: $this->generateInvoiceNo($owner_id),
+            'invoice_no' => $this->resolveInvoiceNo($request, $owner_id, $isNew, $existing),
             'invoice_date' => $request->get('invoice_date') ?: Carbon::now()->format('Y-m-d'),
             'carrier_id' => $request->get('carrier_id'),
             'consignee_id' => $request->get('consignee_id'),
@@ -512,6 +528,21 @@ class IranInvoiceController extends Controller
         }
 
         return $attributes;
+    }
+
+    private function resolveInvoiceNo(Request $request, $owner_id, bool $isNew, ?IranInvoice $existing = null): string
+    {
+        $manual = trim((string) $request->input('invoice_no', ''));
+
+        if ($manual !== '') {
+            return $manual;
+        }
+
+        if (!$isNew && $existing && !empty($existing->invoice_no)) {
+            return $existing->invoice_no;
+        }
+
+        return $this->generateInvoiceNo($owner_id);
     }
 
     private function syncItems(IranInvoice $invoice, array $items): void
@@ -578,12 +609,33 @@ class IranInvoiceController extends Controller
 
     private function generateInvoiceNo($owner_id): string
     {
-        $year = Carbon::now()->format('Y');
-        $count = IranInvoice::where('owner_id', $owner_id)
-            ->whereYear('created_at', $year)
-            ->count();
+        return $this->nextInvoiceNo($owner_id, true);
+    }
 
-        return 'IR-' . $year . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+    private function nextInvoiceNo($owner_id, bool $lock): string
+    {
+        $year = Carbon::now()->format('Y');
+        $prefix = 'IR-' . $year . '-';
+
+        $query = IranInvoice::withTrashed()
+            ->where('invoice_no', 'like', $prefix . '%');
+
+        if ($owner_id !== null) {
+            $query->where('owner_id', $owner_id);
+        }
+
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        $max = 0;
+        foreach ($query->pluck('invoice_no') as $invoiceNo) {
+            if (preg_match('/-(\d+)$/', (string) $invoiceNo, $matches)) {
+                $max = max($max, (int) $matches[1]);
+            }
+        }
+
+        return $prefix . str_pad($max + 1, 4, '0', STR_PAD_LEFT);
     }
 
     private function carAttributes(Request $request): array

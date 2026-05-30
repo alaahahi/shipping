@@ -117,7 +117,7 @@ const deleteAttachment = async (attachment) => {
   }
 };
 
-const fileUrl = (name) => `/uploads/${name}`;
+const fileUrl = (name) => (name ? `/uploads/${encodeURIComponent(name)}` : "");
 
 let searchTimer = null;
 watch(q, () => {
