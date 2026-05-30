@@ -36,7 +36,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        @page { size: A4; margin: 10mm 10mm 22mm 10mm; }
+        @page { size: A4; margin: 10mm 10mm 30mm 10mm; }
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; }
         body {
@@ -45,6 +45,7 @@
             direction: ltr;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
+            padding-bottom: 58px;
         }
         .red { color: #d11212; }
 
@@ -76,18 +77,32 @@
             bottom: 0;
             left: 0;
             right: 0;
-            z-index: 2;
+            z-index: 99;
             background: #fff;
             text-align: center;
             font-size: 11px;
             padding-top: 6px;
-            padding-bottom: 2mm;
+            padding-bottom: 3mm;
+            min-height: 14mm;
         }
         .print-footer .line { border-top: 2px solid #d11212; margin-bottom: 5px; }
         .print-footer .red { color: #d11212; font-weight: bold; }
 
         /* Main content inside layout tbody */
-        table.layout > tbody td { padding: 0; border: 0; }
+        table.layout > tbody td { padding: 0; border: 0; padding-bottom: 12mm; }
+
+        @media print {
+            .print-footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                display: block !important;
+            }
+            .summary-wrap {
+                page-break-inside: avoid;
+            }
+        }
 
         table.items thead { display: table-header-group; }
         table.items tr { page-break-inside: avoid; }
@@ -112,7 +127,7 @@
     padding: 5px;
     border: 1px solid;}
 
-        .summary-wrap { width: 100%; margin-top: 14px; margin-bottom: 48px; overflow: hidden; }
+        .summary-wrap { width: 100%; margin-top: 14px; margin-bottom: 14mm; }
         .summary-top-row {
             display: flex;
             justify-content: space-between;
