@@ -189,7 +189,7 @@
                 </table>
 
                 <!-- Summary -->
-                <div class="summary-wrap">
+                <div class="summary-wrap" style="margin-bottom: 100px;">
                     <table class="summary">
                         <tr>
                             <td class="skey">TOTAL UNITS IN CAR</td>
