@@ -36,7 +36,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        @page { size: A4; margin: 10mm; }
+        @page { size: A4; margin: 32mm 10mm 20mm 10mm; }
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; }
         body {
@@ -48,7 +48,7 @@
         }
         .red { color: #d11212; }
 
-        /* Watermark logo - fixed elements repeat on every printed page */
+        /* Watermark - repeats every printed page */
         .watermark {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -56,27 +56,49 @@
             align-items: center;
             justify-content: center;
             z-index: 0;
+            pointer-events: none;
         }
         .watermark img { width: 65%; max-width: 520px; opacity: 0.06; }
 
-        /* Layout table: thead repeats top of each page, tfoot repeats bottom */
-        table.layout { width: 100%; border-collapse: collapse; position: relative; z-index: 1; }
-        table.layout > thead { display: table-header-group; }
-        table.layout > tfoot { display: table-footer-group; }
-        table.layout > thead td,
-        table.layout > tfoot td,
-        table.layout > tbody td { padding: 0; border: 0; }
-
-        /* Repeating header */
-        .doc-header { text-align: center; padding-bottom: 6px; }
-        .doc-header img { max-height: 82px; margin-bottom: 2px; }
+        /* Fixed header - top of every page */
+        .print-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 2;
+            background: #fff;
+            text-align: center;
+            padding-bottom: 4px;
+        }
+        .print-header img { max-height: 78px; margin-bottom: 2px; }
         .company-name { font-size: 24px; font-weight: bold; margin: 2px 0; letter-spacing: .5px; }
         .company-sub { font-style: italic; font-size: 12px; margin: 1px 0; }
 
-        /* Repeating footer */
-        .doc-footer { text-align: center; font-size: 11px; padding-top: 8px; }
-        .doc-footer .line { border-top: 2px solid #d11212; margin-bottom: 5px; }
-        .doc-footer .red { color: #d11212; font-weight: bold; }
+        /* Fixed footer - bottom of every page */
+        .print-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 2;
+            background: #fff;
+            text-align: center;
+            font-size: 11px;
+            padding-top: 6px;
+            padding-bottom: 2mm;
+        }
+        .print-footer .line { border-top: 2px solid #d11212; margin-bottom: 5px; }
+        .print-footer .red { color: #d11212; font-weight: bold; }
+
+        /* Main content area (page margins reserve header/footer space) */
+        .print-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        table.items thead { display: table-header-group; }
+        table.items tr { page-break-inside: avoid; }
 
         .meta { width: 100%; margin-top: 14px; font-size: 15px; }
         .meta td { vertical-align: top; padding: 1px 0; }
@@ -108,34 +130,23 @@
     </style>
 </head>
 <body>
-    <!-- Watermark repeats on every page -->
     <div class="watermark"><img src="/img/logo.jpg" alt=""></div>
 
-    <table class="layout">
-        <thead>
-            <tr><td>
-                <div class="doc-header">
-                    <img src="/img/logo.jpg" alt="logo">
-                    <div class="company-name">SALAM JALAL AYOUB Co.</div>
-                    <div class="company-sub">For Individual Car Trading</div>
-                    <div class="company-sub red">Erbil, Iraq</div>
-                    <div class="company-sub red">Commercial Registration No. 298</div>
-                </div>
-            </td></tr>
-        </thead>
+    <div class="print-header">
+        <img src="/img/logo.jpg" alt="logo">
+        <div class="company-name">SALAM JALAL AYOUB Co.</div>
+        <div class="company-sub">For Individual Car Trading</div>
+        <div class="company-sub red">Erbil, Iraq</div>
+        <div class="company-sub red">Commercial Registration No. 298</div>
+    </div>
 
-        <tfoot>
-            <tr><td>
-                <div class="doc-footer">
-                    <div class="line"></div>
-                    <div>100 Street, Salam Jalal Office, Erbil, Iraq</div>
-                    <div class="red">+964 7704459964 | +964 7504544320 | info@salam-jalal-co.intellij-app.com</div>
-                </div>
-            </td></tr>
-        </tfoot>
+    <div class="print-footer">
+        <div class="line"></div>
+        <div>100 Street, Salam Jalal Office, Erbil, Iraq</div>
+        <div class="red">+964 7704459964 | +964 7504544320 | info@salam-jalal-co.intellij-app.com</div>
+    </div>
 
-        <tbody>
-            <tr><td>
+    <div class="print-content">
                 <!-- Invoice meta -->
                 <table class="meta">
                     <tr>
@@ -189,7 +200,7 @@
                 </table>
 
                 <!-- Summary -->
-                <div class="summary-wrap" style="margin-bottom: 100px;">
+                <div class="summary-wrap">
                     <table class="summary">
                         <tr>
                             <td class="skey">TOTAL UNITS IN CAR</td>
@@ -209,9 +220,7 @@
                         </tr>
                     </table>
                 </div>
-            </td></tr>
-        </tbody>
-    </table>
+    </div>
 
     <script>
         window.onload = function () { window.print(); };
