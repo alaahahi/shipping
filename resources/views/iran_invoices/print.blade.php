@@ -91,7 +91,7 @@
         table.items thead th { background: #1f3864; color: #fff; font-weight: bold; border-color: #1f3864;     font-size: medium;
     padding: 5px;
     border: 1px solid;}
-        table.items td.carname { font-weight: bold;     font-size: medium;
+        table.items td.carname , td.no , td.year , td.color , td.weight , td.unit_price{ font-weight: bold;     font-size: medium;
     padding: 5px;
     border: 1px solid;  }
         table.items td.vin { font-weight: bold; letter-spacing: .3px; text-align: center;     font-size: medium;
