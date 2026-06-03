@@ -224,18 +224,10 @@
                         <td colspan="2" class="label" style="padding-top:6px;">{{ strtoupper($carrierName) }}</td>
                     </tr>
                     @endif
-                    @if($destination || $consigneeName)
+                    @if($consigneeName)
                     <tr>
                         <td colspan="2" class="label" style="padding-top:4px;">
-                            @if($destination)
-                                TRANSIT TO {{ strtoupper($destination) }}
-                            @endif
-                            @if($destination && $consigneeName)
-                                &nbsp;&nbsp;|&nbsp;&nbsp;
-                            @endif
-                            @if($consigneeName)
-                                CONSIGNEE: {{ strtoupper($consigneeName) }}
-                            @endif
+                            TRANSIT TO {{ strtoupper($consigneeName) }}
                         </td>
                     </tr>
                     @endif
@@ -297,11 +289,7 @@
                                 </tr>
                                 <tr>
                                     <td class="skey">DESTINATION CIP</td>
-                                    <td class="destination">
-                                        @if($destination){{ strtoupper($destination) }}@endif
-                                        @if($destination && $consigneeName)<br>@endif
-                                        @if($consigneeName){{ strtoupper($consigneeName) }}@endif
-                                    </td>
+                                    <td class="destination">{{ $destination ? strtoupper($destination) : '' }}</td>
                                 </tr>
                             </table>
                         </div>
