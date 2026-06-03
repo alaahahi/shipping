@@ -516,23 +516,41 @@ class IranInvoiceController extends Controller
 
     private function invoiceAttributes(Request $request, $owner_id, bool $isNew, ?IranInvoice $existing = null): array
     {
-        $carrierName = $request->get('carrier_name');
-        if (!$carrierName && $request->get('carrier_id')) {
-            $carrierName = optional(IranInvoiceCarrier::find($request->get('carrier_id')))->name;
+        $carrierId = $request->input('carrier_id');
+        $consigneeId = $request->input('consignee_id');
+
+        if (!$isNew && $existing) {
+            if ($carrierId === '' || $carrierId === null) {
+                $carrierId = $existing->carrier_id;
+            }
+            if ($consigneeId === '' || $consigneeId === null) {
+                $consigneeId = $existing->consignee_id;
+            }
         }
 
-        $consigneeName = $request->get('consignee_name');
-        if (!$consigneeName && $request->get('consignee_id')) {
-            $consigneeName = optional(IranInvoiceConsignee::find($request->get('consignee_id')))->name;
+        $carrierName = trim((string) $request->get('carrier_name', ''));
+        if ($carrierName === '' && $carrierId) {
+            $carrierName = optional(IranInvoiceCarrier::find($carrierId))->name ?? '';
+        }
+        if ($carrierName === '' && $existing) {
+            $carrierName = $existing->carrier_name ?? optional($existing->carrier)->name ?? '';
+        }
+
+        $consigneeName = trim((string) $request->get('consignee_name', ''));
+        if ($consigneeName === '' && $consigneeId) {
+            $consigneeName = optional(IranInvoiceConsignee::find($consigneeId))->name ?? '';
+        }
+        if ($consigneeName === '' && $existing) {
+            $consigneeName = $existing->consignee_name ?? optional($existing->consignee)->name ?? '';
         }
 
         $attributes = [
             'invoice_no' => $this->resolveInvoiceNo($request, $owner_id, $isNew, $existing),
-            'invoice_date' => $request->get('invoice_date') ?: Carbon::now()->format('Y-m-d'),
-            'carrier_id' => $request->get('carrier_id'),
-            'consignee_id' => $request->get('consignee_id'),
-            'carrier_name' => $carrierName,
-            'consignee_name' => $consigneeName,
+            'invoice_date' => $this->resolveInvoiceDate($request, $isNew, $existing),
+            'carrier_id' => $carrierId ?: null,
+            'consignee_id' => $consigneeId ?: null,
+            'carrier_name' => $carrierName ?: null,
+            'consignee_name' => $consigneeName ?: null,
             'destination' => $request->get('destination'),
             'notes' => $request->get('notes'),
             'currency' => $request->get('currency', 'USD'),
@@ -559,6 +577,20 @@ class IranInvoiceController extends Controller
         }
 
         return $this->generateInvoiceNo($owner_id);
+    }
+
+    private function resolveInvoiceDate(Request $request, bool $isNew, ?IranInvoice $existing = null): string
+    {
+        $date = $request->input('invoice_date');
+        if ($date !== null && trim((string) $date) !== '') {
+            return (string) $date;
+        }
+
+        if (!$isNew && $existing && $existing->invoice_date) {
+            return $existing->invoice_date->format('Y-m-d');
+        }
+
+        return Carbon::now()->format('Y-m-d');
     }
 
     private function syncItems(IranInvoice $invoice, array $items): void

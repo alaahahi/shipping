@@ -1,8 +1,4 @@
 @php
-    $invoiceDate = $invoice->invoice_date
-        ? \Carbon\Carbon::parse($invoice->invoice_date)->format('d/m/Y')
-        : '';
-
     $toNumber = function ($value) {
         if ($value === null || $value === '') {
             return null;
@@ -23,11 +19,37 @@
 
     $formatPrice = function ($value) use ($toNumber) {
         $num = $toNumber($value);
-        return $num === null ? '' : number_format($num, 2);
+        if ($num === null) {
+            return '';
+        }
+        if (abs($num - round($num)) < 0.00001) {
+            return number_format($num, 0, '.', ',');
+        }
+
+        return rtrim(rtrim(number_format($num, 2, '.', ','), '0'), '.');
     };
 
-    $totalPrice = $invoice->total_price;
-    $destination = $invoice->destination ?? '';
+    $storedTotal = $toNumber($invoice->total_price);
+    if ($storedTotal !== null) {
+        $totalPrice = $storedTotal;
+    } else {
+        $lineSum = 0;
+        $hasPricedLine = false;
+        foreach ($invoice->items as $line) {
+            $linePrice = $toNumber($line->unit_price);
+            if ($linePrice !== null) {
+                $hasPricedLine = true;
+                $lineSum += $linePrice;
+            }
+        }
+        $totalPrice = $hasPricedLine ? $lineSum : null;
+    }
+    $destination = trim($invoice->destination ?? '');
+    $carrierName = trim($invoice->carrier_name ?? optional($invoice->carrier)->name ?? '');
+    $consigneeName = trim($invoice->consignee_name ?? optional($invoice->consignee)->name ?? '');
+    $invoiceDate = $invoice->invoice_date
+        ? $invoice->invoice_date->format('d/m/Y')
+        : '';
 @endphp
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -197,14 +219,24 @@
                         <td><span class="label">DATE:</span> &nbsp; {{ $invoiceDate }}</td>
                         <td>SALAM JALAL AYOUB CO.</td>
                     </tr>
+                    @if($carrierName)
                     <tr>
-                        <td colspan="2" class="label" style="padding-top:6px;">
-                            {{ $invoice->carrier_name ?? optional($invoice->carrier)->name }}
-                        </td>
+                        <td colspan="2" class="label" style="padding-top:6px;">{{ strtoupper($carrierName) }}</td>
                     </tr>
-                    @if($destination)
+                    @endif
+                    @if($destination || $consigneeName)
                     <tr>
-                        <td colspan="2" class="label">TRANSIT TO {{ strtoupper($destination) }}</td>
+                        <td colspan="2" class="label" style="padding-top:4px;">
+                            @if($destination)
+                                TRANSIT TO {{ strtoupper($destination) }}
+                            @endif
+                            @if($destination && $consigneeName)
+                                &nbsp;&nbsp;|&nbsp;&nbsp;
+                            @endif
+                            @if($consigneeName)
+                                CONSIGNEE: {{ strtoupper($consigneeName) }}
+                            @endif
+                        </td>
                     </tr>
                     @endif
                 </table>
@@ -265,7 +297,11 @@
                                 </tr>
                                 <tr>
                                     <td class="skey">DESTINATION CIP</td>
-                                    <td class="destination">{{ strtoupper($destination) }}</td>
+                                    <td class="destination">
+                                        @if($destination){{ strtoupper($destination) }}@endif
+                                        @if($destination && $consigneeName)<br>@endif
+                                        @if($consigneeName){{ strtoupper($consigneeName) }}@endif
+                                    </td>
                                 </tr>
                             </table>
                         </div>
