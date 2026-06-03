@@ -23,7 +23,7 @@ const nextInvoiceNo = ref("");
 
 const form = ref({
   invoice_no: "",
-  invoice_date: new Date().toISOString().slice(0, 10),
+  invoice_date: todayLocal(),
   carrier_id: "",
   consignee_id: "",
   destination: "",
@@ -34,6 +34,28 @@ const form = ref({
 });
 
 const isEdit = computed(() => !!props.invoice_id);
+
+/** Avoid timezone shift when Laravel returns ISO date strings (UTC). */
+const toDateInput = (value) => {
+  if (!value) return "";
+  const str = String(value);
+  if (!str.includes("T")) {
+    return str.slice(0, 10);
+  }
+  const d = new Date(str);
+  if (Number.isNaN(d.getTime())) {
+    return str.slice(0, 10);
+  }
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
+const todayLocal = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 
 const emptyItem = () => ({
   id: null,
@@ -92,7 +114,7 @@ const fetchInvoice = async () => {
     const data = response.data;
     form.value = {
       invoice_no: data.invoice_no || "",
-      invoice_date: data.invoice_date ? String(data.invoice_date).slice(0, 10) : "",
+      invoice_date: toDateInput(data.invoice_date),
       carrier_id: data.carrier_id || "",
       consignee_id: data.consignee_id || "",
       destination: data.destination || "",

@@ -232,6 +232,11 @@ class IranInvoiceController extends Controller
             ->where('verification_token', $token)
             ->firstOrFail();
 
+        if (empty($invoice->verification_token)) {
+            $invoice->verification_token = Str::uuid()->toString();
+            $invoice->save();
+        }
+
         $config = SystemConfig::first();
         $verificationUrl = route('iranInvoices.verify', $invoice->verification_token);
 

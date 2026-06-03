@@ -1,6 +1,44 @@
 @php
+    $toNumber = function ($value) {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $clean = preg_replace('/[^0-9.\-]/', '', (string) $value);
+        return $clean === '' ? null : (float) $clean;
+    };
+
+    $formatPrice = function ($value) use ($toNumber) {
+        $num = $toNumber($value);
+        if ($num === null) {
+            return '—';
+        }
+        if (abs($num - round($num)) < 0.00001) {
+            return number_format($num, 0, '.', ',');
+        }
+        return rtrim(rtrim(number_format($num, 2, '.', ','), '0'), '.');
+    };
+
+    $storedTotal = $toNumber($invoice->total_price);
+    if ($storedTotal !== null) {
+        $totalPrice = $storedTotal;
+    } else {
+        $lineSum = 0;
+        $hasPricedLine = false;
+        foreach ($invoice->items as $line) {
+            $linePrice = $toNumber($line->unit_price);
+            if ($linePrice !== null) {
+                $hasPricedLine = true;
+                $lineSum += $linePrice;
+            }
+        }
+        $totalPrice = $hasPricedLine ? $lineSum : null;
+    }
+
+    $destination = trim($invoice->destination ?? '');
+    $carrierName = trim($invoice->carrier_name ?? optional($invoice->carrier)->name ?? '');
+    $consigneeName = trim($invoice->consignee_name ?? optional($invoice->consignee)->name ?? '');
     $invoiceDate = $invoice->invoice_date
-        ? \Carbon\Carbon::parse($invoice->invoice_date)->format('d/m/Y')
+        ? $invoice->invoice_date->format('d/m/Y')
         : '—';
 @endphp
 <!DOCTYPE html>
@@ -79,27 +117,37 @@
             <div class="verified mb-4">✓ Authentic invoice issued by the company</div>
 
             <div class="row g-4">
-                <div class="col-md-6">
+                @if($carrierName)
+                <div class="col-12">
                     <div class="label mb-1">Carrier</div>
-                    <div class="value">{{ $invoice->carrier_name ?? optional($invoice->carrier)->name ?? '—' }}</div>
+                    <div class="value">{{ strtoupper($carrierName) }}</div>
                 </div>
-                <div class="col-md-6">
-                    <div class="label mb-1">Consignee</div>
-                    <div class="value">{{ $invoice->consignee_name ?? optional($invoice->consignee)->name ?? '—' }}</div>
+                @endif
+                @if($consigneeName)
+                <div class="col-12">
+                    <div class="label mb-1">Transit To</div>
+                    <div class="value">{{ strtoupper($consigneeName) }}</div>
                 </div>
+                @endif
+                @if($destination)
                 <div class="col-md-6">
                     <div class="label mb-1">Destination CIP</div>
-                    <div class="value">{{ strtoupper($invoice->destination ?? '—') }}</div>
+                    <div class="value">{{ strtoupper($destination) }}</div>
                 </div>
+                @endif
                 <div class="col-md-6">
                     <div class="label mb-1">Total Price</div>
                     <div class="value">
-                        @if($invoice->total_price !== null && $invoice->total_price !== '')
-                            {{ number_format((float) $invoice->total_price, 2) }} {{ $invoice->currency }}
+                        @if($totalPrice !== null)
+                            {{ $formatPrice($totalPrice) }} {{ $invoice->currency }}
                         @else
                             —
                         @endif
                     </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="label mb-1">Total Units</div>
+                    <div class="value">{{ $invoice->items->count() }}</div>
                 </div>
             </div>
 
@@ -131,7 +179,7 @@
 
             <div class="qr-wrap mt-4">
                 <img id="verification-qr" alt="QR" style="display:none;width:150px;height:150px;margin:0 auto;background:#fff;padding:8px;border-radius:10px;border:1px solid #e2e8f0;" />
-                <div class="label mt-2">Verification code: {{ $invoice->verification_token }}</div>
+                <div class="label mt-2">Invoice No: {{ $invoice->invoice_no }}</div>
                 <a href="{{ $verificationUrl }}" class="d-inline-block mt-1 small">{{ $verificationUrl }}</a>
             </div>
         </div>

@@ -62,4 +62,15 @@ class IranInvoice extends Model
     {
         return $this->hasMany(IranInvoiceTransfer::class, 'invoice_id');
     }
+
+    public function toArray()
+    {
+        $array = parent::toArray();
+
+        if ($this->invoice_date) {
+            $array['invoice_date'] = $this->invoice_date->format('Y-m-d');
+        }
+
+        return $array;
+    }
 }
