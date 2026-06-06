@@ -38,15 +38,15 @@ const restform =()=>{
   
   <template>  
     <Transition name="modal">
-      <div v-if="show" class="modal-mask ">
-        <div class="modal-wrapper  max-h-[80vh]">
+      <div v-if="show" class="modal-mask">
+        <div class="modal-wrapper">
           <div class="modal-container">
             <div class="modal-header">
               <slot name="header"></slot>
             </div>
             <div class="modal-body">
                
-                        <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="mb-4 mx-5">
                         <label for="amountDollar" >المبلغ بالدولار</label>
                         <input
@@ -65,7 +65,7 @@ const restform =()=>{
                         </div>
                        
                         </div>
-                        <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="mb-4 mx-5">
                           <label for="card" >التاريخ</label>
                           <input
@@ -114,26 +114,32 @@ const restform =()=>{
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    display: table;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    overflow-y: auto;
     transition: opacity 0.3s ease;
   }
   
   .modal-wrapper {
-    display: table-cell;
-    vertical-align: middle;
+    width: 100%;
+    max-width: 560px;
+    margin: auto;
   }
   
   .modal-container {
-    width: 50%;
-    min-width: 350px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
     margin: 0px auto;
-    padding: 20px  30px;
-    padding-bottom: 60px;
+    padding: 20px 24px;
+    padding-bottom: 20px;
     background-color: #fff;
-    border-radius: 2px;
+    border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
     transition: all 0.3s ease;
-    border-radius: 10px;
   }
   
   .modal-header h3 {
@@ -143,8 +149,33 @@ const restform =()=>{
   
   .modal-body {
     margin: 20px 0;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (max-width: 768px) {
+    .modal-mask {
+      padding: 8px;
+      align-items: flex-start;
+    }
+
+    .modal-container {
+      padding: 16px;
+      max-height: 95vh;
+    }
+
+    .modal-body .mx-5 {
+      margin-left: 0.5rem;
+      margin-right: 0.5rem;
+    }
   }
   
+  .modal-footer {
+    flex-shrink: 0;
+  }
+
   .modal-default-button {
     float: right;
     width: 100%;
