@@ -21,20 +21,6 @@ const saving = ref(false);
 const attachments = ref([]);
 const nextInvoiceNo = ref("");
 
-const form = ref({
-  invoice_no: "",
-  invoice_date: todayLocal(),
-  carrier_id: "",
-  consignee_id: "",
-  destination: "",
-  currency: "USD",
-  notes: "",
-  total_price: "",
-  items: [],
-});
-
-const isEdit = computed(() => !!props.invoice_id);
-
 /** Avoid timezone shift when Laravel returns ISO date strings (UTC). */
 const toDateInput = (value) => {
   if (!value) return "";
@@ -56,6 +42,20 @@ const todayLocal = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
+
+const form = ref({
+  invoice_no: "",
+  invoice_date: todayLocal(),
+  carrier_id: "",
+  consignee_id: "",
+  destination: "",
+  currency: "USD",
+  notes: "",
+  total_price: "",
+  items: [],
+});
+
+const isEdit = computed(() => !!props.invoice_id);
 
 const emptyItem = () => ({
   id: null,
