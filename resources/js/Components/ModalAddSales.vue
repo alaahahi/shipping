@@ -48,7 +48,7 @@ const restform = () => {
               <slot name="header"></slot>
             </div>
             <div class="modal-body text-gray-800 dark:text-gray-200">
-                        <h2 class="text-center pb-5">
+                        <h2 class="text-center pb-5 text-gray-900 dark:text-gray-100">
                          وصل قبض
                         </h2>
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
@@ -56,7 +56,7 @@ const restform = () => {
    
 
                         <div className="mb-4 mx-5">
-                        <label for="card" class="dark:text-gray-200">المبلغ بالدولار</label>
+                        <label for="card" class="text-gray-800 dark:text-gray-100">المبلغ بالدولار</label>
                         <input
                           id="card"
                           type="number"
@@ -65,7 +65,7 @@ const restform = () => {
                         </div>
 
                         <div className="mb-4 mx-5">
-                        <label for="card" class="dark:text-gray-200">المبلغ بالدينار</label>
+                        <label for="card" class="text-gray-800 dark:text-gray-100">المبلغ بالدينار</label>
                         <input
                           id="card"
                           type="number"
@@ -74,7 +74,7 @@ const restform = () => {
                         </div>
                      
                         <div className="mb-4 mx-5">
-                        <label for="card" class="dark:text-gray-200">ملاحظة</label>
+                        <label for="card" class="text-gray-800 dark:text-gray-100">ملاحظة</label>
                         <input
                           id="card"
                           type="text"
@@ -83,7 +83,7 @@ const restform = () => {
                         </div>
 
                         <div className="mb-4 mx-5">
-                          <label for="card" >التاريخ</label>
+                          <label for="card" class="text-gray-800 dark:text-gray-100">التاريخ</label>
                           <input
                           id="card"
                           type="date"
@@ -92,7 +92,7 @@ const restform = () => {
                         </div>
 
                         <div v-if="showTagSelect" className="mb-4 mx-5 lg:col-span-2">
-                          <label for="tag_select" class="dark:text-gray-200">التاغ</label>
+                          <label for="tag_select" class="text-gray-800 dark:text-gray-100">التاغ</label>
                           <input v-if="!tagOptions.length" id="tag_select" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.tag" placeholder="اختياري" />
                           <select v-else id="tag_select" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.tag">
                             <option value="">— بدون تاغ —</option>
@@ -102,19 +102,19 @@ const restform = () => {
 
                         <template v-if="showExtendedFields">
                           <div className="mb-4 mx-5">
-                            <label for="cars_count" class="dark:text-gray-200">عدد السيارات</label>
+                            <label for="cars_count" class="text-gray-800 dark:text-gray-100">عدد السيارات</label>
                             <input id="cars_count" type="number" min="0" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.cars_count" />
                           </div>
                           <div className="mb-4 mx-5">
-                            <label for="cmr" class="dark:text-gray-200">رقم CMR</label>
+                            <label for="cmr" class="text-gray-800 dark:text-gray-100">رقم CMR</label>
                             <input id="cmr" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.cmr" />
                           </div>
                           <div className="mb-4 mx-5">
-                            <label for="driver_name" class="dark:text-gray-200">اسم السائق</label>
+                            <label for="driver_name" class="text-gray-800 dark:text-gray-100">اسم السائق</label>
                             <input id="driver_name" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.driver_name" />
                           </div>
                           <div className="mb-4 mx-5">
-                            <label for="entry_date" class="dark:text-gray-200">تاريخ الدخول</label>
+                            <label for="entry_date" class="text-gray-800 dark:text-gray-100">تاريخ الدخول</label>
                             <input id="entry_date" type="date" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.entry_date" />
                           </div>
                         </template>
@@ -174,7 +174,6 @@ const restform = () => {
     margin: 0px auto;
     padding: 20px 24px;
     padding-bottom: 20px;
-    background-color: #fff;
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
     transition: all 0.3s ease;

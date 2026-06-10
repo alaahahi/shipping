@@ -1,6 +1,8 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { buildWalletTransactionNote } from '@/utils/walletTransactionNote';
 
+const emit = defineEmits(['a', 'close']);
 
 const props = defineProps({
   show: Boolean,
@@ -8,9 +10,13 @@ const props = defineProps({
   sum_transactions: Intl,
   sum_transactions_dinar: Intl,
   tagOptions: { type: Array, default: () => [] },
+  driverSuggestions: { type: Array, default: () => [] },
   showExtendedFields: { type: Boolean, default: false },
   showTagSelect: { type: Boolean, default: false },
 });
+
+const noteManuallyEdited = ref(false);
+
 const form = ref({
   id: props.boxes?.id,
   date: getTodayDate(),
@@ -19,7 +25,48 @@ const form = ref({
   driver_name: '',
   entry_date: '',
   tag: '',
+  note: '',
 });
+
+const composedNote = computed(() => {
+  if (!props.showExtendedFields) {
+    return '';
+  }
+  return buildWalletTransactionNote(form.value);
+});
+
+watch(composedNote, (val) => {
+  if (!props.showExtendedFields || noteManuallyEdited.value) {
+    return;
+  }
+  form.value.note = val;
+});
+
+watch(
+  () => props.show,
+  (open) => {
+    if (open) {
+      noteManuallyEdited.value = false;
+    }
+  }
+);
+
+function onNoteInput() {
+  noteManuallyEdited.value = true;
+}
+
+function submitForm() {
+  const payload = { ...form.value };
+  if (props.showExtendedFields) {
+    const built = buildWalletTransactionNote(payload);
+    if (built) {
+      payload.note = built;
+    }
+  }
+  emit('a', payload);
+  restform();
+}
+
 function getTodayDate() {
   const today = new Date();
   const year = today.getFullYear();
@@ -27,7 +74,9 @@ function getTodayDate() {
   const day = String(today.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+
 const restform = () => {
+  noteManuallyEdited.value = false;
   form.value = {
     id: props.boxes?.id,
     date: getTodayDate(),
@@ -36,9 +85,9 @@ const restform = () => {
     driver_name: '',
     entry_date: '',
     tag: '',
+    note: '',
   };
 };
-
 
 </script>
   
@@ -46,49 +95,41 @@ const restform = () => {
     <Transition name="modal">
       <div v-if="show" class="modal-mask">
         <div class="modal-wrapper">
-          <div class="modal-container">
-            <div class="modal-header">
+          <div class="modal-container bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+            <div class="modal-header text-gray-900 dark:text-gray-100">
               <slot name="header"></slot>
             </div>
-            <div class="modal-body">
+            <div class="modal-body text-gray-800 dark:text-gray-200">
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="mb-4 mx-5">
-                        <label for="amountDollar" >المبلغ بالدولار</label>
+                        <label for="amountDollar" class="text-gray-800 dark:text-gray-100">المبلغ بالدولار</label>
                         <input
                           id="amountDollar"
                           type="number"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.amountDollar" />
                         </div>
                         <div className="mb-4 mx-5">
-                        <label for="amountDinar" >المبلغ بالدينار العراقي</label>
+                        <label for="amountDinar" class="text-gray-800 dark:text-gray-100">المبلغ بالدينار العراقي</label>
                         <input
                           id="amountDinar"
                           type="number"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.amountDinar" />
                         </div>
                         <div className="mb-4 mx-5">
-                        <label for="note" >ملاحظة</label>
-                        <input
-                          id="note"
-                          type="text"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                          v-model="form.note" />
-                        </div>
-                        <div className="mb-4 mx-5">
-                          <label for="card" >التاريخ</label>
+                          <label for="card" class="text-gray-800 dark:text-gray-100">التاريخ</label>
                           <input
                           id="card"
                           type="date"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.date"   />
                         </div>
 
                         <div v-if="showTagSelect" className="mb-4 mx-5 lg:col-span-2">
-                          <label for="tag_select" class="dark:text-gray-200">التاغ</label>
-                          <input v-if="!tagOptions.length" id="tag_select" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.tag" placeholder="اختياري" />
-                          <select v-else id="tag_select" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.tag">
+                          <label for="tag_select" class="text-gray-800 dark:text-gray-100">التاغ</label>
+                          <input v-if="!tagOptions.length" id="tag_select" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md shadow-sm" v-model="form.tag" placeholder="اختياري" />
+                          <select v-else id="tag_select" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md shadow-sm" v-model="form.tag">
                             <option value="">— بدون تاغ —</option>
                             <option v-for="t in tagOptions" :key="t.id" :value="t.name">{{ t.name }}</option>
                           </select>
@@ -96,22 +137,45 @@ const restform = () => {
 
                         <template v-if="showExtendedFields">
                           <div className="mb-4 mx-5">
-                            <label for="cars_count" class="dark:text-gray-200">عدد السيارات</label>
-                            <input id="cars_count" type="number" min="0" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.cars_count" />
+                            <label for="driver_name" class="text-gray-800 dark:text-gray-100">اسم السائق</label>
+                            <input
+                              id="driver_name"
+                              type="text"
+                              list="wallet_driver_suggestions"
+                              autocomplete="off"
+                              class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md shadow-sm"
+                              v-model="form.driver_name"
+                            />
+                            <datalist id="wallet_driver_suggestions">
+                              <option v-for="name in driverSuggestions" :key="name" :value="name" />
+                            </datalist>
                           </div>
                           <div className="mb-4 mx-5">
-                            <label for="cmr" class="dark:text-gray-200">رقم CMR</label>
-                            <input id="cmr" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.cmr" />
+                            <label for="cmr" class="text-gray-800 dark:text-gray-100">رقم CMR</label>
+                            <input id="cmr" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md shadow-sm" v-model="form.cmr" />
                           </div>
                           <div className="mb-4 mx-5">
-                            <label for="driver_name" class="dark:text-gray-200">اسم السائق</label>
-                            <input id="driver_name" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.driver_name" />
+                            <label for="cars_count" class="text-gray-800 dark:text-gray-100">عدد السيارات</label>
+                            <input id="cars_count" type="number" min="0" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md shadow-sm" v-model="form.cars_count" />
                           </div>
                           <div className="mb-4 mx-5">
-                            <label for="entry_date" class="dark:text-gray-200">تاريخ الدخول</label>
-                            <input id="entry_date" type="date" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.entry_date" />
+                            <label for="entry_date" class="text-gray-800 dark:text-gray-100">تاريخ الدخول</label>
+                            <input id="entry_date" type="date" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md shadow-sm" v-model="form.entry_date" />
                           </div>
                         </template>
+
+                        <div className="mb-4 mx-5" :class="showExtendedFields ? 'lg:col-span-2' : ''">
+                        <label for="note" class="text-gray-800 dark:text-gray-100">الوصف / ملاحظة</label>
+                        <input
+                          id="note"
+                          type="text"
+                          class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          v-model="form.note"
+                          @input="onNoteInput" />
+                        <p v-if="showExtendedFields && composedNote" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          يُحدَّث تلقائياً من بيانات السائق والشحنة
+                        </p>
+                        </div>
                         </div>
             </div>
   
@@ -122,7 +186,7 @@ const restform = () => {
                     @click="$emit('close');">تراجع</button>
                   </div>
               <div class="basis-1/2 px-4">
-                <button class="modal-default-button py-3  bg-rose-500 rounded col-6"  @click="$emit('a',form);restform();"  >نعم</button>
+                <button class="modal-default-button py-3  bg-rose-500 rounded col-6" @click="submitForm">نعم</button>
                 </div>
 
             </div>
@@ -166,7 +230,6 @@ const restform = () => {
     margin: 0px auto;
     padding: 20px 24px;
     padding-bottom: 20px;
-    background-color: #fff;
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
     transition: all 0.3s ease;

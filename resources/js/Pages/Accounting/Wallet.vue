@@ -134,15 +134,36 @@ function loadTagOptionsIfNeeded() {
   }).catch(() => {});
 }
 
-function openAddSales() {
+function prepareWalletModalData() {
   loadTagOptionsIfNeeded();
+  loadDriversSummary();
+}
+
+const driverSuggestions = computed(() => {
+  const names = new Set();
+  driversSummary.value.forEach((row) => {
+    if (row.driver_name && row.driver_name !== '—') {
+      names.add(row.driver_name);
+    }
+  });
+  transactions.value.forEach((tran) => {
+    const name = tran.details?.driver_name;
+    if (name && String(name).trim()) {
+      names.add(String(name).trim());
+    }
+  });
+  return [...names].sort((a, b) => a.localeCompare(b, 'ar'));
+});
+
+function openAddSales() {
+  prepareWalletModalData();
   showModalAddSales.value = true;
 }
 function opendebtSales() {
   showModaldebtSales.value = true;
 }
 function openAddExpenses(){
-  loadTagOptionsIfNeeded();
+  prepareWalletModalData();
   showModalAddExpensesWallet.value = true;
 }
 function openAddSalesAmanah() {
@@ -606,6 +627,7 @@ function printTagDetails() {
             :show="showModalAddExpensesWallet ? true : false"
             :boxes="boxes"
             :tagOptions="tagOptions"
+            :driverSuggestions="driverSuggestions"
             :showExtendedFields="true"
             :showTagSelect="hasWalletTags"
             :sum_transactions="laravelData.sum_transactions"
@@ -881,55 +903,55 @@ function printTagDetails() {
             </div>
             <div v-if="hasWalletTags" class="mx-4 mb-4">
               <button type="button" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 mb-2" @click="loadLoanTransactions()">عرض قروض السائقين</button>
-              <div v-if="loanTransactionsLoaded" class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
-                <h4 class="font-semibold dark:text-white mb-2">قروض السائقين</h4>
+              <div v-if="loanTransactionsLoaded" class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg mb-4 bg-white dark:bg-gray-800/60">
+                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">قروض السائقين</h4>
                 <div class="overflow-x-auto">
-                  <table class="w-full text-sm text-right border dark:border-gray-700">
-                    <thead class="bg-gray-100 dark:bg-gray-700">
+                  <table class="w-full text-sm text-right text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-100">
                       <tr>
-                        <th class="px-2 py-2">رقم</th>
-                        <th class="px-2 py-2">السائق</th>
-                        <th class="px-2 py-2">التاريخ</th>
-                        <th class="px-2 py-2">المبلغ</th>
-                        <th class="px-2 py-2">تنفيذ</th>
+                        <th class="px-2 py-2 font-medium">رقم</th>
+                        <th class="px-2 py-2 font-medium">السائق</th>
+                        <th class="px-2 py-2 font-medium">التاريخ</th>
+                        <th class="px-2 py-2 font-medium">المبلغ</th>
+                        <th class="px-2 py-2 font-medium">تنفيذ</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      <tr v-for="tran in loanTransactions" :key="tran.id" class="border-b dark:border-gray-700">
-                        <td class="px-2 py-1">{{ tran.id }}</td>
-                        <td class="px-2 py-1">{{ tran.details?.driver_name || '—' }}</td>
-                        <td class="px-2 py-1">{{ formatBaghdadTimestamp(tran?.created_at) }}</td>
-                        <td class="px-2 py-1">{{ Math.abs(tran.amount) }} {{ tran.currency ?? '$' }}</td>
-                        <td class="px-2 py-1">
-                          <button type="button" class="px-2 py-1 bg-green-600 text-white rounded text-xs" @click="openRepaymentModal(tran)">تسجيل دفعة إرجاع</button>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                      <tr v-for="tran in loanTransactions" :key="tran.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/40">
+                        <td class="px-2 py-2 text-gray-800 dark:text-gray-200">{{ tran.id }}</td>
+                        <td class="px-2 py-2 text-gray-800 dark:text-gray-200">{{ tran.details?.driver_name || '—' }}</td>
+                        <td class="px-2 py-2 text-gray-800 dark:text-gray-200">{{ formatBaghdadTimestamp(tran?.created_at) }}</td>
+                        <td class="px-2 py-2 text-gray-800 dark:text-gray-200">{{ Math.abs(tran.amount) }} {{ tran.currency ?? '$' }}</td>
+                        <td class="px-2 py-2">
+                          <button type="button" class="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700" @click="openRepaymentModal(tran)">تسجيل دفعة إرجاع</button>
                         </td>
                       </tr>
                       <tr v-if="loanTransactions.length === 0">
-                        <td colspan="5" class="px-2 py-4 text-gray-400">لا توجد قروض مسجلة</td>
+                        <td colspan="5" class="px-2 py-4 text-center text-gray-500 dark:text-gray-400">لا توجد قروض مسجلة</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
             </div>
-            <div v-if="hasWalletTags && driversSummary.length" class="mx-4 mb-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-              <h4 class="font-semibold dark:text-white mb-2">مجموع التوصيلات حسب السائق</h4>
+            <div v-if="hasWalletTags && driversSummary.length" class="mx-4 mb-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/60">
+              <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">مجموع التوصيلات حسب السائق</h4>
               <div class="overflow-x-auto">
-                <table class="w-full text-sm text-right border dark:border-gray-700">
-                  <thead class="bg-gray-100 dark:bg-gray-700">
+                <table class="w-full text-sm text-right text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700">
+                  <thead class="bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-100">
                     <tr>
-                      <th class="px-2 py-2">السائق</th>
-                      <th class="px-2 py-2">عدد الحركات</th>
-                      <th class="px-2 py-2">إجمالي إيداع</th>
-                      <th class="px-2 py-2">إجمالي سحب</th>
+                      <th class="px-2 py-2 font-medium">السائق</th>
+                      <th class="px-2 py-2 font-medium">عدد الحركات</th>
+                      <th class="px-2 py-2 font-medium">إجمالي إيداع</th>
+                      <th class="px-2 py-2 font-medium">إجمالي سحب</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    <tr v-for="row in driversSummary" :key="row.driver_name" class="border-b dark:border-gray-700">
-                      <td class="px-2 py-1">{{ row.driver_name }}</td>
-                      <td class="px-2 py-1">{{ row.count }}</td>
-                      <td class="px-2 py-1">{{ row.total_in }}</td>
-                      <td class="px-2 py-1">{{ row.total_out }}</td>
+                  <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    <tr v-for="row in driversSummary" :key="row.driver_name" class="hover:bg-gray-50 dark:hover:bg-gray-700/40">
+                      <td class="px-2 py-2 text-gray-800 dark:text-gray-200 font-medium">{{ row.driver_name }}</td>
+                      <td class="px-2 py-2 text-gray-800 dark:text-gray-200">{{ row.count }}</td>
+                      <td class="px-2 py-2 text-green-700 dark:text-green-400">{{ row.total_in }}</td>
+                      <td class="px-2 py-2 text-red-700 dark:text-red-400">{{ row.total_out }}</td>
                     </tr>
                   </tbody>
                 </table>
