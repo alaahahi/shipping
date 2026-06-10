@@ -121,12 +121,12 @@ async function save() {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
+  padding: 12px 180px;
 }
 
 .modal-wrapper {
   width: 100%;
-  max-width: min(720px, 96vw);
+  max-width: min(900px, 100%);
 }
 
 .modal-container {
@@ -171,5 +171,11 @@ async function save() {
 
 :global(.dark) .wallet-select-wrap :deep(.ui.search.selection.dropdown .menu .item:hover) {
   background: rgb(55 65 81);
+}
+
+@media (max-width: 1024px) {
+  .modal-mask {
+    padding: 12px;
+  }
 }
 </style>
