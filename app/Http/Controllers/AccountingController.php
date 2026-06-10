@@ -119,13 +119,28 @@ class AccountingController extends Controller
             ->whereHas('wallet')
             ->get();
 
-        $walletUsers = User::with('wallet')
+        $clientTypeId = $this->accounting->userClient();
+        $walletUsers = User::query()
             ->where('owner_id', $owner_id)
-            ->whereIn('type_id', array_filter([
-                $this->accounting->userSelesKirkuk(),
-                $this->accounting->userCarExpenses(),
-            ]))
-            ->whereHas('wallet')
+            ->where(function ($query) use ($clientTypeId) {
+                $query->where(function ($base) {
+                    $base->where('email', '!=', 'mainBox@account.com')
+                        ->whereHas('wallet');
+                });
+                if ($clientTypeId) {
+                    $query->orWhere(function ($traders) use ($clientTypeId) {
+                        $traders->where('type_id', $clientTypeId)
+                            ->whereExists(function ($subQuery) {
+                                $subQuery->select(DB::raw(1))
+                                    ->from('transactions')
+                                    ->whereColumn('transactions.morphed_id', 'users.id')
+                                    ->where('transactions.morphed_type', User::class)
+                                    ->whereIn('transactions.type', ['inUserBox', 'outUserBox'])
+                                    ->whereNull('transactions.deleted_at');
+                            });
+                    });
+                }
+            })
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -1081,14 +1096,6 @@ class AccountingController extends Controller
 
         if ((int) $targetUser->id === (int) $mainBox->id) {
             return Response::json(['message' => 'لا يمكن إسناد الحركة إلى الصندوق نفسه'], 422);
-        }
-
-        $allowedWalletTypes = array_filter([
-            $this->accounting->userSelesKirkuk(),
-            $this->accounting->userCarExpenses(),
-        ]);
-        if (!in_array((int) $targetUser->type_id, array_map('intval', $allowedWalletTypes), true)) {
-            return Response::json(['message' => 'يمكن الإسناد إلى قاسات الموظفين فقط وليس حساب التاجر'], 422);
         }
 
         if (!$targetUser->wallet) {

@@ -25,26 +25,32 @@ const props = defineProps({
     <Transition name="modal">
       <div v-if="show" class="modal-mask ">
         <div class="modal-wrapper  max-h-[80vh]">
-          <div class="modal-container dark:bg-gray-900 overflow-auto  max-h-[80vh]">
-            <div class="modal-header">
+          <div class="modal-container bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 overflow-auto max-h-[80vh]">
+            <div class="modal-header text-gray-900 dark:text-gray-100">
               <slot name="header"></slot>
             </div>
-            <div class="modal-body">
+            <div class="modal-body text-gray-800 dark:text-gray-200">
               
-              <div class="text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
+              <div class="text-sm font-medium text-center border-b border-gray-200 dark:border-gray-700">
                   <ul class="flex flex-wrap -mb-px">
                     <li class="mr-2" @click="setActiveTab('add')">
                       <button
-                        class="inline-block p-4 border-b-2 border-transparent rounded-t-lg"
-                        :class="activeTab == 'add'?'dark:text-blue-500 dark:border-blue-500' :'hover:text-gray-600 hover:border-gray-300'"
+                        type="button"
+                        class="inline-block p-4 border-b-2 rounded-t-lg"
+                        :class="activeTab == 'add'
+                          ? 'text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
                       >
                         اضافة
                       </button>
                     </li>
                     <li class="mr-2" @click="setActiveTab('record')">
                       <button
-                        class="inline-block p-4 border-b-2 border-transparent rounded-t-lg "
-                        :class="activeTab == 'record'? 'dark:text-blue-500 dark:border-blue-500' :'hover:text-gray-600 hover:border-gray-300'"
+                        type="button"
+                        class="inline-block p-4 border-b-2 rounded-t-lg"
+                        :class="activeTab == 'record'
+                          ? 'text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
                       >
                         السجل
                       </button>
@@ -56,35 +62,35 @@ const props = defineProps({
                 <div >
                           <h1 class="text-center dark:text-gray-200 mt-4"> اضافة دفعة</h1>
                           <div className="mb-4 mx-5">
-                          <label  class="dark:text-gray-200" for="expens_amount" >{{ $t('amount') }}</label>
+                          <label class="text-gray-800 dark:text-gray-100 font-medium" for="expens_amount">{{ $t('amount') }}</label>
                           <input
                             id="expens_amount"
                             type="number"
-                            class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                            class="mt-1 block w-full border-gray-300 dark:border-gray-600 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-100"
                             v-model="formData.amount" />
                           </div>
                           <div className="mb-4 mx-5">
-                            <label  class="dark:text-gray-200" for="expenses_id">{{ $t('factor') }}</label>
+                            <label class="text-gray-800 dark:text-gray-100 font-medium" for="expenses_id">{{ $t('factor') }}</label>
                             <input
                             id="note_expens"
                             type="text"
-                            class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                            class="mt-1 block w-full border-gray-300 dark:border-gray-600 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-100"
                             v-model="formData.factor" />
                           </div>
                           <div className="mb-4 mx-5">
-                          <label  class="dark:text-gray-200" for="expens_amount" >{{ $t('result') }}</label>
+                          <label class="text-gray-800 dark:text-gray-100 font-medium" for="expens_result">{{ $t('result') }}</label>
                           <input
-                            id="expens_amount"
+                            id="expens_result"
                             type="number"
-                            class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                            class="mt-1 block w-full border-gray-300 dark:border-gray-600 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-100"
                             :value="(formData.amount / formData.factor).toFixed(1)" />
                           </div>
                           <div className="mb-4 mx-5">
-                          <label  class="dark:text-gray-200" for="note" >{{ $t('note') }} </label>
+                          <label class="text-gray-800 dark:text-gray-100 font-medium" for="note">{{ $t('note') }}</label>
                           <input
                             id="note"
                             type="text"
-                            class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
+                            class="mt-1 block w-full border-gray-300 dark:border-gray-600 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-100"
                             v-model="formData.note" />
                           </div>
                         </div>
@@ -211,7 +217,6 @@ const props = defineProps({
     margin: 0px auto;
     padding: 20px  30px;
     padding-bottom: 60px;
-    background-color: #fff;
     border-radius: 2px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
     transition: all 0.3s ease;

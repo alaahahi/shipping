@@ -126,13 +126,14 @@ async function save() {
 
 .modal-wrapper {
   width: 100%;
-  max-width: 480px;
+  max-width: min(720px, 96vw);
 }
 
 .modal-container {
-  padding: 20px 24px;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
+  padding: 28px 32px;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  min-height: 280px;
 }
 
 .modal-body {
@@ -145,7 +146,12 @@ async function save() {
 
 .wallet-select-wrap :deep(.ui.search.selection.dropdown) {
   width: 100%;
-  min-height: 2.5rem;
+  min-height: 3rem;
+  font-size: 1rem;
+}
+
+.wallet-select-wrap :deep(.ui.search.selection.dropdown .menu) {
+  max-height: 320px;
 }
 
 :global(.dark) .wallet-select-wrap :deep(.ui.search.selection.dropdown) {

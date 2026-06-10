@@ -40,46 +40,46 @@ const restform =()=>{
     <Transition name="modal">
       <div v-if="show" class="modal-mask">
         <div class="modal-wrapper">
-          <div class="modal-container">
-            <div class="modal-header">
+          <div class="modal-container bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+            <div class="modal-header text-gray-900 dark:text-gray-100">
               <slot name="header"></slot>
             </div>
-            <div class="modal-body">
+            <div class="modal-body text-gray-800 dark:text-gray-200">
                
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="mb-4 mx-5">
-                        <label for="amountDollar" >المبلغ بالدولار</label>
+                        <label for="amountDollar" class="text-gray-800 dark:text-gray-100 font-medium">المبلغ بالدولار</label>
                         <input
                           id="amountDollar"
                           type="number"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.amountDollar" />
                         </div>
                         <div className="mb-4 mx-5">
-                        <label for="amountDinar" >المبلغ بالدينار العراقي</label>
+                        <label for="amountDinar" class="text-gray-800 dark:text-gray-100 font-medium">المبلغ بالدينار العراقي</label>
                         <input
                           id="amountDinar"
                           type="number"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.amountDinar" />
                         </div>
                        
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="mb-4 mx-5">
-                          <label for="card" >التاريخ</label>
+                          <label for="card" class="text-gray-800 dark:text-gray-100 font-medium">التاريخ</label>
                           <input
                           id="card"
                           type="date"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.date"   />
                         </div>
                         <div className="mb-4 mx-5">
-                        <label for="note" >ملاحظة</label>
+                        <label for="note" class="text-gray-800 dark:text-gray-100 font-medium">ملاحظة</label>
                         <input
                           id="note"
                           type="text"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.note" />
                         </div>
                         </div>
@@ -136,7 +136,6 @@ const restform =()=>{
     margin: 0px auto;
     padding: 20px 24px;
     padding-bottom: 20px;
-    background-color: #fff;
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
     transition: all 0.3s ease;

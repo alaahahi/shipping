@@ -688,7 +688,7 @@ function getOrangeColorClass(index) {
             @close="showModalAddExpenses = false"
             >
           <template #header>
-            <h3 class="text-center">ادخال مصاريف</h3>
+            <h3 class="text-center text-gray-900 dark:text-gray-100 font-semibold">ادخال مصاريف</h3>
             
            </template>
       </ModalAddExpenses>

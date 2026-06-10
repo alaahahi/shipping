@@ -222,7 +222,7 @@ const restform = () => {
   
   .modal-wrapper {
     width: 100%;
-    max-width: 560px;
+    max-width: min(720px, 96vw);
     margin: auto;
   }
   
@@ -232,10 +232,10 @@ const restform = () => {
     display: flex;
     flex-direction: column;
     margin: 0px auto;
-    padding: 20px 24px;
-    padding-bottom: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
+    padding: 28px 32px;
+    padding-bottom: 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
     transition: all 0.3s ease;
   }
   
