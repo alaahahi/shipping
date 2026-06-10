@@ -185,7 +185,11 @@ function openModalUploader(tran){
 }
 
 function canAssignToWallet(tran) {
-  if (!tran || tran.parent_id) {
+  if (!tran) {
+    return false;
+  }
+  const parentId = Number(tran.parent_id ?? 0);
+  if (parentId > 0) {
     return false;
   }
   return tran.type === 'debt' || tran.type === 'out';
@@ -1224,12 +1228,13 @@ function getOrangeColorClass(index) {
 }
 
 .action-btn--wallet {
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   width: auto;
-  min-width: 2.5rem;
-  padding: 0 0.45rem;
-  font-size: 0.62rem;
+  min-width: 3rem;
+  padding: 0 0.5rem;
+  font-size: 0.7rem;
   font-weight: 700;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
 }
 
 .account-link {
