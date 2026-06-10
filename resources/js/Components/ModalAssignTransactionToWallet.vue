@@ -1,6 +1,8 @@
 <script setup>
 import { ref, watch } from 'vue';
 import axios from 'axios';
+import { ModelListSelect } from 'vue-search-select';
+import 'vue-search-select/dist/VueSearchSelect.css';
 
 const props = defineProps({
   show: Boolean,
@@ -59,20 +61,18 @@ async function save() {
               حركة رقم <strong>{{ transaction.id }}</strong>
               — {{ Math.abs(transaction.amount) }} {{ transaction.currency ?? '$' }}
             </p>
-            <div class="mb-4">
+            <div class="mb-4 wallet-select-wrap">
               <label for="wallet_user_id" class="block text-sm font-medium text-gray-800 dark:text-gray-100 mb-1">
                 إسناد إلى قاسة
               </label>
-              <select
+              <ModelListSelect
                 id="wallet_user_id"
                 v-model="selectedUserId"
-                class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md shadow-sm"
-              >
-                <option value="">— اختر القاسة —</option>
-                <option v-for="user in walletUsers" :key="user.id" :value="user.id">
-                  {{ user.name }}
-                </option>
-              </select>
+                :list="walletUsers"
+                option-value="id"
+                option-text="name"
+                placeholder="ابحث عن القاسة..."
+              />
             </div>
             <p class="text-xs text-gray-500 dark:text-gray-400">
               ستُحوَّل الحركة لتظهر كسحب من القاسة المختارة (مثل وصل الصرف من القاسة) مع بقاء خصم الصندوق كما هو.
@@ -141,5 +141,29 @@ async function save() {
 
 .modal-default-button {
   color: #fff;
+}
+
+.wallet-select-wrap :deep(.ui.search.selection.dropdown) {
+  width: 100%;
+  min-height: 2.5rem;
+}
+
+:global(.dark) .wallet-select-wrap :deep(.ui.search.selection.dropdown) {
+  background: rgb(55 65 81);
+  color: rgb(243 244 246);
+  border-color: rgb(75 85 99);
+}
+
+:global(.dark) .wallet-select-wrap :deep(.ui.search.selection.dropdown .menu) {
+  background: rgb(31 41 55);
+  color: rgb(243 244 246);
+}
+
+:global(.dark) .wallet-select-wrap :deep(.ui.search.selection.dropdown .menu .item) {
+  color: rgb(243 244 246);
+}
+
+:global(.dark) .wallet-select-wrap :deep(.ui.search.selection.dropdown .menu .item:hover) {
+  background: rgb(55 65 81);
 }
 </style>

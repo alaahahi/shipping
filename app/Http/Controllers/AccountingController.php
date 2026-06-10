@@ -121,7 +121,10 @@ class AccountingController extends Controller
 
         $walletUsers = User::with('wallet')
             ->where('owner_id', $owner_id)
-            ->where('email', '!=', 'mainBox@account.com')
+            ->whereIn('type_id', array_filter([
+                $this->accounting->userSelesKirkuk(),
+                $this->accounting->userCarExpenses(),
+            ]))
             ->whereHas('wallet')
             ->orderBy('name')
             ->get(['id', 'name']);
@@ -1078,6 +1081,14 @@ class AccountingController extends Controller
 
         if ((int) $targetUser->id === (int) $mainBox->id) {
             return Response::json(['message' => 'لا يمكن إسناد الحركة إلى الصندوق نفسه'], 422);
+        }
+
+        $allowedWalletTypes = array_filter([
+            $this->accounting->userSelesKirkuk(),
+            $this->accounting->userCarExpenses(),
+        ]);
+        if (!in_array((int) $targetUser->type_id, array_map('intval', $allowedWalletTypes), true)) {
+            return Response::json(['message' => 'يمكن الإسناد إلى قاسات الموظفين فقط وليس حساب التاجر'], 422);
         }
 
         if (!$targetUser->wallet) {
