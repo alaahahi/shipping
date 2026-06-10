@@ -127,13 +127,22 @@ const getResults = async ($state) => {
 };
  
 
+function loadTagOptionsIfNeeded() {
+  if (!hasWalletTags.value) return;
+  axios.get('/api/paymentTags').then((r) => {
+    tagOptions.value = r.data || [];
+  }).catch(() => {});
+}
+
 function openAddSales() {
+  loadTagOptionsIfNeeded();
   showModalAddSales.value = true;
 }
 function opendebtSales() {
   showModaldebtSales.value = true;
 }
 function openAddExpenses(){
+  loadTagOptionsIfNeeded();
   showModalAddExpensesWallet.value = true;
 }
 function openAddSalesAmanah() {
@@ -148,9 +157,29 @@ function openConvertDollarDinar(){
 function openConvertDinarDollar(){
   showModalConvertDinarDollar.value = true;
 }
+function isAmanahTransaction(tran) {
+  return tran?.type === 'inUserAmanah' || tran?.type === 'outUserAmanah';
+}
+
 function openModalDel(tran){
+  if (isAmanahTransaction(tran)) {
+    deleteAmanahTransaction(tran);
+    return;
+  }
   tranId.value = tran
   showModalDel.value = true;
+}
+
+function deleteAmanahTransaction(tran) {
+  axios.post(`/api/delTransactions?id=${tran.id}`)
+    .then(() => {
+      transactions.value = transactions.value.filter((t) => t.id !== tran.id);
+      showModalEditTransaction.value = false;
+      refresh();
+    })
+    .catch((error) => {
+      console.error(error);
+    });
 }
 function openModalUploader(tran){
   tranId.value = tran
@@ -223,8 +252,7 @@ function confirmdebt(V) {
   .then(response => {
     showModaldebtSales.value=false;
     showModalAddExpensesWallet.value = false;
-    window.location.reload();
-
+    refresh();
   })
   .catch(error => {
 
@@ -246,8 +274,7 @@ function confirmdebtAmanah(V) {
   axios.post('/api/salesDebtUserAmanah',V)
   .then(response => {
     showModaldebtSalesAmanah.value=false;
-    window.location.reload();
-
+    refresh();
   })
   .catch(error => {
 
@@ -564,7 +591,8 @@ function printTagDetails() {
     <ModalAddSales
             :show="showModalAddSales ? true : false"
             :tagOptions="tagOptions"
-            :showExtendedFields="hasWalletTags"
+            :showExtendedFields="false"
+            :showTagSelect="hasWalletTags"
             @a="confirm($event)"
             @close="showModalAddSales = false"
             >
@@ -577,6 +605,9 @@ function printTagDetails() {
       <ModalAddExpensesWallet 
             :show="showModalAddExpensesWallet ? true : false"
             :boxes="boxes"
+            :tagOptions="tagOptions"
+            :showExtendedFields="true"
+            :showTagSelect="hasWalletTags"
             :sum_transactions="laravelData.sum_transactions"
             :sum_transactions_dinar="laravelData.sum_transactions_dinar"
             @a="confirmdebt($event)"
@@ -590,7 +621,7 @@ function printTagDetails() {
       <ModalAddSales
             :show="showModalAddSalesAmanah ? true : false"
             :tagOptions="tagOptions"
-            :showExtendedFields="hasWalletTags"
+            :showExtendedFields="false"
             @a="confirmAmanah($event)"
             @close="showModalAddSalesAmanah = false"
             >
@@ -1041,8 +1072,8 @@ function printTagDetails() {
                       </a>
                       <button 
                         class="action-btn action-btn--delete"
-                        @click="openModalDel(tran)" 
-                        title="حذف الحركة"
+                        @click="isAmanahTransaction(tran) ? deleteAmanahTransaction(tran) : openModalDel(tran)" 
+                        :title="isAmanahTransaction(tran) ? 'حذف الأمانة' : 'حذف الحركة'"
                       >
                         <trash />
                       </button>

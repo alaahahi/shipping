@@ -8,7 +8,8 @@ const props = defineProps({
   data: Array,
   accounts: Array,
   tagOptions: { type: Array, default: () => [] },
-  showExtendedFields: { type: Boolean, default: true },
+  showExtendedFields: { type: Boolean, default: false },
+  showTagSelect: { type: Boolean, default: false },
 });
 const form = ref({
   date: getTodayDate(),
@@ -90,6 +91,15 @@ const restform = () => {
                           v-model="form.date"   />
                         </div>
 
+                        <div v-if="showTagSelect" className="mb-4 mx-5 lg:col-span-2">
+                          <label for="tag_select" class="dark:text-gray-200">التاغ</label>
+                          <input v-if="!tagOptions.length" id="tag_select" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.tag" placeholder="اختياري" />
+                          <select v-else id="tag_select" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.tag">
+                            <option value="">— بدون تاغ —</option>
+                            <option v-for="t in tagOptions" :key="t.id" :value="t.name">{{ t.name }}</option>
+                          </select>
+                        </div>
+
                         <template v-if="showExtendedFields">
                           <div className="mb-4 mx-5">
                             <label for="cars_count" class="dark:text-gray-200">عدد السيارات</label>
@@ -106,14 +116,6 @@ const restform = () => {
                           <div className="mb-4 mx-5">
                             <label for="entry_date" class="dark:text-gray-200">تاريخ الدخول</label>
                             <input id="entry_date" type="date" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.entry_date" />
-                          </div>
-                          <div className="mb-4 mx-5 lg:col-span-2">
-                            <label for="tag" class="dark:text-gray-200">التاغ</label>
-                            <input v-if="!tagOptions.length" id="tag" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.tag" placeholder="اختياري" />
-                            <select v-else id="tag" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.tag">
-                              <option value="">— بدون تاغ —</option>
-                              <option v-for="t in tagOptions" :key="t.id" :value="t.name">{{ t.name }}</option>
-                            </select>
                           </div>
                         </template>
 

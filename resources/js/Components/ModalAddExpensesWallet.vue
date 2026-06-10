@@ -5,13 +5,20 @@ import { ref, watch } from 'vue';
 const props = defineProps({
   show: Boolean,
   boxes: Array,
-  sum_transactions:Intl,
-  sum_transactions_dinar:Intl,
-
+  sum_transactions: Intl,
+  sum_transactions_dinar: Intl,
+  tagOptions: { type: Array, default: () => [] },
+  showExtendedFields: { type: Boolean, default: false },
+  showTagSelect: { type: Boolean, default: false },
 });
 const form = ref({
-  id:props.boxes.id,
-  date:getTodayDate(),
+  id: props.boxes?.id,
+  date: getTodayDate(),
+  cars_count: '',
+  cmr: '',
+  driver_name: '',
+  entry_date: '',
+  tag: '',
 });
 function getTodayDate() {
   const today = new Date();
@@ -20,12 +27,17 @@ function getTodayDate() {
   const day = String(today.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
-const restform =()=>{
+const restform = () => {
   form.value = {
-  id:props.boxes.id,
-  date:getTodayDate(),
+    id: props.boxes?.id,
+    date: getTodayDate(),
+    cars_count: '',
+    cmr: '',
+    driver_name: '',
+    entry_date: '',
+    tag: '',
+  };
 };
-}
 
 
 </script>
@@ -72,6 +84,34 @@ const restform =()=>{
                           class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.date"   />
                         </div>
+
+                        <div v-if="showTagSelect" className="mb-4 mx-5 lg:col-span-2">
+                          <label for="tag_select" class="dark:text-gray-200">التاغ</label>
+                          <input v-if="!tagOptions.length" id="tag_select" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.tag" placeholder="اختياري" />
+                          <select v-else id="tag_select" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.tag">
+                            <option value="">— بدون تاغ —</option>
+                            <option v-for="t in tagOptions" :key="t.id" :value="t.name">{{ t.name }}</option>
+                          </select>
+                        </div>
+
+                        <template v-if="showExtendedFields">
+                          <div className="mb-4 mx-5">
+                            <label for="cars_count" class="dark:text-gray-200">عدد السيارات</label>
+                            <input id="cars_count" type="number" min="0" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.cars_count" />
+                          </div>
+                          <div className="mb-4 mx-5">
+                            <label for="cmr" class="dark:text-gray-200">رقم CMR</label>
+                            <input id="cmr" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.cmr" />
+                          </div>
+                          <div className="mb-4 mx-5">
+                            <label for="driver_name" class="dark:text-gray-200">اسم السائق</label>
+                            <input id="driver_name" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.driver_name" />
+                          </div>
+                          <div className="mb-4 mx-5">
+                            <label for="entry_date" class="dark:text-gray-200">تاريخ الدخول</label>
+                            <input id="entry_date" type="date" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" v-model="form.entry_date" />
+                          </div>
+                        </template>
                         </div>
             </div>
   

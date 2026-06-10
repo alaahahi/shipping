@@ -353,15 +353,22 @@ class AccountingController extends Controller
       $user=  User::with('wallet')->find($user_id);
       $desc="وصل سحب مباشر"." ".' قاسه'.' '.$user->name.' '.$note;
       $date= $request->date??0;
+      $details = array_filter([
+          'cars_count' => $request->input('cars_count'),
+          'cmr' => $request->input('cmr'),
+          'driver_name' => $request->input('driver_name'),
+          'entry_date' => $request->input('entry_date'),
+      ], function ($v) { return $v !== null && $v !== ''; });
+      $tag = $request->input('tag') ? trim($request->input('tag')) : null;
       if($amountDollar){
         $transactiond=$this->debtWallet($amountDollar,$desc,$this->accounting->mainBox()->id,$user_id,'App\Models\User',0,0,'$',$date,0,'outUserBox');
-        $transactionDetilsd = ['type' => 'outUser','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDollar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'$','parent_id'=>$transactiond->id];
+        $transactionDetilsd = ['type' => 'outUser','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDollar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'$','parent_id'=>$transactiond->id,'details'=>$details,'tag'=>$tag];
         $transaction = Transactions::create($transactionDetilsd);
       }
       if($amountDinar)
       {
         $transactionq=$this->debtWallet($amountDinar,$desc,$this->accounting->mainBox()->id,$user_id,'App\Models\User',0,0,'IQD',$date,0,'outUserBox');
-        $transactionDetilsq = ['type' => 'outUser','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDinar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'IQD','parent_id'=>$transactionq->id];
+        $transactionDetilsq = ['type' => 'outUser','wallet_id'=>$user->wallet->id,'description'=>$desc,'amount'=>$amountDinar,'is_pay'=>1,'morphed_id'=>$user_id,'morphed_type'=>'App\Models\User','user_added'=>0,'created'=>$date,'discount'=>0,'currency'=>'IQD','parent_id'=>$transactionq->id,'details'=>$details,'tag'=>$tag];
         $transaction = Transactions::create($transactionDetilsq);
       }
       return Response::json($request, 200);
@@ -1316,14 +1323,26 @@ class AccountingController extends Controller
         $this->accounting->loadAccounts(Auth::user()->owner_id);
         $owner_id=Auth::user()->owner_id;
         $transaction_id = $request->id ?? 0;
-        $originalTransaction = Transactions::find($transaction_id);
-        $wallet_id=$originalTransaction->wallet_id;
-        $refundTransaction = 'مرتجع حذف حركة';
-
-        $wallet=Wallet::find($wallet_id);
+        $originalTransaction = Transactions::with('TransactionsImages')->find($transaction_id);
         if (!$originalTransaction) {
           return response()->json(['message' => 'Transaction not found'], 404);
-          }
+        }
+
+        if (in_array($originalTransaction->type, ['inUserAmanah', 'outUserAmanah'], true)) {
+            foreach ($originalTransaction->TransactionsImages as $transactionsImage) {
+                File::delete(public_path('uploads/' . $transactionsImage->name));
+                File::delete(public_path('uploadsResized/' . $transactionsImage->name));
+                $transactionsImage->delete();
+            }
+            $originalTransaction->delete();
+            return response()->json(['message' => 'deleted'], 200);
+        }
+
+        $wallet_id=$originalTransaction->wallet_id;
+        $refundTransaction = 'مرتجع حذف حركة';
+        $firstTransaction = null;
+
+        $wallet=Wallet::find($wallet_id);
         if($originalTransaction->currency=='$'){
             if($originalTransaction->type=='inUserBox' || $originalTransaction->type=='outUserBox')
             {
@@ -1431,7 +1450,7 @@ class AccountingController extends Controller
         if ($this->accounting->dubai() && $this->accounting->dubai()->wallet) {
             $walletExpensesIds[] = $this->accounting->dubai()->wallet->id;
         }
-        if (in_array($wallet_id, $walletExpensesIds)) {
+        if ($firstTransaction && in_array($wallet_id, $walletExpensesIds)) {
             $expenses = Expenses::where('transaction_id',$firstTransaction->id);
             $expenses->delete();
         }
@@ -1448,7 +1467,7 @@ class AccountingController extends Controller
         if ($this->accounting->debtOnlineContractsDinar() && $this->accounting->debtOnlineContractsDinar()->wallet) {
             $walletContractsIds[] = $this->accounting->debtOnlineContractsDinar()->wallet->id;
         }
-        if (in_array($wallet_id, $walletContractsIds)) {
+        if ($firstTransaction && in_array($wallet_id, $walletContractsIds)) {
             $refundTransaction = 'مرتجع حذف حركة';
             $contract = Contract::where('car_id',$firstTransaction->morphed_id)->first();
             if($firstTransaction->currency=='$'){

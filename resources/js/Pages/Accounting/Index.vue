@@ -620,6 +620,7 @@ function getOrangeColorClass(index) {
             :show="showModalAddSales ? true : false"
             :data="users"
             :accounts="accounts"
+            :showExtendedFields="false"
             @a="confirm($event)"
             @close="showModalAddSales = false"
             >
