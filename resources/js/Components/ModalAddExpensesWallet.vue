@@ -28,15 +28,19 @@ const form = ref({
   note: '',
 });
 
+const shouldAutoComposeNote = computed(
+  () => props.showExtendedFields || props.showTagSelect
+);
+
 const composedNote = computed(() => {
-  if (!props.showExtendedFields) {
+  if (!shouldAutoComposeNote.value) {
     return '';
   }
   return buildWalletTransactionNote(form.value);
 });
 
 watch(composedNote, (val) => {
-  if (!props.showExtendedFields || noteManuallyEdited.value) {
+  if (!shouldAutoComposeNote.value || noteManuallyEdited.value) {
     return;
   }
   form.value.note = val;
@@ -57,7 +61,7 @@ function onNoteInput() {
 
 function submitForm() {
   const payload = { ...form.value };
-  if (props.showExtendedFields) {
+  if (shouldAutoComposeNote.value) {
     const built = buildWalletTransactionNote(payload);
     if (built) {
       payload.note = built;
@@ -172,8 +176,8 @@ const restform = () => {
                           class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                           v-model="form.note"
                           @input="onNoteInput" />
-                        <p v-if="showExtendedFields && composedNote" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                          يُحدَّث تلقائياً من بيانات السائق والشحنة
+                        <p v-if="shouldAutoComposeNote && composedNote" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          يُحدَّث تلقائياً من بيانات السائق والشحنة والتاغ
                         </p>
                         </div>
                         </div>

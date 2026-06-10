@@ -7,6 +7,7 @@ export function buildWalletTransactionNote(fields = {}) {
   const cmr = fields.cmr != null ? String(fields.cmr).trim() : '';
   const carsCount = fields.cars_count;
   const entryDate = fields.entry_date != null ? String(fields.entry_date).trim() : '';
+  const tag = fields.tag != null ? String(fields.tag).trim() : '';
 
   if (driver) {
     parts.push(`سائق: ${driver}`);
@@ -19,6 +20,9 @@ export function buildWalletTransactionNote(fields = {}) {
   }
   if (entryDate) {
     parts.push(`دخول: ${entryDate}`);
+  }
+  if (tag) {
+    parts.push(`تاغ: ${tag}`);
   }
 
   return parts.join(' | ');
