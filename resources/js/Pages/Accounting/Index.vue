@@ -17,6 +17,7 @@ import ModalConvertDollarDinar from "@/Components/ModalConvertDollarDinar.vue";
 import ModalConvertDinarDollar from "@/Components/ModalConvertDinarDollar.vue";
 import ModalDel from "@/Components/ModalDel.vue";
 import ModalUploader from "@/Components/ModalUploader.vue";
+import ModalAssignTransactionToWallet from "@/Components/ModalAssignTransactionToWallet.vue";
 
 
 
@@ -45,6 +46,8 @@ let showModalAddExpensesToMainBransh = ref(false);
 let showModalExpensesFromOtherBransh = ref(false);
 let showModalDel = ref(false);
 let showModalUploader = ref(false);
+let showModalAssignToWallet = ref(false);
+let tranForAssignWallet = ref(null);
 let transactions= ref([]);
 let expenses_type_id = ref(0);
 let tranId =ref({});
@@ -181,12 +184,34 @@ function openModalUploader(tran){
   showModalUploader.value = true;
 }
 
+function canAssignToWallet(tran) {
+  if (!tran || tran.parent_id) {
+    return false;
+  }
+  return tran.type === 'debt' || tran.type === 'out';
+}
+
+function openAssignToWalletModal(tran) {
+  tranForAssignWallet.value = tran;
+  showModalAssignToWallet.value = true;
+}
+
+function onAssignToWalletSaved() {
+  showModalAssignToWallet.value = false;
+  tranForAssignWallet.value = null;
+  refresh();
+}
+
 const props = defineProps({
   url: String,
   users:Array,
   accounts:Array,
   boxes:Array,
   flaggedWallets: {
+    type: Array,
+    default: () => []
+  },
+  walletUsers: {
     type: Array,
     default: () => []
   },
@@ -553,6 +578,18 @@ function getOrangeColorClass(index) {
     <template #header>
  
     </template>
+    <ModalAssignTransactionToWallet
+      :show="showModalAssignToWallet"
+      :transaction="tranForAssignWallet"
+      :wallet-users="walletUsers"
+      @saved="onAssignToWalletSaved"
+      @close="showModalAssignToWallet = false; tranForAssignWallet = null"
+    >
+      <template #header>
+        <h2 class="text-center text-lg font-semibold">إسناد السحب إلى قاسة</h2>
+      </template>
+    </ModalAssignTransactionToWallet>
+
     <ModalDel
             :show="showModalDel ? true : false"
             :formData="tranId"
@@ -1038,6 +1075,14 @@ function getOrangeColorClass(index) {
                         >
                           <edit class="w-4 h-4" />
                         </button>
+                        <button
+                          v-if="canAssignToWallet(tran)"
+                          class="action-btn action-btn--wallet"
+                          title="إسناد إلى قاسة"
+                          @click="openAssignToWalletModal(tran)"
+                        >
+                          قاسة
+                        </button>
                         <button class="action-btn action-btn--delete" @click="openModalDel(tran)" title="حذف الحركة">
                           <trash />
                         </button>
@@ -1176,6 +1221,15 @@ function getOrangeColorClass(index) {
 
 .action-btn--print {
   background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.action-btn--wallet {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  width: auto;
+  min-width: 2.5rem;
+  padding: 0 0.45rem;
+  font-size: 0.62rem;
+  font-weight: 700;
 }
 
 .account-link {

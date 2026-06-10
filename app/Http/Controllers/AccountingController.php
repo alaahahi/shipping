@@ -119,10 +119,18 @@ class AccountingController extends Controller
             ->whereHas('wallet')
             ->get();
 
+        $walletUsers = User::with('wallet')
+            ->where('owner_id', $owner_id)
+            ->where('email', '!=', 'mainBox@account.com')
+            ->whereHas('wallet')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         return Inertia::render('Accounting/Index', [
             'boxes'=>$boxes,
             'accounts'=>$this->accounting->mainAccount(),
-            'flaggedWallets'=>$flaggedWallets
+            'flaggedWallets'=>$flaggedWallets,
+            'walletUsers'=>$walletUsers,
         ]);
     }
     public function wallet(Request $request)
@@ -1020,6 +1028,103 @@ class AccountingController extends Controller
                 'id' => $transaction->id,
                 'description' => $transaction->description,
             ],
+        ], 200);
+    }
+
+    /**
+     * Convert a main-box withdrawal (debt/out) into a wallet withdrawal (outUserBox + outUser).
+     */
+    public function assignTransactionToWallet(Request $request)
+    {
+        $validated = $request->validate([
+            'transaction_id' => ['required', 'integer', 'exists:transactions,id'],
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+        ]);
+
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
+        $mainBox = $this->accounting->mainBox();
+        $mainBoxWalletId = $mainBox->wallet->id ?? null;
+
+        if (!$mainBoxWalletId) {
+            return Response::json(['message' => 'لم يتم العثور على صندوق المحاسبة'], 422);
+        }
+
+        $transaction = Transactions::with('wallet.user')->find($validated['transaction_id']);
+
+        if (!$transaction || (int) $transaction->wallet_id !== (int) $mainBoxWalletId) {
+            return Response::json(['message' => 'هذه الحركة ليست من صندوق المحاسبة'], 422);
+        }
+
+        if (!in_array($transaction->type, ['debt', 'out'], true)) {
+            return Response::json(['message' => 'يمكن تحويل حركات السحب من الصندوق فقط'], 422);
+        }
+
+        if ($transaction->parent_id) {
+            return Response::json(['message' => 'لا يمكن تحويل حركة مرتبطة بحركة أخرى'], 422);
+        }
+
+        if (Transactions::where('parent_id', $transaction->id)->exists()) {
+            return Response::json(['message' => 'الحركة مرتبطة مسبقاً بقاسة'], 422);
+        }
+
+        $targetUser = User::with('wallet')
+            ->where('id', $validated['user_id'])
+            ->where('owner_id', Auth::user()->owner_id)
+            ->first();
+
+        if (!$targetUser) {
+            return Response::json(['message' => 'القاسة المحددة غير موجودة'], 404);
+        }
+
+        if ((int) $targetUser->id === (int) $mainBox->id) {
+            return Response::json(['message' => 'لا يمكن إسناد الحركة إلى الصندوق نفسه'], 422);
+        }
+
+        if (!$targetUser->wallet) {
+            Wallet::create(['user_id' => $targetUser->id, 'balance' => 0, 'balance_dinar' => 0]);
+            $targetUser->load('wallet');
+        }
+
+        $amount = abs((float) $transaction->amount);
+        if ($amount <= 0) {
+            return Response::json(['message' => 'مبلغ الحركة غير صالح'], 422);
+        }
+
+        $noteSuffix = trim($transaction->description ?? '');
+        if (preg_match('/سحب\s+دفعة\s*(.*)/u', $noteSuffix, $matches)) {
+            $noteSuffix = trim($matches[1]);
+        }
+        $description = 'وصل سحب مباشر'.' '.'قاسه'.' '.$targetUser->name.($noteSuffix !== '' ? ' '.$noteSuffix : '');
+
+        DB::transaction(function () use ($transaction, $targetUser, $description, $amount) {
+            $transaction->type = 'outUserBox';
+            $transaction->morphed_id = $targetUser->id;
+            $transaction->morphed_type = User::class;
+            $transaction->description = $description;
+            $transaction->save();
+
+            Transactions::create([
+                'type' => 'outUser',
+                'wallet_id' => $targetUser->wallet->id,
+                'description' => $description,
+                'amount' => $amount,
+                'is_pay' => $transaction->is_pay,
+                'morphed_id' => $targetUser->id,
+                'morphed_type' => User::class,
+                'user_added' => 0,
+                'created' => $transaction->created,
+                'discount' => $transaction->discount ?? 0,
+                'currency' => $transaction->currency,
+                'parent_id' => $transaction->id,
+                'details' => $transaction->details,
+                'tag' => $transaction->tag,
+            ]);
+        });
+
+        return Response::json([
+            'message' => 'تم إسناد الحركة إلى القاسة بنجاح',
+            'transaction_id' => $transaction->id,
+            'wallet_user_id' => $targetUser->id,
         ], 200);
     }
 
