@@ -1077,11 +1077,11 @@ class AccountingController extends Controller
             return Response::json(['message' => 'يمكن تحويل حركات السحب من الصندوق فقط'], 422);
         }
 
-        if ($transaction->parent_id) {
+        if ((int) ($transaction->parent_id ?? 0) > 0) {
             return Response::json(['message' => 'لا يمكن تحويل حركة مرتبطة بحركة أخرى'], 422);
         }
 
-        if (Transactions::where('parent_id', $transaction->id)->exists()) {
+        if (Transactions::where('parent_id', $transaction->id)->where('type', 'outUser')->exists()) {
             return Response::json(['message' => 'الحركة مرتبطة مسبقاً بقاسة'], 422);
         }
 
@@ -1114,14 +1114,17 @@ class AccountingController extends Controller
         }
         $description = 'وصل سحب مباشر'.' '.'قاسه'.' '.$targetUser->name.($noteSuffix !== '' ? ' '.$noteSuffix : '');
 
-        DB::transaction(function () use ($transaction, $targetUser, $description, $amount) {
+        $originalCreatedAt = $transaction->created_at;
+        $originalCreated = $transaction->created;
+
+        DB::transaction(function () use ($transaction, $targetUser, $description, $amount, $originalCreatedAt, $originalCreated) {
             $transaction->type = 'outUserBox';
             $transaction->morphed_id = $targetUser->id;
             $transaction->morphed_type = User::class;
             $transaction->description = $description;
             $transaction->save();
 
-            Transactions::create([
+            $child = Transactions::create([
                 'type' => 'outUser',
                 'wallet_id' => $targetUser->wallet->id,
                 'description' => $description,
@@ -1130,13 +1133,19 @@ class AccountingController extends Controller
                 'morphed_id' => $targetUser->id,
                 'morphed_type' => User::class,
                 'user_added' => 0,
-                'created' => $transaction->created,
+                'created' => $originalCreated ?: ($originalCreatedAt ? Carbon::parse($originalCreatedAt)->format('Y-m-d') : $this->currentDate),
                 'discount' => $transaction->discount ?? 0,
                 'currency' => $transaction->currency,
                 'parent_id' => $transaction->id,
                 'details' => $transaction->details,
                 'tag' => $transaction->tag,
             ]);
+
+            if ($originalCreatedAt) {
+                $child->created_at = $originalCreatedAt;
+                $child->updated_at = $originalCreatedAt;
+                $child->save();
+            }
         });
 
         return Response::json([
