@@ -1133,20 +1133,40 @@ class AccountingController extends Controller
             return Response::json(['message' => 'مبلغ الحركة غير صالح'], 422);
         }
 
-        $noteSuffix = trim($transaction->description ?? '');
-        if (preg_match('/سحب\s+دفعة\s*(.*)/u', $noteSuffix, $matches)) {
-            $noteSuffix = trim($matches[1]);
+        $originalDescription = trim($transaction->description ?? '');
+        $genExpenseAccountUserId = $this->resolveGenExpenseAccountUserId($originalDescription);
+        $existingDetails = is_array($transaction->details) ? $transaction->details : [];
+
+        if ($genExpenseAccountUserId) {
+            // البوكسات الخمسة: إبقاء وصف المصروف الأصلي وربط الحساب بصندوق المصروف (دبي/إيران/الحدود...)
+            $description = $originalDescription;
+            $morphedId = $genExpenseAccountUserId;
+            $childDetails = array_merge($existingDetails, [
+                'gen_expense_box' => true,
+                'assigned_wallet_user_id' => $targetUser->id,
+            ]);
+        } else {
+            $noteSuffix = $originalDescription;
+            if (preg_match('/سحب\s+دفعة\s*(.*)/u', $noteSuffix, $matches)) {
+                $noteSuffix = trim($matches[1]);
+            }
+            $description = 'وصل سحب مباشر'.' '.'قاسه'.' '.$targetUser->name.($noteSuffix !== '' ? ' '.$noteSuffix : '');
+            $morphedId = $targetUser->id;
+            $childDetails = $existingDetails;
         }
-        $description = 'وصل سحب مباشر'.' '.'قاسه'.' '.$targetUser->name.($noteSuffix !== '' ? ' '.$noteSuffix : '');
 
         $originalCreatedAt = $transaction->created_at;
         $originalCreated = $transaction->created;
+        $currentDate = $this->currentDate;
 
-        DB::transaction(function () use ($transaction, $targetUser, $description, $amount, $originalCreatedAt, $originalCreated) {
+        DB::transaction(function () use ($transaction, $targetUser, $description, $amount, $originalCreatedAt, $originalCreated, $morphedId, $childDetails, $currentDate) {
             $transaction->type = 'outUserBox';
-            $transaction->morphed_id = $targetUser->id;
+            $transaction->morphed_id = $morphedId;
             $transaction->morphed_type = User::class;
             $transaction->description = $description;
+            if (!empty($childDetails)) {
+                $transaction->details = $childDetails;
+            }
             $transaction->save();
 
             $child = Transactions::create([
@@ -1155,14 +1175,14 @@ class AccountingController extends Controller
                 'description' => $description,
                 'amount' => $amount,
                 'is_pay' => $transaction->is_pay,
-                'morphed_id' => $targetUser->id,
+                'morphed_id' => $morphedId,
                 'morphed_type' => User::class,
                 'user_added' => 0,
-                'created' => $originalCreated ?: ($originalCreatedAt ? Carbon::parse($originalCreatedAt)->format('Y-m-d') : $this->currentDate),
+                'created' => $originalCreated ?: ($originalCreatedAt ? Carbon::parse($originalCreatedAt)->format('Y-m-d') : $currentDate),
                 'discount' => $transaction->discount ?? 0,
                 'currency' => $transaction->currency,
                 'parent_id' => $transaction->id,
-                'details' => $transaction->details,
+                'details' => $childDetails ?: null,
                 'tag' => $transaction->tag,
             ]);
 
