@@ -1050,6 +1050,31 @@ class AccountingController extends Controller
     }
 
     /**
+     * Detect GenExpenses (البوكسات الخمسة) from description and return the expense account user id.
+     */
+    private function resolveGenExpenseAccountUserId(?string $description): ?int
+    {
+        if (!$description) {
+            return null;
+        }
+
+        $account = null;
+        if (preg_match('/مصاريف\s+أربيل/ui', $description)) {
+            $account = $this->accounting->howler();
+        } elseif (preg_match('/مصاريف\s+دبي/ui', $description)) {
+            $account = $this->accounting->dubai();
+        } elseif (preg_match('/مصاريف\s+ايران/ui', $description) || preg_match('/مصاريف\s+إيران/ui', $description)) {
+            $account = $this->accounting->iran();
+        } elseif (preg_match('/مصاريف\s+الحدود/ui', $description)) {
+            $account = $this->accounting->border();
+        } elseif (preg_match('/مصاريف\s+شهادة\s*coc/ui', $description)) {
+            $account = $this->accounting->shippingCoc();
+        }
+
+        return $account?->id;
+    }
+
+    /**
      * Convert a main-box withdrawal (debt/out) into a wallet withdrawal (outUserBox + outUser).
      */
     public function assignTransactionToWallet(Request $request)
