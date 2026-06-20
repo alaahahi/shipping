@@ -137,7 +137,7 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
     Route::get('log-viewer/content', [LogViewerController::class, 'getLog'])->name('logViewer.content');
     Route::post('log-viewer/clear', [LogViewerController::class, 'clearLog'])->name('logViewer.clear');
     
-    Route::get('dashboard/statistics',[StatisticsController::class,'index'])->name('dashboard.statistics');
+    Route::get('dashboard/admin',[StatisticsController::class,'index'])->name('dashboard.statistics');
     
     // صفحة تفاصيل الجدول
     Route::get('sync-monitor/table/{tableName}', function (string $tableName, \Illuminate\Http\Request $request) {

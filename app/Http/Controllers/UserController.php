@@ -1403,7 +1403,7 @@ class UserController extends Controller
         $config = SystemConfig::first();
         $car = $sale->car;
 
-        return view('receiptBuyerPayment', compact('payment', 'buyer', 'merchant', 'config', 'car'));
+        return view('receiptBuyerPayment', compact('payment', 'buyer', 'merchant', 'config', 'car', 'owner_id'));
     }
 
     public function deletePayment(Request $request)

@@ -13,6 +13,21 @@ $buyerName = $buyer->name ?? '';
 $vin = $car->vin ?? $car->car_number ?? '-';
 $carLabel = trim(($car->car_type ?? '') . ' ' . ($car->year ?? ''));
 $note = $payment->note ?? '';
+$cfg = $config ? (is_array($config) ? $config : $config->toArray()) : [];
+$thirdTitleAr = $config ? ($config->third_title_ar ?? '') : '';
+$receiptAddress = ((int) ($owner_id ?? 0) === 2)
+    ? ($cfg['address_kik'] ?? $thirdTitleAr)
+    : ($cfg['address_erb'] ?? $thirdTitleAr);
+$receiptMobile = ((int) ($owner_id ?? 0) === 2)
+    ? ($cfg['mobile_kik'] ?? '')
+    : ($cfg['mobile_erb'] ?? '');
+if ($receiptMobile === '' && !empty($cfg['phones'])) {
+    $phones = $cfg['phones'];
+    if (is_string($phones)) {
+        $phones = array_filter(array_map('trim', explode(',', $phones)));
+    }
+    $receiptMobile = is_array($phones) ? ($phones[0] ?? '') : '';
+}
 @endphp
 <!DOCTYPE html>
 <html>
@@ -64,8 +79,8 @@ $note = $payment->note ?? '';
         <div class="col-8 text-start ps-5">اسم وتوقيع المستلم</div>
     </div>
     <div class="row p-2 border-top border-bottom mt-3" style="font-size: 14px">
-        <div class="col-6 pe-5">العنوان: اربيل - مدينة المعارض</div>
-        <div class="col-6 ps-5 text-start">Mobile: 0770 445 9964</div>
+        <div class="col-6 pe-5">العنوان: {{ $receiptAddress }}</div>
+        <div class="col-6 ps-5 text-start">Mobile: {{ $receiptMobile }}</div>
     </div>
 </div>
 @if($copy === 1)
