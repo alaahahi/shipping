@@ -120,30 +120,7 @@ $Help = new MyHelp();
       اسم وتوقيع المستلم
     </div>
   </div>
-  <div class="row p-2  border-top border-bottom mt-3" style="font-size: 14px">
-    <div class="col-6 pe-5"> 
-    العنوان:
-    @if($owner_id??'')
-    @if($owner_id==2)
-    {{$config['address_kik']}}
-    @else
-    {{$config['address_erb']}}
-    @endif
-    @endif
-
-    </div>
-
-    <div class="col-6 ps-5 text-start">
-       Mobile:
-       @if($owner_id??'')
-       @if($owner_id==2)
-       {{$config['mobile_kik']}}
-       @else
-       {{$config['mobile_erb']}}
-       @endif
-       @endif
-    </div>
-  </div>
+  @include('Components.receiptFooterContact')
   {{-- <div class="row text-center py-2">
     <table class="table table-sm table-striped table-bordered" style="font-size: 12px">
         <thead>
@@ -270,30 +247,7 @@ $Help = new MyHelp();
         اسم وتوقيع المستلم
       </div>
     </div>
-    <div class="row p-2  border-top border-bottom mt-3" style="font-size: 14px">
-      <div class="col-6 pe-5"> 
-      العنوان:
-      @if($owner_id??'')
-      @if($owner_id==2)
-      {{$config['address_kik']}}
-      @else
-      {{$config['address_erb']}}
-      @endif
-      @endif
-
-      </div>
-
-      <div class="col-6 ps-5 text-start">
-         Mobile:
-         @if($owner_id??'')
-         @if($owner_id==2)
-         {{$config['mobile_kik']}}
-         @else
-         {{$config['mobile_erb']}}
-         @endif
-         @endif
-      </div>
-    </div> 
+    @include('Components.receiptFooterContact')
   </div>
 <script>
     $(document).ready(function() {

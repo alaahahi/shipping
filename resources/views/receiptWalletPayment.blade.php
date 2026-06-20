@@ -93,28 +93,7 @@ $Help = new MyHelp();
       اسم وتوقيع المستلم
     </div>
 </div>
-<div class="row p-2 border-top border-bottom mt-3" style="font-size: 14px">
-    <div class="col-6 pe-5"> 
-    العنوان:
-    @if($owner_id ?? '')
-        @if($owner_id == 2)
-            {{$config['address_kik'] ?? ''}}
-        @else
-            {{$config['address_erb'] ?? ''}}
-        @endif
-    @endif
-    </div>
-    <div class="col-6 ps-5 text-start">
-       Mobile:
-       @if($owner_id ?? '')
-            @if($owner_id == 2)
-                {{$config['mobile_kik'] ?? ''}}
-            @else
-                {{$config['mobile_erb'] ?? ''}}
-            @endif
-       @endif
-    </div>
-</div>
+@include('Components.receiptFooterContact')
 </div>
 <hr>
 <div class="container-fluid mt-2" style="border: 2px solid">       
@@ -182,32 +161,7 @@ $Help = new MyHelp();
         اسم وتوقيع المستلم
       </div>
   </div>
-  <div class="row p-2 border-top border-bottom mt-3" style="font-size: 14px">
-      <div class="col-6 pe-5"> 
-      العنوان:
-      @if(isset($owner_id))
-          @if($owner_id == 2)
-              {{$config['address_kik'] ?? 'اربيل - مدينة المعارض'}}
-          @else
-              {{$config['address_erb'] ?? 'اربيل - مدينة المعارض'}}
-          @endif
-      @else
-          {{$config['address_erb'] ?? 'اربيل - مدينة المعارض'}}
-      @endif
-      </div>
-      <div class="col-6 ps-5 text-start">
-         Mobile:
-         @if(isset($owner_id))
-              @if($owner_id == 2)
-                  {{$config['mobile_kik'] ?? '0770 445 9964'}}
-              @else
-                  {{$config['mobile_erb'] ?? '0770 445 9964'}}
-              @endif
-         @else
-              {{$config['mobile_erb'] ?? '0770 445 9964'}}
-         @endif
-      </div>
-  </div>
+  @include('Components.receiptFooterContact')
 </div>
 <script>
     $(document).ready(function() {
