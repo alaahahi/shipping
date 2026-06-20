@@ -119,17 +119,7 @@ $Help = new MyHelp();
       اسم وتوقيع المستلم
     </div>
   </div>
-  <div class="row p-2  border-top border-bottom mt-3" style="font-size: 14px">
-    <div class="col-6 pe-5"> 
-    العنوان:
-    اربيل - مدينة المعارض
-    </div>
-
-    <div class="col-6 ps-5 text-start">
-       Mobile:
-    0770 445 9964
-    </div>
-  </div>
+  @include('Components.receiptFooterContact')
   {{-- <div class="row text-center py-2">
     <table class="table table-sm table-striped table-bordered" style="font-size: 12px">
         <thead>
@@ -256,17 +246,7 @@ $Help = new MyHelp();
         اسم وتوقيع المستلم
       </div>
     </div>
-    <div class="row p-2  border-top border-bottom mt-3" style="font-size: 14px">
-      <div class="col-6 pe-5"> 
-      العنوان:
-      اربيل - مدينة المعارض
-      </div>
-
-      <div class="col-6 ps-5 text-start">
-         Mobile:
-      0770 445 9964
-      </div>
-    </div>
+    @include('Components.receiptFooterContact')
     {{-- <div class="row text-center py-2">
       <table class="table table-sm table-striped table-bordered" style="font-size: 12px">
           <thead>
