@@ -52,7 +52,7 @@ class SystemConfigController extends Controller
             'usd_to_dinar_rate' => 'nullable|numeric|min:0',
             'contract_terms' => 'nullable|array',
             'contract_terms_2' => 'nullable|array',
-            'contract_template' => 'nullable|in:1,2',
+            'contract_template' => 'nullable|in:1,2,3',
             'contract_currency' => 'nullable|in:usd,dinar',
             'primary_color' => 'nullable|string|max:20',
         ]);

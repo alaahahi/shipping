@@ -724,6 +724,7 @@ function printCarTagDetails(tag) {
                   >
                     <option :value="1">قالب 1 (الافتراضي)</option>
                     <option :value="2">قالب 2</option>
+                    <option :value="3">قالب 3 (محدّث)</option>
                   </select>
                   <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     يحدد شكل عقد البيع عند الطباعة.

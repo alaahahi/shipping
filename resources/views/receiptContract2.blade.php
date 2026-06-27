@@ -28,7 +28,20 @@ $contractTerms = array_filter($contractTerms, function($t) { return !empty(trim(
 body { font-family: 'Peshang', sans-serif; background: #fff; direction: rtl; color: #000; }
 @page { size: A4; margin: 0; }
 html, body { width: 210mm; margin: 0; padding: 0; }
-.t2-page { padding: 10mm 13mm; max-width: 210mm; margin: 0 auto; background: #fff; border-radius: var(--t2-radius); }
+.t2-page { position: relative; overflow: hidden; padding: 10mm 13mm; max-width: 210mm; margin: 0 auto; background: #fff; border-radius: var(--t2-radius); }
+.t2-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 280px;
+  max-width: 65%;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+  user-select: none;
+}
+.t2-page > *:not(.t2-watermark) { position: relative; z-index: 1; }
 .t2-meta { display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-bottom: 8px; color: #000; border: 1px solid var(--t2-primary); padding: 6px 12px; background: #fff; border-radius: var(--t2-radius); }
 .t2-header { display: flex; justify-content: space-between; align-items: flex-start; border: 2px solid #000; padding: 10px 12px; margin-bottom: 10px; background: #fff; border-radius: var(--t2-radius); }
 .t2-header-right { text-align: right; }
@@ -56,15 +69,6 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 .t2-car-item { display: flex; gap: 8px; color: #000; }
 .t2-car-item .label { color: #000; font-weight: 600; }
 .t2-car-item .value { font-weight: 700; }
-.t2-money-row { display: flex; align-items: baseline; margin-bottom: 8px; font-size: 12px; border-bottom: 1px dotted #000; padding-bottom: 4px; }
-.t2-money-row .label { min-width: 130px; color: #000; }
-.t2-money-row .value { flex: 1; margin-right: 8px; min-height: 20px; font-weight: 700; }
-.t2-money-inline { display: flex; justify-content: space-between; align-items: stretch; gap: 16px; font-size: 12px; border-bottom: 1px dotted #000; padding-bottom: 8px; }
-.t2-money-inline .item { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-.t2-money-inline .item .label { color: #000; font-weight: 600; }
-.t2-money-inline .item .value { font-weight: 700; color: #000; }
-.t2-money-inline .item .words { font-size: 11px; color: #333; font-weight: 500; }
-/* صندوق السعر والواصل والباقي - شكل العقود الرسمي */
 .t2-money-box { border: 1px solid var(--t2-primary); padding: 10px 12px; background: #fff; border-radius: var(--t2-radius); }
 .t2-money-line { display: flex; align-items: center; margin-bottom: 8px; font-size: 12px; direction: rtl; }
 .t2-money-line:last-child { margin-bottom: 0; }
@@ -78,24 +82,27 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 .t2-notes-row .value { flex: 1; min-height: 20px; color: #000; }
 .t2-terms-title { color: var(--t2-primary); font-weight: 700; font-size: 17px; margin: 8px 0 4px; padding: 4px 0; border-bottom: 2px solid var(--t2-primary); border-radius: 2px; }
 .t2-terms-wrap { position: relative; margin-bottom: 6px; }
-.t2-terms-wrap.has-qr { padding-left: 88px; }
 .t2-terms-list { margin: 0; padding: 6px 8px 6px 14px; list-style: none; border: 1px solid var(--t2-primary); background: #fff; border-radius: var(--t2-radius); }
 .t2-terms-list li { font-size: 12px; margin-bottom: 3px; line-height: 1.5; position: relative; padding-right: 6px; color: #000; }
 .t2-terms-list li::before { content: "* "; color: var(--t2-primary); font-weight: 700; }
-.t2-terms-qr { position: absolute; left: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.t2-terms-qr img { width: 72px; height: 72px; border: 1px solid var(--t2-primary); background: #fff; display: block; border-radius: var(--t2-radius); }
-.t2-terms-qr .t2-qr-caption { font-size: 12px; color: var(--t2-primary); font-weight: 700; }
 .t2-signatures { display: flex; justify-content: space-between; margin-top: 18px; padding-top: 12px; border-top: 2px solid var(--t2-primary); font-size: 12px; border-radius: 0 0 var(--t2-radius) var(--t2-radius); }
 .t2-sig-col { text-align: center; flex: 1; color: #000; }
 .t2-sig-label { font-weight: 700; margin-bottom: 22px; color: #000; }
 @media print {
   body { background: #fff; }
   .t2-page { padding: 8mm 11mm; box-shadow: none; }
+  .t2-watermark { opacity: 0.07; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { height: auto; min-height: auto; }
 }
 </style>
 <body>
   <div class="t2-page">
+    <img
+      class="t2-watermark"
+      src="{{ asset('img/logo.png') }}"
+      alt=""
+      onerror="this.src='{{ asset('img/logo.jpg') }}'; this.onerror=null;"
+    />
     <div class="t2-meta">
       <span>الرقم: {{ $data['id'] ?? '' }}</span>
       <span>التاريخ: {{ $data['created'] ?? '' }}</span>
@@ -116,11 +123,9 @@ html, body { width: 210mm; margin: 0; padding: 0; }
       </div>
       @endif
       <div class="t2-header-left">
- 
         <div class="t2-logo-wrap">
           <img src="{{ asset('img/logo.png') }}" alt="Logo" class="t2-logo" onerror="this.src='{{ asset('img/logo.jpg') }}'; this.onerror=null;" />
         </div>
-      
         <div class="t2-phones mt-1">
           @foreach(config('car_contract.phones', []) as $p) <span>{{ $p }}</span> @endforeach
         </div>
@@ -146,11 +151,10 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 
     <div class="t2-section">
       <div class="t2-section-title">تفاصيل السيارة</div>
-      <div class="t2-car-grid" style=" padding: 5px 8px;border: 1px solid var(--t2-primary); color: #000; border-radius: var(--t2-radius);">
+      <div class="t2-car-grid" style="padding:5px 8px;border:1px solid var(--t2-primary);border-radius:var(--t2-radius);">
         <div class="t2-car-item"><span class="label">نوع السيارة:</span><span class="value">{{ $data['car_name'] ?? '' }}</span></div>
         <div class="t2-car-item"><span class="label">رقم السيارة:</span><span class="value">{{ $data['no'] ?? '' }}</span></div>
         <div class="t2-car-item"><span class="label">رقم الشاصي:</span><span class="value">{{ $data['vin'] ?? '' }}</span></div>
-
         <div class="t2-car-item"><span class="label">لون السيارة:</span><span class="value">{{ $data['color'] ?? '' }}</span></div>
         <div class="t2-car-item"><span class="label">الموديل:</span><span class="value">{{ $data['modal'] ?? '' }}</span></div>
         <div class="t2-car-item"><span class="label">صاحب السنوية:</span><span class="value">{{ $data['annual_owner_name'] ?? '' }}</span></div>
@@ -160,7 +164,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
     @if(!empty($data['vin_s'] ?? null))
     <div class="t2-section">
       <div class="t2-section-title">السيارة البديلة</div>
-      <div class="t2-car-grid" style=" padding: 5px 8px;border: 1px solid var(--t2-primary); color: #000; border-radius: var(--t2-radius);">
+      <div class="t2-car-grid" style="padding:5px 8px;border:1px solid var(--t2-primary);border-radius:var(--t2-radius);">
         <div class="t2-car-item"><span class="label">نوع السيارة:</span><span class="value">{{ $data['car_name_s'] ?? '' }}</span></div>
         <div class="t2-car-item"><span class="label">رقم السيارة:</span><span class="value">{{ $data['no_s'] ?? '' }}</span></div>
         <div class="t2-car-item"><span class="label">رقم الشاصي:</span><span class="value">{{ $data['vin_s'] ?? '' }}</span></div>
@@ -202,17 +206,13 @@ html, body { width: 210mm; margin: 0; padding: 0; }
           <span class="t2-ml-words">/ {{ $Help->numberToWords($priceVal, $wordsCurrency) }}</span>
         </div>
         <div class="t2-money-line">
-          <span class="t2-ml-label" style="
-              width: 36px;
-          ">الواصل</span>
+          <span class="t2-ml-label" style="width:36px;">الواصل</span>
           <span class="t2-ml-num">/ {{ number_format($paidVal) }}{{ $sym }}</span>
           <span class="t2-ml-written">كتابتاً</span>
           <span class="t2-ml-words">/ {{ $Help->numberToWords($paidVal, $wordsCurrency) }}</span>
         </div>
         <div class="t2-money-line">
-          <span class="t2-ml-label" style="
-              width: 36px;
-          ">الباقي</span>
+          <span class="t2-ml-label" style="width:36px;">الباقي</span>
           <span class="t2-ml-num">/ {{ number_format($remainVal) }}{{ $sym }}</span>
           <span class="t2-ml-written">كتابتاً</span>
           <span class="t2-ml-words">/ {{ $Help->numberToWords($remainVal, $wordsCurrency) }}</span>

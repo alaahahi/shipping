@@ -99,7 +99,11 @@ class CarContractController extends Controller
         $config = SystemConfig::first();
         $verificationUrl = $data ? route('contract.verify', $data->verification_token) : null;
         $template = (int) ($request->query('template') ?? $config->contract_template ?? 1);
-        $viewName = $template === 2 ? 'receiptContract2' : 'receiptContract';
+        $viewName = match ($template) {
+            2 => 'receiptContract2',
+            3 => 'receiptContract3',
+            default => 'receiptContract',
+        };
         // أولوية: organizer_name في العقد ← اسم منظم العقد من المستخدم المنشئ (users.organizer_name)
         $creatorOrganizer = $data->user?->organizer_name ?? '';
         $contractOrganizer = $data->organizer_name ?? $creatorOrganizer;
