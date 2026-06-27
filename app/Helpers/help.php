@@ -37,12 +37,9 @@ class Help
         $mobile = $isKik
             ? ($cfg['mobile_kik'] ?? '')
             : ($cfg['mobile_erb'] ?? '');
-        if ($mobile === '' && ! empty($cfg['phones'])) {
-            $phones = $cfg['phones'];
-            if (is_string($phones)) {
-                $phones = array_filter(array_map('trim', explode(',', $phones)));
-            }
-            $mobile = is_array($phones) ? ($phones[0] ?? '') : '';
+        if ($mobile === '') {
+            $phones = config('car_contract.phones', []);
+            $mobile = $phones[0] ?? '';
         }
 
         return ['address' => (string) $address, 'mobile' => (string) $mobile];

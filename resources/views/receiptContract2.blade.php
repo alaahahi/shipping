@@ -122,12 +122,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
         </div>
       
         <div class="t2-phones mt-1">
-          @php
-            $phones = $config['phones'] ?? ['07701575738','07707588987','07718456595'];
-            if (is_string($phones)) { $phones = array_filter(array_map('trim', explode(',', $phones))); }
-            if (empty($phones)) { $phones = ['07701575738','07707588987','07718456595']; }
-          @endphp
-          @foreach($phones as $p) <span>{{ $p }}</span> @endforeach
+          @foreach(config('car_contract.phones', []) as $p) <span>{{ $p }}</span> @endforeach
         </div>
       </div>
     </div>
