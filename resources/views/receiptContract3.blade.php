@@ -117,7 +117,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   text-align: center;
 }
 .c3-head-qr img {
-  width: 650px;
+  width: 60px;
   height: 60px;
   display: block;
   margin: 0 auto;
