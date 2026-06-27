@@ -49,15 +49,18 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 }
 .c3-watermark {
   position: absolute;
-  top: 58%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 260px;
-  max-width: 55%;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  width: 100%;
+  max-width: 100%;
+  height: auto;
   opacity: 0.05;
   pointer-events: none;
   z-index: 0;
   user-select: none;
+  object-fit: contain;
 }
 .c3-body { position: relative; z-index: 1; }
 
@@ -74,7 +77,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   justify-content: space-between;
   gap: 12px;
   padding: 14px 16px 12px;
-  background: #111;
+  background: #000;
 }
 .c3-head-logo {
   flex: 0 0 auto;
@@ -114,18 +117,17 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   text-align: center;
 }
 .c3-head-qr img {
-  width: 52px;
-  height: 52px;
+  width: 650px;
+  height: 60px;
   display: block;
   margin: 0 auto;
-  border-radius: 6px;
   border: none;
   background: #fff;
 }
 .c3-head-qr span {
   display: block;
   font-size: 8.5px;
-  color: #ff7070;
+  color: var(--c3-primary);
   font-weight: 700;
   margin-top: 3px;
 }
