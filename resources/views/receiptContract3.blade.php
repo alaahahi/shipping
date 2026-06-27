@@ -476,7 +476,6 @@ html, body { width: 210mm; margin: 0; padding: 0; }
       }
     @endphp
 
-    <div class="c3-h">المبالغ المالية</div>
     <div class="c3-money">
       <div class="c3-money-row">
         <span class="lbl">لە جیاتی / بڕی پارە (بمبلغ قدره)</span>
