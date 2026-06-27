@@ -24,7 +24,7 @@ $phones = config('car_contract.phones', []);
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <style>
-:root { --c3-primary: {{ $primaryColor }}; }
+:root { --c3-primary: {{ $primaryColor }}; --c3-r: 10px; }
 @font-face { font-family: 'Peshang'; src: url('/Peshang.ttf') format('truetype'); }
 * { box-sizing: border-box; }
 body {
@@ -41,76 +41,105 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   position: relative;
   overflow: hidden;
   margin: 0 auto;
-  padding: 9mm 11mm 10mm;
+  padding: 8mm 10mm 10mm;
   max-width: 210mm;
-  border: 2px solid #111;
-  outline: 1px solid #111;
-  outline-offset: 3px;
+  border: 1px solid #d4d4d4;
+  border-radius: 12px;
   min-height: 277mm;
 }
 .c3-watermark {
   position: absolute;
-  top: 50%;
+  top: 58%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 300px;
-  max-width: 60%;
-  opacity: 0.08;
+  width: 260px;
+  max-width: 55%;
+  opacity: 0.05;
   pointer-events: none;
   z-index: 0;
   user-select: none;
 }
-.c3-sheet > *:not(.c3-watermark) { position: relative; z-index: 1; }
+.c3-body { position: relative; z-index: 1; }
 
-/* رأس الصفحة */
-.c3-top {
-  display: table;
-  width: 100%;
-  border-bottom: 2px solid var(--c3-primary);
-  padding-bottom: 8px;
-  margin-bottom: 0;
+/* ── الهيدر ── */
+.c3-head {
+  border-radius: var(--c3-r);
+  overflow: hidden;
+  margin-bottom: 12px;
+  border: 1px solid #e5e5e5;
+  background: #fafafa;
 }
-.c3-top > div { display: table-cell; vertical-align: middle; }
-.c3-top-logo { width: 22%; text-align: right; }
-.c3-top-logo img { max-height: 58px; max-width: 100%; }
-.c3-top-center { text-align: center; padding: 0 8px; }
-.c3-top-center h1 {
-  margin: 0 0 3px;
-  font-size: 17px;
+.c3-head-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px 10px;
+}
+.c3-head-logo {
+  flex: 0 0 auto;
+}
+.c3-head-logo img {
+  max-height: 62px;
+  max-width: 110px;
+  display: block;
+  object-fit: contain;
+}
+.c3-head-info {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+.c3-head-info h1 {
+  margin: 0 0 4px;
+  font-size: 16px;
   font-weight: 700;
   color: #111;
+  line-height: 1.3;
 }
-.c3-top-center .addr {
-  font-size: 12px;
+.c3-head-info .addr {
+  font-size: 11.5px;
+  color: #555;
+  margin-bottom: 5px;
+}
+.c3-head-info .phones {
+  font-size: 10.5px;
+  font-weight: 700;
   color: #333;
-  margin-bottom: 4px;
-}
-.c3-top-center .phones {
-  font-size: 11px;
-  font-weight: 700;
-  color: #111;
   direction: ltr;
   unicode-bidi: embed;
 }
-.c3-top-qr { width: 18%; text-align: left; }
-.c3-top-qr img { width: 56px; height: 56px; display: block; margin-left: auto; border: 1px solid #ccc; }
-.c3-top-qr span { display: block; font-size: 9px; color: var(--c3-primary); font-weight: 700; text-align: left; margin-top: 2px; }
-
-/* شريط العنوان */
-.c3-titlebar {
+.c3-head-qr {
+  flex: 0 0 auto;
+  text-align: center;
+}
+.c3-head-qr img {
+  width: 52px;
+  height: 52px;
+  display: block;
+  margin: 0 auto;
+  border-radius: 6px;
+  border: none;
+}
+.c3-head-qr span {
+  display: block;
+  font-size: 8.5px;
+  color: var(--c3-primary);
+  font-weight: 700;
+  margin-top: 3px;
+}
+.c3-head-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: var(--c3-primary);
   color: #fff;
-  padding: 5px 10px;
-  font-size: 12px;
-  margin: 8px 0 10px;
+  padding: 7px 14px;
+  font-size: 11.5px;
 }
-.c3-titlebar .mid {
-  font-size: 14px;
+.c3-head-bar .mid {
+  font-size: 13.5px;
   font-weight: 700;
-  letter-spacing: 0;
 }
 
 /* عناوين الأقسام */
@@ -121,7 +150,20 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   border-bottom: 1px solid var(--c3-primary);
   padding-bottom: 3px;
   margin: 0 0 6px;
+  line-height: 1.45;
 }
+.c3-h .ku { display: block; font-size: 11px; color: #333; font-weight: 600; }
+.c3-agree {
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--c3-primary);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+.c3-party-h { font-size: 11px; line-height: 1.4; }
+.c3-tbl th { font-size: 10px; line-height: 1.35; }
+.c3-money-row .lbl { font-size: 10px; line-height: 1.35; min-width: 0; flex: 0 1 38%; }
+.c3-sigs .role { font-size: 10px; line-height: 1.4; }
 
 /* الأطراف */
 .c3-parties {
@@ -138,11 +180,13 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 }
 .c3-parties > div:first-child { padding-left: 0; padding-right: 6px; }
 .c3-party {
-  border: 1px solid #333;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  overflow: hidden;
 }
 .c3-party-h {
-  background: #f2f2f2;
-  border-bottom: 1px solid #333;
+  background: #f5f5f5;
+  border-bottom: 1px solid #ddd;
   text-align: center;
   font-size: 12px;
   font-weight: 700;
@@ -169,17 +213,25 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 /* جدول السيارة */
 .c3-tbl {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 11.5px;
   margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  overflow: hidden;
 }
 .c3-tbl th, .c3-tbl td {
-  border: 1px solid #333;
+  border-bottom: 1px solid #e0e0e0;
+  border-left: 1px solid #e0e0e0;
   padding: 5px 7px;
   text-align: right;
 }
+.c3-tbl tr:last-child th,
+.c3-tbl tr:last-child td { border-bottom: none; }
+.c3-tbl th:first-child, .c3-tbl td:first-child { border-left: none; }
 .c3-tbl th {
-  background: #f2f2f2;
+  background: #f5f5f5;
   font-weight: 700;
   width: 16%;
   color: #222;
@@ -189,7 +241,9 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 
 /* المبالغ */
 .c3-money {
-  border: 1px solid #333;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  overflow: hidden;
   margin-bottom: 10px;
 }
 .c3-money-row {
@@ -218,8 +272,9 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 
 /* ملاحظات */
 .c3-note {
-  border: 1px dotted #333;
-  padding: 6px 8px;
+  border: 1px dashed #bbb;
+  border-radius: 8px;
+  padding: 6px 10px;
   font-size: 11.5px;
   margin-bottom: 10px;
   min-height: 28px;
@@ -228,16 +283,19 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 
 /* الشروط */
 .c3-terms {
-  border: 1px solid #333;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  overflow: hidden;
   margin-bottom: 10px;
 }
 .c3-terms-h {
-  background: #f2f2f2;
-  border-bottom: 1px solid #333;
+  background: #f5f5f5;
+  border-bottom: 1px solid #ddd;
   text-align: center;
   font-weight: 700;
-  font-size: 12px;
-  padding: 5px;
+  font-size: 11px;
+  padding: 6px 8px;
+  line-height: 1.45;
 }
 .c3-terms ul {
   margin: 0;
@@ -275,9 +333,9 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 
 @media print {
   body { background: #fff; }
-  .c3-sheet { outline: none; border-width: 1.5px; min-height: auto; padding: 7mm 9mm; }
-  .c3-watermark { opacity: 0.07; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .c3-titlebar, .c3-party-h, .c3-tbl th, .c3-terms-h {
+  .c3-sheet { border-width: 1px; min-height: auto; padding: 7mm 9mm; }
+  .c3-watermark { opacity: 0.045; }
+  .c3-head-bar, .c3-party-h, .c3-tbl th, .c3-terms-h {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -292,87 +350,103 @@ html, body { width: 210mm; margin: 0; padding: 0; }
       onerror="this.src='{{ asset('img/logo.jpg') }}'; this.onerror=null;"
     />
 
-    <div class="c3-top">
-      <div class="c3-top-logo">
-        <img src="{{ asset('img/logo.png') }}" alt="" onerror="this.src='{{ asset('img/logo.jpg') }}'; this.onerror=null;" />
-      </div>
-      <div class="c3-top-center">
-        <h1>{{ $companyName }}</h1>
-        <div class="addr">{{ $config['third_title_ar'] ?? '' }}</div>
-        @if(count($phones))
-        <div class="phones">{{ implode(' &nbsp;|&nbsp; ', $phones) }}</div>
-        @endif
-      </div>
-      <div class="c3-top-qr">
-        @if(!empty($verificationUrl))
-        <img id="c3-qr-img" alt="QR" style="display:none;" />
-        <span>امسح QR للتحقق</span>
-        @endif
-      </div>
-    </div>
+    <div class="c3-body">
 
-    <div class="c3-titlebar">
-      <span>الرقم: {{ $data['id'] ?? '' }}</span>
-      <span class="mid">عقد بيع وشراء سيارة</span>
-      <span>التاريخ: {{ $data['created'] ?? '' }}</span>
-    </div>
+    <header class="c3-head">
+      <div class="c3-head-main">
+        <div class="c3-head-logo">
+          <img src="{{ asset('img/logo.png') }}" alt="" onerror="this.src='{{ asset('img/logo.jpg') }}'; this.onerror=null;" />
+        </div>
+        <div class="c3-head-info">
+          <h1>{{ $companyName }}</h1>
+          <div class="addr">{{ $config['third_title_ar'] ?? '' }}</div>
+          @if(count($phones))
+          <div class="phones">{{ implode(' &nbsp;|&nbsp; ', $phones) }}</div>
+          @endif
+        </div>
+        <div class="c3-head-qr">
+          @if(!empty($verificationUrl))
+          <img id="c3-qr-img" alt="QR" style="display:none;" />
+          <span>امسح QR للتحقق</span>
+          @endif
+        </div>
+      </div>
+      <div class="c3-head-bar">
+        <span>الرقم: {{ $data['id'] ?? '' }}</span>
+        <span class="mid">عقد بيع وشراء سيارة</span>
+        <span>التاريخ: {{ $data['created'] ?? '' }}</span>
+      </div>
+    </header>
 
     <div class="c3-parties">
       <div>
         <div class="c3-party">
-          <div class="c3-party-h">الطرف الأول — البائع</div>
+          <div class="c3-party-h">لایەنی یەکەم فرۆشیار – الطرف الأول (البائع)</div>
           <div class="c3-party-b">
-            <div class="c3-row"><span class="k">الاسم:</span><span class="v">{{ $data['name_seller'] ?? '' }}</span></div>
-            <div class="c3-row"><span class="k">رقم الهوية:</span><span class="v">{{ $data['seller_id_number'] ?? '' }}</span></div>
-            <div class="c3-row"><span class="k">العنوان:</span><span class="v">{{ $data['address_seller'] ?? '' }}</span></div>
-            <div class="c3-row"><span class="k">الهاتف:</span><span class="v">{{ $data['phone_seller'] ?? '' }}</span></div>
+            <div class="c3-row"><span class="k">فرۆشیار / البائع</span><span class="v">{{ $data['name_seller'] ?? '' }}</span></div>
+            <div class="c3-row"><span class="k">رقم الهوية</span><span class="v">{{ $data['seller_id_number'] ?? '' }}</span></div>
+            <div class="c3-row"><span class="k">دانیشتوی / السكن</span><span class="v">{{ $data['address_seller'] ?? '' }}</span></div>
+            <div class="c3-row"><span class="k">رقم الموبايل</span><span class="v">{{ $data['phone_seller'] ?? '' }}</span></div>
           </div>
         </div>
       </div>
       <div>
         <div class="c3-party">
-          <div class="c3-party-h">الطرف الثاني — المشتري</div>
+          <div class="c3-party-h">لایەنی دووەم کریار – الطرف الثاني (المشتري)</div>
           <div class="c3-party-b">
-            <div class="c3-row"><span class="k">الاسم:</span><span class="v">{{ $data['name_buyer'] ?? '' }}</span></div>
-            <div class="c3-row"><span class="k">رقم الهوية:</span><span class="v">{{ $data['buyer_id_number'] ?? '' }}</span></div>
-            <div class="c3-row"><span class="k">العنوان:</span><span class="v">{{ $data['address_buyer'] ?? '' }}</span></div>
-            <div class="c3-row"><span class="k">الهاتف:</span><span class="v">{{ $data['phone_buyer'] ?? '' }}</span></div>
+            <div class="c3-row"><span class="k">کریار / المشتري</span><span class="v">{{ $data['name_buyer'] ?? '' }}</span></div>
+            <div class="c3-row"><span class="k">رقم الهوية</span><span class="v">{{ $data['buyer_id_number'] ?? '' }}</span></div>
+            <div class="c3-row"><span class="k">دانیشتوی / السكن</span><span class="v">{{ $data['address_buyer'] ?? '' }}</span></div>
+            <div class="c3-row"><span class="k">رقم الموبايل</span><span class="v">{{ $data['phone_buyer'] ?? '' }}</span></div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="c3-h">بيانات السيارة</div>
+    <div class="c3-agree">
+      <div>رێکەوتن کرا لە نێوان هەردوو لیەن لە سەر ئەم خالنەی خوارەوه</div>
+      <div>وتم الاتفاق على النقاط التالية بين الطرفين</div>
+    </div>
+
+    <div class="c3-h">
+      <span class="ku">فرۆشتنی لایەنی یەکەم بە لایەنی دووەم ئوتومبێلی ژمارە (بيع سيارة الطرف الأول إلى الطرف الثاني رقم)</span>
+    </div>
     <table class="c3-tbl">
       <tr>
-        <th>النوع</th><td>{{ $data['car_name'] ?? '' }}</td>
-        <th>الموديل</th><td>{{ $data['modal'] ?? '' }}</td>
-        <th>اللون</th><td>{{ $data['color'] ?? '' }}</td>
+        <th>لە جۆری<br>(من النوع)</th><td>{{ $data['car_name'] ?? '' }}</td>
+        <th>مودیل</th><td>{{ $data['modal'] ?? '' }}</td>
+        <th>رەنگ<br>(اللون)</th><td>{{ $data['color'] ?? '' }}</td>
       </tr>
       <tr>
-        <th>رقم السيارة</th><td>{{ $data['no'] ?? '' }}</td>
-        <th>رقم الشاصي</th><td colspan="3">{{ $data['vin'] ?? '' }}</td>
+        <th>ئوتومبێلی ژمارە</th><td>{{ $data['no'] ?? '' }}</td>
+        <th>ژمارە لشە<br>(الشاصی)</th><td colspan="3">{{ $data['vin'] ?? '' }}</td>
       </tr>
+      @if(!empty($data['annual_owner_name'] ?? ''))
       <tr>
         <th>صاحب السنوية</th><td colspan="5">{{ $data['annual_owner_name'] ?? '' }}</td>
       </tr>
+      @endif
     </table>
 
     @if(!empty($data['vin_s'] ?? null))
-    <div class="c3-h">السيارة البديلة</div>
+    <div class="c3-h">
+      <span class="ku">گۆرینەوەی لایەنی یەکەم ئوتومبێلی ژمارە (السيارة البديلة)</span>
+    </div>
     <table class="c3-tbl">
       <tr>
-        <th>النوع</th><td>{{ $data['car_name_s'] ?? '' }}</td>
-        <th>الموديل</th><td>{{ $data['modal_s'] ?? '' }}</td>
-        <th>اللون</th><td>{{ $data['color_s'] ?? '' }}</td>
+        <th>لە جۆری<br>(من النوع)</th><td>{{ $data['car_name_s'] ?? '' }}</td>
+        <th>مودیل</th><td>{{ $data['modal_s'] ?? '' }}</td>
+        <th>رەنگ<br>(اللون)</th><td>{{ $data['color_s'] ?? '' }}</td>
       </tr>
       <tr>
-        <th>رقم السيارة</th><td>{{ $data['no_s'] ?? '' }}</td>
-        <th>رقم الشاصي</th><td colspan="3">{{ $data['vin_s'] ?? '' }}</td>
+        <th>ئوتومبێلی ژمارە</th><td>{{ $data['no_s'] ?? '' }}</td>
+        <th>ژمارە لشە<br>(الشاصی)</th><td colspan="3">{{ $data['vin_s'] ?? '' }}</td>
       </tr>
+      @if(!empty($data['annual_owner_name_s'] ?? ''))
       <tr>
         <th>صاحب السنوية</th><td colspan="5">{{ $data['annual_owner_name_s'] ?? '' }}</td>
       </tr>
+      @endif
     </table>
     @endif
 
@@ -402,29 +476,32 @@ html, body { width: 210mm; margin: 0; padding: 0; }
     <div class="c3-h">المبالغ المالية</div>
     <div class="c3-money">
       <div class="c3-money-row">
-        <span class="lbl">سعر البيع</span>
+        <span class="lbl">لە جیاتی / بڕی پارە (بمبلغ قدره)</span>
         <span class="num">{{ number_format($priceVal) }}{{ $sym }}</span>
         <span class="wrt">كتابةً</span>
         <span class="words">{{ $Help->numberToWords($priceVal, $wordsCurrency) }}</span>
       </div>
       <div class="c3-money-row">
-        <span class="lbl">الواصل</span>
+        <span class="lbl">فرۆشیار وەری گرت بڕی پارە (وقد قبض)</span>
         <span class="num">{{ number_format($paidVal) }}{{ $sym }}</span>
         <span class="wrt">كتابةً</span>
         <span class="words">{{ $Help->numberToWords($paidVal, $wordsCurrency) }}</span>
       </div>
       <div class="c3-money-row">
-        <span class="lbl">الباقي</span>
+        <span class="lbl">ئەو برەی ماوەتەوە (الباقی)</span>
         <span class="num">{{ number_format($remainVal) }}{{ $sym }}</span>
         <span class="wrt">كتابةً</span>
         <span class="words">{{ $Help->numberToWords($remainVal, $wordsCurrency) }}</span>
       </div>
     </div>
 
-    <div class="c3-note"><b>ملاحظات:</b> {{ $data['note'] ?? '' }}</div>
+    <div class="c3-note"><b>تێبینی (ملاحظة):</b> {{ $data['note'] ?? '' }}</div>
 
     <div class="c3-terms">
-      <div class="c3-terms-h">شروط وأحكام بيع وشراء السيارة</div>
+      <div class="c3-terms-h">
+        <div>رێکەوتن کرا لە نێوان هەردوو لیەن لە سەر ئەم خالنەی خوارەوه</div>
+        <div>وتم الاتفاق على النقاط التالية بين الطرفين</div>
+      </div>
       <ul>
         @foreach($contractTerms as $term)
           <li>{{ $term }}</li>
@@ -435,21 +512,23 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 
     <div class="c3-sigs">
       <div>
-        <div class="role">توقيع البائع</div>
+        <div class="role">بەلێن و رەزامەندی لایەنی یەکەم فرۆشیار (البائع)</div>
         <div class="line"></div>
         <div class="name">{{ $data['name_seller'] ?? '' }}</div>
       </div>
       <div>
-        <div class="role">منظم العقد</div>
+        <div class="role">نووسەری پێشانگا</div>
         <div class="line"></div>
-        <div class="name">{{ $contractOrganizer ?: '—' }}</div>
+        <div class="name">{{ $contractOrganizer ?: 'كاتب المعرض' }}</div>
       </div>
       <div>
-        <div class="role">توقيع المشتري</div>
+        <div class="role">بەلێن و رەزامەندی لایەنی دووەم کریار (المشتری)</div>
         <div class="line"></div>
         <div class="name">{{ $data['name_buyer'] ?? '' }}</div>
       </div>
     </div>
+
+    </div><!-- .c3-body -->
 
   </div>
 
