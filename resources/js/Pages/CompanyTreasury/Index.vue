@@ -1,0 +1,949 @@
+<script setup>
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import ModalDel from "@/Components/ModalDel.vue";
+import { Head } from "@inertiajs/inertia-vue3";
+import { ref, computed, watch, onMounted } from "vue";
+import axios from "axios";
+
+const currency = ref("$");
+const entries = ref([]);
+const balanceUsd = ref(0);
+const balanceIqd = ref(0);
+const totalDebit = ref(0);
+const totalCredit = ref(0);
+const periodBalance = ref(0);
+const loading = ref(false);
+const saving = ref(false);
+const errorMsg = ref("");
+const successMsg = ref("");
+const showModalDel = ref(false);
+const entryToDelete = ref(null);
+const showEntryPanel = ref(true);
+const showFilterPanel = ref(false);
+
+const from = ref(getFirstDayOfMonth());
+const to = ref(getTodayDate());
+
+const form = ref({
+  entry_type: "deposit",
+  amount: "",
+  entry_date: getTodayDate(),
+  description: "",
+});
+
+const currencyLabel = computed(() =>
+  currency.value === "$" ? "USD" : "IQD"
+);
+
+const currencySymbol = computed(() =>
+  currency.value === "$" ? "$" : " IQD"
+);
+
+function getTodayDate() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function getFirstDayOfMonth() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+}
+
+function fmt(n, cur = currency.value) {
+  const v = Number(n) || 0;
+  return cur === "$"
+    ? v.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+    : v.toLocaleString("en-US", { maximumFractionDigits: 0 });
+}
+
+function fmtCell(n) {
+  const v = Number(n) || 0;
+  if (v === 0) return "—";
+  return fmt(v);
+}
+
+function flashSuccess(msg) {
+  successMsg.value = msg;
+  setTimeout(() => { successMsg.value = ""; }, 2800);
+}
+
+async function loadSummary() {
+  const res = await axios.get("/api/companyTreasurySummary");
+  balanceUsd.value = res.data.balance_usd ?? 0;
+  balanceIqd.value = res.data.balance_iqd ?? 0;
+}
+
+async function loadEntries() {
+  loading.value = true;
+  errorMsg.value = "";
+  try {
+    const res = await axios.get("/api/companyTreasuryEntries", {
+      params: { currency: currency.value, from: from.value, to: to.value },
+    });
+    entries.value = res.data.entries ?? [];
+    totalDebit.value = res.data.total_debit ?? 0;
+    totalCredit.value = res.data.total_credit ?? 0;
+    periodBalance.value = res.data.balance ?? 0;
+  } catch (e) {
+    errorMsg.value = e.response?.data?.message || "تعذر تحميل القاصة | Failed to load";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function refreshAll() {
+  await Promise.all([loadSummary(), loadEntries()]);
+}
+
+async function submitEntry() {
+  if (!form.value.amount || Number(form.value.amount) <= 0) {
+    errorMsg.value = "أدخل مبلغاً صحيحاً | Enter a valid amount";
+    return;
+  }
+  saving.value = true;
+  errorMsg.value = "";
+  const wasDeposit = form.value.entry_type === "deposit";
+  try {
+    await axios.post("/api/companyTreasuryStore", {
+      entry_type: form.value.entry_type,
+      amount: form.value.amount,
+      currency: currency.value,
+      entry_date: form.value.entry_date,
+      description: form.value.description,
+    });
+    form.value.amount = "";
+    form.value.description = "";
+    flashSuccess(
+      wasDeposit
+        ? "تم الإيداع بنجاح | Deposit saved"
+        : "تم السحب بنجاح | Withdrawal saved"
+    );
+    await refreshAll();
+  } catch (e) {
+    errorMsg.value = e.response?.data?.message || "تعذر حفظ الحركة | Save failed";
+  } finally {
+    saving.value = false;
+  }
+}
+
+function setEntryType(type) {
+  form.value.entry_type = type;
+}
+
+function openDelete(entry) {
+  entryToDelete.value = entry;
+  showModalDel.value = true;
+}
+
+async function confirmDelete() {
+  if (!entryToDelete.value) return;
+  try {
+    await axios.post(`/api/companyTreasuryDelete?id=${entryToDelete.value.id}`);
+    showModalDel.value = false;
+    entryToDelete.value = null;
+    flashSuccess("تم الحذف | Deleted");
+    await refreshAll();
+  } catch (e) {
+    errorMsg.value = e.response?.data?.message || "تعذر الحذف | Delete failed";
+  }
+}
+
+function onFormKeydown(e) {
+  if (e.key === "Enter" && !saving.value) submitEntry();
+}
+
+watch(currency, async () => {
+  await loadEntries();
+});
+
+watch([from, to], () => loadEntries());
+
+onMounted(() => refreshAll());
+</script>
+
+<template>
+  <Head title="قاصة الشركة | Company Treasury" />
+  <AuthenticatedLayout>
+    <ModalDel
+      :show="showModalDel"
+      :formData="entryToDelete"
+      @a="confirmDelete()"
+      @close="showModalDel = false"
+    >
+      <template #header>
+        <h2 class="mb-2 dark:text-white text-center text-lg font-bold">حذف الحركة؟</h2>
+        <p class="text-center text-sm text-gray-500 dark:text-gray-400">Delete this entry?</p>
+      </template>
+    </ModalDel>
+
+    <div class="treasury-app" dir="rtl">
+      <!-- Toast -->
+      <Transition name="toast">
+        <div v-if="successMsg" class="treasury-toast">{{ successMsg }}</div>
+      </Transition>
+
+      <!-- App shell -->
+      <div class="treasury-shell">
+        <!-- Top bar -->
+        <header class="treasury-topbar">
+          <div class="treasury-brand">
+            <div class="treasury-brand-icon">₵</div>
+            <div>
+              <h1 class="treasury-title">قاصة الشركة</h1>
+              <p class="treasury-subtitle">Company Treasury</p>
+            </div>
+          </div>
+
+          <div class="treasury-segment" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              class="treasury-segment-btn"
+              :class="{ active: currency === '$' }"
+              @click="currency = '$'"
+            >
+              <span>دولار</span>
+              <span class="en">USD</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              class="treasury-segment-btn"
+              :class="{ active: currency === 'IQD' }"
+              @click="currency = 'IQD'"
+            >
+              <span>دينار</span>
+              <span class="en">IQD</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Balance cards -->
+        <section class="treasury-balances">
+          <div class="balance-card balance-usd" :class="{ dimmed: currency !== '$' }">
+            <span class="balance-label">رصيد الدولار <span class="en">USD Balance</span></span>
+            <span class="balance-value">{{ fmt(balanceUsd, "$") }} <small>$</small></span>
+          </div>
+          <div class="balance-card balance-iqd" :class="{ dimmed: currency !== 'IQD' }">
+            <span class="balance-label">رصيد الدينار <span class="en">IQD Balance</span></span>
+            <span class="balance-value">{{ fmt(balanceIqd, "IQD") }} <small>IQD</small></span>
+          </div>
+          <div class="balance-card balance-active">
+            <span class="balance-label">رصيد الفترة <span class="en">Period Balance</span></span>
+            <span class="balance-value">{{ fmt(periodBalance) }}<small>{{ currencySymbol }}</small></span>
+          </div>
+        </section>
+
+        <!-- Toolbar -->
+        <section class="treasury-toolbar">
+          <div class="toolbar-actions toolbar-actions-main">
+            <button
+              type="button"
+              class="btn-ghost"
+              :class="{ 'btn-ghost-active': showFilterPanel }"
+              @click="showFilterPanel = !showFilterPanel"
+            >
+              <span>{{ showFilterPanel ? "إخفاء الفلتر" : "فلتر" }}</span>
+              <span class="en">{{ showFilterPanel ? "Hide Filter" : "Filter" }}</span>
+            </button>
+            <button type="button" class="btn-ghost" :disabled="loading" @click="refreshAll">
+              <span>تحديث</span>
+              <span class="en">Refresh</span>
+            </button>
+            <button
+              type="button"
+              class="btn-primary"
+              @click="showEntryPanel = !showEntryPanel"
+            >
+              <span>{{ showEntryPanel ? "إخفاء الإدخال" : "حركة جديدة" }}</span>
+              <span class="en">{{ showEntryPanel ? "Hide Form" : "New Entry" }}</span>
+            </button>
+          </div>
+
+          <Transition name="slide-filter">
+            <div v-show="showFilterPanel" class="toolbar-filter">
+              <div class="toolbar-dates">
+                <label class="field-label">من <span class="en">From</span></label>
+                <input v-model="from" type="date" class="field-input" />
+                <label class="field-label">إلى <span class="en">To</span></label>
+                <input v-model="to" type="date" class="field-input" />
+              </div>
+              <p class="filter-hint">{{ from }} — {{ to }}</p>
+            </div>
+          </Transition>
+        </section>
+
+        <!-- Entry composer -->
+        <Transition name="slide-composer">
+          <section v-show="showEntryPanel" class="treasury-composer" @keydown="onFormKeydown">
+            <div class="composer-type">
+              <button
+                type="button"
+                class="type-btn type-deposit"
+                :class="{ active: form.entry_type === 'deposit' }"
+                @click="setEntryType('deposit')"
+              >
+                <span>إيداع</span>
+                <span class="en">Deposit</span>
+                <small class="hint">مدين · Debit</small>
+              </button>
+              <button
+                type="button"
+                class="type-btn type-withdraw"
+                :class="{ active: form.entry_type === 'withdraw' }"
+                @click="setEntryType('withdraw')"
+              >
+                <span>سحب</span>
+                <span class="en">Withdraw</span>
+                <small class="hint">دائن · Credit</small>
+              </button>
+            </div>
+
+            <div class="composer-fields">
+              <div class="composer-field composer-amount">
+                <label class="field-label">المبلغ <span class="en">Amount</span></label>
+                <input
+                  v-model="form.amount"
+                  type="number"
+                  min="0"
+                  step="any"
+                  class="field-input field-input-lg"
+                  placeholder="0"
+                  autofocus
+                />
+              </div>
+              <div class="composer-field">
+                <label class="field-label">التاريخ <span class="en">Date</span></label>
+                <input v-model="form.entry_date" type="date" class="field-input" />
+              </div>
+              <div class="composer-field composer-desc">
+                <label class="field-label">البيان <span class="en">Description</span></label>
+                <input
+                  v-model="form.description"
+                  type="text"
+                  class="field-input"
+                  placeholder="وصف الحركة · Entry note"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn-submit"
+                :class="form.entry_type === 'deposit' ? 'is-deposit' : 'is-withdraw'"
+                :disabled="saving"
+                @click="submitEntry"
+              >
+                <span v-if="saving">جاري الحفظ · Saving…</span>
+                <template v-else>
+                  <span>{{ form.entry_type === "deposit" ? "تأكيد الإيداع" : "تأكيد السحب" }}</span>
+                  <span class="en">{{ form.entry_type === "deposit" ? "Confirm Deposit" : "Confirm Withdraw" }}</span>
+                </template>
+              </button>
+            </div>
+
+            <p v-if="errorMsg" class="composer-error">{{ errorMsg }}</p>
+          </section>
+        </Transition>
+
+        <!-- Ledger table -->
+        <section class="treasury-ledger">
+          <div class="ledger-header">
+            <h2>سجل الحركات · {{ currencyLabel }}</h2>
+            <span class="ledger-count">{{ entries.length }} حركة · entries</span>
+          </div>
+
+          <div class="ledger-wrap" :class="{ 'is-loading': loading }">
+            <div v-if="loading" class="ledger-overlay">
+              <div class="spinner"></div>
+              <span>تحميل · Loading</span>
+            </div>
+
+            <table class="ledger-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>التاريخ <span class="en">Date</span></th>
+                  <th>البيان <span class="en">Description</span></th>
+                  <th class="col-debit">مدين <span class="en">Debit</span></th>
+                  <th class="col-credit">دائن <span class="en">Credit</span></th>
+                  <th class="col-balance">الرصيد <span class="en">Balance</span></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="!loading && !entries.length" class="empty-row">
+                  <td colspan="7">
+                    <div class="empty-state">
+                      <span>لا توجد حركات</span>
+                      <span class="en">No entries in this period</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr
+                  v-for="(row, idx) in entries"
+                  :key="row.id"
+                  class="data-row"
+                >
+                  <td class="col-num">{{ idx + 1 }}</td>
+                  <td class="col-date">{{ row.entry_date?.substring?.(0, 10) ?? row.entry_date }}</td>
+                  <td class="col-desc">{{ row.description || "—" }}</td>
+                  <td class="col-debit">{{ fmtCell(row.debit) }}</td>
+                  <td class="col-credit">{{ fmtCell(row.credit) }}</td>
+                  <td class="col-balance">{{ fmt(row.balance) }}</td>
+                  <td class="col-action">
+                    <button type="button" class="btn-delete" @click="openDelete(row)">
+                      <span>حذف</span>
+                      <span class="en">Del</span>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot v-if="entries.length && !loading">
+                <tr class="totals-row">
+                  <td colspan="3">المجموع · Total</td>
+                  <td class="col-debit">{{ fmt(totalDebit) }}</td>
+                  <td class="col-credit">{{ fmt(totalCredit) }}</td>
+                  <td class="col-balance">{{ fmt(periodBalance) }}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </AuthenticatedLayout>
+</template>
+
+<style scoped>
+.treasury-app {
+  min-height: calc(100vh - 4rem);
+  background: linear-gradient(160deg, #f0f4f8 0%, #e8eef5 40%, #f5f7fa 100%);
+  padding: 0.75rem;
+}
+.dark .treasury-app {
+  background: linear-gradient(160deg, #0f1419 0%, #111827 50%, #0f172a 100%);
+}
+
+.treasury-shell {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Toast */
+.treasury-toast {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  background: #065f46;
+  color: #fff;
+  padding: 0.65rem 1.25rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  white-space: nowrap;
+}
+.toast-enter-active, .toast-leave-active { transition: all 0.35s ease; }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+
+/* Top bar */
+.treasury-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #fff;
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+.dark .treasury-topbar {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.treasury-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+.treasury-brand-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+.treasury-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1.2;
+  margin: 0;
+}
+.dark .treasury-title { color: #f9fafb; }
+.treasury-subtitle {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Currency segment */
+.treasury-segment {
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+}
+.dark .treasury-segment { background: #0f172a; }
+.treasury-segment-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.45rem 1.1rem;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #4b5563;
+  transition: all 0.2s ease;
+  line-height: 1.15;
+}
+.treasury-segment-btn .en {
+  font-size: 0.65rem;
+  font-weight: 600;
+  opacity: 0.7;
+  letter-spacing: 0.04em;
+}
+.treasury-segment-btn.active {
+  background: #fff;
+  color: #047857;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.dark .treasury-segment-btn.active {
+  background: #334155;
+  color: #6ee7b7;
+}
+
+/* Balances */
+.treasury-balances {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem;
+}
+@media (max-width: 640px) {
+  .treasury-balances { grid-template-columns: 1fr; }
+}
+.balance-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  transition: opacity 0.25s, transform 0.25s;
+}
+.dark .balance-card { background: #1e293b; border-color: #334155; }
+.balance-card.dimmed { opacity: 0.55; transform: scale(0.98); }
+.balance-usd { border-right: 4px solid #059669; }
+.balance-iqd { border-right: 4px solid #d97706; }
+.balance-active { border-right: 4px solid #2563eb; }
+.balance-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #6b7280;
+  margin-bottom: 0.35rem;
+}
+.balance-label .en { opacity: 0.75; margin-right: 0.25rem; }
+.balance-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #111827;
+}
+.dark .balance-value { color: #f9fafb; }
+.balance-value small {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.65;
+  margin-right: 2px;
+}
+
+/* Toolbar */
+.treasury-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  background: #fff;
+  border-radius: 14px;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+.dark .treasury-toolbar { background: #1e293b; border-color: #334155; }
+.toolbar-actions-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+}
+.toolbar-filter {
+  padding-top: 0.65rem;
+  border-top: 1px dashed #e5e7eb;
+}
+.dark .toolbar-filter { border-color: #475569; }
+.filter-hint {
+  margin: 0.45rem 0 0;
+  font-size: 0.72rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+.toolbar-dates {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+.toolbar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.btn-ghost-active {
+  background: #dbeafe !important;
+  color: #1d4ed8 !important;
+}
+.dark .btn-ghost-active {
+  background: #1e3a5f !important;
+  color: #93c5fd !important;
+}
+
+/* Bilingual buttons */
+.en {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 600;
+  opacity: 0.72;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.btn-ghost, .btn-primary, .btn-submit, .btn-delete, .type-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.15;
+  cursor: pointer;
+  border: none;
+  transition: all 0.18s ease;
+}
+.btn-ghost {
+  padding: 0.5rem 0.9rem;
+  border-radius: 10px;
+  background: #f3f4f6;
+  color: #374151;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+.btn-ghost:hover:not(:disabled) { background: #e5e7eb; }
+.dark .btn-ghost { background: #334155; color: #e5e7eb; }
+.btn-primary {
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  background: #111827;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+.btn-primary:hover { background: #1f2937; }
+.dark .btn-primary { background: #059669; }
+
+/* Composer */
+.treasury-composer {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+.dark .treasury-composer { background: #1e293b; border-color: #334155; }
+.slide-filter-enter-active, .slide-filter-leave-active,
+.slide-composer-enter-active, .slide-composer-leave-active {
+  transition: all 0.28s ease;
+  overflow: hidden;
+}
+.slide-filter-enter-from, .slide-filter-leave-to {
+  opacity: 0;
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.slide-filter-enter-to, .slide-filter-leave-from { max-height: 120px; }
+.slide-composer-enter-from, .slide-composer-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin: 0;
+}
+.slide-composer-enter-to, .slide-composer-leave-from { max-height: 320px; }
+
+.composer-type {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+.type-btn {
+  flex: 1;
+  padding: 0.65rem;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  background: #fafafa;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.dark .type-btn { background: #0f172a; border-color: #334155; color: #e5e7eb; }
+.type-btn .hint {
+  font-size: 0.6rem;
+  font-weight: 600;
+  opacity: 0.6;
+  margin-top: 2px;
+}
+.type-deposit.active {
+  border-color: #059669;
+  background: #ecfdf5;
+  color: #047857;
+}
+.type-withdraw.active {
+  border-color: #dc2626;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.composer-fields {
+  display: grid;
+  grid-template-columns: 140px 150px 1fr auto;
+  gap: 0.65rem;
+  align-items: end;
+}
+@media (max-width: 768px) {
+  .composer-fields { grid-template-columns: 1fr 1fr; }
+  .composer-desc { grid-column: 1 / -1; }
+  .btn-submit { grid-column: 1 / -1; }
+}
+
+.field-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #6b7280;
+  margin-bottom: 0.3rem;
+}
+.field-label .en { display: inline; font-size: 0.62rem; margin-right: 0.2rem; }
+.field-input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.875rem;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field-input:focus {
+  outline: none;
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+}
+.dark .field-input {
+  background: #0f172a;
+  border-color: #475569;
+  color: #f9fafb;
+}
+.field-input-lg {
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.btn-submit {
+  padding: 0.65rem 1.1rem;
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.82rem;
+  min-width: 120px;
+  min-height: 52px;
+}
+.btn-submit.is-deposit { background: linear-gradient(135deg, #059669, #047857); }
+.btn-submit.is-withdraw { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-submit:not(:disabled):hover { filter: brightness(1.06); transform: translateY(-1px); }
+
+.composer-error {
+  margin-top: 0.65rem;
+  padding: 0.5rem 0.75rem;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Ledger */
+.treasury-ledger {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+}
+.dark .treasury-ledger { background: #1e293b; border-color: #334155; }
+
+.ledger-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fafafa;
+}
+.dark .ledger-header { background: #0f172a; border-color: #334155; }
+.ledger-header h2 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #111827;
+}
+.dark .ledger-header h2 { color: #f9fafb; }
+.ledger-count {
+  font-size: 0.72rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.ledger-wrap {
+  position: relative;
+  overflow: auto;
+  flex: 1;
+  max-height: calc(100vh - 28rem);
+}
+.ledger-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.75);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  z-index: 5;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+}
+.dark .ledger-overlay { background: rgba(15, 23, 42, 0.8); color: #e5e7eb; }
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #059669;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+.ledger-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.ledger-table th {
+  background: #374151;
+  color: #fff;
+  padding: 0.55rem 0.65rem;
+  font-weight: 700;
+  text-align: center;
+  border: 1px solid #4b5563;
+  white-space: nowrap;
+}
+.ledger-table th .en {
+  display: block;
+  font-size: 0.58rem;
+  opacity: 0.75;
+  font-weight: 600;
+}
+.ledger-table td {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #d1d5db;
+  vertical-align: middle;
+}
+.dark .ledger-table td { border-color: #475569; color: #e5e7eb; }
+.data-row:nth-child(even) { background: #f9fafb; }
+.dark .data-row:nth-child(even) { background: #0f172a; }
+.data-row:hover { background: #fef9c3 !important; }
+.dark .data-row:hover { background: #1e3a2f !important; }
+
+.col-num { text-align: center; color: #9ca3af; width: 2.5rem; }
+.col-date { text-align: center; white-space: nowrap; }
+.col-desc { text-align: right; max-width: 280px; }
+.col-debit { text-align: left; font-weight: 700; color: #047857; }
+.col-credit { text-align: left; font-weight: 700; color: #b91c1c; }
+.col-balance { text-align: left; font-weight: 800; color: #1e40af; }
+.dark .col-balance { color: #93c5fd; }
+
+.totals-row td {
+  background: #e5e7eb !important;
+  font-weight: 800;
+  border-top: 2px solid #374151;
+}
+.dark .totals-row td { background: #334155 !important; }
+
+.btn-delete {
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  background: transparent;
+  color: #dc2626;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+.btn-delete:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 2.5rem;
+  color: #9ca3af;
+  font-weight: 600;
+}
+.empty-state .en { font-size: 0.75rem; }
+</style>

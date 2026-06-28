@@ -21,6 +21,7 @@ use App\Http\Controllers\HunterController;
 use App\Http\Controllers\AnnualController;
 use App\Http\Controllers\CarExpensesController;
 use App\Http\Controllers\CarContractController;
+use App\Http\Controllers\CompanyTreasuryController;
 use App\Http\Controllers\CarDamageReportController;
 use App\Http\Controllers\SyncMonitorController;
 use App\Http\Controllers\LicenseController;
@@ -394,6 +395,11 @@ Route::post('convertDinarDollarContract',[CarContractController::class, 'convert
 Route::post('DropFromBoxContract',[CarContractController::class, 'DropFromBoxContract'])->name('DropFromBoxContract');
 Route::get('getIndexClientsContract',[CarContractController::class, 'getIndexClientsContract'])->name('getIndexClientsContract');
 Route::get('contract_account_report',[CarContractController::class, 'contract_account_report'])->name('contract_account_report');
+
+Route::get('companyTreasuryEntries',[CompanyTreasuryController::class, 'getEntries'])->name('companyTreasuryEntries');
+Route::get('companyTreasurySummary',[CompanyTreasuryController::class, 'getSummary'])->name('companyTreasurySummary');
+Route::post('companyTreasuryStore',[CompanyTreasuryController::class, 'store'])->name('companyTreasuryStore');
+Route::post('companyTreasuryDelete',[CompanyTreasuryController::class, 'destroy'])->name('companyTreasuryDelete');
 
 Route::post('makeDrivingDocument',[CarContractController::class, 'makeDrivingDocument'])->name('makeDrivingDocument');
 Route::get('makeDrivingDocumentPdf',[CarContractController::class, 'makeDrivingDocumentPdf'])->name('makeDrivingDocumentPdf');

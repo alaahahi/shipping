@@ -15,6 +15,7 @@ use App\Http\Controllers\OnlineContractsController;
 use App\Http\Controllers\AnnualController;
 use App\Http\Controllers\CarExpensesController;
 use App\Http\Controllers\CarContractController;
+use App\Http\Controllers\CompanyTreasuryController;
 use App\Http\Controllers\CarDamageReportController;
 use App\Http\Controllers\HunterController;
 use App\Http\Controllers\StatisticsController;
@@ -258,6 +259,7 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
 
     Route::get('car_contract',[CarContractController::class, 'index'])->name('car_contract');
     Route::get('contract_account',[CarContractController::class, 'contract_account'])->name('contract_account');
+    Route::get('company_treasury',[CompanyTreasuryController::class, 'index'])->name('company_treasury');
     Route::get('contract/{id?}', [CarContractController::class, 'contract'])->name('contract');
     Route::get('contract_print/{id}', [CarContractController::class, 'contract_print'])->name('contract_print');
     

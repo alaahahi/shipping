@@ -166,6 +166,14 @@ const switchLocale = (locale) => {
               </div>
               <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.type_id==8">
                 <NavLink
+                  :href="route('company_treasury')"
+                  :active="route().current('company_treasury')"
+                >
+                {{ $t("CompanyTreasury") }}
+                </NavLink>
+              </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.type_id==8">
+                <NavLink
                   :href="route('contract_account')"
                   :active="route().current('contract_account')"
 
@@ -525,6 +533,13 @@ const switchLocale = (locale) => {
                 v-if="$page.props.auth.user.type_id==8||$page.props.auth.user.type_id==10"
               >
               عقود البيع  
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
+                :href="route('company_treasury')"
+                :active="route().current('company_treasury')"
+                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8"
+              >
+              قاصة الشركة
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('contract_account')"
