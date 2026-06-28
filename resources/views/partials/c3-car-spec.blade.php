@@ -6,14 +6,14 @@ $carLogo = MyHelp::carBrandLogo($carName ?? '');
   @if(!empty($titleKu))
   <div class="c3-car-card-intro">{{ $titleKu }}</div>
   @endif
-  <div class="c3-car-card-body">
+  <div class="c3-car-card-body{{ $carLogo ? '' : ' c3-car-card-body--no-logo' }}">
     @if($carLogo)
     <div class="c3-car-logo-col">
       <img src="{{ asset('car-logos/'.$carLogo.'.svg') }}" alt="" class="c3-car-logo" />
     </div>
     @endif
     <div class="c3-car-specs">
-      <div class="c3-spec-item">
+      <div class="c3-spec-item c3-spec-r1">
         <span class="lbl">لە جۆری (من النوع)</span>
         <span class="val">{{ $carName ?? '' }}</span>
       </div>
@@ -25,7 +25,7 @@ $carLogo = MyHelp::carBrandLogo($carName ?? '');
         <span class="lbl">رەنگ (اللون)</span>
         <span class="val">{{ $color ?? '' }}</span>
       </div>
-      <div class="c3-spec-item">
+      <div class="c3-spec-item c3-spec-r1">
         <span class="lbl">ئوتومبێلی ژمارە</span>
         <span class="val">{{ $no ?? '' }}</span>
       </div>

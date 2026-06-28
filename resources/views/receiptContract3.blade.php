@@ -193,28 +193,32 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   text-align: center;
 }
 .c3-car-card-body {
-  display: flex;
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
   align-items: stretch;
-  min-height: 0;
+}
+.c3-car-card-body--no-logo {
+  grid-template-columns: minmax(0, 1fr);
 }
 .c3-car-logo-col {
-  flex: 0 0 78px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 10px;
+  padding: 12px 8px;
   background: #fafafa;
   border-left: 1px solid #eee;
+  min-width: 82px;
+  min-height: 100%;
 }
 .c3-car-logo {
-  width: 58px;
-  height: 58px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
+  display: block;
 }
 .c3-car-specs {
-  flex: 1;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   min-width: 0;
 }
 .c3-spec-item {
@@ -222,7 +226,17 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   border-left: 1px solid #eee;
   border-bottom: 1px solid #eee;
 }
-.c3-spec-item:nth-child(3n) { border-left: none; }
+.c3-spec-item.c3-spec-r1 { border-left: none; }
+.c3-spec-wide {
+  grid-column: span 2;
+}
+.c3-spec-full {
+  grid-column: 1 / -1;
+  background: #fafafa;
+}
+.c3-car-specs .c3-spec-item:last-child {
+  border-bottom: none;
+}
 .c3-spec-item .lbl {
   display: block;
   font-size: 11px;
@@ -239,18 +253,6 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   word-break: break-word;
   line-height: 1.35;
 }
-.c3-spec-wide {
-  grid-column: span 2;
-  border-left: none;
-}
-.c3-spec-full {
-  grid-column: 1 / -1;
-  border-left: none;
-  border-bottom: none;
-  background: #fafafa;
-}
-.c3-car-specs .c3-spec-item:nth-child(4) { border-left: none; }
-.c3-money-row .lbl { font-size: 10px; line-height: 1.35; min-width: 0; flex: 0 1 38%; }
 .c3-sigs .role { font-size: 10px; line-height: 1.4; }
 
 /* الأطراف */
