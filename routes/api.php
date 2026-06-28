@@ -399,6 +399,7 @@ Route::get('contract_account_report',[CarContractController::class, 'contract_ac
 Route::get('companyTreasuryEntries',[CompanyTreasuryController::class, 'getEntries'])->name('companyTreasuryEntries');
 Route::get('companyTreasurySummary',[CompanyTreasuryController::class, 'getSummary'])->name('companyTreasurySummary');
 Route::post('companyTreasuryStore',[CompanyTreasuryController::class, 'store'])->name('companyTreasuryStore');
+Route::post('companyTreasuryUpdate',[CompanyTreasuryController::class, 'update'])->name('companyTreasuryUpdate');
 Route::post('companyTreasuryDelete',[CompanyTreasuryController::class, 'destroy'])->name('companyTreasuryDelete');
 
 Route::post('makeDrivingDocument',[CarContractController::class, 'makeDrivingDocument'])->name('makeDrivingDocument');

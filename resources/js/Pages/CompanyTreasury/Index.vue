@@ -1,9 +1,14 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import ModalDel from "@/Components/ModalDel.vue";
+import Modal from "@/Components/Modal.vue";
 import { Head } from "@inertiajs/inertia-vue3";
 import { ref, computed, watch, onMounted } from "vue";
 import axios from "axios";
+import InfiniteLoading from "v3-infinite-loading";
+import "v3-infinite-loading/lib/style.css";
+
+const PAGE_SIZE = 100;
 
 const currency = ref("$");
 const entries = ref([]);
@@ -12,19 +17,34 @@ const balanceIqd = ref(0);
 const totalDebit = ref(0);
 const totalCredit = ref(0);
 const periodBalance = ref(0);
+const totalEntries = ref(0);
 const loading = ref(false);
+const loadingMore = ref(false);
 const saving = ref(false);
 const errorMsg = ref("");
 const successMsg = ref("");
 const showModalDel = ref(false);
 const entryToDelete = ref(null);
+const showEditModal = ref(false);
+const entryToEdit = ref(null);
+const editError = ref("");
+const editing = ref(false);
 const showEntryPanel = ref(true);
 const showFilterPanel = ref(false);
+const resetData = ref(false);
+let page = 1;
 
 const from = ref(getFirstDayOfMonth());
 const to = ref(getTodayDate());
 
 const form = ref({
+  entry_type: "deposit",
+  amount: "",
+  entry_date: getTodayDate(),
+  description: "",
+});
+
+const editForm = ref({
   entry_type: "deposit",
   amount: "",
   entry_date: getTodayDate(),
@@ -47,6 +67,29 @@ function getTodayDate() {
 function getFirstDayOfMonth() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+}
+
+function getDateMonthsAgo(months) {
+  const d = new Date();
+  d.setMonth(d.getMonth() - months);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function setFilterThisMonth() {
+  from.value = getFirstDayOfMonth();
+  to.value = getTodayDate();
+}
+
+function setFilterThreeMonths() {
+  from.value = getDateMonthsAgo(3);
+  to.value = getTodayDate();
+}
+
+function resetEntries() {
+  page = 1;
+  entries.value = [];
+  totalEntries.value = 0;
+  resetData.value = !resetData.value;
 }
 
 function fmt(n, cur = currency.value) {
@@ -73,26 +116,52 @@ async function loadSummary() {
   balanceIqd.value = res.data.balance_iqd ?? 0;
 }
 
-async function loadEntries() {
-  loading.value = true;
-  errorMsg.value = "";
+async function loadEntriesPage($state) {
+  if (page === 1) {
+    loading.value = true;
+  } else {
+    loadingMore.value = true;
+  }
+  if (page === 1) {
+    errorMsg.value = "";
+  }
   try {
     const res = await axios.get("/api/companyTreasuryEntries", {
-      params: { currency: currency.value, from: from.value, to: to.value },
+      params: {
+        currency: currency.value,
+        from: from.value,
+        to: to.value,
+        page,
+        limit: PAGE_SIZE,
+      },
     });
-    entries.value = res.data.entries ?? [];
+    const batch = res.data.entries ?? [];
+    entries.value.push(...batch);
     totalDebit.value = res.data.total_debit ?? 0;
     totalCredit.value = res.data.total_credit ?? 0;
-    periodBalance.value = res.data.balance ?? 0;
+    periodBalance.value = res.data.period_balance ?? 0;
+    totalEntries.value = res.data.pagination?.total ?? entries.value.length;
+
+    if (batch.length < PAGE_SIZE) {
+      $state.complete();
+    } else {
+      $state.loaded();
+    }
+    page++;
   } catch (e) {
-    errorMsg.value = e.response?.data?.message || "تعذر تحميل القاصة | Failed to load";
+    if (page === 1) {
+      errorMsg.value = e.response?.data?.message || "تعذر تحميل القاصة | Failed to load";
+    }
+    $state.error();
   } finally {
     loading.value = false;
+    loadingMore.value = false;
   }
 }
 
 async function refreshAll() {
-  await Promise.all([loadSummary(), loadEntries()]);
+  await loadSummary();
+  resetEntries();
 }
 
 async function submitEntry() {
@@ -135,6 +204,46 @@ function openDelete(entry) {
   showModalDel.value = true;
 }
 
+function openEdit(entry) {
+  entryToEdit.value = entry;
+  const isDeposit = Number(entry.debit) > 0;
+  editForm.value = {
+    entry_type: isDeposit ? "deposit" : "withdraw",
+    amount: isDeposit ? entry.debit : entry.credit,
+    entry_date: (entry.entry_date?.substring?.(0, 10) ?? entry.entry_date) || getTodayDate(),
+    description: entry.description ?? "",
+  };
+  editError.value = "";
+  showEditModal.value = true;
+}
+
+async function confirmEdit() {
+  if (!entryToEdit.value) return;
+  if (!editForm.value.amount || Number(editForm.value.amount) <= 0) {
+    editError.value = "أدخل مبلغاً صحيحاً | Enter a valid amount";
+    return;
+  }
+  editing.value = true;
+  editError.value = "";
+  try {
+    await axios.post("/api/companyTreasuryUpdate", {
+      id: entryToEdit.value.id,
+      entry_type: editForm.value.entry_type,
+      amount: editForm.value.amount,
+      entry_date: editForm.value.entry_date,
+      description: editForm.value.description,
+    });
+    showEditModal.value = false;
+    entryToEdit.value = null;
+    flashSuccess("تم التعديل | Updated");
+    await refreshAll();
+  } catch (e) {
+    editError.value = e.response?.data?.message || "تعذر التعديل | Update failed";
+  } finally {
+    editing.value = false;
+  }
+}
+
 async function confirmDelete() {
   if (!entryToDelete.value) return;
   try {
@@ -152,13 +261,14 @@ function onFormKeydown(e) {
   if (e.key === "Enter" && !saving.value) submitEntry();
 }
 
-watch(currency, async () => {
-  await loadEntries();
+watch(currency, () => resetEntries());
+
+watch([from, to], () => resetEntries());
+
+onMounted(async () => {
+  await loadSummary();
+  resetEntries();
 });
-
-watch([from, to], () => loadEntries());
-
-onMounted(() => refreshAll());
 </script>
 
 <template>
@@ -175,6 +285,67 @@ onMounted(() => refreshAll());
         <p class="text-center text-sm text-gray-500 dark:text-gray-400">Delete this entry?</p>
       </template>
     </ModalDel>
+
+    <Modal :show="showEditModal" @close="showEditModal = false">
+      <template #header>
+        <h2 class="text-lg font-bold dark:text-white text-center mb-1">تعديل الحركة</h2>
+        <p class="text-center text-sm text-gray-500 dark:text-gray-400">Edit Entry</p>
+      </template>
+      <template #body>
+        <div class="edit-form space-y-3 px-1">
+          <div class="composer-type">
+            <button
+              type="button"
+              class="type-btn type-deposit"
+              :class="{ active: editForm.entry_type === 'deposit' }"
+              @click="editForm.entry_type = 'deposit'"
+            >
+              <span>إيداع</span>
+              <span class="en">Deposit</span>
+            </button>
+            <button
+              type="button"
+              class="type-btn type-withdraw"
+              :class="{ active: editForm.entry_type === 'withdraw' }"
+              @click="editForm.entry_type = 'withdraw'"
+            >
+              <span>سحب</span>
+              <span class="en">Withdraw</span>
+            </button>
+          </div>
+          <div>
+            <label class="field-label">المبلغ <span class="en">Amount</span></label>
+            <input v-model="editForm.amount" type="number" min="0" step="any" class="field-input field-input-lg w-full" />
+          </div>
+          <div>
+            <label class="field-label">التاريخ <span class="en">Date</span></label>
+            <input v-model="editForm.entry_date" type="date" class="field-input w-full" />
+          </div>
+          <div>
+            <label class="field-label">البيان <span class="en">Description</span></label>
+            <input v-model="editForm.description" type="text" class="field-input w-full" />
+          </div>
+          <p v-if="editError" class="composer-error">{{ editError }}</p>
+        </div>
+      </template>
+      <template #footer>
+        <div class="flex flex-row gap-2 w-full px-2">
+          <button type="button" class="flex-1 py-2.5 rounded-lg bg-gray-500 text-white font-bold" @click="showEditModal = false">
+            <span>إلغاء</span>
+            <span class="en block text-xs opacity-80">Cancel</span>
+          </button>
+          <button
+            type="button"
+            class="flex-1 py-2.5 rounded-lg bg-blue-600 text-white font-bold"
+            :disabled="editing"
+            @click="confirmEdit"
+          >
+            <span>{{ editing ? "..." : "حفظ" }}</span>
+            <span class="en block text-xs opacity-80">Save</span>
+          </button>
+        </div>
+      </template>
+    </Modal>
 
     <div class="treasury-app" dir="rtl">
       <!-- Toast -->
@@ -194,29 +365,77 @@ onMounted(() => refreshAll());
             </div>
           </div>
 
-          <div class="treasury-segment" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              class="treasury-segment-btn"
-              :class="{ active: currency === '$' }"
-              @click="currency = '$'"
-            >
-              <span>دولار</span>
-              <span class="en">USD</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              class="treasury-segment-btn"
-              :class="{ active: currency === 'IQD' }"
-              @click="currency = 'IQD'"
-            >
-              <span>دينار</span>
-              <span class="en">IQD</span>
-            </button>
+          <div class="topbar-right">
+            <div class="topbar-actions">
+              <button
+                type="button"
+                class="btn-ghost"
+                :class="{ 'btn-ghost-active': showFilterPanel }"
+                @click="showFilterPanel = !showFilterPanel"
+              >
+                <span>{{ showFilterPanel ? "إخفاء الفلتر" : "فلتر" }}</span>
+                <span class="en">{{ showFilterPanel ? "Hide Filter" : "Filter" }}</span>
+              </button>
+              <button type="button" class="btn-ghost" :disabled="loading" @click="refreshAll">
+                <span>تحديث</span>
+                <span class="en">Refresh</span>
+              </button>
+              <button
+                type="button"
+                class="btn-primary"
+                @click="showEntryPanel = !showEntryPanel"
+              >
+                <span>{{ showEntryPanel ? "إخفاء الإدخال" : "حركة جديدة" }}</span>
+                <span class="en">{{ showEntryPanel ? "Hide Form" : "New Entry" }}</span>
+              </button>
+            </div>
+
+            <div class="treasury-segment" role="tablist">
+              <button
+                type="button"
+                role="tab"
+                class="treasury-segment-btn"
+                :class="{ active: currency === '$' }"
+                @click="currency = '$'"
+              >
+                <span>دولار</span>
+                <span class="en">USD</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                class="treasury-segment-btn"
+                :class="{ active: currency === 'IQD' }"
+                @click="currency = 'IQD'"
+              >
+                <span>دينار</span>
+                <span class="en">IQD</span>
+              </button>
+            </div>
           </div>
         </header>
+
+        <Transition name="slide-filter">
+          <section v-show="showFilterPanel" class="treasury-filter-bar">
+            <div class="toolbar-dates">
+              <label class="field-label">من <span class="en">From</span></label>
+              <input v-model="from" type="date" class="field-input" />
+              <label class="field-label">إلى <span class="en">To</span></label>
+              <input v-model="to" type="date" class="field-input" />
+            </div>
+            <div class="filter-quick">
+              <button type="button" class="btn-quick" @click="setFilterThisMonth">
+                <span>هذا الشهر</span>
+                <span class="en">This Month</span>
+              </button>
+              <button type="button" class="btn-quick" @click="setFilterThreeMonths">
+                <span>3 أشهر</span>
+                <span class="en">3 Months</span>
+              </button>
+            </div>
+            <p class="filter-hint">{{ from }} — {{ to }}</p>
+          </section>
+        </Transition>
 
         <!-- Balance cards -->
         <section class="treasury-balances">
@@ -232,45 +451,6 @@ onMounted(() => refreshAll());
             <span class="balance-label">رصيد الفترة <span class="en">Period Balance</span></span>
             <span class="balance-value">{{ fmt(periodBalance) }}<small>{{ currencySymbol }}</small></span>
           </div>
-        </section>
-
-        <!-- Toolbar -->
-        <section class="treasury-toolbar">
-          <div class="toolbar-actions toolbar-actions-main">
-            <button
-              type="button"
-              class="btn-ghost"
-              :class="{ 'btn-ghost-active': showFilterPanel }"
-              @click="showFilterPanel = !showFilterPanel"
-            >
-              <span>{{ showFilterPanel ? "إخفاء الفلتر" : "فلتر" }}</span>
-              <span class="en">{{ showFilterPanel ? "Hide Filter" : "Filter" }}</span>
-            </button>
-            <button type="button" class="btn-ghost" :disabled="loading" @click="refreshAll">
-              <span>تحديث</span>
-              <span class="en">Refresh</span>
-            </button>
-            <button
-              type="button"
-              class="btn-primary"
-              @click="showEntryPanel = !showEntryPanel"
-            >
-              <span>{{ showEntryPanel ? "إخفاء الإدخال" : "حركة جديدة" }}</span>
-              <span class="en">{{ showEntryPanel ? "Hide Form" : "New Entry" }}</span>
-            </button>
-          </div>
-
-          <Transition name="slide-filter">
-            <div v-show="showFilterPanel" class="toolbar-filter">
-              <div class="toolbar-dates">
-                <label class="field-label">من <span class="en">From</span></label>
-                <input v-model="from" type="date" class="field-input" />
-                <label class="field-label">إلى <span class="en">To</span></label>
-                <input v-model="to" type="date" class="field-input" />
-              </div>
-              <p class="filter-hint">{{ from }} — {{ to }}</p>
-            </div>
-          </Transition>
         </section>
 
         <!-- Entry composer -->
@@ -348,11 +528,13 @@ onMounted(() => refreshAll());
         <section class="treasury-ledger">
           <div class="ledger-header">
             <h2>سجل الحركات · {{ currencyLabel }}</h2>
-            <span class="ledger-count">{{ entries.length }} حركة · entries</span>
+            <span class="ledger-count">
+              {{ entries.length }} / {{ totalEntries }} حركة · loaded
+            </span>
           </div>
 
-          <div class="ledger-wrap" :class="{ 'is-loading': loading }">
-            <div v-if="loading" class="ledger-overlay">
+          <div class="ledger-wrap" :class="{ 'is-loading': loading && !entries.length }">
+            <div v-if="loading && !entries.length" class="ledger-overlay">
               <div class="spinner"></div>
               <span>تحميل · Loading</span>
             </div>
@@ -390,10 +572,16 @@ onMounted(() => refreshAll());
                   <td class="col-credit">{{ fmtCell(row.credit) }}</td>
                   <td class="col-balance">{{ fmt(row.balance) }}</td>
                   <td class="col-action">
-                    <button type="button" class="btn-delete" @click="openDelete(row)">
-                      <span>حذف</span>
-                      <span class="en">Del</span>
-                    </button>
+                    <div class="action-btns">
+                      <button type="button" class="btn-edit" @click="openEdit(row)">
+                        <span>تعديل</span>
+                        <span class="en">Edit</span>
+                      </button>
+                      <button type="button" class="btn-delete" @click="openDelete(row)">
+                        <span>حذف</span>
+                        <span class="en">Del</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -407,6 +595,22 @@ onMounted(() => refreshAll());
                 </tr>
               </tfoot>
             </table>
+
+            <InfiniteLoading
+              :key="`${currency}-${from}-${to}-${resetData}`"
+              @infinite="loadEntriesPage"
+            >
+              <template #complete>
+                <div v-if="entries.length" class="load-more-hint">تم تحميل الكل · All loaded</div>
+              </template>
+              <template #error>
+                <div class="load-more-hint load-more-error">تعذر التحميل · Load error</div>
+              </template>
+            </InfiniteLoading>
+            <div v-if="loadingMore" class="load-more-hint">
+              <div class="spinner spinner-sm"></div>
+              تحميل المزيد · Loading more…
+            </div>
           </div>
         </section>
       </div>
@@ -457,14 +661,37 @@ onMounted(() => refreshAll());
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
   background: #fff;
   border-radius: 16px;
-  padding: 1rem 1.25rem;
+  padding: 0.85rem 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
 .dark .treasury-topbar {
+  background: #1e293b;
+  border-color: #334155;
+}
+.topbar-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-right: auto;
+}
+.topbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+.treasury-filter-bar {
+  background: #fff;
+  border-radius: 14px;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+.dark .treasury-filter-bar {
   background: #1e293b;
   border-color: #334155;
 }
@@ -583,39 +810,57 @@ onMounted(() => refreshAll());
   margin-right: 2px;
 }
 
-/* Toolbar */
-.treasury-toolbar {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  background: #fff;
-  border-radius: 14px;
-  padding: 0.75rem 1rem;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
-.dark .treasury-toolbar { background: #1e293b; border-color: #334155; }
-.toolbar-actions-main {
+/* Toolbar — removed, actions in topbar */
+.toolbar-dates {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-end;
   gap: 0.5rem;
-  width: 100%;
 }
-.toolbar-filter {
-  padding-top: 0.65rem;
-  border-top: 1px dashed #e5e7eb;
-}
-.dark .toolbar-filter { border-color: #475569; }
 .filter-hint {
   margin: 0.45rem 0 0;
   font-size: 0.72rem;
   color: #6b7280;
   font-weight: 600;
 }
-.toolbar-dates {
+.filter-quick {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+.btn-quick {
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #374151;
+  cursor: pointer;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+.btn-quick:hover { background: #f3f4f6; border-color: #059669; color: #047857; }
+.dark .btn-quick { background: #0f172a; border-color: #475569; color: #e5e7eb; }
+.load-more-hint {
+  text-align: center;
+  padding: 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 0.5rem;
+}
+.load-more-error { color: #b91c1c; }
+.spinner-sm {
+  width: 18px;
+  height: 18px;
+  border-width: 2px;
 }
 .toolbar-actions {
   display: flex;
@@ -652,24 +897,24 @@ onMounted(() => refreshAll());
   transition: all 0.18s ease;
 }
 .btn-ghost {
-  padding: 0.5rem 0.9rem;
+  padding: 0.45rem 0.75rem;
   border-radius: 10px;
   background: #f3f4f6;
   color: #374151;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 .btn-ghost:hover:not(:disabled) { background: #e5e7eb; }
 .dark .btn-ghost { background: #334155; color: #e5e7eb; }
 .btn-primary {
-  padding: 0.5rem 1rem;
+  padding: 0.45rem 0.85rem;
   border-radius: 10px;
-  background: #111827;
+  background: #059669;
   color: #fff;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
-.btn-primary:hover { background: #1f2937; }
+.btn-primary:hover { background: #047857; }
 .dark .btn-primary { background: #059669; }
 
 /* Composer */
@@ -935,6 +1180,32 @@ onMounted(() => refreshAll());
   background: #fef2f2;
   border-color: #fecaca;
 }
+.action-btns {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.btn-edit {
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  background: transparent;
+  color: #2563eb;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+.btn-edit:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+.edit-form .composer-type { margin-bottom: 0; }
+.edit-form .type-btn { padding: 0.5rem; font-size: 0.8rem; }
 
 .empty-state {
   display: flex;
