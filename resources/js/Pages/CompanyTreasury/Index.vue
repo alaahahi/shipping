@@ -564,6 +564,7 @@ onMounted(async () => {
                   v-for="(row, idx) in entries"
                   :key="row.id"
                   class="data-row"
+                  :class="Number(row.debit) > 0 ? 'row-deposit' : 'row-withdraw'"
                 >
                   <td class="col-num">{{ idx + 1 }}</td>
                   <td class="col-date">{{ row.entry_date?.substring?.(0, 10) ?? row.entry_date }}</td>
@@ -573,14 +574,8 @@ onMounted(async () => {
                   <td class="col-balance">{{ fmt(row.balance) }}</td>
                   <td class="col-action">
                     <div class="action-btns">
-                      <button type="button" class="btn-edit" @click="openEdit(row)">
-                        <span>تعديل</span>
-                        <span class="en">Edit</span>
-                      </button>
-                      <button type="button" class="btn-delete" @click="openDelete(row)">
-                        <span>حذف</span>
-                        <span class="en">Del</span>
-                      </button>
+                      <button type="button" class="btn-edit" title="Edit" @click="openEdit(row)">تعديل</button>
+                      <button type="button" class="btn-delete" title="Delete" @click="openDelete(row)">حذف</button>
                     </div>
                   </td>
                 </tr>
@@ -622,7 +617,7 @@ onMounted(async () => {
 .treasury-app {
   min-height: calc(100vh - 4rem);
   background: linear-gradient(160deg, #f0f4f8 0%, #e8eef5 40%, #f5f7fa 100%);
-  padding: 0.75rem;
+  padding: 0.4rem;
 }
 .dark .treasury-app {
   background: linear-gradient(160deg, #0f1419 0%, #111827 50%, #0f172a 100%);
@@ -633,7 +628,7 @@ onMounted(async () => {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.45rem;
 }
 
 /* Toast */
@@ -772,15 +767,15 @@ onMounted(async () => {
 .treasury-balances {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.65rem;
+  gap: 0.4rem;
 }
 @media (max-width: 640px) {
   .treasury-balances { grid-template-columns: 1fr; }
 }
 .balance-card {
   background: #fff;
-  border-radius: 14px;
-  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  padding: 0.45rem 0.65rem;
   border: 1px solid rgba(0, 0, 0, 0.06);
   transition: opacity 0.25s, transform 0.25s;
 }
@@ -791,20 +786,20 @@ onMounted(async () => {
 .balance-active { border-right: 4px solid #2563eb; }
 .balance-label {
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.62rem;
   color: #6b7280;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.12rem;
 }
 .balance-label .en { opacity: 0.75; margin-right: 0.25rem; }
 .balance-value {
-  font-size: 1.35rem;
+  font-size: 1.05rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: #111827;
 }
 .dark .balance-value { color: #f9fafb; }
 .balance-value small {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 600;
   opacity: 0.65;
   margin-right: 2px;
@@ -1052,13 +1047,13 @@ onMounted(async () => {
 /* Ledger */
 .treasury-ledger {
   background: #fff;
-  border-radius: 16px;
+  border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.06);
   overflow: hidden;
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 320px;
+  min-height: 0;
 }
 .dark .treasury-ledger { background: #1e293b; border-color: #334155; }
 
@@ -1066,20 +1061,20 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
+  padding: 0.35rem 0.65rem;
   border-bottom: 1px solid #e5e7eb;
   background: #fafafa;
 }
 .dark .ledger-header { background: #0f172a; border-color: #334155; }
 .ledger-header h2 {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   font-weight: 800;
   color: #111827;
 }
 .dark .ledger-header h2 { color: #f9fafb; }
 .ledger-count {
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   color: #6b7280;
   font-weight: 600;
 }
@@ -1088,7 +1083,8 @@ onMounted(async () => {
   position: relative;
   overflow: auto;
   flex: 1;
-  max-height: calc(100vh - 28rem);
+  max-height: calc(100vh - 14rem);
+  min-height: 280px;
 }
 .ledger-overlay {
   position: absolute;
@@ -1118,7 +1114,8 @@ onMounted(async () => {
 .ledger-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.82rem;
+  font-size: 0.72rem;
+  line-height: 1.25;
   font-variant-numeric: tabular-nums;
 }
 .ledger-table thead {
@@ -1129,92 +1126,92 @@ onMounted(async () => {
 .ledger-table th {
   background: #374151;
   color: #fff;
-  padding: 0.55rem 0.65rem;
+  padding: 0.28rem 0.35rem;
   font-weight: 700;
+  font-size: 0.68rem;
   text-align: center;
   border: 1px solid #4b5563;
   white-space: nowrap;
 }
 .ledger-table th .en {
-  display: block;
-  font-size: 0.58rem;
-  opacity: 0.75;
-  font-weight: 600;
+  display: inline;
+  font-size: 0.55rem;
+  opacity: 0.7;
+  margin-right: 3px;
 }
 .ledger-table td {
-  padding: 0.5rem 0.65rem;
+  padding: 0.2rem 0.35rem;
   border: 1px solid #d1d5db;
   vertical-align: middle;
 }
 .dark .ledger-table td { border-color: #475569; color: #e5e7eb; }
-.data-row:nth-child(even) { background: #f9fafb; }
-.dark .data-row:nth-child(even) { background: #0f172a; }
-.data-row:hover { background: #fef9c3 !important; }
-.dark .data-row:hover { background: #1e3a2f !important; }
 
-.col-num { text-align: center; color: #9ca3af; width: 2.5rem; }
-.col-date { text-align: center; white-space: nowrap; }
-.col-desc { text-align: right; max-width: 280px; }
-.col-debit { text-align: left; font-weight: 700; color: #047857; }
-.col-credit { text-align: left; font-weight: 700; color: #b91c1c; }
-.col-balance { text-align: left; font-weight: 800; color: #1e40af; }
+/* إيداع = خلفية خضراء | سحب = خلفية حمراء */
+.row-deposit { background: #ecfdf5; }
+.row-withdraw { background: #fef2f2; }
+.dark .row-deposit { background: rgba(6, 95, 70, 0.22); }
+.dark .row-withdraw { background: rgba(153, 27, 27, 0.2); }
+.row-deposit:hover { background: #d1fae5 !important; }
+.row-withdraw:hover { background: #fee2e2 !important; }
+.dark .row-deposit:hover { background: rgba(6, 95, 70, 0.35) !important; }
+.dark .row-withdraw:hover { background: rgba(153, 27, 27, 0.32) !important; }
+
+.col-num { text-align: center; color: #9ca3af; width: 1.8rem; font-size: 0.65rem; }
+.col-date { text-align: center; white-space: nowrap; font-size: 0.68rem; }
+.col-desc { text-align: right; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.col-debit { text-align: left; font-weight: 700; color: #047857; font-size: 0.72rem; }
+.col-credit { text-align: left; font-weight: 700; color: #b91c1c; font-size: 0.72rem; }
+.col-balance { text-align: left; font-weight: 800; color: #1e40af; font-size: 0.72rem; }
 .dark .col-balance { color: #93c5fd; }
+.col-action { width: 4.5rem; padding: 0.15rem !important; }
 
 .totals-row td {
   background: #e5e7eb !important;
   font-weight: 800;
+  font-size: 0.72rem;
+  padding: 0.28rem 0.35rem !important;
   border-top: 2px solid #374151;
 }
 .dark .totals-row td { background: #334155 !important; }
 
 .btn-delete {
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
   background: transparent;
   color: #dc2626;
-  font-size: 0.7rem;
+  font-size: 0.62rem;
   font-weight: 700;
-  border: 1px solid transparent;
+  border: none;
+  cursor: pointer;
 }
-.btn-delete:hover {
-  background: #fef2f2;
-  border-color: #fecaca;
-}
+.btn-delete:hover { background: rgba(254, 226, 226, 0.8); }
 .action-btns {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 3px;
+  justify-content: center;
+  gap: 2px;
 }
 .btn-edit {
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
   background: transparent;
   color: #2563eb;
-  font-size: 0.7rem;
+  font-size: 0.62rem;
   font-weight: 700;
-  border: 1px solid transparent;
+  border: none;
   cursor: pointer;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1.1;
 }
-.btn-edit:hover {
-  background: #eff6ff;
-  border-color: #bfdbfe;
-}
-.edit-form .composer-type { margin-bottom: 0; }
-.edit-form .type-btn { padding: 0.5rem; font-size: 0.8rem; }
+.btn-edit:hover { background: rgba(219, 234, 254, 0.8); }
 
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  padding: 2.5rem;
+  gap: 0.15rem;
+  padding: 1.5rem;
   color: #9ca3af;
   font-weight: 600;
+  font-size: 0.75rem;
 }
-.empty-state .en { font-size: 0.75rem; }
 </style>
