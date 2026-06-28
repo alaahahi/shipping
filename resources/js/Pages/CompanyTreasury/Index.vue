@@ -31,6 +31,10 @@ const editError = ref("");
 const editing = ref(false);
 const showEntryPanel = ref(true);
 const showFilterPanel = ref(false);
+const showTrashPanel = ref(false);
+const trashEntries = ref([]);
+const loadingTrash = ref(false);
+const restoringId = ref(null);
 const resetData = ref(false);
 let page = 1;
 
@@ -250,10 +254,50 @@ async function confirmDelete() {
     await axios.post(`/api/companyTreasuryDelete?id=${entryToDelete.value.id}`);
     showModalDel.value = false;
     entryToDelete.value = null;
-    flashSuccess("تم الحذف | Deleted");
+    flashSuccess("تم النقل إلى المحذوفات | Moved to trash");
     await refreshAll();
+    if (showTrashPanel.value) {
+      await loadTrash();
+    }
   } catch (e) {
     errorMsg.value = e.response?.data?.message || "تعذر الحذف | Delete failed";
+  }
+}
+
+async function loadTrash() {
+  loadingTrash.value = true;
+  try {
+    const res = await axios.get("/api/companyTreasuryTrash", {
+      params: { currency: currency.value, limit: 50 },
+    });
+    trashEntries.value = res.data.entries ?? [];
+  } catch (e) {
+    errorMsg.value = e.response?.data?.message || "تعذر تحميل المحذوفات | Failed to load trash";
+  } finally {
+    loadingTrash.value = false;
+  }
+}
+
+async function toggleTrashPanel() {
+  showTrashPanel.value = !showTrashPanel.value;
+  if (showTrashPanel.value) {
+    await loadTrash();
+  }
+}
+
+async function restoreEntry(entry) {
+  if (restoringId.value) return;
+  restoringId.value = entry.id;
+  errorMsg.value = "";
+  try {
+    await axios.post(`/api/companyTreasuryRestore?id=${entry.id}`);
+    flashSuccess("تم الاسترجاع | Restored");
+    await refreshAll();
+    await loadTrash();
+  } catch (e) {
+    errorMsg.value = e.response?.data?.message || "تعذر الاسترجاع | Restore failed";
+  } finally {
+    restoringId.value = null;
   }
 }
 
@@ -261,7 +305,12 @@ function onFormKeydown(e) {
   if (e.key === "Enter" && !saving.value) submitEntry();
 }
 
-watch(currency, () => resetEntries());
+watch(currency, () => {
+  resetEntries();
+  if (showTrashPanel.value) {
+    loadTrash();
+  }
+});
 
 watch([from, to], () => resetEntries());
 
@@ -281,8 +330,11 @@ onMounted(async () => {
       @close="showModalDel = false"
     >
       <template #header>
-        <h2 class="mb-2 dark:text-white text-center text-lg font-bold">حذف الحركة؟</h2>
-        <p class="text-center text-sm text-gray-500 dark:text-gray-400">Delete this entry?</p>
+        <h2 class="mb-2 dark:text-white text-center text-lg font-bold">نقل إلى المحذوفات؟</h2>
+        <p class="text-center text-sm text-gray-500 dark:text-gray-400">
+          يمكن استرجاع الحركة لاحقاً من قسم المحذوفات
+        </p>
+        <p class="text-center text-xs text-gray-400 dark:text-gray-500 mt-1">Move to trash — can be restored later</p>
       </template>
     </ModalDel>
 
@@ -379,6 +431,15 @@ onMounted(async () => {
               <button type="button" class="btn-ghost" :disabled="loading" @click="refreshAll">
                 <span>تحديث</span>
                 <span class="en">Refresh</span>
+              </button>
+              <button
+                type="button"
+                class="btn-ghost"
+                :class="{ 'btn-ghost-active': showTrashPanel }"
+                @click="toggleTrashPanel"
+              >
+                <span>{{ showTrashPanel ? "إخفاء المحذوفات" : "المحذوفات" }}</span>
+                <span class="en">{{ showTrashPanel ? "Hide Trash" : "Trash" }}</span>
               </button>
               <button
                 type="button"
@@ -608,6 +669,67 @@ onMounted(async () => {
             </div>
           </div>
         </section>
+
+        <!-- Trash panel -->
+        <Transition name="panel-slide">
+          <section v-if="showTrashPanel" class="treasury-trash">
+            <div class="ledger-header">
+              <h2>المحذوفات · {{ currencyLabel }}</h2>
+              <span class="ledger-count">{{ trashEntries.length }} حركة · entries</span>
+            </div>
+            <div class="ledger-wrap" :class="{ 'is-loading': loadingTrash }">
+              <div v-if="loadingTrash" class="ledger-overlay">
+                <div class="spinner"></div>
+                <span>تحميل · Loading</span>
+              </div>
+              <table class="ledger-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>تاريخ الحذف <span class="en">Deleted</span></th>
+                    <th>التاريخ <span class="en">Date</span></th>
+                    <th>البيان <span class="en">Description</span></th>
+                    <th class="col-debit">مدين <span class="en">Debit</span></th>
+                    <th class="col-credit">دائن <span class="en">Credit</span></th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-if="!loadingTrash && !trashEntries.length" class="empty-row">
+                    <td colspan="7">
+                      <div class="empty-state">
+                        <span>لا توجد حركات محذوفة</span>
+                        <span class="en">No deleted entries</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr
+                    v-for="(row, idx) in trashEntries"
+                    :key="row.id"
+                    class="data-row row-trash"
+                  >
+                    <td class="col-num">{{ idx + 1 }}</td>
+                    <td class="col-date">{{ row.deleted_at?.substring?.(0, 10) ?? "—" }}</td>
+                    <td class="col-date">{{ row.entry_date?.substring?.(0, 10) ?? row.entry_date }}</td>
+                    <td class="col-desc">{{ row.description || "—" }}</td>
+                    <td class="col-debit">{{ fmtCell(row.debit) }}</td>
+                    <td class="col-credit">{{ fmtCell(row.credit) }}</td>
+                    <td class="col-action">
+                      <button
+                        type="button"
+                        class="btn-restore"
+                        :disabled="restoringId === row.id"
+                        @click="restoreEntry(row)"
+                      >
+                        {{ restoringId === row.id ? "..." : "استرجاع" }}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </Transition>
       </div>
     </div>
   </AuthenticatedLayout>
@@ -1155,6 +1277,47 @@ onMounted(async () => {
 .row-withdraw:hover { background: #fee2e2 !important; }
 .dark .row-deposit:hover { background: rgba(6, 95, 70, 0.35) !important; }
 .dark .row-withdraw:hover { background: rgba(153, 27, 27, 0.32) !important; }
+
+.treasury-trash {
+  background: #fffbeb;
+  border-radius: 12px;
+  border: 1px solid #fcd34d;
+  overflow: hidden;
+}
+.dark .treasury-trash {
+  background: rgba(120, 53, 15, 0.15);
+  border-color: #92400e;
+}
+.row-trash { background: #fffbeb; }
+.dark .row-trash { background: rgba(120, 53, 15, 0.12); }
+.row-trash:hover { background: #fef3c7 !important; }
+.dark .row-trash:hover { background: rgba(120, 53, 15, 0.22) !important; }
+
+.btn-restore {
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: transparent;
+  color: #b45309;
+  font-size: 0.62rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+.btn-restore:hover:not(:disabled) { background: rgba(254, 243, 199, 0.9); }
+.btn-restore:disabled { opacity: 0.5; cursor: wait; }
+
+.panel-slide-enter-active, .panel-slide-leave-active {
+  transition: all 0.28s ease;
+  overflow: hidden;
+}
+.panel-slide-enter-from, .panel-slide-leave-to {
+  opacity: 0;
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.panel-slide-enter-to, .panel-slide-leave-from { max-height: 480px; }
 
 .col-num { text-align: center; color: #9ca3af; width: 1.8rem; font-size: 0.65rem; }
 .col-date { text-align: center; white-space: nowrap; font-size: 0.68rem; }

@@ -125,7 +125,7 @@ class CompanyTreasuryController extends Controller
         if ($this->getLastBalance($ownerId, $currency) < 0) {
             $entryDate = $entry->entry_date->format('Y-m-d');
             $entryId = (int) $entry->id;
-            $entry->delete();
+            $entry->forceDelete();
             $this->recalculateAfterDelete($ownerId, $currency, $entryDate, $entryId);
 
             return Response::json(['message' => 'الرصيد غير كافٍ لإتمام السحب'], 422);
@@ -149,6 +149,52 @@ class CompanyTreasuryController extends Controller
         $this->recalculateAfterDelete($ownerId, $currency, $entryDate, $entryId);
 
         return Response::json(['message' => 'ok'], 200);
+    }
+
+    public function getTrash(Request $request)
+    {
+        $this->authorizeTreasury();
+
+        $ownerId = Auth::user()->owner_id;
+        $currency = $request->get('currency', '$');
+        $limit = min(max((int) $request->get('limit', 50), 1), 100);
+
+        $entries = CompanyTreasuryEntry::onlyTrashed()
+            ->where('owner_id', $ownerId)
+            ->where('currency', $currency)
+            ->orderBy('deleted_at', 'desc')
+            ->limit($limit)
+            ->get();
+
+        return Response::json(['entries' => $entries], 200);
+    }
+
+    public function restore(Request $request)
+    {
+        $this->authorizeTreasury();
+
+        $ownerId = Auth::user()->owner_id;
+        $entry = CompanyTreasuryEntry::onlyTrashed()
+            ->where('owner_id', $ownerId)
+            ->findOrFail($request->id);
+
+        $currency = $entry->currency;
+        $entryDate = $entry->entry_date->format('Y-m-d');
+        $entryId = (int) $entry->id;
+
+        $entry->restore();
+        $this->recalculateBalancesFrom($ownerId, $currency, $entryDate, $entryId);
+
+        if ($this->getLastBalance($ownerId, $currency) < 0) {
+            $entry->delete();
+            $this->recalculateAfterDelete($ownerId, $currency, $entryDate, $entryId);
+
+            return Response::json(['message' => 'لا يمكن الاسترجاع — الرصيد سيصبح سالباً'], 422);
+        }
+
+        $entry->refresh();
+
+        return Response::json($entry, 200);
     }
 
     public function update(Request $request)

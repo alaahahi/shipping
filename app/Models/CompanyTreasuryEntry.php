@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CompanyTreasuryEntry extends Model
 {
+    use SoftDeletes;
     protected $table = 'company_treasury_entries';
 
     protected $fillable = [

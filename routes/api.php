@@ -401,6 +401,8 @@ Route::get('companyTreasurySummary',[CompanyTreasuryController::class, 'getSumma
 Route::post('companyTreasuryStore',[CompanyTreasuryController::class, 'store'])->name('companyTreasuryStore');
 Route::post('companyTreasuryUpdate',[CompanyTreasuryController::class, 'update'])->name('companyTreasuryUpdate');
 Route::post('companyTreasuryDelete',[CompanyTreasuryController::class, 'destroy'])->name('companyTreasuryDelete');
+Route::get('companyTreasuryTrash',[CompanyTreasuryController::class, 'getTrash'])->name('companyTreasuryTrash');
+Route::post('companyTreasuryRestore',[CompanyTreasuryController::class, 'restore'])->name('companyTreasuryRestore');
 
 Route::post('makeDrivingDocument',[CarContractController::class, 'makeDrivingDocument'])->name('makeDrivingDocument');
 Route::get('makeDrivingDocumentPdf',[CarContractController::class, 'makeDrivingDocumentPdf'])->name('makeDrivingDocumentPdf');
