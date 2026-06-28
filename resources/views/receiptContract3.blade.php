@@ -156,21 +156,14 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   line-height: 1.45;
 }
 .c3-h .ku { display: block; font-size: 11px; color: #333; font-weight: 600; }
-.c3-agree {
-  text-align: center;
-  font-size: 11.5px;
-  color: var(--c3-primary);
-  margin-bottom: 10px;
-  line-height: 1.5;
-}
 .c3-party-h {
-  font-size: 11px;
+  font-size: 12.5px;
   line-height: 1.4;
   background: var(--c3-primary);
   border-bottom: 1px solid var(--c3-primary);
   text-align: center;
   font-weight: 700;
-  padding: 6px 8px;
+  padding: 7px 10px;
   color: #fff;
 }
 .c3-tbl th { font-size: 10px; line-height: 1.35; }
@@ -192,55 +185,74 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   padding: 7px 14px;
   text-align: center;
 }
-.c3-car-logo-strip {
+.c3-car-card-body {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+.c3-car-card-body--no-logo {
+  display: block;
+}
+.c3-car-logo-side {
+  flex: 0 0 90px;
+  width: 90px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 14px;
+  padding: 10px 8px;
   background: #fafafa;
-  border-bottom: 2px solid var(--c3-primary);
+  border-left: 1px solid #eee;
 }
 .c3-car-logo {
-  width: 68px;
-  height: 68px;
+  width: 64px;
+  height: 64px;
   object-fit: contain;
   display: block;
 }
 .c3-car-specs {
+  flex: 1;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-width: 0;
 }
 .c3-spec-item {
-  padding: 10px 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 8px 10px;
   border-left: 1px solid #eee;
   border-bottom: 1px solid #eee;
+  min-width: 0;
 }
-.c3-spec-item.c3-spec-r1 { border-left: none; }
-.c3-spec-wide {
-  grid-column: span 2;
-}
+.c3-spec-item:nth-child(odd) { border-left: none; }
 .c3-spec-full {
   grid-column: 1 / -1;
-  background: #fafafa;
+  border-left: none;
 }
 .c3-car-specs .c3-spec-item:last-child {
   border-bottom: none;
 }
 .c3-spec-item .lbl {
-  display: block;
+  flex-shrink: 0;
   font-size: 11px;
   font-weight: 700;
   color: var(--c3-primary);
-  margin-bottom: 5px;
   line-height: 1.35;
+  white-space: nowrap;
 }
 .c3-spec-item .val {
-  display: block;
-  font-size: 13.5px;
+  flex: 1;
+  font-size: 13px;
   font-weight: 700;
   color: #111;
   word-break: break-word;
   line-height: 1.35;
+  min-width: 0;
+}
+.c3-spec-item .val.c3-vin-val {
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: 0.02em;
 }
 .c3-sigs .role { font-size: 10px; line-height: 1.4; }
 
@@ -259,21 +271,22 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   border-radius: 8px;
   overflow: hidden;
 }
-.c3-party-b { padding: 6px 8px; }
+.c3-party-b { padding: 8px 10px; }
 .c3-row {
   display: flex;
-  font-size: 11.5px;
-  margin-bottom: 5px;
+  font-size: 13px;
+  margin-bottom: 6px;
   align-items: baseline;
 }
 .c3-row:last-child { margin-bottom: 0; }
-.c3-row .k { font-weight: 600; white-space: nowrap; margin-left: 4px; }
+.c3-row .k { font-size: 12.5px; font-weight: 600; white-space: nowrap; margin-left: 5px; }
 .c3-row .v {
   flex: 1;
   border-bottom: 1px dotted #555;
+  font-size: 14px;
   font-weight: 700;
-  min-height: 17px;
-  padding: 0 3px;
+  min-height: 18px;
+  padding: 0 4px;
 }
 
 /* جدول السيارة — محذوف، استُبدل بـ c3-car-card */
@@ -297,7 +310,8 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 .c3-money-row .num {
   min-width: 95px;
   border-bottom: 1px dotted #444;
-  font-weight: 700;
+  font-weight: 900;
+  font-size: 13.5px;
   margin: 0 6px;
   text-align: center;
 }
@@ -315,10 +329,11 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   border-radius: 8px;
   padding: 6px 10px;
   font-size: 11.5px;
+  font-weight: 700;
   margin-bottom: 10px;
   min-height: 28px;
 }
-.c3-note b { margin-left: 4px; }
+.c3-note b { margin-left: 4px; font-weight: 900; }
 
 /* الشروط */
 .c3-terms {
@@ -328,13 +343,14 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   margin-bottom: 10px;
 }
 .c3-terms-h {
-  background: #f5f5f5;
-  border-bottom: 1px solid #ddd;
+  background: var(--c3-primary);
+  border-bottom: 1px solid var(--c3-primary);
   text-align: center;
   font-weight: 700;
   font-size: 11px;
-  padding: 6px 8px;
-  line-height: 1.45;
+  padding: 7px 10px;
+  color: #fff;
+  line-height: 1.35;
 }
 .c3-terms ul {
   margin: 0;
@@ -374,7 +390,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   body { background: #fff; }
   .c3-sheet { border-width: 1px; min-height: auto; padding: 7mm 9mm; }
   .c3-watermark { opacity: 0.045; }
-  .c3-head-main, .c3-head-bar, .c3-party-h, .c3-car-card-intro, .c3-terms-h {
+  .c3-head-main, .c3-head-bar, .c3-party-h, .c3-car-card-intro, .c3-car-logo-side, .c3-terms-h {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -400,7 +416,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
           <h1>{{ $companyName }}</h1>
           <div class="addr">{{ $config['third_title_ar'] ?? '' }}</div>
           @if(count($phones))
-          <div class="phones">{{ implode(' &nbsp;|&nbsp; ', $phones) }}</div>
+          <div class="phones">{!! implode(' &nbsp;|&nbsp; ', $phones) !!}</div>
           @endif
         </div>
         <div class="c3-head-qr">
@@ -511,12 +527,8 @@ html, body { width: 210mm; margin: 0; padding: 0; }
     </div>
 
     <div class="c3-note"><b>تێبینی (ملاحظة):</b> {{ $data['note'] ?? '' }}</div>
-    <div class="c3-agree">
-      <div>رێکەوتن کرا لە نێوان هەردوو لیەن لە سەر ئەم خالنەی خوارەوه</div>
-      <div>وتم الاتفاق على النقاط التالية بين الطرفين</div>
-    </div>image.png
     <div class="c3-terms">
-  
+      <div class="c3-terms-h">رێکەوتن کرا لە نێوان هەردوو لایەن لە سەر ئەم خاڵانەی خوارەوە – وتم الاتفاق على النقاط التالية بين الطرفين</div>
       <ul>
         @foreach($contractTerms as $term)
           <li>{{ $term }}</li>
