@@ -192,34 +192,23 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   padding: 7px 14px;
   text-align: center;
 }
-.c3-car-card-body {
-  display: grid;
-  grid-template-columns: 82px minmax(0, 1fr);
-  align-items: stretch;
-}
-.c3-car-card-body--no-logo {
-  grid-template-columns: minmax(0, 1fr);
-}
-.c3-car-logo-col {
+.c3-car-logo-strip {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 8px;
+  padding: 12px 14px;
   background: #fafafa;
-  border-left: 1px solid #eee;
-  min-width: 82px;
-  min-height: 100%;
+  border-bottom: 2px solid var(--c3-primary);
 }
 .c3-car-logo {
-  width: 60px;
-  height: 60px;
+  width: 68px;
+  height: 68px;
   object-fit: contain;
   display: block;
 }
 .c3-car-specs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  min-width: 0;
 }
 .c3-spec-item {
   padding: 10px 12px;
