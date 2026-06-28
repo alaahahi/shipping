@@ -33,10 +33,12 @@ $carLogo = MyHelp::carBrandLogo($carName ?? '');
         <span class="lbl">ژمارە لشە (الشاصی)</span>
         <span class="val">{{ $vin ?? '' }}</span>
       </div>
+      @if(!empty($annualOwnerName))
       <div class="c3-spec-item c3-spec-full">
         <span class="lbl">صاحب السنوية</span>
-        <span class="val">{{ $annualOwnerName ?? '' }}</span>
+        <span class="val">{{ $annualOwnerName }}</span>
       </div>
+      @endif
     </div>
   </div>
 </div>
