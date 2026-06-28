@@ -13,6 +13,11 @@ if (!is_array($contractTerms)) {
 $contractTerms = array_filter($contractTerms, function($t) { return !empty(trim($t)); });
 $companyName = $config['second_title_ar'] ?? $config['first_title_ar'] ?? config('app.company_name');
 $phones = config('car_contract.phones', []);
+$contractAt = !empty($data->created_at ?? null)
+  ? \Carbon\Carbon::parse($data->created_at)
+  : (!empty($data['created'] ?? null) ? \Carbon\Carbon::parse($data['created']) : null);
+$contractDate = $data['created'] ?? ($contractAt ? $contractAt->format('d-m-Y') : '');
+$contractTime = $contractAt ? $contractAt->format('H:i') : '';
 @endphp
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -433,7 +438,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
           عقد بيع وشراء سيارة
 
         </span>
-        <span>التاريخ: {{ $data['created'] ?? '' }}</span>
+        <span>التاريخ: {{ $contractDate }}</span>
       </div>
     </header>
 
@@ -537,7 +542,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
         @foreach($contractTerms as $term)
           <li>{{ $term }}</li>
         @endforeach
-        <li>تم إنشاء هذا العقد بتاريخ {{ $data['created'] ?? '' }} الساعة {{ \Carbon\Carbon::now()->format('H:i') }}</li>
+        <li>تم إنشاء هذا العقد بتاريخ {{ $contractDate }} الساعة {{ $contractTime }}</li>
       </ul>
     </div>
 
