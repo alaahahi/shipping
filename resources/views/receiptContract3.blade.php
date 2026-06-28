@@ -163,38 +163,110 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   margin-bottom: 10px;
   line-height: 1.5;
 }
-.c3-party-h { font-size: 11px; line-height: 1.4; }
+.c3-party-h {
+  font-size: 11px;
+  line-height: 1.4;
+  background: var(--c3-primary);
+  border-bottom: 1px solid var(--c3-primary);
+  text-align: center;
+  font-weight: 700;
+  padding: 6px 8px;
+  color: #fff;
+}
 .c3-tbl th { font-size: 10px; line-height: 1.35; }
+
+/* بطاقة السيارة */
+.c3-car-card {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  background: #fff;
+}
+.c3-car-card-intro {
+  background: var(--c3-primary);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.45;
+  padding: 7px 14px;
+  text-align: center;
+}
+.c3-car-card-body {
+  display: flex;
+  align-items: stretch;
+  min-height: 0;
+}
+.c3-car-logo-col {
+  flex: 0 0 78px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 10px;
+  background: #fafafa;
+  border-left: 1px solid #eee;
+}
+.c3-car-logo {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+}
+.c3-car-specs {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  min-width: 0;
+}
+.c3-spec-item {
+  padding: 10px 12px;
+  border-left: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+.c3-spec-item:nth-child(3n) { border-left: none; }
+.c3-spec-item .lbl {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c3-primary);
+  margin-bottom: 5px;
+  line-height: 1.35;
+}
+.c3-spec-item .val {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #111;
+  word-break: break-word;
+  line-height: 1.35;
+}
+.c3-spec-wide {
+  grid-column: span 2;
+  border-left: none;
+}
+.c3-spec-full {
+  grid-column: 1 / -1;
+  border-left: none;
+  border-bottom: none;
+  background: #fafafa;
+}
+.c3-car-specs .c3-spec-item:nth-child(4) { border-left: none; }
 .c3-money-row .lbl { font-size: 10px; line-height: 1.35; min-width: 0; flex: 0 1 38%; }
 .c3-sigs .role { font-size: 10px; line-height: 1.4; }
 
 /* الأطراف */
 .c3-parties {
-  display: table;
-  width: 100%;
-  border-collapse: collapse;
+  display: flex;
+  gap: 16px;
   margin-bottom: 10px;
 }
 .c3-parties > div {
-  display: table-cell;
-  width: 50%;
-  vertical-align: top;
-  padding-left: 6px;
+  flex: 1;
+  min-width: 0;
 }
-.c3-parties > div:first-child { padding-left: 0; padding-right: 6px; }
 .c3-party {
   border: 1px solid #ccc;
   border-radius: 8px;
   overflow: hidden;
-}
-.c3-party-h {
-  background: #f5f5f5;
-  border-bottom: 1px solid #ddd;
-  text-align: center;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 4px;
-  color: #111;
 }
 .c3-party-b { padding: 6px 8px; }
 .c3-row {
@@ -213,34 +285,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   padding: 0 3px;
 }
 
-/* جدول السيارة */
-.c3-tbl {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 11.5px;
-  margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  overflow: hidden;
-}
-.c3-tbl th, .c3-tbl td {
-  border-bottom: 1px solid #e0e0e0;
-  border-left: 1px solid #e0e0e0;
-  padding: 5px 7px;
-  text-align: right;
-}
-.c3-tbl tr:last-child th,
-.c3-tbl tr:last-child td { border-bottom: none; }
-.c3-tbl th:first-child, .c3-tbl td:first-child { border-left: none; }
-.c3-tbl th {
-  background: #f5f5f5;
-  font-weight: 700;
-  width: 16%;
-  color: #222;
-  font-size: 11px;
-}
-.c3-tbl td { font-weight: 700; }
+/* جدول السيارة — محذوف، استُبدل بـ c3-car-card */
 
 /* المبالغ */
 .c3-money {
@@ -338,7 +383,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   body { background: #fff; }
   .c3-sheet { border-width: 1px; min-height: auto; padding: 7mm 9mm; }
   .c3-watermark { opacity: 0.045; }
-  .c3-head-main, .c3-head-bar, .c3-party-h, .c3-tbl th, .c3-terms-h {
+  .c3-head-main, .c3-head-bar, .c3-party-h, .c3-car-card-intro, .c3-terms-h {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -406,51 +451,28 @@ html, body { width: 210mm; margin: 0; padding: 0; }
       </div>
     </div>
 
-    <div class="c3-agree">
-      <div>رێکەوتن کرا لە نێوان هەردوو لیەن لە سەر ئەم خالنەی خوارەوه</div>
-      <div>وتم الاتفاق على النقاط التالية بين الطرفين</div>
-    </div>
+  
 
-    <div class="c3-h">
-      <span class="ku">فرۆشتنی لایەنی یەکەم بە لایەنی دووەم ئوتومبێلی ژمارە (بيع سيارة الطرف الأول إلى الطرف الثاني رقم)</span>
-    </div>
-    <table class="c3-tbl">
-      <tr>
-        <th>لە جۆری<br>(من النوع)</th><td>{{ $data['car_name'] ?? '' }}</td>
-        <th>مودیل</th><td>{{ $data['modal'] ?? '' }}</td>
-        <th>رەنگ<br>(اللون)</th><td>{{ $data['color'] ?? '' }}</td>
-      </tr>
-      <tr>
-        <th>ئوتومبێلی ژمارە</th><td>{{ $data['no'] ?? '' }}</td>
-        <th>ژمارە لشە<br>(الشاصی)</th><td colspan="3">{{ $data['vin'] ?? '' }}</td>
-      </tr>
-      @if(!empty($data['annual_owner_name'] ?? ''))
-      <tr>
-        <th>صاحب السنوية</th><td colspan="5">{{ $data['annual_owner_name'] ?? '' }}</td>
-      </tr>
-      @endif
-    </table>
+    @include('partials.c3-car-spec', [
+      'titleKu' => 'فرۆشتنی لایەنی یەکەم بە لایەنی دووەم ئوتومبێلی ژمارە (بيع سيارة الطرف الأول إلى الطرف الثاني رقم)',
+      'carName' => $data['car_name'] ?? '',
+      'modal' => $data['modal'] ?? '',
+      'color' => $data['color'] ?? '',
+      'no' => $data['no'] ?? '',
+      'vin' => $data['vin'] ?? '',
+      'annualOwnerName' => $data['annual_owner_name'] ?? '',
+    ])
 
     @if(!empty($data['vin_s'] ?? null))
-    <div class="c3-h">
-      <span class="ku">گۆرینەوەی لایەنی یەکەم ئوتومبێلی ژمارە (السيارة البديلة)</span>
-    </div>
-    <table class="c3-tbl">
-      <tr>
-        <th>لە جۆری<br>(من النوع)</th><td>{{ $data['car_name_s'] ?? '' }}</td>
-        <th>مودیل</th><td>{{ $data['modal_s'] ?? '' }}</td>
-        <th>رەنگ<br>(اللون)</th><td>{{ $data['color_s'] ?? '' }}</td>
-      </tr>
-      <tr>
-        <th>ئوتومبێلی ژمارە</th><td>{{ $data['no_s'] ?? '' }}</td>
-        <th>ژمارە لشە<br>(الشاصی)</th><td colspan="3">{{ $data['vin_s'] ?? '' }}</td>
-      </tr>
-      @if(!empty($data['annual_owner_name_s'] ?? ''))
-      <tr>
-        <th>صاحب السنوية</th><td colspan="5">{{ $data['annual_owner_name_s'] ?? '' }}</td>
-      </tr>
-      @endif
-    </table>
+    @include('partials.c3-car-spec', [
+      'titleKu' => 'گۆرینەوەی لایەنی یەکەم ئوتومبێلی ژمارە (السيارة البديلة)',
+      'carName' => $data['car_name_s'] ?? '',
+      'modal' => $data['modal_s'] ?? '',
+      'color' => $data['color_s'] ?? '',
+      'no' => $data['no_s'] ?? '',
+      'vin' => $data['vin_s'] ?? '',
+      'annualOwnerName' => $data['annual_owner_name_s'] ?? '',
+    ])
     @endif
 
     @php
@@ -498,12 +520,12 @@ html, body { width: 210mm; margin: 0; padding: 0; }
     </div>
 
     <div class="c3-note"><b>تێبینی (ملاحظة):</b> {{ $data['note'] ?? '' }}</div>
-
+    <div class="c3-agree">
+      <div>رێکەوتن کرا لە نێوان هەردوو لیەن لە سەر ئەم خالنەی خوارەوه</div>
+      <div>وتم الاتفاق على النقاط التالية بين الطرفين</div>
+    </div>image.png
     <div class="c3-terms">
-      <div class="c3-terms-h">
-        <div>رێکەوتن کرا لە نێوان هەردوو لیەن لە سەر ئەم خالنەی خوارەوه</div>
-        <div>وتم الاتفاق على النقاط التالية بين الطرفين</div>
-      </div>
+  
       <ul>
         @foreach($contractTerms as $term)
           <li>{{ $term }}</li>
