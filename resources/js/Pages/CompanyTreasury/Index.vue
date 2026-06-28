@@ -109,6 +109,19 @@ function fmtCell(n) {
   return fmt(v);
 }
 
+function fmtDateLite(value) {
+  if (!value) return "—";
+  const s = String(value);
+  return s.substring(0, 10);
+}
+
+function fmtTimeLite(value) {
+  if (!value) return "";
+  const s = String(value);
+  const match = s.match(/(?:T|\s)(\d{2}:\d{2})/);
+  return match ? match[1] : "";
+}
+
 function flashSuccess(msg) {
   successMsg.value = msg;
   setTimeout(() => { successMsg.value = ""; }, 2800);
@@ -628,7 +641,10 @@ onMounted(async () => {
                   :class="Number(row.debit) > 0 ? 'row-deposit' : 'row-withdraw'"
                 >
                   <td class="col-num">{{ idx + 1 }}</td>
-                  <td class="col-date">{{ row.entry_date?.substring?.(0, 10) ?? row.entry_date }}</td>
+                  <td class="col-date">
+                    <span class="date-main">{{ fmtDateLite(row.entry_date) }}</span>
+                    <span v-if="fmtTimeLite(row.created_at)" class="date-time-lite">{{ fmtTimeLite(row.created_at) }}</span>
+                  </td>
                   <td class="col-desc">{{ row.description || "—" }}</td>
                   <td class="col-debit">{{ fmtCell(row.debit) }}</td>
                   <td class="col-credit">{{ fmtCell(row.credit) }}</td>
@@ -709,8 +725,14 @@ onMounted(async () => {
                     class="data-row row-trash"
                   >
                     <td class="col-num">{{ idx + 1 }}</td>
-                    <td class="col-date">{{ row.deleted_at?.substring?.(0, 10) ?? "—" }}</td>
-                    <td class="col-date">{{ row.entry_date?.substring?.(0, 10) ?? row.entry_date }}</td>
+                    <td class="col-date">
+                      <span class="date-main">{{ fmtDateLite(row.deleted_at) }}</span>
+                      <span v-if="fmtTimeLite(row.deleted_at)" class="date-time-lite">{{ fmtTimeLite(row.deleted_at) }}</span>
+                    </td>
+                    <td class="col-date">
+                      <span class="date-main">{{ fmtDateLite(row.entry_date) }}</span>
+                      <span v-if="fmtTimeLite(row.created_at)" class="date-time-lite">{{ fmtTimeLite(row.created_at) }}</span>
+                    </td>
                     <td class="col-desc">{{ row.description || "—" }}</td>
                     <td class="col-debit">{{ fmtCell(row.debit) }}</td>
                     <td class="col-credit">{{ fmtCell(row.credit) }}</td>
@@ -1320,7 +1342,16 @@ onMounted(async () => {
 .panel-slide-enter-to, .panel-slide-leave-from { max-height: 480px; }
 
 .col-num { text-align: center; color: #9ca3af; width: 1.8rem; font-size: 0.65rem; }
-.col-date { text-align: center; white-space: nowrap; font-size: 0.68rem; }
+.col-date { text-align: center; white-space: nowrap; font-size: 0.68rem; line-height: 1.15; }
+.date-main { display: block; }
+.date-time-lite {
+  display: block;
+  font-size: 0.56rem;
+  font-weight: 400;
+  color: #9ca3af;
+  margin-top: 1px;
+}
+.dark .date-time-lite { color: #64748b; }
 .col-desc { text-align: right; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .col-debit { text-align: left; font-weight: 700; color: #047857; font-size: 0.72rem; }
 .col-credit { text-align: left; font-weight: 700; color: #b91c1c; font-size: 0.72rem; }
