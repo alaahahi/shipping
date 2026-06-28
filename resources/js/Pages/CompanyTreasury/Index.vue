@@ -35,8 +35,9 @@ const showTrashPanel = ref(false);
 const trashEntries = ref([]);
 const loadingTrash = ref(false);
 const restoringId = ref(null);
-const resetData = ref(false);
+const infiniteKey = ref(0);
 let page = 1;
+let listToken = 0;
 
 const from = ref(getFirstDayOfMonth());
 const to = ref(getTodayDate());
@@ -90,10 +91,19 @@ function setFilterThreeMonths() {
 }
 
 function resetEntries() {
+  listToken++;
   page = 1;
   entries.value = [];
   totalEntries.value = 0;
-  resetData.value = !resetData.value;
+  infiniteKey.value++;
+}
+
+function entryTimeOf(row) {
+  return row?.entry_time || fmtTimeLite(row?.created_at) || fmtTimeLite(row?.updated_at) || "";
+}
+
+function deletedTimeOf(row) {
+  return row?.deleted_time || fmtTimeLite(row?.deleted_at) || "";
 }
 
 function fmt(n, cur = currency.value) {
@@ -134,45 +144,59 @@ async function loadSummary() {
 }
 
 async function loadEntriesPage($state) {
-  if (page === 1) {
+  const token = listToken;
+  const requestPage = page;
+
+  if (requestPage === 1) {
     loading.value = true;
+    errorMsg.value = "";
   } else {
     loadingMore.value = true;
   }
-  if (page === 1) {
-    errorMsg.value = "";
-  }
+
   try {
     const res = await axios.get("/api/companyTreasuryEntries", {
       params: {
         currency: currency.value,
         from: from.value,
         to: to.value,
-        page,
+        page: requestPage,
         limit: PAGE_SIZE,
       },
     });
+
+    if (token !== listToken) {
+      $state.complete();
+      return;
+    }
+
     const batch = res.data.entries ?? [];
+    const lastPage = res.data.pagination?.last_page ?? 1;
+
     entries.value.push(...batch);
     totalDebit.value = res.data.total_debit ?? 0;
     totalCredit.value = res.data.total_credit ?? 0;
     periodBalance.value = res.data.period_balance ?? 0;
     totalEntries.value = res.data.pagination?.total ?? entries.value.length;
 
-    if (batch.length < PAGE_SIZE) {
+    if (requestPage >= lastPage || batch.length === 0) {
       $state.complete();
     } else {
+      page = requestPage + 1;
       $state.loaded();
     }
-    page++;
   } catch (e) {
-    if (page === 1) {
+    if (token === listToken && requestPage === 1) {
       errorMsg.value = e.response?.data?.message || "تعذر تحميل القاصة | Failed to load";
     }
-    $state.error();
+    if (token === listToken) {
+      $state.error();
+    }
   } finally {
-    loading.value = false;
-    loadingMore.value = false;
+    if (token === listToken) {
+      loading.value = false;
+      loadingMore.value = false;
+    }
   }
 }
 
@@ -329,7 +353,6 @@ watch([from, to], () => resetEntries());
 
 onMounted(async () => {
   await loadSummary();
-  resetEntries();
 });
 </script>
 
@@ -643,7 +666,7 @@ onMounted(async () => {
                   <td class="col-num">{{ idx + 1 }}</td>
                   <td class="col-date">
                     <span class="date-main">{{ fmtDateLite(row.entry_date) }}</span>
-                    <span v-if="fmtTimeLite(row.created_at)" class="date-time-lite">{{ fmtTimeLite(row.created_at) }}</span>
+                    <span v-if="entryTimeOf(row)" class="date-time-lite">{{ entryTimeOf(row) }}</span>
                   </td>
                   <td class="col-desc">{{ row.description || "—" }}</td>
                   <td class="col-debit">{{ fmtCell(row.debit) }}</td>
@@ -669,7 +692,7 @@ onMounted(async () => {
             </table>
 
             <InfiniteLoading
-              :key="`${currency}-${from}-${to}-${resetData}`"
+              :key="`${currency}-${from}-${to}-${infiniteKey}`"
               @infinite="loadEntriesPage"
             >
               <template #complete>
@@ -727,11 +750,11 @@ onMounted(async () => {
                     <td class="col-num">{{ idx + 1 }}</td>
                     <td class="col-date">
                       <span class="date-main">{{ fmtDateLite(row.deleted_at) }}</span>
-                      <span v-if="fmtTimeLite(row.deleted_at)" class="date-time-lite">{{ fmtTimeLite(row.deleted_at) }}</span>
+                      <span v-if="deletedTimeOf(row)" class="date-time-lite">{{ deletedTimeOf(row) }}</span>
                     </td>
                     <td class="col-date">
                       <span class="date-main">{{ fmtDateLite(row.entry_date) }}</span>
-                      <span v-if="fmtTimeLite(row.created_at)" class="date-time-lite">{{ fmtTimeLite(row.created_at) }}</span>
+                      <span v-if="entryTimeOf(row)" class="date-time-lite">{{ entryTimeOf(row) }}</span>
                     </td>
                     <td class="col-desc">{{ row.description || "—" }}</td>
                     <td class="col-debit">{{ fmtCell(row.debit) }}</td>
@@ -1346,12 +1369,12 @@ onMounted(async () => {
 .date-main { display: block; }
 .date-time-lite {
   display: block;
-  font-size: 0.56rem;
-  font-weight: 400;
-  color: #9ca3af;
-  margin-top: 1px;
+  font-size: 0.62rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin-top: 2px;
 }
-.dark .date-time-lite { color: #64748b; }
+.dark .date-time-lite { color: #94a3b8; }
 .col-desc { text-align: right; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .col-debit { text-align: left; font-weight: 700; color: #047857; font-size: 0.72rem; }
 .col-credit { text-align: left; font-weight: 700; color: #b91c1c; font-size: 0.72rem; }

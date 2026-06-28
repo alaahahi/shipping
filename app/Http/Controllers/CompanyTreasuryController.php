@@ -62,7 +62,10 @@ class CompanyTreasuryController extends Controller
             ->paginate($perPage, ['*'], 'page', $page);
 
         return Response::json([
-            'entries' => $paginated->items(),
+            'entries' => array_map(
+                fn (CompanyTreasuryEntry $entry) => $this->formatEntryForApi($entry),
+                $paginated->items()
+            ),
             'pagination' => [
                 'total' => $totalCount,
                 'page' => $paginated->currentPage(),
@@ -133,7 +136,7 @@ class CompanyTreasuryController extends Controller
 
         $entry->refresh();
 
-        return Response::json($entry, 201);
+        return Response::json($this->formatEntryForApi($entry), 201);
     }
 
     public function destroy(Request $request)
@@ -166,7 +169,9 @@ class CompanyTreasuryController extends Controller
             ->limit($limit)
             ->get();
 
-        return Response::json(['entries' => $entries], 200);
+        return Response::json([
+            'entries' => $entries->map(fn (CompanyTreasuryEntry $entry) => $this->formatEntryForApi($entry, true))->values(),
+        ], 200);
     }
 
     public function restore(Request $request)
@@ -194,7 +199,7 @@ class CompanyTreasuryController extends Controller
 
         $entry->refresh();
 
-        return Response::json($entry, 200);
+        return Response::json($this->formatEntryForApi($entry), 200);
     }
 
     public function update(Request $request)
@@ -246,7 +251,7 @@ class CompanyTreasuryController extends Controller
 
         $entry->refresh();
 
-        return Response::json($entry, 200);
+        return Response::json($this->formatEntryForApi($entry), 200);
     }
 
     protected function getLastBalance(int $ownerId, string $currency): float
@@ -340,5 +345,17 @@ class CompanyTreasuryController extends Controller
             $next->entry_date->format('Y-m-d'),
             (int) $next->id
         );
+    }
+
+    protected function formatEntryForApi(CompanyTreasuryEntry $entry, bool $includeDeleted = false): array
+    {
+        $data = $entry->toArray();
+        $data['entry_time'] = $entry->created_at?->timezone(config('app.timezone'))->format('H:i') ?? '';
+
+        if ($includeDeleted) {
+            $data['deleted_time'] = $entry->deleted_at?->timezone(config('app.timezone'))->format('H:i') ?? '';
+        }
+
+        return $data;
     }
 }
