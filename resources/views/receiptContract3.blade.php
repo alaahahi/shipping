@@ -40,11 +40,11 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 .c3-sheet {
   position: relative;
   overflow: hidden;
-  margin: 0 auto;
-  padding: 8mm 10mm 10mm;
+  margin: 0;
+  padding: 5mm 6mm 6mm;
   max-width: 210mm;
-  border: 1px solid #d4d4d4;
-  border-radius: 12px;
+  border: none;
+  border-radius: 0;
   min-height: 277mm;
 }
 .c3-watermark {
@@ -388,7 +388,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
 
 @media print {
   body { background: #fff; }
-  .c3-sheet { border-width: 1px; min-height: auto; padding: 7mm 9mm; }
+  .c3-sheet { min-height: auto; padding: 4mm 5mm; }
   .c3-watermark { opacity: 0.045; }
   .c3-head-main, .c3-head-bar, .c3-party-h, .c3-car-card-intro, .c3-car-logo-side, .c3-terms-h {
     -webkit-print-color-adjust: exact;
