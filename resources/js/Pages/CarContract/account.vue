@@ -27,6 +27,9 @@ import edit from "@/Components/icon/edit.vue";
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
 import debounce from 'lodash/debounce';
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const laravelData = ref({});
 const searchTerm = ref('');
@@ -324,9 +327,7 @@ function UpdatePage (){
             >
           <template #header>
             <h2 class=" mb-5 dark:text-white text-center">
-
-          هل متأكد من الحذف 
-          ؟
+              {{ t("contractDeleteConfirm") }}
           </h2>
           </template>
     </ModalDel>
@@ -339,7 +340,7 @@ function UpdatePage (){
           <template #header>
             <h2 class=" mb-5 dark:text-white text-center">
 
-            تحميل ملفات
+            {{ t("uploadFiles") }}
           </h2>
           </template>
     </ModalUploader>
@@ -354,7 +355,7 @@ function UpdatePage (){
             @close="showModalAddSales = false"
             >
           <template #header>
-            <h3 class="text-center">المحاسبة</h3>
+            <h3 class="text-center">{{ t("contractsAccounting") }}</h3>
             
            </template>
       </ModalAddSales>
@@ -376,7 +377,7 @@ function UpdatePage (){
             @close="showModalAddExpenses = false"
             >
           <template #header>
-            <h3 class="text-center">ادخال مصاريف</h3>
+            <h3 class="text-center">{{ t("addExpenseEntry") }}</h3>
             
            </template>
       </ModalAddExpenses>
@@ -387,7 +388,7 @@ function UpdatePage (){
             @close="showModalConvertDollarDinar = false"
             >
           <template #header>
-            <h3 class="text-center">تحويل من الدولار الى دينار</h3>
+            <h3 class="text-center">{{ t("convertUsdToIqd") }}</h3>
             
            </template>
       </ModalConvertDollarDinar>
@@ -398,7 +399,7 @@ function UpdatePage (){
             @close="showModalConvertDinarDollar = false"
             >
           <template #header>
-            <h3 class="text-center">تحويل من الدينار الى دولار</h3>
+            <h3 class="text-center">{{ t("convertIqdToUsd") }}</h3>
             
            </template>
       </ModalConvertDinarDollar>
@@ -425,7 +426,7 @@ function UpdatePage (){
                               </svg>
                             </div>
                             <div class="mr-4" >
-                              <h2 class="font-semibold ">جميع العقود</h2>
+                              <h2 class="font-semibold ">{{ t("allContracts") }}</h2>
                               <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{allContract}}</p>
                             </div>
                           </div>
@@ -438,7 +439,7 @@ function UpdatePage (){
                               </svg>
                             </div>
                             <div class="mr-4" >
-                              <h2 class="font-semibold ">العقود بالدولار</h2>
+                              <h2 class="font-semibold ">{{ t("contractsUsd") }}</h2>
                               <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{sum_contract}}</p>
                             </div>
                           </div>
@@ -450,7 +451,7 @@ function UpdatePage (){
                               </svg>
                             </div>
                             <div class="mr-4">
-                              <h2 class="font-semibold">دين العقود بالدولار</h2>
+                              <h2 class="font-semibold">{{ t("contractDebtUsd") }}</h2>
                               <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{sum_contract_debit}}</p>
                             </div>
                           </div>
@@ -461,7 +462,7 @@ function UpdatePage (){
                               </svg>
                             </div>
                             <div class="mr-4">
-                              <h2 class="font-semibold">العقود بالدينار</h2>
+                              <h2 class="font-semibold">{{ t("contractsIqd") }}</h2>
                               <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{sum_contract_dinar}}</p>
                             </div>
                           </div>
@@ -472,7 +473,7 @@ function UpdatePage (){
                               </svg>
                             </div>
                             <div class="mr-4">
-                              <h2 class="font-semibold">دين العقود بالدينار</h2>
+                              <h2 class="font-semibold">{{ t("contractDebtIqd") }}</h2>
                               <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{sum_contract_debit_dinar}}</p>
                             </div>
                           </div>
@@ -482,8 +483,8 @@ function UpdatePage (){
               <div class="pt-5  print:hidden">
               <button style=" width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==8" className="px-4 py-2 text-white bg-green-500 rounded-md focus:outline-none"
                                             @click="openAddSales()">
-                                            وصل قبض
-                                            (أضافة)
+                                            {{ t("receiptIn") }}
+                                            ({{ t("receiptInAdd") }})
               </button>
               </div>
 
@@ -492,8 +493,8 @@ function UpdatePage (){
               <div class="pt-5  print:hidden">
               <button  style=" width: 100%; margin-top: 4px;"  v-if="$page.props.auth.user.type_id==8" className="px-4 py-2 text-white bg-rose-500 rounded-md focus:outline-none"
                                             @click="openAddExpenses()">
-                                             وصل صرف
-                                             (سحب)
+                                             {{ t("receiptOut") }}
+                                             ({{ t("receiptOutWithdraw") }})
 
               </button>
        
@@ -501,7 +502,7 @@ function UpdatePage (){
               
               <div class=" px-4">
                           <div >
-                              <InputLabel for="from" value="من تاريخ" />
+                              <InputLabel for="from" :value="t('fromDate')" />
                               <TextInput
                                 id="from"
                                 type="date"
@@ -513,7 +514,7 @@ function UpdatePage (){
               </div>
               <div class=" px-4">
                             <div >
-                              <InputLabel for="to" value="حتى تاريخ" />
+                              <InputLabel for="to" :value="t('toDate')" />
                               <TextInput
                                 id="to"
                                 type="date"
@@ -523,36 +524,36 @@ function UpdatePage (){
                             </div>
               </div>
               <div className=" mr-5 print:hidden">
-                            <InputLabel for="pay" value="فلترة" />
+                            <InputLabel for="pay" :value="t('filter')" />
                             <button
                             @click.prevent="refresh();getcountTotalInfo()"
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded" style="width: 100%">
-                            <span v-if="!isLoading">فلترة</span>
-                            <span v-else>جاري الحفظ...</span>
+                            <span v-if="!isLoading">{{ t("filter") }}</span>
+                            <span v-else>{{ t("saving") }}</span>
                           </button>
               </div>
               <div className=" mr-5 print:hidden"  >
-                            <InputLabel for="pay" value="تقرير مصاريف" />
+                            <InputLabel for="pay" :value="t('expenseReport')" />
                             <a
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded" style="display: block;text-align: center;"
                             :href="`api/contract_account_report?type=سحب دفعة &from=${from}&to=${to}&print=1`"
                             target="_blank"
                             >
                             
-                            <span v-if="!isLoading">طباعة</span>
-                            <span v-else>جاري الحفظ...</span>
+                            <span v-if="!isLoading">{{ t("print") }}</span>
+                            <span v-else>{{ t("saving") }}</span>
                           </a>
               </div>
               <div className=" mr-5 print:hidden"  >
-                            <InputLabel for="pay" value="تقرير العقود" />
+                            <InputLabel for="pay" :value="t('contractsReport')" />
                             <a
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-blue-500 rounded" style="display: block;text-align: center;"
                             :href="`api/contract_account_report?type=contract-report&from=${from}&to=${to}&print=2&q=${q}`"
                             target="_blank"
                             >
                             
-                            <span v-if="!isLoading">طباعة</span>
-                            <span v-else>جاري الحفظ...</span>
+                            <span v-if="!isLoading">{{ t("print") }}</span>
+                            <span v-else>{{ t("saving") }}</span>
                           </a>
               </div>
 
@@ -601,7 +602,7 @@ function UpdatePage (){
                             @click="openConvertDollarDinar()"
                             style="min-width:150px;"
                             className="px-6 mb-12 w-full py-2 font-bold text-white bg-teal-500 rounded">
-                             تحويل دولار الى دينار  
+                             {{ t("convertUsdToIqd") }}
                           </button>
                         </div>
                         <div>
@@ -610,13 +611,13 @@ function UpdatePage (){
                             @click="openConvertDinarDollar()"
                             style="min-width:150px;"
                             className="px-6 mb-12 w-full py-2 font-bold text-white bg-yellow-500 rounded">
-                             تحويل دينار الى دولار  
+                             {{ t("convertIqdToUsd") }}
                           </button>
                         </div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-3 lg:gap-3">
               <div >
-                              <InputLabel for="to" value="رصيد الصندوق بالدولار" />
+                              <InputLabel for="to" :value="t('fundBalanceUsd')" />
                               <TextInput
                                 id="to"
                                 type="number"
@@ -626,7 +627,7 @@ function UpdatePage (){
                               />
                 </div>
                 <div class="relative w-full">
-                          <InputLabel for="to" value="بحث رقم الوصل او الوصف" />
+                          <InputLabel for="to" :value="t('receiptOrDescriptionSearch')" />
                           <TextInput
                                 id="q"
                                 type="text"
@@ -638,7 +639,7 @@ function UpdatePage (){
             </div>
             <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-3 lg:gap-3 pt-3">
               <div >
-                              <InputLabel for="to" value="رصيد الصندوق بالدينار العراقي" />
+                              <InputLabel for="to" :value="t('fundBalanceIqd')" />
                               <TextInput
                                 id="to"
                                 type="number"
@@ -663,12 +664,12 @@ function UpdatePage (){
                   class="text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center"
                 >
                   <tr class="rounded-l-lg mb-2 sm:mb-0">
-                    <th className="px-2 py-2" style="width: 100px;">رقم الوصل</th>
+                    <th className="px-2 py-2" style="width: 100px;">{{ t("receiptNumber") }}</th>
                     <!-- <th className="px-2 py-2">الحساب</th> -->
-                    <th className="px-2 py-2" style="width: 180px;">التاريخ</th>
-                    <th className="px-2 py-2">الوصف</th>
-                    <th className="px-2 py-2">المبلغ</th>
-                    <th className="px-2 py-2" style="width: 100px;">تنفيذ</th>
+                    <th className="px-2 py-2" style="width: 180px;">{{ t("transactionDate") }}</th>
+                    <th className="px-2 py-2">{{ t("description") }}</th>
+                    <th className="px-2 py-2">{{ t("transactionAmount") }}</th>
+                    <th className="px-2 py-2" style="width: 100px;">{{ t("execute") }}</th>
                     <th v-if="false"
                       scope="col"
                       class="px-1 py-2 text-base print:hidden" style="width: 100px;"

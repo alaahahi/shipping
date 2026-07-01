@@ -526,8 +526,8 @@ function VinApi1 (v){
     <div v-if="!isOnline" class="fixed bottom-4 left-4 bg-yellow-500 text-white px-4 py-3 rounded-lg shadow-xl z-50">
       <div class="flex items-center space-x-3 space-x-reverse">
         <div class="flex-1">
-          <p class="font-bold">📡 العمل في وضع Offline</p>
-          <p class="text-sm opacity-90">يتم الحفظ في SQLite المحلي - سيتم المزامنة تلقائياً عند عودة الإنترنت</p>
+          <p class="font-bold">📡 {{ t("offlineMode") }}</p>
+          <p class="text-sm opacity-90">{{ t("offlineHint") }}</p>
         </div>
       </div>
     </div>
@@ -541,7 +541,7 @@ function VinApi1 (v){
         <div
           class="ml-3 text-sm font-medium text-green-700 dark:text-green-800"
         >
-          تم ادخال العقد بنجاح
+          {{ t("contractSaved") }}
         </div>
       </div>
     </div>
@@ -551,10 +551,10 @@ function VinApi1 (v){
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
               <div class="bg-white  dark:bg-gray-900 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white dark:bg-gray-900">
-                  <h2 class="text-center text-xl py-2 dark:text-white">الطرف الاول (البائع)</h2>
+                  <h2 class="text-center text-xl py-2 dark:text-white">{{ t("sellerParty") }}</h2>
                   <div className="flex flex-col">
                     <div className="mb-4">
-                      <InputLabel for="name" value="الأسم"  :class="{'list-item text-red-600':!form.name_seller}" />
+                      <InputLabel for="name" :value="t('fullName')"  :class="{'list-item text-red-600':!form.name_seller}" />
                       <div class="relative">
                         <ModelListSelect
                           v-if="!showClient"
@@ -577,7 +577,7 @@ function VinApi1 (v){
                             v-if="!showClient"
                             class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-green-500 rounded-tl-lg rounded-bl-lg"
                           >
-                            بائع جديد
+                            {{ t("newSeller") }}
                           </button>
                         </div>
                         <div  v-if="showClient">
@@ -599,7 +599,7 @@ function VinApi1 (v){
                             v-if="showClient"
                             class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-pink-500 rounded-tl-lg rounded-bl-lg"
                           >
-                            تحديد بائع
+                            {{ t("selectSeller") }}
                           </button>
                         </div>
 
@@ -608,7 +608,7 @@ function VinApi1 (v){
                     </div>
          
                     <div className="mb-4">
-                        <InputLabel for="address_seller" value="العنوان" />
+                        <InputLabel for="address_seller" :value="t('address')" />
                         <TextInput
                           type="text"
                           class="mt-1 block w-full"
@@ -616,7 +616,7 @@ function VinApi1 (v){
                         />
                         </div>
                         <div className="mb-4">
-                          <InputLabel for="phone_seller" value="رقم الهاتف" />
+                          <InputLabel for="phone_seller" :value="t('phoneNumber')" />
                           <TextInput
                             type="text"
                             class="mt-1 block w-full"
@@ -624,7 +624,7 @@ function VinApi1 (v){
                           />
                         </div>
                         <div className="mb-4">
-                          <InputLabel for="seller_id_number" value="رقم الهوية" />
+                          <InputLabel for="seller_id_number" :value="t('idNumber')" />
                           <TextInput
                             type="text"
                             class="mt-1 block w-full"
@@ -634,7 +634,7 @@ function VinApi1 (v){
                     <template v-if="showBrokerageSection">
                     <div class="flex justify-center">
                       <div className="mb-4 ml-5">
-                        <InputLabel for="tex_seller" value="دلالى دولار" />
+                        <InputLabel for="tex_seller" :value="t('brokerageUsd')" />
                         <TextInput
                           type="number"
                           class="mt-1"
@@ -643,7 +643,7 @@ function VinApi1 (v){
                         />
                       </div>
                       <div className="mb-4">
-                        <InputLabel for="tex_seller_dinar" value="دلالى دينار" />
+                        <InputLabel for="tex_seller_dinar" :value="t('brokerageIqd')" />
                         <TextInput
                           type="number"
                           class="mt-1"
@@ -654,7 +654,7 @@ function VinApi1 (v){
                     </div>
                     <div class="flex justify-center">
                       <div className="mb-4 ml-5">
-                        <InputLabel for="tex_seller_paid" value="مدفوع دولار" />
+                        <InputLabel for="tex_seller_paid" :value="t('paidUsd')" />
                         <TextInput
                           type="number"
                           class="mt-1"
@@ -664,7 +664,7 @@ function VinApi1 (v){
                         />
                       </div>
                       <div className="mb-4">
-                        <InputLabel for="tex_seller_dinar_paid" value="مدفوع دينار" />
+                        <InputLabel for="tex_seller_dinar_paid" :value="t('paidIqd')" />
                         <TextInput
                           type="number"
                           class="mt-1"
@@ -676,7 +676,7 @@ function VinApi1 (v){
                     </div>
                     <div class="flex justify-center">
                       <div className="mb-4 ml-5">
-                        <InputLabel for="debit" value="متبقي دولار" />
+                        <InputLabel for="debit" :value="t('remainingUsd')" />
                         <TextInput
                           type="number"
                           class="mt-1"
@@ -685,7 +685,7 @@ function VinApi1 (v){
                         />
                       </div>
                       <div className="mb-4">
-                        <InputLabel for="debit_dinar" value="متبقي دينار" />
+                        <InputLabel for="debit_dinar" :value="t('remainingIqd')" />
                         <TextInput
                           type="number"
                           class="mt-1"
@@ -697,7 +697,7 @@ function VinApi1 (v){
                     </div>
                     </template>
                     <div className="mb-4">
-                      <InputLabel for="note" value="ملاحظة" />
+                      <InputLabel for="note" :value="t('note')" />
                       <TextInput
                         type="text"
                         class="mt-1 block w-full"
@@ -713,12 +713,12 @@ function VinApi1 (v){
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
               <div class="bg-white  dark:bg-gray-900 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white  dark:bg-gray-900">
-                  <h2 class="text-center text-xl py-2  dark:text-white">الطرف الثاني (المشتري)</h2>
+                  <h2 class="text-center text-xl py-2  dark:text-white">{{ t("buyerParty") }}</h2>
 
                   <div className="flex flex-col">
         
                     <div className="mb-4">
-                      <InputLabel for="name" value="الأسم"  :class="{'list-item text-red-600':!form.name_buyer}" />
+                      <InputLabel for="name" :value="t('fullName')"  :class="{'list-item text-red-600':!form.name_buyer}" />
                       <div class="relative">
                         <ModelListSelect
                           v-if="!showClientB"
@@ -741,7 +741,7 @@ function VinApi1 (v){
                             v-if="!showClientB"
                             class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-green-500 rounded-tl-lg rounded-bl-lg"
                           >
-                            مشتري جديد
+                            {{ t("newBuyer") }}
                           </button>
                         </div>
                         <div  v-if="showClientB">
@@ -763,7 +763,7 @@ function VinApi1 (v){
                             v-if="showClientB"
                             class="absolute left-0 top-0 h-full px-3 py-2 font-bold text-white bg-pink-500 rounded-tl-lg rounded-bl-lg"
                           >
-                            تحديد مشتري
+                            {{ t("selectBuyer") }}
                           </button>
                         </div>
 
@@ -771,7 +771,7 @@ function VinApi1 (v){
                         </div>
                     </div>
                     <div className="mb-4">
-                      <InputLabel for="address_buyer" value="العنوان" />
+                      <InputLabel for="address_buyer" :value="t('address')" />
                       <TextInput
                         id="address_buyer"
                         type="text"
@@ -781,7 +781,7 @@ function VinApi1 (v){
                     </div>
 
                     <div className="mb-4">
-                      <InputLabel for="phone_buyer" value="رقم الهاتف" />
+                      <InputLabel for="phone_buyer" :value="t('phoneNumber')" />
                       <TextInput
                         id="phone_buyer"
                         type="text"
@@ -790,7 +790,7 @@ function VinApi1 (v){
                       />
                     </div>
                     <div className="mb-4">
-                      <InputLabel for="buyer_id_number" value="رقم الهوية" />
+                      <InputLabel for="buyer_id_number" :value="t('idNumber')" />
                       <TextInput
                         id="buyer_id_number"
                         type="text"
@@ -802,7 +802,7 @@ function VinApi1 (v){
                     <template v-if="showBrokerageSection">
                     <div class="flex justify-center">
                       <div className="mb-4 ml-5">
-                        <InputLabel for="tex_buyer" value="دلالى دولار" />
+                        <InputLabel for="tex_buyer" :value="t('brokerageUsd')" />
                         <TextInput
                           type="number"
                           class="mt-1"
@@ -811,7 +811,7 @@ function VinApi1 (v){
                         />
                       </div>
                       <div className="mb-4">
-                        <InputLabel for="tex_buyer_dinar" value="دلالى دينار" />
+                        <InputLabel for="tex_buyer_dinar" :value="t('brokerageIqd')" />
                         <TextInput
                           type="number"
                           class="mt-1"
@@ -822,7 +822,7 @@ function VinApi1 (v){
                     </div>
                     <div class="flex justify-center">
                       <div className="mb-4 ml-5">
-                        <InputLabel for="tex_buyer_paid" value="مدفوع دولار" />
+                        <InputLabel for="tex_buyer_paid" :value="t('paidUsd')" />
                         <TextInput
                           type="number"
                           class="mt-1"
@@ -831,7 +831,7 @@ function VinApi1 (v){
                         />
                       </div>
                       <div className="mb-4">
-                        <InputLabel for="tex_buyer_dinar_paid" value="مدفوع دينار" />
+                        <InputLabel for="tex_buyer_dinar_paid" :value="t('paidIqd')" />
                         <TextInput
                           type="number"
                           class="mt-1"
@@ -842,7 +842,7 @@ function VinApi1 (v){
                     </div>
                     <div class="flex justify-center">
                       <div className="mb-4 ml-5">
-                        <InputLabel for="phone_number" value="متبقي دولار" />
+                        <InputLabel for="phone_number" :value="t('remainingUsd')" />
                         <TextInput
                           type="number"
                           class="mt-1"
@@ -851,7 +851,7 @@ function VinApi1 (v){
                         />
                       </div>
                       <div className="mb-4">
-                        <InputLabel for="phone_number" value="متبقي دينار" />
+                        <InputLabel for="phone_number" :value="t('remainingIqd')" />
                         <TextInput
                           type="number"
                           class="mt-1"
@@ -863,7 +863,7 @@ function VinApi1 (v){
                     </template>
                   </div>
                   <div className="mb-4">
-                    <InputLabel for="system_note" value="ملاحظة ستاف" />
+                    <InputLabel for="system_note" :value="t('staffNote')" />
 
                     <TextInput
                       id="system_note"
@@ -873,15 +873,15 @@ function VinApi1 (v){
                     />
                   </div>
                   <div className="mb-4">
-                    <InputLabel for="organizer_name" value="اسم منظم العقد (كاتب العقد)" />
+                    <InputLabel for="organizer_name" :value="t('contractOrganizerName')" />
                     <TextInput
                       id="organizer_name"
                       type="text"
                       class="mt-1 block w-full"
                       v-model="form.organizer_name"
-                      :placeholder="props.defaultOrganizerName || 'يظهر في توقيع العقد'"
+                      :placeholder="props.defaultOrganizerName || t('contractOrganizerPlaceholder')"
                     />
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">منفصل عن المستخدم المنشئ - يظهر في توقيع العقد المطبوع</p>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t("contractOrganizerHint") }}</p>
                   </div>
                 </div>
               </div>
@@ -897,7 +897,7 @@ function VinApi1 (v){
                   <div class="flex flex-wrap my-6 justify-center">
                     <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
-                        <InputLabel for="vin" value="رقم الشاصى" :class="{'list-item text-red-600':!form.vin}" />
+                        <InputLabel for="vin" :value="t('vin')" :class="{'list-item text-red-600':!form.vin}" />
                         <TextInput
                           type="text"
                           @input="checkApisVin(form.vin)"
@@ -908,7 +908,7 @@ function VinApi1 (v){
                     </div>
                     <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
-                        <InputLabel for="car_name" value="السيارة" :class="{'list-item text-red-600':!form.car_name}" />
+                        <InputLabel for="car_name" :value="t('car_type')" :class="{'list-item text-red-600':!form.car_name}" />
                         <TextInput
                           type="text"
                           class="mt-1 block w-full"
@@ -918,7 +918,7 @@ function VinApi1 (v){
                     </div>
                     <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
-                        <InputLabel for="annual_owner_name" value="صاحب السنوية" />
+                        <InputLabel for="annual_owner_name" :value="t('annualOwner')" />
                         <TextInput
                           id="annual_owner_name"
                           type="text"
@@ -929,7 +929,7 @@ function VinApi1 (v){
                     </div>
                     <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
-                        <InputLabel for="modal" value="موديل" />
+                        <InputLabel for="modal" :value="t('model')" />
                         <TextInput
                           type="number"
                           class="mt-1 block w-full"
@@ -939,7 +939,7 @@ function VinApi1 (v){
                     </div>
                     <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
-                        <InputLabel for="color" value="اللون" />
+                        <InputLabel for="color" :value="t('color')" />
                         <TextInput
                           type="text"
                           class="mt-1 block w-full"
@@ -949,7 +949,7 @@ function VinApi1 (v){
                     </div>
                     <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
-                        <InputLabel for="size" value="قماره" />
+                        <InputLabel for="size" :value="t('number')" />
                         <TextInput
                           type="number"
                           class="mt-1 block w-full"
@@ -961,7 +961,7 @@ function VinApi1 (v){
                       <div className="mb-4 mx-5">
                         <InputLabel
                           for="no"
-                          value="رقم السيارة او كاتي"
+                          :value="t('plateOrRegistration')"
                           :class="{'list-item text-red-600':!form.no}"
                         />
                         <TextInput
@@ -977,7 +977,7 @@ function VinApi1 (v){
                       <div className="mb-4 mx-5">
                         <InputLabel
                           for="car_price"
-                          value="سعر السيارة بالدولار"
+                          :value="t('carPriceUsd')"
                         />
                         <TextInput
                           type="number"
@@ -991,7 +991,7 @@ function VinApi1 (v){
                       <div className="mb-4 mx-5">
                         <InputLabel
                           for="car_paid"
-                          value="المدفوع بالدولار"
+                          :value="t('paidMainUsd')"
                         />
                         <TextInput
                           type="number"
@@ -1003,7 +1003,7 @@ function VinApi1 (v){
                     </div>
                     <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
-                        <InputLabel for="relatives" value="المتبقي بالدولار" />
+                        <InputLabel for="relatives" :value="t('remainingMainUsd')" />
                         <TextInput
                           type="number"
                           class="mt-1 block w-full"
@@ -1027,12 +1027,12 @@ function VinApi1 (v){
             <div class="mx-auto mx-7">
               <div class="bg-white  dark:bg-gray-900 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white  dark:bg-gray-900">
-                  <h5 class="text-center py-4  dark:text-white">السيارة البديلة</h5>
+                  <h5 class="text-center py-4  dark:text-white">{{ t("replacementCar") }}</h5>
 
                   <div class="flex flex-wrap justify-center">
                     <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
-                        <InputLabel for="vin_s" value="رقم الشاصى"  />
+                        <InputLabel for="vin_s" :value="t('vin')"  />
                         <TextInput
                           type="text"
                           @input="checkApisVin1(form.vin_s)"
@@ -1043,7 +1043,7 @@ function VinApi1 (v){
                     </div>
                     <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
-                        <InputLabel for="car_name_s" value="السيارة"  />
+                        <InputLabel for="car_name_s" :value="t('car_type')"  />
                         <TextInput
                           type="text"
                           class="mt-1 block w-full"
@@ -1053,7 +1053,7 @@ function VinApi1 (v){
                     </div>
                     <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
-                        <InputLabel for="modal_s" value="موديل" />
+                        <InputLabel for="modal_s" :value="t('model')" />
                         <TextInput
                           type="number"
                           class="mt-1 block w-full"
@@ -1063,7 +1063,7 @@ function VinApi1 (v){
                     </div>
                     <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
-                        <InputLabel for="color_s" value="اللون" />
+                        <InputLabel for="color_s" :value="t('color')" />
                         <TextInput
                           type="text"
                           class="mt-1 block w-full"
@@ -1073,7 +1073,7 @@ function VinApi1 (v){
                     </div>
                     <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
-                        <InputLabel for="annual_owner_name_s" value="صاحب السنوية" />
+                        <InputLabel for="annual_owner_name_s" :value="t('annualOwner')" />
                         <TextInput
                           type="text"
                           class="mt-1 block w-full"
@@ -1085,7 +1085,7 @@ function VinApi1 (v){
                       <div className="mb-4 mx-5">
                         <InputLabel
                           for="no_s"
-                          value="رقم السيارة او كاتي"
+                          :value="t('plateOrRegistration')"
                          
                         />
                         <TextInput
@@ -1110,7 +1110,7 @@ function VinApi1 (v){
           className="px-6 mx-2 py-2 mb-12 text-white bg-gray-500 rounded-md focus:outline-none rounded"
           :href="route('car_contract')"
         >
-          العودة
+          {{ t("return") }}
         </Link>
 
         <button
@@ -1119,8 +1119,8 @@ function VinApi1 (v){
           :disabled="isLoading"
           class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-600"
         >
-          <span v-if="!isLoading">حفظ فقط</span>
-          <span v-else>جاري الحفظ...</span>
+          <span v-if="!isLoading">{{ t("saveOnly") }}</span>
+          <span v-else>{{ t("saving") }}</span>
         </button>
 
         <button
@@ -1129,8 +1129,8 @@ function VinApi1 (v){
           :disabled="isLoading"
           class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-rose-500 rounded hover:bg-rose-600"
         >
-          <span v-if="!isLoading">حفظ وطباعة</span>
-          <span v-else>جاري الحفظ...</span>
+          <span v-if="!isLoading">{{ t("saveAndPrint") }}</span>
+          <span v-else>{{ t("saving") }}</span>
         </button>
     
         

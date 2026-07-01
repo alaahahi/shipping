@@ -115,7 +115,7 @@ function confirmUpdateCar(V) {
     .post("/api/updateCarsS", V)
     .then((response) => {
       showModal.value = false;
-      toast.success("تم التعديل بنجاح", {
+      toast.success(t("contractSaved"), {
         timeout: 2000,
         position: "bottom-right",
         rtl: true,
@@ -127,7 +127,7 @@ function confirmUpdateCar(V) {
     .catch((error) => {
       showModal.value = false;
 
-      toast.error("لم التعديل بنجاح", {
+      toast.error(t("saving"), {
         timeout: 2000,
         position: "bottom-right",
         rtl: true,
@@ -140,7 +140,7 @@ function confirmDelCarContract(V) {
     .post("/api/DelCarContract", V)
     .then((response) => {
       showModalDelCar.value = false;
-      toast.success("تم حذف العقد بنجاح", {
+      toast.success(t("delete"), {
         timeout: 3000,
         position: "bottom-right",
         rtl: true,
@@ -209,7 +209,7 @@ function getDownloadUrl(name) {
     @close="showModalDelCar = false"
   >
     <template #header>
-      <h2 class="my-5 dark:text-white text-center">هل متأكد من حذف العقد ؟</h2>
+      <h2 class="my-5 dark:text-white text-center">{{ t("contractDeleteConfirm") }}</h2>
     </template>
   </ModalDelCar>
 
@@ -259,7 +259,7 @@ function getDownloadUrl(name) {
                         type="text"
                         id="simple-search"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                        placeholder="بحث"
+                        :placeholder="t('searchContracts')"
                         required
                       />
                     </div>
@@ -268,7 +268,7 @@ function getDownloadUrl(name) {
 
                 <div class="px-4">
                   <div>
-                    <InputLabel for="from" value="من تاريخ" />
+                    <InputLabel for="from" :value="t('fromDate')" />
                     <TextInput
                       id="from"
                       type="date"
@@ -279,7 +279,7 @@ function getDownloadUrl(name) {
                 </div>
                 <div class="px-4">
                   <div>
-                    <InputLabel for="to" value="حتى تاريخ" />
+                    <InputLabel for="to" :value="t('toDate')" />
                     <TextInput
                       id="to"
                       type="date"
@@ -290,34 +290,34 @@ function getDownloadUrl(name) {
                 </div>
                 <div class="px-4" v-if="$page.props.auth.user.type_id == 8 && contractCreators && contractCreators.length > 0">
                   <div>
-                    <InputLabel for="createdBy" value="منشئ العقد" />
+                    <InputLabel for="createdBy" :value="t('contractCreator')" />
                     <select
                       id="createdBy"
                       v-model="createdByUserId"
                       @change="refresh()"
                       class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
                     >
-                      <option value="">الكل</option>
+                      <option value="">{{ t("all") }}</option>
                       <option v-for="u in contractCreators" :key="u.id" :value="u.id">{{ u.name }}</option>
                     </select>
                   </div>
                 </div>
                 <div class="px-4 print:hidden flex flex-col gap-1">
-                  <InputLabel value="اختصارات" />
+                  <InputLabel :value="t('shortcuts')" />
                   <div class="flex gap-2 flex-wrap">
                     <button
                       type="button"
                       @click="setFilterThisMonth"
                       class="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500"
                     >
-                      هذا الشهر
+                      {{ t("thisMonth") }}
                     </button>
                     <button
                       type="button"
                       @click="setFilterAll"
                       class="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500"
                     >
-                      عرض الكل
+                      {{ t("showAll") }}
                     </button>
                     <button
                       v-if="$page.props.auth.user.type_id == 8"
@@ -325,12 +325,12 @@ function getDownloadUrl(name) {
                       @click="setFilterDeletedOnly"
                       :class="deletedOnly ? 'px-3 py-2 text-sm font-medium rounded text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700' : 'px-3 py-2 text-sm font-medium rounded text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'"
                     >
-                      العقود المحذوفة فقط
+                      {{ t("deletedContractsOnly") }}
                     </button>
                   </div>
                 </div>
                 <div className=" mr-5 print:hidden">
-                  <InputLabel for="pay" value="فلترة" />
+                  <InputLabel for="pay" :value="t('filter')" />
                   <button
                     @click.prevent="
                       refresh();
@@ -339,20 +339,20 @@ function getDownloadUrl(name) {
                     class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-gray-500 rounded"
                     style="width: 100%"
                   >
-                    <span v-if="!isLoading">فلترة</span>
-                    <span v-else>جاري الحفظ...</span>
+                    <span v-if="!isLoading">{{ t("filter") }}</span>
+                    <span v-else>{{ t("saving") }}</span>
                   </button>
                 </div>
                 <div className=" mr-5 print:hidden">
-                  <InputLabel for="pay" value="تقرير العقود" />
+                  <InputLabel for="pay" :value="t('contractsReport')" />
                   <a
                     class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-blue-500 rounded"
                     style="display: block; text-align: center"
                     :href="`api/contract_account_report?type=contract-report&from=${from}&to=${to}&print=2&q=${q}`"
                     target="_blank"
                   >
-                    <span v-if="!isLoading">طباعة</span>
-                    <span v-else>جاري الحفظ...</span>
+                    <span v-if="!isLoading">{{ t("print") }}</span>
+                    <span v-else>{{ t("saving") }}</span>
                   </a>
                 </div>
               </div>
@@ -405,18 +405,18 @@ function getDownloadUrl(name) {
                         </template>
                         <template v-if="showBrokerageSection">
                           <th scope="col" class="px-1 py-3 text-base">
-                            واصل دولار
+                            {{ t("receivedUsd") }}
                           </th>
                           <th scope="col" class="px-1 py-3 text-base">
-                            واصل دينار
+                            {{ t("receivedIqd") }}
                           </th>
                         </template>
                         <th scope="col" class="px-1 py-3 text-base">
                           {{ $t("note") }}
                         </th>
-                        <th scope="col" class="px-1 py-3 text-base">بتاريخ</th>
-                        <th scope="col" class="px-1 py-3 text-base">المنشئ</th>
-                        <th scope="col" class="px-1 py-3 text-base">المرفقات</th>
+                        <th scope="col" class="px-1 py-3 text-base">{{ t("createdAt") }}</th>
+                        <th scope="col" class="px-1 py-3 text-base">{{ t("createdBy") }}</th>
+                        <th scope="col" class="px-1 py-3 text-base">{{ t("attachments") }}</th>
 
                         <th
                           scope="col"
@@ -429,7 +429,7 @@ function getDownloadUrl(name) {
                     </thead>
                     <tbody>
                       <tr
-                        v-for="(car, index) in car"
+                        v-for="car in car"
                         :key="car.id"
                         :class="[
                           deletedOnly ? 'bg-amber-50 dark:bg-amber-900/20' : '',
@@ -558,7 +558,7 @@ function getDownloadUrl(name) {
                               />
                             </a>
                             <span v-if="!car.contract_images || car.contract_images.length === 0" class="text-gray-400 text-xs">
-                              لا يوجد
+                              {{ t("none") }}
                             </span>
                           </div>
                         </td>
@@ -570,7 +570,7 @@ function getDownloadUrl(name) {
                             tabIndex="1"
                             class="px-1 py-1 text-white mx-1 bg-purple-600 rounded inline-flex"
                             @click="openModalContractUploader(car)"
-                            title="مرفقات العقد"
+                            :title="t('attachments')"
                           >
                             <imags />
                           </button>
@@ -735,7 +735,7 @@ function getDownloadUrl(name) {
                       </svg>
                     </div>
                     <div class="mr-4">
-                      <h2 class="font-semibold">جميع العقود</h2>
+                      <h2 class="font-semibold">{{ t("allContracts") }}</h2>
                       <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">
                         {{ allCars }}
                       </p>

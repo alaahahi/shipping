@@ -18,6 +18,7 @@ $contractAt = !empty($data->created_at ?? null)
   : (!empty($data['created'] ?? null) ? \Carbon\Carbon::parse($data['created']) : null);
 $contractDate = $data['created'] ?? ($contractAt ? $contractAt->format('d-m-Y') : '');
 $contractTime = $contractAt ? $contractAt->format('H:i') : '';
+$contractNote = trim((string) (($data['note'] ?? null) ?: ($data->note ?? '')));
 @endphp
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -535,7 +536,9 @@ html, body { width: 210mm; margin: 0; padding: 0; }
       </div>
     </div>
 
-    <div class="c3-note"><b>تێبینی (ملاحظة):</b> {{ $data['note'] ?? '' }}</div>
+    @if($contractNote !== '')
+    <div class="c3-note"><b>تێبینی (ملاحظة):</b> {{ $contractNote }}</div>
+    @endif
     <div class="c3-terms">
       <div class="c3-terms-h">رێکەوتن کرا لە نێوان هەردوو لایەن لە سەر ئەم خاڵانەی خوارەوە – وتم الاتفاق على النقاط التالية بين الطرفين</div>
       <ul>

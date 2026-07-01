@@ -11,6 +11,7 @@ if (!is_array($contractTerms)) {
   $contractTerms = [];
 }
 $contractTerms = array_filter($contractTerms, function($t) { return !empty(trim($t)); });
+$contractNote = trim((string) (($data['note'] ?? null) ?: ($data->note ?? '')));
 @endphp
 <!DOCTYPE html>
 <html>
@@ -220,12 +221,14 @@ html, body { width: 210mm; margin: 0; padding: 0; }
       </div>
     </div>
 
+    @if($contractNote !== '')
     <div class="t2-section">
       <div class="t2-notes-row">
         <span class="label">الملاحظات /</span>
-        <span class="value">{{ $data['note'] ?? '' }}</span>
+        <span class="value">{{ $contractNote }}</span>
       </div>
     </div>
+    @endif
 
     <div class="t2-terms-title">شروط وأحكام بيع وشراء السيارة</div>
     <div class="t2-terms-wrap">

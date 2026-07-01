@@ -22,6 +22,7 @@ if ($contractCurrency === 'dinar') {
   $priceSym = ' $';
   $wordsCurrency = 'usd';
 }
+$contractNote = trim((string) (($data['note'] ?? null) ?: ($data->note ?? '')));
 @endphp
 <!DOCTYPE html>
 <html>
@@ -547,14 +548,16 @@ body {
         </li>
       </ul>
       @endif  
+      @if($contractNote !== '')
       <div class="pt-2">
         تێبینی
         (ملاحظة)
           :
         <b class="px-3">
-          {{ $data['note'] ?? '' }}
+          {{ $contractNote }}
         </b>
       </div>
+      @endif
       </div>
       <div class="d-flex justify-content-between  mt-3 pt-2">
         <div>
