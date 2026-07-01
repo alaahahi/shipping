@@ -388,7 +388,7 @@ function UpdatePage (){
             @close="showModalConvertDollarDinar = false"
             >
           <template #header>
-            <h3 class="text-center">{{ t("convertUsdToIqd") }}</h3>
+            <h3 class="text-center dark:text-white">{{ t("convertUsdToIqd") }}</h3>
             
            </template>
       </ModalConvertDollarDinar>
@@ -399,7 +399,7 @@ function UpdatePage (){
             @close="showModalConvertDinarDollar = false"
             >
           <template #header>
-            <h3 class="text-center">{{ t("convertIqdToUsd") }}</h3>
+            <h3 class="text-center dark:text-white">{{ t("convertIqdToUsd") }}</h3>
             
            </template>
       </ModalConvertDinarDollar>

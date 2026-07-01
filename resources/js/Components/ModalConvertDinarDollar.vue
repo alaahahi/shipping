@@ -49,45 +49,45 @@ function calculateAmountDollarDinar (){
     <Transition name="modal">
       <div v-if="show" class="modal-mask ">
         <div class="modal-wrapper  max-h-[80vh]">
-          <div class="modal-container">
+          <div class="modal-container dark:bg-gray-800 dark:text-gray-100">
             <div class="modal-header">
               <slot name="header"></slot>
             </div>
             <div class="modal-body">
                         <div>
                         <div className="my-4 mx-5">
-                        <label for="amountDinar" >سعر الصرف 100$</label>
+                        <label for="exchangeRateIqdUsd" class="modal-field-label">سعر الصرف 100$</label>
                         <input
-                          id="amountDinar"
+                          id="exchangeRateIqdUsd"
                           type="number"
                           @input="calculateAmountDollarDinar()"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          class="modal-field-input"
                           v-model="form.exchangeRate" />
-                          <div v-if="exchangeRateError" class="text-red-500">
+                          <div v-if="exchangeRateError" class="modal-field-error">
                           مطلوب رقم من 6 خانة فقط
                           </div>
                         </div>
                         
                         <div className="my-4 mx-5">
-                        <label for="amountDinar" >المبلغ بالدينار العراقي
+                        <label for="amountDinarWithdraw" class="modal-field-label">المبلغ بالدينار العراقي
                           (المبلغ المسحوب من الصندوق بالدينار العراقي)
                         </label>
                         <input
-                          id="amountDinar"
+                          id="amountDinarWithdraw"
                           type="number"
                           @input="calculateAmountDollarDinar()"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          class="modal-field-input"
                           v-model="form.amountDinar" />
                         </div>
                   
                         <div className="mb-y mx-5">
-                        <label for="amountDinar" >المبلغ  بالدولار
+                        <label for="amountResultDollar" class="modal-field-label">المبلغ  بالدولار
                           (المبلغ المضاف للصندوق بالدولار)
                         </label>
                         <input
-                          id="amountDinar"
+                          id="amountResultDollar"
                           type="number"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                          class="modal-field-input"
                           v-model="form.amountResultDollar" />
                         </div>
                
@@ -140,15 +140,72 @@ function calculateAmountDollarDinar (){
     padding: 20px  30px;
     padding-bottom: 60px;
     background-color: #fff;
-    border-radius: 2px;
+    border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
     transition: all 0.3s ease;
-    border-radius: 10px;
+  }
+
+  .dark .modal-container {
+    background-color: #1f2937;
+    color: #f3f4f6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  }
+
+  .modal-field-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.25rem;
+    line-height: 1.4;
+  }
+
+  .dark .modal-field-label {
+    color: #e5e7eb;
+  }
+
+  .modal-field-input {
+    margin-top: 0.25rem;
+    display: block;
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    padding: 0.5rem 0.75rem;
+    background-color: #fff;
+    color: #111827;
+  }
+
+  .dark .modal-field-input {
+    background-color: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+
+  .modal-field-input:focus {
+    outline: none;
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.25);
+  }
+
+  .modal-field-error {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #ef4444;
+  }
+
+  .dark .modal-field-error {
+    color: #fca5a5;
   }
   
   .modal-header h3 {
     margin-top: 0;
-    color: #42b983;
+    color: #111827;
+    font-weight: 700;
+  }
+
+  .dark .modal-header h3 {
+    color: #f9fafb;
   }
   
   .modal-body {
