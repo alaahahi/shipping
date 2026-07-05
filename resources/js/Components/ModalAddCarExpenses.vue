@@ -27,20 +27,29 @@ const props = defineProps({
   formData: Object,
 });
 
+const REGISTRATION_DINAR_PRESETS = [
+  { key: 'fee1860', label: '1,860,000', amount: 1860000 },
+  { key: 'fee2965', label: '2,965,000', amount: 2965000 },
+  { key: 'fee2705', label: '2,705,000', amount: 2705000 },
+  { key: 'fee3755', label: '3,755,000', amount: 3755000 },
+];
+
 const paymentForm = ref({
   registrationDollar: '',
-  registrationDinar: '',
-  expenseDollar: '',
-  expenseDinar: '',
+  selectedDinarPresets: [],
+  registrationDinarExtra: '',
+  repairCurrency: 'dollar',
+  repairAmount: '',
   note: '',
 });
 
 function resetPaymentForm() {
   paymentForm.value = {
     registrationDollar: '',
-    registrationDinar: '',
-    expenseDollar: '',
-    expenseDinar: '',
+    selectedDinarPresets: [],
+    registrationDinarExtra: '',
+    repairCurrency: 'dollar',
+    repairAmount: '',
     note: '',
   };
 }
@@ -53,45 +62,90 @@ watch(() => props.show, (visible) => {
 });
 
 function parseAmount(value) {
-  const n = parseFloat(value);
+  const n = Number(value);
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
-function buildExpenseNote() {
-  const parts = [];
-  const expenseDollar = parseAmount(paymentForm.value.expenseDollar);
-  const expenseDinar = parseAmount(paymentForm.value.expenseDinar);
+function formatDinar(n) {
+  return new Intl.NumberFormat('ar-IQ').format(n);
+}
 
-  if (expenseDollar > 0) parts.push(`مصروف ${expenseDollar}$`);
-  if (expenseDinar > 0) parts.push(`مصروف ${expenseDinar} د`);
+function toggleDinarPreset(key) {
+  const selected = paymentForm.value.selectedDinarPresets;
+  const idx = selected.indexOf(key);
+  if (idx >= 0) {
+    selected.splice(idx, 1);
+  } else {
+    selected.push(key);
+  }
+}
+
+function isPresetSelected(key) {
+  return paymentForm.value.selectedDinarPresets.includes(key);
+}
+
+const registrationDinarTotal = computed(() => {
+  let total = 0;
+  for (const preset of REGISTRATION_DINAR_PRESETS) {
+    if (paymentForm.value.selectedDinarPresets.includes(preset.key)) {
+      total += preset.amount;
+    }
+  }
+  total += parseAmount(paymentForm.value.registrationDinarExtra);
+  return total;
+});
+
+const repairDollar = computed(() => {
+  return paymentForm.value.repairCurrency === 'dollar'
+    ? parseAmount(paymentForm.value.repairAmount)
+    : 0;
+});
+
+const repairDinar = computed(() => {
+  return paymentForm.value.repairCurrency === 'dinar'
+    ? parseAmount(paymentForm.value.repairAmount)
+    : 0;
+});
+
+const totalDollar = computed(() => parseAmount(paymentForm.value.registrationDollar) + repairDollar.value);
+const totalDinar = computed(() => registrationDinarTotal.value + repairDinar.value);
+
+function buildNote() {
+  const parts = [];
+
+  const regDollar = parseAmount(paymentForm.value.registrationDollar);
+  if (regDollar > 0) parts.push(`تسجيل ${regDollar}$`);
+
+  const presetLabels = REGISTRATION_DINAR_PRESETS
+    .filter((p) => paymentForm.value.selectedDinarPresets.includes(p.key))
+    .map((p) => p.label);
+  const extraDinar = parseAmount(paymentForm.value.registrationDinarExtra);
+
+  if (presetLabels.length || extraDinar > 0) {
+    const dinarParts = [...presetLabels];
+    if (extraDinar > 0) dinarParts.push(formatDinar(extraDinar));
+    parts.push(`تسجيل ${dinarParts.join(' + ')} د`);
+  }
+
+  if (repairDollar.value > 0) parts.push(`تصليح ${repairDollar.value}$`);
+  if (repairDinar.value > 0) parts.push(`تصليح ${formatDinar(repairDinar.value)} د`);
 
   const userNote = paymentForm.value.note?.trim() || '';
-
-  if (userNote && parts.length) {
-    return `${userNote} (${parts.join('، ')})`;
-  }
-  if (parts.length) {
-    return parts.join('، ');
-  }
+  if (userNote && parts.length) return `${userNote} — ${parts.join(' | ')}`;
+  if (parts.length) return parts.join(' | ');
   return userNote;
 }
 
-const canSubmit = computed(() => {
-  return parseAmount(paymentForm.value.registrationDollar) > 0
-    || parseAmount(paymentForm.value.registrationDinar) > 0
-    || parseAmount(paymentForm.value.expenseDollar) > 0
-    || parseAmount(paymentForm.value.expenseDinar) > 0
-    || !!paymentForm.value.note?.trim();
-});
+const canSubmit = computed(() => totalDollar.value > 0 || totalDinar.value > 0);
 
 function submitPayment() {
   if (!canSubmit.value) return;
 
   emit('a', {
     ...props.formData,
-    amountDollar: parseAmount(paymentForm.value.registrationDollar),
-    amountDinar: parseAmount(paymentForm.value.registrationDinar),
-    amountNote: buildExpenseNote(),
+    amountDollar: totalDollar.value,
+    amountDinar: totalDinar.value,
+    amountNote: buildNote(),
   });
 
   resetPaymentForm();
@@ -104,49 +158,45 @@ function closeModal() {
 }
 
 function openModalDelClient(expense) {
-  if (window.confirm("Are you sure you want to delete?")) {
+  if (window.confirm('هل أنت متأكد من الحذف؟')) {
     axios.post('/api/delExpensesCar', expense)
       .then(() => {
-        toast.success("تم حذف الدفعة بنجاح ", {
+        toast.success('تم حذف الدفعة بنجاح', {
           timeout: 3000,
-          position: "bottom-right",
+          position: 'bottom-right',
           rtl: true,
         });
-        setTimeout(() => {
-          location.reload();
-        }, 2000);
+        setTimeout(() => location.reload(), 2000);
       })
-      .catch((error) => {
-        console.error(error);
-      });
+      .catch((error) => console.error(error));
   }
 }
 </script>
 
 <template>
   <Transition name="modal">
-    <div v-if="show" class="modal-mask ">
-      <div class="modal-wrapper  max-h-[80vh]">
-        <div class="modal-container dark:bg-gray-900 overflow-auto  max-h-[80vh]">
+    <div v-if="show" class="modal-mask">
+      <div class="modal-wrapper max-h-[85vh]">
+        <div class="modal-container dark:bg-gray-900 overflow-auto max-h-[85vh]">
           <div class="modal-header">
-            <slot name="header"></slot>
+            <slot name="header" />
           </div>
-          <div class="modal-body">
 
+          <div class="modal-body">
             <div class="text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
               <ul class="flex flex-wrap -mb-px">
-                <li class="mr-2" @click="setActiveTab('add')" v-if="currentWork">
+                <li v-if="currentWork" class="mr-2" @click="setActiveTab('add')">
                   <button
                     class="inline-block p-4 border-b-2 border-transparent rounded-t-lg"
-                    :class="activeTab == 'add' ? 'dark:text-blue-500 dark:border-blue-500' : 'hover:text-gray-600 hover:border-gray-300'"
+                    :class="activeTab === 'add' ? 'dark:text-blue-500 dark:border-blue-500' : 'hover:text-gray-600 hover:border-gray-300'"
                   >
                     اضافة
                   </button>
                 </li>
                 <li class="mr-2" @click="setActiveTab('record')">
                   <button
-                    class="inline-block p-4 border-b-2 border-transparent rounded-t-lg "
-                    :class="activeTab == 'record' ? 'dark:text-blue-500 dark:border-blue-500' : 'hover:text-gray-600 hover:border-gray-300'"
+                    class="inline-block p-4 border-b-2 border-transparent rounded-t-lg"
+                    :class="activeTab === 'record' ? 'dark:text-blue-500 dark:border-blue-500' : 'hover:text-gray-600 hover:border-gray-300'"
                   >
                     السجل
                   </button>
@@ -154,110 +204,162 @@ function openModalDelClient(expense) {
               </ul>
             </div>
 
-            <div v-if="activeTab == 'add' && currentWork">
-              <h1 class="text-center dark:text-gray-200 mt-4">اضافة دفعة</h1>
+            <!-- إضافة -->
+            <div v-if="activeTab === 'add' && currentWork" class="mx-4 mt-4 space-y-4">
+              <h1 class="text-center text-lg font-bold dark:text-gray-100">تسجيل مصاريف السيارة</h1>
 
-              <p class="mx-5 mt-3 text-sm text-blue-600 dark:text-blue-400 text-center">
-                التسجيل يُضاف على مدفوع السيارة. المصروف يُسجّل في الملاحظة فقط.
-              </p>
+              <!-- التسجيل -->
+              <div class="rounded-xl border-2 border-emerald-200 bg-emerald-50/80 p-4 dark:border-emerald-800 dark:bg-emerald-950/30">
+                <div class="mb-3 flex items-center gap-2 font-bold text-emerald-800 dark:text-emerald-300">
+                  <span class="text-xl">📋</span>
+                  <span>رسوم التسجيل</span>
+                </div>
 
-              <div class="mx-5 mt-4 mb-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-                التسجيل
-              </div>
-              <div class="mb-4 mx-5">
-                <label class="dark:text-gray-200" for="reg_dollar">التسجيل (دولار)</label>
-                <input
-                  id="reg_dollar"
-                  type="number"
-                  min="0"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="paymentForm.registrationDollar"
-                  placeholder="0"
-                />
-              </div>
-              <div class="mb-4 mx-5">
-                <label class="dark:text-gray-200" for="reg_dinar">التسجيل (دينار)</label>
-                <input
-                  id="reg_dinar"
-                  type="number"
-                  min="0"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="paymentForm.registrationDinar"
-                  placeholder="0"
-                />
-              </div>
+                <div class="mb-4">
+                  <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">دولار $</label>
+                  <input
+                    type="number"
+                    min="0"
+                    v-model="paymentForm.registrationDollar"
+                    placeholder="0"
+                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-400 focus:ring-emerald-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                  />
+                </div>
 
-              <div class="mx-5 mt-2 mb-2 text-sm font-semibold text-amber-700 dark:text-amber-400">
-                المصروف
-              </div>
-              <div class="mb-4 mx-5">
-                <label class="dark:text-gray-200" for="exp_dollar">المصروف (دولار)</label>
-                <input
-                  id="exp_dollar"
-                  type="number"
-                  min="0"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="paymentForm.expenseDollar"
-                  placeholder="0"
-                />
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  يُسجّل في الملاحظة فقط
-                </p>
-              </div>
-              <div class="mb-4 mx-5">
-                <label class="dark:text-gray-200" for="exp_dinar">المصروف (دينار)</label>
-                <input
-                  id="exp_dinar"
-                  type="number"
-                  min="0"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                  v-model="paymentForm.expenseDinar"
-                  placeholder="0"
-                />
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  يُسجّل في الملاحظة فقط
-                </p>
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">دينار — اختر المبالغ</label>
+                  <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <button
+                      v-for="preset in REGISTRATION_DINAR_PRESETS"
+                      :key="preset.key"
+                      type="button"
+                      @click="toggleDinarPreset(preset.key)"
+                      :class="[
+                        'rounded-lg border-2 px-2 py-2 text-sm font-semibold transition',
+                        isPresetSelected(preset.key)
+                          ? 'border-emerald-600 bg-emerald-600 text-white shadow-md'
+                          : 'border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-gray-800 dark:text-emerald-300 dark:hover:bg-emerald-900/40',
+                      ]"
+                    >
+                      {{ preset.label }}
+                    </button>
+                  </div>
+
+                  <div class="mt-3">
+                    <label class="mb-1 block text-xs text-gray-500 dark:text-gray-400">مبلغ دينار إضافي (اختياري)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      v-model="paymentForm.registrationDinarExtra"
+                      placeholder="0"
+                      class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-emerald-400 focus:ring-emerald-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    />
+                  </div>
+
+                  <div
+                    v-if="registrationDinarTotal > 0"
+                    class="mt-3 rounded-lg bg-emerald-100 px-3 py-2 text-center text-sm font-bold text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200"
+                  >
+                    مجموع التسجيل بالدينار: {{ formatDinar(registrationDinarTotal) }} د
+                  </div>
+                </div>
               </div>
 
-              <div class="mb-4 mx-5">
-                <label class="dark:text-gray-200" for="note">{{ $t('note') }}</label>
+              <!-- مصروف تصليح -->
+              <div class="rounded-xl border-2 border-amber-200 bg-amber-50/80 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+                <div class="mb-3 flex items-center gap-2 font-bold text-amber-800 dark:text-amber-300">
+                  <span class="text-xl">🔧</span>
+                  <span>مصروف تصليح</span>
+                  <span class="text-xs font-normal text-amber-600 dark:text-amber-400">(منفصل عن التسجيل)</span>
+                </div>
+
+                <div class="mb-3 flex gap-2">
+                  <button
+                    type="button"
+                    @click="paymentForm.repairCurrency = 'dollar'"
+                    :class="[
+                      'flex-1 rounded-lg border-2 py-2 text-sm font-semibold transition',
+                      paymentForm.repairCurrency === 'dollar'
+                        ? 'border-amber-600 bg-amber-600 text-white'
+                        : 'border-amber-300 bg-white text-amber-800 dark:border-amber-700 dark:bg-gray-800 dark:text-amber-300',
+                    ]"
+                  >
+                    💵 دولار
+                  </button>
+                  <button
+                    type="button"
+                    @click="paymentForm.repairCurrency = 'dinar'"
+                    :class="[
+                      'flex-1 rounded-lg border-2 py-2 text-sm font-semibold transition',
+                      paymentForm.repairCurrency === 'dinar'
+                        ? 'border-amber-600 bg-amber-600 text-white'
+                        : 'border-amber-300 bg-white text-amber-800 dark:border-amber-700 dark:bg-gray-800 dark:text-amber-300',
+                    ]"
+                  >
+                    🇮🇶 دينار
+                  </button>
+                </div>
+
                 <input
-                  id="note"
+                  type="number"
+                  min="0"
+                  v-model="paymentForm.repairAmount"
+                  :placeholder="paymentForm.repairCurrency === 'dollar' ? 'مبلغ التصليح بالدولار' : 'مبلغ التصليح بالدينار'"
+                  class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-400 focus:ring-amber-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                />
+              </div>
+
+              <!-- ملاحظة -->
+              <div>
+                <label class="mb-1 block text-sm font-medium dark:text-gray-300">{{ $t('note') }}</label>
+                <input
                   type="text"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="paymentForm.note"
+                  placeholder="ملاحظة إضافية..."
+                  class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-400 focus:ring-indigo-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                 />
+              </div>
+
+              <!-- المجموع -->
+              <div
+                v-if="canSubmit"
+                class="rounded-xl border-2 border-blue-200 bg-blue-50 p-4 text-center dark:border-blue-800 dark:bg-blue-950/40"
+              >
+                <div class="text-sm text-blue-600 dark:text-blue-400">المجموع الذي سيُحفظ</div>
+                <div class="mt-1 text-xl font-bold text-blue-900 dark:text-blue-200">
+                  <span v-if="totalDollar > 0">{{ totalDollar }} $</span>
+                  <span v-if="totalDollar > 0 && totalDinar > 0"> + </span>
+                  <span v-if="totalDinar > 0">{{ formatDinar(totalDinar) }} د</span>
+                </div>
               </div>
             </div>
 
+            <!-- السجل -->
             <div v-else>
-              <h1 class="text-center dark:text-gray-200 mt-4">سجل الدفعات</h1>
-              <div class="overflow-x-auto shadow-md sm:rounded-lg mt-4 mb-5">
-                <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center divide-y divide-gray-200 dark:divide-gray-800">
-                  <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center">
+              <h1 class="mt-4 text-center dark:text-gray-200">سجل الدفعات</h1>
+              <div class="mb-5 mt-4 overflow-x-auto shadow-md sm:rounded-lg">
+                <table class="w-full divide-y divide-gray-200 text-center text-sm text-gray-500 dark:divide-gray-800 dark:text-gray-200">
+                  <thead class="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400">
                     <tr class="bg-rose-500 text-gray-100">
-                      <th className="px-2 py-2 sm:px-4 sm:py-2">{{ $t('date') }}</th>
-                      <th className="px-2 py-2 sm:px-4 sm:py-2">التسجيل بالدولار</th>
-                      <th className="px-2 py-2 sm:px-4 sm:py-2">التسجيل بالدينار</th>
-                      <th className="px-2 py-2 sm:px-4 sm:py-2">ملاحظة</th>
-                      <th className="px-2 py-2 sm:px-4 sm:py-2">عبر</th>
-                      <th scope="col" class="px-2 py-2 sm:px-4 sm:py-2 print:hidden">
-                        {{ $t("execute") }}
-                      </th>
+                      <th class="px-2 py-2 sm:px-4 sm:py-2">{{ $t('date') }}</th>
+                      <th class="px-2 py-2 sm:px-4 sm:py-2">دولار</th>
+                      <th class="px-2 py-2 sm:px-4 sm:py-2">دينار</th>
+                      <th class="px-2 py-2 sm:px-4 sm:py-2">ملاحظة</th>
+                      <th class="px-2 py-2 sm:px-4 sm:py-2">عبر</th>
+                      <th class="px-2 py-2 sm:px-4 sm:py-2 print:hidden">{{ $t('execute') }}</th>
                     </tr>
                   </thead>
                   <tbody>
                     <template v-for="expense in (formData.carexpenses ?? [])" :key="expense.id">
                       <tr class="text-center">
-                        <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.created }}</td>
-                        <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.amount_dollar }}</td>
-                        <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.amount_dinar }}</td>
-                        <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.note }}</td>
-                        <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">{{ expense.user?.name }}</td>
-                        <td className="px-4 py-2 border dark:border-gray-800 dark:text-gray-200">
+                        <td class="border px-4 py-2 dark:border-gray-800">{{ expense.created }}</td>
+                        <td class="border px-4 py-2 dark:border-gray-800">{{ Number(expense.amount_dollar) || 0 }}</td>
+                        <td class="border px-4 py-2 dark:border-gray-800">{{ formatDinar(Number(expense.amount_dinar) || 0) }}</td>
+                        <td class="border px-4 py-2 dark:border-gray-800">{{ expense.note }}</td>
+                        <td class="border px-4 py-2 dark:border-gray-800">{{ expense.user?.name }}</td>
+                        <td class="border px-4 py-2 dark:border-gray-800">
                           <button
-                            tabIndex="1"
-                            class="px-1 py-1 text-white mx-1 bg-orange-500 rounded"
+                            class="mx-1 rounded bg-orange-500 px-1 py-1 text-white"
                             @click="openModalDelClient(expense)"
                           >
                             <trash />
@@ -271,31 +373,28 @@ function openModalDelClient(expense) {
               <div class="text-center">
                 <a
                   target="_blank"
-                  style="display: inline-flex;"
                   :href="`/api/getIndexExpensesPrint?car_id=${formData.id}`"
-                  tabIndex="1"
-                  class="px-4 py-1 text-white m-1 bg-blue-500 rounded"
+                  class="m-1 inline-flex rounded bg-blue-500 px-4 py-1 text-white"
                 >
                   جميع الدفعات
                   <print />
                 </a>
               </div>
             </div>
-
           </div>
 
           <div class="modal-footer my-2">
             <div class="flex flex-row">
               <div class="basis-1/2 px-4">
-                <button class="modal-default-button py-3 bg-gray-500 rounded" @click="closeModal">
+                <button class="modal-default-button rounded bg-gray-500 py-3" @click="closeModal">
                   {{ $t('cancel') }}
                 </button>
               </div>
-              <div class="basis-1/2 px-4" v-if="activeTab == 'add' && currentWork">
+              <div v-if="activeTab === 'add' && currentWork" class="basis-1/2 px-4">
                 <button
-                  class="modal-default-button py-3 bg-rose-500 rounded col-6"
-                  @click="submitPayment"
+                  class="modal-default-button col-6 rounded bg-rose-500 py-3"
                   :disabled="!canSubmit"
+                  @click="submitPayment"
                 >
                   {{ $t('yes') }}
                 </button>
@@ -308,14 +407,11 @@ function openModalDelClient(expense) {
   </Transition>
 </template>
 
-<style>
+<style scoped>
 .modal-mask {
   position: fixed;
   z-index: 9998;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background-color: rgba(0, 0, 0, 0.5);
   display: table;
   transition: opacity 0.3s ease;
@@ -327,44 +423,33 @@ function openModalDelClient(expense) {
 }
 
 .modal-container {
-  width: 50%;
-  min-width: 350px;
-  margin: 0px auto;
-  padding: 20px 30px;
-  padding-bottom: 60px;
+  width: 92%;
+  max-width: 520px;
+  min-width: 320px;
+  margin: 0 auto;
+  padding: 20px 24px 60px;
   background-color: #fff;
-  border-radius: 2px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
-  border-radius: 10px;
-}
-
-.modal-header h3 {
-  margin-top: 0;
-  color: #42b983;
 }
 
 .modal-body {
-  margin: 20px 0;
+  margin: 16px 0;
 }
 
 .modal-default-button {
-  float: right;
   width: 100%;
   color: #fff;
 }
 
-.modal-enter-from {
-  opacity: 0;
-}
-
+.modal-enter-from,
 .modal-leave-to {
   opacity: 0;
 }
 
 .modal-enter-from .modal-container,
 .modal-leave-to .modal-container {
-  -webkit-transform: scale(1.1);
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 </style>

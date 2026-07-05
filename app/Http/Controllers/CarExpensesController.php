@@ -117,8 +117,8 @@ class CarExpensesController extends Controller
         $expenses->car_id = $request->id;
         $expenses->created =Carbon::now()->format('Y-m-d');
         $expenses->note = $request->amountNote;
-        $expenses->amount_dinar = $request->amountDinar;
-        $expenses->amount_dollar = $request->amountDollar;
+        $expenses->amount_dinar = (float) ($request->amountDinar ?? 0);
+        $expenses->amount_dollar = (float) ($request->amountDollar ?? 0);
         $expenses->save();
 
 

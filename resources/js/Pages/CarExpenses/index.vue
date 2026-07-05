@@ -132,10 +132,10 @@ function getTodayDate() {
   return `${year}-${month}-${day}`;
 }
 function  calculateSum(carexpenses) {
-      return (carexpenses ?? []).reduce((sum, expense) => sum + (expense.amount_dollar || 0), 0);
+      return (carexpenses ?? []).reduce((sum, expense) => sum + (Number(expense.amount_dollar) || 0), 0);
     }
 function  calculateSumDinar(carexpenses) {
-      return (carexpenses ?? []).reduce((sum, expense) => sum + (expense.amount_dinar || 0), 0);
+      return (carexpenses ?? []).reduce((sum, expense) => sum + (Number(expense.amount_dinar) || 0), 0);
     }
 
     function confirmCar (car){
