@@ -50,11 +50,11 @@ const moreMenuActive = computed(() => {
                 </Link>
               </div>
 
-              <div class="hidden sm:flex sm:items-center sm:ml-4 min-w-0 flex-1 gap-4">
-              <div class="flex min-w-0 flex-1 items-center gap-4 overflow-x-auto nav-scroll">
+              <div class="hidden sm:flex sm:items-center sm:gap-4 sm:ml-4 min-w-0 flex-1 overflow-x-auto nav-scroll">
               <NavLink
                 :href="route('dashboard')"
                 :active="route().current('dashboard')"
+                class="shrink-0"
               >
                 {{ $t("home") }}
               </NavLink>
@@ -97,6 +97,14 @@ const moreMenuActive = computed(() => {
               >
                 معلومات السنوية
               </NavLink>
+              <NavLink
+                :href="route('car_expenses')"
+                :active="route().current('car_expenses')"
+                class="shrink-0"
+              >
+                تسجيل السيارات
+              </NavLink>
+              <NavMoreMenu :active="moreMenuActive" />
 
               <NavLink
                 v-if="$page.props.auth.user && ($page.props.auth.user.type_id==8||$page.props.auth.user.type_id==10)"
@@ -154,17 +162,6 @@ const moreMenuActive = computed(() => {
               >
                 🚢 حسابات الشركات
               </NavLink>
-              </div>
-
-              <div class="flex shrink-0 items-center gap-4 ps-4 border-s border-gray-200 dark:border-gray-700">
-                <NavLink
-                  :href="route('car_expenses')"
-                  :active="route().current('car_expenses')"
-                >
-                  تسجيل السيارات
-                </NavLink>
-                <NavMoreMenu :active="moreMenuActive" />
-              </div>
               </div>
               <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                 <NavLink
