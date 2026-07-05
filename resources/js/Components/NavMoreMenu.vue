@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { Link } from '@inertiajs/inertia-vue3';
+import { Link, usePage } from '@inertiajs/inertia-vue3';
 
 defineProps({
     active: {
@@ -9,20 +9,40 @@ defineProps({
     },
 });
 
+const page = usePage();
+
+const isContractUser = computed(() => {
+    const typeId = page.props.auth?.user?.type_id;
+    return typeId === 8 || typeId === 10;
+});
+
+const allItems = [
+    { href: () => route('dashboard.statistics'), label: 'احصائات', name: 'dashboard.statistics' },
+    { href: () => route('sync.monitor'), label: '🔄 المزامنة', name: 'sync.monitor' },
+    { href: () => route('online_contracts'), label: 'العقود الالكترونية', name: 'online_contracts' },
+    { href: () => route('car_check'), label: 'مراجعة السيارات', name: 'car_check' },
+    { href: () => route('damage_report.index'), label: 'تقارير الضرر', name: 'damage_report.index' },
+    { href: () => route('hunter'), label: 'عاطل', name: 'hunter' },
+    { href: () => route('systemSettings'), label: 'إعدادات النظام', name: 'systemSettings' },
+    { href: () => route('logViewer'), label: '📋 لوغ الأخطاء', name: 'logViewer' },
+];
+
+const contractOnlyNames = ['systemSettings', 'logViewer'];
+
+const items = computed(() => {
+    const list = isContractUser.value
+        ? allItems.filter((item) => contractOnlyNames.includes(item.name))
+        : allItems;
+
+    return list.map((item) => ({
+        ...item,
+        href: item.href(),
+    }));
+});
+
 const open = ref(false);
 const triggerRef = ref(null);
 const panelStyle = ref({ top: '0px', left: '0px' });
-
-const items = computed(() => [
-    { href: route('dashboard.statistics'), label: 'احصائات', name: 'dashboard.statistics' },
-    { href: route('sync.monitor'), label: '🔄 المزامنة', name: 'sync.monitor' },
-    { href: route('online_contracts'), label: 'العقود الالكترونية', name: 'online_contracts' },
-    { href: route('car_check'), label: 'مراجعة السيارات', name: 'car_check' },
-    { href: route('damage_report.index'), label: 'تقارير الضرر', name: 'damage_report.index' },
-    { href: route('hunter'), label: 'عاطل', name: 'hunter' },
-    { href: route('systemSettings'), label: 'إعدادات النظام', name: 'systemSettings' },
-    { href: route('logViewer'), label: '📋 لوغ الأخطاء', name: 'logViewer' },
-]);
 
 function isCurrent(name) {
     return route().current(name);
@@ -91,7 +111,7 @@ onUnmounted(() => {
             type="button"
             @click.stop="toggle"
             :class="[
-                'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out select-none',
+                'inline-flex items-center px-3 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out select-none whitespace-nowrap',
                 active
                     ? 'border-indigo-400 text-gray-900 dark:text-gray-200'
                     : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100 hover:border-gray-300',
