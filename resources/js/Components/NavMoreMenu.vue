@@ -1,6 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Link, usePage } from '@inertiajs/inertia-vue3';
+import { isAdminOrOwner } from '@/utils/navAccess';
 
 defineProps({
     active: {
@@ -11,7 +12,7 @@ defineProps({
 
 const page = usePage();
 
-const isAdmin = computed(() => Number(page.props.auth?.user?.type_id) === 1);
+const hasFullAccess = computed(() => isAdminOrOwner(page.props.auth?.user));
 
 const allItems = [
     { href: () => route('dashboard.statistics'), label: 'احصائات', name: 'dashboard.statistics' },
@@ -27,7 +28,7 @@ const allItems = [
 const adminOnlyNames = ['dashboard.statistics', 'sync.monitor', 'online_contracts', 'car_check', 'damage_report.index', 'hunter'];
 
 const items = computed(() => {
-    const list = isAdmin.value
+    const list = hasFullAccess.value
         ? allItems
         : allItems.filter((item) => !adminOnlyNames.includes(item.name));
 
