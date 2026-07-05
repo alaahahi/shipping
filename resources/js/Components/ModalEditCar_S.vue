@@ -34,74 +34,92 @@ const registrationData = ref({
   noteToAdd: '' // الملاحظة التي سيتم إضافتها
 });
 
-// حساب المجموع تلقائياً
+// حساب المجموع تلقائياً (المصروف بالدينار للتفاصيل فقط — لا يُضاف على حساب السيارة)
 const calculateRegistrationTotal = computed(() => {
-  const total = parseFloat(registrationData.value.fee || 0) + 
-                parseFloat(registrationData.value.expenses || 0) + 
-                parseFloat(registrationData.value.companyContract || 0);
+  const fee = parseFloat(registrationData.value.fee || 0);
+  const expenses = parseFloat(registrationData.value.expenses || 0);
+  const companyContract = parseFloat(registrationData.value.companyContract || 0);
   const rate = parseFloat(registrationData.value.exchangeRate || 1);
   const additionalExpenses = parseFloat(registrationData.value.additionalExpenses || 0);
-  
+
+  const financialDinarTotal = fee + companyContract;
+
+  let totalUSD = 0;
   if (rate > 0) {
-    const result = total / (rate / 100);
-    const totalUSD = Math.round(result) + additionalExpenses;
-    
-    // تحديث الملاحظة تلقائياً
-    registrationData.value.noteToAdd = `+ رسوم تسجيل ومصاريف ${totalUSD}$`;
-    
-    return totalUSD; // عدد صحيح + المصروف الإضافي بالدولار
+    totalUSD = Math.round(financialDinarTotal / (rate / 100)) + additionalExpenses;
+  } else {
+    totalUSD = additionalExpenses;
   }
-  
-  registrationData.value.noteToAdd = '';
-  return additionalExpenses;
+
+  const details = [];
+  if (fee > 0) details.push(`تسجيل ${fee} د`);
+  if (expenses > 0) details.push(`مصروف ${expenses} د`);
+  if (companyContract > 0) details.push(`عقد ${companyContract} د`);
+
+  if (totalUSD > 0) {
+    registrationData.value.noteToAdd = details.length
+      ? `+ رسوم تسجيل ${totalUSD}$ (${details.join('، ')})`
+      : `+ رسوم تسجيل ${totalUSD}$`;
+  } else if (expenses > 0) {
+    registrationData.value.noteToAdd = `+ مصروف ${expenses} د`;
+  } else {
+    registrationData.value.noteToAdd = '';
+  }
+
+  return totalUSD;
+});
+
+const canApplyRegistrationFees = computed(() => {
+  return calculateRegistrationTotal.value > 0
+    || parseFloat(registrationData.value.expenses || 0) > 0;
 });
 
 // تطبيق رسوم التسجيل على المصاريف والملاحظة
 function applyRegistrationFees() {
   const totalUSD = calculateRegistrationTotal.value;
-  
+  const noteText = registrationData.value.noteToAdd?.trim();
+
+  if (!noteText && totalUSD <= 0) return;
+
   if (totalUSD > 0) {
-    // إضافة على المصاريف (المشتريات) - عدد صحيح مع التقريب
     props.formData.expenses = Math.round(parseFloat(props.formData.expenses || 0) + totalUSD);
-    
-    // إضافة على المصاريف (المبيعات) - عدد صحيح مع التقريب
     props.formData.expenses_s = Math.round(parseFloat(props.formData.expenses_s || 0) + totalUSD);
-    
-    // إضافة على الملاحظة (من الحقل القابل للتعديل)
+  }
+
+  if (noteText) {
     if (props.formData.note) {
-      props.formData.note += ' ' + registrationData.value.noteToAdd;
+      props.formData.note += ' ' + noteText;
     } else {
-      props.formData.note = registrationData.value.noteToAdd;
+      props.formData.note = noteText;
     }
-    
-    // إعادة تعيين حقول التسجيل
-    registrationData.value = {
-      fee: 0,
-      expenses: 0,
-      companyContract: 200000,
-      exchangeRate: registrationData.value.exchangeRate,
-      additionalExpenses: 0,
-      totalUSD: 0,
-      noteToAdd: ''
-    };
-    
-    // الرجوع للتاب الأساسي
-    activeTab.value = 'edit';
-    
-    // استخدام toast بدلاً من alert
-    toast.success('✅ تم إضافة رسوم التسجيل بنجاح!', {
+  }
+
+  registrationData.value = {
+    fee: 0,
+    expenses: 0,
+    companyContract: 200000,
+    exchangeRate: registrationData.value.exchangeRate,
+    additionalExpenses: 0,
+    totalUSD: 0,
+    noteToAdd: ''
+  };
+
+  activeTab.value = 'edit';
+
+  toast.success(
+    totalUSD > 0 ? '✅ تم إضافة رسوم التسجيل بنجاح!' : '✅ تم تسجيل المصروف في الملاحظة',
+    {
       timeout: 3000,
       position: 'bottom-right'
+    }
+  );
+
+  setTimeout(() => {
+    toast.info('📎 يرجى تحميل المرفق إذا موجود', {
+      timeout: 5000,
+      position: 'bottom-right'
     });
-    
-    // رسالة تذكير بتحميل المرفق
-    setTimeout(() => {
-      toast.info('📎 يرجى تحميل المرفق إذا موجود', {
-        timeout: 5000,
-        position: 'bottom-right'
-      });
-    }, 500);
-  }
+  }, 500);
 }
 
 function getTodayDate() {
@@ -679,7 +697,7 @@ async function removeTagFromCar(tagValue) {
                 📋 حساب رسوم التسجيل والمصاريف
               </h3>
               <p class="text-sm text-blue-600 dark:text-blue-400">
-                املأ الحقول أدناه، سيتم الحساب تلقائياً وعند الضغط على "تطبيق الرسوم" سيتم إضافة المبلغ على المصاريف والملاحظة
+                املأ الحقول أدناه، سيتم الحساب تلقائياً. التسجيل وعقد الشركة يُضافان على مصاريف السيارة، أما المصروف (دينار) فيُسجّل في الملاحظة فقط.
               </p>
             </div>
 
@@ -710,6 +728,9 @@ async function removeTagFromCar(tagValue) {
                   v-model.number="registrationData.expenses"
                   placeholder="0"
                 />
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  📝 يُسجّل في الملاحظة فقط ولا يُضاف على مصاريف السيارة
+                </p>
               </div>
 
               <!-- عقد الشركة -->
@@ -771,7 +792,7 @@ async function removeTagFromCar(tagValue) {
                     المجموع بالدولار (عدد صحيح)
                   </h4>
                   <p class="text-sm text-green-600 dark:text-green-400 mt-1">
-                    الحساب: [(التسجيل + المصروف + عقد الشركة) ÷ (سعر الصرف ÷ 100)] + مصروف إضافي
+                    الحساب: [(التسجيل + عقد الشركة) ÷ (سعر الصرف ÷ 100)] + مصروف إضافي
                   </p>
                 </div>
                 <div class="text-3xl font-bold text-green-600 dark:text-green-400">
@@ -802,10 +823,10 @@ async function removeTagFromCar(tagValue) {
             <div class="mt-6">
               <button
                 @click="applyRegistrationFees"
-                :disabled="calculateRegistrationTotal <= 0"
+                :disabled="!canApplyRegistrationFees"
                 :class="[
                   'w-full py-3 px-4 rounded-lg font-semibold text-white transition-all',
-                  calculateRegistrationTotal > 0
+                  canApplyRegistrationFees
                     ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg'
                     : 'bg-gray-400 cursor-not-allowed'
                 ]"
