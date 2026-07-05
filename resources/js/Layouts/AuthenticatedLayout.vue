@@ -51,79 +51,130 @@ const moreMenuTriggerClass = computed(() =>
       <nav class="bg-white border-gray-100 dark:bg-gray-900  print:hidden">
         <!-- Primary Navigation Menu -->
         <div class="max-w-8xl mx-auto px-4 sm:px-2  ">
-          <div class="flex justify-between h-16">
-            <div class="flex">
+          <div class="flex justify-between h-16 gap-2">
+            <div class="flex min-w-0 flex-1 items-center">
               <!-- Logo -->
               <div class="shrink-0 flex items-center">
                 <Link :href="route('dashboard')" class="flex items-center">
                   <img src="/img/logo.png" alt="Logo" class="h-9 w-auto object-contain" onerror="this.src='/img/logo.jpg'; this.onerror=null;" />
                 </Link>
               </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                <NavLink
-                  :href="route('dashboard')"
-                  :active="route().current('dashboard')"
-                >
-                  {{ $t("home") }}
-                </NavLink>
-                
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex" v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
-                <NavLink
-                  :href="route('purchases')"
-                  :active="route().current('purchases')"
-                >
-                  {{ $t("purchases") }}
-                </NavLink>
-                
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex" v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
-                <NavLink
-                  :href="route('sales')"
-                  :active="route().current('sales')"
-                >
-                  {{ $t("sales") }}
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
-                <NavLink
-                  :href="route('clients')"
-                  :active="route().current('clients')"
-                >
-                  {{ $t("clients") }}
-                </NavLink>
+
+              <div class="hidden sm:flex sm:items-center sm:gap-4 sm:ml-4 min-w-0 flex-1 overflow-x-auto nav-scroll">
+              <NavLink
+                :href="route('dashboard')"
+                :active="route().current('dashboard')"
+                class="shrink-0"
+              >
+                {{ $t("home") }}
+              </NavLink>
+              <NavLink
+                v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6"
+                :href="route('purchases')"
+                :active="route().current('purchases')"
+                class="shrink-0"
+              >
+                {{ $t("purchases") }}
+              </NavLink>
+              <NavLink
+                v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6"
+                :href="route('sales')"
+                :active="route().current('sales')"
+                class="shrink-0"
+              >
+                {{ $t("sales") }}
+              </NavLink>
+              <NavLink
+                v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6"
+                :href="route('clients')"
+                :active="route().current('clients')"
+                class="shrink-0"
+              >
+                {{ $t("clients") }}
+              </NavLink>
+              <NavLink
+                v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6"
+                :href="route('accounting')"
+                :active="route().current('accounting')"
+                class="shrink-0"
+              >
+                المحاسبة
+              </NavLink>
+              <NavLink
+                :href="route('annual_information')"
+                :active="route().current('annual_information')"
+                class="shrink-0"
+              >
+                معلومات السنوية
+              </NavLink>
+              <NavLink
+                :href="route('car_expenses')"
+                :active="route().current('car_expenses')"
+                class="shrink-0"
+              >
+                تسجيل السيارات
+              </NavLink>
+
+              <NavLink
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==8||$page.props.auth.user.type_id==10)"
+                :href="route('contract')"
+                :active="route().current('contract')"
+                class="shrink-0"
+              >
+                {{ $t("newContract") }}
+              </NavLink>
+              <NavLink
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==8||$page.props.auth.user.type_id==10)"
+                :href="route('car_contract')"
+                :active="route().current('car_contract')"
+                class="shrink-0"
+              >
+                {{ $t("SalesContracts") }}
+              </NavLink>
+              <NavLink
+                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8"
+                :href="route('company_treasury')"
+                :active="route().current('company_treasury')"
+                class="shrink-0"
+              >
+                {{ $t("CompanyTreasury") }}
+              </NavLink>
+              <NavLink
+                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8"
+                :href="route('contract_account')"
+                :active="route().current('contract_account')"
+                class="shrink-0"
+              >
+                {{ $t("CompanyExpenses") }}
+              </NavLink>
+              <NavLink
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)"
+                :href="route('trips')"
+                :active="route().current('trips') || route().current('trips.create') || route().current('trips.show')"
+                class="shrink-0"
+              >
+                🚢 الرحلات
+              </NavLink>
+              <NavLink
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)"
+                :href="route('consigneeBalances.index')"
+                :active="route().current('consigneeBalances.index')"
+                class="shrink-0"
+              >
+                💰 أرصدة الزبائن
+              </NavLink>
+              <NavLink
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)"
+                :href="route('companyBalances.index')"
+                :active="route().current('companyBalances.index') || route().current('companyBalances.show')"
+                class="shrink-0"
+              >
+                🚢 حسابات الشركات
+              </NavLink>
               </div>
 
-
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
-                <NavLink
-                  :href="route('accounting')"
-                  :active="route().current('accounting')"
-                >
-                 المحاسبة
-                </NavLink>
-              </div>
-
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                <NavLink
-                  :href="route('annual_information')"
-                  :active="route().current('annual_information')"
-                >
-                  معلومات السنوية
-                </NavLink>
-              </div>
-
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                <NavLink
-                  :href="route('car_expenses')"
-                  :active="route().current('car_expenses')"
-                >
-                  تسجيل السيارات
-                </NavLink>
-              </div>
-              
-              <!-- قائمة منسدلة: خدمات إضافية -->
-              <div class="hidden sm:flex sm:items-center sm:-my-px sm:ml-6" v-if="showMoreMenu">
+              <!-- قائمة المزيد — خارج منطقة التمرير لتبقى ظاهرة دائماً -->
+              <div class="hidden shrink-0 sm:block" v-if="showMoreMenu">
                 <Dropdown align="left" width="48" :contentClasses="['py-1', 'bg-white', 'dark:bg-gray-800', 'dark:border', 'dark:border-gray-700', 'min-w-[13rem]']">
                   <template #trigger>
                     <button type="button" :class="moreMenuTriggerClass">
@@ -178,65 +229,6 @@ const moreMenuTriggerClass = computed(() =>
                     </DropdownLink>
                   </template>
                 </Dropdown>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && ($page.props.auth.user.type_id==8||$page.props.auth.user.type_id==10)">
-                <NavLink
-                  :href="route('contract')"
-                  :active="route().current('contract')"
-
-                >
-                {{ $t("newContract") }}
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && ($page.props.auth.user.type_id==8||$page.props.auth.user.type_id==10)">
-                <NavLink
-                  :href="route('car_contract')"
-                  :active="route().current('car_contract')"
-
-                >
-                {{ $t("SalesContracts") }}
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.type_id==8">
-                <NavLink
-                  :href="route('company_treasury')"
-                  :active="route().current('company_treasury')"
-                >
-                {{ $t("CompanyTreasury") }}
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.type_id==8">
-                <NavLink
-                  :href="route('contract_account')"
-                  :active="route().current('contract_account')"
-
-                >
-                {{ $t("CompanyExpenses") }}
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)">
-                <NavLink
-                  :href="route('trips')"
-                  :active="route().current('trips') || route().current('trips.create') || route().current('trips.show')"
-                >
-                  🚢 الرحلات
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)">
-                <NavLink
-                  :href="route('consigneeBalances.index')"
-                  :active="route().current('consigneeBalances.index')"
-                >
-                  💰 أرصدة الزبائن
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)">
-                <NavLink
-                  :href="route('companyBalances.index')"
-                  :active="route().current('companyBalances.index') || route().current('companyBalances.show')"
-                >
-                  🚢 حسابات الشركات
-                </NavLink>
               </div>
               <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                 <NavLink
@@ -602,5 +594,15 @@ const moreMenuTriggerClass = computed(() =>
 <style>
 .max-w-8xl{
   max-width: 95rem
+}
+.nav-scroll {
+  scrollbar-width: thin;
+}
+.nav-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.nav-scroll::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5);
+  border-radius: 999px;
 }
 </style>
