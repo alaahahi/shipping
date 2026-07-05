@@ -28,6 +28,8 @@ use Inertia\Inertia;
 
 class CarExpensesController extends Controller
 {
+    public const CAR_HAVE_EXPENSES_LINKED = 4;
+
     protected $accountingController;
     protected $userClient;
     protected $accounting;
@@ -321,7 +323,7 @@ class CarExpensesController extends Controller
                 'total' => $newTotal,
                 'total_s' => $newTotalS,
                 'profit' => $newTotalS - $newTotal,
-                'car_have_expenses' => 0,
+                'car_have_expenses' => self::CAR_HAVE_EXPENSES_LINKED,
             ]);
 
             return response()->json([
@@ -358,7 +360,7 @@ class CarExpensesController extends Controller
             'total_dinar' => $totalDinar,
             'has_registration' => $expenses->isNotEmpty(),
             'link_exchange_rate' => self::parseLinkExchangeRate($expenses),
-            'is_linked' => (int) $car->car_have_expenses === 0,
+            'is_linked' => self::isCarLinked($car),
         ], 200);
     }
 
@@ -373,7 +375,7 @@ class CarExpensesController extends Controller
                     return response()->json(['error' => 'غير مصرح'], 403);
                 }
 
-                if ((int) $car->car_have_expenses !== 0) {
+                if (!self::isCarLinked($car)) {
                     return response()->json(['error' => 'السيارة غير مربوطة'], 422);
                 }
 
@@ -508,6 +510,40 @@ class CarExpensesController extends Controller
         }
 
         return null;
+    }
+
+    public static function applyLinkedCarsFilter($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('car_have_expenses', self::CAR_HAVE_EXPENSES_LINKED)
+                ->orWhere(function ($q2) {
+                    $q2->where('car_have_expenses', 0)
+                        ->whereHas('carexpenses', function ($e) {
+                            $e->where('note', 'like', '%[مربوط]%');
+                        });
+                });
+        });
+    }
+
+    public static function isCarLinked(Car $car): bool
+    {
+        if ((int) $car->car_have_expenses === self::CAR_HAVE_EXPENSES_LINKED) {
+            return true;
+        }
+
+        if ((int) $car->car_have_expenses === 0) {
+            if ($car->relationLoaded('carexpenses')) {
+                return $car->carexpenses->contains(function ($expense) {
+                    return str_contains($expense->note ?? '', '[مربوط]');
+                });
+            }
+
+            return CarExpenses::where('car_id', $car->id)
+                ->where('note', 'like', '%[مربوط]%')
+                ->exists();
+        }
+
+        return false;
     }
 
     public static function enrichCarsWithLinkRates($cars)

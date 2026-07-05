@@ -1037,7 +1037,11 @@ class DashboardController extends Controller
         
         // إضافة فلاتر إضافية
         if ($car_have_expenses !== '' && $car_have_expenses !== null) {
-            $baseQuery->where('car_have_expenses', $car_have_expenses);
+            if ((string) $car_have_expenses === (string) CarExpensesController::CAR_HAVE_EXPENSES_LINKED) {
+                CarExpensesController::applyLinkedCarsFilter($baseQuery);
+            } else {
+                $baseQuery->where('car_have_expenses', $car_have_expenses);
+            }
         }
         
         if ($from && $to) {

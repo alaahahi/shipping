@@ -73,6 +73,7 @@ let q = '';
 function carHaveExpensesParam() {
   if (listTab.value === 'work') return 1;
   if (listTab.value === 'archive') return 2;
+  if (listTab.value === 'linked') return 4;
   return 0;
 }
 

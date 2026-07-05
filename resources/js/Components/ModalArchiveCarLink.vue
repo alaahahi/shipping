@@ -30,20 +30,20 @@ function submit() {
   <Transition name="modal">
     <div v-if="show" class="modal-mask">
       <div class="modal-wrapper max-h-[80vh]">
-        <div class="modal-container dark:bg-gray-900 dark:border dark:border-gray-600 overflow-auto max-h-[80vh]">
+        <div class="modal-container overflow-auto max-h-[80vh]">
           <div class="modal-header">
             <slot name="header" />
-            <h2 class="text-center py-5 text-gray-900 dark:text-white font-bold">
+            <h2 class="link-modal-title">
               ربط السيارة مع ليست السيارة
               {{ formData?.car_type }} شانص{{ formData?.vin }} رقم{{ formData?.car_number }}
             </h2>
-            <p class="text-center text-sm text-gray-600 dark:text-gray-200 px-4">
+            <p class="link-modal-hint">
               سيتم تحويل مصاريف الدينار إلى دولار وإضافتها لحقل المصاريف في ليست السيارة (مرة واحدة).
             </p>
           </div>
 
           <div class="modal-body px-4">
-            <label class="block mb-2 font-semibold text-gray-800 dark:text-gray-100" for="exchange_rate">سعر الصرف</label>
+            <label class="link-modal-label" for="exchange_rate">سعر الصرف</label>
             <input
               id="exchange_rate"
               v-model="exchangeRate"
@@ -51,7 +51,7 @@ function submit() {
               min="1"
               step="any"
               placeholder="مثال: 140000"
-              class="w-full rounded border border-gray-300 p-2.5 text-gray-900 bg-white dark:bg-gray-950 dark:border-gray-500 dark:text-white dark:placeholder-gray-400"
+              class="link-modal-input"
             />
           </div>
 
@@ -60,7 +60,7 @@ function submit() {
               <div class="basis-1/2 px-4">
                 <button
                   type="button"
-                  class="modal-default-button py-3 bg-gray-500 rounded"
+                  class="modal-default-button modal-btn-cancel"
                   @click="$emit('close')"
                 >
                   تراجع
@@ -69,7 +69,7 @@ function submit() {
               <div class="basis-1/2 px-4">
                 <button
                   type="button"
-                  class="modal-default-button py-3 bg-indigo-600 rounded col-6"
+                  class="modal-default-button modal-btn-submit"
                   :disabled="!exchangeRate || Number(exchangeRate) <= 0"
                   @click="submit"
                 >
@@ -105,6 +105,7 @@ function submit() {
   margin: 0 auto;
   padding: 20px 30px 60px;
   background-color: #fff;
+  color: #111827;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
   transition: all 0.3s ease;
@@ -112,14 +113,108 @@ function submit() {
 
 :global(.dark) .modal-container {
   background-color: #111827;
+  color: #f3f4f6;
   border: 1px solid #4b5563;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
+}
+
+.link-modal-title {
+  text-align: center;
+  padding: 1.25rem 1rem 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #1f2937;
+}
+
+:global(.dark) .link-modal-title {
+  color: #f9fafb;
+}
+
+.link-modal-hint {
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  padding: 0 1rem 0.75rem;
+  color: #374151;
+}
+
+:global(.dark) .link-modal-hint {
+  color: #d1d5db;
+}
+
+.link-modal-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+:global(.dark) .link-modal-label {
+  color: #e5e7eb;
+}
+
+.link-modal-input {
+  display: block;
+  width: 100%;
+  border-radius: 0.375rem;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #111827;
+  padding: 0.625rem 0.75rem;
+  font-size: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.link-modal-input::placeholder {
+  color: #9ca3af;
+}
+
+.link-modal-input:focus {
+  outline: none;
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.25);
+}
+
+:global(.dark) .link-modal-input {
+  border-color: #4b5563;
+  background: #030712;
+  color: #f9fafb;
+}
+
+:global(.dark) .link-modal-input::placeholder {
+  color: #9ca3af;
 }
 
 .modal-default-button {
   float: right;
   width: 100%;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
   color: #fff;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1;
+}
+
+.modal-btn-cancel {
+  background-color: #6b7280;
+}
+
+.modal-btn-cancel:hover {
+  background-color: #4b5563;
+}
+
+.modal-btn-submit {
+  background-color: #4f46e5;
+}
+
+.modal-btn-submit:hover:not(:disabled) {
+  background-color: #4338ca;
 }
 
 .modal-default-button:disabled {
