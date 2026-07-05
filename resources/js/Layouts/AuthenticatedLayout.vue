@@ -34,12 +34,6 @@ const moreMenuActive = computed(() => {
     'logViewer',
   ].some((name) => route().current(name));
 });
-
-const moreMenuTriggerClass = computed(() =>
-  moreMenuActive.value
-    ? 'inline-flex items-center px-1 pt-1 border-b-2 border-indigo-400 text-sm font-medium leading-5 text-gray-900 dark:text-gray-200 focus:outline-none transition duration-150 ease-in-out'
-    : 'inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100 hover:border-gray-300 focus:outline-none transition duration-150 ease-in-out'
-);
 </script>
 
 <template>
@@ -172,17 +166,79 @@ const moreMenuTriggerClass = computed(() =>
                 🚢 حسابات الشركات
               </NavLink>
               </div>
+              <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <NavLink
+                  :href="route('dubai')"
+                  :active="route().current('dubai')"
+                >
+                {{ $t("dubai") }}
+                </NavLink>
+              </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <NavLink
+                  :href="route('iran')"
+                  :active="route().current('iran')"
+                >
+                {{ $t("iran") }}
+                </NavLink>
+              </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <NavLink
+                  :href="route('border')"
+                  :active="route().current('border')"
+                >
+                {{ $t("border") }}
+                </NavLink>
+              </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <NavLink
+                  :href="route('coc')"
+                  :active="route().current('coc')"
+                >
+                {{ $t("shipping_coc") }}
+                </NavLink>
+              </div>
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <NavLink
+                  :href="route('howler')"
+                  :active="route().current('howler')"
+                >
+                {{ $t("howler") }}
 
-              <!-- قائمة المزيد — خارج منطقة التمرير لتبقى ظاهرة دائماً -->
-              <div class="hidden shrink-0 sm:block sm:ml-2" v-if="showMoreMenu">
+                  
+                </NavLink>
+              </div> -->
+            </div>
+            <div class="hidden sm:flex sm:items-center sm:ml-6 gap-4 shrink-0">
+              <!-- قائمة المزيد — بجانب اللغة والمستخدم حتى لا تختفي -->
+              <div class="relative" v-if="showMoreMenu">
                 <Dropdown align="right" width="48" :contentClasses="['py-1', 'bg-white', 'dark:bg-gray-800', 'dark:border', 'dark:border-gray-700', 'min-w-[13rem]']">
                   <template #trigger>
-                    <button type="button" :class="moreMenuTriggerClass">
-                      المزيد
-                      <svg class="mr-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                      </svg>
-                    </button>
+                    <span class="inline-flex rounded-md">
+                      <button
+                        type="button"
+                        :class="[
+                          'inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md focus:outline-none transition ease-in-out duration-150',
+                          moreMenuActive
+                            ? 'border-indigo-400 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-gray-800'
+                            : 'text-gray-500 dark:text-gray-300 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-100',
+                        ]"
+                      >
+                        المزيد
+                        <svg
+                          class="ml-2 -mr-0.5 h-4 w-4"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                            clip-rule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                    </span>
                   </template>
                   <template #content>
                     <DropdownLink
@@ -230,50 +286,6 @@ const moreMenuTriggerClass = computed(() =>
                   </template>
                 </Dropdown>
               </div>
-              <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                <NavLink
-                  :href="route('dubai')"
-                  :active="route().current('dubai')"
-                >
-                {{ $t("dubai") }}
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                <NavLink
-                  :href="route('iran')"
-                  :active="route().current('iran')"
-                >
-                {{ $t("iran") }}
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                <NavLink
-                  :href="route('border')"
-                  :active="route().current('border')"
-                >
-                {{ $t("border") }}
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                <NavLink
-                  :href="route('coc')"
-                  :active="route().current('coc')"
-                >
-                {{ $t("shipping_coc") }}
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                <NavLink
-                  :href="route('howler')"
-                  :active="route().current('howler')"
-                >
-                {{ $t("howler") }}
-
-                  
-                </NavLink>
-              </div> -->
-            </div>
-            <div class="hidden sm:flex sm:items-center sm:ml-6 gap-4">
               <div class="ml-3 relative">
                 <Dropdown align="right" width="48">
                   <template #trigger>
