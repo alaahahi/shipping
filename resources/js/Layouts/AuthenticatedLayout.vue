@@ -21,21 +21,14 @@ const switchLocale = (locale) => {
 const page = usePage();
 const authUser = computed(() => page.props.auth?.user ?? null);
 
-const showMoreMenu = computed(() => {
-  const u = authUser.value;
-  if (!u) return false;
-  const t = Number(u.type_id);
-  return t === 1 || t === 6 || t === 7 || (Number(u.owner_id) === 1 && t !== 10);
-});
+const showMoreMenu = computed(() => !!authUser.value);
 
 const moreMenuActive = computed(() => {
   return [
     'sync.monitor',
     'online_contracts',
-    'annual_information',
     'car_check',
     'damage_report.index',
-    'car_expenses',
     'hunter',
     'systemSettings',
     'logViewer',
@@ -110,8 +103,26 @@ const moreMenuTriggerClass = computed(() =>
                  المحاسبة
                 </NavLink>
               </div>
+
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <NavLink
+                  :href="route('annual_information')"
+                  :active="route().current('annual_information')"
+                >
+                  معلومات السنوية
+                </NavLink>
+              </div>
+
+              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <NavLink
+                  :href="route('car_expenses')"
+                  :active="route().current('car_expenses')"
+                >
+                  تسجيل السيارات
+                </NavLink>
+              </div>
               
-              <!-- قائمة منسدلة: خدمات السيارات والنظام -->
+              <!-- قائمة منسدلة: خدمات إضافية -->
               <div class="hidden sm:flex sm:items-center sm:-my-px sm:ml-6" v-if="showMoreMenu">
                 <Dropdown align="left" width="48" :contentClasses="['py-1', 'bg-white', 'dark:bg-gray-800', 'dark:border', 'dark:border-gray-700', 'min-w-[13rem]']">
                   <template #trigger>
@@ -124,63 +135,42 @@ const moreMenuTriggerClass = computed(() =>
                   </template>
                   <template #content>
                     <DropdownLink
-                      v-if="$page.props.auth.user.type_id==1"
                       :href="route('sync.monitor')"
                       :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('sync.monitor') }"
                     >
                       🔄 المزامنة
                     </DropdownLink>
                     <DropdownLink
-                      v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6"
                       :href="route('online_contracts')"
                       :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('online_contracts') }"
                     >
                       {{ $t("online_contracts") }}
                     </DropdownLink>
                     <DropdownLink
-                      v-if="$page.props.auth.user.type_id==1"
-                      :href="route('annual_information')"
-                      :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('annual_information') }"
-                    >
-                      معلومات السنوية
-                    </DropdownLink>
-                    <DropdownLink
-                      v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==7"
-                      :href="route('car_expenses')"
-                      :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('car_expenses') }"
-                    >
-                      مصاريف السيارات
-                    </DropdownLink>
-                    <DropdownLink
-                      v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==7"
                       :href="route('car_check')"
                       :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('car_check') }"
                     >
                       مراجعة السيارات
                     </DropdownLink>
                     <DropdownLink
-                      v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6||$page.props.auth.user.type_id==7"
                       :href="route('damage_report.index')"
                       :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('damage_report.index') }"
                     >
                       تقارير الضرر
                     </DropdownLink>
                     <DropdownLink
-                      v-if="$page.props.auth.user.type_id==1"
                       :href="route('hunter')"
                       :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('hunter') }"
                     >
                       عاطل
                     </DropdownLink>
                     <DropdownLink
-                      v-if="$page.props.auth.user.owner_id==1 && $page.props.auth.user.type_id!=10"
                       :href="route('systemSettings')"
                       :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('systemSettings') }"
                     >
                       إعدادات النظام
                     </DropdownLink>
                     <DropdownLink
-                      v-if="$page.props.auth.user.owner_id==1 && $page.props.auth.user.type_id!=10"
                       :href="route('logViewer')"
                       :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('logViewer') }"
                     >
@@ -492,6 +482,19 @@ const moreMenuTriggerClass = computed(() =>
               🚢 حسابات الشركات
               </ResponsiveNavLink>
               
+              <ResponsiveNavLink
+                :href="route('annual_information')"
+                :active="route().current('annual_information')"
+              >
+              معلومات السنوية
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
+                :href="route('car_expenses')"
+                :active="route().current('car_expenses')"
+              >
+              تسجيل السيارات
+              </ResponsiveNavLink>
+
               <!-- المزيد — قائمة الهاتف -->
               <div
                 v-if="showMoreMenu"
@@ -502,42 +505,24 @@ const moreMenuTriggerClass = computed(() =>
               <ResponsiveNavLink
                 :href="route('sync.monitor')"
                 :active="route().current('sync.monitor')"
-                v-if="$page.props.auth.user && $page.props.auth.user.type_id == 1"
               >
               🔄 المزامنة
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('car_check')"
                 :active="route().current('car_check')"
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==7)"
               >
               مراجعة السيارات
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('online_contracts')"
                 :active="route().current('online_contracts')"
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6)"
               >
               {{ $t("online_contracts") }}
               </ResponsiveNavLink>
               <ResponsiveNavLink
-                :href="route('annual_information')"
-                :active="route().current('annual_information')"
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6)"
-              >
-              معلومات السنوية
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('car_expenses')"
-                :active="route().current('car_expenses')"
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==7)"
-              >
-              مصاريف السيارات 
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
                 :href="route('damage_report.index')"
                 :active="route().current('damage_report.index')"
-                v-if="$page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6||$page.props.auth.user.type_id==7"
               >
               تقارير الضرر
               </ResponsiveNavLink>
@@ -572,21 +557,18 @@ const moreMenuTriggerClass = computed(() =>
               <ResponsiveNavLink
                 :href="route('hunter')"
                 :active="route().current('hunter')"
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6)"
               >
               عاطل 
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('systemSettings')"
                 :active="route().current('systemSettings')"
-                v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1 && $page.props.auth.user.type_id!=10"
               >
               إعدادات النظام
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('logViewer')"
                 :active="route().current('logViewer')"
-                v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1 && $page.props.auth.user.type_id!=10"
               >
               📋 لوغ الأخطاء
               </ResponsiveNavLink>
