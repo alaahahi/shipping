@@ -61,8 +61,14 @@ let resetData = ref(false);
 let user_id = 0;
 let page = 1;
 let q = '';
+const isSubmittingExpense = ref(false);
+
+function formatNumber(n) {
+  return new Intl.NumberFormat('en-US').format(Number(n) || 0);
+}
+
 const refresh = () => {
-  page = 0;
+  page = 1;
   car.value.length = 0;
   resetData.value = !resetData.value;
 };
@@ -103,24 +109,31 @@ const getResultsCar = async ($state) => {
 
  
 
-function confirmExpensesCar(V) { 
-  axios.post('/api/confirmExpensesCar',V)
-  .then(response => {
+function confirmExpensesCar(V) {
+  if (isSubmittingExpense.value) return;
+  isSubmittingExpense.value = true;
+
+  axios.post('/api/confirmExpensesCar', {
+    id: V.id,
+    amountDollar: Number(V.amountDollar) || 0,
+    amountDinar: Number(V.amountDinar) || 0,
+    amountNote: V.amountNote || '',
+  })
+  .then(() => {
     showModalAddCarExpenses.value = false;
-    toast.success( "تم إضافة السيارة بنجاح ", {
+    toast.success("تم إضافة الدفعة بنجاح", {
         timeout: 3000,
         position: "bottom-right",
         rtl: true
-
       });
-
-
-      refresh()
-
+    refresh();
   })
-  .catch(error => {
+  .catch((error) => {
     console.error(error);
   })
+  .finally(() => {
+    isSubmittingExpense.value = false;
+  });
 }
 
 
@@ -474,8 +487,8 @@ function confirmDelCarFav(V) {
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.car_color }}</td>
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.vin }}</td>
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.car_number }}</td> 
-                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ calculateSum(car.carexpenses) }}</td>
-                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ calculateSumDinar(car.carexpenses) }}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ formatNumber(calculateSum(car.carexpenses)) }}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ formatNumber(calculateSumDinar(car.carexpenses)) }}</td>
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">
                                     <button
                                       tabIndex="1"

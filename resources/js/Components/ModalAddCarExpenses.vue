@@ -9,6 +9,7 @@ const toast = useToast();
 const emit = defineEmits(['close', 'a']);
 
 const activeTab = ref('add');
+let repairRowId = 0;
 
 const setActiveTab = (tab) => {
   activeTab.value = tab;
@@ -36,20 +37,22 @@ const REGISTRATION_DINAR_PRESETS = [
 
 const paymentForm = ref({
   registrationDollar: '',
-  registrationDinar: '',
-  repairCurrency: 'dollar',
-  repairAmount: '',
+  registrationDinarManual: '',
+  selectedDinarPresets: [],
   note: '',
 });
 
+const repairItems = ref([]);
+
 function resetPaymentForm() {
+  repairRowId = 0;
   paymentForm.value = {
     registrationDollar: '',
-    registrationDinar: '',
-    repairCurrency: 'dollar',
-    repairAmount: '',
+    registrationDinarManual: '',
+    selectedDinarPresets: [],
     note: '',
   };
+  repairItems.value = [];
 }
 
 watch(() => props.show, (visible) => {
@@ -64,42 +67,91 @@ function parseAmount(value) {
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
-function formatDinar(n) {
-  return new Intl.NumberFormat('ar-IQ').format(n);
+function formatNumber(n) {
+  return new Intl.NumberFormat('en-US').format(Number(n) || 0);
 }
 
-function addDinarQuick(amount) {
-  paymentForm.value.registrationDinar = parseAmount(paymentForm.value.registrationDinar) + amount;
+function toggleDinarPreset(key) {
+  const selected = paymentForm.value.selectedDinarPresets;
+  const idx = selected.indexOf(key);
+  if (idx >= 0) {
+    selected.splice(idx, 1);
+  } else {
+    selected.push(key);
+  }
 }
 
-const registrationDinarTotal = computed(() => parseAmount(paymentForm.value.registrationDinar));
+function isPresetSelected(key) {
+  return paymentForm.value.selectedDinarPresets.includes(key);
+}
+
+const registrationDinarFromPresets = computed(() => {
+  let total = 0;
+  for (const preset of REGISTRATION_DINAR_PRESETS) {
+    if (paymentForm.value.selectedDinarPresets.includes(preset.key)) {
+      total += preset.amount;
+    }
+  }
+  return total;
+});
+
+const registrationDinarTotal = computed(() => {
+  return registrationDinarFromPresets.value + parseAmount(paymentForm.value.registrationDinarManual);
+});
 
 const repairDollar = computed(() => {
-  return paymentForm.value.repairCurrency === 'dollar'
-    ? parseAmount(paymentForm.value.repairAmount)
-    : 0;
+  return repairItems.value
+    .filter((item) => item.currency === 'dollar')
+    .reduce((sum, item) => sum + parseAmount(item.amount), 0);
 });
 
 const repairDinar = computed(() => {
-  return paymentForm.value.repairCurrency === 'dinar'
-    ? parseAmount(paymentForm.value.repairAmount)
-    : 0;
+  return repairItems.value
+    .filter((item) => item.currency === 'dinar')
+    .reduce((sum, item) => sum + parseAmount(item.amount), 0);
 });
 
 const totalDollar = computed(() => parseAmount(paymentForm.value.registrationDollar) + repairDollar.value);
 const totalDinar = computed(() => registrationDinarTotal.value + repairDinar.value);
 
+function addRepairRow() {
+  repairItems.value.push({
+    id: ++repairRowId,
+    currency: 'dollar',
+    amount: '',
+    note: '',
+  });
+}
+
+function removeRepairRow(id) {
+  repairItems.value = repairItems.value.filter((item) => item.id !== id);
+}
+
 function buildNote() {
   const parts = [];
 
   const regDollar = parseAmount(paymentForm.value.registrationDollar);
-  if (regDollar > 0) parts.push(`تسجيل ${regDollar}$`);
+  if (regDollar > 0) parts.push(`تسجيل ${formatNumber(regDollar)}$`);
 
-  const regDinar = registrationDinarTotal.value;
-  if (regDinar > 0) parts.push(`تسجيل ${formatDinar(regDinar)} د`);
+  if (registrationDinarTotal.value > 0) {
+    const dinarDetail = [];
+    for (const preset of REGISTRATION_DINAR_PRESETS) {
+      if (paymentForm.value.selectedDinarPresets.includes(preset.key)) {
+        dinarDetail.push(preset.label);
+      }
+    }
+    const manual = parseAmount(paymentForm.value.registrationDinarManual);
+    if (manual > 0) dinarDetail.push(formatNumber(manual));
+    parts.push(`تسجيل ${dinarDetail.join(' + ')} د`);
+  }
 
-  if (repairDollar.value > 0) parts.push(`تصليح ${repairDollar.value}$`);
-  if (repairDinar.value > 0) parts.push(`تصليح ${formatDinar(repairDinar.value)} د`);
+  for (const item of repairItems.value) {
+    const amount = parseAmount(item.amount);
+    if (amount <= 0) continue;
+    const label = item.currency === 'dollar' ? `${formatNumber(amount)}$` : `${formatNumber(amount)} د`;
+    const detail = item.note?.trim() ? `${label} (${item.note.trim()})` : label;
+    parts.push(`تصليح ${detail}`);
+  }
 
   const userNote = paymentForm.value.note?.trim() || '';
   if (userNote && parts.length) return `${userNote} — ${parts.join(' | ')}`;
@@ -113,13 +165,11 @@ function submitPayment() {
   if (!canSubmit.value) return;
 
   emit('a', {
-    ...props.formData,
+    id: props.formData?.id,
     amountDollar: totalDollar.value,
     amountDinar: totalDinar.value,
     amountNote: buildNote(),
   });
-
-  resetPaymentForm();
 }
 
 function closeModal() {
@@ -204,135 +254,178 @@ function openModalDelClient(expense) {
                 </div>
 
                 <div>
-                  <label class="pay-label" for="reg_dinar">دينار د.ع</label>
+                  <label class="pay-label" for="reg_dinar_manual">دينار د.ع</label>
                   <input
-                    id="reg_dinar"
+                    id="reg_dinar_manual"
                     type="number"
                     min="0"
-                    v-model="paymentForm.registrationDinar"
+                    v-model="paymentForm.registrationDinarManual"
                     placeholder="0"
                     class="pay-input pay-input--highlight mb-2"
                   />
-                  <p class="pay-hint mb-3">يمكنك الكتابة مباشرة أو الضغط على الأزرار للإضافة السريعة</p>
+                  <p class="pay-hint mb-3">اكتب مبلغاً يدوياً أو اختر من الأزرار (الضغط مرة أخرى يلغي الاختيار)</p>
 
                   <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     <button
                       v-for="preset in REGISTRATION_DINAR_PRESETS"
                       :key="preset.key"
                       type="button"
-                      @click="addDinarQuick(preset.amount)"
-                      class="pay-quick-btn pay-quick-btn--green"
+                      @click="toggleDinarPreset(preset.key)"
+                      :class="[
+                        'pay-quick-btn pay-quick-btn--green',
+                        isPresetSelected(preset.key) ? 'pay-quick-btn--green-active' : '',
+                      ]"
                     >
-                      + {{ preset.label }}
+                      {{ preset.label }}
                     </button>
+                  </div>
+
+                  <div
+                    v-if="registrationDinarTotal > 0"
+                    class="pay-subtotal pay-subtotal--green mt-3"
+                  >
+                    مجموع التسجيل بالدينار: {{ formatNumber(registrationDinarTotal) }} د
                   </div>
                 </div>
               </div>
 
-              <!-- مصروف تصليح -->
+              <!-- مصروف تصليح — قائمة -->
               <div class="pay-card pay-card--amber">
-                <div class="pay-card__title pay-card__title--amber">
-                  <span class="text-xl">🔧</span>
-                  <span>مصروف تصليح</span>
-                  <span class="text-xs font-normal opacity-80">(منفصل عن التسجيل)</span>
-                </div>
-
-                <div class="mb-3 flex gap-2">
-                  <button
-                    type="button"
-                    @click="paymentForm.repairCurrency = 'dollar'"
-                    :class="[
-                      'pay-currency-btn flex-1',
-                      paymentForm.repairCurrency === 'dollar' ? 'pay-currency-btn--active-amber' : '',
-                    ]"
-                  >
-                    💵 دولار
-                  </button>
-                  <button
-                    type="button"
-                    @click="paymentForm.repairCurrency = 'dinar'"
-                    :class="[
-                      'pay-currency-btn flex-1',
-                      paymentForm.repairCurrency === 'dinar' ? 'pay-currency-btn--active-amber' : '',
-                    ]"
-                  >
-                    🇮🇶 دينار
+                <div class="flex items-center justify-between gap-2 mb-3">
+                  <div class="pay-card__title pay-card__title--amber mb-0">
+                    <span class="text-xl">🔧</span>
+                    <span>مصروف تصليح</span>
+                  </div>
+                  <button type="button" class="pay-add-btn" @click="addRepairRow">
+                    + إضافة
                   </button>
                 </div>
 
-                <input
-                  type="number"
-                  min="0"
-                  v-model="paymentForm.repairAmount"
-                  :placeholder="paymentForm.repairCurrency === 'dollar' ? 'مبلغ التصليح بالدولار' : 'مبلغ التصليح بالدينار'"
-                  class="pay-input pay-input--amber"
-                />
+                <p v-if="repairItems.length === 0" class="pay-hint text-center py-2">
+                  اضغط + لإضافة بند تصليح
+                </p>
+
+                <div v-for="(item, index) in repairItems" :key="item.id" class="repair-row">
+                  <div class="repair-row__header">
+                    <span class="repair-row__index">#{{ index + 1 }}</span>
+                    <button type="button" class="repair-row__remove" @click="removeRepairRow(item.id)">
+                      حذف
+                    </button>
+                  </div>
+
+                  <div class="mb-2 flex gap-2">
+                    <button
+                      type="button"
+                      @click="item.currency = 'dollar'"
+                      :class="['pay-currency-btn flex-1', item.currency === 'dollar' ? 'pay-currency-btn--active-amber' : '']"
+                    >
+                      دولار
+                    </button>
+                    <button
+                      type="button"
+                      @click="item.currency = 'dinar'"
+                      :class="['pay-currency-btn flex-1', item.currency === 'dinar' ? 'pay-currency-btn--active-amber' : '']"
+                    >
+                      دينار
+                    </button>
+                  </div>
+
+                  <input
+                    type="number"
+                    min="0"
+                    v-model="item.amount"
+                    :placeholder="item.currency === 'dollar' ? 'المبلغ بالدولار' : 'المبلغ بالدينار'"
+                    class="pay-input pay-input--amber mb-2"
+                  />
+                  <input
+                    type="text"
+                    v-model="item.note"
+                    placeholder="ملاحظة البند (اختياري)"
+                    class="pay-input pay-input--amber text-sm"
+                  />
+                </div>
+
+                <div v-if="repairDollar > 0 || repairDinar > 0" class="pay-subtotal pay-subtotal--amber mt-3">
+                  <span v-if="repairDollar > 0">{{ formatNumber(repairDollar) }} $</span>
+                  <span v-if="repairDollar > 0 && repairDinar > 0"> + </span>
+                  <span v-if="repairDinar > 0">{{ formatNumber(repairDinar) }} د</span>
+                </div>
               </div>
 
-              <!-- ملاحظة -->
               <div>
                 <label class="pay-label" for="pay_note">{{ $t('note') }}</label>
                 <input
                   id="pay_note"
                   type="text"
                   v-model="paymentForm.note"
-                  placeholder="ملاحظة إضافية..."
+                  placeholder="ملاحظة عامة..."
                   class="pay-input"
                 />
               </div>
 
-              <!-- المجموع -->
               <div v-if="canSubmit" class="pay-total">
                 <div class="pay-total__label">المجموع الذي سيُحفظ</div>
                 <div class="pay-total__value">
-                  <span v-if="totalDollar > 0">{{ totalDollar }} $</span>
+                  <span v-if="totalDollar > 0">{{ formatNumber(totalDollar) }} $</span>
                   <span v-if="totalDollar > 0 && totalDinar > 0"> + </span>
-                  <span v-if="totalDinar > 0">{{ formatDinar(totalDinar) }} د</span>
+                  <span v-if="totalDinar > 0">{{ formatNumber(totalDinar) }} د</span>
                 </div>
               </div>
             </div>
 
             <!-- السجل -->
-            <div v-else>
-              <h1 class="mt-4 text-center text-lg font-bold text-gray-800 dark:text-gray-100">سجل الدفعات</h1>
-              <div class="mb-5 mt-4 overflow-x-auto shadow-md sm:rounded-lg">
-                <table class="pay-table w-full text-center text-sm">
+            <div v-else class="record-panel">
+              <h1 class="record-panel__title">سجل الدفعات</h1>
+
+              <div class="record-table-wrap">
+                <table class="record-table w-full text-center text-sm">
                   <thead>
-                    <tr class="bg-rose-600 text-white">
-                      <th class="px-2 py-2 sm:px-4 sm:py-2">{{ $t('date') }}</th>
-                      <th class="px-2 py-2 sm:px-4 sm:py-2">دولار</th>
-                      <th class="px-2 py-2 sm:px-4 sm:py-2">دينار</th>
-                      <th class="px-2 py-2 sm:px-4 sm:py-2">ملاحظة</th>
-                      <th class="px-2 py-2 sm:px-4 sm:py-2">عبر</th>
-                      <th class="px-2 py-2 sm:px-4 sm:py-2 print:hidden">{{ $t('execute') }}</th>
+                    <tr>
+                      <th>{{ $t('date') }}</th>
+                      <th>دولار</th>
+                      <th>دينار</th>
+                      <th>ملاحظة</th>
+                      <th>عبر</th>
+                      <th class="print:hidden">{{ $t('execute') }}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <template v-for="expense in (formData.carexpenses ?? [])" :key="expense.id">
-                      <tr class="pay-table__row">
-                        <td class="pay-table__cell">{{ expense.created }}</td>
-                        <td class="pay-table__cell">{{ Number(expense.amount_dollar) || 0 }}</td>
-                        <td class="pay-table__cell">{{ formatDinar(Number(expense.amount_dinar) || 0) }}</td>
-                        <td class="pay-table__cell">{{ expense.note }}</td>
-                        <td class="pay-table__cell">{{ expense.user?.name }}</td>
-                        <td class="pay-table__cell">
-                          <button
-                            class="mx-1 rounded bg-orange-500 px-1 py-1 text-white"
-                            @click="openModalDelClient(expense)"
-                          >
-                            <trash />
-                          </button>
-                        </td>
-                      </tr>
-                    </template>
+                    <tr v-if="!(formData.carexpenses ?? []).length">
+                      <td colspan="6" class="record-table__empty">لا توجد دفعات مسجّلة</td>
+                    </tr>
+                    <tr
+                      v-for="expense in (formData.carexpenses ?? [])"
+                      :key="expense.id"
+                      class="record-table__row"
+                    >
+                      <td class="record-table__cell">{{ expense.created }}</td>
+                      <td class="record-table__cell record-table__cell--dollar">
+                        {{ formatNumber(Number(expense.amount_dollar) || 0) }}
+                      </td>
+                      <td class="record-table__cell record-table__cell--dinar">
+                        {{ formatNumber(Number(expense.amount_dinar) || 0) }}
+                      </td>
+                      <td class="record-table__cell record-table__cell--note">{{ expense.note }}</td>
+                      <td class="record-table__cell">{{ expense.user?.name }}</td>
+                      <td class="record-table__cell print:hidden">
+                        <button
+                          type="button"
+                          class="record-table__delete"
+                          @click="openModalDelClient(expense)"
+                        >
+                          <trash />
+                        </button>
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
-              <div class="text-center">
+
+              <div class="text-center mt-4">
                 <a
                   target="_blank"
                   :href="`/api/getIndexExpensesPrint?car_id=${formData.id}`"
-                  class="m-1 inline-flex rounded bg-blue-500 px-4 py-1 text-white"
+                  class="record-print-btn"
                 >
                   جميع الدفعات
                   <print />
@@ -344,12 +437,13 @@ function openModalDelClient(expense) {
           <div class="modal-footer my-2">
             <div class="flex flex-row">
               <div class="basis-1/2 px-4">
-                <button class="modal-default-button rounded bg-gray-500 py-3" @click="closeModal">
+                <button type="button" class="modal-default-button rounded bg-gray-500 py-3" @click="closeModal">
                   {{ $t('cancel') }}
                 </button>
               </div>
               <div v-if="activeTab === 'add' && currentWork" class="basis-1/2 px-4">
                 <button
+                  type="button"
                   class="modal-default-button col-6 rounded bg-rose-500 py-3"
                   :disabled="!canSubmit"
                   @click="submitPayment"
@@ -370,7 +464,7 @@ function openModalDelClient(expense) {
   position: fixed;
   z-index: 9998;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.55);
   display: table;
   transition: opacity 0.3s ease;
 }
@@ -428,6 +522,7 @@ function openModalDelClient(expense) {
   padding: 0.6rem 0.75rem;
   font-size: 1rem;
   font-weight: 500;
+  font-variant-numeric: lining-nums;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
@@ -443,11 +538,6 @@ function openModalDelClient(expense) {
   color: #f9fafb;
 }
 
-:global(.dark) .pay-input:focus {
-  border-color: #34d399;
-  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.35);
-}
-
 .pay-input--highlight {
   font-size: 1.125rem;
   font-weight: 700;
@@ -456,11 +546,6 @@ function openModalDelClient(expense) {
 .pay-input--amber:focus {
   border-color: #f59e0b;
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
-}
-
-:global(.dark) .pay-input--amber:focus {
-  border-color: #fbbf24;
-  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.35);
 }
 
 .pay-card {
@@ -512,32 +597,87 @@ function openModalDelClient(expense) {
 
 .pay-quick-btn {
   border-radius: 0.5rem;
-  border: 2px solid;
+  border: 2px solid #10b981;
+  background: #fff;
+  color: #047857;
   padding: 0.5rem 0.35rem;
   font-size: 0.8rem;
   font-weight: 700;
+  font-variant-numeric: lining-nums;
   transition: all 0.15s ease;
 }
 
-.pay-quick-btn--green {
-  border-color: #10b981;
-  background: #fff;
-  color: #047857;
+.pay-quick-btn--green-active {
+  border-color: #047857;
+  background: #10b981;
+  color: #fff;
 }
 
-.pay-quick-btn--green:hover {
-  background: #d1fae5;
-}
-
-:global(.dark) .pay-quick-btn--green {
+:global(.dark) .pay-quick-btn {
   border-color: #34d399;
   background: #022c22;
   color: #a7f3d0;
 }
 
-:global(.dark) .pay-quick-btn--green:hover {
-  background: #065f46;
+:global(.dark) .pay-quick-btn--green-active {
+  background: #059669;
   color: #ecfdf5;
+}
+
+.pay-add-btn {
+  border-radius: 0.5rem;
+  border: 2px solid #d97706;
+  background: #f59e0b;
+  color: #fff;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: opacity 0.15s;
+}
+
+.pay-add-btn:hover {
+  opacity: 0.9;
+}
+
+:global(.dark) .pay-add-btn {
+  background: #f59e0b;
+  color: #1c1917;
+}
+
+.repair-row {
+  border-radius: 0.625rem;
+  border: 1px dashed #fbbf24;
+  background: rgba(255, 255, 255, 0.65);
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+:global(.dark) .repair-row {
+  border-color: #b45309;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.repair-row__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.repair-row__index {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #92400e;
+}
+
+:global(.dark) .repair-row__index {
+  color: #fcd34d;
+}
+
+.repair-row__remove {
+  font-size: 0.75rem;
+  color: #dc2626;
+  font-weight: 600;
 }
 
 .pay-currency-btn {
@@ -548,7 +688,6 @@ function openModalDelClient(expense) {
   padding: 0.5rem;
   font-size: 0.875rem;
   font-weight: 700;
-  transition: all 0.15s ease;
 }
 
 :global(.dark) .pay-currency-btn {
@@ -567,6 +706,35 @@ function openModalDelClient(expense) {
   border-color: #fbbf24;
   background: #f59e0b;
   color: #1c1917;
+}
+
+.pay-subtotal {
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-variant-numeric: lining-nums;
+}
+
+.pay-subtotal--green {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+:global(.dark) .pay-subtotal--green {
+  background: #065f46;
+  color: #d1fae5;
+}
+
+.pay-subtotal--amber {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+:global(.dark) .pay-subtotal--amber {
+  background: #78350f;
+  color: #fde68a;
 }
 
 .pay-total {
@@ -596,29 +764,138 @@ function openModalDelClient(expense) {
   font-size: 1.25rem;
   font-weight: 800;
   color: #1e3a8a;
+  font-variant-numeric: lining-nums;
 }
 
 :global(.dark) .pay-total__value {
   color: #dbeafe;
 }
 
-.pay-table__row:nth-child(even) {
-  background: #f9fafb;
+.record-panel {
+  padding: 0.5rem 1rem 1rem;
 }
 
-:global(.dark) .pay-table__row:nth-child(even) {
+.record-panel__title {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+:global(.dark) .record-panel__title {
+  color: #f3f4f6;
+}
+
+.record-table-wrap {
+  margin-top: 1rem;
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+:global(.dark) .record-table-wrap {
+  border-color: #4b5563;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.record-table thead tr {
+  background: linear-gradient(135deg, #e11d48, #be123c);
+  color: #fff;
+}
+
+:global(.dark) .record-table thead tr {
+  background: linear-gradient(135deg, #9f1239, #881337);
+}
+
+.record-table th {
+  padding: 0.65rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.record-table__row:nth-child(even) {
+  background: #f8fafc;
+}
+
+:global(.dark) .record-table__row:nth-child(even) {
   background: #1f2937;
 }
 
-.pay-table__cell {
-  border: 1px solid #e5e7eb;
-  padding: 0.5rem 0.75rem;
-  color: #374151;
+.record-table__row:hover {
+  background: #f1f5f9;
 }
 
-:global(.dark) .pay-table__cell {
+:global(.dark) .record-table__row:hover {
+  background: #374151;
+}
+
+.record-table__cell {
+  border-top: 1px solid #e5e7eb;
+  padding: 0.55rem 0.5rem;
+  color: #374151;
+  font-variant-numeric: lining-nums;
+}
+
+:global(.dark) .record-table__cell {
   border-color: #4b5563;
   color: #e5e7eb;
+}
+
+.record-table__cell--dollar {
+  font-weight: 700;
+  color: #15803d;
+}
+
+:global(.dark) .record-table__cell--dollar {
+  color: #4ade80;
+}
+
+.record-table__cell--dinar {
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+:global(.dark) .record-table__cell--dinar {
+  color: #60a5fa;
+}
+
+.record-table__cell--note {
+  max-width: 12rem;
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+.record-table__empty {
+  padding: 1.5rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.record-table__delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  background: #f97316;
+  padding: 0.25rem 0.5rem;
+  color: #fff;
+}
+
+.record-print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 0.5rem;
+  background: #2563eb;
+  padding: 0.45rem 1rem;
+  color: #fff;
+  font-weight: 600;
+}
+
+:global(.dark) .record-print-btn {
+  background: #1d4ed8;
 }
 
 .modal-default-button:disabled {
