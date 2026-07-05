@@ -394,10 +394,23 @@ class CarExpensesController extends Controller
                     return response()->json(['error' => 'لا توجد مصاريف مربوطة لإلغاء الربط'], 422);
                 }
 
-                $exchangeRate = self::parseLinkExchangeRate($linkedExpenses);
-                if (!$exchangeRate || $exchangeRate <= 0) {
-                    return response()->json(['error' => 'سعر الصرف المستخدم في الربط غير متوفر'], 422);
+                $manualRate = $request->filled('exchangeRate')
+                    ? (float) $request->exchangeRate
+                    : null;
+                $rateResolution = self::resolveUnlinkExchangeRate(
+                    $car,
+                    $linkedExpenses,
+                    $manualRate
+                );
+
+                if ($rateResolution['error']) {
+                    return response()->json([
+                        'error' => $rateResolution['error'],
+                        'needs_exchange_rate' => $rateResolution['needs_exchange_rate'],
+                    ], 422);
                 }
+
+                $exchangeRate = $rateResolution['rate'];
 
                 $calc_rate = $exchangeRate;
                 if ($calc_rate > 9999) {
@@ -515,7 +528,10 @@ class CarExpensesController extends Controller
         foreach ($expenses as $expense) {
             if (preg_match_all('/\[مربوط@(\d+)\]/u', $expense->note ?? '', $matches)) {
                 foreach ($matches[1] as $rawRate) {
-                    $rates[] = (float) $rawRate;
+                    $rate = (float) $rawRate;
+                    if (self::isValidLinkExchangeRate($rate)) {
+                        $rates[] = $rate;
+                    }
                 }
             }
         }
@@ -524,8 +540,46 @@ class CarExpensesController extends Controller
             return null;
         }
 
-        // Use the last tag in note order (most recent link rate).
-        return (float) end($rates);
+        // Prefer the first valid 6-digit tag (original link rate on first linked expense).
+        return (float) $rates[0];
+    }
+
+    public static function resolveUnlinkExchangeRate(Car $car, $linkedExpenses, ?float $manualRate = null): array
+    {
+        $storedRate = self::parseLinkExchangeRate($linkedExpenses);
+        if (!$storedRate) {
+            $storedRate = self::parseLinkExchangeRate($car->carexpenses);
+        }
+
+        if ($storedRate && $storedRate > 0) {
+            return [
+                'rate' => $storedRate,
+                'error' => null,
+                'needs_exchange_rate' => false,
+            ];
+        }
+
+        if ($manualRate !== null && $manualRate > 0) {
+            if (!self::isValidLinkExchangeRate($manualRate)) {
+                return [
+                    'rate' => null,
+                    'error' => 'يجب أن يكون سعر الصرف 6 أرقام',
+                    'needs_exchange_rate' => true,
+                ];
+            }
+
+            return [
+                'rate' => $manualRate,
+                'error' => null,
+                'needs_exchange_rate' => false,
+            ];
+        }
+
+        return [
+            'rate' => null,
+            'error' => 'سعر الصرف المستخدم في الربط غير متوفر',
+            'needs_exchange_rate' => true,
+        ];
     }
 
     public static function isValidLinkExchangeRate($exchangeRate): bool

@@ -1136,6 +1136,10 @@ class DashboardController extends Controller
             }
         }
 
+        if (!empty($data['data']) && (string) $car_have_expenses === (string) CarExpensesController::CAR_HAVE_EXPENSES_LINKED) {
+            $data['data'] = CarExpensesController::enrichCarsWithLinkRates($data['data'])->values()->all();
+        }
+
         $config = SystemConfig::first();
 
         return Response::json($data, 200);
