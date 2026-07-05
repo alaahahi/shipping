@@ -676,7 +676,15 @@ class CarExpensesController extends Controller
             }, []);
 
         return $collection->map(function ($car) use ($rateByCarId) {
-            $car->link_exchange_rate = $rateByCarId[$car->id] ?? null;
+            $carId = is_array($car) ? ($car['id'] ?? null) : ($car->id ?? null);
+            $rate = $carId ? ($rateByCarId[$carId] ?? null) : null;
+
+            if (is_array($car)) {
+                $car['link_exchange_rate'] = $rate;
+            } else {
+                $car->link_exchange_rate = $rate;
+            }
+
             return $car;
         });
     }

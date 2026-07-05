@@ -111,26 +111,25 @@ const getResultsCar = async ($state) => {
     });
 
     const json = response.data;
+    const rows = Array.isArray(json?.data) ? json.data : [];
 
     if (isWorkTab.value) {
       expensesTotalDollar.value = Number(json.expensesTotalDollar) || 0;
       expensesTotalDinar.value = Number(json.expensesTotalDinar) || 0;
     }
 
-    if (json.data.length < 100){
-      car.value.push(...json.data);
+    if (rows.length < 100) {
+      car.value.push(...rows);
       $state.complete();
-    } 
-    else {
-      car.value.push(...json.data);
-       $state.loaded();
+    } else {
+      car.value.push(...rows);
+      $state.loaded();
     }
-
 
     page++;
   } catch (error) {
-    console.log(error);
-    //$state.error();
+    console.error(error);
+    $state.error();
   }
 };
 
