@@ -51,8 +51,8 @@ const moreMenuTriggerClass = computed(() =>
       <nav class="bg-white border-gray-100 dark:bg-gray-900  print:hidden">
         <!-- Primary Navigation Menu -->
         <div class="max-w-8xl mx-auto px-4 sm:px-2  ">
-          <div class="flex justify-between h-16 gap-2">
-            <div class="flex min-w-0 flex-1 items-center">
+          <div class="flex justify-between h-16 gap-2 overflow-visible">
+            <div class="flex min-w-0 flex-1 items-center overflow-visible">
               <!-- Logo -->
               <div class="shrink-0 flex items-center">
                 <Link :href="route('dashboard')" class="flex items-center">
@@ -174,8 +174,8 @@ const moreMenuTriggerClass = computed(() =>
               </div>
 
               <!-- قائمة المزيد — خارج منطقة التمرير لتبقى ظاهرة دائماً -->
-              <div class="hidden shrink-0 sm:block" v-if="showMoreMenu">
-                <Dropdown align="left" width="48" :contentClasses="['py-1', 'bg-white', 'dark:bg-gray-800', 'dark:border', 'dark:border-gray-700', 'min-w-[13rem]']">
+              <div class="hidden shrink-0 sm:block sm:ml-2" v-if="showMoreMenu">
+                <Dropdown align="right" width="48" :contentClasses="['py-1', 'bg-white', 'dark:bg-gray-800', 'dark:border', 'dark:border-gray-700', 'min-w-[13rem]']">
                   <template #trigger>
                     <button type="button" :class="moreMenuTriggerClass">
                       المزيد

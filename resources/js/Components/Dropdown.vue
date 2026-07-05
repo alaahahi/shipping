@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps({
     align: {
@@ -14,15 +14,8 @@ const props = defineProps({
 });
 
 const open = ref(false);
-
-const closeOnEscape = (e) => {
-    if (open.value && e.key === 'Escape') {
-        open.value = false;
-    }
-};
-
-onMounted(() => document.addEventListener('keydown', closeOnEscape));
-onUnmounted(() => document.removeEventListener('keydown', closeOnEscape));
+const triggerRef = ref(null);
+const panelStyle = ref({ top: '0px', left: '0px' });
 
 const widthClass = computed(() => {
     return {
@@ -30,14 +23,33 @@ const widthClass = computed(() => {
     }[props.width.toString()];
 });
 
-const alignmentClasses = computed(() => {
-    if (props.align === 'left') {
-        return 'origin-top-left left-0';
-    } else if (props.align === 'right') {
-        return 'origin-top-right right-0';
-    }
-    return 'origin-top';
+const panelWidthPx = computed(() => {
+    return {
+        '48': 192,
+    }[props.width.toString()] ?? 192;
 });
+
+function updatePosition() {
+    const el = triggerRef.value;
+    if (!el) {
+        return;
+    }
+
+    const rect = el.getBoundingClientRect();
+    let left = rect.left;
+
+    if (props.align === 'right') {
+        left = rect.right - panelWidthPx.value;
+    }
+
+    const maxLeft = window.innerWidth - panelWidthPx.value - 8;
+    left = Math.max(8, Math.min(left, maxLeft));
+
+    panelStyle.value = {
+        top: `${rect.bottom + 8}px`,
+        left: `${left}px`,
+    };
+}
 
 function toggle() {
     open.value = !open.value;
@@ -46,34 +58,72 @@ function toggle() {
 function close() {
     open.value = false;
 }
+
+const closeOnEscape = (e) => {
+    if (open.value && e.key === 'Escape') {
+        close();
+    }
+};
+
+const closeOnScrollOrResize = () => {
+    if (open.value) {
+        close();
+    }
+};
+
+watch(open, async (isOpen) => {
+    if (isOpen) {
+        await nextTick();
+        updatePosition();
+    }
+});
+
+onMounted(() => {
+    document.addEventListener('keydown', closeOnEscape);
+    window.addEventListener('resize', closeOnScrollOrResize);
+    window.addEventListener('scroll', closeOnScrollOrResize, true);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('keydown', closeOnEscape);
+    window.removeEventListener('resize', closeOnScrollOrResize);
+    window.removeEventListener('scroll', closeOnScrollOrResize, true);
+});
 </script>
 
 <template>
     <div class="relative">
-        <div @click.stop="toggle">
+        <div ref="triggerRef" @click.stop="toggle">
             <slot name="trigger" />
         </div>
 
-        <div v-if="open" class="fixed inset-0 z-40" @click="close"></div>
+        <Teleport to="body">
+            <div v-if="open" class="fixed inset-0 z-[100]" @click="close"></div>
 
-        <Transition
-            enter-active-class="transition ease-out duration-200"
-            enter-from-class="opacity-0 scale-95"
-            enter-to-class="opacity-100 scale-100"
-            leave-active-class="transition ease-in duration-75"
-            leave-from-class="opacity-100 scale-100"
-            leave-to-class="opacity-0 scale-95"
-        >
-            <div
-                v-if="open"
-                class="absolute z-50 mt-2 rounded-md shadow-lg"
-                :class="[widthClass, alignmentClasses]"
-                @click.stop
+            <Transition
+                enter-active-class="transition ease-out duration-200"
+                enter-from-class="opacity-0 scale-95"
+                enter-to-class="opacity-100 scale-100"
+                leave-active-class="transition ease-in duration-75"
+                leave-from-class="opacity-100 scale-100"
+                leave-to-class="opacity-0 scale-95"
             >
-                <div class="rounded-md ring-1 ring-black ring-opacity-5 dark:ring-gray-600" :class="contentClasses">
-                    <slot name="content" />
+                <div
+                    v-if="open"
+                    class="fixed z-[101] rounded-md shadow-lg"
+                    :class="widthClass"
+                    :style="panelStyle"
+                    @click.stop
+                >
+                    <div
+                        class="rounded-md ring-1 ring-black ring-opacity-5 dark:ring-gray-600"
+                        :class="contentClasses"
+                        @click="close"
+                    >
+                        <slot name="content" />
+                    </div>
                 </div>
-            </div>
-        </Transition>
+            </Transition>
+        </Teleport>
     </div>
 </template>
