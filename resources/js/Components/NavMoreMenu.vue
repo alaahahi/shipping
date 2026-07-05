@@ -14,6 +14,7 @@ const triggerRef = ref(null);
 const panelStyle = ref({ top: '0px', left: '0px' });
 
 const items = computed(() => [
+    { href: route('dashboard.statistics'), label: 'احصائات', name: 'dashboard.statistics' },
     { href: route('sync.monitor'), label: '🔄 المزامنة', name: 'sync.monitor' },
     { href: route('online_contracts'), label: 'العقود الالكترونية', name: 'online_contracts' },
     { href: route('car_check'), label: 'مراجعة السيارات', name: 'car_check' },

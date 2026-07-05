@@ -21,6 +21,7 @@ const switchLocale = (locale) => {
 
 const moreMenuActive = computed(() => {
   return [
+    'dashboard.statistics',
     'sync.monitor',
     'online_contracts',
     'car_check',
@@ -426,6 +427,12 @@ const moreMenuActive = computed(() => {
               >
                 المزيد
               </div>
+              <ResponsiveNavLink
+                :href="route('dashboard.statistics')"
+                :active="route().current('dashboard.statistics')"
+              >
+              احصائات
+              </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('sync.monitor')"
                 :active="route().current('sync.monitor')"
