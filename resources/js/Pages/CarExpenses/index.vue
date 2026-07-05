@@ -60,16 +60,25 @@ function openModalDelCar(form={}) {
   showModalDelCar.value = true;
 }
 
-const currentWork = ref(true);
-
-
+const listTab = ref('work');
+const isSubmittingExpense = ref(false);
+const isArchivingAll = ref(false);
+const isLinkingCar = ref(false);
+const isUnlinkingCar = ref(false);
 let resetData = ref(false);
 let user_id = 0;
 let page = 1;
 let q = '';
-const isSubmittingExpense = ref(false);
-const isArchivingAll = ref(false);
-const isLinkingCar = ref(false);
+
+function carHaveExpensesParam() {
+  if (listTab.value === 'work') return 1;
+  if (listTab.value === 'archive') return 2;
+  return 0;
+}
+
+const isWorkTab = computed(() => listTab.value === 'work');
+const isArchiveTab = computed(() => listTab.value === 'archive');
+const isLinkedTab = computed(() => listTab.value === 'linked');
 const expensesTotalDollar = ref(0);
 const expensesTotalDinar = ref(0);
 
@@ -93,13 +102,13 @@ const getResultsCar = async ($state) => {
         page: page,
         q: q,
         user_id: user_id,
-        car_have_expenses:currentWork.value?1:2
+        car_have_expenses: carHaveExpensesParam()
       }
     });
 
     const json = response.data;
 
-    if (currentWork.value) {
+    if (isWorkTab.value) {
       expensesTotalDollar.value = Number(json.expensesTotalDollar) || 0;
       expensesTotalDinar.value = Number(json.expensesTotalDinar) || 0;
     }
@@ -277,11 +286,34 @@ function confirmArchiveAllCars() {
     });
 }
 function swiptab(tab){
-  currentWork.value=tab
+  listTab.value = tab
   expensesTotalDollar.value = 0
   expensesTotalDinar.value = 0
   refresh()
+}
 
+function confirmUnlinkArchiveCar(car) {
+  if (isUnlinkingCar.value) return;
+  const confirmed = window.confirm('هل تريد إلغاء ربط هذه السيارة؟ سيتم التراجع عن المصاريف المضافة للليست وإعادتها للأرشيف.');
+  if (!confirmed) return;
+
+  isUnlinkingCar.value = true;
+  axios.post('/api/confirmUnlinkArchiveCar', { id: car.id })
+    .then(() => {
+      toast.success('تم إلغاء الربط بنجاح', {
+        timeout: 3000,
+        position: 'bottom-right',
+        rtl: true,
+      });
+      refresh();
+    })
+    .catch((error) => {
+      const msg = error?.response?.data?.error || 'فشل إلغاء الربط';
+      toast.error(msg, { timeout: 4000, position: 'bottom-right', rtl: true });
+    })
+    .finally(() => {
+      isUnlinkingCar.value = false;
+    });
 }
 
 
@@ -348,7 +380,7 @@ function confirmDelCarFav(V) {
     <ModalAddCarExpenses
             :formData="formData"
             :show="showModalAddCarExpenses ? true : false"
-            :currentWork="currentWork"
+            :currentWork="isWorkTab"
             @a="confirmExpensesCar($event)"
             @close="showModalAddCarExpenses = false"
             >
@@ -370,12 +402,15 @@ function confirmDelCarFav(V) {
 
     <AuthenticatedLayout>
         <div class="py-2" v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==7">
-          <ul class="sm:px-6 lg:px-8 text-sm font-medium text-center text-gray-500 rounded-lg  flex dark:divide-gray-700 dark:text-gray-400">
+          <ul class="sm:px-6 lg:px-8 text-sm font-medium text-center rounded-lg flex dark:divide-gray-700">
             <li class="w-full">
-                <button @click="swiptab(true)" class="inline-block w-full p-4 border-r border-gray-200 dark:border-gray-700 hover:text-gray-700 hover:bg-gray-50  focus:outline-none  dark:text-white" :class="!currentWork ? 'dark:bg-gray-800 dark:hover:bg-gray-700':'bg-white  dark:bg-gray-900'" >قيد العمل </button>
+                <button @click="swiptab('work')" class="inline-block w-full p-4 border-r border-gray-200 dark:border-gray-700 hover:text-gray-800 hover:bg-gray-50 focus:outline-none dark:hover:bg-gray-700 dark:hover:text-white" :class="listTab === 'work' ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-semibold' : 'text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800'" >قيد العمل </button>
             </li>
             <li class="w-full">
-                <button @click="swiptab(false)" class="inline-block w-full p-4 border-r border-gray-200 dark:border-gray-700 hover:text-gray-700 hover:bg-gray-50  focus:outline-none  dark:text-white" :class="currentWork ? 'dark:bg-gray-800 dark:hover:bg-gray-700':'bg-white  dark:bg-gray-900'" >السيارة المكتملة</button>
+                <button @click="swiptab('archive')" class="inline-block w-full p-4 border-r border-gray-200 dark:border-gray-700 hover:text-gray-800 hover:bg-gray-50 focus:outline-none dark:hover:bg-gray-700 dark:hover:text-white" :class="listTab === 'archive' ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-semibold' : 'text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800'" >السيارة المكتملة</button>
+            </li>
+            <li class="w-full">
+                <button @click="swiptab('linked')" class="inline-block w-full p-4 hover:text-gray-800 hover:bg-gray-50 focus:outline-none dark:hover:bg-gray-700 dark:hover:text-white" :class="listTab === 'linked' ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-semibold' : 'text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800'" >السيارات المربوطة</button>
             </li>
      
           </ul>
@@ -451,7 +486,7 @@ function confirmDelCarFav(V) {
                               {{ $t('addCar') }} 
                             </button>
                           </div>
-                        <div v-if="currentWork" class="text-center">
+                        <div v-if="isWorkTab" class="text-center">
                             <button
                               type="button"
                               @click="confirmArchiveAllCars()"
@@ -528,13 +563,13 @@ function confirmDelCarFav(V) {
                       </div>
 
                       <div
-                        v-if="currentWork"
-                        class="flex flex-wrap items-center justify-between gap-3 mt-4 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800"
+                        v-if="isWorkTab"
+                        class="flex flex-wrap items-center justify-between gap-3 mt-4 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-700"
                       >
-                        <div class="text-sm font-bold dark:text-gray-100">
-                          <span class="text-green-700 dark:text-green-400">مجموع الدولار: {{ formatNumber(expensesTotalDollar) }} $</span>
-                          <span class="mx-2">|</span>
-                          <span class="text-blue-700 dark:text-blue-400">مجموع الدينار: {{ formatNumber(expensesTotalDinar) }} د</span>
+                        <div class="text-sm font-bold text-gray-800 dark:text-emerald-50">
+                          <span class="text-green-700 dark:text-green-300">مجموع الدولار: {{ formatNumber(expensesTotalDollar) }} $</span>
+                          <span class="mx-2 text-gray-500 dark:text-emerald-200/70">|</span>
+                          <span class="text-blue-700 dark:text-blue-300">مجموع الدينار: {{ formatNumber(expensesTotalDinar) }} د</span>
                         </div>
                         <a
                           target="_blank"
@@ -550,9 +585,9 @@ function confirmDelCarFav(V) {
                         <div>
                         </div>
                         <div class="overflow-x-auto shadow-md sm:rounded-lg mt-4 mb-5">
-                        <table class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center divide-y divide-gray-200 dark:divide-gray-800">
-                          <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center">
-                            <tr class="bg-emerald-600 text-gray-100">
+                        <table class="w-full text-sm text-right text-gray-600 dark:text-gray-200 text-center divide-y divide-gray-200 dark:divide-gray-700">
+                          <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800">
+                            <tr class="bg-emerald-600 dark:bg-emerald-800 text-white">
                                       <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2	" >
                                         {{ $t('no') }}  
                                       </th>
@@ -588,27 +623,28 @@ function confirmDelCarFav(V) {
                               <tbody>
 
 
-                                <tr v-for="car in car" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-900':'bg-green-100 dark:bg-green-900'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.no }}</td>
-                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.client?.name }}</td>
-                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.car_type}}</td>
-                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.year}}</td>
-                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.car_color }}</td>
-                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.vin }}</td>
-                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.car_number }}</td> 
-                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ formatNumber(calculateSum(car.carexpenses)) }}</td>
-                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ formatNumber(calculateSumDinar(car.carexpenses)) }}</td>
+                                <tr v-for="car in car" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-950/50':'bg-green-100 dark:bg-green-950/50'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ car.no }}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ car.client?.name }}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ car.car_type}}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ car.year}}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ car.car_color }}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ car.vin }}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ car.car_number }}</td> 
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-green-700 dark:text-green-300 font-semibold">{{ formatNumber(calculateSum(car.carexpenses)) }}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-blue-700 dark:text-blue-300 font-semibold">{{ formatNumber(calculateSumDinar(car.carexpenses)) }}</td>
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">
                                     <button
                                       tabIndex="1"
                                       class="px-2 py-1  text-white mx-1 bg-emerald-500 rounded"
                                       @click="openwshowModalAddCarExpenses(car)"
                                     >
-                                     <newContracts v-if="currentWork" />
+                                     <newContracts v-if="isWorkTab" />
+                                     <show v-else-if="isArchiveTab" />
                                      <show v-else />
                                     </button>
                                     <button
-                                    v-if="currentWork"
+                                    v-if="isWorkTab"
                                       tabIndex="1"
                                       class="px-2 py-1  text-white mx-1 bg-pink-600 rounded mt-3 sm:mt-0"
                                       @click="openwshowModalArchiveCarExpenses(car)"
@@ -618,7 +654,7 @@ function confirmDelCarFav(V) {
                                     </svg>
                                     </button>
                                     <button
-                                    v-if="!currentWork"
+                                    v-if="isArchiveTab"
                                       tabIndex="1"
                                       class="px-2 py-1  text-white mx-1 bg-pink-600 rounded mt-3 sm:mt-0"
                                       @click="openwshowModalArchiveCarExpensesBack(car)"
@@ -628,7 +664,7 @@ function confirmDelCarFav(V) {
                                     </svg>
                                     </button>
                                     <button
-                                    v-if="!currentWork"
+                                    v-if="isArchiveTab"
                                       tabIndex="1"
                                       class="px-2 py-1 text-white mx-1 bg-indigo-600 rounded mt-3 sm:mt-0 text-xs font-bold"
                                       @click="openModalArchiveCarLink(car)"
@@ -636,7 +672,16 @@ function confirmDelCarFav(V) {
                                       ربط
                                     </button>
                                     <button
-                                    v-if="currentWork"
+                                    v-if="isLinkedTab"
+                                      tabIndex="1"
+                                      class="px-2 py-1 text-white mx-1 bg-orange-600 rounded mt-3 sm:mt-0 text-xs font-bold disabled:opacity-50"
+                                      :disabled="isUnlinkingCar"
+                                      @click="confirmUnlinkArchiveCar(car)"
+                                    >
+                                      إلغاء الربط
+                                    </button>
+                                    <button
+                                    v-if="isWorkTab"
                                       tabIndex="1"
                                       
                                       class="px-2 py-1  text-white mx-1 bg-orange-500 rounded  mt-3 sm:mt-0"

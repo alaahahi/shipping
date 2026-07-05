@@ -382,6 +382,7 @@ Route::post('confirmArchiveCar',[CarExpensesController::class, 'confirmArchiveCa
 Route::post('confirmArchiveCarBack',[CarExpensesController::class, 'confirmArchiveCarBack'])->name('confirmArchiveCarBack');
 Route::post('confirmArchiveAllCars',[CarExpensesController::class, 'confirmArchiveAllCars'])->name('confirmArchiveAllCars');
 Route::post('confirmLinkArchiveCar',[CarExpensesController::class, 'confirmLinkArchiveCar'])->name('confirmLinkArchiveCar');
+Route::post('confirmUnlinkArchiveCar',[CarExpensesController::class, 'confirmUnlinkArchiveCar'])->name('confirmUnlinkArchiveCar');
 Route::post('confirmDelCarFav',[CarExpensesController::class, 'confirmDelCarFav'])->name('confirmDelCarFav');
 Route::get('getIndexExpensesPrint',[CarExpensesController::class, 'getIndexExpensesPrint'])->name('getIndexExpensesPrint');
 Route::get('getIndexExpensesSummaryPrint',[CarExpensesController::class, 'getIndexExpensesSummaryPrint'])->name('getIndexExpensesSummaryPrint');

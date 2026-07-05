@@ -509,7 +509,7 @@ function openModalDelClient(expense) {
 }
 
 :global(.dark) .pay-hint {
-  color: #9ca3af;
+  color: #d1d5db;
 }
 
 .pay-input {
@@ -871,6 +871,10 @@ function openModalDelClient(expense) {
   padding: 1.5rem;
   color: #9ca3af;
   font-style: italic;
+}
+
+:global(.dark) .record-table__empty {
+  color: #d1d5db;
 }
 
 .record-table__delete {

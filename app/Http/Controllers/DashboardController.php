@@ -1036,7 +1036,7 @@ class DashboardController extends Controller
         $baseQuery = Car::query()->where('owner_id', $owner_id);
         
         // إضافة فلاتر إضافية
-        if ($car_have_expenses || $car_have_expenses == 1) {
+        if ($car_have_expenses !== '' && $car_have_expenses !== null) {
             $baseQuery->where('car_have_expenses', $car_have_expenses);
         }
         

@@ -842,6 +842,9 @@ function openModalCarRegistrationDetails(car) {
   registrationCarId.value = car.id;
   showModalCarRegistrationDetails.value = true;
 }
+function formatRegistrationRate(rate) {
+  return new Intl.NumberFormat('en-US').format(Number(rate) || 0);
+}
 function calculateAmountDiscount (){
   let need_payment =  laravelData?.value?.client?.wallet?.balance
   amount.value=need_payment- discount.value
@@ -2303,15 +2306,26 @@ async function savePaymentDescription(payment) {
                       >
                         <document />
                       </button>
-                      <button
+                      <div
                         v-if="item.data.carexpenses_count > 0"
-                        tabIndex="1"
-                        class="px-1 py-1 text-white mx-1 bg-teal-600 rounded text-xs font-bold"
-                        title="تفاصيل التسجيل"
-                        @click="openModalCarRegistrationDetails(item.data)"
+                        class="inline-flex flex-col items-center mx-1 align-top"
                       >
-                        تسجيل
-                      </button>
+                        <button
+                          tabIndex="1"
+                          class="px-1 py-1 text-white bg-teal-600 rounded text-xs font-bold"
+                          title="تفاصيل التسجيل"
+                          @click="openModalCarRegistrationDetails(item.data)"
+                        >
+                          تسجيل
+                        </button>
+                        <span
+                          v-if="item.data.link_exchange_rate"
+                          class="mt-0.5 text-[10px] font-bold leading-tight text-amber-700 dark:text-amber-300 whitespace-nowrap"
+                          title="سعر التحويل المستخدم عند الربط"
+                        >
+                          سعر: {{ formatRegistrationRate(item.data.link_exchange_rate) }}
+                        </span>
+                      </div>
                       <a  target="_blank"
                    
                       style="display: inline-flex;"

@@ -304,9 +304,14 @@ class CarExpensesController extends Controller
                 );
             }
 
+            $isFirstLinkedExpense = true;
             foreach ($unlinkedExpenses as $expense) {
+                $linkSuffix = $isFirstLinkedExpense
+                    ? ' [مربوط@' . $exchangeRate . ']'
+                    : ' [مربوط]';
+                $isFirstLinkedExpense = false;
                 $expense->update([
-                    'note' => trim(($expense->note ?? '') . ' [مربوط]'),
+                    'note' => trim(($expense->note ?? '') . $linkSuffix),
                 ]);
             }
 
@@ -352,7 +357,184 @@ class CarExpensesController extends Controller
             'total_dollar' => $totalDollar,
             'total_dinar' => $totalDinar,
             'has_registration' => $expenses->isNotEmpty(),
+            'link_exchange_rate' => self::parseLinkExchangeRate($expenses),
+            'is_linked' => (int) $car->car_have_expenses === 0,
         ], 200);
+    }
+
+    public function confirmUnlinkArchiveCar(Request $request)
+    {
+        try {
+            return DB::transaction(function () use ($request) {
+                $car = Car::with('carexpenses')->findOrFail($request->id);
+                $owner_id = Auth::user()->owner_id;
+
+                if ((int) $car->owner_id !== (int) $owner_id) {
+                    return response()->json(['error' => 'غير مصرح'], 403);
+                }
+
+                if ((int) $car->car_have_expenses !== 0) {
+                    return response()->json(['error' => 'السيارة غير مربوطة'], 422);
+                }
+
+                $linkedExpenses = $car->carexpenses->filter(function ($expense) {
+                    return str_contains($expense->note ?? '', '[مربوط]');
+                });
+
+                if ($linkedExpenses->isEmpty()) {
+                    return response()->json(['error' => 'لا توجد مصاريف مربوطة لإلغاء الربط'], 422);
+                }
+
+                $exchangeRate = self::parseLinkExchangeRate($linkedExpenses);
+                if (!$exchangeRate || $exchangeRate <= 0) {
+                    return response()->json(['error' => 'سعر الصرف المستخدم في الربط غير متوفر'], 422);
+                }
+
+                $calc_rate = $exchangeRate;
+                if ($calc_rate > 9999) {
+                    $calc_rate = $calc_rate / 100;
+                }
+
+                $totalDollarPaid = $linkedExpenses->sum('amount_dollar');
+                $totalDinarPaid = $linkedExpenses->sum('amount_dinar');
+                $dollarFromDinar = (int) ($totalDinarPaid / $calc_rate);
+                $expenseToRemove = (int) ($totalDollarPaid + $dollarFromDinar);
+
+                if ($expenseToRemove <= 0) {
+                    return response()->json(['error' => 'لا توجد مصاريف صالحة لإلغاء الربط'], 422);
+                }
+
+                $newExpenses = (int) ($car->expenses ?? 0) - $expenseToRemove;
+                $newExpensesS = (int) ($car->expenses_s ?? 0) - $expenseToRemove;
+
+                if ($newExpenses < 0 || $newExpensesS < 0) {
+                    return response()->json(['error' => 'تعذر التراجع: المصاريف المسجلة أقل من المربوطة'], 422);
+                }
+
+                $oldTotal = (int) ($car->total ?? 0);
+                $oldTotalS = (int) ($car->total_s ?? 0);
+
+                $dolar_price_input = $car->dolar_price ?? 1;
+                $car_calc_rate = $dolar_price_input;
+                if ($car_calc_rate == 0) {
+                    $car_calc_rate = 1;
+                } elseif ($car_calc_rate > 9999) {
+                    $car_calc_rate = $car_calc_rate / 100;
+                }
+
+                $newTotal = (int) (
+                    ($car->checkout ?? 0)
+                    + ($car->shipping_dolar ?? 0)
+                    + ($car->coc_dolar ?? 0)
+                    + (int) (($car->dinar ?? 0) / $car_calc_rate)
+                    + (int) (($car->land_shipping_dinar ?? 0) / $car_calc_rate)
+                    + $newExpenses
+                    + ($car->land_shipping ?? 0)
+                );
+
+                $dolar_price_s_input = $car->dolar_price_s ?? 1;
+                $car_calc_rate_s = $dolar_price_s_input;
+                if ($car_calc_rate_s == 0) {
+                    $car_calc_rate_s = 1;
+                } elseif ($car_calc_rate_s > 9999) {
+                    $car_calc_rate_s = $car_calc_rate_s / 100;
+                }
+
+                $newTotalS = (int) (
+                    ($car->checkout_s ?? 0)
+                    + ($car->shipping_dolar_s ?? 0)
+                    + ($car->coc_dolar_s ?? 0)
+                    + (int) (($car->dinar_s ?? 0) / $car_calc_rate_s)
+                    + (int) (($car->land_shipping_dinar_s ?? 0) / $car_calc_rate_s)
+                    + $newExpensesS
+                    + ($car->land_shipping_s ?? 0)
+                );
+
+                $desc = 'إلغاء ربط مصاريف السيارة ' . $car->car_type . ' ' . $car->vin;
+
+                if ($oldTotal > $newTotal) {
+                    $this->accountingController->increaseWallet(
+                        ($oldTotal - $newTotal),
+                        $desc,
+                        $this->accounting->mainAccount()->id,
+                        $car->id,
+                        'App\Models\Car'
+                    );
+                }
+
+                if ($oldTotalS > $newTotalS) {
+                    $this->accountingController->decreaseWallet(
+                        ($oldTotalS - $newTotalS),
+                        $desc,
+                        $car->client_id,
+                        $car->id,
+                        'App\Models\User'
+                    );
+                }
+
+                foreach ($linkedExpenses as $expense) {
+                    $cleanNote = preg_replace('/ \[مربوط@[\d.]+\]/', '', $expense->note ?? '');
+                    $cleanNote = str_replace(' [مربوط]', '', $cleanNote);
+                    $expense->update(['note' => trim($cleanNote)]);
+                }
+
+                $car->update([
+                    'expenses' => $newExpenses,
+                    'expenses_s' => $newExpensesS,
+                    'total' => $newTotal,
+                    'total_s' => $newTotalS,
+                    'profit' => $newTotalS - $newTotal,
+                    'car_have_expenses' => 2,
+                ]);
+
+                return response()->json([
+                    'ok' => true,
+                    'expense_removed' => $expenseToRemove,
+                ], 200);
+            });
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'السيارة غير موجودة'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    public static function parseLinkExchangeRate($expenses): ?float
+    {
+        foreach ($expenses as $expense) {
+            if (preg_match('/\[مربوط@([\d.]+)\]/', $expense->note ?? '', $matches)) {
+                return (float) $matches[1];
+            }
+        }
+
+        return null;
+    }
+
+    public static function enrichCarsWithLinkRates($cars)
+    {
+        if (!$cars || (is_countable($cars) && count($cars) === 0)) {
+            return $cars;
+        }
+
+        $collection = $cars instanceof \Illuminate\Support\Collection ? $cars : collect($cars);
+        $carIds = $collection->pluck('id')->filter()->values();
+
+        if ($carIds->isEmpty()) {
+            return $cars;
+        }
+
+        $rateByCarId = CarExpenses::whereIn('car_id', $carIds)
+            ->where('note', 'like', '%[مربوط@%')
+            ->get(['car_id', 'note'])
+            ->mapWithKeys(function ($expense) {
+                $rate = self::parseLinkExchangeRate(collect([$expense]));
+                return $rate ? [$expense->car_id => $rate] : [];
+            });
+
+        return $collection->map(function ($car) use ($rateByCarId) {
+            $car->link_exchange_rate = $rateByCarId[$car->id] ?? null;
+            return $car;
+        });
     }
     public function confirmDelCarFav(Request $request){
         $car = Car::find($request->id);

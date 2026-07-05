@@ -30,20 +30,20 @@ function submit() {
   <Transition name="modal">
     <div v-if="show" class="modal-mask">
       <div class="modal-wrapper max-h-[80vh]">
-        <div class="modal-container dark:bg-gray-900 overflow-auto max-h-[80vh]">
+        <div class="modal-container dark:bg-gray-900 dark:border dark:border-gray-600 overflow-auto max-h-[80vh]">
           <div class="modal-header">
             <slot name="header" />
-            <h2 class="text-center py-5 dark:text-white">
+            <h2 class="text-center py-5 text-gray-900 dark:text-white font-bold">
               ربط السيارة مع ليست السيارة
               {{ formData?.car_type }} شانص{{ formData?.vin }} رقم{{ formData?.car_number }}
             </h2>
-            <p class="text-center text-sm text-gray-600 dark:text-gray-300 px-4">
+            <p class="text-center text-sm text-gray-600 dark:text-gray-200 px-4">
               سيتم تحويل مصاريف الدينار إلى دولار وإضافتها لحقل المصاريف في ليست السيارة (مرة واحدة).
             </p>
           </div>
 
           <div class="modal-body px-4">
-            <label class="block mb-2 font-semibold dark:text-gray-200" for="exchange_rate">سعر الصرف</label>
+            <label class="block mb-2 font-semibold text-gray-800 dark:text-gray-100" for="exchange_rate">سعر الصرف</label>
             <input
               id="exchange_rate"
               v-model="exchangeRate"
@@ -51,7 +51,7 @@ function submit() {
               min="1"
               step="any"
               placeholder="مثال: 140000"
-              class="w-full rounded border border-gray-300 p-2.5 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+              class="w-full rounded border border-gray-300 p-2.5 text-gray-900 bg-white dark:bg-gray-950 dark:border-gray-500 dark:text-white dark:placeholder-gray-400"
             />
           </div>
 
@@ -108,6 +108,12 @@ function submit() {
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
   transition: all 0.3s ease;
+}
+
+:global(.dark) .modal-container {
+  background-color: #111827;
+  border: 1px solid #4b5563;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
 }
 
 .modal-default-button {
