@@ -82,6 +82,10 @@ const props = defineProps({
   config: [Array, Object]
 });
 
+const vinSearchInput = ref(props.q ?? '');
+
+const activeVinQuery = computed(() => String(vinSearchInput.value ?? props.q ?? '').trim());
+
 const currentClientId = computed(() => {
   if (client_Select.value && client_Select.value !== 0 && client_Select.value !== "undefined") {
     return client_Select.value;
@@ -314,20 +318,12 @@ let getResults = async (page = 1, shouldCheckBalance = true) => {
       if (shouldCheckBalance && !isFilterActive.value) {
         checkClientBalance(response.data.cars_sum);
       }
+      const cars = Array.isArray(response.data?.data) ? response.data.data : [];
+      ensureCompletedCarsVisibleForQuery(cars);
       isDataLoaded.value = true;
 
-      if (props.q && !hasHandledQueryBehavior.value) {
-        const cars = Array.isArray(response.data?.data) ? response.data.data : [];
-        const matchingCar = cars.find((car) => matchesCarQuery(car));
-        if (matchingCar) {
-          if (matchingCar.results === 2) {
-            showComplatedCars.value = true;
-            showPaymentsInTable.value = true;
-          }
-          nextTick(() => {
-            scrollToHighlightedCar();
-          });
-        }
+      if (activeVinQuery.value && !hasHandledQueryBehavior.value) {
+        nextTick(() => applyVinSearchBehavior(cars));
         hasHandledQueryBehavior.value = true;
       }
     })
@@ -413,18 +409,11 @@ const getResultsSelect = async (page = 1) => {
         checkClientBalance(response.data.cars_sum);
       }
 
-      if (props.q) {
-        const cars = Array.isArray(response.data?.data) ? response.data.data : [];
-        const matchingCar = cars.find((car) => matchesCarQuery(car));
-        if (matchingCar) {
-          if (matchingCar.results === 2) {
-            showComplatedCars.value = true;
-            showPaymentsInTable.value = true;
-          }
-          nextTick(() => {
-            scrollToHighlightedCar();
-          });
-        }
+      const cars = Array.isArray(response.data?.data) ? response.data.data : [];
+      ensureCompletedCarsVisibleForQuery(cars);
+
+      if (activeVinQuery.value) {
+        nextTick(() => applyVinSearchBehavior(cars));
       }
     })
     .catch((error) => {
@@ -446,22 +435,73 @@ const hasHandledQueryBehavior = ref(false);
 const shouldAutoScrollToQuery = ref(true);
 const matchedRowElement = ref(null);
 
-function matchesCarQuery(car) {
-  if (!car || !props.q) {
+function getNormalizedVinQuery() {
+  if (!activeVinQuery.value) {
+    return '';
+  }
+  return normalizeIdentifier(activeVinQuery.value);
+}
+
+function getCarVinIdentifiers(car) {
+  return [
+    normalizeIdentifier(car?.vin),
+    normalizeIdentifier(car?.car_number),
+    normalizeIdentifier(car?.chassis_number),
+  ].filter(Boolean);
+}
+
+function identifierMatchesQuery(car, queryNormalized) {
+  if (!queryNormalized || queryNormalized.length < 2 || !car) {
     return false;
   }
-  const query = String(props.q).trim().toUpperCase();
+  return getCarVinIdentifiers(car).some((id) => {
+    if (id.startsWith(queryNormalized) || queryNormalized.startsWith(id)) {
+      return true;
+    }
+    if (queryNormalized.length >= 4 && id.includes(queryNormalized)) {
+      return true;
+    }
+    if (id.length >= 4 && queryNormalized.includes(id)) {
+      return true;
+    }
+    return false;
+  });
+}
+
+function matchesCarQuery(car) {
+  const query = getNormalizedVinQuery();
   if (!query) {
     return false;
   }
-  const vin = car?.vin ? String(car.vin).toUpperCase() : '';
-  const carNumber = car?.car_number ? String(car.car_number).toUpperCase() : '';
-  const chassis = car?.chassis_number ? String(car.chassis_number).toUpperCase() : '';
-  return (
-    vin.startsWith(query) ||
-    carNumber.startsWith(query) ||
-    chassis.startsWith(query)
+  return identifierMatchesQuery(car, query);
+}
+
+function ensureCompletedCarsVisibleForQuery(cars) {
+  const query = getNormalizedVinQuery();
+  if (!query || !Array.isArray(cars)) {
+    return;
+  }
+  const hasPaidMatch = cars.some(
+    (car) => Number(car?.results) === 2 && identifierMatchesQuery(car, query)
   );
+  if (hasPaidMatch) {
+    showComplatedCars.value = true;
+    showPaymentsInTable.value = true;
+  }
+}
+
+function applyVinSearchBehavior(cars) {
+  if (!activeVinQuery.value) {
+    return;
+  }
+  const list = Array.isArray(cars) ? cars : [];
+  const matchingCars = list.filter((car) => matchesCarQuery(car));
+  if (!matchingCars.length) {
+    return;
+  }
+  ensureCompletedCarsVisibleForQuery(list);
+  shouldAutoScrollToQuery.value = true;
+  nextTick(() => scrollToHighlightedCar());
 }
 
 function resetQueryBehaviour() {
@@ -532,6 +572,7 @@ watch(() => props.client_id, (newValue, oldValue) => {
     discount.value = 0;
     note.value = '';
     indexs = 1;
+    resetQueryBehaviour();
     getResults();
   }
 }, { immediate: false });
@@ -1071,13 +1112,20 @@ const mergedData = computed(() => {
   }
 });
 
-watch(() => props.q, () => {
-  resetQueryBehaviour();
-  if (props.q) {
-    nextTick(() => {
-      scrollToHighlightedCar();
-    });
+watch(() => props.q, (newQ) => {
+  const normalized = newQ ?? '';
+  if (normalized !== vinSearchInput.value) {
+    vinSearchInput.value = normalized;
   }
+});
+
+const debouncedVinSearch = debounce(() => {
+  resetQueryBehaviour();
+  applyVinSearchBehavior(laravelData.value?.data || []);
+}, 250);
+
+watch(vinSearchInput, () => {
+  debouncedVinSearch();
 });
 
 watch(matchedRowElement, (el) => {
@@ -1095,9 +1143,9 @@ watch(matchedRowElement, (el) => {
 
 watch(
   () => showComplatedCars.value,
-  (newVal) => {
-    showPaymentsInTable.value = newVal;
-    if (props.q && shouldAutoScrollToQuery.value) {
+  () => {
+    showPaymentsInTable.value = showComplatedCars.value;
+    if (activeVinQuery.value && shouldAutoScrollToQuery.value) {
       nextTick(() => scrollToHighlightedCar());
     }
   }
@@ -1106,7 +1154,7 @@ watch(
 watch(
   () => mergedData.value,
   () => {
-    if (props.q && shouldAutoScrollToQuery.value) {
+    if (activeVinQuery.value && shouldAutoScrollToQuery.value) {
       nextTick(() => scrollToHighlightedCar());
     }
   },
@@ -1417,10 +1465,18 @@ async function savePaymentDescription(payment) {
       </div>
     </div>
     <div class="py-4" v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-center pb-2 dark:text-gray-400 flex-1">
+      <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
+        <h2 class="text-center pb-2 dark:text-gray-400 flex-1 min-w-[180px]">
           {{ $t("sales_bill") }}
         </h2>
+        <div class="print:hidden w-full sm:w-auto sm:min-w-[240px] px-1">
+          <TextInput
+            v-model="vinSearchInput"
+            type="search"
+            placeholder="بحث برقم الشاصي"
+            class="w-full"
+          />
+        </div>
         <Link 
           v-if="props.client?.has_internal_sales"
           :href="`/internalSales/${currentClientId}`" 
@@ -2423,6 +2479,11 @@ async function savePaymentDescription(payment) {
 .query-highlight-row {
   position: relative;
   scroll-margin-top: 160px;
+}
+
+.query-highlight-row.bg-green-200,
+.query-highlight-row.dark\:bg-green-800 {
+  background-color: rgba(250, 204, 21, 0.2) !important;
 }
 
 .query-highlight-row > td {
