@@ -18,6 +18,7 @@ use App\Models\ExpensesType;
 use Illuminate\Support\Facades\DB;
 use App\Models\Transactions;
 use App\Models\Expenses;
+use App\Models\CarExpenses;
 use App\Helpers\UploadHelper;
 use App\Exports\Exportcar;
 use Carbon\Carbon;
@@ -1116,6 +1117,20 @@ class DashboardController extends Controller
         $data['resultsProfit'] = $resultsProfit;
         $data['resultsPaid'] = $resultsPaid;
         $data['resultsTotalS'] = $resultsTotalS;
+
+        if ((string) $car_have_expenses === '1') {
+            $expenseCarIds = (clone $baseQuery)->pluck('id');
+            if ($expenseCarIds->isNotEmpty()) {
+                $expenseTotals = CarExpenses::whereIn('car_id', $expenseCarIds)
+                    ->selectRaw('COALESCE(SUM(amount_dollar), 0) as total_dollar, COALESCE(SUM(amount_dinar), 0) as total_dinar')
+                    ->first();
+                $data['expensesTotalDollar'] = (float) ($expenseTotals->total_dollar ?? 0);
+                $data['expensesTotalDinar'] = (float) ($expenseTotals->total_dinar ?? 0);
+            } else {
+                $data['expensesTotalDollar'] = 0;
+                $data['expensesTotalDinar'] = 0;
+            }
+        }
 
         $config = SystemConfig::first();
 

@@ -5,12 +5,13 @@ import ModalAddCarExpensesFav from "@/Components/ModalAddCarExpensesFav.vue";
 import ModalAddCarExpenses from "@/Components/ModalAddCarExpenses.vue";
 import ModalArchiveCar from "@/Components/ModalArchiveCar.vue";
 import ModalArchiveCarBack from "@/Components/ModalArchiveCarBack.vue";
+import ModalArchiveCarLink from "@/Components/ModalArchiveCarLink.vue";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
 
 
 import { useToast } from "vue-toastification";
 import axios from 'axios';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from "vue-i18n";
 import newContracts from "@/Components/icon/new.vue";
 import show from "@/Components/icon/show.vue";
@@ -31,6 +32,7 @@ let showModalAddCarExpensesFav =  ref(false);
 let showModalAddCarExpenses =  ref(false);
 let showModalArchiveCarExpenses=  ref(false);
 let showModalArchiveCarExpensesBack=  ref(false);
+let showModalArchiveCarLink = ref(false);
 let showModalDelCar = ref(false);
 
 let car = ref([]);
@@ -49,6 +51,10 @@ function openwshowModalArchiveCarExpensesBack(form={}) {
   formData.value=form
   showModalArchiveCarExpensesBack.value = true;
 }
+function openModalArchiveCarLink(form={}) {
+  formData.value = form;
+  showModalArchiveCarLink.value = true;
+}
 function openModalDelCar(form={}) {
   formData.value=form
   showModalDelCar.value = true;
@@ -62,6 +68,10 @@ let user_id = 0;
 let page = 1;
 let q = '';
 const isSubmittingExpense = ref(false);
+const isArchivingAll = ref(false);
+const isLinkingCar = ref(false);
+const expensesTotalDollar = ref(0);
+const expensesTotalDinar = ref(0);
 
 function formatNumber(n) {
   return new Intl.NumberFormat('en-US').format(Number(n) || 0);
@@ -89,6 +99,10 @@ const getResultsCar = async ($state) => {
 
     const json = response.data;
 
+    if (currentWork.value) {
+      expensesTotalDollar.value = Number(json.expensesTotalDollar) || 0;
+      expensesTotalDinar.value = Number(json.expensesTotalDinar) || 0;
+    }
 
     if (json.data.length < 100){
       car.value.push(...json.data);
@@ -151,6 +165,14 @@ function  calculateSumDinar(carexpenses) {
       return (carexpenses ?? []).reduce((sum, expense) => sum + (Number(expense.amount_dinar) || 0), 0);
     }
 
+const summaryPrintUrl = computed(() => {
+  const params = new URLSearchParams();
+  if (user_id) params.set('user_id', user_id);
+  if (q) params.set('q', q);
+  const query = params.toString();
+  return `/api/getIndexExpensesSummaryPrint${query ? `?${query}` : ''}`;
+});
+
     function confirmCar (car){
   axios.post('/api/addCarFavorite',car)
   .then(response => {
@@ -206,8 +228,58 @@ function confirmArchiveCarBack(car){
     console.error(error);
   })
 }
+
+function confirmLinkArchiveCar(payload) {
+  if (isLinkingCar.value) return;
+  isLinkingCar.value = true;
+
+  axios.post('/api/confirmLinkArchiveCar', payload)
+    .then(() => {
+      showModalArchiveCarLink.value = false;
+      toast.success('تم ربط السيارة وإضافة المصاريف بنجاح', {
+        timeout: 3000,
+        position: 'bottom-right',
+        rtl: true,
+      });
+      refresh();
+    })
+    .catch((error) => {
+      const msg = error?.response?.data?.error || 'فشل الربط';
+      toast.error(msg, { timeout: 4000, position: 'bottom-right', rtl: true });
+    })
+    .finally(() => {
+      isLinkingCar.value = false;
+    });
+}
+
+function confirmArchiveAllCars() {
+  if (isArchivingAll.value) return;
+  const confirmed = window.confirm('هل تريد أرشفة جميع السيارات في قيد العمل (حسب الفلتر الحالي)؟');
+  if (!confirmed) return;
+
+  isArchivingAll.value = true;
+  axios.post('/api/confirmArchiveAllCars', { user_id, q })
+    .then((response) => {
+      const count = response.data?.count ?? 0;
+      toast.success(`تم أرشفة ${count} سيارة`, {
+        timeout: 3000,
+        position: 'bottom-right',
+        rtl: true,
+      });
+      refresh();
+    })
+    .catch((error) => {
+      const msg = error?.response?.data?.error || 'فشل أرشفة الكل';
+      toast.error(msg, { timeout: 4000, position: 'bottom-right', rtl: true });
+    })
+    .finally(() => {
+      isArchivingAll.value = false;
+    });
+}
 function swiptab(tab){
   currentWork.value=tab
+  expensesTotalDollar.value = 0
+  expensesTotalDinar.value = 0
   refresh()
 
 }
@@ -254,6 +326,15 @@ function confirmDelCarFav(V) {
         <template #header>
           </template>
     </ModalArchiveCarBack>
+    <ModalArchiveCarLink
+            :formData="formData"
+            :show="showModalArchiveCarLink ? true : false"
+            @a="confirmLinkArchiveCar($event)"
+            @close="showModalArchiveCarLink = false"
+            >
+        <template #header>
+          </template>
+    </ModalArchiveCarLink>
     <ModalAddCarExpensesFav
             :formData="formData"
             :show="showModalAddCarExpensesFav ? true : false"
@@ -370,6 +451,17 @@ function confirmDelCarFav(V) {
                               {{ $t('addCar') }} 
                             </button>
                           </div>
+                        <div v-if="currentWork" class="text-center">
+                            <button
+                              type="button"
+                              @click="confirmArchiveAllCars()"
+                              :disabled="isArchivingAll"
+                              style="min-width:150px;"
+                              class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-pink-700 rounded disabled:opacity-50"
+                            >
+                              أرشفة الكل
+                            </button>
+                          </div>
                         <!-- <div>
                           <button
                             type="button"
@@ -435,7 +527,24 @@ function confirmDelCarFav(V) {
 
                       </div>
 
-              
+                      <div
+                        v-if="currentWork"
+                        class="flex flex-wrap items-center justify-between gap-3 mt-4 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800"
+                      >
+                        <div class="text-sm font-bold dark:text-gray-100">
+                          <span class="text-green-700 dark:text-green-400">مجموع الدولار: {{ formatNumber(expensesTotalDollar) }} $</span>
+                          <span class="mx-2">|</span>
+                          <span class="text-blue-700 dark:text-blue-400">مجموع الدينار: {{ formatNumber(expensesTotalDinar) }} د</span>
+                        </div>
+                        <a
+                          target="_blank"
+                          :href="summaryPrintUrl"
+                          class="inline-flex items-center gap-1 px-3 py-2 text-sm font-bold text-white bg-blue-600 rounded hover:bg-blue-700"
+                        >
+                          طباعة مختصرة
+                          <print />
+                        </a>
+                      </div>
 
                       <div>
                         <div>
@@ -517,6 +626,14 @@ function confirmDelCarFav(V) {
                                     <svg class="w-6 h-6 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16">
                                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h11m0 0-4-4m4 4-4 4m-5 3H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h3"></path>
                                     </svg>
+                                    </button>
+                                    <button
+                                    v-if="!currentWork"
+                                      tabIndex="1"
+                                      class="px-2 py-1 text-white mx-1 bg-indigo-600 rounded mt-3 sm:mt-0 text-xs font-bold"
+                                      @click="openModalArchiveCarLink(car)"
+                                    >
+                                      ربط
                                     </button>
                                     <button
                                     v-if="currentWork"

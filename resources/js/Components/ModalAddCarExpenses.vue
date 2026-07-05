@@ -117,7 +117,7 @@ const totalDinar = computed(() => registrationDinarTotal.value + repairDinar.val
 function addRepairRow() {
   repairItems.value.push({
     id: ++repairRowId,
-    currency: 'dollar',
+    currency: 'dinar',
     amount: '',
     note: '',
   });

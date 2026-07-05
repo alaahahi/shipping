@@ -16,6 +16,7 @@ import ModalEditCarContracts from "@/Components/ModalEditCarContracts.vue";
 import ModalAddExitCar from "@/Components/ModalAddExitCar.vue";
 import ModalShowExitCar from "@/Components/ModalShowExitCar.vue";
 import ModalShowDriving from "@/Components/ModalShowDriving.vue";
+import ModalCarRegistrationDetails from "@/Components/ModalCarRegistrationDetails.vue";
 
 
 import print from "@/Components/icon/print.vue";
@@ -52,6 +53,8 @@ let showModalEditCarContracts =  ref(false);
 let showModalAddExitCar = ref(false);
 let showModalShowExitCar = ref(false);
 let showModalShowDriving = ref(false);
+let showModalCarRegistrationDetails = ref(false);
+let registrationCarId = ref(null);
 let total = ref(0);
 let formData = ref({});
 let formDriving = ref({});
@@ -835,6 +838,10 @@ function openModalShowDriving(form={}) {
   formDriving.value.noteDriving= `انا كارزان سرهنك محمد (وكيل عام سلام جلال ايوب ) (مدير مفوض شركة سلام جلال ايوب) قد خولت السيد(name) بقيادة السيارة ذات المواصفات ادناه له حق  نقلها  من محافظة الى محافظة اخرى ودفع الرسوم والغرمات بيع وشراء القبض الثمن.`;
   showModalShowDriving.value = true;
 }
+function openModalCarRegistrationDetails(car) {
+  registrationCarId.value = car.id;
+  showModalCarRegistrationDetails.value = true;
+}
 function calculateAmountDiscount (){
   let need_payment =  laravelData?.value?.client?.wallet?.balance
   amount.value=need_payment- discount.value
@@ -1360,6 +1367,11 @@ async function savePaymentDescription(payment) {
         <template #header>
           </template>
     </ModalShowDriving>
+    <ModalCarRegistrationDetails
+      :show="showModalCarRegistrationDetails"
+      :car-id="registrationCarId"
+      @close="showModalCarRegistrationDetails = false; registrationCarId = null"
+    />
     <ModalEditCars
       :formData="formData"
       :show="showModalEditCars ? true : false"
@@ -2290,6 +2302,15 @@ async function savePaymentDescription(payment) {
 
                       >
                         <document />
+                      </button>
+                      <button
+                        v-if="item.data.carexpenses_count > 0"
+                        tabIndex="1"
+                        class="px-1 py-1 text-white mx-1 bg-teal-600 rounded text-xs font-bold"
+                        title="تفاصيل التسجيل"
+                        @click="openModalCarRegistrationDetails(item.data)"
+                      >
+                        تسجيل
                       </button>
                       <a  target="_blank"
                    

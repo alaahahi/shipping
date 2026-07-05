@@ -380,8 +380,12 @@ Route::post('confirmExpensesCar',[CarExpensesController::class, 'confirmExpenses
 Route::post('delExpensesCar',[CarExpensesController::class, 'delExpensesCar'])->name('delExpensesCar');
 Route::post('confirmArchiveCar',[CarExpensesController::class, 'confirmArchiveCar'])->name('confirmArchiveCar');
 Route::post('confirmArchiveCarBack',[CarExpensesController::class, 'confirmArchiveCarBack'])->name('confirmArchiveCarBack');
+Route::post('confirmArchiveAllCars',[CarExpensesController::class, 'confirmArchiveAllCars'])->name('confirmArchiveAllCars');
+Route::post('confirmLinkArchiveCar',[CarExpensesController::class, 'confirmLinkArchiveCar'])->name('confirmLinkArchiveCar');
 Route::post('confirmDelCarFav',[CarExpensesController::class, 'confirmDelCarFav'])->name('confirmDelCarFav');
 Route::get('getIndexExpensesPrint',[CarExpensesController::class, 'getIndexExpensesPrint'])->name('getIndexExpensesPrint');
+Route::get('getIndexExpensesSummaryPrint',[CarExpensesController::class, 'getIndexExpensesSummaryPrint'])->name('getIndexExpensesSummaryPrint');
+Route::get('getCarRegistrationDetails',[CarExpensesController::class, 'getCarRegistrationDetails'])->name('getCarRegistrationDetails');
 
 Route::post('addCarContract',[CarContractController::class, 'addCarContract'])->name('addCarContract');
 Route::get('getIndexContractCar',[CarContractController::class, 'getIndexContractCar'])->name('getIndexContractCar');
