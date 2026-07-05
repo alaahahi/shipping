@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 const props = defineProps({
   show: Boolean,
@@ -10,6 +10,15 @@ const emit = defineEmits(['close', 'a']);
 
 const exchangeRate = ref('');
 
+function isSixDigitExchangeRate(value) {
+  if (value === '' || value === null || value === undefined) return false;
+  const rate = Number(value);
+  if (!Number.isFinite(rate) || rate <= 0 || !Number.isInteger(rate)) return false;
+  return String(Math.trunc(rate)).length === 6;
+}
+
+const isExchangeRateValid = computed(() => isSixDigitExchangeRate(exchangeRate.value));
+
 watch(() => props.show, (visible) => {
   if (visible) {
     exchangeRate.value = '';
@@ -17,11 +26,10 @@ watch(() => props.show, (visible) => {
 });
 
 function submit() {
-  const rate = Number(exchangeRate.value);
-  if (!Number.isFinite(rate) || rate <= 0) return;
+  if (!isExchangeRateValid.value) return;
   emit('a', {
     id: props.formData?.id,
-    exchangeRate: rate,
+    exchangeRate: Math.trunc(Number(exchangeRate.value)),
   });
 }
 </script>
@@ -48,11 +56,18 @@ function submit() {
               id="exchange_rate"
               v-model="exchangeRate"
               type="number"
-              min="1"
-              step="any"
+              min="100000"
+              max="999999"
+              step="1"
               placeholder="مثال: 140000"
               class="link-modal-input"
             />
+            <p
+              v-if="exchangeRate && !isExchangeRateValid"
+              class="link-modal-error"
+            >
+              يجب أن يكون 6 أرقام
+            </p>
           </div>
 
           <div class="modal-footer my-2">
@@ -70,7 +85,7 @@ function submit() {
                 <button
                   type="button"
                   class="modal-default-button modal-btn-submit"
-                  :disabled="!exchangeRate || Number(exchangeRate) <= 0"
+                  :disabled="!isExchangeRateValid"
                   @click="submit"
                 >
                   ربط
@@ -185,6 +200,16 @@ function submit() {
 
 :global(.dark) .link-modal-input::placeholder {
   color: #9ca3af;
+}
+
+.link-modal-error {
+  margin-top: 0.375rem;
+  font-size: 0.8125rem;
+  color: #dc2626;
+}
+
+:global(.dark) .link-modal-error {
+  color: #f87171;
 }
 
 .modal-default-button {

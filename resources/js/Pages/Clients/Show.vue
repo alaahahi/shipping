@@ -842,9 +842,6 @@ function openModalCarRegistrationDetails(car) {
   registrationCarId.value = car.id;
   showModalCarRegistrationDetails.value = true;
 }
-function formatRegistrationRate(rate) {
-  return new Intl.NumberFormat('en-US').format(Number(rate) || 0);
-}
 function calculateAmountDiscount (){
   let need_payment =  laravelData?.value?.client?.wallet?.balance
   amount.value=need_payment- discount.value
@@ -2318,13 +2315,6 @@ async function savePaymentDescription(payment) {
                         >
                           تسجيل
                         </button>
-                        <span
-                          v-if="item.data.link_exchange_rate"
-                          class="mt-0.5 text-[10px] font-bold leading-tight text-amber-700 dark:text-amber-300 whitespace-nowrap"
-                          title="سعر التحويل المستخدم عند الربط"
-                        >
-                          سعر: {{ formatRegistrationRate(item.data.link_exchange_rate) }}
-                        </span>
                       </div>
                       <a  target="_blank"
                    

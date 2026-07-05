@@ -224,6 +224,9 @@ class CarExpensesController extends Controller
             if ($exchangeRate <= 0) {
                 return response()->json(['error' => 'سعر الصرف مطلوب'], 422);
             }
+            if (!self::isValidLinkExchangeRate($exchangeRate)) {
+                return response()->json(['error' => 'يجب أن يكون سعر الصرف 6 أرقام'], 422);
+            }
 
             $calc_rate = $exchangeRate;
             if ($calc_rate > 9999) {
@@ -308,12 +311,15 @@ class CarExpensesController extends Controller
 
             $isFirstLinkedExpense = true;
             foreach ($unlinkedExpenses as $expense) {
+                $baseNote = preg_replace('/\s*\[مربوط@\d+\]/u', '', $expense->note ?? '');
+                $baseNote = str_replace(' [مربوط]', '', $baseNote);
+                $baseNote = trim($baseNote);
                 $linkSuffix = $isFirstLinkedExpense
-                    ? ' [مربوط@' . $exchangeRate . ']'
+                    ? ' [مربوط@' . (int) $exchangeRate . ']'
                     : ' [مربوط]';
                 $isFirstLinkedExpense = false;
                 $expense->update([
-                    'note' => trim(($expense->note ?? '') . $linkSuffix),
+                    'note' => trim($baseNote . $linkSuffix),
                 ]);
             }
 
@@ -475,7 +481,7 @@ class CarExpensesController extends Controller
                 }
 
                 foreach ($linkedExpenses as $expense) {
-                    $cleanNote = preg_replace('/ \[مربوط@[\d.]+\]/', '', $expense->note ?? '');
+                    $cleanNote = preg_replace('/\s*\[مربوط@\d+\]/u', '', $expense->note ?? '');
                     $cleanNote = str_replace(' [مربوط]', '', $cleanNote);
                     $expense->update(['note' => trim($cleanNote)]);
                 }
@@ -503,13 +509,36 @@ class CarExpensesController extends Controller
 
     public static function parseLinkExchangeRate($expenses): ?float
     {
+        $rates = [];
+
         foreach ($expenses as $expense) {
-            if (preg_match('/\[مربوط@([\d.]+)\]/', $expense->note ?? '', $matches)) {
-                return (float) $matches[1];
+            if (preg_match_all('/\[مربوط@(\d+)\]/u', $expense->note ?? '', $matches)) {
+                foreach ($matches[1] as $rawRate) {
+                    $rates[] = (float) $rawRate;
+                }
             }
         }
 
-        return null;
+        if (empty($rates)) {
+            return null;
+        }
+
+        // Use the last tag in note order (most recent link rate).
+        return (float) end($rates);
+    }
+
+    public static function isValidLinkExchangeRate($exchangeRate): bool
+    {
+        if (!is_numeric($exchangeRate) || (float) $exchangeRate <= 0) {
+            return false;
+        }
+
+        $rate = (float) $exchangeRate;
+        if ($rate != (int) $rate) {
+            return false;
+        }
+
+        return strlen((string) (int) $rate) === 6;
     }
 
     public static function applyLinkedCarsFilter($query)

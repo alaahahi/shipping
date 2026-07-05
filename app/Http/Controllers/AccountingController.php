@@ -735,8 +735,6 @@ class AccountingController extends Controller
             return view('receiptExpensesTotal',compact('clientData','config','transactions_id'));
          }
 
-        $clientData['data'] = CarExpensesController::enrichCarsWithLinkRates($clientData['data']);
-
         return Response::json($clientData, 200);
     }
     public function paySelse(Request $request,$id)
