@@ -15,7 +15,7 @@ import OnlineUsersIndicator from '@/Components/OnlineUsersIndicator.vue';
 
 const showingNavigationDropdown = ref(false);
 const page = usePage();
-const hasFullNavAccess = computed(() => isAdminOrOwner(page.props.auth?.user));
+const hasFullNavAccess = computed(() => isAdminOrOwner(page.props.value.auth?.user));
 const i18n = useI18n();
 const locale = ref("en"); // Default locale
 const switchLocale = (locale) => {

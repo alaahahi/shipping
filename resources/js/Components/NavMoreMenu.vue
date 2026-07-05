@@ -12,7 +12,7 @@ defineProps({
 
 const page = usePage();
 
-const hasFullAccess = computed(() => isAdminOrOwner(page.props.auth?.user));
+const hasFullAccess = computed(() => isAdminOrOwner(page.props.value.auth?.user));
 
 const allItems = [
     { href: () => route('dashboard.statistics'), label: 'احصائات', name: 'dashboard.statistics' },
