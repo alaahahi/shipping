@@ -541,7 +541,4 @@ nav,
 nav > div {
   overflow: visible !important;
 }
-.nav-more[open] {
-  z-index: 9999;
-}
 </style>

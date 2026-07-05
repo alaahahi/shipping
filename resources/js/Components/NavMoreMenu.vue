@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Link } from '@inertiajs/inertia-vue3';
 
 defineProps({
@@ -8,6 +8,10 @@ defineProps({
         default: false,
     },
 });
+
+const open = ref(false);
+const triggerRef = ref(null);
+const panelStyle = ref({ top: '0px', left: '0px' });
 
 const items = computed(() => [
     { href: route('sync.monitor'), label: '🔄 المزامنة', name: 'sync.monitor' },
@@ -22,13 +26,71 @@ const items = computed(() => [
 function isCurrent(name) {
     return route().current(name);
 }
+
+function updatePosition() {
+    const el = triggerRef.value;
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    const panelWidth = 208;
+    let left = rect.right - panelWidth;
+    left = Math.max(8, Math.min(left, window.innerWidth - panelWidth - 8));
+
+    panelStyle.value = {
+        top: `${rect.bottom + 6}px`,
+        left: `${left}px`,
+    };
+}
+
+function toggle() {
+    open.value = !open.value;
+}
+
+function close() {
+    open.value = false;
+}
+
+function onDocumentClick(e) {
+    if (!open.value) return;
+    const el = triggerRef.value;
+    if (el && !el.contains(e.target)) {
+        close();
+    }
+}
+
+function onEscape(e) {
+    if (e.key === 'Escape') close();
+}
+
+watch(open, async (isOpen) => {
+    if (isOpen) {
+        await nextTick();
+        updatePosition();
+    }
+});
+
+onMounted(() => {
+    document.addEventListener('click', onDocumentClick);
+    document.addEventListener('keydown', onEscape);
+    window.addEventListener('resize', close);
+    window.addEventListener('scroll', close, true);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('click', onDocumentClick);
+    document.removeEventListener('keydown', onEscape);
+    window.removeEventListener('resize', close);
+    window.removeEventListener('scroll', close, true);
+});
 </script>
 
 <template>
-    <details class="nav-more group relative shrink-0">
-        <summary
+    <div ref="triggerRef" class="relative shrink-0">
+        <button
+            type="button"
+            @click.stop="toggle"
             :class="[
-                'inline-flex cursor-pointer list-none items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out select-none',
+                'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out select-none',
                 active
                     ? 'border-indigo-400 text-gray-900 dark:text-gray-200'
                     : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100 hover:border-gray-300',
@@ -36,7 +98,8 @@ function isCurrent(name) {
         >
             المزيد
             <svg
-                class="mr-1 h-4 w-4 transition-transform group-open:rotate-180"
+                class="mr-1 h-4 w-4 transition-transform"
+                :class="{ 'rotate-180': open }"
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
@@ -47,34 +110,31 @@ function isCurrent(name) {
                     clip-rule="evenodd"
                 />
             </svg>
-        </summary>
+        </button>
 
-        <div
-            class="nav-more-panel absolute right-0 top-full z-[9999] mt-2 min-w-[13rem] rounded-md border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-700 dark:bg-gray-800"
-        >
-            <Link
-                v-for="item in items"
-                :key="item.name"
-                :href="item.href"
-                :class="[
-                    'block w-full px-4 py-2 text-right text-sm leading-5 transition duration-150 ease-in-out',
-                    isCurrent(item.name)
-                        ? 'bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
-                        : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700',
-                ]"
+        <Teleport to="body">
+            <div v-if="open" class="fixed inset-0 z-[9998]" @click="close"></div>
+            <div
+                v-if="open"
+                class="fixed z-[9999] min-w-[13rem] rounded-md border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-700 dark:bg-gray-800"
+                :style="panelStyle"
+                @click.stop
             >
-                {{ item.label }}
-            </Link>
-        </div>
-    </details>
+                <Link
+                    v-for="item in items"
+                    :key="item.name"
+                    :href="item.href"
+                    :class="[
+                        'block w-full px-4 py-2 text-right text-sm leading-5 transition duration-150 ease-in-out',
+                        isCurrent(item.name)
+                            ? 'bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
+                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700',
+                    ]"
+                    @click="close"
+                >
+                    {{ item.label }}
+                </Link>
+            </div>
+        </Teleport>
+    </div>
 </template>
-
-<style scoped>
-.nav-more summary::-webkit-details-marker {
-    display: none;
-}
-
-.nav-more:not([open]) .nav-more-panel {
-    display: none;
-}
-</style>
