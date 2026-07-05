@@ -1081,22 +1081,28 @@ class DashboardController extends Controller
         $resultsProfit = $baseQuery->sum('profit');
         $resultsPaid = $baseQuery->sum('paid');
         $totalCars = $baseQuery->count();
+
+        $relations = ['client:id,name', 'tags:id,name'];
+        if ($car_have_expenses !== '' && $car_have_expenses !== null) {
+            $relations[] = 'carexpenses';
+        }
+
         // جلب البيانات مع العلاقات المطلوبة فقط
         if($get_image){
             // جلب البيانات مع الصور (أبطأ لكن يحتوي على الصور)
-            $data = $baseQuery->with(['client:id,name', 'CarImages', 'tags:id,name'])
+            $data = $baseQuery->with(array_merge($relations, ['CarImages']))
                              ->orderBy('no', 'DESC')
                              ->paginate($limit)
                              ->toArray();
         } else if($online_contract){
-            $data = $baseQuery->with(['client:id,name', 'contract','exitcar', 'tags:id,name'])
+            $data = $baseQuery->with(array_merge($relations, ['contract', 'exitcar']))
                              ->orderBy('no', 'DESC')
                              ->paginate($limit)
                              ->toArray();
         }
         else {
             // جلب البيانات بدون الصور (أسرع للأداء)
-            $data = $baseQuery->with(['client:id,name', 'tags:id,name'])
+            $data = $baseQuery->with($relations)
                              ->orderBy('no', 'DESC')
                              ->paginate($limit)
                              ->toArray();
