@@ -51,7 +51,7 @@ const moreMenuActive = computed(() => {
                 </Link>
               </div>
 
-              <div class="hidden sm:flex sm:items-center sm:gap-6 sm:ml-6 min-w-0 flex-1 overflow-x-auto nav-scroll">
+              <div class="hidden sm:flex sm:items-center sm:gap-4 sm:ml-4 min-w-0 flex-1 overflow-x-auto nav-scroll">
               <NavLink
                 :href="route('dashboard')"
                 :active="route().current('dashboard')"
@@ -207,7 +207,7 @@ const moreMenuActive = computed(() => {
                 </NavLink>
               </div> -->
             </div>
-            <div class="hidden sm:flex sm:items-center sm:ml-6 gap-6 shrink-0">
+            <div class="hidden sm:flex sm:items-center sm:ml-4 gap-4 shrink-0">
               <div class="ml-3 relative">
                 <Dropdown align="right" width="48">
                   <template #trigger>
@@ -430,35 +430,35 @@ const moreMenuActive = computed(() => {
               <ResponsiveNavLink
                 :href="route('dashboard.statistics')"
                 :active="route().current('dashboard.statistics')"
-                v-if="$page.props.auth.user.type_id!=8 && $page.props.auth.user.type_id!=10"
+                v-if="$page.props.auth.user.type_id==1"
               >
               احصائات
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('sync.monitor')"
                 :active="route().current('sync.monitor')"
-                v-if="$page.props.auth.user.type_id!=8 && $page.props.auth.user.type_id!=10"
+                v-if="$page.props.auth.user.type_id==1"
               >
               🔄 المزامنة
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('car_check')"
                 :active="route().current('car_check')"
-                v-if="$page.props.auth.user.type_id!=8 && $page.props.auth.user.type_id!=10"
+                v-if="$page.props.auth.user.type_id==1"
               >
               مراجعة السيارات
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('online_contracts')"
                 :active="route().current('online_contracts')"
-                v-if="$page.props.auth.user.type_id!=8 && $page.props.auth.user.type_id!=10"
+                v-if="$page.props.auth.user.type_id==1"
               >
               {{ $t("online_contracts") }}
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('damage_report.index')"
                 :active="route().current('damage_report.index')"
-                v-if="$page.props.auth.user.type_id!=8 && $page.props.auth.user.type_id!=10"
+                v-if="$page.props.auth.user.type_id==1"
               >
               تقارير الضرر
               </ResponsiveNavLink>
@@ -493,7 +493,7 @@ const moreMenuActive = computed(() => {
               <ResponsiveNavLink
                 :href="route('hunter')"
                 :active="route().current('hunter')"
-                v-if="$page.props.auth.user.type_id!=8 && $page.props.auth.user.type_id!=10"
+                v-if="$page.props.auth.user.type_id==1"
               >
               عاطل 
               </ResponsiveNavLink>

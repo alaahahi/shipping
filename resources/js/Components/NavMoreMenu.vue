@@ -11,10 +11,7 @@ defineProps({
 
 const page = usePage();
 
-const isContractUser = computed(() => {
-    const typeId = page.props.auth?.user?.type_id;
-    return typeId === 8 || typeId === 10;
-});
+const isAdmin = computed(() => Number(page.props.auth?.user?.type_id) === 1);
 
 const allItems = [
     { href: () => route('dashboard.statistics'), label: 'احصائات', name: 'dashboard.statistics' },
@@ -27,12 +24,12 @@ const allItems = [
     { href: () => route('logViewer'), label: '📋 لوغ الأخطاء', name: 'logViewer' },
 ];
 
-const contractOnlyNames = ['systemSettings', 'logViewer'];
+const adminOnlyNames = ['dashboard.statistics', 'sync.monitor', 'online_contracts', 'car_check', 'damage_report.index', 'hunter'];
 
 const items = computed(() => {
-    const list = isContractUser.value
-        ? allItems.filter((item) => contractOnlyNames.includes(item.name))
-        : allItems;
+    const list = isAdmin.value
+        ? allItems
+        : allItems.filter((item) => !adminOnlyNames.includes(item.name));
 
     return list.map((item) => ({
         ...item,
@@ -111,7 +108,7 @@ onUnmounted(() => {
             type="button"
             @click.stop="toggle"
             :class="[
-                'inline-flex items-center px-3 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out select-none whitespace-nowrap',
+                'inline-flex items-center px-2 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out select-none whitespace-nowrap',
                 active
                     ? 'border-indigo-400 text-gray-900 dark:text-gray-200'
                     : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100 hover:border-gray-300',
