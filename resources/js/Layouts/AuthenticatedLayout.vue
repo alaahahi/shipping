@@ -1,10 +1,10 @@
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import Dropdown from "@/Components/Dropdown.vue";
 import DropdownLink from "@/Components/DropdownLink.vue";
 import NavLink from "@/Components/NavLink.vue";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink.vue";
-import { Link } from "@inertiajs/inertia-vue3";
+import { Link, usePage } from "@inertiajs/inertia-vue3";
 import { useI18n } from "vue-i18n";
 import DarkModeToggle from '@/Components/DarkToggle.vue';
 import SyncStatusBadge from '@/Components/SyncStatusBadge.vue';
@@ -17,6 +17,36 @@ const switchLocale = (locale) => {
   i18n.locale.value = locale;
   localStorage.setItem('lang', locale);
 };
+
+const page = usePage();
+const authUser = computed(() => page.props.auth?.user ?? null);
+
+const showMoreMenu = computed(() => {
+  const u = authUser.value;
+  if (!u) return false;
+  const t = Number(u.type_id);
+  return t === 1 || t === 6 || t === 7 || (Number(u.owner_id) === 1 && t !== 10);
+});
+
+const moreMenuActive = computed(() => {
+  return [
+    'sync.monitor',
+    'online_contracts',
+    'annual_information',
+    'car_check',
+    'damage_report.index',
+    'car_expenses',
+    'hunter',
+    'systemSettings',
+    'logViewer',
+  ].some((name) => route().current(name));
+});
+
+const moreMenuTriggerClass = computed(() =>
+  moreMenuActive.value
+    ? 'inline-flex items-center px-1 pt-1 border-b-2 border-indigo-400 text-sm font-medium leading-5 text-gray-900 dark:text-gray-200 focus:outline-none transition duration-150 ease-in-out'
+    : 'inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100 hover:border-gray-300 focus:outline-none transition duration-150 ease-in-out'
+);
 </script>
 
 <template>
@@ -81,71 +111,84 @@ const switchLocale = (locale) => {
                 </NavLink>
               </div>
               
-              <!-- صفحة مراقبة المزامنة -->
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1">
-                <NavLink
-                  :href="route('sync.monitor')"
-                  :active="route().current('sync.monitor')"
-                >
-                  🔄 المزامنة
-                </NavLink>
+              <!-- قائمة منسدلة: خدمات السيارات والنظام -->
+              <div class="hidden sm:flex sm:items-center sm:-my-px sm:ml-6" v-if="showMoreMenu">
+                <Dropdown align="left" width="48" :contentClasses="['py-1', 'bg-white', 'dark:bg-gray-800', 'dark:border', 'dark:border-gray-700', 'min-w-[13rem]']">
+                  <template #trigger>
+                    <button type="button" :class="moreMenuTriggerClass">
+                      المزيد
+                      <svg class="mr-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                  </template>
+                  <template #content>
+                    <DropdownLink
+                      v-if="$page.props.auth.user.type_id==1"
+                      :href="route('sync.monitor')"
+                      :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('sync.monitor') }"
+                    >
+                      🔄 المزامنة
+                    </DropdownLink>
+                    <DropdownLink
+                      v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6"
+                      :href="route('online_contracts')"
+                      :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('online_contracts') }"
+                    >
+                      {{ $t("online_contracts") }}
+                    </DropdownLink>
+                    <DropdownLink
+                      v-if="$page.props.auth.user.type_id==1"
+                      :href="route('annual_information')"
+                      :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('annual_information') }"
+                    >
+                      معلومات السنوية
+                    </DropdownLink>
+                    <DropdownLink
+                      v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==7"
+                      :href="route('car_expenses')"
+                      :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('car_expenses') }"
+                    >
+                      مصاريف السيارات
+                    </DropdownLink>
+                    <DropdownLink
+                      v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==7"
+                      :href="route('car_check')"
+                      :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('car_check') }"
+                    >
+                      مراجعة السيارات
+                    </DropdownLink>
+                    <DropdownLink
+                      v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6||$page.props.auth.user.type_id==7"
+                      :href="route('damage_report.index')"
+                      :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('damage_report.index') }"
+                    >
+                      تقارير الضرر
+                    </DropdownLink>
+                    <DropdownLink
+                      v-if="$page.props.auth.user.type_id==1"
+                      :href="route('hunter')"
+                      :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('hunter') }"
+                    >
+                      عاطل
+                    </DropdownLink>
+                    <DropdownLink
+                      v-if="$page.props.auth.user.owner_id==1 && $page.props.auth.user.type_id!=10"
+                      :href="route('systemSettings')"
+                      :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('systemSettings') }"
+                    >
+                      إعدادات النظام
+                    </DropdownLink>
+                    <DropdownLink
+                      v-if="$page.props.auth.user.owner_id==1 && $page.props.auth.user.type_id!=10"
+                      :href="route('logViewer')"
+                      :class="{ 'bg-gray-100 dark:bg-gray-700': route().current('logViewer') }"
+                    >
+                      📋 لوغ الأخطاء
+                    </DropdownLink>
+                  </template>
+                </Dropdown>
               </div>
-              
-              <!-- صفحة البحث Offline -->
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="false">
-                <NavLink
-                  :href="route('offline.car.search')"
-                  :active="route().current('offline.car.search')"
-                >
-                  🔍 بحث Offline
-                </NavLink>
-              </div>
-              
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
-                <NavLink
-                  :href="route('online_contracts')"
-                  :active="route().current('online_contracts')"
-                >
-                  {{ $t("online_contracts") }}
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1">
-                <NavLink
-                  :href="route('annual_information')"
-                  :active="route().current('annual_information')"
-
-                >
-                  معلومات السنوية
-                </NavLink>
-
-                
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && ($page.props.auth.user.type_id==1||$page.props.auth.user.type_id==7)">
-                <NavLink
-                  :href="route('car_check')"
-                  :active="route().current('car_check')"
-
-                >
-                    مراجعة السيارات
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && ($page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6||$page.props.auth.user.type_id==7)">
-                <NavLink
-                  :href="route('damage_report.index')"
-                  :active="route().current('damage_report.index')"
-                >
-                  تقارير الضرر
-                </NavLink>
-              </div>
-              <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==7">
-                <NavLink
-                  :href="route('car_expenses')"
-                  :active="route().current('car_expenses')"
-
-                >
-                   مصاريف السيارات
-                </NavLink>
-              </div> -->
               <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && ($page.props.auth.user.type_id==8||$page.props.auth.user.type_id==10)">
                 <NavLink
                   :href="route('contract')"
@@ -203,31 +246,6 @@ const switchLocale = (locale) => {
                   :active="route().current('companyBalances.index') || route().current('companyBalances.show')"
                 >
                   🚢 حسابات الشركات
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user.type_id==1">
-                <NavLink
-                  :href="route('hunter')"
-                  :active="route().current('hunter')"
-
-                >
-                عاطل
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1 && $page.props.auth.user.type_id!=10">
-                <NavLink
-                  :href="route('systemSettings')"
-                  :active="route().current('systemSettings')"
-                >
-                  إعدادات النظام
-                </NavLink>
-              </div>
-              <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"  v-if="$page.props.auth.user && $page.props.auth.user.owner_id==1 && $page.props.auth.user.type_id!=10">
-                <NavLink
-                  :href="route('logViewer')"
-                  :active="route().current('logViewer')"
-                >
-                  📋 لوغ الأخطاء
                 </NavLink>
               </div>
               <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
@@ -474,7 +492,13 @@ const switchLocale = (locale) => {
               🚢 حسابات الشركات
               </ResponsiveNavLink>
               
-              <!-- صفحة مراقبة المزامنة للهواتف -->
+              <!-- المزيد — قائمة الهاتف -->
+              <div
+                v-if="showMoreMenu"
+                class="px-4 pt-2 pb-1 text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500"
+              >
+                المزيد
+              </div>
               <ResponsiveNavLink
                 :href="route('sync.monitor')"
                 :active="route().current('sync.monitor')"
@@ -482,16 +506,13 @@ const switchLocale = (locale) => {
               >
               🔄 المزامنة
               </ResponsiveNavLink>
-              
-              <!-- صفحة البحث Offline للهواتف -->
               <ResponsiveNavLink
-                :href="route('offline.car.search')"
-                :active="route().current('offline.car.search')"
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6) && false"
+                :href="route('car_check')"
+                :active="route().current('car_check')"
+                v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==7)"
               >
-              🔍 بحث Offline
+              مراجعة السيارات
               </ResponsiveNavLink>
-              
               <ResponsiveNavLink
                 :href="route('online_contracts')"
                 :active="route().current('online_contracts')"
