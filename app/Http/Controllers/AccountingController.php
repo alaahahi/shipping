@@ -542,6 +542,13 @@ class AccountingController extends Controller
         return Response::json($transaction, 200);
 
         }
+    protected function prepareClientCarsForDisplay($carsQuery)
+    {
+        return $carsQuery->get()->map(function ($car) {
+            return CarExpensesController::prepareCarForRegistrationDisplay($car);
+        });
+    }
+
     public function getIndexAccountsSelas()
     { 
         $this->accounting->loadAccounts(Auth::user()->owner_id);
@@ -615,7 +622,7 @@ class AccountingController extends Controller
             if($showComplatedCars==1){
                 $clientData = [
                     'totalAmount' =>   $transactions->sum('amount'),
-                    'data' => $cars->where('results','!=','2')->get(),
+                    'data' => $this->prepareClientCarsForDisplay($cars->where('results','!=','2')),
                     'client'=>$client,
                     'car_total'=>$cars->where('results','!=','2')->count(),
                     'car_total_unpaid'=>$car_total_unpaid,
@@ -635,7 +642,7 @@ class AccountingController extends Controller
             }else{
                 $clientData = [
                     'totalAmount' =>   $transactions->sum('amount'),
-                    'data' => $cars->get(),
+                    'data' => $this->prepareClientCarsForDisplay($cars),
                     'client'=>$client,
                     'car_total'=>$car_total,
                     'car_total_unpaid'=>$car_total_unpaid,
@@ -669,7 +676,7 @@ class AccountingController extends Controller
             $config=SystemConfig::first();
             $clientData = [
                 'totalAmount' =>   $transactions->sum('amount'),
-                'data' => $cars->where('id',$car_id)->get(),
+                'data' => $this->prepareClientCarsForDisplay($cars->where('id',$car_id)),
                 'client'=>$client,
                 'car_total'=>$cars->where('id',$car_id)->count(),
                 'car_total_unpaid'=>$car_total_unpaid,
@@ -693,7 +700,7 @@ class AccountingController extends Controller
                  // Additional logic to retrieve client data
         $clientData = [
             'totalAmount' =>   $transactions->sum('amount'),
-            'data' => $cars->get(),
+            'data' => $this->prepareClientCarsForDisplay($cars),
             'client'=>$client,
             'car_total'=>$car_total,
             'car_total_unpaid'=>$car_total_unpaid,

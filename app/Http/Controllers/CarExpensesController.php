@@ -349,7 +349,8 @@ class CarExpensesController extends Controller
             ->where('owner_id', $owner_id)
             ->findOrFail($request->car_id);
 
-        $expenses = $car->carexpenses;
+        $inWorkflow = self::isCarInRegistrationWorkflow($car);
+        $expenses = $inWorkflow ? $car->carexpenses : collect();
         $totalDollar = $expenses->sum('amount_dollar');
         $totalDinar = $expenses->sum('amount_dinar');
 
@@ -364,8 +365,8 @@ class CarExpensesController extends Controller
             'expenses' => $expenses,
             'total_dollar' => $totalDollar,
             'total_dinar' => $totalDinar,
-            'has_registration' => $expenses->isNotEmpty(),
-            'link_exchange_rate' => self::parseLinkExchangeRate($expenses),
+            'has_registration' => $inWorkflow && $expenses->isNotEmpty(),
+            'link_exchange_rate' => $inWorkflow ? self::parseLinkExchangeRate($expenses) : null,
             'is_linked' => self::isCarLinked($car),
         ], 200);
     }
@@ -552,6 +553,22 @@ class CarExpensesController extends Controller
                         });
                 });
         });
+    }
+
+    public static function isCarInRegistrationWorkflow(Car $car): bool
+    {
+        return in_array((int) $car->car_have_expenses, [1, 2, self::CAR_HAVE_EXPENSES_LINKED], true);
+    }
+
+    public static function prepareCarForRegistrationDisplay(Car $car): Car
+    {
+        $inWorkflow = self::isCarInRegistrationWorkflow($car);
+        $car->has_registration_workflow = $inWorkflow;
+        if (!$inWorkflow) {
+            $car->carexpenses_count = 0;
+        }
+
+        return $car;
     }
 
     public static function isCarLinked(Car $car): bool

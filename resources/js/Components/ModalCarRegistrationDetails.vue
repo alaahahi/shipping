@@ -45,27 +45,29 @@ async function loadDetails() {
   <Transition name="modal">
     <div v-if="show" class="modal-mask">
       <div class="modal-wrapper max-h-[90vh]">
-        <div class="modal-container dark:bg-gray-900 overflow-auto max-h-[90vh]">
-          <div class="modal-header">
-            <h2 class="text-center py-4 text-lg font-bold text-gray-900 dark:text-white">تفاصيل التسجيل</h2>
-            <p v-if="details?.car" class="text-center text-sm text-gray-800 dark:text-gray-200 px-4">
+        <div class="modal-container registration-details-modal dark:bg-gray-900 overflow-auto max-h-[90vh]">
+          <div class="modal-header registration-details-header">
+            <h2 class="registration-details-title text-center py-4 text-lg font-bold">تفاصيل التسجيل</h2>
+            <p v-if="details?.car" class="registration-details-subtitle text-center text-sm font-semibold px-4">
               {{ details.car.car_type }} — شانص {{ details.car.vin }} — رقم {{ details.car.car_number }}
             </p>
-            <p v-if="details?.link_exchange_rate" class="text-center text-sm font-bold text-amber-700 dark:text-amber-300 px-4 mt-1">
+            <p v-if="details?.link_exchange_rate" class="registration-details-rate text-center text-sm font-bold text-amber-700 dark:text-amber-300 px-4 mt-1">
               سعر التحويل عند الربط: {{ formatNumber(details.link_exchange_rate) }}
             </p>
           </div>
 
           <div class="modal-body px-4 pb-4">
-            <div v-if="loading" class="text-center py-8 text-gray-600 dark:text-gray-300">جاري التحميل...</div>
+            <div v-if="loading" class="registration-details-loading text-center py-8 font-medium">جاري التحميل...</div>
 
             <template v-else-if="details?.has_registration">
-              <div class="grid grid-cols-2 gap-3 mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-700 text-center font-bold">
-                <div class="text-green-800 dark:text-green-300">
-                  دولار: {{ formatNumber(details.total_dollar) }} $
+              <div class="registration-details-summary grid grid-cols-2 gap-3 mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-700 text-center font-bold">
+                <div class="registration-details-summary-dollar">
+                  <span class="registration-details-label">دولار:</span>
+                  {{ formatNumber(details.total_dollar) }} $
                 </div>
-                <div class="text-blue-800 dark:text-blue-300">
-                  دينار: {{ formatNumber(details.total_dinar) }} د
+                <div class="registration-details-summary-dinar">
+                  <span class="registration-details-label">دينار:</span>
+                  {{ formatNumber(details.total_dinar) }} د
                 </div>
               </div>
 
@@ -86,15 +88,15 @@ async function loadDetails() {
                       :key="expense.id"
                       class="registration-details-row border-t border-gray-200 dark:border-gray-600"
                     >
-                      <td class="px-2 py-2">{{ expense.created }}</td>
-                      <td class="px-2 py-2 text-green-800 dark:text-green-300 font-semibold">
+                      <td class="registration-details-cell px-2 py-2">{{ expense.created }}</td>
+                      <td class="registration-details-cell registration-details-dollar px-2 py-2 font-semibold">
                         {{ formatNumber(expense.amount_dollar) }}
                       </td>
-                      <td class="px-2 py-2 text-blue-800 dark:text-blue-300 font-semibold">
+                      <td class="registration-details-cell registration-details-dinar px-2 py-2 font-semibold">
                         {{ formatNumber(expense.amount_dinar) }}
                       </td>
-                      <td class="px-2 py-2 text-right text-xs max-w-[10rem]">{{ expense.note }}</td>
-                      <td class="px-2 py-2">{{ expense.user?.name }}</td>
+                      <td class="registration-details-cell registration-details-note px-2 py-2 text-right text-xs max-w-[10rem]">{{ expense.note }}</td>
+                      <td class="registration-details-cell px-2 py-2">{{ expense.user?.name }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -112,7 +114,7 @@ async function loadDetails() {
               </div>
             </template>
 
-            <p v-else class="text-center py-6 text-gray-500 dark:text-gray-300">لا توجد مصاريف تسجيل مسجّلة لهذه السيارة</p>
+            <p v-else class="registration-details-empty text-center py-6 font-medium">لا توجد مصاريف تسجيل مسجّلة لهذه السيارة</p>
           </div>
 
           <div class="modal-footer px-4 pb-4">
@@ -165,33 +167,122 @@ async function loadDetails() {
   opacity: 0;
 }
 
+.registration-details-title {
+  color: #111827 !important;
+}
+
+.registration-details-subtitle {
+  color: #1f2937 !important;
+}
+
+.registration-details-rate {
+  color: #b45309 !important;
+}
+
+.registration-details-loading,
+.registration-details-empty {
+  color: #374151 !important;
+}
+
+.registration-details-label {
+  color: #374151 !important;
+  font-weight: 600;
+}
+
+.registration-details-summary-dollar {
+  color: #166534 !important;
+}
+
+.registration-details-summary-dinar {
+  color: #1e40af !important;
+}
+
 .registration-details-table {
-  color: #111827;
+  color: #111827 !important;
 }
 
 .registration-details-table thead th {
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 .registration-details-row {
   background-color: #ffffff;
-  color: #111827;
 }
 
 .registration-details-row:nth-child(even) {
   background-color: #f3f4f6;
 }
 
+.registration-details-cell {
+  color: #111827 !important;
+}
+
+.registration-details-dollar {
+  color: #166534 !important;
+}
+
+.registration-details-dinar {
+  color: #1e40af !important;
+}
+
+.registration-details-note {
+  color: #1f2937 !important;
+}
+
+:global(.dark) .registration-details-title {
+  color: #f9fafb !important;
+}
+
+:global(.dark) .registration-details-subtitle {
+  color: #e5e7eb !important;
+}
+
+:global(.dark) .registration-details-rate {
+  color: #fcd34d !important;
+}
+
+:global(.dark) .registration-details-loading,
+:global(.dark) .registration-details-empty {
+  color: #d1d5db !important;
+}
+
+:global(.dark) .registration-details-label {
+  color: #d1d5db !important;
+}
+
+:global(.dark) .registration-details-summary-dollar {
+  color: #86efac !important;
+}
+
+:global(.dark) .registration-details-summary-dinar {
+  color: #93c5fd !important;
+}
+
 :global(.dark) .registration-details-table {
-  color: #f3f4f6;
+  color: #f3f4f6 !important;
 }
 
 :global(.dark) .registration-details-row {
   background-color: #111827;
-  color: #f3f4f6;
 }
 
 :global(.dark) .registration-details-row:nth-child(even) {
   background-color: #1f2937;
+}
+
+:global(.dark) .registration-details-cell {
+  color: #f3f4f6 !important;
+}
+
+:global(.dark) .registration-details-dollar {
+  color: #86efac !important;
+}
+
+:global(.dark) .registration-details-dinar {
+  color: #93c5fd !important;
+}
+
+:global(.dark) .registration-details-note {
+  color: #e5e7eb !important;
 }
 </style>

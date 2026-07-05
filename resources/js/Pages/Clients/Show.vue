@@ -838,6 +838,12 @@ function openModalShowDriving(form={}) {
   formDriving.value.noteDriving= `انا كارزان سرهنك محمد (وكيل عام سلام جلال ايوب ) (مدير مفوض شركة سلام جلال ايوب) قد خولت السيد(name) بقيادة السيارة ذات المواصفات ادناه له حق  نقلها  من محافظة الى محافظة اخرى ودفع الرسوم والغرمات بيع وشراء القبض الثمن.`;
   showModalShowDriving.value = true;
 }
+function carHasRegistrationWorkflow(car) {
+  if (car?.has_registration_workflow !== undefined) {
+    return Boolean(car.has_registration_workflow);
+  }
+  return [1, 2, 4].includes(Number(car?.car_have_expenses));
+}
 function openModalCarRegistrationDetails(car) {
   registrationCarId.value = car.id;
   showModalCarRegistrationDetails.value = true;
@@ -2304,7 +2310,7 @@ async function savePaymentDescription(payment) {
                         <document />
                       </button>
                       <div
-                        v-if="item.data.carexpenses_count > 0"
+                        v-if="carHasRegistrationWorkflow(item.data)"
                         class="inline-flex flex-col items-center mx-1 align-top"
                       >
                         <button
