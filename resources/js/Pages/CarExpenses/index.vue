@@ -6,6 +6,7 @@ import ModalAddCarExpenses from "@/Components/ModalAddCarExpenses.vue";
 import ModalArchiveCar from "@/Components/ModalArchiveCar.vue";
 import ModalArchiveCarBack from "@/Components/ModalArchiveCarBack.vue";
 import ModalArchiveCarLink from "@/Components/ModalArchiveCarLink.vue";
+import ModalUnlinkCar from "@/Components/ModalUnlinkCar.vue";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
 
 
@@ -33,6 +34,7 @@ let showModalAddCarExpenses =  ref(false);
 let showModalArchiveCarExpenses=  ref(false);
 let showModalArchiveCarExpensesBack=  ref(false);
 let showModalArchiveCarLink = ref(false);
+let showModalUnlinkCar = ref(false);
 let showModalDelCar = ref(false);
 
 let car = ref([]);
@@ -65,6 +67,7 @@ const isSubmittingExpense = ref(false);
 const isArchivingAll = ref(false);
 const isLinkingCar = ref(false);
 const isUnlinkingCar = ref(false);
+const unlinkCarPending = ref(null);
 let resetData = ref(false);
 let user_id = 0;
 let page = 1;
@@ -293,14 +296,49 @@ function swiptab(tab){
   refresh()
 }
 
-function confirmUnlinkArchiveCar(car) {
+function getCarLinkExchangeRate(car) {
+  if (car?.link_exchange_rate) {
+    const preset = Number(car.link_exchange_rate);
+    if (Number.isInteger(preset) && String(preset).length === 6) {
+      return preset;
+    }
+  }
+
+  const expenses = car?.carexpenses ?? [];
+  for (const expense of expenses) {
+    const note = expense?.note ?? '';
+    const matches = note.match(/\[مربوط@(\d+)\]/g) ?? [];
+    for (const tag of matches) {
+      const rateMatch = tag.match(/(\d+)/);
+      const rate = Number(rateMatch?.[1] ?? 0);
+      if (Number.isInteger(rate) && String(rate).length === 6) {
+        return rate;
+      }
+    }
+  }
+
+  return null;
+}
+
+function openModalUnlinkCar(form = {}) {
+  formData.value = form;
+  unlinkCarPending.value = form;
+  showModalUnlinkCar.value = true;
+}
+
+function requestUnlinkArchiveCar(car, exchangeRate = null) {
   if (isUnlinkingCar.value) return;
-  const confirmed = window.confirm('هل تريد إلغاء ربط هذه السيارة؟ سيتم التراجع عن المصاريف المضافة للليست وإعادتها للأرشيف.');
-  if (!confirmed) return;
 
   isUnlinkingCar.value = true;
-  axios.post('/api/confirmUnlinkArchiveCar', { id: car.id })
+  const payload = { id: car.id };
+  if (exchangeRate != null) {
+    payload.exchangeRate = exchangeRate;
+  }
+
+  axios.post('/api/confirmUnlinkArchiveCar', payload)
     .then(() => {
+      showModalUnlinkCar.value = false;
+      unlinkCarPending.value = null;
       toast.success('تم إلغاء الربط بنجاح', {
         timeout: 3000,
         position: 'bottom-right',
@@ -310,11 +348,40 @@ function confirmUnlinkArchiveCar(car) {
     })
     .catch((error) => {
       const msg = error?.response?.data?.error || 'فشل إلغاء الربط';
+      const needsRate = Boolean(error?.response?.data?.needs_exchange_rate);
+
+      if (needsRate) {
+        openModalUnlinkCar({
+          ...car,
+          link_exchange_rate: getCarLinkExchangeRate(car),
+        });
+        return;
+      }
+
       toast.error(msg, { timeout: 4000, position: 'bottom-right', rtl: true });
     })
     .finally(() => {
       isUnlinkingCar.value = false;
     });
+}
+
+function confirmUnlinkArchiveCar(car) {
+  if (isUnlinkingCar.value) return;
+  const confirmed = window.confirm('هل تريد إلغاء ربط هذه السيارة؟ سيتم التراجع عن المصاريف المضافة للليست وإعادتها للأرشيف.');
+  if (!confirmed) return;
+
+  const knownRate = getCarLinkExchangeRate(car);
+  if (!knownRate) {
+    openModalUnlinkCar(car);
+    return;
+  }
+
+  requestUnlinkArchiveCar(car);
+}
+
+function confirmUnlinkWithRate(payload) {
+  const car = unlinkCarPending.value ?? { id: payload.id };
+  requestUnlinkArchiveCar(car, payload.exchangeRate);
 }
 
 
@@ -368,6 +435,15 @@ function confirmDelCarFav(V) {
         <template #header>
           </template>
     </ModalArchiveCarLink>
+    <ModalUnlinkCar
+            :formData="formData"
+            :show="showModalUnlinkCar ? true : false"
+            @a="confirmUnlinkWithRate($event)"
+            @close="showModalUnlinkCar = false; unlinkCarPending = null"
+            >
+        <template #header>
+          </template>
+    </ModalUnlinkCar>
     <ModalAddCarExpensesFav
             :formData="formData"
             :show="showModalAddCarExpensesFav ? true : false"

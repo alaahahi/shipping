@@ -661,11 +661,19 @@ class CarExpensesController extends Controller
 
         $rateByCarId = CarExpenses::whereIn('car_id', $carIds)
             ->where('note', 'like', '%[مربوط@%')
+            ->orderBy('id')
             ->get(['car_id', 'note'])
-            ->mapWithKeys(function ($expense) {
+            ->reduce(function ($acc, $expense) {
+                if (isset($acc[$expense->car_id])) {
+                    return $acc;
+                }
                 $rate = self::parseLinkExchangeRate(collect([$expense]));
-                return $rate ? [$expense->car_id => $rate] : [];
-            });
+                if ($rate) {
+                    $acc[$expense->car_id] = $rate;
+                }
+
+                return $acc;
+            }, []);
 
         return $collection->map(function ($car) use ($rateByCarId) {
             $car->link_exchange_rate = $rateByCarId[$car->id] ?? null;
