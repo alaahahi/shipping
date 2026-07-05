@@ -92,6 +92,7 @@ const moreMenuActive = computed(() => {
                 المحاسبة
               </NavLink>
               <NavLink
+                v-if="$page.props.auth.user.type_id==1"
                 :href="route('annual_information')"
                 :active="route().current('annual_information')"
                 class="shrink-0"
@@ -99,13 +100,13 @@ const moreMenuActive = computed(() => {
                 معلومات السنوية
               </NavLink>
               <NavLink
+                v-if="$page.props.auth.user.type_id==1"
                 :href="route('car_expenses')"
                 :active="route().current('car_expenses')"
                 class="shrink-0"
               >
                 تسجيل السيارات
               </NavLink>
-              <NavMoreMenu :active="moreMenuActive" />
 
               <NavLink
                 v-if="$page.props.auth.user && ($page.props.auth.user.type_id==8||$page.props.auth.user.type_id==10)"
@@ -163,6 +164,7 @@ const moreMenuActive = computed(() => {
               >
                 🚢 حسابات الشركات
               </NavLink>
+              <NavMoreMenu :active="moreMenuActive" />
               </div>
               <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                 <NavLink
@@ -411,12 +413,14 @@ const moreMenuActive = computed(() => {
               <ResponsiveNavLink
                 :href="route('annual_information')"
                 :active="route().current('annual_information')"
+                v-if="$page.props.auth.user.type_id==1"
               >
               معلومات السنوية
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('car_expenses')"
                 :active="route().current('car_expenses')"
+                v-if="$page.props.auth.user.type_id==1"
               >
               تسجيل السيارات
               </ResponsiveNavLink>
