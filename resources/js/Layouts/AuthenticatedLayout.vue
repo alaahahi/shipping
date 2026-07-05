@@ -1,7 +1,5 @@
 <script setup>
 import { ref, computed } from "vue";
-import { usePage } from "@inertiajs/inertia-vue3";
-import { isAdminOrOwner } from "@/utils/navAccess";
 import Dropdown from "@/Components/Dropdown.vue";
 import DropdownLink from "@/Components/DropdownLink.vue";
 import NavLink from "@/Components/NavLink.vue";
@@ -14,8 +12,6 @@ import SyncStatusBadge from '@/Components/SyncStatusBadge.vue';
 import OnlineUsersIndicator from '@/Components/OnlineUsersIndicator.vue';
 
 const showingNavigationDropdown = ref(false);
-const page = usePage();
-const hasFullNavAccess = computed(() => isAdminOrOwner(page.props.auth?.user));
 const i18n = useI18n();
 const locale = ref("en"); // Default locale
 const switchLocale = (locale) => {
@@ -96,7 +92,7 @@ const moreMenuActive = computed(() => {
                 المحاسبة
               </NavLink>
               <NavLink
-                v-if="hasFullNavAccess"
+                v-if="$page.props.auth.user.type_id==1"
                 :href="route('annual_information')"
                 :active="route().current('annual_information')"
                 class="shrink-0"
@@ -104,7 +100,7 @@ const moreMenuActive = computed(() => {
                 معلومات السنوية
               </NavLink>
               <NavLink
-                v-if="hasFullNavAccess"
+                v-if="$page.props.auth.user.type_id==1"
                 :href="route('car_expenses')"
                 :active="route().current('car_expenses')"
                 class="shrink-0"
@@ -417,14 +413,14 @@ const moreMenuActive = computed(() => {
               <ResponsiveNavLink
                 :href="route('annual_information')"
                 :active="route().current('annual_information')"
-                v-if="hasFullNavAccess"
+                v-if="$page.props.auth.user.type_id==1"
               >
               معلومات السنوية
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('car_expenses')"
                 :active="route().current('car_expenses')"
-                v-if="hasFullNavAccess"
+                v-if="$page.props.auth.user.type_id==1"
               >
               تسجيل السيارات
               </ResponsiveNavLink>
@@ -438,35 +434,35 @@ const moreMenuActive = computed(() => {
               <ResponsiveNavLink
                 :href="route('dashboard.statistics')"
                 :active="route().current('dashboard.statistics')"
-                v-if="hasFullNavAccess"
+                v-if="$page.props.auth.user.type_id==1"
               >
               احصائات
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('sync.monitor')"
                 :active="route().current('sync.monitor')"
-                v-if="hasFullNavAccess"
+                v-if="$page.props.auth.user.type_id==1"
               >
               🔄 المزامنة
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('car_check')"
                 :active="route().current('car_check')"
-                v-if="hasFullNavAccess"
+                v-if="$page.props.auth.user.type_id==1"
               >
               مراجعة السيارات
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('online_contracts')"
                 :active="route().current('online_contracts')"
-                v-if="hasFullNavAccess"
+                v-if="$page.props.auth.user.type_id==1"
               >
               {{ $t("online_contracts") }}
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('damage_report.index')"
                 :active="route().current('damage_report.index')"
-                v-if="hasFullNavAccess"
+                v-if="$page.props.auth.user.type_id==1"
               >
               تقارير الضرر
               </ResponsiveNavLink>
@@ -501,7 +497,7 @@ const moreMenuActive = computed(() => {
               <ResponsiveNavLink
                 :href="route('hunter')"
                 :active="route().current('hunter')"
-                v-if="hasFullNavAccess"
+                v-if="$page.props.auth.user.type_id==1"
               >
               عاطل 
               </ResponsiveNavLink>
