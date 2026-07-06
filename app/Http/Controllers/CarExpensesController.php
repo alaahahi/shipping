@@ -413,8 +413,16 @@ class CarExpensesController extends Controller
 
                 $isLinked = self::isCarLinked($car);
                 $linkRate = self::parseLinkExchangeRate($car->carexpenses);
-                $oldContribution = ($isLinked && $linkRate && str_contains($expense->note ?? '', '[مربوط]'))
-                    ? self::calcExpenseLinkDollars($expense, $linkRate)
+                $hasTaggedNotes = $car->carexpenses->contains(function ($expense) {
+                    return str_contains($expense->note ?? '', '[مربوط]');
+                });
+                $forceUntaggedLinked = $isLinked && !$hasTaggedNotes;
+                $oldContribution = ($isLinked && $linkRate)
+                    ? self::calcExpenseLinkDollars(
+                        $expense,
+                        $linkRate,
+                        self::expenseCountsAsLinked($expense, $forceUntaggedLinked)
+                    )
                     : 0;
 
                 unset($parsed['items'][$lineIndex]);
@@ -433,8 +441,8 @@ class CarExpensesController extends Controller
                 }
 
                 if ($isLinked && $linkRate && $oldContribution > 0) {
-                    $newContribution = $expense->exists && str_contains($expense->note ?? '', '[مربوط]')
-                        ? self::calcExpenseLinkDollars($expense, $linkRate)
+                    $newContribution = $expense->exists
+                        ? self::calcExpenseLinkDollars($expense, $linkRate, true)
                         : 0;
                     $delta = $newContribution - $oldContribution;
                     if ($delta !== 0) {
@@ -447,6 +455,122 @@ class CarExpensesController extends Controller
             });
         } catch (ModelNotFoundException $e) {
             return response()->json(['error' => 'البند غير موجود'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    public function addRegistrationExpenseLine(Request $request)
+    {
+        try {
+            return DB::transaction(function () use ($request) {
+                $owner_id = Auth::user()->owner_id;
+                $car = Car::with('carexpenses')->findOrFail($request->car_id);
+
+                if ((int) $car->owner_id !== (int) $owner_id) {
+                    return response()->json(['error' => 'غير مصرح'], 403);
+                }
+
+                if (!self::isCarInRegistrationWorkflow($car)) {
+                    return response()->json(['error' => 'السيارة ليست ضمن تسجيل المصاريف'], 422);
+                }
+
+                $currency = $request->currency === 'dollar' ? 'dollar' : 'dinar';
+                $amount = (float) ($request->amount ?? 0);
+                if ($amount <= 0) {
+                    return response()->json(['error' => 'المبلغ مطلوب'], 422);
+                }
+
+                $itemType = $request->item_type === 'registration' ? 'registration' : 'repair';
+                $itemNote = trim((string) ($request->item_note ?? ''));
+                $createNew = (bool) $request->create_new;
+
+                $isLinked = self::isCarLinked($car);
+                $linkRate = self::parseLinkExchangeRate($car->carexpenses);
+                $hasTaggedNotes = $car->carexpenses->contains(function ($expense) {
+                    return str_contains($expense->note ?? '', '[مربوط]');
+                });
+                $forceUntaggedLinked = $isLinked && !$hasTaggedNotes;
+
+                $linePart = self::formatRegistrationLineItem($itemType, $currency, $amount, $itemNote);
+                $oldContribution = 0;
+
+                if ($createNew || $car->carexpenses->isEmpty()) {
+                    $linkSuffix = '';
+                    if ($isLinked) {
+                        $linkSuffix = $linkRate ? ' [مربوط]' : '';
+                    }
+
+                    $note = trim($linePart . $linkSuffix);
+                    $expense = CarExpenses::create([
+                        'user_id' => Auth::id(),
+                        'owner_id' => $owner_id,
+                        'car_id' => $car->id,
+                        'created' => Carbon::now()->format('Y-m-d'),
+                        'note' => $note,
+                        'amount_dollar' => $currency === 'dollar' ? $amount : 0,
+                        'amount_dinar' => $currency === 'dinar' ? $amount : 0,
+                    ]);
+
+                    if ($isLinked && $linkRate) {
+                        $oldContribution = 0;
+                        $newContribution = self::calcExpenseLinkDollars($expense, $linkRate, true);
+                        if ($newContribution !== 0) {
+                            $desc = 'إضافة مصروف تسجيل السيارة ' . $car->car_type . ' ' . $car->vin;
+                            $this->applyLinkedExpenseDelta($car->fresh(), $newContribution, $desc);
+                        }
+                    }
+
+                    return response()->json(['ok' => true, 'expense_id' => $expense->id], 200);
+                }
+
+                $expense = $request->filled('expense_id')
+                    ? $car->carexpenses->firstWhere('id', (int) $request->expense_id)
+                    : $car->carexpenses->sortByDesc('id')->first();
+
+                if (!$expense) {
+                    return response()->json(['error' => 'دفعة التسجيل غير موجودة'], 422);
+                }
+
+                if ($isLinked && $linkRate) {
+                    $oldContribution = self::calcExpenseLinkDollars(
+                        $expense,
+                        $linkRate,
+                        self::expenseCountsAsLinked($expense, $forceUntaggedLinked)
+                    );
+                }
+
+                $parsed = self::parseRegistrationNote($expense->note ?? '');
+                $newItem = self::parseRegistrationNotePart($linePart);
+                $newItem['raw'] = $linePart;
+                $parsed['items'][] = $newItem;
+                $remainingItems = array_values(array_map(function ($item, $index) {
+                    $item['index'] = $index;
+
+                    return $item;
+                }, $parsed['items'], array_keys($parsed['items'])));
+
+                $amounts = self::sumLineItemAmounts($remainingItems);
+                $expense->update([
+                    'note' => self::rebuildRegistrationNote($parsed['user_prefix'], $remainingItems, $parsed['link_suffix']),
+                    'amount_dollar' => $amounts['dollar'],
+                    'amount_dinar' => $amounts['dinar'],
+                ]);
+                $expense->refresh();
+
+                if ($isLinked && $linkRate) {
+                    $newContribution = self::calcExpenseLinkDollars($expense, $linkRate, true);
+                    $delta = $newContribution - $oldContribution;
+                    if ($delta !== 0) {
+                        $desc = 'إضافة بند تسجيل السيارة ' . $car->car_type . ' ' . $car->vin;
+                        $this->applyLinkedExpenseDelta($car->fresh(), $delta, $desc);
+                    }
+                }
+
+                return response()->json(['ok' => true, 'expense_id' => $expense->id], 200);
+            });
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'السيارة غير موجودة'], 404);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
@@ -885,6 +1009,28 @@ class CarExpensesController extends Controller
             'dollar' => $dollar,
             'dinar' => $dinar,
         ];
+    }
+
+    public static function formatRegistrationLineItem(
+        string $type,
+        string $currency,
+        float $amount,
+        string $detail = ''
+    ): string {
+        $formatted = number_format((int) round($amount), 0, '.', ',');
+
+        if ($type === 'registration') {
+            return $currency === 'dollar'
+                ? "تسجيل {$formatted}$"
+                : "تسجيل {$formatted} د";
+        }
+
+        $label = $currency === 'dollar' ? "{$formatted}$" : "{$formatted} د";
+        if ($detail !== '') {
+            $label .= " ({$detail})";
+        }
+
+        return "تصليح {$label}";
     }
 
     public static function rebuildRegistrationNote(string $userPrefix, array $items, string $linkSuffix = ''): string

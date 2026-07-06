@@ -18,6 +18,15 @@ const saving = ref(false);
 const details = ref(null);
 const editingRate = ref(false);
 const rateInput = ref('');
+const showAddForm = ref(false);
+const addForm = ref({
+  currency: 'dinar',
+  amount: '',
+  item_note: '',
+  item_type: 'repair',
+  expense_id: null,
+  create_new: false,
+});
 
 function formatNumber(n) {
   return new Intl.NumberFormat('en-US').format(Number(n) || 0);
@@ -30,9 +39,28 @@ function isSixDigitRate(value) {
 
 const isRateInputValid = computed(() => isSixDigitRate(rateInput.value));
 
+function resetAddForm() {
+  addForm.value = {
+    currency: 'dinar',
+    amount: '',
+    item_note: '',
+    item_type: 'repair',
+    expense_id: details.value?.expenses?.length
+      ? details.value.expenses[details.value.expenses.length - 1].id
+      : null,
+    create_new: false,
+  };
+}
+
+function refreshAfterChange() {
+  emit('updated');
+  setTimeout(() => window.location.reload(), 400);
+}
+
 watch(() => props.show, (visible) => {
   if (visible && props.carId) {
     editingRate.value = false;
+    showAddForm.value = false;
     rateInput.value = '';
     loadDetails();
   } else {
@@ -50,6 +78,7 @@ async function loadDetails() {
     if (details.value?.link_exchange_rate) {
       rateInput.value = String(Math.trunc(details.value.link_exchange_rate));
     }
+    resetAddForm();
   } catch (error) {
     console.error(error);
     details.value = null;
@@ -86,8 +115,7 @@ async function saveExchangeRate() {
     });
     toast.success('تم تحديث سعر الصرف', { timeout: 2500, position: 'bottom-right', rtl: true });
     editingRate.value = false;
-    await loadDetails();
-    emit('updated');
+    refreshAfterChange();
   } catch (error) {
     toast.error(error?.response?.data?.error || 'تعذر تحديث سعر الصرف', {
       timeout: 3000,
@@ -110,8 +138,7 @@ async function deleteLineItem(expense, lineIndex) {
       line_index: lineIndex,
     });
     toast.success('تم حذف البند', { timeout: 2500, position: 'bottom-right', rtl: true });
-    await loadDetails();
-    emit('updated');
+    refreshAfterChange();
   } catch (error) {
     toast.error(error?.response?.data?.error || 'تعذر حذف البند', {
       timeout: 3000,
@@ -127,6 +154,50 @@ function itemTypeLabel(type) {
   if (type === 'registration') return 'تسجيل';
   if (type === 'repair') return 'تصليح';
   return 'بند';
+}
+
+function openAddForm(expenseId = null) {
+  resetAddForm();
+  if (expenseId) {
+    addForm.value.expense_id = expenseId;
+    addForm.value.create_new = false;
+  }
+  showAddForm.value = true;
+}
+
+function parseAddAmount() {
+  const n = Number(addForm.value.amount);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+const canSubmitAdd = computed(() => parseAddAmount() > 0);
+
+async function submitAddExpense() {
+  if (!canSubmitAdd.value || !details.value?.car?.id || !details.value?.can_edit) return;
+
+  saving.value = true;
+  try {
+    await axios.post('/api/addRegistrationExpenseLine', {
+      car_id: details.value.car.id,
+      expense_id: addForm.value.create_new ? null : addForm.value.expense_id,
+      create_new: addForm.value.create_new,
+      currency: addForm.value.currency,
+      amount: parseAddAmount(),
+      item_type: addForm.value.item_type,
+      item_note: addForm.value.item_note?.trim() || '',
+    });
+    toast.success('تمت إضافة المصروف', { timeout: 2500, position: 'bottom-right', rtl: true });
+    showAddForm.value = false;
+    refreshAfterChange();
+  } catch (error) {
+    toast.error(error?.response?.data?.error || 'تعذر إضافة المصروف', {
+      timeout: 3000,
+      position: 'bottom-right',
+      rtl: true,
+    });
+  } finally {
+    saving.value = false;
+  }
 }
 </script>
 
@@ -201,6 +272,84 @@ function itemTypeLabel(type) {
                 </div>
               </div>
 
+              <div v-if="details.can_edit" class="add-expense-panel mb-4 rounded-lg border border-emerald-300 dark:border-emerald-700 overflow-hidden">
+                <button
+                  type="button"
+                  class="add-expense-toggle w-full px-3 py-2 text-sm font-bold"
+                  :disabled="saving"
+                  @click="showAddForm ? (showAddForm = false) : openAddForm()"
+                >
+                  {{ showAddForm ? 'إخفاء نموذج الإضافة' : '+ إضافة مصروف' }}
+                </button>
+
+                <div v-if="showAddForm" class="add-expense-form px-3 py-3 border-t border-emerald-200 dark:border-emerald-800">
+                  <div class="grid grid-cols-2 gap-2 mb-2">
+                    <label class="add-form-field">
+                      <span class="registration-details-label text-xs">العملة</span>
+                      <select v-model="addForm.currency" class="add-form-input">
+                        <option value="dinar">دينار</option>
+                        <option value="dollar">دولار</option>
+                      </select>
+                    </label>
+                    <label class="add-form-field">
+                      <span class="registration-details-label text-xs">النوع</span>
+                      <select v-model="addForm.item_type" class="add-form-input">
+                        <option value="repair">تصليح</option>
+                        <option value="registration">تسجيل</option>
+                      </select>
+                    </label>
+                  </div>
+                  <label class="add-form-field block mb-2">
+                    <span class="registration-details-label text-xs">المبلغ</span>
+                    <input
+                      v-model="addForm.amount"
+                      type="number"
+                      min="1"
+                      step="any"
+                      class="add-form-input w-full"
+                      placeholder="0"
+                    />
+                  </label>
+                  <label class="add-form-field block mb-2">
+                    <span class="registration-details-label text-xs">ملاحظة (اختياري)</span>
+                    <input
+                      v-model="addForm.item_note"
+                      type="text"
+                      class="add-form-input w-full"
+                      placeholder="مثال: بنزين"
+                    />
+                  </label>
+                  <label v-if="details.expenses?.length > 1" class="add-form-field block mb-2">
+                    <span class="registration-details-label text-xs">إضافة إلى دفعة</span>
+                    <select
+                      v-model="addForm.expense_id"
+                      class="add-form-input w-full"
+                      :disabled="addForm.create_new"
+                    >
+                      <option
+                        v-for="exp in details.expenses"
+                        :key="exp.id"
+                        :value="exp.id"
+                      >
+                        {{ exp.created }} — {{ formatNumber(exp.amount_dinar) }} د
+                      </option>
+                    </select>
+                  </label>
+                  <label class="add-form-check flex items-center gap-2 mb-3 text-sm">
+                    <input v-model="addForm.create_new" type="checkbox" class="rounded" />
+                    <span class="registration-details-label">دفعة جديدة (سجل منفصل)</span>
+                  </label>
+                  <button
+                    type="button"
+                    class="add-expense-submit w-full"
+                    :disabled="!canSubmitAdd || saving"
+                    @click="submitAddExpense"
+                  >
+                    حفظ المصروف
+                  </button>
+                </div>
+              </div>
+
               <div
                 v-for="expense in details.expenses"
                 :key="expense.id"
@@ -245,6 +394,16 @@ function itemTypeLabel(type) {
                     {{ expense.note }}
                   </li>
                 </ul>
+                <div v-if="details.can_edit" class="px-3 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                  <button
+                    type="button"
+                    class="expense-block-add-btn text-xs font-semibold"
+                    :disabled="saving"
+                    @click="openAddForm(expense.id)"
+                  >
+                    + إضافة بند لهذه الدفعة
+                  </button>
+                </div>
               </div>
 
               <div class="text-center mt-4">
@@ -401,6 +560,48 @@ function itemTypeLabel(type) {
   cursor: not-allowed;
 }
 
+.add-expense-toggle {
+  background: #ecfdf5;
+  color: #047857 !important;
+  text-align: center;
+}
+
+.add-expense-form {
+  background: #f8fafc;
+}
+
+.add-form-input {
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #111827 !important;
+  background: #fff;
+}
+
+.add-expense-submit {
+  height: 38px;
+  border-radius: 6px;
+  background: #059669;
+  color: #fff !important;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.add-expense-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.expense-block-add-btn {
+  color: #1d4ed8 !important;
+}
+
+.expense-block-add-btn:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
 .rate-edit-btn,
 .rate-save-btn,
 .rate-cancel-btn {
@@ -510,6 +711,21 @@ function itemTypeLabel(type) {
 }
 
 :global(.dark) .rate-edit-input {
+  background: #030712;
+  border-color: #4b5563;
+  color: #f9fafb !important;
+}
+
+:global(.dark) .add-expense-toggle {
+  background: #064e3b;
+  color: #6ee7b7 !important;
+}
+
+:global(.dark) .add-expense-form {
+  background: #0f172a;
+}
+
+:global(.dark) .add-form-input {
   background: #030712;
   border-color: #4b5563;
   color: #f9fafb !important;

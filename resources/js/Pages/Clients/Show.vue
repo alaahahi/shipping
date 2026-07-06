@@ -1377,6 +1377,7 @@ async function savePaymentDescription(payment) {
       :show="showModalCarRegistrationDetails"
       :car-id="registrationCarId"
       @close="showModalCarRegistrationDetails = false; registrationCarId = null"
+      @updated="getResults()"
     />
     <ModalEditCars
       :formData="formData"
