@@ -94,9 +94,8 @@ function resetAddForm() {
 watch(() => addForm.value.item_type, (type) => {
   if (type === 'contract') {
     addForm.value.currency = 'dinar';
-    if (!addForm.value.amount || Number(addForm.value.amount) <= 0) {
-      addForm.value.amount = String(CONTRACT_DEFAULT_AMOUNT);
-    }
+    addForm.value.item_note = '';
+    addForm.value.amount = String(CONTRACT_DEFAULT_AMOUNT);
   }
 });
 

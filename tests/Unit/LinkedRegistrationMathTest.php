@@ -94,4 +94,47 @@ class LinkedRegistrationMathTest extends TestCase
 
         $this->assertSame(1888, CarExpensesController::resolveStoredLinkedUsd($car));
     }
+
+    public function test_parse_contract_note_part(): void
+    {
+        $parsed = CarExpensesController::parseRegistrationNotePart('عقد 200,000 د');
+
+        $this->assertSame('contract', $parsed['type']);
+        $this->assertSame('dinar', $parsed['currency']);
+        $this->assertSame(200000.0, $parsed['amount']);
+    }
+
+    public function test_format_contract_line_item(): void
+    {
+        $line = CarExpensesController::formatRegistrationLineItem('contract', 'dinar', 200000);
+
+        $this->assertSame('عقد 200,000 د', $line);
+    }
+
+    public function test_car_linked_via_db_meta_without_note_tag(): void
+    {
+        $car = new Car([
+            'car_have_expenses' => CarExpensesController::CAR_HAVE_EXPENSES_LINKED,
+            'registration_exchange_rate' => 153000,
+            'registration_linked_usd' => 1888,
+            'registration_pre_expenses' => 3112,
+            'registration_pre_expenses_s' => 2912,
+        ]);
+
+        $car->setRelation('carexpenses', collect([
+            new CarExpenses([
+                'amount_dinar' => 2890000,
+                'amount_dollar' => 0,
+                'note' => 'تسجيل 2,890,000 د',
+            ]),
+        ]));
+
+        $this->assertTrue(CarExpensesController::isCarLinked($car));
+        $linked = CarExpensesController::resolveLinkedRegistrationExpenses($car);
+        $this->assertCount(1, $linked);
+        $this->assertSame(
+            1888,
+            CarExpensesController::computeLinkedRegistrationTotal($linked, 153000)
+        );
+    }
 }
