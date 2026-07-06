@@ -350,21 +350,6 @@ class CarExpensesController extends Controller
         $inWorkflow = self::isCarInRegistrationWorkflow($car);
         $expenses = $inWorkflow ? $car->carexpenses : collect();
 
-        if ($inWorkflow && self::isCarLinked($car)) {
-            $linkRate = self::resolveLinkRateForCar($car);
-            if ($linkRate) {
-                $this->normalizeRegistrationExpenseAmounts($car);
-                $this->reconcileLinkedRegistrationToCar(
-                    $car,
-                    $linkRate,
-                    'تصحيح مزامنة ربط التسجيل ' . $car->car_type . ' ' . $car->vin
-                );
-                $car->refresh();
-                $car->load('carexpenses');
-                $expenses = $car->carexpenses;
-            }
-        }
-
         $totalDollar = $expenses->sum('amount_dollar');
         $totalDinar = $expenses->sum('amount_dinar');
 
@@ -396,7 +381,7 @@ class CarExpensesController extends Controller
             'total_dollar' => $totalDollar,
             'total_dinar' => $totalDinar,
             'has_registration' => $inWorkflow && $expenses->isNotEmpty(),
-            'link_exchange_rate' => $inWorkflow ? self::parseLinkExchangeRate($expenses) : null,
+            'link_exchange_rate' => $inWorkflow ? self::resolveLinkRateForCar($car) : null,
             'is_linked' => self::isCarLinked($car),
             'can_edit' => $inWorkflow,
         ], 200);
@@ -572,6 +557,9 @@ class CarExpensesController extends Controller
                 }
 
                 $this->normalizeRegistrationExpenseAmounts($car);
+                $car->load('carexpenses');
+
+                $storedLinkedUsd = self::parseLinkedUsdFromNotes($car->carexpenses);
 
                 $isFirst = true;
                 foreach ($car->carexpenses as $expense) {
@@ -580,7 +568,7 @@ class CarExpensesController extends Controller
                     }
                     $parsed = self::parseRegistrationNote($expense->note ?? '');
                     $linkSuffix = $isFirst
-                        ? self::buildLinkTagSuffix($newRate)
+                        ? self::buildLinkTagSuffix($newRate, $storedLinkedUsd)
                         : ' [مربوط]';
                     $isFirst = false;
                     $expense->update([
@@ -757,7 +745,7 @@ class CarExpensesController extends Controller
         $rates = [];
 
         foreach ($expenses as $expense) {
-            if (preg_match_all('/\[مربوط@(\d+)\]/u', $expense->note ?? '', $matches)) {
+            if (preg_match_all('/\[مربوط@(\d+)(?:\|\d+)?\]/u', $expense->note ?? '', $matches)) {
                 foreach ($matches[1] as $rawRate) {
                     $rate = (float) $rawRate;
                     if (self::isValidLinkExchangeRate($rate)) {
@@ -1115,14 +1103,14 @@ class CarExpensesController extends Controller
         }
 
         $hasRateTag = $car->carexpenses->contains(function ($expense) {
-            return preg_match('/\[مربوط@\d+\]/u', $expense->note ?? '');
+            return preg_match('/\[مربوط@\d+(?:\|\d+)?\]/u', $expense->note ?? '');
         });
 
         $isFirstRate = !$hasRateTag;
 
         foreach ($car->carexpenses as $expense) {
             if (str_contains($expense->note ?? '', '[مربوط]')) {
-                if (preg_match('/\[مربوط@\d+\]/u', $expense->note ?? '')) {
+                if (preg_match('/\[مربوط@\d+(?:\|\d+)?\]/u', $expense->note ?? '')) {
                     $isFirstRate = false;
                 }
                 continue;
