@@ -23,6 +23,7 @@ use App\Http\Controllers\CarExpensesController;
 use App\Http\Controllers\CarContractController;
 use App\Http\Controllers\CompanyTreasuryController;
 use App\Http\Controllers\CarDamageReportController;
+use App\Http\Controllers\ExternalCarController;
 use App\Http\Controllers\SyncMonitorController;
 use App\Http\Controllers\LicenseController;
 use App\Http\Controllers\AdminLicenseController;
@@ -421,6 +422,11 @@ Route::middleware('auth')->group(function () {
     Route::get('getIndexDamageReport',[CarDamageReportController::class, 'getIndex'])->name('getIndexDamageReport');
     Route::get('makeDamageReportPdf',[CarDamageReportController::class, 'makeDamageReportPdf'])->name('makeDamageReportPdf');
     Route::post('deleteDamageReport',[CarDamageReportController::class, 'delete'])->name('deleteDamageReport');
+
+    Route::post('storeExternalCar', [ExternalCarController::class, 'store'])->name('storeExternalCar');
+    Route::post('updateExternalCar', [ExternalCarController::class, 'update'])->name('updateExternalCar');
+    Route::get('getIndexExternalCars', [ExternalCarController::class, 'getIndex'])->name('getIndexExternalCars');
+    Route::post('deleteExternalCar', [ExternalCarController::class, 'delete'])->name('deleteExternalCar');
 
     // Car History APIs
     Route::get('car/{carId}/history', [CarHistoryController::class, 'getHistory'])->name('car.history.api');

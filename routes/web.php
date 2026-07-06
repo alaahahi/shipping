@@ -18,6 +18,7 @@ use App\Http\Controllers\CarContractController;
 use App\Http\Controllers\CompanyTreasuryController;
 use App\Http\Controllers\CarDamageReportController;
 use App\Http\Controllers\HunterController;
+use App\Http\Controllers\ExternalCarController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\LogViewerController;
@@ -245,6 +246,7 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
 
     Route::get('annual_information',[AnnualController::class, 'index'])->name('annual_information');
     Route::get('hunter',[HunterController::class, 'index'])->name('hunter');
+    Route::get('external-cars', [ExternalCarController::class, 'index'])->name('external_cars');
 
     Route::get('wallet',[AccountingController::class, 'wallet'])->name("wallet");
 

@@ -21,11 +21,12 @@ const allItems = [
     { href: () => route('car_check'), label: 'مراجعة السيارات', name: 'car_check' },
     { href: () => route('damage_report.index'), label: 'تقارير الضرر', name: 'damage_report.index' },
     { href: () => route('hunter'), label: 'عاطل', name: 'hunter' },
+    { href: () => route('external_cars'), label: 'السيارات الخارجية', name: 'external_cars' },
     { href: () => route('systemSettings'), label: 'إعدادات النظام', name: 'systemSettings' },
     { href: () => route('logViewer'), label: '📋 لوغ الأخطاء', name: 'logViewer' },
 ];
 
-const adminOnlyNames = ['dashboard.statistics', 'sync.monitor', 'online_contracts', 'car_check', 'damage_report.index', 'hunter'];
+const adminOnlyNames = ['dashboard.statistics', 'sync.monitor', 'online_contracts', 'car_check', 'damage_report.index', 'hunter', 'external_cars'];
 
 const items = computed(() => {
     const list = hasFullAccess.value

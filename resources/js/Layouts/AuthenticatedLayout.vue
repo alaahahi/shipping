@@ -31,6 +31,7 @@ const moreMenuActive = computed(() => {
     'car_check',
     'damage_report.index',
     'hunter',
+    'external_cars',
     'systemSettings',
     'logViewer',
   ].some((name) => route().current(name));
@@ -504,6 +505,13 @@ const moreMenuActive = computed(() => {
                 v-if="hasFullNavAccess"
               >
               عاطل 
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
+                :href="route('external_cars')"
+                :active="route().current('external_cars')"
+                v-if="hasFullNavAccess"
+              >
+              السيارات الخارجية
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 :href="route('systemSettings')"
