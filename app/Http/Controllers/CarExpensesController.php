@@ -240,11 +240,12 @@ class CarExpensesController extends Controller
 
             $preLinkExpenses = (int) ($car->expenses ?? 0);
             $preLinkExpensesS = (int) ($car->expenses_s ?? 0);
+            $syncSalesExpenses = ($preLinkExpensesS === 0 || $preLinkExpensesS === $preLinkExpenses);
 
             $oldTotal = (int) ($car->total ?? 0);
             $oldTotalS = (int) ($car->total_s ?? 0);
             $newExpenses = $preLinkExpenses + $expenseToAdd;
-            $newExpensesS = $preLinkExpensesS + $expenseToAdd;
+            $newExpensesS = $syncSalesExpenses ? ($preLinkExpensesS + $expenseToAdd) : $preLinkExpensesS;
 
             $dolar_price_input = $car->dolar_price ?? 1;
             $car_calc_rate = $dolar_price_input;
@@ -282,7 +283,7 @@ class CarExpensesController extends Controller
                 + ($car->land_shipping_s ?? 0)
             );
 
-            $desc = 'ربط مصاريف السيارة ' . $car->car_type . ' ' . $car->vin;
+            $desc = 'مصروف تسجيل + ' . $expenseToAdd . '$ — ' . $car->car_type . ' ' . $car->vin;
 
             if ($newTotal > $oldTotal) {
                 $this->accountingController->decreaseWallet(
@@ -294,7 +295,7 @@ class CarExpensesController extends Controller
                 );
             }
 
-            if ($newTotalS > $oldTotalS) {
+            if ($syncSalesExpenses && $newTotalS > $oldTotalS) {
                 $this->accountingController->increaseWallet(
                     ($newTotalS - $oldTotalS),
                     $desc,
@@ -304,15 +305,10 @@ class CarExpensesController extends Controller
                 );
             }
 
-            $isFirstLinkedExpense = true;
             foreach ($unlinkedExpenses as $expense) {
                 $baseNote = self::stripLinkTagsFromNote($expense->note ?? '');
-                $linkSuffix = $isFirstLinkedExpense
-                    ? self::buildLinkTag($exchangeRate, $preLinkExpenses)
-                    : ' [مربوط]';
-                $isFirstLinkedExpense = false;
                 $expense->update([
-                    'note' => trim($baseNote . $linkSuffix),
+                    'note' => trim($baseNote . ' [مربوط]'),
                 ]);
             }
 
@@ -323,6 +319,10 @@ class CarExpensesController extends Controller
                 'total_s' => $newTotalS,
                 'profit' => $newTotalS - $newTotal,
                 'car_have_expenses' => self::CAR_HAVE_EXPENSES_LINKED,
+                'registration_exchange_rate' => (int) $exchangeRate,
+                'registration_pre_expenses' => $preLinkExpenses,
+                'registration_pre_expenses_s' => $preLinkExpensesS,
+                'registration_sync_sales' => $syncSalesExpenses,
             ]);
 
             return response()->json([
@@ -345,7 +345,9 @@ class CarExpensesController extends Controller
         $inWorkflow = self::isCarInRegistrationWorkflow($car);
 
         if ($inWorkflow && self::isCarLinked($car)) {
-            $linkRate = self::parseLinkExchangeRate($car->carexpenses);
+            $this->migrateCarLinkMetaFromNotes($car);
+            $car->refresh();
+            $linkRate = self::resolveCarLinkExchangeRate($car);
             if ($linkRate && $this->linkedCarNeedsHeal($car, $linkRate)) {
                 DB::transaction(function () use ($car, $linkRate) {
                     $fresh = Car::with('carexpenses')->findOrFail($car->id);
@@ -377,13 +379,16 @@ class CarExpensesController extends Controller
             return $row;
         });
 
-        $linkRate = $inWorkflow ? self::parseLinkExchangeRate($car->carexpenses) : null;
+        $linkRate = $inWorkflow ? self::resolveCarLinkExchangeRate($car) : null;
         $linkedUsdTotal = null;
+        $linkedPortionInCar = null;
         if ($linkRate && self::isCarLinked($car)) {
             $linkedUsdTotal = self::computeLinkedRegistrationTotal(
                 self::resolveLinkedRegistrationExpenses($car),
                 $linkRate
             );
+            $preLink = self::resolvePreLinkExpensesBase($car, $linkRate);
+            $linkedPortionInCar = max(0, (int) ($car->expenses ?? 0) - $preLink);
         }
 
         return response()->json([
@@ -393,6 +398,8 @@ class CarExpensesController extends Controller
                 'vin' => $car->vin,
                 'car_number' => $car->car_number,
                 'car_have_expenses' => $car->car_have_expenses,
+                'expenses' => (int) ($car->expenses ?? 0),
+                'expenses_s' => (int) ($car->expenses_s ?? 0),
             ],
             'expenses' => $expensesPayload,
             'total_dollar' => $totalDollar,
@@ -400,8 +407,10 @@ class CarExpensesController extends Controller
             'has_registration' => $inWorkflow && $expenses->isNotEmpty(),
             'link_exchange_rate' => $linkRate,
             'linked_usd_total' => $linkedUsdTotal,
+            'linked_portion_in_car' => $linkedPortionInCar,
             'is_linked' => self::isCarLinked($car),
             'can_edit' => $inWorkflow,
+            'registration_sync_sales' => (bool) $car->registration_sync_sales,
         ], 200);
     }
 
@@ -575,13 +584,15 @@ class CarExpensesController extends Controller
                 }
 
                 if ($isLinked) {
+                    $car->update(['registration_exchange_rate' => (int) $newRate]);
                     $this->syncLinkedCarExpenses(
                         $car->fresh()->load('carexpenses'),
                         $newRate,
-                        'تعديل سعر صرف ربط السيارة ' . $car->car_type . ' ' . $car->vin
+                        'مصروف تسجيل + تعديل سعر صرف — ' . $car->car_type . ' ' . $car->vin
                     );
                 } elseif ($linkedExpenses->isNotEmpty()) {
-                    $this->rewriteLinkTagsOnly($car->fresh()->load('carexpenses'), $newRate);
+                    $car->update(['registration_exchange_rate' => (int) $newRate]);
+                    $this->normalizeLinkedExpenseMarkers($car->fresh()->load('carexpenses'));
                 }
 
                 return response()->json([
@@ -644,11 +655,23 @@ class CarExpensesController extends Controller
                     return response()->json(['error' => 'لا توجد مصاريف صالحة لإلغاء الربط'], 422);
                 }
 
-                $preLinkExpenses = self::parsePreLinkBaseFromNotes($linkedForTotal);
+                $preLinkExpenses = $car->registration_pre_expenses;
+                if ($preLinkExpenses === null) {
+                    $preLinkExpenses = self::parsePreLinkBaseFromNotes($linkedForTotal);
+                }
                 $newExpenses = $preLinkExpenses !== null
-                    ? $preLinkExpenses
+                    ? (int) $preLinkExpenses
                     : (int) ($car->expenses ?? 0) - $expenseToRemove;
-                $newExpensesS = (int) ($car->expenses_s ?? 0) - $expenseToRemove;
+
+                $syncSales = (bool) $car->registration_sync_sales;
+                if ($syncSales) {
+                    $preLinkExpensesS = $car->registration_pre_expenses_s;
+                    $newExpensesS = $preLinkExpensesS !== null
+                        ? (int) $preLinkExpensesS
+                        : (int) ($car->expenses_s ?? 0) - $expenseToRemove;
+                } else {
+                    $newExpensesS = (int) ($car->registration_pre_expenses_s ?? $car->expenses_s ?? 0);
+                }
 
                 if ($newExpenses < 0 || $newExpensesS < 0) {
                     return response()->json(['error' => 'تعذر التراجع: المصاريف المسجلة أقل من المربوطة'], 422);
@@ -705,7 +728,7 @@ class CarExpensesController extends Controller
                     );
                 }
 
-                if ($oldTotalS > $newTotalS) {
+                if ($syncSales && $oldTotalS > $newTotalS) {
                     $this->accountingController->decreaseWallet(
                         ($oldTotalS - $newTotalS),
                         $desc,
@@ -727,6 +750,10 @@ class CarExpensesController extends Controller
                     'total_s' => $newTotalS,
                     'profit' => $newTotalS - $newTotal,
                     'car_have_expenses' => 2,
+                    'registration_exchange_rate' => null,
+                    'registration_pre_expenses' => null,
+                    'registration_pre_expenses_s' => null,
+                    'registration_sync_sales' => false,
                 ]);
 
                 return response()->json([
@@ -741,7 +768,28 @@ class CarExpensesController extends Controller
         }
     }
 
-    public static function parseLinkExchangeRate($expenses): ?float
+    public static function resolveCarLinkExchangeRate(Car $car): ?float
+    {
+        if ($car->registration_exchange_rate) {
+            return (float) $car->registration_exchange_rate;
+        }
+
+        return self::parseLinkExchangeRateFromNotes($car->carexpenses ?? collect());
+    }
+
+    public static function parseLinkExchangeRate($expenses, ?Car $car = null): ?float
+    {
+        if ($car) {
+            $rate = self::resolveCarLinkExchangeRate($car);
+            if ($rate) {
+                return $rate;
+            }
+        }
+
+        return self::parseLinkExchangeRateFromNotes($expenses);
+    }
+
+    public static function parseLinkExchangeRateFromNotes($expenses): ?float
     {
         foreach ($expenses as $expense) {
             $note = $expense->note ?? '';
@@ -766,6 +814,44 @@ class CarExpensesController extends Controller
         }
 
         return null;
+    }
+
+    private function migrateCarLinkMetaFromNotes(Car $car): void
+    {
+        if ($car->registration_exchange_rate || !self::isCarLinked($car)) {
+            return;
+        }
+
+        $car->loadMissing('carexpenses');
+        $rate = self::parseLinkExchangeRateFromNotes($car->carexpenses);
+        if (!$rate) {
+            return;
+        }
+
+        $linkedExpenses = self::resolveLinkedRegistrationExpenses($car);
+        $expected = self::computeLinkedRegistrationTotal($linkedExpenses, $rate);
+        $preExp = self::parsePreLinkBaseFromNotes($linkedExpenses);
+        if ($preExp === null) {
+            $legacyUsd = self::parseLegacyLinkedUsdFromNotes($linkedExpenses);
+            $preExp = $legacyUsd !== null
+                ? max(0, (int) ($car->expenses ?? 0) - $legacyUsd)
+                : max(0, (int) ($car->expenses ?? 0) - $expected);
+        }
+
+        $preExpS = (int) ($car->expenses_s ?? 0);
+        $syncSales = ($preExpS === 0 || $preExpS === $preExp || $preExpS === ($preExp + $expected));
+        if ($syncSales) {
+            $preExpS = max(0, $preExpS - $expected);
+        }
+
+        $car->update([
+            'registration_exchange_rate' => (int) $rate,
+            'registration_pre_expenses' => $preExp,
+            'registration_pre_expenses_s' => $preExpS,
+            'registration_sync_sales' => $syncSales,
+        ]);
+
+        $this->normalizeLinkedExpenseMarkers($car->fresh()->load('carexpenses'));
     }
 
     public static function parsePreLinkBaseFromNotes($expenses): ?int
@@ -813,6 +899,10 @@ class CarExpensesController extends Controller
 
     public static function resolvePreLinkExpensesBase(Car $car, float $linkRate): int
     {
+        if ($car->registration_pre_expenses !== null) {
+            return (int) $car->registration_pre_expenses;
+        }
+
         $linkedExpenses = self::resolveLinkedRegistrationExpenses($car);
         $fromTag = self::parsePreLinkBaseFromNotes($linkedExpenses);
         if ($fromTag !== null) {
@@ -831,9 +921,12 @@ class CarExpensesController extends Controller
 
     public static function resolveUnlinkExchangeRate(Car $car, $linkedExpenses, ?float $manualRate = null): array
     {
-        $storedRate = self::parseLinkExchangeRate($linkedExpenses);
+        $storedRate = self::resolveCarLinkExchangeRate($car);
         if (!$storedRate) {
-            $storedRate = self::parseLinkExchangeRate($car->carexpenses);
+            $storedRate = self::parseLinkExchangeRateFromNotes($linkedExpenses);
+        }
+        if (!$storedRate) {
+            $storedRate = self::parseLinkExchangeRateFromNotes($car->carexpenses);
         }
 
         if ($storedRate && $storedRate > 0) {
@@ -1123,7 +1216,7 @@ class CarExpensesController extends Controller
 
     public static function resolveLinkRateForCar(Car $car, ?float $fallbackRate = null): ?float
     {
-        $rate = self::parseLinkExchangeRate($car->carexpenses);
+        $rate = self::resolveCarLinkExchangeRate($car);
 
         if ($rate) {
             return $rate;
@@ -1136,37 +1229,22 @@ class CarExpensesController extends Controller
         return null;
     }
 
-    private function rewriteLinkTagsOnExpenses(Car $car, float $linkRate, ?int $preLinkBase): void
+    private function normalizeLinkedExpenseMarkers(Car $car): void
     {
-        $linkedExpenses = $car->carexpenses
-            ->filter(fn ($expense) => str_contains($expense->note ?? '', '[مربوط]'))
-            ->sortBy('id');
-        $firstLinkedId = $linkedExpenses->first()?->id;
-
         foreach ($car->carexpenses as $expense) {
             if (!str_contains($expense->note ?? '', '[مربوط]')) {
                 continue;
             }
 
             $parsed = self::parseRegistrationNote($expense->note ?? '');
-            $linkSuffix = ($expense->id === $firstLinkedId)
-                ? self::buildLinkTag($linkRate, $preLinkBase)
-                : ' [مربوط]';
-
             $expense->update([
                 'note' => self::rebuildRegistrationNote(
                     $parsed['user_prefix'],
                     $parsed['items'],
-                    $linkSuffix
+                    ' [مربوط]'
                 ),
             ]);
         }
-    }
-
-    private function rewriteLinkTagsOnly(Car $car, float $linkRate): void
-    {
-        $preLink = self::parsePreLinkBaseFromNotes($car->carexpenses);
-        $this->rewriteLinkTagsOnExpenses($car, $linkRate, $preLink);
     }
 
     private function linkedCarNeedsHeal(Car $car, float $linkRate): bool
@@ -1177,12 +1255,12 @@ class CarExpensesController extends Controller
             return true;
         }
 
-        $preLink = self::parsePreLinkBaseFromNotes($linkedExpenses);
-        if ($preLink === null) {
+        if ($car->registration_pre_expenses === null) {
             return true;
         }
 
         $expected = self::computeLinkedRegistrationTotal($linkedExpenses, $linkRate);
+        $preLink = (int) $car->registration_pre_expenses;
 
         return ($preLink + $expected) !== (int) ($car->expenses ?? 0);
     }
@@ -1202,12 +1280,17 @@ class CarExpensesController extends Controller
         $preLink = self::resolvePreLinkExpensesBase($car, $linkRate);
         $target = $preLink + $expected;
         $delta = $target - (int) ($car->expenses ?? 0);
+        $syncSales = (bool) $car->registration_sync_sales;
 
         if ($delta !== 0) {
-            $this->applyLinkedExpenseDelta($car->fresh(), $delta, $desc);
+            $this->applyLinkedExpenseDelta($car->fresh(), $delta, $desc, $syncSales);
         }
 
-        $this->rewriteLinkTagsOnExpenses($car->fresh()->load('carexpenses'), $linkRate, $preLink);
+        if (!$car->registration_exchange_rate) {
+            $car->update(['registration_exchange_rate' => (int) $linkRate]);
+        }
+
+        $this->normalizeLinkedExpenseMarkers($car->fresh()->load('carexpenses'));
     }
 
     public static function expenseCountsAsLinked($expense, bool $forceUntaggedLinked = false): bool
@@ -1219,14 +1302,16 @@ class CarExpensesController extends Controller
         return $forceUntaggedLinked;
     }
 
-    private function applyLinkedExpenseDelta(Car $car, int $expenseDelta, string $desc): void
+    private function applyLinkedExpenseDelta(Car $car, int $expenseDelta, string $desc, bool $syncSales = true): void
     {
         if ($expenseDelta === 0) {
             return;
         }
 
         $newExpenses = (int) (($car->expenses ?? 0) + $expenseDelta);
-        $newExpensesS = (int) (($car->expenses_s ?? 0) + $expenseDelta);
+        $newExpensesS = $syncSales
+            ? (int) (($car->expenses_s ?? 0) + $expenseDelta)
+            : (int) ($car->expenses_s ?? 0);
 
         if ($newExpenses < 0 || $newExpensesS < 0) {
             throw new \Exception('تعذر التعديل: المصاريف المسجلة أقل من المربوطة');
@@ -1277,7 +1362,7 @@ class CarExpensesController extends Controller
                     'App\Models\Car'
                 );
             }
-            if ($newTotalS > $oldTotalS) {
+            if ($syncSales && $newTotalS > $oldTotalS) {
                 $this->accountingController->increaseWallet(
                     ($newTotalS - $oldTotalS),
                     $desc,
@@ -1296,7 +1381,7 @@ class CarExpensesController extends Controller
                     'App\Models\Car'
                 );
             }
-            if ($oldTotalS > $newTotalS) {
+            if ($syncSales && $oldTotalS > $newTotalS) {
                 $this->accountingController->decreaseWallet(
                     ($oldTotalS - $newTotalS),
                     $desc,
@@ -1379,21 +1464,32 @@ class CarExpensesController extends Controller
             return $cars;
         }
 
-        $rateByCarId = CarExpenses::whereIn('car_id', $carIds)
-            ->where('note', 'like', '%[مربوط@%')
-            ->orderBy('id')
-            ->get(['car_id', 'note'])
-            ->reduce(function ($acc, $expense) {
-                if (isset($acc[$expense->car_id])) {
-                    return $acc;
-                }
-                $rate = self::parseLinkExchangeRate(collect([$expense]));
-                if ($rate) {
-                    $acc[$expense->car_id] = $rate;
-                }
+        $rateByCarId = Car::whereIn('id', $carIds)
+            ->whereNotNull('registration_exchange_rate')
+            ->pluck('registration_exchange_rate', 'id')
+            ->map(fn ($rate) => (float) $rate)
+            ->all();
 
-                return $acc;
-            }, []);
+        $missingIds = $carIds->filter(fn ($id) => !isset($rateByCarId[$id]))->values();
+        if ($missingIds->isNotEmpty()) {
+            $fromNotes = CarExpenses::whereIn('car_id', $missingIds)
+                ->where('note', 'like', '%[مربوط@%')
+                ->orderBy('id')
+                ->get(['car_id', 'note'])
+                ->reduce(function ($acc, $expense) {
+                    if (isset($acc[$expense->car_id])) {
+                        return $acc;
+                    }
+                    $rate = self::parseLinkExchangeRateFromNotes(collect([$expense]));
+                    if ($rate) {
+                        $acc[$expense->car_id] = $rate;
+                    }
+
+                    return $acc;
+                }, []);
+
+            $rateByCarId = $rateByCarId + $fromNotes;
+        }
 
         return $collection->map(function ($car) use ($rateByCarId) {
             $carId = is_array($car) ? ($car['id'] ?? null) : ($car->id ?? null);

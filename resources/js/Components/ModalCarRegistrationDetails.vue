@@ -39,6 +39,42 @@ function isSixDigitRate(value) {
 
 const isRateInputValid = computed(() => isSixDigitRate(rateInput.value));
 
+function calcRateForConversion(rate) {
+  const r = Number(rate);
+  if (!r || r <= 0) return null;
+  return r > 9999 ? r / 100 : r;
+}
+
+function computeLinkedUsd(dinar, dollar, rate) {
+  const calc = calcRateForConversion(rate);
+  if (!calc) return null;
+  return Math.trunc(Number(dinar || 0) / calc) + Math.trunc(Number(dollar || 0));
+}
+
+const activeRate = computed(() => {
+  if (editingRate.value && isSixDigitRate(rateInput.value)) {
+    return Math.trunc(Number(rateInput.value));
+  }
+  return details.value?.link_exchange_rate
+    ? Math.trunc(Number(details.value.link_exchange_rate))
+    : null;
+});
+
+const convertedUsdTotal = computed(() => {
+  if (!details.value || !activeRate.value) return null;
+  return computeLinkedUsd(
+    details.value.total_dinar,
+    details.value.total_dollar,
+    activeRate.value,
+  );
+});
+
+const conversionMatchesCar = computed(() => {
+  if (convertedUsdTotal.value === null || !details.value?.is_linked) return null;
+  const inCar = details.value.linked_portion_in_car ?? details.value.linked_usd_total;
+  return inCar === convertedUsdTotal.value;
+});
+
 function resetAddForm() {
   addForm.value = {
     currency: 'dinar',
@@ -113,6 +149,10 @@ async function saveExchangeRate() {
         ? Math.trunc(Number(details.value.link_exchange_rate))
         : null,
     });
+    const savedRate = Math.trunc(Number(rateInput.value));
+    if (details.value) {
+      details.value.link_exchange_rate = savedRate;
+    }
     toast.success('تم تحديث سعر الصرف', { timeout: 2500, position: 'bottom-right', rtl: true });
     editingRate.value = false;
     await loadDetails();
@@ -214,22 +254,32 @@ async function submitAddExpense() {
             </p>
 
             <div v-if="details?.link_exchange_rate || details?.is_linked" class="px-4 mt-2">
-              <div v-if="!editingRate" class="registration-details-rate-row flex items-center justify-center gap-2 flex-wrap">
-                <p v-if="details?.link_exchange_rate" class="registration-details-rate text-sm font-bold">
-                  سعر التحويل عند الربط: {{ formatNumber(details.link_exchange_rate) }}
+              <div v-if="!editingRate" class="registration-details-rate-row flex flex-col items-center gap-1">
+                <div class="flex items-center justify-center gap-2 flex-wrap">
+                  <p v-if="details?.link_exchange_rate" class="registration-details-rate text-sm font-bold">
+                    سعر التحويل: {{ formatNumber(details.link_exchange_rate) }}
+                  </p>
+                  <button
+                    v-if="details?.can_edit && (details?.is_linked || details?.link_exchange_rate)"
+                    type="button"
+                    class="rate-edit-btn"
+                    :disabled="saving"
+                    @click="startEditRate"
+                  >
+                    تعديل
+                  </button>
+                </div>
+                <p v-if="convertedUsdTotal !== null" class="registration-details-conversion text-sm font-bold">
+                  نتيجة التحويل: {{ formatNumber(convertedUsdTotal) }} $
+                  <span v-if="details?.is_linked && details?.linked_portion_in_car != null" class="text-xs font-semibold">
+                    — في مصاريف المشتريات: {{ formatNumber(details.linked_portion_in_car) }} $
+                    <span v-if="conversionMatchesCar === true" class="conversion-ok">✓ متطابق</span>
+                    <span v-else-if="conversionMatchesCar === false" class="conversion-warn">≠ غير متطابق</span>
+                  </span>
                 </p>
-                <button
-                  v-if="details?.can_edit && (details?.is_linked || details?.link_exchange_rate)"
-                  type="button"
-                  class="rate-edit-btn"
-                  :disabled="saving"
-                  @click="startEditRate"
-                >
-                  تعديل
-                </button>
               </div>
               <div v-else class="rate-edit-form flex flex-col items-center gap-2">
-                <label class="registration-details-label text-sm" for="reg_rate_edit">سعر الصرف (6 أرقام)</label>
+                <label class="registration-details-label text-sm" for="reg_rate_edit">سعر الصرف (6 أرقام) — واحد لكل التسجيل</label>
                 <input
                   id="reg_rate_edit"
                   v-model="rateInput"
@@ -241,6 +291,9 @@ async function submitAddExpense() {
                   placeholder="مثال: 153000"
                 />
                 <p v-if="rateInput && !isRateInputValid" class="rate-edit-error">يجب أن يكون 6 أرقام</p>
+                <p v-if="convertedUsdTotal !== null && isRateInputValid" class="registration-details-conversion text-sm font-bold">
+                  نتيجة التحويل: {{ formatNumber(convertedUsdTotal) }} $
+                </p>
                 <div class="flex gap-2">
                   <button
                     type="button"
@@ -484,6 +537,18 @@ async function submitAddExpense() {
   color: #b45309 !important;
 }
 
+.registration-details-conversion {
+  color: #047857 !important;
+}
+
+.conversion-ok {
+  color: #16a34a !important;
+}
+
+.conversion-warn {
+  color: #dc2626 !important;
+}
+
 .registration-details-loading,
 .registration-details-empty {
   color: #374151 !important;
@@ -663,6 +728,10 @@ async function submitAddExpense() {
 
 :global(.dark) .registration-details-rate {
   color: #fcd34d !important;
+}
+
+:global(.dark) .registration-details-conversion {
+  color: #6ee7b7 !important;
 }
 
 :global(.dark) .registration-details-loading,
