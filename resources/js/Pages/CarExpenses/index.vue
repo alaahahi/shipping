@@ -8,6 +8,7 @@ import ModalArchiveCarBack from "@/Components/ModalArchiveCarBack.vue";
 import ModalArchiveCarLink from "@/Components/ModalArchiveCarLink.vue";
 import ModalUnlinkCar from "@/Components/ModalUnlinkCar.vue";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
+import ModalExternalCarForm from "@/Components/ModalExternalCarForm.vue";
 
 
 import { useToast } from "vue-toastification";
@@ -17,6 +18,7 @@ import { useI18n } from "vue-i18n";
 import newContracts from "@/Components/icon/new.vue";
 import show from "@/Components/icon/show.vue";
 import trash from "@/Components/icon/trash.vue";
+import edit from "@/Components/icon/edit.vue";
 import print from "@/Components/icon/print.vue";
 
 import InfiniteLoading from "v3-infinite-loading";
@@ -36,6 +38,8 @@ let showModalArchiveCarExpensesBack=  ref(false);
 let showModalArchiveCarLink = ref(false);
 let showModalUnlinkCar = ref(false);
 let showModalDelCar = ref(false);
+let showModalExternalCarForm = ref(false);
+let externalDeleteMode = ref(false);
 
 let car = ref([]);
 function openwModalAddCarExpensesFav(form={}) {
@@ -56,10 +60,6 @@ function openwshowModalArchiveCarExpensesBack(form={}) {
 function openModalArchiveCarLink(form={}) {
   formData.value = form;
   showModalArchiveCarLink.value = true;
-}
-function openModalDelCar(form={}) {
-  formData.value=form
-  showModalDelCar.value = true;
 }
 
 const listTab = ref('work');
@@ -83,8 +83,11 @@ function carHaveExpensesParam() {
 const isWorkTab = computed(() => listTab.value === 'work');
 const isArchiveTab = computed(() => listTab.value === 'archive');
 const isLinkedTab = computed(() => listTab.value === 'linked');
+const isExternalTab = computed(() => listTab.value === 'external');
 const expensesTotalDollar = ref(0);
 const expensesTotalDinar = ref(0);
+const externalTotalPaidDollar = ref(0);
+const externalTotalPaidDinar = ref(0);
 
 function formatNumber(n) {
   return new Intl.NumberFormat('en-US').format(Number(n) || 0);
@@ -100,6 +103,32 @@ const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce de
 
 const getResultsCar = async ($state) => {
   try {
+    if (isExternalTab.value) {
+      const response = await axios.get('/api/getIndexExternalCars', {
+        params: {
+          limit: 50,
+          page,
+          q: q || undefined,
+        },
+      });
+
+      const json = response.data;
+      externalTotalPaidDollar.value = Number(json.total_paid_dollar) || 0;
+      externalTotalPaidDinar.value = Number(json.total_paid_dinar) || 0;
+
+      const rows = Array.isArray(json?.data) ? json.data : [];
+      if (rows.length < 50) {
+        car.value.push(...rows);
+        $state.complete();
+      } else {
+        car.value.push(...rows);
+        $state.loaded();
+      }
+
+      page++;
+      return;
+    }
+
     const response = await axios.get(`/getIndexCar`, {
       params: {
         limit: 100,
@@ -292,7 +321,106 @@ function swiptab(tab){
   listTab.value = tab
   expensesTotalDollar.value = 0
   expensesTotalDinar.value = 0
+  externalTotalPaidDollar.value = 0
+  externalTotalPaidDinar.value = 0
   refresh()
+}
+
+function emptyExternalForm() {
+  return {
+    dealer_name: '',
+    car_type: '',
+    year: '',
+    car_color: '',
+    car_number: '',
+    paid_dollar: 0,
+    paid_dinar: 0,
+    note: '',
+    date: getTodayDate(),
+  };
+}
+
+function formatExternalDate(value) {
+  if (!value) return '';
+  return String(value).includes('T') ? String(value).split('T')[0] : String(value);
+}
+
+function openExternalCarForm(row = null) {
+  if (row) {
+    formData.value = {
+      id: row.id,
+      dealer_name: row.dealer_name ?? '',
+      car_type: row.car_type ?? '',
+      year: row.year ?? '',
+      car_color: row.car_color ?? '',
+      car_number: row.car_number ?? '',
+      paid_dollar: row.paid_dollar ?? 0,
+      paid_dinar: row.paid_dinar ?? 0,
+      note: row.note ?? '',
+      date: formatExternalDate(row.date) || getTodayDate(),
+    };
+  } else {
+    formData.value = emptyExternalForm();
+  }
+  showModalExternalCarForm.value = true;
+}
+
+function saveExternalCar(payload) {
+  const url = payload.id ? '/api/updateExternalCar' : '/api/storeExternalCar';
+  axios.post(url, payload)
+    .then(() => {
+      showModalExternalCarForm.value = false;
+      toast.success(payload.id ? 'تم التعديل بنجاح' : 'تمت إضافة السيارة الخارجية', {
+        timeout: 2500,
+        position: 'bottom-right',
+        rtl: true,
+      });
+      refresh();
+    })
+    .catch((error) => {
+      toast.error(error?.response?.data?.error || 'تعذر الحفظ', {
+        timeout: 3000,
+        position: 'bottom-right',
+        rtl: true,
+      });
+    });
+}
+
+function openExternalDeleteModal(row) {
+  externalDeleteMode.value = true;
+  formData.value = { id: row.id };
+  showModalDelCar.value = true;
+}
+
+function openModalDelCar(form={}) {
+  externalDeleteMode.value = false;
+  formData.value=form
+  showModalDelCar.value = true;
+}
+
+function confirmDeleteExternalCar(payload) {
+  axios.post('/api/deleteExternalCar', payload)
+    .then(() => {
+      showModalDelCar.value = false;
+      externalDeleteMode.value = false;
+      toast.success('تم الحذف بنجاح', { timeout: 2500, position: 'bottom-right', rtl: true });
+      refresh();
+    })
+    .catch((error) => {
+      toast.error(error?.response?.data?.error || 'تعذر الحذف', {
+        timeout: 3000,
+        position: 'bottom-right',
+        rtl: true,
+      });
+    });
+}
+
+function handleAddButton() {
+  if (isExternalTab.value) {
+    openExternalCarForm();
+    return;
+  }
+  openwModalAddCarExpensesFav();
 }
 
 function getCarLinkExchangeRate(car) {
@@ -473,15 +601,22 @@ function confirmDelCarFav(V) {
     <ModalDelCar
       :show="showModalDelCar ? true : false"
       :formData="formData"
-      @a="confirmDelCarFav($event)"
-      @close="showModalDelCar = false"
+      @a="externalDeleteMode ? confirmDeleteExternalCar($event) : confirmDelCarFav($event)"
+      @close="showModalDelCar = false; externalDeleteMode = false"
     >
       <template #header>
         <h2 class="mb-5 dark:text-gray-400 text-center">
-          هل متأكد من حذف السيارة ؟
+          {{ externalDeleteMode ? 'هل متأكد من حذف السيارة الخارجية؟' : 'هل متأكد من حذف السيارة ؟' }}
         </h2>
       </template>
     </ModalDelCar>
+
+    <ModalExternalCarForm
+      :show="showModalExternalCarForm"
+      :form-data="formData"
+      @save="saveExternalCar"
+      @close="showModalExternalCarForm = false"
+    />
 
     <AuthenticatedLayout>
         <div class="py-2" v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==7">
@@ -493,7 +628,10 @@ function confirmDelCarFav(V) {
                 <button @click="swiptab('archive')" class="inline-block w-full p-4 border-r border-gray-200 dark:border-gray-700 hover:text-gray-800 hover:bg-gray-50 focus:outline-none dark:hover:bg-gray-700 dark:hover:text-white" :class="listTab === 'archive' ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-semibold' : 'text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800'" >السيارة المكتملة</button>
             </li>
             <li class="w-full">
-                <button @click="swiptab('linked')" class="inline-block w-full p-4 hover:text-gray-800 hover:bg-gray-50 focus:outline-none dark:hover:bg-gray-700 dark:hover:text-white" :class="listTab === 'linked' ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-semibold' : 'text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800'" >السيارات المربوطة</button>
+                <button @click="swiptab('linked')" class="inline-block w-full p-4 border-r border-gray-200 dark:border-gray-700 hover:text-gray-800 hover:bg-gray-50 focus:outline-none dark:hover:bg-gray-700 dark:hover:text-white" :class="listTab === 'linked' ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-semibold' : 'text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800'" >السيارات المربوطة</button>
+            </li>
+            <li class="w-full">
+                <button @click="swiptab('external')" class="inline-block w-full p-4 hover:text-gray-800 hover:bg-gray-50 focus:outline-none dark:hover:bg-gray-700 dark:hover:text-white" :class="listTab === 'external' ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-semibold' : 'text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800'" >السيارات الخارجية</button>
             </li>
      
           </ul>
@@ -563,10 +701,10 @@ function confirmDelCarFav(V) {
                         <div class="text-center">
                             <button
                               type="button"
-                              @click="openwModalAddCarExpensesFav()"
+                              @click="handleAddButton()"
                               style="min-width:150px;"
                               className="px-6 mb-12 mx-2 py-2 font-bold text-white bg-green-500 rounded">
-                              {{ $t('addCar') }} 
+                              {{ isExternalTab ? 'إضافة سيارة خارجية' : $t('addCar') }}
                             </button>
                           </div>
                         <div v-if="isWorkTab" class="text-center">
@@ -617,7 +755,13 @@ function confirmDelCarFav(V) {
                           </button>
                         </div> -->
                         <div>
-                            <select @change="refresh()" v-model="user_id" id="default" class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500">
+                            <select
+                              v-if="!isExternalTab"
+                              @change="refresh()"
+                              v-model="user_id"
+                              id="default"
+                              class="pr-8 bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500"
+                            >
                               <option value="0" disabled> {{ $t("selectCustomer") }}</option>
                               <option value="">{{ $t("allOwners") }}</option>
                               <option v-for="(user, index) in client" :key="index" :value="user.id">{{ user.name }}</option>
@@ -646,6 +790,20 @@ function confirmDelCarFav(V) {
                       </div>
 
                       <div
+                        v-if="isExternalTab"
+                        class="car-expenses-summary flex flex-wrap items-center justify-between gap-3 mt-4 p-3 rounded-lg border"
+                      >
+                        <div class="car-expenses-summary-text text-sm font-bold">
+                          <span class="car-expenses-summary-dollar">مجموع المدفوع دولار: {{ formatNumber(externalTotalPaidDollar) }} $</span>
+                          <span class="car-expenses-summary-sep mx-2">|</span>
+                          <span class="car-expenses-summary-dinar">مجموع المدفوع دينار: {{ formatNumber(externalTotalPaidDinar) }} د</span>
+                        </div>
+                        <p class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                          خارج جدول السيارات — بدون ربط
+                        </p>
+                      </div>
+
+                      <div
                         v-if="isWorkTab"
                         class="car-expenses-summary flex flex-wrap items-center justify-between gap-3 mt-4 p-3 rounded-lg border"
                       >
@@ -667,7 +825,62 @@ function confirmDelCarFav(V) {
                       <div>
                         <div>
                         </div>
-                        <div class="overflow-x-auto shadow-md sm:rounded-lg mt-4 mb-5">
+                        <div class="overflow-x-auto shadow-md sm:rounded-lg mt-4 mb-5" v-if="isExternalTab">
+                        <table class="w-full text-sm text-right text-gray-600 dark:text-gray-200 text-center divide-y divide-gray-200 dark:divide-gray-700">
+                          <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800">
+                            <tr class="bg-amber-600 dark:bg-amber-800 text-white">
+                              <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">التاريخ</th>
+                              <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">التاجر</th>
+                              <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t('car_type') }}</th>
+                              <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t('year') }}</th>
+                              <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t('color') }}</th>
+                              <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t('car_number') }}</th>
+                              <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">مدفوع دولار</th>
+                              <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">مدفوع دينار</th>
+                              <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t('execute') }}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-if="!car?.length">
+                              <td colspan="9" class="car-expenses-empty-msg py-8">
+                                لا توجد سيارات خارجية
+                              </td>
+                            </tr>
+                            <tr
+                              v-for="item in car"
+                              :key="`external-${item.id}`"
+                              class="bg-white border-b dark:bg-gray-900 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                            >
+                              <td class="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ formatExternalDate(item.date) }}</td>
+                              <td class="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ item.dealer_name }}</td>
+                              <td class="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ item.car_type }}</td>
+                              <td class="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ item.year || '-' }}</td>
+                              <td class="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ item.car_color || '-' }}</td>
+                              <td class="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ item.car_number }}</td>
+                              <td class="px-3 py-2 sm:px-4 sm:py-2 text-center car-expenses-cell-dollar font-semibold">{{ formatNumber(item.paid_dollar) }}</td>
+                              <td class="px-3 py-2 sm:px-4 sm:py-2 text-center car-expenses-cell-dinar font-semibold">{{ formatNumber(item.paid_dinar) }}</td>
+                              <td class="px-3 py-2 sm:px-4 sm:py-2 text-center">
+                                <button
+                                  type="button"
+                                  class="px-2 py-1 text-white mx-1 bg-blue-600 rounded"
+                                  @click="openExternalCarForm(item)"
+                                >
+                                  <edit />
+                                </button>
+                                <button
+                                  type="button"
+                                  class="px-2 py-1 text-white mx-1 bg-orange-500 rounded"
+                                  @click="openExternalDeleteModal(item)"
+                                >
+                                  <trash />
+                                </button>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        </div>
+
+                        <div class="overflow-x-auto shadow-md sm:rounded-lg mt-4 mb-5" v-else>
                         <table class="w-full text-sm text-right text-gray-600 dark:text-gray-200 text-center divide-y divide-gray-200 dark:divide-gray-700">
                           <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800">
                             <tr class="bg-emerald-600 dark:bg-emerald-800 text-white">
