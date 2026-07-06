@@ -472,22 +472,33 @@ class CarExpensesController extends Controller
                     return response()->json(['error' => 'يجب أن يكون سعر الصرف 6 أرقام'], 422);
                 }
 
-                $linkedExpenses = $car->carexpenses->filter(function ($expense) {
-                    return str_contains($expense->note ?? '', '[مربوط]');
-                });
+                $isLinked = self::isCarLinked($car);
+                $linkedExpenses = self::resolveLinkedRegistrationExpenses($car);
 
                 if ($linkedExpenses->isEmpty()) {
                     return response()->json(['error' => 'لا يوجد ربط لتعديل سعر الصرف'], 422);
                 }
 
+                $hasTaggedNotes = $car->carexpenses->contains(function ($expense) {
+                    return str_contains($expense->note ?? '', '[مربوط]');
+                });
+                $forceUntaggedLinked = $isLinked && !$hasTaggedNotes;
+
                 $oldRate = self::parseLinkExchangeRate($car->carexpenses);
-                $isLinked = self::isCarLinked($car);
+                if (!$oldRate && $request->filled('previousExchangeRate')) {
+                    $previousRate = (float) $request->previousExchangeRate;
+                    if (self::isValidLinkExchangeRate($previousRate)) {
+                        $oldRate = $previousRate;
+                    }
+                }
+
                 $oldContribution = 0;
                 $newContribution = 0;
 
                 if ($isLinked && $oldRate) {
                     foreach ($linkedExpenses as $expense) {
-                        $oldContribution += self::calcExpenseLinkDollars($expense, $oldRate);
+                        $countsAsLinked = self::expenseCountsAsLinked($expense, $forceUntaggedLinked);
+                        $oldContribution += self::calcExpenseLinkDollars($expense, $oldRate, $countsAsLinked);
                     }
                 }
 
@@ -510,7 +521,8 @@ class CarExpensesController extends Controller
                 if ($isLinked) {
                     foreach ($linkedExpenses as $expense) {
                         $expense->refresh();
-                        $newContribution += self::calcExpenseLinkDollars($expense, $newRate);
+                        $countsAsLinked = self::expenseCountsAsLinked($expense, true);
+                        $newContribution += self::calcExpenseLinkDollars($expense, $newRate, $countsAsLinked);
                     }
                     $delta = $newContribution - $oldContribution;
                     if ($delta !== 0) {
@@ -893,9 +905,9 @@ class CarExpensesController extends Controller
         return trim($note);
     }
 
-    public static function calcExpenseLinkDollars($expense, float $exchangeRate): int
+    public static function calcExpenseLinkDollars($expense, float $exchangeRate, bool $treatAsLinked = false): int
     {
-        if (!str_contains($expense->note ?? '', '[مربوط]')) {
+        if (!$treatAsLinked && !str_contains($expense->note ?? '', '[مربوط]')) {
             return 0;
         }
 
@@ -905,6 +917,34 @@ class CarExpensesController extends Controller
         }
 
         return (int) ((float) ($expense->amount_dollar ?? 0) + (float) ($expense->amount_dinar ?? 0) / $calc_rate);
+    }
+
+    public static function resolveLinkedRegistrationExpenses(Car $car)
+    {
+        $tagged = $car->carexpenses->filter(function ($expense) {
+            return str_contains($expense->note ?? '', '[مربوط]');
+        });
+
+        if ($tagged->isNotEmpty()) {
+            return $tagged;
+        }
+
+        if (self::isCarLinked($car) && $car->carexpenses->isNotEmpty()) {
+            return $car->carexpenses;
+        }
+
+        return $car->carexpenses->filter(function ($expense) {
+            return preg_match('/\[مربوط@/u', $expense->note ?? '');
+        });
+    }
+
+    public static function expenseCountsAsLinked($expense, bool $forceUntaggedLinked = false): bool
+    {
+        if (str_contains($expense->note ?? '', '[مربوط]')) {
+            return true;
+        }
+
+        return $forceUntaggedLinked;
     }
 
     private function applyLinkedExpenseDelta(Car $car, int $expenseDelta, string $desc): void

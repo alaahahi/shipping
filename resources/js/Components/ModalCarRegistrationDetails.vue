@@ -80,6 +80,9 @@ async function saveExchangeRate() {
     await axios.post('/api/updateRegistrationExchangeRate', {
       car_id: details.value.car.id,
       exchangeRate: Math.trunc(Number(rateInput.value)),
+      previousExchangeRate: details.value?.link_exchange_rate
+        ? Math.trunc(Number(details.value.link_exchange_rate))
+        : null,
     });
     toast.success('تم تحديث سعر الصرف', { timeout: 2500, position: 'bottom-right', rtl: true });
     editingRate.value = false;
@@ -144,7 +147,7 @@ function itemTypeLabel(type) {
                   سعر التحويل عند الربط: {{ formatNumber(details.link_exchange_rate) }}
                 </p>
                 <button
-                  v-if="details?.can_edit && details?.is_linked"
+                  v-if="details?.can_edit && (details?.is_linked || details?.link_exchange_rate)"
                   type="button"
                   class="rate-edit-btn"
                   :disabled="saving"
