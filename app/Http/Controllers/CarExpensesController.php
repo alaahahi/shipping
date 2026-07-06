@@ -625,14 +625,16 @@ class CarExpensesController extends Controller
                 $exchangeRate = $rateResolution['rate'];
 
                 $linkedForTotal = self::resolveLinkedRegistrationExpenses($car);
-                $expenseToRemove = self::parseLinkedUsdFromNotes($linkedForTotal)
-                    ?? self::computeLinkedRegistrationTotal($linkedForTotal, $exchangeRate);
+                $expenseToRemove = self::computeLinkedRegistrationTotal($linkedForTotal, $exchangeRate);
 
                 if ($expenseToRemove <= 0) {
                     return response()->json(['error' => 'لا توجد مصاريف صالحة لإلغاء الربط'], 422);
                 }
 
-                $newExpenses = (int) ($car->expenses ?? 0) - $expenseToRemove;
+                $preLinkExpenses = self::parsePreLinkBaseFromNotes($linkedForTotal);
+                $newExpenses = $preLinkExpenses !== null
+                    ? $preLinkExpenses
+                    : (int) ($car->expenses ?? 0) - $expenseToRemove;
                 $newExpensesS = (int) ($car->expenses_s ?? 0) - $expenseToRemove;
 
                 if ($newExpenses < 0 || $newExpensesS < 0) {
@@ -701,7 +703,7 @@ class CarExpensesController extends Controller
                 }
 
                 foreach ($linkedExpenses as $expense) {
-                    $cleanNote = self::stripLinkTags($expense->note ?? '');
+                    $cleanNote = self::stripLinkTagsFromNote($expense->note ?? '');
                     $expense->update(['note' => trim($cleanNote)]);
                 }
 
