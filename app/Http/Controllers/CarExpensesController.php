@@ -731,7 +731,20 @@ class CarExpensesController extends Controller
     public static function parseLinkExchangeRate($expenses): ?float
     {
         foreach ($expenses as $expense) {
-            if (preg_match('/\[مربوط@(\d+)(?:\|\d+)?\]/u', $expense->note ?? '', $m)) {
+            $note = $expense->note ?? '';
+            if (preg_match('/\[مربوط@(\d{6})(?:\|b:\d+)?\]/u', $note, $m)) {
+                $rate = (float) $m[1];
+                if (self::isValidLinkExchangeRate($rate)) {
+                    return $rate;
+                }
+            }
+            if (preg_match('/\[مربوط@(\d{6})\|(\d+)\]/u', $note, $m)) {
+                $rate = (float) $m[1];
+                if (self::isValidLinkExchangeRate($rate)) {
+                    return $rate;
+                }
+            }
+            if (preg_match('/\[مربوط@(\d{6})\]/u', $note, $m)) {
                 $rate = (float) $m[1];
                 if (self::isValidLinkExchangeRate($rate)) {
                     return $rate;
@@ -740,6 +753,67 @@ class CarExpensesController extends Controller
         }
 
         return null;
+    }
+
+    public static function parsePreLinkBaseFromNotes($expenses): ?int
+    {
+        foreach ($expenses as $expense) {
+            if (preg_match('/\[مربوط@\d{6}\|b:(\d+)\]/u', $expense->note ?? '', $matches)) {
+                return (int) $matches[1];
+            }
+        }
+
+        return null;
+    }
+
+    public static function parseLegacyLinkedUsdFromNotes($expenses): ?int
+    {
+        foreach ($expenses as $expense) {
+            $note = $expense->note ?? '';
+            if (preg_match('/\[مربوط@\d{6}\|b:/u', $note)) {
+                continue;
+            }
+            if (preg_match('/\[مربوط@\d{6}\|(\d+)\]/u', $note, $matches)) {
+                return (int) $matches[1];
+            }
+        }
+
+        return null;
+    }
+
+    public static function buildLinkTag(float $rate, ?int $preLinkBase = null): string
+    {
+        $tag = ' [مربوط@' . (int) $rate;
+        if ($preLinkBase !== null) {
+            $tag .= '|b:' . (int) $preLinkBase;
+        }
+
+        return $tag . ']';
+    }
+
+    public static function stripLinkTagsFromNote(string $note): string
+    {
+        $note = preg_replace('/\s*\[مربوط@\d{6}(?:\|(?:b:\d+|\d+))?\]/u', '', $note);
+
+        return trim(str_replace(' [مربوط]', '', $note));
+    }
+
+    public static function resolvePreLinkExpensesBase(Car $car, float $linkRate): int
+    {
+        $linkedExpenses = self::resolveLinkedRegistrationExpenses($car);
+        $fromTag = self::parsePreLinkBaseFromNotes($linkedExpenses);
+        if ($fromTag !== null) {
+            return $fromTag;
+        }
+
+        $legacyUsd = self::parseLegacyLinkedUsdFromNotes($linkedExpenses);
+        if ($legacyUsd !== null) {
+            return max(0, (int) ($car->expenses ?? 0) - $legacyUsd);
+        }
+
+        $expected = self::computeLinkedRegistrationTotal($linkedExpenses, $linkRate);
+
+        return max(0, (int) ($car->expenses ?? 0) - $expected);
     }
 
     public static function resolveUnlinkExchangeRate(Car $car, $linkedExpenses, ?float $manualRate = null): array
@@ -804,13 +878,15 @@ class CarExpensesController extends Controller
     public static function parseRegistrationNote(string $note): array
     {
         $linkSuffix = '';
-        if (preg_match('/\[مربوط@\d+(?:\|\d+)?\]/u', $note, $rateMatch)) {
+        if (preg_match('/\[مربوط@\d{6}(?:\|b:\d+)?\]/u', $note, $rateMatch)) {
             $linkSuffix = ' ' . $rateMatch[0];
+        } elseif (preg_match('/\[مربوط@\d{6}\|\d+\]/u', $note, $legacyMatch)) {
+            $linkSuffix = ' ' . $legacyMatch[0];
         } elseif (str_contains($note, '[مربوط]')) {
             $linkSuffix = ' [مربوط]';
         }
 
-        $baseNote = preg_replace('/\s*\[مربوط@\d+(?:\|\d+)?\]/u', '', $note);
+        $baseNote = preg_replace('/\s*\[مربوط@\d{6}(?:\|(?:b:\d+|\d+))?\]/u', '', $note);
         $baseNote = str_replace(' [مربوط]', '', $baseNote);
         $baseNote = trim($baseNote);
 
@@ -1001,35 +1077,7 @@ class CarExpensesController extends Controller
             $calc_rate = $calc_rate / 100;
         }
 
-        return (int) ($totalDollar + $totalDinar / $calc_rate);
-    }
-
-    public static function buildLinkTagSuffix(float $rate, ?int $linkedUsd = null): string
-    {
-        $tag = ' [مربوط@' . (int) $rate;
-        if ($linkedUsd !== null) {
-            $tag .= '|' . (int) $linkedUsd;
-        }
-
-        return $tag . ']';
-    }
-
-    public static function stripLinkTags(string $note): string
-    {
-        $note = preg_replace('/\s*\[مربوط@\d+(?:\|\d+)?\]/u', '', $note);
-
-        return trim(str_replace(' [مربوط]', '', $note));
-    }
-
-    public static function parseLinkedUsdFromNotes($expenses): ?int
-    {
-        foreach ($expenses as $expense) {
-            if (preg_match('/\[مربوط@\d+\|(\d+)\]/u', $expense->note ?? '', $matches)) {
-                return (int) $matches[1];
-            }
-        }
-
-        return null;
+        return (int) ($totalDinar / $calc_rate) + (int) $totalDollar;
     }
 
     public static function syncExpenseAmountsFromParsedItems(CarExpenses $expense): void
@@ -1075,55 +1123,22 @@ class CarExpensesController extends Controller
         return null;
     }
 
-    private function ensureLinkedExpenseTags(Car $car, float $linkRate): void
+    private function rewriteLinkTagsOnExpenses(Car $car, float $linkRate, ?int $preLinkBase): void
     {
-        if (!self::isCarLinked($car)) {
-            return;
-        }
+        $linkedExpenses = $car->carexpenses
+            ->filter(fn ($expense) => str_contains($expense->note ?? '', '[مربوط]'))
+            ->sortBy('id');
+        $firstLinkedId = $linkedExpenses->first()?->id;
 
-        $hasRateTag = $car->carexpenses->contains(function ($expense) {
-            return preg_match('/\[مربوط@\d+(?:\|\d+)?\]/u', $expense->note ?? '');
-        });
-
-        $isFirstRate = !$hasRateTag;
-
-        foreach ($car->carexpenses as $expense) {
-            if (str_contains($expense->note ?? '', '[مربوط]')) {
-                if (preg_match('/\[مربوط@\d+(?:\|\d+)?\]/u', $expense->note ?? '')) {
-                    $isFirstRate = false;
-                }
-                continue;
-            }
-
-            $parsed = self::parseRegistrationNote($expense->note ?? '');
-            $linkSuffix = $isFirstRate
-                ? self::buildLinkTagSuffix($linkRate)
-                : ' [مربوط]';
-            $isFirstRate = false;
-
-            $expense->update([
-                'note' => self::rebuildRegistrationNote(
-                    $parsed['user_prefix'],
-                    $parsed['items'],
-                    $linkSuffix
-                ),
-            ]);
-        }
-    }
-
-    private function updateLinkedUsdInNotes(Car $car, float $linkRate, int $linkedUsd): void
-    {
-        $isFirst = true;
         foreach ($car->carexpenses as $expense) {
             if (!str_contains($expense->note ?? '', '[مربوط]')) {
                 continue;
             }
 
             $parsed = self::parseRegistrationNote($expense->note ?? '');
-            $linkSuffix = $isFirst
-                ? self::buildLinkTagSuffix($linkRate, $linkedUsd)
+            $linkSuffix = ($expense->id === $firstLinkedId)
+                ? self::buildLinkTag($linkRate, $preLinkBase)
                 : ' [مربوط]';
-            $isFirst = false;
 
             $expense->update([
                 'note' => self::rebuildRegistrationNote(
@@ -1135,35 +1150,33 @@ class CarExpensesController extends Controller
         }
     }
 
-    private function reconcileLinkedRegistrationToCar(Car $car, float $linkRate, string $desc): void
+    private function rewriteLinkTagsOnly(Car $car, float $linkRate): void
+    {
+        $preLink = self::parsePreLinkBaseFromNotes($car->carexpenses);
+        $this->rewriteLinkTagsOnExpenses($car, $linkRate, $preLink);
+    }
+
+    private function syncLinkedCarExpenses(Car $car, float $linkRate, string $desc): void
     {
         if (!self::isCarLinked($car)) {
             return;
         }
 
         $car->load('carexpenses');
-        $this->ensureLinkedExpenseTags($car, $linkRate);
+        $this->normalizeRegistrationExpenseAmounts($car);
         $car->load('carexpenses');
 
-        $expected = self::computeLinkedRegistrationTotal(
-            self::resolveLinkedRegistrationExpenses($car),
-            $linkRate
-        );
-
-        $recordedLinkedUsd = self::parseLinkedUsdFromNotes($car->carexpenses) ?? $expected;
-        $preLinkBase = (int) ($car->expenses ?? 0) - $recordedLinkedUsd;
-        if ($preLinkBase < 0) {
-            $preLinkBase = 0;
-        }
-
-        $targetExpenses = $preLinkBase + $expected;
-        $delta = $targetExpenses - (int) ($car->expenses ?? 0);
+        $linkedExpenses = self::resolveLinkedRegistrationExpenses($car);
+        $expected = self::computeLinkedRegistrationTotal($linkedExpenses, $linkRate);
+        $preLink = self::resolvePreLinkExpensesBase($car, $linkRate);
+        $target = $preLink + $expected;
+        $delta = $target - (int) ($car->expenses ?? 0);
 
         if ($delta !== 0) {
             $this->applyLinkedExpenseDelta($car->fresh(), $delta, $desc);
         }
 
-        $this->updateLinkedUsdInNotes($car->fresh()->load('carexpenses'), $linkRate, $expected);
+        $this->rewriteLinkTagsOnExpenses($car->fresh()->load('carexpenses'), $linkRate, $preLink);
     }
 
     public static function expenseCountsAsLinked($expense, bool $forceUntaggedLinked = false): bool

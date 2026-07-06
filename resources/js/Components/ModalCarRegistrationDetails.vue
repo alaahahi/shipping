@@ -52,9 +52,9 @@ function resetAddForm() {
   };
 }
 
-function refreshAfterChange() {
+async function refreshAfterChange() {
+  await loadDetails();
   emit('updated');
-  setTimeout(() => window.location.reload(), 400);
 }
 
 watch(() => props.show, (visible) => {
@@ -139,7 +139,7 @@ async function deleteLineItem(expense, lineIndex) {
       line_index: lineIndex,
     });
     toast.success('تم حذف البند', { timeout: 2500, position: 'bottom-right', rtl: true });
-    refreshAfterChange();
+    await refreshAfterChange();
   } catch (error) {
     toast.error(error?.response?.data?.error || 'تعذر حذف البند', {
       timeout: 3000,
@@ -189,7 +189,7 @@ async function submitAddExpense() {
     });
     toast.success('تمت إضافة المصروف', { timeout: 2500, position: 'bottom-right', rtl: true });
     showAddForm.value = false;
-    refreshAfterChange();
+    await refreshAfterChange();
   } catch (error) {
     toast.error(error?.response?.data?.error || 'تعذر إضافة المصروف', {
       timeout: 3000,
