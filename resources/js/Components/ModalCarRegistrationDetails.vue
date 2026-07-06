@@ -142,16 +142,19 @@ async function saveExchangeRate() {
 
   saving.value = true;
   try {
-    await axios.post('/api/updateRegistrationExchangeRate', {
+    const response = await axios.post('/api/updateRegistrationExchangeRate', {
       car_id: details.value.car.id,
       exchangeRate: Math.trunc(Number(rateInput.value)),
-      previousExchangeRate: details.value?.link_exchange_rate
-        ? Math.trunc(Number(details.value.link_exchange_rate))
-        : null,
     });
-    const savedRate = Math.trunc(Number(rateInput.value));
+    const data = response.data;
     if (details.value) {
-      details.value.link_exchange_rate = savedRate;
+      details.value.link_exchange_rate = data.link_exchange_rate;
+      details.value.linked_usd_total = data.linked_usd_total;
+      details.value.linked_portion_in_sales = data.linked_portion_in_sales;
+      if (details.value.car && data.car) {
+        details.value.car.expenses = data.car.expenses;
+        details.value.car.expenses_s = data.car.expenses_s;
+      }
     }
     toast.success('تم تحديث سعر الصرف', { timeout: 2500, position: 'bottom-right', rtl: true });
     editingRate.value = false;

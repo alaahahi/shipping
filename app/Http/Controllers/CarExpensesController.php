@@ -569,25 +569,28 @@ class CarExpensesController extends Controller
                 $isLinked = self::isCarLinked($car);
                 $linkedExpenses = self::resolveLinkedRegistrationExpenses($car);
 
-                if ($linkedExpenses->isEmpty() && !$isLinked) {
+                if (!$isLinked && $linkedExpenses->isEmpty()) {
                     return response()->json(['error' => 'لا يوجد ربط لتعديل سعر الصرف'], 422);
                 }
 
-                if ($isLinked) {
-                    $car->update(['registration_exchange_rate' => (int) $newRate]);
-                    $this->syncLinkedCarExpenses(
-                        $car->fresh()->load('carexpenses'),
-                        $newRate,
-                        'مصروف تسجيل + تعديل سعر صرف — ' . $car->car_type . ' ' . $car->vin
-                    );
-                } elseif ($linkedExpenses->isNotEmpty()) {
-                    $car->update(['registration_exchange_rate' => (int) $newRate]);
-                    $this->normalizeLinkedExpenseMarkers($car->fresh()->load('carexpenses'));
-                }
+                $this->syncLinkedCarExpenses(
+                    $car->fresh()->load('carexpenses'),
+                    $newRate,
+                    'مصروف تسجيل + تعديل سعر صرف — ' . $car->car_type . ' ' . $car->vin
+                );
+
+                $car = $car->fresh();
+                $targets = self::computeTargetRegistrationExpenses($car, $newRate);
 
                 return response()->json([
                     'ok' => true,
                     'link_exchange_rate' => $newRate,
+                    'linked_usd_total' => $targets['linked_usd'],
+                    'linked_portion_in_sales' => $targets['linked_usd'],
+                    'car' => [
+                        'expenses' => (int) ($car->expenses ?? 0),
+                        'expenses_s' => (int) ($car->expenses_s ?? 0),
+                    ],
                 ], 200);
             });
         } catch (ModelNotFoundException $e) {
@@ -1237,7 +1240,8 @@ class CarExpensesController extends Controller
 
     private function syncLinkedCarExpenses(Car $car, float $linkRate, string $desc): void
     {
-        if (!self::isCarLinked($car)) {
+        $linkedExpenses = self::resolveLinkedRegistrationExpenses($car);
+        if (!self::isCarLinked($car) && $linkedExpenses->isEmpty()) {
             return;
         }
 
@@ -1246,33 +1250,21 @@ class CarExpensesController extends Controller
         $car->load('carexpenses');
 
         $linkedExpenses = self::resolveLinkedRegistrationExpenses($car);
-        $newLinkedUsd = self::computeLinkedRegistrationTotal($linkedExpenses, $linkRate);
-        $oldLinkedUsd = (int) ($car->registration_linked_usd ?? 0);
+        $targets = self::computeTargetRegistrationExpenses($car, $linkRate, $linkedExpenses);
 
-        $prePurchases = $car->registration_pre_expenses;
-        $preSales = $car->registration_pre_expenses_s;
-        if ($prePurchases === null || $preSales === null) {
-            if ($oldLinkedUsd === 0) {
-                $oldLinkedUsd = $newLinkedUsd;
-            }
-            $prePurchases = $prePurchases ?? max(0, (int) ($car->expenses ?? 0) - $oldLinkedUsd);
-            $preSales = $preSales ?? max(0, (int) ($car->expenses_s ?? 0) - $oldLinkedUsd);
-        } else {
-            $prePurchases = (int) $prePurchases;
-            $preSales = (int) $preSales;
-        }
-
-        $newExpenses = $prePurchases + $newLinkedUsd;
-        $newExpensesS = $preSales + $newLinkedUsd;
-
-        $this->applyAbsoluteLinkedExpenses($car->fresh(), $newExpenses, $newExpensesS, $desc);
+        $this->applyAbsoluteLinkedExpenses(
+            $car->fresh(),
+            $targets['expenses'],
+            $targets['expenses_s'],
+            $desc
+        );
 
         $car->fresh()->update([
             'registration_exchange_rate' => (int) $linkRate,
-            'registration_pre_expenses' => $prePurchases,
-            'registration_pre_expenses_s' => $preSales,
+            'registration_pre_expenses' => $targets['pre_purchases'],
+            'registration_pre_expenses_s' => $targets['pre_sales'],
             'registration_sync_sales' => true,
-            'registration_linked_usd' => $newLinkedUsd,
+            'registration_linked_usd' => $targets['linked_usd'],
         ]);
 
         $this->normalizeLinkedExpenseMarkers($car->fresh()->load('carexpenses'));
@@ -1412,19 +1404,89 @@ class CarExpensesController extends Controller
             return true;
         }
 
-        if ((int) $car->car_have_expenses === 0) {
-            if ($car->relationLoaded('carexpenses')) {
-                return $car->carexpenses->contains(function ($expense) {
-                    return str_contains($expense->note ?? '', '[مربوط]');
-                });
-            }
-
-            return CarExpenses::where('car_id', $car->id)
-                ->where('note', 'like', '%[مربوط]%')
-                ->exists();
+        if ($car->registration_exchange_rate) {
+            return true;
         }
 
-        return false;
+        if ((int) ($car->registration_linked_usd ?? 0) > 0) {
+            return true;
+        }
+
+        if ($car->registration_pre_expenses !== null && self::hasLinkedRegistrationNotes($car)) {
+            return true;
+        }
+
+        return self::hasLinkedRegistrationNotes($car);
+    }
+
+    public static function hasLinkedRegistrationNotes(Car $car): bool
+    {
+        if ($car->relationLoaded('carexpenses')) {
+            return $car->carexpenses->contains(function ($expense) {
+                return str_contains($expense->note ?? '', '[مربوط]');
+            });
+        }
+
+        return CarExpenses::where('car_id', $car->id)
+            ->where('note', 'like', '%[مربوط]%')
+            ->exists();
+    }
+
+    public static function resolveStoredLinkedUsd(Car $car): int
+    {
+        if ($car->registration_linked_usd) {
+            return (int) $car->registration_linked_usd;
+        }
+
+        if ($car->registration_pre_expenses !== null) {
+            return max(0, (int) ($car->expenses ?? 0) - (int) $car->registration_pre_expenses);
+        }
+
+        if ($car->registration_pre_expenses_s !== null) {
+            return max(0, (int) ($car->expenses_s ?? 0) - (int) $car->registration_pre_expenses_s);
+        }
+
+        $rate = self::resolveCarLinkExchangeRate($car);
+        if ($rate) {
+            return self::computeLinkedRegistrationTotal(self::resolveLinkedRegistrationExpenses($car), $rate);
+        }
+
+        return 0;
+    }
+
+    public static function resolveRegistrationPreExpenses(Car $car): array
+    {
+        $storedLinked = self::resolveStoredLinkedUsd($car);
+
+        $prePurchases = $car->registration_pre_expenses;
+        if ($prePurchases === null) {
+            $prePurchases = max(0, (int) ($car->expenses ?? 0) - $storedLinked);
+        }
+
+        $preSales = $car->registration_pre_expenses_s;
+        if ($preSales === null) {
+            $preSales = max(0, (int) ($car->expenses_s ?? 0) - $storedLinked);
+        }
+
+        return [
+            'pre_purchases' => (int) $prePurchases,
+            'pre_sales' => (int) $preSales,
+        ];
+    }
+
+    public static function computeTargetRegistrationExpenses(Car $car, float $linkRate, $linkedExpenses = null): array
+    {
+        $linkedExpenses = $linkedExpenses ?? self::resolveLinkedRegistrationExpenses($car);
+        $linkedUsd = self::computeLinkedRegistrationTotal($linkedExpenses, $linkRate);
+        $pre = self::resolveRegistrationPreExpenses($car);
+
+        return [
+            'pre_purchases' => $pre['pre_purchases'],
+            'pre_sales' => $pre['pre_sales'],
+            'linked_usd' => $linkedUsd,
+            'expenses' => $pre['pre_purchases'] + $linkedUsd,
+            'expenses_s' => $pre['pre_sales'] + $linkedUsd,
+        ];
     }
 
     public static function enrichCarsWithLinkRates($cars)
