@@ -557,32 +557,15 @@ class CarExpensesController extends Controller
                 }
 
                 $this->normalizeRegistrationExpenseAmounts($car);
-                $car->load('carexpenses');
-
-                $storedLinkedUsd = self::parseLinkedUsdFromNotes($car->carexpenses);
-
-                $isFirst = true;
-                foreach ($car->carexpenses as $expense) {
-                    if (!$isLinked && !str_contains($expense->note ?? '', '[مربوط]')) {
-                        continue;
-                    }
-                    $parsed = self::parseRegistrationNote($expense->note ?? '');
-                    $linkSuffix = $isFirst
-                        ? self::buildLinkTagSuffix($newRate, $storedLinkedUsd)
-                        : ' [مربوط]';
-                    $isFirst = false;
-                    $expense->update([
-                        'note' => trim(self::rebuildRegistrationNote(
-                            $parsed['user_prefix'],
-                            $parsed['items'],
-                            $linkSuffix
-                        )),
-                    ]);
-                }
+                $usd = self::parseLinkedUsdFromNotes($car->carexpenses);
+                $this->updateLinkedUsdInNotes($car->fresh()->load('carexpenses'), $newRate, $usd);
 
                 if ($isLinked) {
-                    $desc = 'تعديل سعر صرف ربط السيارة ' . $car->car_type . ' ' . $car->vin;
-                    $this->reconcileLinkedRegistrationToCar($car, $newRate, $desc);
+                    $this->reconcileLinkedRegistrationToCar(
+                        $car->fresh()->load('carexpenses'),
+                        $newRate,
+                        'تعديل سعر صرف ربط السيارة ' . $car->car_type . ' ' . $car->vin
+                    );
                 }
 
                 return response()->json([
@@ -742,25 +725,16 @@ class CarExpensesController extends Controller
 
     public static function parseLinkExchangeRate($expenses): ?float
     {
-        $rates = [];
-
         foreach ($expenses as $expense) {
-            if (preg_match_all('/\[مربوط@(\d+)(?:\|\d+)?\]/u', $expense->note ?? '', $matches)) {
-                foreach ($matches[1] as $rawRate) {
-                    $rate = (float) $rawRate;
-                    if (self::isValidLinkExchangeRate($rate)) {
-                        $rates[] = $rate;
-                    }
+            if (preg_match('/\[مربوط@(\d+)(?:\|\d+)?\]/u', $expense->note ?? '', $m)) {
+                $rate = (float) $m[1];
+                if (self::isValidLinkExchangeRate($rate)) {
+                    return $rate;
                 }
             }
         }
 
-        if (empty($rates)) {
-            return null;
-        }
-
-        // Prefer the first valid 6-digit tag (original link rate on first linked expense).
-        return (float) $rates[0];
+        return null;
     }
 
     public static function resolveUnlinkExchangeRate(Car $car, $linkedExpenses, ?float $manualRate = null): array

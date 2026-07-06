@@ -115,7 +115,8 @@ async function saveExchangeRate() {
     });
     toast.success('تم تحديث سعر الصرف', { timeout: 2500, position: 'bottom-right', rtl: true });
     editingRate.value = false;
-    refreshAfterChange();
+    await loadDetails();
+    emit('updated');
   } catch (error) {
     toast.error(error?.response?.data?.error || 'تعذر تحديث سعر الصرف', {
       timeout: 3000,
