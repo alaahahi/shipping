@@ -303,6 +303,13 @@ function getCarLinkExchangeRate(car) {
     }
   }
 
+  if (car?.registration_exchange_rate) {
+    const stored = Number(car.registration_exchange_rate);
+    if (Number.isInteger(stored) && String(stored).length === 6) {
+      return stored;
+    }
+  }
+
   const expenses = car?.carexpenses ?? [];
   for (const expense of expenses) {
     const note = expense?.note ?? '';

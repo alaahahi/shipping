@@ -28,6 +28,9 @@ const addForm = ref({
   create_new: false,
 });
 
+const CONTRACT_DEFAULT_AMOUNT = 200000;
+const isContractType = computed(() => addForm.value.item_type === 'contract');
+
 function formatNumber(n) {
   return new Intl.NumberFormat('en-US').format(Number(n) || 0);
 }
@@ -87,6 +90,15 @@ function resetAddForm() {
     create_new: false,
   };
 }
+
+watch(() => addForm.value.item_type, (type) => {
+  if (type === 'contract') {
+    addForm.value.currency = 'dinar';
+    if (!addForm.value.amount || Number(addForm.value.amount) <= 0) {
+      addForm.value.amount = String(CONTRACT_DEFAULT_AMOUNT);
+    }
+  }
+});
 
 async function refreshAfterChange() {
   await loadDetails();
@@ -197,7 +209,14 @@ async function deleteLineItem(expense, lineIndex) {
 function itemTypeLabel(type) {
   if (type === 'registration') return 'تسجيل';
   if (type === 'repair') return 'تصليح';
+  if (type === 'contract') return 'عقد';
   return 'بند';
+}
+
+function itemTypeBadgeClass(type) {
+  if (type === 'contract') return 'expense-item-badge expense-item-badge-contract';
+  if (type === 'registration') return 'expense-item-badge expense-item-badge-registration';
+  return 'expense-item-badge';
 }
 
 function openAddForm(expenseId = null) {
@@ -340,42 +359,84 @@ async function submitAddExpense() {
                 </button>
 
                 <div v-if="showAddForm" class="add-expense-form px-3 py-3 border-t border-emerald-200 dark:border-emerald-800">
-                  <div class="grid grid-cols-2 gap-2 mb-2">
-                    <label class="add-form-field">
-                      <span class="registration-details-label text-xs">العملة</span>
-                      <select v-model="addForm.currency" class="add-form-input">
-                        <option value="dinar">دينار</option>
-                        <option value="dollar">دولار</option>
-                      </select>
-                    </label>
-                    <label class="add-form-field">
-                      <span class="registration-details-label text-xs">النوع</span>
-                      <select v-model="addForm.item_type" class="add-form-input">
-                        <option value="repair">تصليح</option>
-                        <option value="registration">تسجيل</option>
-                      </select>
+                  <div class="add-type-selector mb-3">
+                    <span class="registration-details-label text-xs block mb-1.5">نوع البند</span>
+                    <div class="add-type-options flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        class="add-type-btn"
+                        :class="{ 'add-type-btn-active': addForm.item_type === 'repair' }"
+                        @click="addForm.item_type = 'repair'"
+                      >
+                        تصليح
+                      </button>
+                      <button
+                        type="button"
+                        class="add-type-btn"
+                        :class="{ 'add-type-btn-active': addForm.item_type === 'registration' }"
+                        @click="addForm.item_type = 'registration'"
+                      >
+                        تسجيل
+                      </button>
+                      <button
+                        type="button"
+                        class="add-type-btn add-type-btn-contract"
+                        :class="{ 'add-type-btn-active': addForm.item_type === 'contract' }"
+                        @click="addForm.item_type = 'contract'"
+                      >
+                        عقد
+                      </button>
+                    </div>
+                  </div>
+
+                  <div v-if="isContractType" class="contract-form-panel mb-3 p-3 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40">
+                    <p class="contract-form-hint text-xs font-semibold mb-2">
+                      عقد الشركة — مبلغ ثابت بالدينار ({{ formatNumber(CONTRACT_DEFAULT_AMOUNT) }} د)
+                    </p>
+                    <label class="add-form-field block">
+                      <span class="registration-details-label text-xs">مبلغ العقد (دينار)</span>
+                      <input
+                        v-model="addForm.amount"
+                        type="number"
+                        min="1"
+                        step="any"
+                        class="add-form-input w-full"
+                        placeholder="200000"
+                      />
                     </label>
                   </div>
-                  <label class="add-form-field block mb-2">
-                    <span class="registration-details-label text-xs">المبلغ</span>
-                    <input
-                      v-model="addForm.amount"
-                      type="number"
-                      min="1"
-                      step="any"
-                      class="add-form-input w-full"
-                      placeholder="0"
-                    />
-                  </label>
-                  <label class="add-form-field block mb-2">
-                    <span class="registration-details-label text-xs">ملاحظة (اختياري)</span>
-                    <input
-                      v-model="addForm.item_note"
-                      type="text"
-                      class="add-form-input w-full"
-                      placeholder="مثال: بنزين"
-                    />
-                  </label>
+
+                  <template v-else>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                      <label class="add-form-field">
+                        <span class="registration-details-label text-xs">العملة</span>
+                        <select v-model="addForm.currency" class="add-form-input">
+                          <option value="dinar">دينار</option>
+                          <option value="dollar">دولار</option>
+                        </select>
+                      </label>
+                      <label class="add-form-field">
+                        <span class="registration-details-label text-xs">المبلغ</span>
+                        <input
+                          v-model="addForm.amount"
+                          type="number"
+                          min="1"
+                          step="any"
+                          class="add-form-input w-full"
+                          placeholder="0"
+                        />
+                      </label>
+                    </div>
+                    <label class="add-form-field block mb-2">
+                      <span class="registration-details-label text-xs">ملاحظة (اختياري)</span>
+                      <input
+                        v-model="addForm.item_note"
+                        type="text"
+                        class="add-form-input w-full"
+                        placeholder="مثال: بنزين"
+                      />
+                    </label>
+                  </template>
                   <label v-if="details.expenses?.length > 1" class="add-form-field block mb-2">
                     <span class="registration-details-label text-xs">إضافة إلى دفعة</span>
                     <select
@@ -430,7 +491,7 @@ async function submitAddExpense() {
                     class="expense-item flex items-start justify-between gap-2 px-3 py-2 border-t border-gray-200 dark:border-gray-700"
                   >
                     <div class="expense-item-body text-right flex-1 min-w-0">
-                      <span class="expense-item-badge">{{ itemTypeLabel(item.type) }}</span>
+                      <span :class="itemTypeBadgeClass(item.type)">{{ itemTypeLabel(item.type) }}</span>
                       <span class="expense-item-label">{{ item.label }}</span>
                     </div>
                     <button
@@ -599,6 +660,55 @@ async function submitAddExpense() {
   font-weight: 700;
   background: #dbeafe;
   color: #1e40af !important;
+}
+
+.expense-item-badge-registration {
+  background: #dcfce7;
+  color: #166534 !important;
+}
+
+.expense-item-badge-contract {
+  background: #fef3c7;
+  color: #92400e !important;
+}
+
+.add-type-options {
+  justify-content: center;
+}
+
+.add-type-btn {
+  flex: 1;
+  min-width: 72px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151 !important;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.add-type-btn:hover {
+  border-color: #9ca3af;
+  background: #f9fafb;
+}
+
+.add-type-btn-active {
+  border-color: #059669;
+  background: #ecfdf5;
+  color: #047857 !important;
+}
+
+.add-type-btn-contract.add-type-btn-active {
+  border-color: #d97706;
+  background: #fffbeb;
+  color: #92400e !important;
+}
+
+.contract-form-hint {
+  color: #92400e !important;
 }
 
 .expense-item-label {
@@ -777,6 +887,38 @@ async function submitAddExpense() {
 :global(.dark) .expense-item-badge {
   background: #1e3a8a;
   color: #bfdbfe !important;
+}
+
+:global(.dark) .expense-item-badge-registration {
+  background: #14532d;
+  color: #86efac !important;
+}
+
+:global(.dark) .expense-item-badge-contract {
+  background: #78350f;
+  color: #fde68a !important;
+}
+
+:global(.dark) .add-type-btn {
+  background: #1f2937;
+  border-color: #4b5563;
+  color: #e5e7eb !important;
+}
+
+:global(.dark) .add-type-btn-active {
+  background: #064e3b;
+  border-color: #059669;
+  color: #6ee7b7 !important;
+}
+
+:global(.dark) .add-type-btn-contract.add-type-btn-active {
+  background: #78350f;
+  border-color: #d97706;
+  color: #fde68a !important;
+}
+
+:global(.dark) .contract-form-hint {
+  color: #fde68a !important;
 }
 
 :global(.dark) .expense-item-label {

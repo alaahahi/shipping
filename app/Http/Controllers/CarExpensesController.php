@@ -480,7 +480,14 @@ class CarExpensesController extends Controller
                     return response()->json(['error' => 'المبلغ مطلوب'], 422);
                 }
 
-                $itemType = $request->item_type === 'registration' ? 'registration' : 'repair';
+                $itemType = match ($request->item_type) {
+                    'registration' => 'registration',
+                    'contract' => 'contract',
+                    default => 'repair',
+                };
+                if ($itemType === 'contract') {
+                    $currency = 'dinar';
+                }
                 $itemNote = trim((string) ($request->item_note ?? ''));
                 $createNew = (bool) $request->create_new;
 
@@ -615,13 +622,7 @@ class CarExpensesController extends Controller
                     return response()->json(['error' => 'السيارة غير مربوطة'], 422);
                 }
 
-                $linkedExpenses = $car->carexpenses->filter(function ($expense) {
-                    return str_contains($expense->note ?? '', '[مربوط]');
-                });
-
-                if ($linkedExpenses->isEmpty()) {
-                    return response()->json(['error' => 'لا توجد مصاريف مربوطة لإلغاء الربط'], 422);
-                }
+                $linkedExpenses = self::resolveLinkedRegistrationExpenses($car);
 
                 $manualRate = $request->filled('exchangeRate')
                     ? (float) $request->exchangeRate
@@ -642,15 +643,22 @@ class CarExpensesController extends Controller
                 $exchangeRate = $rateResolution['rate'];
 
                 $linkedForTotal = self::resolveLinkedRegistrationExpenses($car);
-                $expenseToRemove = self::computeLinkedRegistrationTotal($linkedForTotal, $exchangeRate);
+                $computedRemove = self::computeLinkedRegistrationTotal($linkedForTotal, $exchangeRate);
+                $storedLinkedUsd = (int) ($car->registration_linked_usd ?? 0);
+                $expenseToRemove = $storedLinkedUsd > 0
+                    ? max($storedLinkedUsd, $computedRemove)
+                    : $computedRemove;
 
                 if ($expenseToRemove <= 0) {
                     return response()->json(['error' => 'لا توجد مصاريف صالحة لإلغاء الربط'], 422);
                 }
 
-                $linkedUsd = (int) ($car->registration_linked_usd ?? $expenseToRemove);
-                $preLinkExpenses = (int) ($car->registration_pre_expenses ?? max(0, (int) ($car->expenses ?? 0) - $linkedUsd));
-                $preLinkExpensesS = (int) ($car->registration_pre_expenses_s ?? max(0, (int) ($car->expenses_s ?? 0) - $linkedUsd));
+                $preLinkExpenses = $car->registration_pre_expenses !== null
+                    ? (int) $car->registration_pre_expenses
+                    : max(0, (int) ($car->expenses ?? 0) - $expenseToRemove);
+                $preLinkExpensesS = $car->registration_pre_expenses_s !== null
+                    ? (int) $car->registration_pre_expenses_s
+                    : max(0, (int) ($car->expenses_s ?? 0) - $expenseToRemove);
                 $newExpenses = $preLinkExpenses;
                 $newExpensesS = $preLinkExpensesS;
 
@@ -719,7 +727,11 @@ class CarExpensesController extends Controller
                     );
                 }
 
-                foreach ($linkedExpenses as $expense) {
+                $expensesToClean = self::isCarInRegistrationWorkflow($car)
+                    ? $car->carexpenses
+                    : $linkedExpenses;
+
+                foreach ($expensesToClean as $expense) {
                     $cleanNote = self::stripLinkTagsFromNote($expense->note ?? '');
                     $expense->update(['note' => trim($cleanNote)]);
                 }
@@ -1040,6 +1052,14 @@ class CarExpensesController extends Controller
             ];
         }
 
+        if (preg_match('/^عقد\s+(.+)\s*د$/u', $part, $matches)) {
+            return [
+                'type' => 'contract',
+                'currency' => 'dinar',
+                'amount' => self::parseAmountFromNote($matches[1]),
+            ];
+        }
+
         if (preg_match('/^تصليح\s+(.+)$/u', $part, $matches)) {
             $detail = trim($matches[1]);
             if (preg_match('/^([\d,\.\s]+)\$\s*(?:\((.+)\))?$/u', $detail, $repairMatch)) {
@@ -1098,6 +1118,10 @@ class CarExpensesController extends Controller
             return $currency === 'dollar'
                 ? "تسجيل {$formatted}$"
                 : "تسجيل {$formatted} د";
+        }
+
+        if ($type === 'contract') {
+            return "عقد {$formatted} د";
         }
 
         $label = $currency === 'dollar' ? "{$formatted}$" : "{$formatted} د";
