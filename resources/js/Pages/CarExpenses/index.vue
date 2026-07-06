@@ -640,17 +640,17 @@ function confirmDelCarFav(V) {
 
                       <div
                         v-if="isWorkTab"
-                        class="flex flex-wrap items-center justify-between gap-3 mt-4 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-700"
+                        class="car-expenses-summary flex flex-wrap items-center justify-between gap-3 mt-4 p-3 rounded-lg border"
                       >
-                        <div class="text-sm font-bold text-gray-800 dark:text-emerald-50">
-                          <span class="text-green-700 dark:text-green-300">مجموع الدولار: {{ formatNumber(expensesTotalDollar) }} $</span>
-                          <span class="mx-2 text-gray-500 dark:text-emerald-200/70">|</span>
-                          <span class="text-blue-700 dark:text-blue-300">مجموع الدينار: {{ formatNumber(expensesTotalDinar) }} د</span>
+                        <div class="car-expenses-summary-text text-sm font-bold">
+                          <span class="car-expenses-summary-dollar">مجموع الدولار: {{ formatNumber(expensesTotalDollar) }} $</span>
+                          <span class="car-expenses-summary-sep mx-2">|</span>
+                          <span class="car-expenses-summary-dinar">مجموع الدينار: {{ formatNumber(expensesTotalDinar) }} د</span>
                         </div>
                         <a
                           target="_blank"
                           :href="summaryPrintUrl"
-                          class="inline-flex items-center gap-1 px-3 py-2 text-sm font-bold text-white bg-blue-600 rounded hover:bg-blue-700"
+                          class="inline-flex items-center gap-1 px-3 py-2 text-sm font-bold text-white bg-blue-700 rounded hover:bg-blue-800 shadow-sm"
                         >
                           طباعة مختصرة
                           <print />
@@ -697,7 +697,11 @@ function confirmDelCarFav(V) {
                                   </tr>
                               </thead>
                               <tbody>
-
+                                <tr v-if="!car?.length">
+                                  <td colspan="10" class="car-expenses-empty-msg py-8">
+                                    لا توجد سيارات في هذا القسم
+                                  </td>
+                                </tr>
 
                                 <tr v-for="car in car" :key="car.id" :class="car.results == 0 ?'':car.results == 1 ?'bg-red-100 dark:bg-red-950/50':'bg-green-100 dark:bg-green-950/50'"  class="bg-white border-b dark:bg-gray-900 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ car.no }}</td>
@@ -707,8 +711,8 @@ function confirmDelCarFav(V) {
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ car.car_color }}</td>
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ car.vin }}</td>
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ car.car_number }}</td> 
-                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-green-700 dark:text-green-300 font-semibold">{{ formatNumber(calculateSum(car.carexpenses)) }}</td>
-                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-blue-700 dark:text-blue-300 font-semibold">{{ formatNumber(calculateSumDinar(car.carexpenses)) }}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center car-expenses-cell-dollar font-semibold">{{ formatNumber(calculateSum(car.carexpenses)) }}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center car-expenses-cell-dinar font-semibold">{{ formatNumber(calculateSumDinar(car.carexpenses)) }}</td>
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">
                                     <button
                                       tabIndex="1"
@@ -779,10 +783,16 @@ function confirmDelCarFav(V) {
                               </tbody>
                           </table>
                         </div>
-                        <div class="spaner">
-                          <InfiniteLoading :car="car" @infinite="getResultsCar" :identifier="resetData" />
-
-                      </div>
+                        <div class="spaner car-expenses-infinite">
+                          <InfiniteLoading :car="car" @infinite="getResultsCar" :identifier="resetData">
+                            <template #complete>
+                              <p class="car-expenses-empty-msg">لا توجد سيارات أخرى</p>
+                            </template>
+                            <template #error>
+                              <p class="car-expenses-empty-msg car-expenses-error-msg">تعذر تحميل المزيد</p>
+                            </template>
+                          </InfiniteLoading>
+                        </div>
                       </div>
 
                       </div>
@@ -795,3 +805,75 @@ function confirmDelCarFav(V) {
     </div>   
     </AuthenticatedLayout>
 </template>
+
+<style scoped>
+.car-expenses-summary {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.car-expenses-summary-dollar {
+  color: #14532d !important;
+}
+
+.car-expenses-summary-dinar {
+  color: #1e3a8a !important;
+}
+
+.car-expenses-summary-sep {
+  color: #475569 !important;
+}
+
+.car-expenses-cell-dollar {
+  color: #15803d !important;
+}
+
+.car-expenses-cell-dinar {
+  color: #1d4ed8 !important;
+}
+
+.car-expenses-empty-msg {
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #e5e7eb !important;
+}
+
+.car-expenses-error-msg {
+  color: #fca5a5 !important;
+}
+
+:global(.dark) .car-expenses-summary {
+  background: #1f2937;
+  border-color: #6b7280;
+}
+
+:global(.dark) .car-expenses-summary-dollar {
+  color: #86efac !important;
+}
+
+:global(.dark) .car-expenses-summary-dinar {
+  color: #93c5fd !important;
+}
+
+:global(.dark) .car-expenses-summary-sep {
+  color: #d1d5db !important;
+}
+
+:global(.dark) .car-expenses-cell-dollar {
+  color: #4ade80 !important;
+}
+
+:global(.dark) .car-expenses-cell-dinar {
+  color: #60a5fa !important;
+}
+
+.car-expenses-infinite :deep(.container) {
+  color: #e5e7eb !important;
+}
+
+.car-expenses-infinite :deep(.state-error) {
+  color: #fca5a5 !important;
+}
+</style>
