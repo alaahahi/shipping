@@ -228,28 +228,23 @@ class CarExpensesController extends Controller
                 return response()->json(['error' => 'يجب أن يكون سعر الصرف 6 أرقام'], 422);
             }
 
-            $calc_rate = $exchangeRate;
-            if ($calc_rate > 9999) {
-                $calc_rate = $calc_rate / 100;
-            }
-
             $unlinkedExpenses = $car->carexpenses->filter(function ($expense) {
                 return !str_contains($expense->note ?? '', '[مربوط]');
             });
 
-            $totalDollarPaid = $unlinkedExpenses->sum('amount_dollar');
-            $totalDinarPaid = $unlinkedExpenses->sum('amount_dinar');
-            $dollarFromDinar = (int) ($totalDinarPaid / $calc_rate);
-            $expenseToAdd = (int) ($totalDollarPaid + $dollarFromDinar);
+            $expenseToAdd = self::computeLinkedRegistrationTotal($unlinkedExpenses, $exchangeRate);
 
             if ($expenseToAdd <= 0) {
                 return response()->json(['error' => 'لا توجد مصاريف غير مربوطة للربط'], 422);
             }
 
+            $preLinkExpenses = (int) ($car->expenses ?? 0);
+            $preLinkExpensesS = (int) ($car->expenses_s ?? 0);
+
             $oldTotal = (int) ($car->total ?? 0);
             $oldTotalS = (int) ($car->total_s ?? 0);
-            $newExpenses = (int) (($car->expenses ?? 0) + $expenseToAdd);
-            $newExpensesS = (int) (($car->expenses_s ?? 0) + $expenseToAdd);
+            $newExpenses = $preLinkExpenses + $expenseToAdd;
+            $newExpensesS = $preLinkExpensesS + $expenseToAdd;
 
             $dolar_price_input = $car->dolar_price ?? 1;
             $car_calc_rate = $dolar_price_input;
@@ -311,9 +306,9 @@ class CarExpensesController extends Controller
 
             $isFirstLinkedExpense = true;
             foreach ($unlinkedExpenses as $expense) {
-                $baseNote = self::stripLinkTags($expense->note ?? '');
+                $baseNote = self::stripLinkTagsFromNote($expense->note ?? '');
                 $linkSuffix = $isFirstLinkedExpense
-                    ? self::buildLinkTagSuffix($exchangeRate, $expenseToAdd)
+                    ? self::buildLinkTag($exchangeRate, $preLinkExpenses)
                     : ' [مربوط]';
                 $isFirstLinkedExpense = false;
                 $expense->update([
@@ -369,6 +364,15 @@ class CarExpensesController extends Controller
             return $row;
         });
 
+        $linkRate = $inWorkflow ? self::parseLinkExchangeRate($car->carexpenses) : null;
+        $linkedUsdTotal = null;
+        if ($linkRate && self::isCarLinked($car)) {
+            $linkedUsdTotal = self::computeLinkedRegistrationTotal(
+                self::resolveLinkedRegistrationExpenses($car),
+                $linkRate
+            );
+        }
+
         return response()->json([
             'car' => [
                 'id' => $car->id,
@@ -381,7 +385,8 @@ class CarExpensesController extends Controller
             'total_dollar' => $totalDollar,
             'total_dinar' => $totalDinar,
             'has_registration' => $inWorkflow && $expenses->isNotEmpty(),
-            'link_exchange_rate' => $inWorkflow ? self::resolveLinkRateForCar($car) : null,
+            'link_exchange_rate' => $linkRate,
+            'linked_usd_total' => $linkedUsdTotal,
             'is_linked' => self::isCarLinked($car),
             'can_edit' => $inWorkflow,
         ], 200);
@@ -430,7 +435,7 @@ class CarExpensesController extends Controller
 
                 if ($isLinked && $linkRate) {
                     $desc = 'تعديل بند تسجيل السيارة ' . $car->car_type . ' ' . $car->vin;
-                    $this->reconcileLinkedRegistrationToCar($car, $linkRate, $desc);
+                    $this->syncLinkedCarExpenses($car->fresh()->load('carexpenses'), $linkRate, $desc);
                 }
 
                 return response()->json(['ok' => true], 200);
@@ -517,7 +522,7 @@ class CarExpensesController extends Controller
 
                 if ($isLinked && $linkRate) {
                     $desc = 'إضافة بند تسجيل السيارة ' . $car->car_type . ' ' . $car->vin;
-                    $this->reconcileLinkedRegistrationToCar($car, $linkRate, $desc);
+                    $this->syncLinkedCarExpenses($car->fresh()->load('carexpenses'), $linkRate, $desc);
                 }
 
                 return response()->json(['ok' => true], 200);
@@ -556,16 +561,14 @@ class CarExpensesController extends Controller
                     return response()->json(['error' => 'لا يوجد ربط لتعديل سعر الصرف'], 422);
                 }
 
-                $this->normalizeRegistrationExpenseAmounts($car);
-                $usd = self::parseLinkedUsdFromNotes($car->carexpenses);
-                $this->updateLinkedUsdInNotes($car->fresh()->load('carexpenses'), $newRate, $usd);
-
                 if ($isLinked) {
-                    $this->reconcileLinkedRegistrationToCar(
+                    $this->syncLinkedCarExpenses(
                         $car->fresh()->load('carexpenses'),
                         $newRate,
                         'تعديل سعر صرف ربط السيارة ' . $car->car_type . ' ' . $car->vin
                     );
+                } elseif ($linkedExpenses->isNotEmpty()) {
+                    $this->rewriteLinkTagsOnly($car->fresh()->load('carexpenses'), $newRate);
                 }
 
                 return response()->json([
