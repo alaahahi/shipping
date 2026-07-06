@@ -412,16 +412,12 @@ class CarExpensesController extends Controller
                 }
 
                 $isLinked = self::isCarLinked($car);
-                $linkRate = self::parseLinkExchangeRate($car->carexpenses);
-                $hasTaggedNotes = $car->carexpenses->contains(function ($expense) {
-                    return str_contains($expense->note ?? '', '[مربوط]');
-                });
-                $forceUntaggedLinked = $isLinked && !$hasTaggedNotes;
-                $oldContribution = ($isLinked && $linkRate)
-                    ? self::calcExpenseLinkDollars(
-                        $expense,
-                        $linkRate,
-                        self::expenseCountsAsLinked($expense, $forceUntaggedLinked)
+                $this->normalizeRegistrationExpenseAmounts($car);
+                $linkRate = self::resolveLinkRateForCar($car);
+                $beforeTotal = ($isLinked && $linkRate)
+                    ? self::computeLinkedRegistrationTotal(
+                        self::resolveLinkedRegistrationExpenses($car),
+                        $linkRate
                     )
                     : 0;
 
@@ -437,18 +433,11 @@ class CarExpensesController extends Controller
                         'amount_dollar' => $amounts['dollar'],
                         'amount_dinar' => $amounts['dinar'],
                     ]);
-                    $expense->refresh();
                 }
 
-                if ($isLinked && $linkRate && $oldContribution > 0) {
-                    $newContribution = $expense->exists
-                        ? self::calcExpenseLinkDollars($expense, $linkRate, true)
-                        : 0;
-                    $delta = $newContribution - $oldContribution;
-                    if ($delta !== 0) {
-                        $desc = 'تعديل بند تسجيل السيارة ' . $car->car_type . ' ' . $car->vin;
-                        $this->applyLinkedExpenseDelta($car->fresh(), $delta, $desc);
-                    }
+                if ($isLinked && $linkRate) {
+                    $desc = 'تعديل بند تسجيل السيارة ' . $car->car_type . ' ' . $car->vin;
+                    $this->applyLinkedRegistrationSync($car, $linkRate, $beforeTotal, $desc);
                 }
 
                 return response()->json(['ok' => true], 200);
@@ -486,88 +475,65 @@ class CarExpensesController extends Controller
                 $createNew = (bool) $request->create_new;
 
                 $isLinked = self::isCarLinked($car);
-                $linkRate = self::parseLinkExchangeRate($car->carexpenses);
-                $hasTaggedNotes = $car->carexpenses->contains(function ($expense) {
-                    return str_contains($expense->note ?? '', '[مربوط]');
-                });
-                $forceUntaggedLinked = $isLinked && !$hasTaggedNotes;
+                $this->normalizeRegistrationExpenseAmounts($car);
+                $linkRate = self::resolveLinkRateForCar($car);
+                $beforeTotal = ($isLinked && $linkRate)
+                    ? self::computeLinkedRegistrationTotal(
+                        self::resolveLinkedRegistrationExpenses($car),
+                        $linkRate
+                    )
+                    : 0;
 
                 $linePart = self::formatRegistrationLineItem($itemType, $currency, $amount, $itemNote);
-                $oldContribution = 0;
 
                 if ($createNew || $car->carexpenses->isEmpty()) {
                     $linkSuffix = '';
-                    if ($isLinked) {
-                        $linkSuffix = $linkRate ? ' [مربوط]' : '';
+                    if ($isLinked && $linkRate) {
+                        $linkSuffix = ' [مربوط]';
                     }
 
-                    $note = trim($linePart . $linkSuffix);
-                    $expense = CarExpenses::create([
+                    CarExpenses::create([
                         'user_id' => Auth::id(),
                         'owner_id' => $owner_id,
                         'car_id' => $car->id,
                         'created' => Carbon::now()->format('Y-m-d'),
-                        'note' => $note,
+                        'note' => trim($linePart . $linkSuffix),
                         'amount_dollar' => $currency === 'dollar' ? $amount : 0,
                         'amount_dinar' => $currency === 'dinar' ? $amount : 0,
                     ]);
+                } else {
+                    $expense = $request->filled('expense_id')
+                        ? $car->carexpenses->firstWhere('id', (int) $request->expense_id)
+                        : $car->carexpenses->sortByDesc('id')->first();
 
-                    if ($isLinked && $linkRate) {
-                        $oldContribution = 0;
-                        $newContribution = self::calcExpenseLinkDollars($expense, $linkRate, true);
-                        if ($newContribution !== 0) {
-                            $desc = 'إضافة مصروف تسجيل السيارة ' . $car->car_type . ' ' . $car->vin;
-                            $this->applyLinkedExpenseDelta($car->fresh(), $newContribution, $desc);
-                        }
+                    if (!$expense) {
+                        return response()->json(['error' => 'دفعة التسجيل غير موجودة'], 422);
                     }
 
-                    return response()->json(['ok' => true, 'expense_id' => $expense->id], 200);
-                }
+                    $parsed = self::parseRegistrationNote($expense->note ?? '');
+                    $newItem = self::parseRegistrationNotePart($linePart);
+                    $newItem['raw'] = $linePart;
+                    $parsed['items'][] = $newItem;
+                    $remainingItems = array_values(array_map(function ($item, $index) {
+                        $item['index'] = $index;
 
-                $expense = $request->filled('expense_id')
-                    ? $car->carexpenses->firstWhere('id', (int) $request->expense_id)
-                    : $car->carexpenses->sortByDesc('id')->first();
+                        return $item;
+                    }, $parsed['items'], array_keys($parsed['items'])));
 
-                if (!$expense) {
-                    return response()->json(['error' => 'دفعة التسجيل غير موجودة'], 422);
+                    $amounts = self::sumLineItemAmounts($remainingItems);
+                    $expense->update([
+                        'note' => self::rebuildRegistrationNote($parsed['user_prefix'], $remainingItems, $parsed['link_suffix']),
+                        'amount_dollar' => $amounts['dollar'],
+                        'amount_dinar' => $amounts['dinar'],
+                    ]);
                 }
 
                 if ($isLinked && $linkRate) {
-                    $oldContribution = self::calcExpenseLinkDollars(
-                        $expense,
-                        $linkRate,
-                        self::expenseCountsAsLinked($expense, $forceUntaggedLinked)
-                    );
+                    $desc = 'إضافة بند تسجيل السيارة ' . $car->car_type . ' ' . $car->vin;
+                    $this->applyLinkedRegistrationSync($car, $linkRate, $beforeTotal, $desc);
                 }
 
-                $parsed = self::parseRegistrationNote($expense->note ?? '');
-                $newItem = self::parseRegistrationNotePart($linePart);
-                $newItem['raw'] = $linePart;
-                $parsed['items'][] = $newItem;
-                $remainingItems = array_values(array_map(function ($item, $index) {
-                    $item['index'] = $index;
-
-                    return $item;
-                }, $parsed['items'], array_keys($parsed['items'])));
-
-                $amounts = self::sumLineItemAmounts($remainingItems);
-                $expense->update([
-                    'note' => self::rebuildRegistrationNote($parsed['user_prefix'], $remainingItems, $parsed['link_suffix']),
-                    'amount_dollar' => $amounts['dollar'],
-                    'amount_dinar' => $amounts['dinar'],
-                ]);
-                $expense->refresh();
-
-                if ($isLinked && $linkRate) {
-                    $newContribution = self::calcExpenseLinkDollars($expense, $linkRate, true);
-                    $delta = $newContribution - $oldContribution;
-                    if ($delta !== 0) {
-                        $desc = 'إضافة بند تسجيل السيارة ' . $car->car_type . ' ' . $car->vin;
-                        $this->applyLinkedExpenseDelta($car->fresh(), $delta, $desc);
-                    }
-                }
-
-                return response()->json(['ok' => true, 'expense_id' => $expense->id], 200);
+                return response()->json(['ok' => true], 200);
             });
         } catch (ModelNotFoundException $e) {
             return response()->json(['error' => 'السيارة غير موجودة'], 404);
@@ -599,35 +565,27 @@ class CarExpensesController extends Controller
                 $isLinked = self::isCarLinked($car);
                 $linkedExpenses = self::resolveLinkedRegistrationExpenses($car);
 
-                if ($linkedExpenses->isEmpty()) {
+                if ($linkedExpenses->isEmpty() && !$isLinked) {
                     return response()->json(['error' => 'لا يوجد ربط لتعديل سعر الصرف'], 422);
                 }
 
-                $hasTaggedNotes = $car->carexpenses->contains(function ($expense) {
-                    return str_contains($expense->note ?? '', '[مربوط]');
-                });
-                $forceUntaggedLinked = $isLinked && !$hasTaggedNotes;
+                $this->normalizeRegistrationExpenseAmounts($car);
+                $linkedExpenses = self::resolveLinkedRegistrationExpenses($car);
 
-                $oldRate = self::parseLinkExchangeRate($car->carexpenses);
-                if (!$oldRate && $request->filled('previousExchangeRate')) {
-                    $previousRate = (float) $request->previousExchangeRate;
-                    if (self::isValidLinkExchangeRate($previousRate)) {
-                        $oldRate = $previousRate;
-                    }
-                }
+                $oldRate = self::resolveLinkRateForCar(
+                    $car,
+                    $request->filled('previousExchangeRate') ? (float) $request->previousExchangeRate : null
+                );
 
-                $oldContribution = 0;
-                $newContribution = 0;
-
-                if ($isLinked && $oldRate) {
-                    foreach ($linkedExpenses as $expense) {
-                        $countsAsLinked = self::expenseCountsAsLinked($expense, $forceUntaggedLinked);
-                        $oldContribution += self::calcExpenseLinkDollars($expense, $oldRate, $countsAsLinked);
-                    }
-                }
+                $beforeTotal = ($isLinked && $oldRate)
+                    ? self::computeLinkedRegistrationTotal($linkedExpenses, $oldRate)
+                    : 0;
 
                 $isFirst = true;
-                foreach ($linkedExpenses as $expense) {
+                foreach ($car->carexpenses as $expense) {
+                    if (!$isLinked && !str_contains($expense->note ?? '', '[مربوط]')) {
+                        continue;
+                    }
                     $parsed = self::parseRegistrationNote($expense->note ?? '');
                     $linkSuffix = $isFirst
                         ? ' [مربوط@' . (int) $newRate . ']'
@@ -642,17 +600,9 @@ class CarExpensesController extends Controller
                     ]);
                 }
 
-                if ($isLinked) {
-                    foreach ($linkedExpenses as $expense) {
-                        $expense->refresh();
-                        $countsAsLinked = self::expenseCountsAsLinked($expense, true);
-                        $newContribution += self::calcExpenseLinkDollars($expense, $newRate, $countsAsLinked);
-                    }
-                    $delta = $newContribution - $oldContribution;
-                    if ($delta !== 0) {
-                        $desc = 'تعديل سعر صرف ربط السيارة ' . $car->car_type . ' ' . $car->vin;
-                        $this->applyLinkedExpenseDelta($car->fresh(), $delta, $desc);
-                    }
+                if ($isLinked && $oldRate) {
+                    $desc = 'تعديل سعر صرف ربط السيارة ' . $car->car_type . ' ' . $car->vin;
+                    $this->applyLinkedRegistrationSync($car, $newRate, $beforeTotal, $desc);
                 }
 
                 return response()->json([
@@ -1067,6 +1017,10 @@ class CarExpensesController extends Controller
 
     public static function resolveLinkedRegistrationExpenses(Car $car)
     {
+        if (self::isCarLinked($car) && $car->carexpenses->isNotEmpty()) {
+            return $car->carexpenses;
+        }
+
         $tagged = $car->carexpenses->filter(function ($expense) {
             return str_contains($expense->note ?? '', '[مربوط]');
         });
@@ -1075,13 +1029,120 @@ class CarExpensesController extends Controller
             return $tagged;
         }
 
-        if (self::isCarLinked($car) && $car->carexpenses->isNotEmpty()) {
-            return $car->carexpenses;
-        }
-
         return $car->carexpenses->filter(function ($expense) {
             return preg_match('/\[مربوط@/u', $expense->note ?? '');
         });
+    }
+
+    public static function computeLinkedRegistrationTotal($expenses, float $exchangeRate): int
+    {
+        $total = 0;
+
+        foreach ($expenses as $expense) {
+            $total += self::calcExpenseLinkDollars($expense, $exchangeRate, true);
+        }
+
+        return $total;
+    }
+
+    public static function syncExpenseAmountsFromParsedItems(CarExpenses $expense): void
+    {
+        $parsed = self::parseRegistrationNote($expense->note ?? '');
+        if (empty($parsed['items'])) {
+            return;
+        }
+
+        $amounts = self::sumLineItemAmounts($parsed['items']);
+        $currentDollar = (float) ($expense->amount_dollar ?? 0);
+        $currentDinar = (float) ($expense->amount_dinar ?? 0);
+
+        if ($currentDollar != $amounts['dollar'] || $currentDinar != $amounts['dinar']) {
+            $expense->update([
+                'amount_dollar' => $amounts['dollar'],
+                'amount_dinar' => $amounts['dinar'],
+            ]);
+        }
+    }
+
+    private function normalizeRegistrationExpenseAmounts(Car $car): void
+    {
+        foreach ($car->carexpenses as $expense) {
+            self::syncExpenseAmountsFromParsedItems($expense);
+        }
+
+        $car->load('carexpenses');
+    }
+
+    public static function resolveLinkRateForCar(Car $car, ?float $fallbackRate = null): ?float
+    {
+        $rate = self::parseLinkExchangeRate($car->carexpenses);
+
+        if ($rate) {
+            return $rate;
+        }
+
+        if ($fallbackRate && self::isValidLinkExchangeRate($fallbackRate)) {
+            return $fallbackRate;
+        }
+
+        return null;
+    }
+
+    private function ensureLinkedExpenseTags(Car $car, float $linkRate): void
+    {
+        if (!self::isCarLinked($car)) {
+            return;
+        }
+
+        $hasRateTag = $car->carexpenses->contains(function ($expense) {
+            return preg_match('/\[مربوط@\d+\]/u', $expense->note ?? '');
+        });
+
+        $isFirstRate = !$hasRateTag;
+
+        foreach ($car->carexpenses as $expense) {
+            if (str_contains($expense->note ?? '', '[مربوط]')) {
+                if (preg_match('/\[مربوط@\d+\]/u', $expense->note ?? '')) {
+                    $isFirstRate = false;
+                }
+                continue;
+            }
+
+            $parsed = self::parseRegistrationNote($expense->note ?? '');
+            $linkSuffix = $isFirstRate
+                ? ' [مربوط@' . (int) $linkRate . ']'
+                : ' [مربوط]';
+            $isFirstRate = false;
+
+            $expense->update([
+                'note' => self::rebuildRegistrationNote(
+                    $parsed['user_prefix'],
+                    $parsed['items'],
+                    $linkSuffix
+                ),
+            ]);
+        }
+    }
+
+    private function applyLinkedRegistrationSync(Car $car, float $linkRate, int $beforeTotal, string $desc): void
+    {
+        if (!self::isCarLinked($car)) {
+            return;
+        }
+
+        $car->load('carexpenses');
+        $this->ensureLinkedExpenseTags($car, $linkRate);
+        $car->load('carexpenses');
+
+        $afterTotal = self::computeLinkedRegistrationTotal(
+            self::resolveLinkedRegistrationExpenses($car),
+            $linkRate
+        );
+
+        $delta = $afterTotal - $beforeTotal;
+        if ($delta !== 0) {
+            $this->applyLinkedExpenseDelta($car->fresh(), $delta, $desc);
+        }
     }
 
     public static function expenseCountsAsLinked($expense, bool $forceUntaggedLinked = false): bool
