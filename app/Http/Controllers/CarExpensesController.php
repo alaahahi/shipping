@@ -354,6 +354,22 @@ class CarExpensesController extends Controller
         $totalDollar = $expenses->sum('amount_dollar');
         $totalDinar = $expenses->sum('amount_dinar');
 
+        $expensesPayload = $expenses->map(function ($expense) {
+            $parsed = self::parseRegistrationNote($expense->note ?? '');
+            $row = $expense->toArray();
+            $row['line_items'] = array_map(function ($item) {
+                return [
+                    'index' => $item['index'],
+                    'label' => $item['raw'],
+                    'type' => $item['type'],
+                    'currency' => $item['currency'],
+                    'amount' => $item['amount'],
+                ];
+            }, $parsed['items']);
+
+            return $row;
+        });
+
         return response()->json([
             'car' => [
                 'id' => $car->id,
@@ -362,13 +378,157 @@ class CarExpensesController extends Controller
                 'car_number' => $car->car_number,
                 'car_have_expenses' => $car->car_have_expenses,
             ],
-            'expenses' => $expenses,
+            'expenses' => $expensesPayload,
             'total_dollar' => $totalDollar,
             'total_dinar' => $totalDinar,
             'has_registration' => $inWorkflow && $expenses->isNotEmpty(),
             'link_exchange_rate' => $inWorkflow ? self::parseLinkExchangeRate($expenses) : null,
             'is_linked' => self::isCarLinked($car),
+            'can_edit' => $inWorkflow,
         ], 200);
+    }
+
+    public function deleteRegistrationExpenseLine(Request $request)
+    {
+        try {
+            return DB::transaction(function () use ($request) {
+                $expense = CarExpenses::findOrFail($request->expense_id);
+                $car = Car::with('carexpenses')->findOrFail($expense->car_id);
+                $owner_id = Auth::user()->owner_id;
+
+                if ((int) $expense->owner_id !== (int) $owner_id || (int) $car->owner_id !== (int) $owner_id) {
+                    return response()->json(['error' => 'غير مصرح'], 403);
+                }
+
+                if (!self::isCarInRegistrationWorkflow($car)) {
+                    return response()->json(['error' => 'السيارة ليست ضمن تسجيل المصاريف'], 422);
+                }
+
+                $lineIndex = (int) $request->line_index;
+                $parsed = self::parseRegistrationNote($expense->note ?? '');
+
+                if (!isset($parsed['items'][$lineIndex])) {
+                    return response()->json(['error' => 'البند غير موجود'], 422);
+                }
+
+                $isLinked = self::isCarLinked($car);
+                $linkRate = self::parseLinkExchangeRate($car->carexpenses);
+                $oldContribution = ($isLinked && $linkRate && str_contains($expense->note ?? '', '[مربوط]'))
+                    ? self::calcExpenseLinkDollars($expense, $linkRate)
+                    : 0;
+
+                unset($parsed['items'][$lineIndex]);
+                $remainingItems = array_values($parsed['items']);
+
+                if (empty($remainingItems)) {
+                    $expense->delete();
+                } else {
+                    $amounts = self::sumLineItemAmounts($remainingItems);
+                    $expense->update([
+                        'note' => self::rebuildRegistrationNote($parsed['user_prefix'], $remainingItems, $parsed['link_suffix']),
+                        'amount_dollar' => $amounts['dollar'],
+                        'amount_dinar' => $amounts['dinar'],
+                    ]);
+                    $expense->refresh();
+                }
+
+                if ($isLinked && $linkRate && $oldContribution > 0) {
+                    $newContribution = $expense->exists && str_contains($expense->note ?? '', '[مربوط]')
+                        ? self::calcExpenseLinkDollars($expense, $linkRate)
+                        : 0;
+                    $delta = $newContribution - $oldContribution;
+                    if ($delta !== 0) {
+                        $desc = 'تعديل بند تسجيل السيارة ' . $car->car_type . ' ' . $car->vin;
+                        $this->applyLinkedExpenseDelta($car->fresh(), $delta, $desc);
+                    }
+                }
+
+                return response()->json(['ok' => true], 200);
+            });
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'البند غير موجود'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    public function updateRegistrationExchangeRate(Request $request)
+    {
+        try {
+            return DB::transaction(function () use ($request) {
+                $car = Car::with('carexpenses')->findOrFail($request->car_id);
+                $owner_id = Auth::user()->owner_id;
+
+                if ((int) $car->owner_id !== (int) $owner_id) {
+                    return response()->json(['error' => 'غير مصرح'], 403);
+                }
+
+                if (!self::isCarInRegistrationWorkflow($car)) {
+                    return response()->json(['error' => 'السيارة ليست ضمن تسجيل المصاريف'], 422);
+                }
+
+                $newRate = (float) ($request->exchangeRate ?? 0);
+                if (!self::isValidLinkExchangeRate($newRate)) {
+                    return response()->json(['error' => 'يجب أن يكون سعر الصرف 6 أرقام'], 422);
+                }
+
+                $linkedExpenses = $car->carexpenses->filter(function ($expense) {
+                    return str_contains($expense->note ?? '', '[مربوط]');
+                });
+
+                if ($linkedExpenses->isEmpty()) {
+                    return response()->json(['error' => 'لا يوجد ربط لتعديل سعر الصرف'], 422);
+                }
+
+                $oldRate = self::parseLinkExchangeRate($car->carexpenses);
+                $isLinked = self::isCarLinked($car);
+                $oldContribution = 0;
+                $newContribution = 0;
+
+                if ($isLinked && $oldRate) {
+                    foreach ($linkedExpenses as $expense) {
+                        $oldContribution += self::calcExpenseLinkDollars($expense, $oldRate);
+                    }
+                }
+
+                $isFirst = true;
+                foreach ($linkedExpenses as $expense) {
+                    $parsed = self::parseRegistrationNote($expense->note ?? '');
+                    $linkSuffix = $isFirst
+                        ? ' [مربوط@' . (int) $newRate . ']'
+                        : ' [مربوط]';
+                    $isFirst = false;
+                    $expense->update([
+                        'note' => trim(self::rebuildRegistrationNote(
+                            $parsed['user_prefix'],
+                            $parsed['items'],
+                            $linkSuffix
+                        )),
+                    ]);
+                }
+
+                if ($isLinked) {
+                    foreach ($linkedExpenses as $expense) {
+                        $expense->refresh();
+                        $newContribution += self::calcExpenseLinkDollars($expense, $newRate);
+                    }
+                    $delta = $newContribution - $oldContribution;
+                    if ($delta !== 0) {
+                        $desc = 'تعديل سعر صرف ربط السيارة ' . $car->car_type . ' ' . $car->vin;
+                        $this->applyLinkedExpenseDelta($car->fresh(), $delta, $desc);
+                    }
+                }
+
+                return response()->json([
+                    'ok' => true,
+                    'link_exchange_rate' => $newRate,
+                ], 200);
+            });
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'السيارة غير موجودة'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
     }
 
     public function confirmUnlinkArchiveCar(Request $request)
@@ -594,6 +754,254 @@ class CarExpensesController extends Controller
         }
 
         return strlen((string) (int) $rate) === 6;
+    }
+
+    public static function parseAmountFromNote(string $value): float
+    {
+        $clean = str_replace([',', ' '], '', trim($value));
+
+        return is_numeric($clean) ? (float) $clean : 0;
+    }
+
+    public static function parseRegistrationNote(string $note): array
+    {
+        $linkSuffix = '';
+        if (preg_match('/\[مربوط@\d+\]/u', $note, $rateMatch)) {
+            $linkSuffix = ' ' . $rateMatch[0];
+        } elseif (str_contains($note, '[مربوط]')) {
+            $linkSuffix = ' [مربوط]';
+        }
+
+        $baseNote = preg_replace('/\s*\[مربوط@\d+\]/u', '', $note);
+        $baseNote = str_replace(' [مربوط]', '', $baseNote);
+        $baseNote = trim($baseNote);
+
+        $userPrefix = '';
+        $itemsPart = $baseNote;
+        if (str_contains($baseNote, ' — ')) {
+            [$userPrefix, $itemsPart] = explode(' — ', $baseNote, 2);
+            $userPrefix = trim($userPrefix);
+            $itemsPart = trim($itemsPart);
+        }
+
+        $parts = $itemsPart !== '' ? preg_split('/\s*\|\s*/', $itemsPart) : [];
+        $items = [];
+
+        foreach ($parts as $part) {
+            $part = trim($part);
+            if ($part === '') {
+                continue;
+            }
+            $parsed = self::parseRegistrationNotePart($part);
+            $parsed['index'] = count($items);
+            $parsed['raw'] = $part;
+            $items[] = $parsed;
+        }
+
+        return [
+            'user_prefix' => $userPrefix,
+            'items' => $items,
+            'link_suffix' => trim($linkSuffix),
+        ];
+    }
+
+    public static function parseRegistrationNotePart(string $part): array
+    {
+        if (preg_match('/^تسجيل\s+(.+)\$$/u', $part, $matches)) {
+            return [
+                'type' => 'registration',
+                'currency' => 'dollar',
+                'amount' => self::parseAmountFromNote($matches[1]),
+            ];
+        }
+
+        if (preg_match('/^تسجيل\s+(.+)\s*د$/u', $part, $matches)) {
+            $amountParts = preg_split('/\s*\+\s*/', $matches[1]);
+            $amount = 0;
+            foreach ($amountParts as $amountPart) {
+                $amount += self::parseAmountFromNote($amountPart);
+            }
+
+            return [
+                'type' => 'registration',
+                'currency' => 'dinar',
+                'amount' => $amount,
+            ];
+        }
+
+        if (preg_match('/^تصليح\s+(.+)$/u', $part, $matches)) {
+            $detail = trim($matches[1]);
+            if (preg_match('/^([\d,\.\s]+)\$\s*(?:\((.+)\))?$/u', $detail, $repairMatch)) {
+                return [
+                    'type' => 'repair',
+                    'currency' => 'dollar',
+                    'amount' => self::parseAmountFromNote($repairMatch[1]),
+                    'detail' => trim($repairMatch[2] ?? ''),
+                ];
+            }
+            if (preg_match('/^([\d,\.\s]+)\s*د(?:\s*\((.+)\))?$/u', $detail, $repairMatch)) {
+                return [
+                    'type' => 'repair',
+                    'currency' => 'dinar',
+                    'amount' => self::parseAmountFromNote($repairMatch[1]),
+                    'detail' => trim($repairMatch[2] ?? ''),
+                ];
+            }
+        }
+
+        return [
+            'type' => 'other',
+            'currency' => 'dinar',
+            'amount' => 0,
+        ];
+    }
+
+    public static function sumLineItemAmounts(array $items): array
+    {
+        $dollar = 0;
+        $dinar = 0;
+
+        foreach ($items as $item) {
+            if (($item['currency'] ?? '') === 'dollar') {
+                $dollar += (float) ($item['amount'] ?? 0);
+            } else {
+                $dinar += (float) ($item['amount'] ?? 0);
+            }
+        }
+
+        return [
+            'dollar' => $dollar,
+            'dinar' => $dinar,
+        ];
+    }
+
+    public static function rebuildRegistrationNote(string $userPrefix, array $items, string $linkSuffix = ''): string
+    {
+        $parts = array_map(function ($item) {
+            return $item['raw'];
+        }, $items);
+
+        $itemsText = implode(' | ', $parts);
+        $note = $userPrefix !== '' && $itemsText !== ''
+            ? $userPrefix . ' — ' . $itemsText
+            : ($userPrefix !== '' ? $userPrefix : $itemsText);
+
+        if ($linkSuffix !== '') {
+            $note = trim($note . ' ' . trim($linkSuffix));
+        }
+
+        return trim($note);
+    }
+
+    public static function calcExpenseLinkDollars($expense, float $exchangeRate): int
+    {
+        if (!str_contains($expense->note ?? '', '[مربوط]')) {
+            return 0;
+        }
+
+        $calc_rate = $exchangeRate;
+        if ($calc_rate > 9999) {
+            $calc_rate = $calc_rate / 100;
+        }
+
+        return (int) ((float) ($expense->amount_dollar ?? 0) + (float) ($expense->amount_dinar ?? 0) / $calc_rate);
+    }
+
+    private function applyLinkedExpenseDelta(Car $car, int $expenseDelta, string $desc): void
+    {
+        if ($expenseDelta === 0) {
+            return;
+        }
+
+        $newExpenses = (int) (($car->expenses ?? 0) + $expenseDelta);
+        $newExpensesS = (int) (($car->expenses_s ?? 0) + $expenseDelta);
+
+        if ($newExpenses < 0 || $newExpensesS < 0) {
+            throw new \Exception('تعذر التعديل: المصاريف المسجلة أقل من المربوطة');
+        }
+
+        $oldTotal = (int) ($car->total ?? 0);
+        $oldTotalS = (int) ($car->total_s ?? 0);
+
+        $dolar_price_input = $car->dolar_price ?? 1;
+        $car_calc_rate = $dolar_price_input == 0 ? 1 : $dolar_price_input;
+        if ($car_calc_rate > 9999) {
+            $car_calc_rate = $car_calc_rate / 100;
+        }
+
+        $newTotal = (int) (
+            ($car->checkout ?? 0)
+            + ($car->shipping_dolar ?? 0)
+            + ($car->coc_dolar ?? 0)
+            + (int) (($car->dinar ?? 0) / $car_calc_rate)
+            + (int) (($car->land_shipping_dinar ?? 0) / $car_calc_rate)
+            + $newExpenses
+            + ($car->land_shipping ?? 0)
+        );
+
+        $dolar_price_s_input = $car->dolar_price_s ?? 1;
+        $car_calc_rate_s = $dolar_price_s_input == 0 ? 1 : $dolar_price_s_input;
+        if ($car_calc_rate_s > 9999) {
+            $car_calc_rate_s = $car_calc_rate_s / 100;
+        }
+
+        $newTotalS = (int) (
+            ($car->checkout_s ?? 0)
+            + ($car->shipping_dolar_s ?? 0)
+            + ($car->coc_dolar_s ?? 0)
+            + (int) (($car->dinar_s ?? 0) / $car_calc_rate_s)
+            + (int) (($car->land_shipping_dinar_s ?? 0) / $car_calc_rate_s)
+            + $newExpensesS
+            + ($car->land_shipping_s ?? 0)
+        );
+
+        if ($expenseDelta > 0) {
+            if ($newTotal > $oldTotal) {
+                $this->accountingController->decreaseWallet(
+                    ($newTotal - $oldTotal),
+                    $desc,
+                    $this->accounting->mainAccount()->id,
+                    $car->id,
+                    'App\Models\Car'
+                );
+            }
+            if ($newTotalS > $oldTotalS) {
+                $this->accountingController->increaseWallet(
+                    ($newTotalS - $oldTotalS),
+                    $desc,
+                    $car->client_id,
+                    $car->id,
+                    'App\Models\User'
+                );
+            }
+        } else {
+            if ($oldTotal > $newTotal) {
+                $this->accountingController->increaseWallet(
+                    ($oldTotal - $newTotal),
+                    $desc,
+                    $this->accounting->mainAccount()->id,
+                    $car->id,
+                    'App\Models\Car'
+                );
+            }
+            if ($oldTotalS > $newTotalS) {
+                $this->accountingController->decreaseWallet(
+                    ($oldTotalS - $newTotalS),
+                    $desc,
+                    $car->client_id,
+                    $car->id,
+                    'App\Models\User'
+                );
+            }
+        }
+
+        $car->update([
+            'expenses' => $newExpenses,
+            'expenses_s' => $newExpensesS,
+            'total' => $newTotal,
+            'total_s' => $newTotalS,
+            'profit' => $newTotalS - $newTotal,
+        ]);
     }
 
     public static function applyLinkedCarsFilter($query)

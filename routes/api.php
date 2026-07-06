@@ -387,6 +387,8 @@ Route::post('confirmDelCarFav',[CarExpensesController::class, 'confirmDelCarFav'
 Route::get('getIndexExpensesPrint',[CarExpensesController::class, 'getIndexExpensesPrint'])->name('getIndexExpensesPrint');
 Route::get('getIndexExpensesSummaryPrint',[CarExpensesController::class, 'getIndexExpensesSummaryPrint'])->name('getIndexExpensesSummaryPrint');
 Route::get('getCarRegistrationDetails',[CarExpensesController::class, 'getCarRegistrationDetails'])->name('getCarRegistrationDetails');
+Route::post('deleteRegistrationExpenseLine',[CarExpensesController::class, 'deleteRegistrationExpenseLine'])->name('deleteRegistrationExpenseLine');
+Route::post('updateRegistrationExchangeRate',[CarExpensesController::class, 'updateRegistrationExchangeRate'])->name('updateRegistrationExchangeRate');
 
 Route::post('addCarContract',[CarContractController::class, 'addCarContract'])->name('addCarContract');
 Route::get('getIndexContractCar',[CarContractController::class, 'getIndexContractCar'])->name('getIndexContractCar');
