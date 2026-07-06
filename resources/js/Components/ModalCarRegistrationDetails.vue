@@ -71,8 +71,8 @@ const convertedUsdTotal = computed(() => {
 
 const conversionMatchesCar = computed(() => {
   if (convertedUsdTotal.value === null || !details.value?.is_linked) return null;
-  const inCar = details.value.linked_portion_in_car ?? details.value.linked_usd_total;
-  return inCar === convertedUsdTotal.value;
+  const inSales = details.value.linked_portion_in_sales ?? details.value.linked_usd_total;
+  return inSales === convertedUsdTotal.value;
 });
 
 function resetAddForm() {
@@ -271,8 +271,8 @@ async function submitAddExpense() {
                 </div>
                 <p v-if="convertedUsdTotal !== null" class="registration-details-conversion text-sm font-bold">
                   نتيجة التحويل: {{ formatNumber(convertedUsdTotal) }} $
-                  <span v-if="details?.is_linked && details?.linked_portion_in_car != null" class="text-xs font-semibold">
-                    — في مصاريف المشتريات: {{ formatNumber(details.linked_portion_in_car) }} $
+                  <span v-if="details?.is_linked && details?.linked_portion_in_sales != null" class="text-xs font-semibold">
+                    — في مصاريف المبيعات: {{ formatNumber(details.linked_portion_in_sales) }} $
                     <span v-if="conversionMatchesCar === true" class="conversion-ok">✓ متطابق</span>
                     <span v-else-if="conversionMatchesCar === false" class="conversion-warn">≠ غير متطابق</span>
                   </span>

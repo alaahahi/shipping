@@ -240,12 +240,11 @@ class CarExpensesController extends Controller
 
             $preLinkExpenses = (int) ($car->expenses ?? 0);
             $preLinkExpensesS = (int) ($car->expenses_s ?? 0);
-            $syncSalesExpenses = ($preLinkExpensesS === 0 || $preLinkExpensesS === $preLinkExpenses);
 
             $oldTotal = (int) ($car->total ?? 0);
             $oldTotalS = (int) ($car->total_s ?? 0);
-            $newExpenses = $preLinkExpenses + $expenseToAdd;
-            $newExpensesS = $syncSalesExpenses ? ($preLinkExpensesS + $expenseToAdd) : $preLinkExpensesS;
+            $newExpenses = $preLinkExpenses;
+            $newExpensesS = $preLinkExpensesS + $expenseToAdd;
 
             $dolar_price_input = $car->dolar_price ?? 1;
             $car_calc_rate = $dolar_price_input;
@@ -285,17 +284,7 @@ class CarExpensesController extends Controller
 
             $desc = 'مصروف تسجيل + ' . $expenseToAdd . '$ — ' . $car->car_type . ' ' . $car->vin;
 
-            if ($newTotal > $oldTotal) {
-                $this->accountingController->decreaseWallet(
-                    ($newTotal - $oldTotal),
-                    $desc,
-                    $this->accounting->mainAccount()->id,
-                    $car->id,
-                    'App\Models\Car'
-                );
-            }
-
-            if ($syncSalesExpenses && $newTotalS > $oldTotalS) {
+            if ($newTotalS > $oldTotalS) {
                 $this->accountingController->increaseWallet(
                     ($newTotalS - $oldTotalS),
                     $desc,
@@ -322,7 +311,7 @@ class CarExpensesController extends Controller
                 'registration_exchange_rate' => (int) $exchangeRate,
                 'registration_pre_expenses' => $preLinkExpenses,
                 'registration_pre_expenses_s' => $preLinkExpensesS,
-                'registration_sync_sales' => $syncSalesExpenses,
+                'registration_sync_sales' => true,
             ]);
 
             return response()->json([
@@ -381,14 +370,14 @@ class CarExpensesController extends Controller
 
         $linkRate = $inWorkflow ? self::resolveCarLinkExchangeRate($car) : null;
         $linkedUsdTotal = null;
-        $linkedPortionInCar = null;
+        $linkedPortionInSales = null;
         if ($linkRate && self::isCarLinked($car)) {
             $linkedUsdTotal = self::computeLinkedRegistrationTotal(
                 self::resolveLinkedRegistrationExpenses($car),
                 $linkRate
             );
-            $preLink = self::resolvePreLinkExpensesBase($car, $linkRate);
-            $linkedPortionInCar = max(0, (int) ($car->expenses ?? 0) - $preLink);
+            $preLinkS = self::resolvePreLinkExpensesSBase($car, $linkRate);
+            $linkedPortionInSales = max(0, (int) ($car->expenses_s ?? 0) - $preLinkS);
         }
 
         return response()->json([
@@ -407,10 +396,9 @@ class CarExpensesController extends Controller
             'has_registration' => $inWorkflow && $expenses->isNotEmpty(),
             'link_exchange_rate' => $linkRate,
             'linked_usd_total' => $linkedUsdTotal,
-            'linked_portion_in_car' => $linkedPortionInCar,
+            'linked_portion_in_sales' => $linkedPortionInSales,
             'is_linked' => self::isCarLinked($car),
             'can_edit' => $inWorkflow,
-            'registration_sync_sales' => (bool) $car->registration_sync_sales,
         ], 200);
     }
 
@@ -655,23 +643,13 @@ class CarExpensesController extends Controller
                     return response()->json(['error' => 'لا توجد مصاريف صالحة لإلغاء الربط'], 422);
                 }
 
-                $preLinkExpenses = $car->registration_pre_expenses;
-                if ($preLinkExpenses === null) {
-                    $preLinkExpenses = self::parsePreLinkBaseFromNotes($linkedForTotal);
-                }
-                $newExpenses = $preLinkExpenses !== null
-                    ? (int) $preLinkExpenses
-                    : (int) ($car->expenses ?? 0) - $expenseToRemove;
+                $preLinkExpenses = $car->registration_pre_expenses ?? (int) ($car->expenses ?? 0);
+                $newExpenses = (int) $preLinkExpenses;
 
-                $syncSales = (bool) $car->registration_sync_sales;
-                if ($syncSales) {
-                    $preLinkExpensesS = $car->registration_pre_expenses_s;
-                    $newExpensesS = $preLinkExpensesS !== null
-                        ? (int) $preLinkExpensesS
-                        : (int) ($car->expenses_s ?? 0) - $expenseToRemove;
-                } else {
-                    $newExpensesS = (int) ($car->registration_pre_expenses_s ?? $car->expenses_s ?? 0);
-                }
+                $preLinkExpensesS = $car->registration_pre_expenses_s;
+                $newExpensesS = $preLinkExpensesS !== null
+                    ? (int) $preLinkExpensesS
+                    : (int) ($car->expenses_s ?? 0) - $expenseToRemove;
 
                 if ($newExpenses < 0 || $newExpensesS < 0) {
                     return response()->json(['error' => 'تعذر التراجع: المصاريف المسجلة أقل من المربوطة'], 422);
@@ -728,7 +706,7 @@ class CarExpensesController extends Controller
                     );
                 }
 
-                if ($syncSales && $oldTotalS > $newTotalS) {
+                if ($oldTotalS > $newTotalS) {
                     $this->accountingController->decreaseWallet(
                         ($oldTotalS - $newTotalS),
                         $desc,
@@ -838,7 +816,7 @@ class CarExpensesController extends Controller
                 : max(0, (int) ($car->expenses ?? 0) - $expected);
         }
 
-        $preExpS = (int) ($car->expenses_s ?? 0);
+        $preExpS = self::resolvePreLinkExpensesSBase($car, $rate);
         $syncSales = ($preExpS === 0 || $preExpS === $preExp || $preExpS === ($preExp + $expected));
         if ($syncSales) {
             $preExpS = max(0, $preExpS - $expected);
@@ -848,10 +826,51 @@ class CarExpensesController extends Controller
             'registration_exchange_rate' => (int) $rate,
             'registration_pre_expenses' => $preExp,
             'registration_pre_expenses_s' => $preExpS,
-            'registration_sync_sales' => $syncSales,
+            'registration_sync_sales' => true,
         ]);
 
+        $this->correctPurchasesDoubleCount($car->fresh(), $preExp);
         $this->normalizeLinkedExpenseMarkers($car->fresh()->load('carexpenses'));
+    }
+
+    private function correctPurchasesDoubleCount(Car $car, int $preLinkPurchases): void
+    {
+        if ((int) ($car->expenses ?? 0) === $preLinkPurchases) {
+            return;
+        }
+
+        $oldTotal = (int) ($car->total ?? 0);
+        $dolar_price_input = $car->dolar_price ?? 1;
+        $car_calc_rate = $dolar_price_input == 0 ? 1 : $dolar_price_input;
+        if ($car_calc_rate > 9999) {
+            $car_calc_rate = $car_calc_rate / 100;
+        }
+
+        $newTotal = (int) (
+            ($car->checkout ?? 0)
+            + ($car->shipping_dolar ?? 0)
+            + ($car->coc_dolar ?? 0)
+            + (int) (($car->dinar ?? 0) / $car_calc_rate)
+            + (int) (($car->land_shipping_dinar ?? 0) / $car_calc_rate)
+            + $preLinkPurchases
+            + ($car->land_shipping ?? 0)
+        );
+
+        $car->update([
+            'expenses' => $preLinkPurchases,
+            'total' => $newTotal,
+            'profit' => (int) ($car->total_s ?? 0) - $newTotal,
+        ]);
+
+        if ($oldTotal > $newTotal) {
+            $this->accountingController->increaseWallet(
+                ($oldTotal - $newTotal),
+                'تصحيح مصاريف مشتريات مكررة — ' . $car->car_type . ' ' . $car->vin,
+                $this->accounting->mainAccount()->id,
+                $car->id,
+                'App\Models\Car'
+            );
+        }
     }
 
     public static function parsePreLinkBaseFromNotes($expenses): ?int
@@ -895,6 +914,18 @@ class CarExpensesController extends Controller
         $note = preg_replace('/\s*\[مربوط@\d{6}(?:\|(?:b:\d+|\d+))?\]/u', '', $note);
 
         return trim(str_replace(' [مربوط]', '', $note));
+    }
+
+    public static function resolvePreLinkExpensesSBase(Car $car, float $linkRate): int
+    {
+        if ($car->registration_pre_expenses_s !== null) {
+            return (int) $car->registration_pre_expenses_s;
+        }
+
+        $linkedExpenses = self::resolveLinkedRegistrationExpenses($car);
+        $expected = self::computeLinkedRegistrationTotal($linkedExpenses, $linkRate);
+
+        return max(0, (int) ($car->expenses_s ?? 0) - $expected);
     }
 
     public static function resolvePreLinkExpensesBase(Car $car, float $linkRate): int
@@ -1250,19 +1281,19 @@ class CarExpensesController extends Controller
     private function linkedCarNeedsHeal(Car $car, float $linkRate): bool
     {
         $linkedExpenses = self::resolveLinkedRegistrationExpenses($car);
-
-        if (self::parseLegacyLinkedUsdFromNotes($linkedExpenses) !== null) {
-            return true;
-        }
-
-        if ($car->registration_pre_expenses === null) {
-            return true;
-        }
-
         $expected = self::computeLinkedRegistrationTotal($linkedExpenses, $linkRate);
-        $preLink = (int) $car->registration_pre_expenses;
+        $prePurchases = self::resolvePreLinkExpensesBase($car, $linkRate);
+        $preSales = self::resolvePreLinkExpensesSBase($car, $linkRate);
 
-        return ($preLink + $expected) !== (int) ($car->expenses ?? 0);
+        if ((int) ($car->expenses ?? 0) !== $prePurchases) {
+            return true;
+        }
+
+        if ($car->registration_pre_expenses_s === null) {
+            return true;
+        }
+
+        return ($preSales + $expected) !== (int) ($car->expenses_s ?? 0);
     }
 
     private function syncLinkedCarExpenses(Car $car, float $linkRate, string $desc): void
@@ -1277,18 +1308,29 @@ class CarExpensesController extends Controller
 
         $linkedExpenses = self::resolveLinkedRegistrationExpenses($car);
         $expected = self::computeLinkedRegistrationTotal($linkedExpenses, $linkRate);
-        $preLink = self::resolvePreLinkExpensesBase($car, $linkRate);
-        $target = $preLink + $expected;
-        $delta = $target - (int) ($car->expenses ?? 0);
-        $syncSales = (bool) $car->registration_sync_sales;
+        $prePurchases = self::resolvePreLinkExpensesBase($car, $linkRate);
+        $preSales = self::resolvePreLinkExpensesSBase($car, $linkRate);
 
-        if ($delta !== 0) {
-            $this->applyLinkedExpenseDelta($car->fresh(), $delta, $desc, $syncSales);
+        $targetPurchases = $prePurchases;
+        $targetSales = $preSales + $expected;
+        $deltaPurchases = $targetPurchases - (int) ($car->expenses ?? 0);
+        $deltaSales = $targetSales - (int) ($car->expenses_s ?? 0);
+
+        if ($deltaPurchases !== 0 || $deltaSales !== 0) {
+            $this->applyLinkedExpenseAdjustment(
+                $car->fresh(),
+                $deltaPurchases,
+                $deltaSales,
+                $desc
+            );
         }
 
-        if (!$car->registration_exchange_rate) {
-            $car->update(['registration_exchange_rate' => (int) $linkRate]);
-        }
+        $car->fresh()->update([
+            'registration_exchange_rate' => (int) $linkRate,
+            'registration_pre_expenses' => $prePurchases,
+            'registration_pre_expenses_s' => $preSales,
+            'registration_sync_sales' => true,
+        ]);
 
         $this->normalizeLinkedExpenseMarkers($car->fresh()->load('carexpenses'));
     }
@@ -1302,16 +1344,14 @@ class CarExpensesController extends Controller
         return $forceUntaggedLinked;
     }
 
-    private function applyLinkedExpenseDelta(Car $car, int $expenseDelta, string $desc, bool $syncSales = true): void
+    private function applyLinkedExpenseAdjustment(Car $car, int $deltaPurchases, int $deltaSales, string $desc): void
     {
-        if ($expenseDelta === 0) {
+        if ($deltaPurchases === 0 && $deltaSales === 0) {
             return;
         }
 
-        $newExpenses = (int) (($car->expenses ?? 0) + $expenseDelta);
-        $newExpensesS = $syncSales
-            ? (int) (($car->expenses_s ?? 0) + $expenseDelta)
-            : (int) ($car->expenses_s ?? 0);
+        $newExpenses = (int) (($car->expenses ?? 0) + $deltaPurchases);
+        $newExpensesS = (int) (($car->expenses_s ?? 0) + $deltaSales);
 
         if ($newExpenses < 0 || $newExpensesS < 0) {
             throw new \Exception('تعذر التعديل: المصاريف المسجلة أقل من المربوطة');
@@ -1352,44 +1392,40 @@ class CarExpensesController extends Controller
             + ($car->land_shipping_s ?? 0)
         );
 
-        if ($expenseDelta > 0) {
-            if ($newTotal > $oldTotal) {
-                $this->accountingController->decreaseWallet(
-                    ($newTotal - $oldTotal),
-                    $desc,
-                    $this->accounting->mainAccount()->id,
-                    $car->id,
-                    'App\Models\Car'
-                );
-            }
-            if ($syncSales && $newTotalS > $oldTotalS) {
-                $this->accountingController->increaseWallet(
-                    ($newTotalS - $oldTotalS),
-                    $desc,
-                    $car->client_id,
-                    $car->id,
-                    'App\Models\User'
-                );
-            }
-        } else {
-            if ($oldTotal > $newTotal) {
-                $this->accountingController->increaseWallet(
-                    ($oldTotal - $newTotal),
-                    $desc,
-                    $this->accounting->mainAccount()->id,
-                    $car->id,
-                    'App\Models\Car'
-                );
-            }
-            if ($syncSales && $oldTotalS > $newTotalS) {
-                $this->accountingController->decreaseWallet(
-                    ($oldTotalS - $newTotalS),
-                    $desc,
-                    $car->client_id,
-                    $car->id,
-                    'App\Models\User'
-                );
-            }
+        if ($deltaPurchases > 0 && $newTotal > $oldTotal) {
+            $this->accountingController->decreaseWallet(
+                ($newTotal - $oldTotal),
+                $desc,
+                $this->accounting->mainAccount()->id,
+                $car->id,
+                'App\Models\Car'
+            );
+        } elseif ($deltaPurchases < 0 && $oldTotal > $newTotal) {
+            $this->accountingController->increaseWallet(
+                ($oldTotal - $newTotal),
+                $desc,
+                $this->accounting->mainAccount()->id,
+                $car->id,
+                'App\Models\Car'
+            );
+        }
+
+        if ($deltaSales > 0 && $newTotalS > $oldTotalS) {
+            $this->accountingController->increaseWallet(
+                ($newTotalS - $oldTotalS),
+                $desc,
+                $car->client_id,
+                $car->id,
+                'App\Models\User'
+            );
+        } elseif ($deltaSales < 0 && $oldTotalS > $newTotalS) {
+            $this->accountingController->decreaseWallet(
+                ($oldTotalS - $newTotalS),
+                $desc,
+                $car->client_id,
+                $car->id,
+                'App\Models\User'
+            );
         }
 
         $car->update([
@@ -1399,6 +1435,16 @@ class CarExpensesController extends Controller
             'total_s' => $newTotalS,
             'profit' => $newTotalS - $newTotal,
         ]);
+    }
+
+    private function applyLinkedExpenseDelta(Car $car, int $expenseDelta, string $desc, bool $syncSales = true): void
+    {
+        $this->applyLinkedExpenseAdjustment(
+            $car,
+            0,
+            $syncSales ? $expenseDelta : 0,
+            $desc
+        );
     }
 
     public static function applyLinkedCarsFilter($query)
