@@ -343,6 +343,19 @@ class CarExpensesController extends Controller
             ->findOrFail($request->car_id);
 
         $inWorkflow = self::isCarInRegistrationWorkflow($car);
+
+        if ($inWorkflow && self::isCarLinked($car)) {
+            $linkRate = self::parseLinkExchangeRate($car->carexpenses);
+            if ($linkRate && $this->linkedCarNeedsHeal($car, $linkRate)) {
+                DB::transaction(function () use ($car, $linkRate) {
+                    $fresh = Car::with('carexpenses')->findOrFail($car->id);
+                    $desc = 'مزامنة تلقائية لتسجيل السيارة ' . $fresh->car_type . ' ' . $fresh->vin;
+                    $this->syncLinkedCarExpenses($fresh, $linkRate, $desc);
+                });
+                $car = Car::with(['carexpenses.user:id,name'])->findOrFail($car->id);
+            }
+        }
+
         $expenses = $inWorkflow ? $car->carexpenses : collect();
 
         $totalDollar = $expenses->sum('amount_dollar');
@@ -1154,6 +1167,24 @@ class CarExpensesController extends Controller
     {
         $preLink = self::parsePreLinkBaseFromNotes($car->carexpenses);
         $this->rewriteLinkTagsOnExpenses($car, $linkRate, $preLink);
+    }
+
+    private function linkedCarNeedsHeal(Car $car, float $linkRate): bool
+    {
+        $linkedExpenses = self::resolveLinkedRegistrationExpenses($car);
+
+        if (self::parseLegacyLinkedUsdFromNotes($linkedExpenses) !== null) {
+            return true;
+        }
+
+        $preLink = self::parsePreLinkBaseFromNotes($linkedExpenses);
+        if ($preLink === null) {
+            return true;
+        }
+
+        $expected = self::computeLinkedRegistrationTotal($linkedExpenses, $linkRate);
+
+        return ($preLink + $expected) !== (int) ($car->expenses ?? 0);
     }
 
     private function syncLinkedCarExpenses(Car $car, float $linkRate, string $desc): void
