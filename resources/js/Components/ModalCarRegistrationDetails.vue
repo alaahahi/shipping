@@ -24,8 +24,6 @@ const addForm = ref({
   amount: '',
   item_note: '',
   item_type: 'repair',
-  expense_id: null,
-  create_new: false,
 });
 
 const CONTRACT_DEFAULT_AMOUNT = 200000;
@@ -84,10 +82,6 @@ function resetAddForm() {
     amount: '',
     item_note: '',
     item_type: 'repair',
-    expense_id: details.value?.expenses?.length
-      ? details.value.expenses[details.value.expenses.length - 1].id
-      : null,
-    create_new: false,
   };
 }
 
@@ -218,12 +212,8 @@ function itemTypeBadgeClass(type) {
   return 'expense-item-badge';
 }
 
-function openAddForm(expenseId = null) {
+function openAddForm() {
   resetAddForm();
-  if (expenseId) {
-    addForm.value.expense_id = expenseId;
-    addForm.value.create_new = false;
-  }
   showAddForm.value = true;
 }
 
@@ -241,8 +231,7 @@ async function submitAddExpense() {
   try {
     await axios.post('/api/addRegistrationExpenseLine', {
       car_id: details.value.car.id,
-      expense_id: addForm.value.create_new ? null : addForm.value.expense_id,
-      create_new: addForm.value.create_new,
+      create_new: true,
       currency: addForm.value.currency,
       amount: parseAddAmount(),
       item_type: addForm.value.item_type,
@@ -436,26 +425,6 @@ async function submitAddExpense() {
                       />
                     </label>
                   </template>
-                  <label v-if="details.expenses?.length > 1" class="add-form-field block mb-2">
-                    <span class="registration-details-label text-xs">إضافة إلى دفعة</span>
-                    <select
-                      v-model="addForm.expense_id"
-                      class="add-form-input w-full"
-                      :disabled="addForm.create_new"
-                    >
-                      <option
-                        v-for="exp in details.expenses"
-                        :key="exp.id"
-                        :value="exp.id"
-                      >
-                        {{ exp.created }} — {{ formatNumber(exp.amount_dinar) }} د
-                      </option>
-                    </select>
-                  </label>
-                  <label class="add-form-check flex items-center gap-2 mb-3 text-sm">
-                    <input v-model="addForm.create_new" type="checkbox" class="rounded" />
-                    <span class="registration-details-label">دفعة جديدة (سجل منفصل)</span>
-                  </label>
                   <button
                     type="button"
                     class="add-expense-submit w-full"
@@ -470,15 +439,15 @@ async function submitAddExpense() {
               <div
                 v-for="expense in details.expenses"
                 :key="expense.id"
-                class="expense-block mb-4 rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden"
+                class="expense-block mb-4 rounded-lg border border-gray-300 dark:border-gray-500 overflow-hidden"
               >
-                <div class="expense-block-header flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800">
+                <div class="expense-block-header flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
                   <span class="expense-block-meta text-sm font-semibold">
                     {{ expense.created }} — {{ expense.user?.name }}
                   </span>
                   <span class="expense-block-totals text-sm font-bold">
                     <span class="registration-details-dollar">{{ formatNumber(expense.amount_dollar) }} $</span>
-                    /
+                    <span class="expense-block-totals-sep">/</span>
                     <span class="registration-details-dinar">{{ formatNumber(expense.amount_dinar) }} د</span>
                   </span>
                 </div>
@@ -487,7 +456,7 @@ async function submitAddExpense() {
                   <li
                     v-for="item in expense.line_items"
                     :key="`${expense.id}-${item.index}`"
-                    class="expense-item flex items-start justify-between gap-2 px-3 py-2 border-t border-gray-200 dark:border-gray-700"
+                    class="expense-item flex items-start justify-between gap-2 px-3 py-2.5 border-t border-gray-200 dark:border-gray-600"
                   >
                     <div class="expense-item-body text-right flex-1 min-w-0">
                       <span :class="itemTypeBadgeClass(item.type)">{{ itemTypeLabel(item.type) }}</span>
@@ -506,21 +475,11 @@ async function submitAddExpense() {
                   </li>
                   <li
                     v-if="!expense.line_items?.length"
-                    class="expense-item px-3 py-2 border-t border-gray-200 dark:border-gray-700 text-sm"
+                    class="expense-item expense-item-note px-3 py-2.5 border-t border-gray-200 dark:border-gray-600 text-sm"
                   >
                     {{ expense.note }}
                   </li>
                 </ul>
-                <div v-if="details.can_edit" class="px-3 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                  <button
-                    type="button"
-                    class="expense-block-add-btn text-xs font-semibold"
-                    :disabled="saving"
-                    @click="openAddForm(expense.id)"
-                  >
-                    + إضافة بند لهذه الدفعة
-                  </button>
-                </div>
               </div>
 
               <div class="text-center mt-4">
@@ -642,12 +601,21 @@ async function submitAddExpense() {
   color: #1f2937 !important;
 }
 
+.expense-block-totals-sep {
+  margin: 0 0.25rem;
+  color: #6b7280 !important;
+}
+
+.expense-items-list {
+  background: #fff;
+}
+
 .expense-item {
   background: #fff;
 }
 
 .expense-item:nth-child(even) {
-  background: #f9fafb;
+  background: #f8fafc;
 }
 
 .expense-item-badge {
@@ -712,8 +680,15 @@ async function submitAddExpense() {
 
 .expense-item-label {
   color: #111827 !important;
-  font-size: 0.8125rem;
-  line-height: 1.4;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.expense-item-note {
+  color: #374151 !important;
+  font-weight: 500;
+  line-height: 1.5;
 }
 
 .expense-item-delete {
@@ -871,31 +846,79 @@ async function submitAddExpense() {
   color: #93c5fd !important;
 }
 
-:global(.dark) .expense-block-meta {
-  color: #e5e7eb !important;
+:global(.dark) .registration-details-modal .expense-block {
+  border-color: #64748b !important;
+  background: #0f172a;
 }
 
-:global(.dark) .expense-item {
-  background: #111827;
+:global(.dark) .registration-details-modal .expense-block-header {
+  background: #1e293b !important;
+  border-bottom-color: #64748b !important;
 }
 
-:global(.dark) .expense-item:nth-child(even) {
-  background: #1f2937;
+:global(.dark) .registration-details-modal .expense-block-meta {
+  color: #f8fafc !important;
 }
 
-:global(.dark) .expense-item-badge {
-  background: #1e3a8a;
-  color: #bfdbfe !important;
+:global(.dark) .registration-details-modal .expense-block-totals-sep {
+  color: #cbd5e1 !important;
 }
 
-:global(.dark) .expense-item-badge-registration {
-  background: #14532d;
-  color: #86efac !important;
+:global(.dark) .registration-details-modal .expense-items-list {
+  background: #0f172a;
 }
 
-:global(.dark) .expense-item-badge-contract {
-  background: #78350f;
-  color: #fde68a !important;
+:global(.dark) .registration-details-modal .expense-item {
+  background: #0f172a !important;
+  border-top-color: #475569 !important;
+}
+
+:global(.dark) .registration-details-modal .expense-item:nth-child(even) {
+  background: #1e293b !important;
+}
+
+:global(.dark) .registration-details-modal .expense-item-badge {
+  background: #1d4ed8;
+  color: #eff6ff !important;
+  border: 1px solid #60a5fa;
+}
+
+:global(.dark) .registration-details-modal .expense-item-badge-registration {
+  background: #166534;
+  color: #ecfdf5 !important;
+  border: 1px solid #4ade80;
+}
+
+:global(.dark) .registration-details-modal .expense-item-badge-contract {
+  background: #92400e;
+  color: #fffbeb !important;
+  border: 1px solid #fbbf24;
+}
+
+:global(.dark) .registration-details-modal .expense-item-label {
+  color: #f8fafc !important;
+}
+
+:global(.dark) .registration-details-modal .expense-item-note {
+  color: #e2e8f0 !important;
+}
+
+:global(.dark) .registration-details-modal .expense-item-delete {
+  border-color: #f87171;
+  background: #450a0a;
+  color: #fecaca !important;
+}
+
+:global(.dark) .registration-details-modal .expense-item-delete:hover:not(:disabled) {
+  background: #7f1d1d;
+}
+
+:global(.dark) .registration-details-modal .conversion-ok {
+  color: #4ade80 !important;
+}
+
+:global(.dark) .registration-details-modal .conversion-warn {
+  color: #f87171 !important;
 }
 
 :global(.dark) .add-type-btn {
@@ -918,10 +941,6 @@ async function submitAddExpense() {
 
 :global(.dark) .contract-form-hint {
   color: #fde68a !important;
-}
-
-:global(.dark) .expense-item-label {
-  color: #f3f4f6 !important;
 }
 
 :global(.dark) .rate-edit-input {
