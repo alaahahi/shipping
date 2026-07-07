@@ -130,12 +130,12 @@ function closeModal() {
   <Transition name="modal">
     <div v-if="show" class="modal-mask">
       <div class="modal-wrapper max-h-[85vh]">
-        <div class="modal-container dark:bg-gray-900 overflow-auto max-h-[85vh]">
+        <div class="modal-container registration-modal overflow-auto max-h-[85vh]">
           <div class="modal-header px-4 pt-4">
-            <h2 class="text-center text-lg font-bold dark:text-gray-100">
+            <h2 class="modal-title text-center text-lg font-bold">
               إضافة سيارة لتسجيل المصاريف
             </h2>
-            <p class="text-center text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p class="modal-subtitle text-center text-xs mt-1">
               ابحث بالشانصي مباشرة — أسرع من اختيار التاجر
             </p>
           </div>
@@ -143,19 +143,19 @@ function closeModal() {
           <div class="modal-body px-4 pb-2">
             <div class="space-y-3">
               <label class="block">
-                <span class="text-sm font-semibold dark:text-gray-200">الشانصي (VIN)</span>
+                <span class="modal-field-label text-sm font-semibold">الشانصي (VIN)</span>
                 <div class="relative mt-1">
                   <input
                     v-model="vinQuery"
                     type="text"
                     dir="ltr"
-                    class="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                    class="modal-field-input block w-full rounded-lg px-3 py-2.5 text-sm shadow-sm"
                     placeholder="أدخل آخر 6 أرقام أو الشانصي كاملاً"
                     autocomplete="off"
                   />
                   <span
                     v-if="isSearching"
-                    class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400"
+                    class="modal-search-hint absolute left-3 top-1/2 -translate-y-1/2 text-xs"
                   >
                     جاري البحث...
                   </span>
@@ -163,10 +163,10 @@ function closeModal() {
               </label>
 
               <label class="block">
-                <span class="text-sm font-semibold dark:text-gray-200">تاجر (فلتر اختياري)</span>
+                <span class="modal-field-label text-sm font-semibold">تاجر (فلتر اختياري)</span>
                 <select
                   v-model="dealerFilter"
-                  class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                  class="modal-field-select mt-1 block w-full rounded-lg px-3 py-2 text-sm"
                 >
                   <option :value="0">الكل</option>
                   <option v-for="c in client" :key="c.id" :value="c.id">{{ c.name }}</option>
@@ -175,7 +175,7 @@ function closeModal() {
 
               <div
                 v-if="vinQuery.trim().length >= 3 && !isSearching && filteredResults.length === 0"
-                class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+                class="modal-alert modal-alert--warn rounded-lg px-3 py-2 text-sm"
               >
                 لا توجد سيارة متاحة لهذا الشانصي (قد تكون مضافة مسبقاً)
               </div>
@@ -185,14 +185,12 @@ function closeModal() {
                   v-for="car in filteredResults"
                   :key="car.id"
                   type="button"
-                  class="w-full text-right rounded-lg border px-3 py-2.5 text-sm transition"
-                  :class="selectedCar?.id === car.id
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/50 dark:border-blue-400'
-                    : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'"
+                  class="modal-result-card w-full text-right rounded-lg border px-3 py-2.5 text-sm transition"
+                  :class="{ 'modal-result-card--selected': selectedCar?.id === car.id }"
                   @click="selectCar(car)"
                 >
-                  <div class="font-semibold dark:text-gray-100">{{ carLabel(car) }}</div>
-                  <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  <div class="modal-result-title font-semibold">{{ carLabel(car) }}</div>
+                  <div class="modal-result-sub text-xs mt-0.5">
                     {{ car.client?.name || '—' }}
                   </div>
                 </button>
@@ -200,10 +198,10 @@ function closeModal() {
 
               <div
                 v-if="selectedCar"
-                class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm dark:border-emerald-800 dark:bg-emerald-950/30"
+                class="modal-alert modal-alert--ok rounded-lg px-3 py-2 text-sm"
               >
-                <span class="font-semibold text-emerald-800 dark:text-emerald-200">محددة: </span>
-                <span class="dark:text-gray-200">{{ carLabel(selectedCar) }}</span>
+                <span class="font-semibold">محددة: </span>
+                <span>{{ carLabel(selectedCar) }}</span>
               </div>
             </div>
 
@@ -258,6 +256,152 @@ function closeModal() {
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
+  color: #111827;
+}
+
+.modal-title {
+  color: #111827;
+}
+
+.modal-subtitle {
+  color: #6b7280;
+}
+
+.modal-field-label {
+  color: #374151;
+}
+
+.modal-field-input,
+.modal-field-select {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #111827;
+}
+
+.modal-field-input:focus,
+.modal-field-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.modal-field-input::placeholder {
+  color: #9ca3af;
+}
+
+.modal-search-hint {
+  color: #9ca3af;
+}
+
+.modal-result-card {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #111827;
+}
+
+.modal-result-card:hover {
+  border-color: #cbd5e1;
+  background: #f9fafb;
+}
+
+.modal-result-card--selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.modal-result-sub {
+  color: #6b7280;
+}
+
+.modal-alert--warn {
+  border: 1px solid #fcd34d;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.modal-alert--ok {
+  border: 1px solid #6ee7b7;
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+:global(.dark) .registration-modal {
+  background: #111827;
+  border: 1px solid #6b7280;
+  color: #f9fafb;
+  color-scheme: dark;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.65);
+}
+
+:global(.dark) .registration-modal .modal-title {
+  color: #ffffff !important;
+}
+
+:global(.dark) .registration-modal .modal-subtitle {
+  color: #e5e7eb !important;
+}
+
+:global(.dark) .registration-modal .modal-field-label {
+  color: #f3f4f6 !important;
+  font-weight: 700;
+}
+
+:global(.dark) .registration-modal .modal-field-input,
+:global(.dark) .registration-modal .modal-field-select {
+  background: #030712 !important;
+  border-color: #6b7280 !important;
+  color: #ffffff !important;
+  font-weight: 500;
+}
+
+:global(.dark) .registration-modal .modal-field-input::placeholder {
+  color: #9ca3af !important;
+}
+
+:global(.dark) .registration-modal .modal-field-select option {
+  background: #111827;
+  color: #f9fafb;
+}
+
+:global(.dark) .registration-modal .modal-search-hint {
+  color: #d1d5db !important;
+}
+
+:global(.dark) .registration-modal .modal-result-card {
+  background: #1f2937 !important;
+  border-color: #6b7280 !important;
+  color: #ffffff !important;
+}
+
+:global(.dark) .registration-modal .modal-result-card:hover {
+  background: #374151 !important;
+  border-color: #9ca3af !important;
+}
+
+:global(.dark) .registration-modal .modal-result-card--selected {
+  background: #1e3a8a !important;
+  border-color: #60a5fa !important;
+}
+
+:global(.dark) .registration-modal .modal-result-title {
+  color: #ffffff !important;
+  font-weight: 700;
+}
+
+:global(.dark) .registration-modal .modal-result-sub {
+  color: #e5e7eb !important;
+}
+
+:global(.dark) .registration-modal .modal-alert--warn {
+  background: #451a03 !important;
+  border-color: #fbbf24 !important;
+  color: #fde68a !important;
+}
+
+:global(.dark) .registration-modal .modal-alert--ok {
+  background: #064e3b !important;
+  border-color: #34d399 !important;
+  color: #d1fae5 !important;
 }
 
 .modal-enter-from,

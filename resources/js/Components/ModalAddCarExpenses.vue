@@ -233,7 +233,7 @@ function openModalDelClient(expense) {
 
             <!-- إضافة -->
             <div v-if="activeTab === 'add' && currentWork" class="mx-4 mt-4 space-y-4">
-              <h1 class="text-center text-lg font-bold dark:text-gray-100">تسجيل مصاريف السيارة</h1>
+              <h1 class="text-center text-lg font-bold text-gray-900 dark:text-white">تسجيل مصاريف السيارة</h1>
 
               <div class="pay-card pay-card--green">
                 <div class="pay-card__title">
@@ -488,7 +488,9 @@ function openModalDelClient(expense) {
 
 :global(.dark) .modal-container {
   background-color: #111827;
+  border: 1px solid #6b7280;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
 }
 
 .pay-label {
@@ -500,7 +502,8 @@ function openModalDelClient(expense) {
 }
 
 :global(.dark) .pay-label {
-  color: #e5e7eb;
+  color: #f3f4f6;
+  font-weight: 700;
 }
 
 .pay-hint {
@@ -533,9 +536,14 @@ function openModalDelClient(expense) {
 }
 
 :global(.dark) .pay-input {
-  border-color: #4b5563;
+  border-color: #6b7280;
   background: #030712;
-  color: #f9fafb;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+:global(.dark) .pay-input::placeholder {
+  color: #9ca3af;
 }
 
 .pay-input--highlight {

@@ -540,6 +540,7 @@ async function submitAddExpense() {
   background: #111827;
   border: 1px solid #4b5563;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
+  color-scheme: dark;
 }
 
 .modal-enter-from,
@@ -806,11 +807,13 @@ async function submitAddExpense() {
 }
 
 :global(.dark) .registration-details-title {
-  color: #f9fafb !important;
+  color: #ffffff !important;
+  font-weight: 800;
 }
 
 :global(.dark) .registration-details-subtitle {
-  color: #e5e7eb !important;
+  color: #f3f4f6 !important;
+  font-weight: 600;
 }
 
 :global(.dark) .registration-details-rate {
@@ -827,7 +830,8 @@ async function submitAddExpense() {
 }
 
 :global(.dark) .registration-details-label {
-  color: #d1d5db !important;
+  color: #f3f4f6 !important;
+  font-weight: 700;
 }
 
 :global(.dark) .registration-details-summary-dollar {
@@ -896,7 +900,9 @@ async function submitAddExpense() {
 }
 
 :global(.dark) .registration-details-modal .expense-item-label {
-  color: #f8fafc !important;
+  color: #ffffff !important;
+  font-size: 0.9375rem;
+  font-weight: 700;
 }
 
 :global(.dark) .registration-details-modal .expense-item-note {
@@ -960,7 +966,16 @@ async function submitAddExpense() {
 
 :global(.dark) .add-form-input {
   background: #030712;
-  border-color: #4b5563;
-  color: #f9fafb !important;
+  border-color: #6b7280;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+:global(.dark) .add-form-input::placeholder {
+  color: #9ca3af !important;
+}
+
+:global(.dark) .rate-edit-input::placeholder {
+  color: #9ca3af !important;
 }
 </style>
