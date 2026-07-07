@@ -1450,6 +1450,11 @@ class CarExpensesController extends Controller
     {
         $inWorkflow = self::isCarInRegistrationWorkflow($car);
         $car->has_registration_workflow = $inWorkflow;
+        $expenseCount = (int) ($car->carexpenses_count ?? 0);
+        $car->has_registration = $inWorkflow && (
+            $expenseCount > 0 || self::isCarLinked($car)
+        );
+
         if (!$inWorkflow) {
             $car->carexpenses_count = 0;
         }

@@ -845,6 +845,17 @@ function carHasRegistrationWorkflow(car) {
   return [1, 2, 4].includes(Number(car?.car_have_expenses));
 }
 
+function carHasRegistration(car) {
+  if (car?.has_registration !== undefined) {
+    return Boolean(car.has_registration);
+  }
+  if (Number(car?.car_have_expenses) === 4) return true;
+  if (car?.registration_exchange_rate || Number(car?.registration_linked_usd ?? 0) > 0) {
+    return true;
+  }
+  return carHasRegistrationWorkflow(car) && Number(car?.carexpenses_count ?? 0) > 0;
+}
+
 const EGRIBEST_CONTRACT_BASE = 'https://egribest.com/otosale/agreement_new.php?page=New_Register_Agreement';
 
 function getCarVinForContract(car) {
@@ -2264,7 +2275,7 @@ async function savePaymentDescription(payment) {
                       className="border dark:border-gray-800 text-start px-2 py-1 print:hidden"
                     >
                       <button
-                        v-if="getCarVinForContract(item.data)"
+                        v-if="getCarVinForContract(item.data) && !carHasRegistration(item.data)"
                         type="button"
                         tabIndex="1"
                         class="px-1 py-1 text-white mx-1 bg-indigo-700 rounded text-xs font-bold inline-flex items-center"
