@@ -38,7 +38,21 @@ class CarExpensesController extends Controller
     {
     $this->accountingController = $accountingController;
     $this->accounting = $accounting;
-    $this->userClient =  UserType::where('name', 'client')->first()->id;
+    $clientType = UserType::where('name', 'client')->first();
+    $this->userClient = $clientType?->id;
+    }
+
+    private function resolveMainAccountId(?int $ownerId = null): int
+    {
+        $ownerId = $ownerId ?? (int) Auth::user()->owner_id;
+        $this->accounting->loadAccounts($ownerId);
+
+        $mainAccount = $this->accounting->mainAccount();
+        if (!$mainAccount || !$mainAccount->id) {
+            throw new \RuntimeException('حساب الصندوق الرئيسي غير مهيأ');
+        }
+
+        return (int) $mainAccount->id;
     }
     public function searchVINs(Request $request)
     {
@@ -216,8 +230,14 @@ class CarExpensesController extends Controller
     public function confirmLinkArchiveCar(Request $request)
     {
         try {
-            $car = Car::with('carexpenses')->findOrFail($request->id);
+            $carId = (int) ($request->id ?? 0);
+            if ($carId <= 0) {
+                return response()->json(['error' => 'معرف السيارة مطلوب'], 422);
+            }
+
+            $car = Car::with('carexpenses')->findOrFail($carId);
             $owner_id = Auth::user()->owner_id;
+            $mainAccountId = $this->resolveMainAccountId((int) $owner_id);
 
             if ((int) $car->owner_id !== (int) $owner_id) {
                 return response()->json(['error' => 'غير مصرح'], 403);
@@ -295,7 +315,7 @@ class CarExpensesController extends Controller
                 $this->accountingController->decreaseWallet(
                     ($newTotal - $oldTotal),
                     $desc,
-                    $this->accounting->mainAccount()->id,
+                    $mainAccountId,
                     $car->id,
                     'App\Models\Car'
                 );
@@ -618,8 +638,14 @@ class CarExpensesController extends Controller
     {
         try {
             return DB::transaction(function () use ($request) {
-                $car = Car::with('carexpenses')->findOrFail($request->id);
+                $carId = (int) ($request->id ?? 0);
+                if ($carId <= 0) {
+                    return response()->json(['error' => 'معرف السيارة مطلوب'], 422);
+                }
+
+                $car = Car::with('carexpenses')->findOrFail($carId);
                 $owner_id = Auth::user()->owner_id;
+                $mainAccountId = $this->resolveMainAccountId((int) $owner_id);
 
                 if ((int) $car->owner_id !== (int) $owner_id) {
                     return response()->json(['error' => 'غير مصرح'], 403);
@@ -718,7 +744,7 @@ class CarExpensesController extends Controller
                     $this->accountingController->increaseWallet(
                         ($oldTotal - $newTotal),
                         $desc,
-                        $this->accounting->mainAccount()->id,
+                        $mainAccountId,
                         $car->id,
                         'App\Models\Car'
                     );
@@ -1320,6 +1346,8 @@ class CarExpensesController extends Controller
             throw new \Exception('تعذر التعديل: المصاريف المسجلة أقل من المربوطة');
         }
 
+        $mainAccountId = $this->resolveMainAccountId((int) $car->owner_id);
+
         $oldTotal = (int) ($car->total ?? 0);
         $oldTotalS = (int) ($car->total_s ?? 0);
 
@@ -1359,7 +1387,7 @@ class CarExpensesController extends Controller
             $this->accountingController->decreaseWallet(
                 ($newTotal - $oldTotal),
                 $desc,
-                $this->accounting->mainAccount()->id,
+                $mainAccountId,
                 $car->id,
                 'App\Models\Car'
             );
@@ -1367,7 +1395,7 @@ class CarExpensesController extends Controller
             $this->accountingController->increaseWallet(
                 ($oldTotal - $newTotal),
                 $desc,
-                $this->accounting->mainAccount()->id,
+                $mainAccountId,
                 $car->id,
                 'App\Models\Car'
             );
