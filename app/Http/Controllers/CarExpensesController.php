@@ -109,13 +109,20 @@ class CarExpensesController extends Controller
     }
     public function addCarFavorite(Request $request)
     {
-        $car = Car::find($request->carId);
-        if($car){
-          $car_edited =  $car->update(['car_have_expenses'=>1]);
-        }else{
-            return Response::json('car not found', 200);    
+        $ownerId = Auth::user()->owner_id;
+        $car = Car::where('owner_id', $ownerId)->find($request->carId);
+
+        if (!$car) {
+            return Response::json(['error' => 'السيارة غير موجودة'], 404);
         }
-        return Response::json($car, 200);    
+
+        if (in_array((int) $car->car_have_expenses, [1, 2, self::CAR_HAVE_EXPENSES_LINKED], true)) {
+            return Response::json(['error' => 'السيارة موجودة مسبقاً في تسجيل المصاريف'], 422);
+        }
+
+        $car->update(['car_have_expenses' => 1]);
+
+        return Response::json($car->fresh(), 200);
     }
     public function confirmExpensesCar(Request $request){
         $user=Auth::user();
@@ -1566,14 +1573,22 @@ class CarExpensesController extends Controller
             return $car;
         });
     }
-    public function confirmDelCarFav(Request $request){
-        $car = Car::find($request->id);
-        if($car){
-          $car_edited =  $car->update(['car_have_expenses'=>3]);
-        }else{
-            return Response::json('car not found', 200);    
+    public function confirmDelCarFav(Request $request)
+    {
+        $ownerId = Auth::user()->owner_id;
+        $car = Car::where('owner_id', $ownerId)->find($request->id);
+
+        if (!$car) {
+            return Response::json(['error' => 'السيارة غير موجودة'], 404);
         }
-        return Response::json($car, 200);    
+
+        if ((int) $car->car_have_expenses !== 1) {
+            return Response::json(['error' => 'السيارة ليست ضمن قيد العمل'], 422);
+        }
+
+        $car->update(['car_have_expenses' => 0]);
+
+        return Response::json(['ok' => true, 'id' => $car->id], 200);
     }
     public function getIndexExpensesPrint(Request $request){
         $data = Car::with('contract', 'exitcar','client','carexpenses.user')->where('id', $request->car_id)->first();

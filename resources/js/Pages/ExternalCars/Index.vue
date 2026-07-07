@@ -37,6 +37,7 @@ function getTodayDate() {
 function emptyForm() {
   return {
     dealer_name: '',
+    vin: '',
     car_type: '',
     year: '',
     car_color: '',
@@ -74,6 +75,7 @@ function openEditModal(car) {
   formData.value = {
     id: car.id,
     dealer_name: car.dealer_name ?? '',
+    vin: car.vin ?? '',
     car_type: car.car_type ?? '',
     year: car.year ?? '',
     car_color: car.car_color ?? '',
@@ -230,7 +232,8 @@ function confirmDelete(payload) {
               <thead>
                 <tr class="bg-gray-100 dark:bg-gray-800">
                   <th class="border dark:border-gray-700 px-2 py-2">التاريخ</th>
-                  <th class="border dark:border-gray-700 px-2 py-2">التاجر</th>
+                  <th class="border dark:border-gray-700 px-2 py-2">شانصي</th>
+                  <th class="border dark:border-gray-700 px-2 py-2">تاجر</th>
                   <th class="border dark:border-gray-700 px-2 py-2">نوع السيارة</th>
                   <th class="border dark:border-gray-700 px-2 py-2">السنة</th>
                   <th class="border dark:border-gray-700 px-2 py-2">اللون</th>
@@ -243,6 +246,7 @@ function confirmDelete(payload) {
               <tbody>
                 <tr v-for="car in cars" :key="car.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/60">
                   <td class="border dark:border-gray-700 px-2 py-2 text-center">{{ formatDate(car.date) }}</td>
+                  <td class="border dark:border-gray-700 px-2 py-2 text-center font-mono text-xs" dir="ltr">{{ car.vin || '-' }}</td>
                   <td class="border dark:border-gray-700 px-2 py-2 text-center">{{ car.dealer_name }}</td>
                   <td class="border dark:border-gray-700 px-2 py-2 text-center">{{ car.car_type }}</td>
                   <td class="border dark:border-gray-700 px-2 py-2 text-center">{{ car.year || '-' }}</td>
@@ -262,7 +266,7 @@ function confirmDelete(payload) {
                   </td>
                 </tr>
                 <tr v-if="cars.length === 0">
-                  <td colspan="9" class="border dark:border-gray-700 px-2 py-6 text-center text-gray-500">
+                  <td colspan="10" class="border dark:border-gray-700 px-2 py-6 text-center text-gray-500">
                     لا توجد سيارات خارجية
                   </td>
                 </tr>

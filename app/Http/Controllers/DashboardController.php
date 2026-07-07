@@ -1144,10 +1144,10 @@ class DashboardController extends Controller
 
         return Response::json($data, 200);
     }
-    public function getIndexCarSearch()
+    public function getIndexCarSearch(Request $request)
     {
         $owner_id = Auth::user()->owner_id;
-        $term = $_GET['q'] ?? '';
+        $term = trim((string) ($request->get('q') ?? ''));
         
         // إذا كان البحث فارغ، إرجاع مصفوفة فارغة
         if (empty($term)) {
@@ -1156,8 +1156,12 @@ class DashboardController extends Controller
         
         // بناء الاستعلام المحسن
         $query = Car::query()
-            ->select(['id', 'vin', 'car_number', 'car_type', 'client_id', 'no', 'created_at', 'total', 'total_s', 'results'])
+            ->select(['id', 'vin', 'car_number', 'car_type', 'car_color', 'year', 'client_id', 'car_have_expenses', 'no', 'created_at', 'total', 'total_s', 'results'])
             ->where('owner_id', $owner_id);
+
+        if ($request->boolean('for_registration')) {
+            $query->where('car_have_expenses', 0);
+        }
         
         // استخدام البحث المحسن مع فهارس
         $query->where(function ($q) use ($term) {

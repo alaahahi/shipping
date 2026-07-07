@@ -62,6 +62,7 @@ class ExternalCarController extends Controller
         if ($q !== '') {
             $query->where(function ($sub) use ($q) {
                 $sub->where('dealer_name', 'LIKE', '%' . $q . '%')
+                    ->orWhere('vin', 'LIKE', '%' . $q . '%')
                     ->orWhere('car_type', 'LIKE', '%' . $q . '%')
                     ->orWhere('car_number', 'LIKE', '%' . $q . '%')
                     ->orWhere('car_color', 'LIKE', '%' . $q . '%');
@@ -97,6 +98,7 @@ class ExternalCarController extends Controller
     {
         $request->validate([
             'dealer_name' => 'required|string|max:255',
+            'vin' => 'nullable|string|max:32',
             'car_type' => 'required|string|max:255',
             'car_number' => 'required|string|max:255',
             'year' => 'nullable|integer|min:1900|max:2100',
@@ -109,6 +111,7 @@ class ExternalCarController extends Controller
 
         return [
             'dealer_name' => trim((string) $request->dealer_name),
+            'vin' => trim((string) ($request->vin ?? '')) ?: null,
             'car_type' => trim((string) $request->car_type),
             'car_number' => trim((string) $request->car_number),
             'year' => $request->filled('year') ? (int) $request->year : null,

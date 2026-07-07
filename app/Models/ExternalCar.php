@@ -15,6 +15,7 @@ class ExternalCar extends Model
         'owner_id',
         'user_id',
         'dealer_name',
+        'vin',
         'car_type',
         'year',
         'car_color',

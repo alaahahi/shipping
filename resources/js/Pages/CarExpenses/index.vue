@@ -95,7 +95,7 @@ function formatNumber(n) {
 
 const refresh = () => {
   page = 1;
-  car.value.length = 0;
+  car.value = [];
   resetData.value = !resetData.value;
 };
 const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce delay (in milliseconds) as needed
@@ -229,7 +229,8 @@ const summaryPrintUrl = computed(() => {
 
   })
   .catch(error => {
-    console.error(error);
+    const msg = error?.response?.data?.error || 'تعذر إضافة السيارة';
+    toast.error(msg, { timeout: 3500, position: 'bottom-right', rtl: true });
   })
 }
 
@@ -329,6 +330,7 @@ function swiptab(tab){
 function emptyExternalForm() {
   return {
     dealer_name: '',
+    vin: '',
     car_type: '',
     year: '',
     car_color: '',
@@ -350,6 +352,7 @@ function openExternalCarForm(row = null) {
     formData.value = {
       id: row.id,
       dealer_name: row.dealer_name ?? '',
+      vin: row.vin ?? '',
       car_type: row.car_type ?? '',
       year: row.year ?? '',
       car_color: row.car_color ?? '',
@@ -399,8 +402,10 @@ function openModalDelCar(form={}) {
 }
 
 function confirmDeleteExternalCar(payload) {
+  const id = payload.id;
   axios.post('/api/deleteExternalCar', payload)
     .then(() => {
+      car.value = car.value.filter((c) => c.id !== id);
       showModalDelCar.value = false;
       externalDeleteMode.value = false;
       toast.success('تم الحذف بنجاح', { timeout: 2500, position: 'bottom-right', rtl: true });
@@ -520,8 +525,10 @@ function confirmUnlinkWithRate(payload) {
 
 
 function confirmDelCarFav(V) {
+  const id = V.id;
   axios.post('/api/confirmDelCarFav',V)
   .then(response => {
+    car.value = car.value.filter((c) => c.id !== id);
     showModalDelCar.value = false;
     toast.success("حذف السيارة بنجاح", {
         timeout: 3000,
@@ -532,7 +539,8 @@ function confirmDelCarFav(V) {
     refresh();
   })
   .catch(error => {
-    console.error(error);
+    const msg = error?.response?.data?.error || 'تعذر الحذف';
+    toast.error(msg, { timeout: 3500, position: 'bottom-right', rtl: true });
   })
 
 
@@ -830,7 +838,8 @@ function confirmDelCarFav(V) {
                           <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800">
                             <tr class="bg-amber-600 dark:bg-amber-800 text-white">
                               <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">التاريخ</th>
-                              <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">التاجر</th>
+                              <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">شانصي</th>
+                              <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">تاجر</th>
                               <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t('car_type') }}</th>
                               <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t('year') }}</th>
                               <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t('color') }}</th>
@@ -842,7 +851,7 @@ function confirmDelCarFav(V) {
                           </thead>
                           <tbody>
                             <tr v-if="!car?.length">
-                              <td colspan="9" class="car-expenses-empty-msg py-8">
+                              <td colspan="10" class="car-expenses-empty-msg py-8">
                                 لا توجد سيارات خارجية
                               </td>
                             </tr>
@@ -852,6 +861,7 @@ function confirmDelCarFav(V) {
                               class="bg-white border-b dark:bg-gray-900 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                             >
                               <td class="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ formatExternalDate(item.date) }}</td>
+                              <td class="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100 font-mono text-xs" dir="ltr">{{ item.vin || '-' }}</td>
                               <td class="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ item.dealer_name }}</td>
                               <td class="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ item.car_type }}</td>
                               <td class="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ item.year || '-' }}</td>
