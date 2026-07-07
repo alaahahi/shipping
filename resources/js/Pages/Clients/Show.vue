@@ -844,6 +844,26 @@ function carHasRegistrationWorkflow(car) {
   }
   return [1, 2, 4].includes(Number(car?.car_have_expenses));
 }
+
+const EGRIBEST_CONTRACT_BASE = 'https://egribest.com/otosale/agreement_new.php?page=New_Register_Agreement';
+
+function getCarVinForContract(car) {
+  const vin = String(car?.vin ?? '').trim().toUpperCase();
+  return vin.length === 17 ? vin : '';
+}
+
+function getEgribestContractUrl(car) {
+  const vin = getCarVinForContract(car);
+  if (!vin) return '';
+  return `${EGRIBEST_CONTRACT_BASE}&VIN=${encodeURIComponent(vin)}`;
+}
+
+function openEgribestContract(car) {
+  const url = getEgribestContractUrl(car);
+  if (!url) return;
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
 function openModalCarRegistrationDetails(car) {
   registrationCarId.value = car.id;
   showModalCarRegistrationDetails.value = true;
@@ -2243,7 +2263,16 @@ async function savePaymentDescription(payment) {
                     <td
                       className="border dark:border-gray-800 text-start px-2 py-1 print:hidden"
                     >
-    
+                      <button
+                        v-if="getCarVinForContract(item.data)"
+                        type="button"
+                        tabIndex="1"
+                        class="px-1 py-1 text-white mx-1 bg-indigo-700 rounded text-xs font-bold inline-flex items-center"
+                        title="عقد تسجيل Egribest"
+                        @click="openEgribestContract(item.data)"
+                      >
+                        عقد
+                      </button>
                       <button
                         tabIndex="1"
                         
