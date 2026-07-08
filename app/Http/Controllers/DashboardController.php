@@ -1163,10 +1163,10 @@ class DashboardController extends Controller
             $query->where('car_have_expenses', 0);
         }
         
-        // استخدام البحث المحسن مع فهارس
+        // مطابقة جزئية: يكفي جزء من الشانصي (مثل آخر 6 أرقام) وليس شرط كتابته كاملاً
         $query->where(function ($q) use ($term) {
-            $q->where('vin', 'LIKE', $term . '%')  // البحث من البداية أفضل للأداء
-              ->orWhere('car_number', 'LIKE', $term . '%')
+            $q->where('vin', 'LIKE', '%' . $term . '%')
+              ->orWhere('car_number', 'LIKE', '%' . $term . '%')
               ->orWhere('car_type', 'LIKE', '%' . $term . '%')
               ->orWhereHas('client', function ($subquery) use ($term) {
                   $subquery->where('name', 'LIKE', '%' . $term . '%');
