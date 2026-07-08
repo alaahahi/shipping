@@ -1628,8 +1628,27 @@ class CarExpensesController extends Controller
         if($data){
 
             $config=SystemConfig::first();
-    
-            return view('receiptCarsExpensesTotal',compact('data','config'));
+
+            $totalAmountDollar = (float) $data->carexpenses->sum('amount_dollar');
+            $totalAmountDinar = (float) $data->carexpenses->sum('amount_dinar');
+
+            // تحويل الدينار إلى دولار بسعر الصرف المسجّل (السعر لا يُعرض في الطباعة)
+            $rate = self::resolveCarLinkExchangeRate($data);
+            $convertedTotalDollar = null;
+            if ($rate) {
+                $calcRate = $rate > 9999 ? $rate / 100 : $rate;
+                if ($calcRate > 0) {
+                    $convertedTotalDollar = (int) ($totalAmountDinar / $calcRate) + (int) $totalAmountDollar;
+                }
+            }
+
+            return view('receiptCarsExpensesTotal', compact(
+                'data',
+                'config',
+                'totalAmountDollar',
+                'totalAmountDinar',
+                'convertedTotalDollar'
+            ));
         }else{
             return Response::json('car not found', 200);    
         }
