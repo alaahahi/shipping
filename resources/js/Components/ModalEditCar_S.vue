@@ -34,7 +34,7 @@ const registrationData = ref({
   noteToAdd: '' // الملاحظة التي سيتم إضافتها
 });
 
-// حساب المجموع تلقائياً (المصروف بالدينار للتفاصيل فقط — لا يُضاف على حساب السيارة)
+// حساب المجموع تلقائياً (التسجيل + المصروف + عقد الشركة تُحوّل لدولار وتُضاف)
 const calculateRegistrationTotal = computed(() => {
   const fee = parseFloat(registrationData.value.fee || 0);
   const expenses = parseFloat(registrationData.value.expenses || 0);
@@ -42,7 +42,7 @@ const calculateRegistrationTotal = computed(() => {
   const rate = parseFloat(registrationData.value.exchangeRate || 1);
   const additionalExpenses = parseFloat(registrationData.value.additionalExpenses || 0);
 
-  const financialDinarTotal = fee + companyContract;
+  const financialDinarTotal = fee + expenses + companyContract;
 
   let totalUSD = 0;
   if (rate > 0) {
@@ -60,8 +60,6 @@ const calculateRegistrationTotal = computed(() => {
     registrationData.value.noteToAdd = details.length
       ? `+ رسوم تسجيل ${totalUSD}$ (${details.join('، ')})`
       : `+ رسوم تسجيل ${totalUSD}$`;
-  } else if (expenses > 0) {
-    registrationData.value.noteToAdd = `+ مصروف ${expenses} د`;
   } else {
     registrationData.value.noteToAdd = '';
   }
@@ -697,7 +695,7 @@ async function removeTagFromCar(tagValue) {
                 📋 حساب رسوم التسجيل والمصاريف
               </h3>
               <p class="text-sm text-blue-600 dark:text-blue-400">
-                املأ الحقول أدناه، سيتم الحساب تلقائياً. التسجيل وعقد الشركة يُضافان على مصاريف السيارة، أما المصروف (دينار) فيُسجّل في الملاحظة فقط.
+                املأ الحقول أدناه، سيتم الحساب تلقائياً. التسجيل والمصروف وعقد الشركة تُحوّل لدولار وتُضاف على مصاريف السيارة.
               </p>
             </div>
 
@@ -729,7 +727,7 @@ async function removeTagFromCar(tagValue) {
                   placeholder="0"
                 />
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  📝 يُسجّل في الملاحظة فقط ولا يُضاف على مصاريف السيارة
+                  💱 يُحوّل لدولار ويُضاف على مصاريف السيارة
                 </p>
               </div>
 
@@ -792,7 +790,7 @@ async function removeTagFromCar(tagValue) {
                     المجموع بالدولار (عدد صحيح)
                   </h4>
                   <p class="text-sm text-green-600 dark:text-green-400 mt-1">
-                    الحساب: [(التسجيل + عقد الشركة) ÷ (سعر الصرف ÷ 100)] + مصروف إضافي
+                    الحساب: [(التسجيل + المصروف + عقد الشركة) ÷ (سعر الصرف ÷ 100)] + مصروف إضافي
                   </p>
                 </div>
                 <div class="text-3xl font-bold text-green-600 dark:text-green-400">
