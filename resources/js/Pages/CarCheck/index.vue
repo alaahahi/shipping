@@ -71,6 +71,17 @@ async function loadArchives() {
   }
 }
 
+async function deleteArchive(archiveId) {
+  try {
+    await axios.delete(`/api/vin-search-archives/${archiveId}`);
+    archives.value = archives.value.filter((archive) => archive.id !== archiveId);
+    toast.success('تم حذف السجل من الأرشيف', { timeout: 2200, position: 'bottom-right', rtl: true });
+  } catch (error) {
+    console.error(error);
+    toast.error('تعذر حذف السجل', { timeout: 2500, position: 'bottom-right', rtl: true });
+  }
+}
+
 function openArchive(archive) {
   vinInput.value = archive.vins_text ?? '';
   results.value = archive.results_payload ?? [];
@@ -231,7 +242,7 @@ onMounted(() => {
                   <div class="flex items-center gap-2">
                     <select
                       v-model="selectedYear"
-                      class="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-100 focus:border-sky-500 focus:outline-none"
+                      class="year-select rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-100 focus:border-sky-500 focus:outline-none"
                     >
                       <option value="all">كل السنوات</option>
                       <option v-for="year in yearOptions" :key="year" :value="year">{{ year }}</option>
@@ -452,9 +463,15 @@ onMounted(() => {
                     v-for="archive in archives"
                     :key="archive.id"
                     type="button"
-                    class="rounded-2xl border border-slate-700 bg-slate-950 p-4 text-right hover:border-sky-600 hover:bg-slate-900 transition"
+                    class="relative rounded-2xl border border-slate-700 bg-slate-950 p-4 text-right hover:border-sky-600 hover:bg-slate-900 transition"
                     @click="openArchive(archive)"
                   >
+                    <span
+                      class="absolute left-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-800 bg-rose-950/80 text-sm font-bold text-rose-200 hover:bg-rose-900"
+                      @click.stop="deleteArchive(archive.id)"
+                    >
+                      ×
+                    </span>
                     <div class="flex items-center justify-between gap-3">
                       <div class="text-sm font-bold text-white">بحث #{{ archive.id }}</div>
                       <div class="text-xs text-slate-400">{{ archive.created_at }}</div>
@@ -500,6 +517,20 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.year-select,
+.year-select:focus,
+.year-select:active {
+  background-color: #020617 !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+  color-scheme: dark;
+}
+
+.year-select option {
+  background-color: #020617 !important;
+  color: #f8fafc !important;
+}
+
 .vin-textarea,
 .vin-textarea:focus,
 .vin-textarea:active,

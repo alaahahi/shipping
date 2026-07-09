@@ -73,7 +73,7 @@ class CarExpensesController extends Controller
                     ->where('owner_id', $ownerId)
                     ->where('vin', $vin)
                     ->when($yearFilter && $yearFilter !== 'all', function ($query) use ($yearFilter) {
-                        $query->where('year', (int) $yearFilter);
+                        $query->where('year_date', (int) $yearFilter);
                     })
                     ->orderByDesc('id')
                     ->get();
@@ -87,7 +87,7 @@ class CarExpensesController extends Controller
                             ->where('owner_id', $ownerId)
                             ->where('vin', 'like', '%' . $lastNumbers)
                             ->when($yearFilter && $yearFilter !== 'all', function ($query) use ($yearFilter) {
-                                $query->where('year', (int) $yearFilter);
+                                $query->where('year_date', (int) $yearFilter);
                             })
                             ->orderByDesc('id')
                             ->get();
@@ -144,6 +144,20 @@ class CarExpensesController extends Controller
             ->get();
 
         return response()->json($archives, 200);
+    }
+
+    public function deleteVinSearchArchive($id)
+    {
+        $ownerId = (int) Auth::user()->owner_id;
+
+        $archive = CarVinSearchArchive::where('owner_id', $ownerId)->find($id);
+        if (!$archive) {
+            return response()->json(['error' => 'سجل الأرشيف غير موجود'], 404);
+        }
+
+        $archive->delete();
+
+        return response()->json(['ok' => true], 200);
     }
 
     public function approveSearchedVin(Request $request)
