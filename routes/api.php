@@ -449,6 +449,7 @@ Route::get('checkClientBalance',[AccountingController::class, 'checkClientBalanc
 
 Route::post('search-vins', [CarExpensesController::class, 'searchVINs'])->name('search-vins');
 Route::post('approve-searched-vin', [CarExpensesController::class, 'approveSearchedVin'])->name('approve-searched-vin');
+Route::get('vin-search-archives', [CarExpensesController::class, 'getVinSearchArchives'])->name('vin-search-archives');
 
 // Trip APIs
 Route::middleware('auth:sanctum')->group(function () {

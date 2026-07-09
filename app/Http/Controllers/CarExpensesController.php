@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Transactions;
 use App\Models\Expenses;
 use App\Models\CarExpenses;
+use App\Models\CarVinSearchArchive;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\SystemConfig;
@@ -56,6 +57,9 @@ class CarExpensesController extends Controller
     }
     public function searchVINs(Request $request)
     {
+            $ownerId = (int) Auth::user()->owner_id;
+            $userId = (int) Auth::id();
+            $yearFilter = $request->input('year');
             $vins = collect($request->input('vins', []))
                 ->map(fn ($vin) => strtoupper(trim((string) $vin)))
                 ->filter()
@@ -66,7 +70,12 @@ class CarExpensesController extends Controller
 
             foreach ($vins as $vin) {
                 $cars = Car::with(['client', 'CarImages'])
+                    ->where('owner_id', $ownerId)
                     ->where('vin', $vin)
+                    ->when($yearFilter && $yearFilter !== 'all', function ($query) use ($yearFilter) {
+                        $query->where('year', (int) $yearFilter);
+                    })
+                    ->orderByDesc('id')
                     ->get();
 
                 if ($cars->isEmpty()) {
@@ -75,7 +84,12 @@ class CarExpensesController extends Controller
 
                     while ($cars->isEmpty() && strlen((string) $lastNumbers) >= 5) {
                         $cars = Car::with(['client', 'CarImages'])
+                            ->where('owner_id', $ownerId)
                             ->where('vin', 'like', '%' . $lastNumbers)
+                            ->when($yearFilter && $yearFilter !== 'all', function ($query) use ($yearFilter) {
+                                $query->where('year', (int) $yearFilter);
+                            })
+                            ->orderByDesc('id')
                             ->get();
 
                         if ($cars->isNotEmpty()) {
@@ -97,10 +111,39 @@ class CarExpensesController extends Controller
                 }
             }
 
+            $matchedCount = collect($results)->filter(fn ($item) => !empty($item['cars']))->count();
+            $ambiguousCount = collect($results)->filter(fn ($item) => count($item['cars']) > 1)->count();
+
+            $archive = CarVinSearchArchive::create([
+                'owner_id' => $ownerId,
+                'user_id' => $userId,
+                'search_year' => $yearFilter && $yearFilter !== 'all' ? (int) $yearFilter : null,
+                'vins_text' => $vins->implode("\n"),
+                'vins_count' => $vins->count(),
+                'matched_count' => $matchedCount,
+                'ambiguous_count' => $ambiguousCount,
+                'missing_count' => count($noResultsVINs),
+                'results_payload' => $results,
+                'missing_vins' => $noResultsVINs,
+            ]);
+
             return response()->json([
                 'results' => $results,
                 'noResultsVINs' => $noResultsVINs,
+                'archive' => $archive,
             ]);
+    }
+
+    public function getVinSearchArchives()
+    {
+        $ownerId = (int) Auth::user()->owner_id;
+
+        $archives = CarVinSearchArchive::where('owner_id', $ownerId)
+            ->latest('id')
+            ->limit(40)
+            ->get();
+
+        return response()->json($archives, 200);
     }
 
     public function approveSearchedVin(Request $request)
