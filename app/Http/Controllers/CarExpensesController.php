@@ -59,7 +59,7 @@ class CarExpensesController extends Controller
     {
             $ownerId = (int) Auth::user()->owner_id;
             $userId = (int) Auth::id();
-            $yearFilter = $request->input('year');
+            $yearFilter = $request->input('year_date');
             $vins = collect($request->input('vins', []))
                 ->map(fn ($vin) => strtoupper(trim((string) $vin)))
                 ->filter()

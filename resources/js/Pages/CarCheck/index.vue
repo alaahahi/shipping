@@ -45,7 +45,7 @@ async function searchVINs() {
   try {
     const response = await axios.post('/api/search-vins', {
       vins: normalizedInputLines.value,
-      year: selectedYear.value,
+      year_date: selectedYear.value,
     });
     results.value = response.data.results ?? [];
     noResultsVINs.value = response.data.noResultsVINs ?? [];
