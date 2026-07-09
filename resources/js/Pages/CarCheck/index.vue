@@ -85,6 +85,10 @@ function replaceLineWithApprovedVin(originalVin, approvedVin) {
   return replaced;
 }
 
+function isExactVinMatch(inputVin, carVin) {
+  return String(inputVin ?? '').trim().toUpperCase() === String(carVin ?? '').trim().toUpperCase();
+}
+
 async function approveFullVin(resultSet, approvedCar) {
   const approvedVin = String(resultSet?.vin ?? '').trim().toUpperCase();
   if (!approvedVin || !approvedCar?.id) return;
@@ -117,9 +121,9 @@ async function approveFullVin(resultSet, approvedCar) {
 
   <AuthenticatedLayout>
     <div class="py-6">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-          <div class="border-b border-slate-200 dark:border-slate-700 bg-gradient-to-l from-sky-50 to-white dark:from-slate-800 dark:to-slate-900 px-6 py-5">
+      <div class="w-full max-w-[calc(100vw-2rem)] mx-auto px-2 sm:px-4 lg:px-6">
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-sm overflow-hidden">
+          <div class="border-b border-slate-200 dark:border-slate-700 bg-gradient-to-l from-sky-50 to-white dark:from-slate-900 dark:to-slate-950 px-6 py-5">
             <h1 class="text-2xl font-bold text-slate-900 dark:text-white">فحص الشانصي</h1>
             <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
               الصق الشواصي، شغّل البحث، ثم حدّث الشانصي الفعلي مباشرة على السيارة المختارة.
@@ -128,26 +132,26 @@ async function approveFullVin(resultSet, approvedCar) {
 
           <div class="p-6 space-y-6">
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 p-4">
+              <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-4 shadow-sm dark:shadow-none">
                 <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">عدد المدخلات</div>
                 <div class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{{ totalSearched }}</div>
               </div>
-              <div class="rounded-xl border border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/30 p-4">
+              <div class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 p-4 shadow-sm dark:shadow-none">
                 <div class="text-xs font-semibold text-emerald-700 dark:text-emerald-300">مطابقات</div>
                 <div class="mt-1 text-2xl font-bold text-emerald-800 dark:text-emerald-200">{{ matchedCount }}</div>
               </div>
-              <div class="rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 p-4">
+              <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-4 shadow-sm dark:shadow-none">
                 <div class="text-xs font-semibold text-amber-700 dark:text-amber-300">نتائج متعددة</div>
                 <div class="mt-1 text-2xl font-bold text-amber-800 dark:text-amber-200">{{ ambiguousCount }}</div>
               </div>
-              <div class="rounded-xl border border-rose-200 dark:border-rose-700 bg-rose-50 dark:bg-rose-950/30 p-4">
+              <div class="rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-4 shadow-sm dark:shadow-none">
                 <div class="text-xs font-semibold text-rose-700 dark:text-rose-300">غير موجود</div>
                 <div class="mt-1 text-2xl font-bold text-rose-800 dark:text-rose-200">{{ noResultsVINs.length }}</div>
               </div>
             </div>
 
-            <div class="grid grid-cols-1 xl:grid-cols-[360px,1fr] gap-6">
-              <section class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-4">
+            <div class="grid grid-cols-1 xl:grid-cols-[420px,minmax(0,1fr)] gap-6">
+              <section class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900 p-4 shadow-sm dark:shadow-none">
                 <div class="flex items-center justify-between gap-3 mb-3">
                   <div>
                     <h2 class="text-base font-bold text-slate-900 dark:text-white">قائمة الشواصي</h2>
@@ -165,16 +169,18 @@ async function approveFullVin(resultSet, approvedCar) {
 
                 <textarea
                   v-model="vinInput"
-                  class="min-h-[520px] w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 px-4 py-3 text-sm leading-6 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                  class="min-h-[520px] w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 px-4 py-3 text-sm leading-6 text-slate-900 dark:!text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                   placeholder="ألصق الشواصي هنا، كل رقم في سطر مستقل"
                   spellcheck="false"
+                  dir="ltr"
+                  style="color-scheme: dark;"
                 />
               </section>
 
               <section class="space-y-4">
                 <div
                   v-if="noResultsVINs.length"
-                  class="rounded-2xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/20 p-4"
+                  class="rounded-2xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/20 p-4 shadow-sm dark:shadow-none"
                 >
                   <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
                     <div>
@@ -194,7 +200,7 @@ async function approveFullVin(resultSet, approvedCar) {
                     <div
                       v-for="(vin, index) in noResultsVINs"
                       :key="`${vin}-${index}`"
-                      class="rounded-lg border border-rose-200 dark:border-rose-800 bg-white/80 dark:bg-slate-900/60 px-3 py-2 text-sm text-slate-800 dark:text-slate-100"
+                      class="rounded-lg border border-rose-200 dark:border-rose-800 bg-white/90 dark:bg-slate-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-100"
                     >
                       <span class="font-bold text-rose-700 dark:text-rose-300">{{ index + 1 }}.</span>
                       <span class="font-mono ms-2">{{ vin }}</span>
@@ -208,10 +214,10 @@ async function approveFullVin(resultSet, approvedCar) {
                     :key="`${resultSet.vin}-${index}`"
                     class="rounded-2xl border shadow-sm overflow-hidden"
                     :class="resultSet.cars?.length > 1
-                      ? 'border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/10'
+                      ? 'border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20'
                       : resultSet.cars?.length === 1
-                        ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/10'
-                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900'"
+                        ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950'"
                   >
                     <div class="px-4 py-3 border-b border-inherit flex flex-wrap items-center justify-between gap-3">
                       <div>
@@ -244,8 +250,8 @@ async function approveFullVin(resultSet, approvedCar) {
                     </div>
 
                     <div v-if="resultSet.cars && resultSet.cars.length" class="overflow-x-auto">
-                      <table class="min-w-full text-sm text-center">
-                        <thead class="bg-slate-900 text-white">
+                      <table class="min-w-full text-sm text-center text-slate-800 dark:text-slate-100">
+                        <thead class="bg-slate-900 text-white dark:bg-slate-800">
                           <tr>
                             <th class="px-3 py-3">الإجراء</th>
                             <th class="px-3 py-3">التاريخ</th>
@@ -264,16 +270,23 @@ async function approveFullVin(resultSet, approvedCar) {
                           <tr
                             v-for="car in resultSet.cars"
                             :key="car.id"
-                            class="bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/70"
+                            class="bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900"
                           >
                             <td class="px-3 py-3">
                               <button
+                                v-if="!isExactVinMatch(resultSet.vin, car.vin)"
                                 type="button"
                                 class="rounded-lg bg-sky-600 px-3 py-2 text-xs font-bold text-white hover:bg-sky-700"
                                 @click="approveFullVin(resultSet, car)"
                               >
                                 اعتماد وتحديث
                               </button>
+                              <span
+                                v-else
+                                class="inline-flex rounded-lg bg-emerald-100 dark:bg-emerald-900/50 px-3 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-200"
+                              >
+                                مطابق
+                              </span>
                             </td>
                             <td class="px-3 py-3 text-slate-700 dark:text-slate-200">{{ car.date }}</td>
                             <td class="px-3 py-3 text-slate-700 dark:text-slate-200">{{ car.client?.name || '-' }}</td>
@@ -321,7 +334,7 @@ async function approveFullVin(resultSet, approvedCar) {
 
                 <div
                   v-else-if="!loading"
-                  class="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 px-6 py-16 text-center"
+                  class="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-16 text-center"
                 >
                   <h3 class="text-lg font-bold text-slate-900 dark:text-white">لا توجد نتائج بعد</h3>
                   <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
