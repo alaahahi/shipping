@@ -132,7 +132,7 @@ async function approveFullVin(resultSet, approvedCar) {
 
           <div class="p-6 space-y-6">
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-4 shadow-sm dark:shadow-none">
+              <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm dark:shadow-none">
                 <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">عدد المدخلات</div>
                 <div class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{{ totalSearched }}</div>
               </div>
@@ -150,8 +150,8 @@ async function approveFullVin(resultSet, approvedCar) {
               </div>
             </div>
 
-            <div class="grid grid-cols-1 xl:grid-cols-[420px,minmax(0,1fr)] gap-6">
-              <section class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900 p-4 shadow-sm dark:shadow-none">
+            <div class="grid grid-cols-1 2xl:grid-cols-[440px,minmax(0,1fr)] xl:grid-cols-[400px,minmax(0,1fr)] gap-6 items-start">
+              <section class="order-1 xl:order-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm dark:shadow-none">
                 <div class="flex items-center justify-between gap-3 mb-3">
                   <div>
                     <h2 class="text-base font-bold text-slate-900 dark:text-white">قائمة الشواصي</h2>
@@ -169,15 +169,17 @@ async function approveFullVin(resultSet, approvedCar) {
 
                 <textarea
                   v-model="vinInput"
-                  class="min-h-[520px] w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 px-4 py-3 text-sm leading-6 text-slate-900 dark:!text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                  class="vin-textarea min-h-[520px] w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 px-4 py-3 text-sm leading-6 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                   placeholder="ألصق الشواصي هنا، كل رقم في سطر مستقل"
                   spellcheck="false"
                   dir="ltr"
-                  style="color-scheme: dark;"
+                  autocapitalize="off"
+                  autocomplete="off"
+                  autocorrect="off"
                 />
               </section>
 
-              <section class="space-y-4">
+              <section class="order-2 xl:order-1 space-y-4">
                 <div
                   v-if="noResultsVINs.length"
                   class="rounded-2xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/20 p-4 shadow-sm dark:shadow-none"
@@ -214,10 +216,10 @@ async function approveFullVin(resultSet, approvedCar) {
                     :key="`${resultSet.vin}-${index}`"
                     class="rounded-2xl border shadow-sm overflow-hidden"
                     :class="resultSet.cars?.length > 1
-                      ? 'border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20'
+                      ? 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20'
                       : resultSet.cars?.length === 1
-                        ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20'
-                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950'"
+                        ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/20'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900'"
                   >
                     <div class="px-4 py-3 border-b border-inherit flex flex-wrap items-center justify-between gap-3">
                       <div>
@@ -270,7 +272,7 @@ async function approveFullVin(resultSet, approvedCar) {
                           <tr
                             v-for="car in resultSet.cars"
                             :key="car.id"
-                            class="bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900"
+                            class="bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800"
                           >
                             <td class="px-3 py-3">
                               <button
@@ -334,7 +336,7 @@ async function approveFullVin(resultSet, approvedCar) {
 
                 <div
                   v-else-if="!loading"
-                  class="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-16 text-center"
+                  class="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 py-16 text-center shadow-sm dark:shadow-none"
                 >
                   <h3 class="text-lg font-bold text-slate-900 dark:text-white">لا توجد نتائج بعد</h3>
                   <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
@@ -349,3 +351,32 @@ async function approveFullVin(resultSet, approvedCar) {
     </div>
   </AuthenticatedLayout>
 </template>
+
+<style scoped>
+.vin-textarea,
+.vin-textarea:focus,
+.vin-textarea:active,
+.vin-textarea:hover {
+  color: #0f172a !important;
+  background: #ffffff !important;
+  caret-color: #0f172a !important;
+}
+
+.vin-textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+:global(.dark) .vin-textarea,
+:global(.dark) .vin-textarea:focus,
+:global(.dark) .vin-textarea:active,
+:global(.dark) .vin-textarea:hover {
+  color: #f8fafc !important;
+  background: #020617 !important;
+  caret-color: #f8fafc !important;
+  color-scheme: dark;
+}
+
+:global(.dark) .vin-textarea::placeholder {
+  color: #64748b !important;
+}
+</style>
