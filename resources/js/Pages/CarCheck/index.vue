@@ -1,446 +1,338 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/inertia-vue3';
-import ModalAddCarExpensesFav from "@/Components/ModalAddCarExpensesFav.vue";
-import ModalAddCarExpenses from "@/Components/ModalAddCarExpenses.vue";
-import ModalArchiveCar from "@/Components/ModalArchiveCar.vue";
-import ModalArchiveCarBack from "@/Components/ModalArchiveCarBack.vue";
-import ModalDelCar from "@/Components/ModalDelCar.vue";
-
-
-import { useToast } from "vue-toastification";
 import axios from 'axios';
-import { ref } from 'vue';
-import { useI18n } from "vue-i18n";
-import newContracts from "@/Components/icon/new.vue";
-import show from "@/Components/icon/show.vue";
-import trash from "@/Components/icon/trash.vue";
-import print from "@/Components/icon/print.vue";
+import { computed, ref } from 'vue';
+import { useToast } from 'vue-toastification';
 
-import InfiniteLoading from "v3-infinite-loading";
-import "v3-infinite-loading/lib/style.css";
-import debounce from 'lodash/debounce';
-const {t} = useI18n();
-const props = defineProps({
-  client:Array,
-});
-const formData = ref({});
 const toast = useToast();
-let searchTerm = ref('');
-let loading = ref(false); // بدء التحميل
-let showModalAddCarExpensesFav =  ref(false);
-let showModalAddCarExpenses =  ref(false);
-let showModalArchiveCarExpenses=  ref(false);
-let showModalArchiveCarExpensesBack=  ref(false);
-let showModalDelCar = ref(false);
 
-let car = ref([]);
-function openwModalAddCarExpensesFav(form={}) {
-  showModalAddCarExpensesFav.value = true;
-}
-function openwshowModalAddCarExpenses(form={}) {
-  formData.value=form
-  showModalAddCarExpenses.value = true;
-}
-function openwshowModalArchiveCarExpenses(form={}) {
-  formData.value=form
-  showModalArchiveCarExpenses.value = true;
-}
-function openwshowModalArchiveCarExpensesBack(form={}) {
-  formData.value=form
-  showModalArchiveCarExpensesBack.value = true;
-}
-function openModalDelCar(form={}) {
-  formData.value=form
-  showModalDelCar.value = true;
-}
-
-const currentWork = ref(true);
-
-
-let resetData = ref(false);
-let user_id = 0;
-let page = 1;
-let q = '';
-const refresh = () => {
-  page = 0;
-  car.value.length = 0;
-  resetData.value = !resetData.value;
-};
-const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce delay (in milliseconds) as needed
-
-
-const getResultsCar = async ($state) => {
-  try {
-    const response = await axios.get(`/getIndexCar`, {
-      params: {
-        limit: 100,
-        page: page,
-        q: q,
-        user_id: user_id,
-        car_have_expenses:currentWork.value?1:2
-      }
-    });
-
-    const json = response.data;
-
-
-    if (json.data.length < 100){
-      car.value.push(...json.data);
-      $state.complete();
-    } 
-    else {
-      car.value.push(...json.data);
-       $state.loaded();
-    }
-
-
-    page++;
-  } catch (error) {
-    console.log(error);
-    //$state.error();
-  }
-};
-
- 
-
-function confirmExpensesCar(V) { 
-  axios.post('/api/confirmExpensesCar',V)
-  .then(response => {
-    showModalAddCarExpenses.value = false;
-    toast.success( "تم إضافة السيارة بنجاح ", {
-        timeout: 3000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-
-
-      refresh()
-
-  })
-  .catch(error => {
-    console.error(error);
-  })
-}
-
-
-function getTodayDate() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-function  calculateSum(carexpenses) {
-      return (carexpenses ?? []).reduce((sum, expense) => sum + (Number(expense.amount_dollar) || 0), 0);
-    }
-function  calculateSumDinar(carexpenses) {
-      return (carexpenses ?? []).reduce((sum, expense) => sum + (Number(expense.amount_dinar) || 0), 0);
-    }
-
-    function confirmCar (car){
-  axios.post('/api/addCarFavorite',car)
-  .then(response => {
-    showModalAddCarExpenses.value = false;
-    toast.success( "تم إضافة السيارة بنجاح ", {
-        timeout: 3000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-      refresh()
-      showModalAddCarExpensesFav.value = false;
-
-  })
-  .catch(error => {
-    console.error(error);
-  })
-}
-
-function confirmArchiveCar(car){
-  axios.post('/api/confirmArchiveCar',car)
-  .then(response => {
-    showModalAddCarExpenses.value = false;
-    toast.success( "تم نقل السيارة بنجاح ", {
-        timeout: 3000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-      refresh()
-      showModalArchiveCarExpenses.value = false;
-
-  })
-  .catch(error => {
-    console.error(error);
-  })
-}
-function confirmArchiveCarBack(car){
-  axios.post('/api/confirmArchiveCarBack',car)
-  .then(response => {
-    showModalArchiveCarExpensesBack.value = false;
-    toast.success( "تم نقل السيارة بنجاح ", {
-        timeout: 3000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-      refresh()
-      showModalArchiveCarExpenses.value = false;
-
-  })
-  .catch(error => {
-    console.error(error);
-  })
-}
-function swiptab(tab){
-  currentWork.value=tab
-  refresh()
-
-}
-
-
-function confirmDelCarFav(V) {
-  axios.post('/api/confirmDelCarFav',V)
-  .then(response => {
-    showModalDelCar.value = false;
-    toast.success("حذف السيارة بنجاح", {
-        timeout: 3000,
-        position: "bottom-right",
-        rtl: true
-
-      });
-    refresh();
-  })
-  .catch(error => {
-    console.error(error);
-  })
-
-
-}
 const vinInput = ref('');
-const results = ref([]); // مصفوفة النتائج
+const loading = ref(false);
+const results = ref([]);
 const noResultsVINs = ref([]);
-const searchVINs = async () => {
-  loading.value=true;
-  // تقسيم الأكواد من textarea إلى قائمة
-  const vinList = vinInput.value.split('\n').map(vin => vin.trim());
 
+const normalizedInputLines = computed(() =>
+  vinInput.value
+    .split('\n')
+    .map((vin) => vin.trim())
+    .filter(Boolean)
+);
+
+const totalSearched = computed(() => normalizedInputLines.value.length);
+const matchedCount = computed(() => results.value.filter((item) => (item.cars?.length ?? 0) > 0).length);
+const exactSingleCount = computed(() => results.value.filter((item) => (item.cars?.length ?? 0) === 1).length);
+const ambiguousCount = computed(() => results.value.filter((item) => (item.cars?.length ?? 0) > 1).length);
+
+async function searchVINs() {
+  if (!normalizedInputLines.value.length) {
+    toast.info('أدخل أرقام الشانصي أولاً', { timeout: 2500, position: 'bottom-right', rtl: true });
+    return;
+  }
+
+  loading.value = true;
   try {
-    const response = await axios.post('/api/search-vins', { vins: vinList });
-    results.value = response.data.results ; // استقبال النتائج كمصفوفة من المصفوفات
-    noResultsVINs.value = response.data.noResultsVINs ; // استقبال النتائج كمصفوفة من المصفوفات
-     
-    loading.value=false;
+    const response = await axios.post('/api/search-vins', { vins: normalizedInputLines.value });
+    results.value = response.data.results ?? [];
+    noResultsVINs.value = response.data.noResultsVINs ?? [];
   } catch (error) {
     console.error('خطأ في البحث:', error);
+    toast.error('تعذر تنفيذ البحث', { timeout: 3000, position: 'bottom-right', rtl: true });
+  } finally {
+    loading.value = false;
   }
-};
+}
+
 function getImageUrl(name) {
-  // Provide the base URL for your images
   return `/public/uploadsResized/${name}`;
 }
+
 function getDownloadUrl(name) {
-  // Provide the base URL for downloading images
   return `/public/uploads/${name}`;
+}
+
+function branchLabel(ownerId) {
+  return Number(ownerId) === 1 ? 'أربيل' : 'كركوك';
+}
+
+async function copyText(text, successMessage) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success(successMessage, { timeout: 2500, position: 'bottom-right', rtl: true });
+  } catch (error) {
+    console.error(error);
+    toast.error('تعذر النسخ', { timeout: 2500, position: 'bottom-right', rtl: true });
+  }
+}
+
+function copyMissingVINs() {
+  if (!noResultsVINs.value.length) return;
+  copyText(noResultsVINs.value.join('\n'), 'تم نسخ الشواصي غير الموجودة');
+}
+
+function replaceLineWithApprovedVin(originalVin, approvedVin) {
+  const lines = vinInput.value.split('\n');
+  let replaced = false;
+  const updated = lines.map((line) => {
+    if (!replaced && line.trim().toUpperCase() === String(originalVin).trim().toUpperCase()) {
+      replaced = true;
+      return approvedVin;
+    }
+    return line;
+  });
+
+  vinInput.value = updated.join('\n');
+  return replaced;
+}
+
+async function approveFullVin(resultSet, approvedCar) {
+  const approvedVin = String(resultSet?.vin ?? '').trim().toUpperCase();
+  if (!approvedVin || !approvedCar?.id) return;
+
+  try {
+    await axios.post('/api/approve-searched-vin', {
+      car_id: approvedCar.id,
+      approved_vin: approvedVin,
+    });
+
+    replaceLineWithApprovedVin(resultSet.vin, approvedVin);
+    resultSet.approvedVin = approvedVin;
+    approvedCar.vin = approvedVin;
+
+    toast.success('تم تحديث الشانصي فعلياً واعتماده', {
+      timeout: 2200,
+      position: 'bottom-right',
+      rtl: true,
+    });
+  } catch (error) {
+    console.error(error);
+    const msg = error?.response?.data?.error || 'تعذر تحديث الشانصي';
+    toast.error(msg, { timeout: 3000, position: 'bottom-right', rtl: true });
+  }
 }
 </script>
 
 <template>
-    <Head title="Dashboard" />
-    <ModalArchiveCar
-            :formData="formData"
-            :show="showModalArchiveCarExpenses ? true : false"
-            @a="confirmArchiveCar($event)"
-            @close="showModalArchiveCarExpenses = false"
-            >
-        <template #header>
-          </template>
-    </ModalArchiveCar>
-    <ModalArchiveCarBack
-            :formData="formData"
-            :show="showModalArchiveCarExpensesBack ? true : false"
-            @a="confirmArchiveCarBack($event)"
-            @close="showModalArchiveCarExpensesBack = false"
-            >
-        <template #header>
-          </template>
-    </ModalArchiveCarBack>
-    <ModalAddCarExpensesFav
-            :formData="formData"
-            :show="showModalAddCarExpensesFav ? true : false"
-            :client="client"
-            @a="confirmCar($event)"
-            @close="showModalAddCarExpensesFav = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddCarExpensesFav>
-    <ModalAddCarExpenses
-            :formData="formData"
-            :show="showModalAddCarExpenses ? true : false"
-            :currentWork="currentWork"
-            @a="confirmExpensesCar($event)"
-            @close="showModalAddCarExpenses = false"
-            >
-        <template #header>
-          </template>
-    </ModalAddCarExpenses>
-    <ModalDelCar
-      :show="showModalDelCar ? true : false"
-      :formData="formData"
-      @a="confirmDelCarFav($event)"
-      @close="showModalDelCar = false"
-    >
-      <template #header>
-        <h2 class="mb-5 dark:text-gray-400 text-center">
-          هل متأكد من حذف السيارة ؟
-        </h2>
-      </template>
-    </ModalDelCar>
+  <Head title="فحص الشانصي" />
 
-    <AuthenticatedLayout>
-        <div class="py-2" v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==7">
-          <ul class="sm:px-6 lg:px-8 text-sm font-medium text-center text-gray-500 rounded-lg  flex dark:divide-gray-700 dark:text-gray-400">
-            <li class="w-full">
-                <button @click="swiptab(true)" class="inline-block w-full p-4 border-r border-gray-200 dark:border-gray-700 hover:text-gray-700 hover:bg-gray-50  focus:outline-none  dark:text-white" :class="!currentWork ? 'dark:bg-gray-800 dark:hover:bg-gray-700':'bg-white  dark:bg-gray-900'" >قيد العمل </button>
-            </li>
-            <li class="w-full">
-                <button @click="swiptab(false)" class="inline-block w-full p-4 border-r border-gray-200 dark:border-gray-700 hover:text-gray-700 hover:bg-gray-50  focus:outline-none  dark:text-white" :class="currentWork ? 'dark:bg-gray-800 dark:hover:bg-gray-700':'bg-white  dark:bg-gray-900'" >السيارة المكتملة</button>
-            </li>
-     
-          </ul>
+  <AuthenticatedLayout>
+    <div class="py-6">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+          <div class="border-b border-slate-200 dark:border-slate-700 bg-gradient-to-l from-sky-50 to-white dark:from-slate-800 dark:to-slate-900 px-6 py-5">
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">فحص الشانصي</h1>
+            <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              الصق الشواصي، شغّل البحث، ثم حدّث الشانصي الفعلي مباشرة على السيارة المختارة.
+            </p>
+          </div>
 
-        <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 ">
-            <div class="bg-white overflow-hidden shadow-sm ">
-                  <div class="p-6 dark:bg-gray-900">
-                      <div class="flex flex-col">
-                        <textarea v-model="vinInput" placeholder="أدخل الأكواد هنا" style="height: 500px;"></textarea>
-                        <br>
-                        <!-- زر البحث -->
-                        <button 
-                          class="px-6 mb-12 mx-2 py-2 font-bold text-white bg-green-500 rounded" 
-                          @click="searchVINs" 
-                          :disabled="loading"
-                        >
-                          <span v-if="!loading">تشغيل</span>
-                          <span v-else>جاري التحميل...</span>
-                        </button>
+          <div class="p-6 space-y-6">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 p-4">
+                <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">عدد المدخلات</div>
+                <div class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{{ totalSearched }}</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/30 p-4">
+                <div class="text-xs font-semibold text-emerald-700 dark:text-emerald-300">مطابقات</div>
+                <div class="mt-1 text-2xl font-bold text-emerald-800 dark:text-emerald-200">{{ matchedCount }}</div>
+              </div>
+              <div class="rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 p-4">
+                <div class="text-xs font-semibold text-amber-700 dark:text-amber-300">نتائج متعددة</div>
+                <div class="mt-1 text-2xl font-bold text-amber-800 dark:text-amber-200">{{ ambiguousCount }}</div>
+              </div>
+              <div class="rounded-xl border border-rose-200 dark:border-rose-700 bg-rose-50 dark:bg-rose-950/30 p-4">
+                <div class="text-xs font-semibold text-rose-700 dark:text-rose-300">غير موجود</div>
+                <div class="mt-1 text-2xl font-bold text-rose-800 dark:text-rose-200">{{ noResultsVINs.length }}</div>
+              </div>
+            </div>
 
-                        <!-- مؤشر التحميل -->
-                        <div v-if="loading" class="text-center mt-4 text-gray-500">
-                          <span class="loader"></span> <!-- يمكنك استخدام CSS للـ loader -->
-                          <p>جاري البحث، يرجى الانتظار...</p>
+            <div class="grid grid-cols-1 xl:grid-cols-[360px,1fr] gap-6">
+              <section class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-4">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                  <div>
+                    <h2 class="text-base font-bold text-slate-900 dark:text-white">قائمة الشواصي</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">كل سطر = شانصي واحد</p>
+                  </div>
+                  <button
+                    type="button"
+                    class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-60"
+                    :disabled="loading"
+                    @click="searchVINs"
+                  >
+                    {{ loading ? 'جاري البحث...' : 'تشغيل البحث' }}
+                  </button>
+                </div>
+
+                <textarea
+                  v-model="vinInput"
+                  class="min-h-[520px] w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 px-4 py-3 text-sm leading-6 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                  placeholder="ألصق الشواصي هنا، كل رقم في سطر مستقل"
+                  spellcheck="false"
+                />
+              </section>
+
+              <section class="space-y-4">
+                <div
+                  v-if="noResultsVINs.length"
+                  class="rounded-2xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/20 p-4"
+                >
+                  <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <div>
+                      <h2 class="text-base font-bold text-rose-800 dark:text-rose-200">الشواصي غير الموجودة</h2>
+                      <p class="text-xs text-rose-700/80 dark:text-rose-300/80">العرض مرقّم، والنسخ بدون ترقيم لسهولة اللصق في الإكسل.</p>
+                    </div>
+                    <button
+                      type="button"
+                      class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700"
+                      @click="copyMissingVINs"
+                    >
+                      نسخ الشواصي غير الموجودة
+                    </button>
+                  </div>
+
+                  <div class="grid sm:grid-cols-2 gap-2">
+                    <div
+                      v-for="(vin, index) in noResultsVINs"
+                      :key="`${vin}-${index}`"
+                      class="rounded-lg border border-rose-200 dark:border-rose-800 bg-white/80 dark:bg-slate-900/60 px-3 py-2 text-sm text-slate-800 dark:text-slate-100"
+                    >
+                      <span class="font-bold text-rose-700 dark:text-rose-300">{{ index + 1 }}.</span>
+                      <span class="font-mono ms-2">{{ vin }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="results.length" class="space-y-4">
+                  <div
+                    v-for="(resultSet, index) in results"
+                    :key="`${resultSet.vin}-${index}`"
+                    class="rounded-2xl border shadow-sm overflow-hidden"
+                    :class="resultSet.cars?.length > 1
+                      ? 'border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/10'
+                      : resultSet.cars?.length === 1
+                        ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/10'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900'"
+                  >
+                    <div class="px-4 py-3 border-b border-inherit flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">بحث {{ index + 1 }}</div>
+                        <div class="mt-1 text-sm text-slate-700 dark:text-slate-200">
+                          <span class="font-semibold">المدخل:</span>
+                          <span class="font-mono">{{ resultSet.vin || 'غير معروف' }}</span>
                         </div>
-
-                        <h3 class="text-center h3 py-3">النتائج</h3>
-                        <!-- عرض الأرقام التي ليس لها نتائج -->
-                        <div v-if="noResultsVINs.length">
-                          <h3 class="mt-8 text-lg font-semibold text-red-500">الأرقام التي ليس لها نتائج:</h3>
-                          <ul>
-                            <li v-for="(vin, index) in noResultsVINs" :key="index">
-                              <p class="text-sm text-gray-300 mb-2">
-                                <span class="font-bold">
-                                  {{ index+1 }}-
-                                  رقم الشاصي:
-                                </span> {{ vin }}
-                              </p>
-                            </li>
-                          </ul>
-                        </div>
-
-                        <div v-if="results.length">
-                          <div v-for="(resultSet, index) in results" :key="index">
-                            <h4 class="text-lg font-semibold text-gray-100">بحث {{ index + 1 }}</h4>
-
-                            <!-- عرض رقم الشاصي -->
-                            <p class="text-sm text-gray-300 mb-2">
-                              <span class="font-bold">رقم الشاصي:</span> {{ resultSet.vin || 'غير معروف' }}
-                            </p>
-
-                            <!-- عرض الجدول في حالة وجود نتائج -->
-                            <div v-if="resultSet.cars && resultSet.cars.length">
-                              <table
-                                :class="resultSet.cars.length > 1 
-                                        ? 'bg-yellow-200 text-gray-800' 
-                                        : 'bg-emerald-200 text-gray-800'"
-                                class="w-full text-sm text-right text-gray-500 dark:text-gray-200 dark:text-gray-400 text-center divide-y divide-gray-200 dark:divide-gray-800"
-                              >
-                                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center">
-                                  <tr     :class="resultSet.cars.length > 1 
-                                        ? 'bg-yellow-600 text-gray-100' 
-                                        : 'bg-emerald-600 text-gray-100'" >
-                                    <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t("date") }}</th>
-                                    <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t('car_owner') }}</th>
-                                    <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t('car_type') }}</th>
-                                    <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t('year') }}</th>
-                                    <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t('color') }}</th>
-                                    <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t('vin') }}</th>
-                                    <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t('car_number') }}</th>
-                                    <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">{{ $t("note") }}</th>
-                                    <th scope="col" class="px-3 py-2 sm:px-4 sm:py-2">فرع</th>
-                                    <th class="px-1 py-3 text-base">تخزين</th>
-
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  <tr
-                                    v-for="(car, idx) in resultSet.cars"
-                                    :key="idx"
-                                    class="bg-white dark:bg-gray-800"
-                                  >
-                                    <td class="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.date }}</td>
-                                    <td class="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.client?.name }}</td>
-                                    <td class="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.car_type }}</td>
-                                    <td class="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.year }}</td>
-                                    <td class="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.car_color }}</td>
-                                    <td class="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.vin }}</td>
-                                    <td class="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.car_number }}</td>
-                                    <td class="px-3 py-2 sm:px-4 sm:py-2 text-center">{{ car.note }}</td>
-                                    <td class="px-3 py-2 sm:px-4 sm:py-2 text-center">
-                                      {{ car.owner_id == 1 ? 'اربيل' : 'كركوك' }}
-                                    </td>
-                                    <td  className="border dark:border-gray-800 text-center px-1 py-2 ">
-                                      <a
-                                        v-for="(image, index) in car.car_images"
-                                        :key="index"
-                                        :href="getDownloadUrl(image.name)"
-                                        style="cursor: pointer"
-                                        target="_blank">
-                                        <img
-                                          :src="getImageUrl(image.name)"
-                                          alt=""
-                                          class="px-1"
-                                          style="
-                                            max-width: 100px;
-                                            max-height: 50px;
-                                            display: inline;
-                                          "
-                                        />
-                                      </a>
-                                    </td>
-                                  </tr>
-                                </tbody>
-                              </table>
-                            </div>
-
-                            <!-- عرض رسالة في حالة عدم وجود نتائج -->
-                            <div v-else>
-                              <p class="text-red-500">
-                                لا توجد نتائج لهذا الرقم: <span class="font-bold">{{ resultSet.vin || 'غير معروف' }}</span>
-                              </p>
-                            </div>
-                          </div>
-
+                        <div v-if="resultSet.approvedVin" class="mt-1 text-xs font-semibold text-sky-700 dark:text-sky-300">
+                          تم اعتماد: <span class="font-mono">{{ resultSet.approvedVin }}</span>
                         </div>
                       </div>
+
+                      <span
+                        class="rounded-full px-3 py-1 text-xs font-bold"
+                        :class="resultSet.cars?.length > 1
+                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200'
+                          : resultSet.cars?.length === 1
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200'
+                            : 'bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200'"
+                      >
+                        {{
+                          resultSet.cars?.length > 1
+                            ? `${resultSet.cars.length} نتائج - اختر السيارة الصحيحة`
+                            : resultSet.cars?.length === 1
+                              ? 'مطابقة واحدة'
+                              : 'لا توجد نتيجة'
+                        }}
+                      </span>
+                    </div>
+
+                    <div v-if="resultSet.cars && resultSet.cars.length" class="overflow-x-auto">
+                      <table class="min-w-full text-sm text-center">
+                        <thead class="bg-slate-900 text-white">
+                          <tr>
+                            <th class="px-3 py-3">الإجراء</th>
+                            <th class="px-3 py-3">التاريخ</th>
+                            <th class="px-3 py-3">المالك</th>
+                            <th class="px-3 py-3">النوع</th>
+                            <th class="px-3 py-3">السنة</th>
+                            <th class="px-3 py-3">اللون</th>
+                            <th class="px-3 py-3">الشانصي الكامل</th>
+                            <th class="px-3 py-3">الكاتي</th>
+                            <th class="px-3 py-3">الملاحظة</th>
+                            <th class="px-3 py-3">الفرع</th>
+                            <th class="px-3 py-3">التخزين</th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                          <tr
+                            v-for="car in resultSet.cars"
+                            :key="car.id"
+                            class="bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/70"
+                          >
+                            <td class="px-3 py-3">
+                              <button
+                                type="button"
+                                class="rounded-lg bg-sky-600 px-3 py-2 text-xs font-bold text-white hover:bg-sky-700"
+                                @click="approveFullVin(resultSet, car)"
+                              >
+                                اعتماد وتحديث
+                              </button>
+                            </td>
+                            <td class="px-3 py-3 text-slate-700 dark:text-slate-200">{{ car.date }}</td>
+                            <td class="px-3 py-3 text-slate-700 dark:text-slate-200">{{ car.client?.name || '-' }}</td>
+                            <td class="px-3 py-3 font-semibold text-slate-800 dark:text-slate-100">{{ car.car_type }}</td>
+                            <td class="px-3 py-3 text-slate-700 dark:text-slate-200">{{ car.year || '-' }}</td>
+                            <td class="px-3 py-3 text-slate-700 dark:text-slate-200">{{ car.car_color || '-' }}</td>
+                            <td class="px-3 py-3 font-mono text-slate-900 dark:text-white">{{ car.vin }}</td>
+                            <td class="px-3 py-3 text-slate-700 dark:text-slate-200">{{ car.car_number || '-' }}</td>
+                            <td class="px-3 py-3 text-right text-slate-600 dark:text-slate-300 min-w-[240px]">{{ car.note || '-' }}</td>
+                            <td class="px-3 py-3 text-slate-700 dark:text-slate-200">{{ branchLabel(car.owner_id) }}</td>
+                            <td class="px-3 py-3">
+                              <div class="flex items-center justify-center gap-2 flex-wrap">
+                                <a
+                                  v-for="image in car.car_images || []"
+                                  :key="image.id || image.name"
+                                  :href="getDownloadUrl(image.name)"
+                                  target="_blank"
+                                  class="inline-flex"
+                                >
+                                  <img
+                                    :src="getImageUrl(image.name)"
+                                    alt="صورة تخزين"
+                                    class="h-12 w-20 rounded-md border border-slate-200 dark:border-slate-700 object-cover"
+                                  />
+                                </a>
+                                <span
+                                  v-if="!(car.car_images && car.car_images.length)"
+                                  class="text-xs text-slate-400 dark:text-slate-500"
+                                >
+                                  لا يوجد
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div v-else class="px-4 py-5 text-sm text-rose-700 dark:text-rose-300">
+                      لا توجد نتائج لهذا الرقم:
+                      <span class="font-mono font-bold">{{ resultSet.vin || 'غير معروف' }}</span>
+                    </div>
                   </div>
-              </div>
-        </div>
+                </div>
+
+                <div
+                  v-else-if="!loading"
+                  class="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 px-6 py-16 text-center"
+                >
+                  <h3 class="text-lg font-bold text-slate-900 dark:text-white">لا توجد نتائج بعد</h3>
+                  <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                    الصق الشواصي في الحقل ثم اضغط تشغيل البحث.
+                  </p>
+                </div>
+              </section>
             </div>
-        <div >
-  
-    </div>   
-    </AuthenticatedLayout>
+          </div>
+        </div>
+      </div>
+    </div>
+  </AuthenticatedLayout>
 </template>

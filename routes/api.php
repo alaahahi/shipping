@@ -448,6 +448,7 @@ Route::middleware('auth')->group(function () {
 Route::get('checkClientBalance',[AccountingController::class, 'checkClientBalance'])->name('checkClientBalance');
 
 Route::post('search-vins', [CarExpensesController::class, 'searchVINs'])->name('search-vins');
+Route::post('approve-searched-vin', [CarExpensesController::class, 'approveSearchedVin'])->name('approve-searched-vin');
 
 // Trip APIs
 Route::middleware('auth:sanctum')->group(function () {

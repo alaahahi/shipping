@@ -56,58 +56,86 @@ class CarExpensesController extends Controller
     }
     public function searchVINs(Request $request)
     {
-            $vins = $request->input('vins');
+            $vins = collect($request->input('vins', []))
+                ->map(fn ($vin) => strtoupper(trim((string) $vin)))
+                ->filter()
+                ->values();
+
             $results = [];
-            $noResultsVINs = []; // مصفوفة جديدة للأرقام التي ليس لها نتائج
+            $noResultsVINs = [];
 
             foreach ($vins as $vin) {
-                // استخراج الأرقام بعد آخر حرف باستخدام التعبير النمطي
-                preg_match('/[A-Z]+(\d+)$/i', $vin, $matches);
+                $cars = Car::with(['client', 'CarImages'])
+                    ->where('vin', $vin)
+                    ->get();
 
-                // التحقق من وجود أرقام بعد آخر حرف
-                $lastNumbers = $matches[1] ?? null;
+                if ($cars->isEmpty()) {
+                    preg_match('/[A-Z]+(\d+)$/i', $vin, $matches);
+                    $lastNumbers = $matches[1] ?? preg_replace('/\D+/', '', $vin);
 
-                if ($lastNumbers) {
-                    // البحث التدريجي عن النتائج
-                    $cars = [];
-                    while (strlen($lastNumbers) >= 5) {
-                        $cars = Car::with('client')->where('vin', 'like', '%' . $lastNumbers)->get();
+                    while ($cars->isEmpty() && strlen((string) $lastNumbers) >= 5) {
+                        $cars = Car::with(['client', 'CarImages'])
+                            ->where('vin', 'like', '%' . $lastNumbers)
+                            ->get();
 
                         if ($cars->isNotEmpty()) {
-                            break; // إذا تم العثور على نتائج، توقف عن البحث
+                            break;
                         }
 
-                        // حذف رقم واحد من اليمين
                         $lastNumbers = substr($lastNumbers, 0, -1);
                     }
+                }
 
-                    // إضافة النتائج مع رقم الشاصي
-                    $results[] = [
-                        'vin' => $vin,
-                        'message' => $cars->isEmpty() ? 'لا توجد نتائج لهذا الرقم' : 'تم العثور على نتائج',
-                        'cars' => $cars
-                    ];
+                $results[] = [
+                    'vin' => $vin,
+                    'message' => $cars->isEmpty() ? 'لا توجد نتائج لهذا الرقم' : 'تم العثور على نتائج',
+                    'cars' => $cars,
+                ];
 
-                    // إضافة VIN إلى قائمة الأرقام التي ليس لها نتائج
-                    if ($cars->isEmpty()) {
-                        $noResultsVINs[] = $vin;
-                    }
-                } else {
-                    // إذا لم يتم العثور على أرقام بعد آخر حرف، أضف رقم الشاصي مع رسالة
-                    $results[] = [
-                        'vin' => $vin,
-                        'message' => 'لا توجد أرقام في رقم الشاصي',
-                        'cars' => [] // مصفوفة فارغة للسيارات
-                    ];
-
-                    // إضافة VIN إلى قائمة الأرقام التي ليس لها نتائج
+                if ($cars->isEmpty()) {
                     $noResultsVINs[] = $vin;
                 }
             }
+
             return response()->json([
                 'results' => $results,
-                'noResultsVINs' => $noResultsVINs,  // إعادة المصفوفة للأرقام التي ليس لها نتائج
+                'noResultsVINs' => $noResultsVINs,
             ]);
+    }
+
+    public function approveSearchedVin(Request $request)
+    {
+        $ownerId = (int) Auth::user()->owner_id;
+        $carId = (int) $request->input('car_id');
+        $approvedVin = strtoupper(trim((string) $request->input('approved_vin')));
+
+        if ($carId <= 0 || $approvedVin === '') {
+            return response()->json(['error' => 'بيانات التحديث غير مكتملة'], 422);
+        }
+
+        $car = Car::where('owner_id', $ownerId)->find($carId);
+        if (!$car) {
+            return response()->json(['error' => 'السيارة غير موجودة'], 404);
+        }
+
+        $duplicate = Car::where('owner_id', $ownerId)
+            ->where('id', '!=', $carId)
+            ->where('vin', $approvedVin)
+            ->exists();
+
+        if ($duplicate) {
+            return response()->json(['error' => 'يوجد سيارة أخرى بنفس الشانصي الكامل'], 422);
+        }
+
+        $oldVin = (string) $car->vin;
+        $car->update(['vin' => $approvedVin]);
+
+        return response()->json([
+            'ok' => true,
+            'old_vin' => $oldVin,
+            'new_vin' => $approvedVin,
+            'car' => $car->fresh(),
+        ], 200);
     }
     public function index(Request $request)
     {
