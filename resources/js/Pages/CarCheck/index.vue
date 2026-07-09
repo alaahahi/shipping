@@ -120,7 +120,7 @@ async function approveFullVin(resultSet, approvedCar) {
   <Head title="فحص الشانصي" />
 
   <AuthenticatedLayout>
-    <div class="py-6">
+    <div class="py-6 bg-slate-100 dark:bg-slate-950 min-h-screen">
       <div class="w-full max-w-[calc(100vw-2rem)] mx-auto px-2 sm:px-4 lg:px-6">
         <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-sm overflow-hidden">
           <div class="border-b border-slate-200 dark:border-slate-700 bg-gradient-to-l from-sky-50 to-white dark:from-slate-900 dark:to-slate-950 px-6 py-5">
@@ -150,8 +150,8 @@ async function approveFullVin(resultSet, approvedCar) {
               </div>
             </div>
 
-            <div class="grid grid-cols-1 2xl:grid-cols-[440px,minmax(0,1fr)] xl:grid-cols-[400px,minmax(0,1fr)] gap-6 items-start">
-              <section class="order-1 xl:order-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm dark:shadow-none">
+            <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr),400px] 2xl:grid-cols-[minmax(0,1fr),440px] gap-6 items-start">
+              <section class="order-2 xl:order-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm dark:shadow-none">
                 <div class="flex items-center justify-between gap-3 mb-3">
                   <div>
                     <h2 class="text-base font-bold text-slate-900 dark:text-white">قائمة الشواصي</h2>
@@ -179,7 +179,7 @@ async function approveFullVin(resultSet, approvedCar) {
                 />
               </section>
 
-              <section class="order-2 xl:order-1 space-y-4">
+              <section class="order-1 xl:order-1 space-y-4">
                 <div
                   v-if="noResultsVINs.length"
                   class="rounded-2xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/20 p-4 shadow-sm dark:shadow-none"
@@ -336,7 +336,7 @@ async function approveFullVin(resultSet, approvedCar) {
 
                 <div
                   v-else-if="!loading"
-                  class="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 py-16 text-center shadow-sm dark:shadow-none"
+                  class="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 py-16 text-center shadow-sm dark:shadow-none min-h-[220px] flex flex-col items-center justify-center"
                 >
                   <h3 class="text-lg font-bold text-slate-900 dark:text-white">لا توجد نتائج بعد</h3>
                   <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
@@ -353,12 +353,15 @@ async function approveFullVin(resultSet, approvedCar) {
 </template>
 
 <style scoped>
+.vin-textarea {
+  background: #ffffff;
+}
+
 .vin-textarea,
 .vin-textarea:focus,
 .vin-textarea:active,
 .vin-textarea:hover {
   color: #0f172a !important;
-  background: #ffffff !important;
   caret-color: #0f172a !important;
 }
 
