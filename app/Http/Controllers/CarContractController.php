@@ -630,8 +630,43 @@ class CarContractController extends Controller
                 });
             }
 
-            $data =$data->paginate($limit)->toArray();
-            return Response::json($data, 200);
+            $paginator = $data->paginate($limit);
+            $items = collect($paginator->items());
+            $contractIds = $items
+                ->where('morphed_type', 'App\Models\CarContract')
+                ->pluck('morphed_id')
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+            $contractTypes = $contractIds
+                ? CarContract::whereIn('id', $contractIds)->pluck('contract_type', 'id')
+                : collect();
+
+            if ($contract_type && in_array($contract_type, ['company', 'external'], true)) {
+                $items = $items->filter(function ($tran) use ($contractTypes, $contract_type) {
+                    if ($tran->morphed_type !== 'App\Models\CarContract') {
+                        return false;
+                    }
+
+                    return ($contractTypes[$tran->morphed_id] ?? 'company') === $contract_type;
+                })->values();
+            }
+
+            $items->transform(function ($tran) use ($contractTypes) {
+                if ($tran->morphed_type === 'App\Models\CarContract' && $tran->morphed_id) {
+                    $tran->contract_type = $contractTypes[$tran->morphed_id] ?? 'company';
+                } else {
+                    $tran->contract_type = null;
+                }
+
+                return $tran;
+            });
+
+            $payload = $paginator->toArray();
+            $payload['data'] = $items->all();
+
+            return Response::json($payload, 200);
         } catch (\Illuminate\Database\QueryException $e) {
             if (str_contains($e->getMessage(), 'no such table')) {
                 return Response::json(['data' => [], 'current_page' => 1, 'last_page' => 1, 'per_page' => 15, 'total' => 0], 200);
@@ -949,7 +984,13 @@ class CarContractController extends Controller
         $completedThisMonth = (clone $statsQuery)->whereBetween('created', [$startOfMonth, $endOfMonth])->count();
         $completedLastMonth = (clone $statsQuery)->whereBetween('created', [$startOfLastMonth, $endOfLastMonth])->count();
         $completedThisYear = (clone $statsQuery)->whereBetween('created', [$startOfYear, $endOfYear])->count();
-        $recentContracts = (clone $statsQuery)->orderBy('id', 'desc')->limit(8)->get(['id', 'no', 'car_name', 'name_seller', 'name_buyer', 'car_price', 'created']);
+        $completedThisMonthCompany = (clone $statsQuery)->where('contract_type', 'company')->whereBetween('created', [$startOfMonth, $endOfMonth])->count();
+        $completedThisMonthExternal = (clone $statsQuery)->where('contract_type', 'external')->whereBetween('created', [$startOfMonth, $endOfMonth])->count();
+        $completedLastMonthCompany = (clone $statsQuery)->where('contract_type', 'company')->whereBetween('created', [$startOfLastMonth, $endOfLastMonth])->count();
+        $completedLastMonthExternal = (clone $statsQuery)->where('contract_type', 'external')->whereBetween('created', [$startOfLastMonth, $endOfLastMonth])->count();
+        $completedThisYearCompany = (clone $statsQuery)->where('contract_type', 'company')->whereBetween('created', [$startOfYear, $endOfYear])->count();
+        $completedThisYearExternal = (clone $statsQuery)->where('contract_type', 'external')->whereBetween('created', [$startOfYear, $endOfYear])->count();
+        $recentContracts = (clone $statsQuery)->orderBy('id', 'desc')->limit(8)->get(['id', 'no', 'car_name', 'name_seller', 'name_buyer', 'car_price', 'created', 'contract_type']);
 
         return Response::json([
             'data1' => $data1,
@@ -957,6 +998,12 @@ class CarContractController extends Controller
             'completedContractsThisMonth' => $completedThisMonth,
             'completedContractsLastMonth' => $completedLastMonth,
             'completedContractsThisYear' => $completedThisYear,
+            'completedContractsThisMonthCompany' => $completedThisMonthCompany,
+            'completedContractsThisMonthExternal' => $completedThisMonthExternal,
+            'completedContractsLastMonthCompany' => $completedLastMonthCompany,
+            'completedContractsLastMonthExternal' => $completedLastMonthExternal,
+            'completedContractsThisYearCompany' => $completedThisYearCompany,
+            'completedContractsThisYearExternal' => $completedThisYearExternal,
             'recentContracts' => $recentContracts,
         ], 200);
     }
@@ -1196,7 +1243,36 @@ class CarContractController extends Controller
         return Response::json([
             'installment' => $installment,
             'contract' => $contract->fresh(['installments']),
+            'print_url' => route('contract_installment_print', $installment->id),
         ], 200);
+    }
+
+    public function getContractInstallmentPayments(Request $request)
+    {
+        $ownerId = (int) Auth::user()->owner_id;
+        $q = trim((string) $request->query('q', ''));
+        $limit = (int) $request->query('limit', 50);
+
+        $query = CarContractInstallment::with([
+            'carContract:id,name_buyer,car_name,vin,car_price,car_paid,contract_type',
+        ])
+            ->where('owner_id', $ownerId)
+            ->orderByDesc('id');
+
+        if ($q !== '') {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('received_by', 'LIKE', '%' . $q . '%')
+                    ->orWhere('note', 'LIKE', '%' . $q . '%')
+                    ->orWhere('amount', 'LIKE', '%' . $q . '%')
+                    ->orWhereHas('carContract', function ($contractQuery) use ($q) {
+                        $contractQuery->where('name_buyer', 'LIKE', '%' . $q . '%')
+                            ->orWhere('vin', 'LIKE', '%' . $q . '%')
+                            ->orWhere('car_name', 'LIKE', '%' . $q . '%');
+                    });
+            });
+        }
+
+        return Response::json($query->paginate($limit), 200);
     }
 
     public function contractInstallmentPrint($id)

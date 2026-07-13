@@ -36,6 +36,12 @@ const laravelData2 = ref({});
 const completedContractsThisMonth = ref(0);
 const completedContractsLastMonth = ref(0);
 const completedContractsThisYear = ref(0);
+const completedContractsThisMonthCompany = ref(0);
+const completedContractsThisMonthExternal = ref(0);
+const completedContractsLastMonthCompany = ref(0);
+const completedContractsLastMonthExternal = ref(0);
+const completedContractsThisYearCompany = ref(0);
+const completedContractsThisYearExternal = ref(0);
 const recentContracts = ref([]);
 let  controller = new AbortController(); // Create a new AbortController
 
@@ -56,6 +62,12 @@ const getResults = async (page = 1) => {
     completedContractsThisMonth.value = response.data.completedContractsThisMonth ?? 0
     completedContractsLastMonth.value = response.data.completedContractsLastMonth ?? 0
     completedContractsThisYear.value = response.data.completedContractsThisYear ?? 0
+    completedContractsThisMonthCompany.value = response.data.completedContractsThisMonthCompany ?? 0
+    completedContractsThisMonthExternal.value = response.data.completedContractsThisMonthExternal ?? 0
+    completedContractsLastMonthCompany.value = response.data.completedContractsLastMonthCompany ?? 0
+    completedContractsLastMonthExternal.value = response.data.completedContractsLastMonthExternal ?? 0
+    completedContractsThisYearCompany.value = response.data.completedContractsThisYearCompany ?? 0
+    completedContractsThisYearExternal.value = response.data.completedContractsThisYearExternal ?? 0
     recentContracts.value = response.data.recentContracts ?? []
   }
 
@@ -512,29 +524,42 @@ function getResultsCarSearchLocal () {
                       <div>
                           <!-- إحصائيات وعقود حديثة -->
                           <div class="mb-6 p-4 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
-                            <h2 class="text-lg font-semibold dark:text-white mb-3">عقود هذا الشهر والإحصائيات</h2>
-                            <div class="flex flex-wrap items-center gap-6 mb-4">
-                              <div class="flex items-center gap-2">
-                                <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{{ completedContractsThisMonth }}</span>
-                                <span class="text-gray-600 dark:text-gray-300">عقد منجز هذا الشهر</span>
+                            <h2 class="text-lg font-semibold dark:text-white mb-3">إحصائيات العقود</h2>
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                              <div class="rounded-lg bg-white dark:bg-gray-800 p-4 border border-sky-200 dark:border-sky-800">
+                                <h3 class="font-semibold text-sky-700 dark:text-sky-300 mb-3">عقود الشركة</h3>
+                                <div class="flex flex-wrap items-center gap-4">
+                                  <div><span class="text-xl font-bold text-sky-600">{{ completedContractsThisMonthCompany }}</span> <span class="text-sm text-gray-500">هذا الشهر</span></div>
+                                  <div><span class="text-xl font-bold text-blue-600">{{ completedContractsLastMonthCompany }}</span> <span class="text-sm text-gray-500">الشهر الماضي</span></div>
+                                  <div><span class="text-xl font-bold text-green-600">{{ completedContractsThisYearCompany }}</span> <span class="text-sm text-gray-500">هذه السنة</span></div>
+                                </div>
                               </div>
-                              <div class="flex items-center gap-2">
-                                <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ completedContractsLastMonth }}</span>
-                                <span class="text-gray-600 dark:text-gray-300">عقد منجز الشهر الماضي</span>
+                              <div class="rounded-lg bg-white dark:bg-gray-800 p-4 border border-violet-200 dark:border-violet-800">
+                                <h3 class="font-semibold text-violet-700 dark:text-violet-300 mb-3">عقود خارجية</h3>
+                                <div class="flex flex-wrap items-center gap-4">
+                                  <div><span class="text-xl font-bold text-violet-600">{{ completedContractsThisMonthExternal }}</span> <span class="text-sm text-gray-500">هذا الشهر</span></div>
+                                  <div><span class="text-xl font-bold text-purple-600">{{ completedContractsLastMonthExternal }}</span> <span class="text-sm text-gray-500">الشهر الماضي</span></div>
+                                  <div><span class="text-xl font-bold text-fuchsia-600">{{ completedContractsThisYearExternal }}</span> <span class="text-sm text-gray-500">هذه السنة</span></div>
+                                </div>
                               </div>
-                              <div class="flex items-center gap-2">
-                                <span class="text-2xl font-bold text-green-600 dark:text-green-400">{{ completedContractsThisYear }}</span>
-                                <span class="text-gray-600 dark:text-gray-300">عقد منجز هذه السنة</span>
-                              </div>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-6 text-sm text-gray-500 dark:text-gray-400">
+                              <span>الإجمالي هذا الشهر: <strong class="text-indigo-600">{{ completedContractsThisMonth }}</strong></span>
+                              <span>الإجمالي الشهر الماضي: <strong class="text-blue-600">{{ completedContractsLastMonth }}</strong></span>
+                              <span>الإجمالي هذه السنة: <strong class="text-green-600">{{ completedContractsThisYear }}</strong></span>
                             </div>
                             <div v-if="recentContracts && recentContracts.length" class="mt-4">
                               <h3 class="text-sm font-medium dark:text-gray-300 mb-2">آخر العقود</h3>
                               <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                                <Link v-for="c in recentContracts" :key="c.id" :href="`/contract/${c.id}`" class="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition">
+                                <Link v-for="c in recentContracts" :key="c.id" :href="`/contract/${c.id}?type=${c.contract_type || 'company'}`" class="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition">
                                   <div class="text-right">
-                                    <div class="font-medium dark:text-white">{{ c.car_name || c.no || '—' }}</div>
+                                    <div class="flex items-center gap-2 justify-end">
+                                      <span v-if="c.contract_type === 'external'" class="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">خارجي</span>
+                                      <span v-else class="text-[10px] px-2 py-0.5 rounded-full bg-sky-100 text-sky-700">شركة</span>
+                                      <div class="font-medium dark:text-white">{{ c.car_name || c.no || '—' }}</div>
+                                    </div>
                                     <div class="text-xs text-gray-500 dark:text-gray-400">{{ c.name_seller }} → {{ c.name_buyer }}</div>
-                                    <div class="text-xs text-indigo-600 dark:text-indigo-400">{{ c.car_price }} $ · {{ c.created }}</div>
+                                    <div class="text-xs text-indigo-600 dark:text-indigo-400">{{ c.car_price }} · {{ c.created }}</div>
                                   </div>
                                 </Link>
                               </div>

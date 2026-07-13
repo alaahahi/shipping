@@ -111,7 +111,7 @@ const getResults = async ($state) => {
 };
  
 const getcountTotalInfo = async () => {
-  axios.get(`/api/totalInfoContract?from=${from.value}&to=${to.value}${contractTypeFilter.value ? `&contract_type=${contractTypeFilter.value}` : ''}`)
+  axios.get(`/api/totalInfoContract?from=${from.value}&to=${to.value}`)
   .then(response => {
     allContract.value=response.data.contract
     sum_contract.value=response.data.sum_contract
@@ -418,11 +418,16 @@ function UpdatePage (){
     </div>
     <div>
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
-        <div class="overflow-hidden shadow-sm sm:rounded-lg">
-          <div class="px-4 pt-4 flex flex-wrap gap-2">
-            <button type="button" class="px-4 py-2 rounded-lg text-sm font-bold" :class="contractTypeFilter === '' ? 'bg-sky-600 text-white' : 'bg-gray-200 dark:bg-gray-700'" @click="contractTypeFilter=''; refresh(); getcountTotalInfo();">الكل</button>
-            <button type="button" class="px-4 py-2 rounded-lg text-sm font-bold" :class="contractTypeFilter === 'company' ? 'bg-sky-600 text-white' : 'bg-gray-200 dark:bg-gray-700'" @click="contractTypeFilter='company'; refresh(); getcountTotalInfo();">شركة</button>
-            <button type="button" class="px-4 py-2 rounded-lg text-sm font-bold" :class="contractTypeFilter === 'external' ? 'bg-violet-600 text-white' : 'bg-gray-200 dark:bg-gray-700'" @click="contractTypeFilter='external'; refresh(); getcountTotalInfo();">خارجي</button>
+          <div class="overflow-hidden shadow-sm sm:rounded-lg">
+          <div class="px-4 pt-4 flex flex-wrap gap-3 items-end">
+            <div>
+              <InputLabel value="فلتر نوع العقد" />
+              <select v-model="contractTypeFilter" @change="refresh()" class="mt-1 rounded-md border-gray-300 dark:bg-gray-800 dark:border-gray-700 text-sm">
+                <option value="">كل الدفعات</option>
+                <option value="company">شركة فقط</option>
+                <option value="external">خارجي فقط</option>
+              </select>
+            </div>
           </div>
           <div class=" border-b border-gray-200">
             <div class="mt-4  mb-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
@@ -500,9 +505,7 @@ function UpdatePage (){
               <div class="pt-5  print:hidden">
               <button  style=" width: 100%; margin-top: 4px;"  v-if="$page.props.auth.user.type_id==8" className="px-4 py-2 text-white bg-rose-500 rounded-md focus:outline-none"
                                             @click="openAddExpenses()">
-                                             {{ t("receiptOut") }}
-                                             ({{ t("receiptOutWithdraw") }})
-
+                                             مصاريف
               </button>
        
               </div>
@@ -543,7 +546,7 @@ function UpdatePage (){
                             <InputLabel for="pay" :value="t('expenseReport')" />
                             <a
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded" style="display: block;text-align: center;"
-                            :href="`api/contract_account_report?type=سحب دفعة &from=${from}&to=${to}&print=1${contractTypeFilter ? `&contract_type=${contractTypeFilter}` : ''}`"
+                            :href="`api/contract_account_report?type=سحب دفعة &from=${from}&to=${to}&print=1`"
                             target="_blank"
                             >
                             
@@ -555,7 +558,7 @@ function UpdatePage (){
                             <InputLabel for="pay" :value="t('contractsReport')" />
                             <a
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-blue-500 rounded" style="display: block;text-align: center;"
-                            :href="`api/contract_account_report?type=contract-report&from=${from}&to=${to}&print=2&q=${q}${contractTypeFilter ? `&contract_type=${contractTypeFilter}` : ''}`"
+                            :href="`api/contract_account_report?type=contract-report&from=${from}&to=${to}&print=2&q=${q}`"
                             target="_blank"
                             >
                             
@@ -672,7 +675,7 @@ function UpdatePage (){
                 >
                   <tr class="rounded-l-lg mb-2 sm:mb-0">
                     <th className="px-2 py-2" style="width: 100px;">{{ t("receiptNumber") }}</th>
-                    <!-- <th className="px-2 py-2">الحساب</th> -->
+                    <th className="px-2 py-2" style="width: 90px;">النوع</th>
                     <th className="px-2 py-2" style="width: 180px;">{{ t("transactionDate") }}</th>
                     <th className="px-2 py-2">{{ t("description") }}</th>
                     <th className="px-2 py-2">{{ t("transactionAmount") }}</th>
@@ -694,9 +697,17 @@ function UpdatePage (){
                   }"
                   class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.id }}</td>
-                  <!-- <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.morphed?.name }}</td> -->
-
-                  
+                  <td className="border dark:border-gray-800 text-center px-2 py-1">
+                    <span
+                      v-if="tran.contract_type === 'external'"
+                      class="inline-block rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-200 px-2 py-0.5 text-xs font-bold"
+                    >خارجي</span>
+                    <span
+                      v-else-if="tran.contract_type === 'company'"
+                      class="inline-block rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-200 px-2 py-0.5 text-xs font-bold"
+                    >شركة</span>
+                    <span v-else class="text-xs text-gray-400">—</span>
+                  </td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran?.created_at.slice(0, 19).replace("T", "  ") }}</td>
                   <th className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.description }}</th>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.amount+' '+(tran.currency ?? '$')  }}</td>

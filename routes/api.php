@@ -413,7 +413,8 @@ Route::post('DropFromBoxContract',[CarContractController::class, 'DropFromBoxCon
 Route::get('getIndexClientsContract',[CarContractController::class, 'getIndexClientsContract'])->name('getIndexClientsContract');
 Route::get('contract_account_report',[CarContractController::class, 'contract_account_report'])->name('contract_account_report');
 Route::get('contract-installments',[CarContractController::class, 'getContractInstallments'])->name('contract-installments.index');
-Route::get('contract-installments/{id}',[CarContractController::class, 'getContractInstallmentDetails'])->name('contract-installments.show');
+Route::get('contract-installment-payments',[CarContractController::class, 'getContractInstallmentPayments'])->name('contract-installment-payments.index');
+Route::get('contract-installments/{id}',[CarContractController::class, 'getContractInstallmentDetails'])->name('contract-installments.show')->whereNumber('id');
 Route::post('contract-installments',[CarContractController::class, 'addContractInstallment'])->name('contract-installments.store');
 
 Route::get('companyTreasuryEntries',[CompanyTreasuryController::class, 'getEntries'])->name('companyTreasuryEntries');
