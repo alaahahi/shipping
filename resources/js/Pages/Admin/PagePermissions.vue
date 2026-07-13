@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/inertia-vue3';
+import { Head, router } from '@inertiajs/inertia-vue3';
 import { ref, computed, onMounted } from 'vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -40,6 +40,10 @@ const selectedUserType = computed(() => {
 onMounted(() => {
   loadData();
 });
+
+function refreshAuthNav() {
+  router.reload({ only: ['auth'] });
+}
 
 function loadData() {
   loading.value = true;
@@ -121,6 +125,7 @@ function savePage() {
       toast.success(editingPage.value ? 'تم تحديث الصفحة' : 'تمت إضافة الصفحة', { timeout: 2000, position: 'bottom-right', rtl: true });
       closeModal();
       loadData();
+      refreshAuthNav();
     })
     .catch((error) => {
       const message = error.response?.data?.message || 'حدث خطأ أثناء الحفظ';
@@ -135,6 +140,7 @@ function deletePage(page) {
     .then(() => {
       toast.success('تم حذف الصفحة', { timeout: 2000, position: 'bottom-right', rtl: true });
       loadData();
+      refreshAuthNav();
     })
     .catch(() => {
       toast.error('تعذر حذف الصفحة', { timeout: 3000, position: 'bottom-right', rtl: true });
@@ -175,6 +181,7 @@ function saveUserTypePages() {
     .then(() => {
       toast.success('تم حفظ صلاحيات النوع', { timeout: 2000, position: 'bottom-right', rtl: true });
       loadData();
+      refreshAuthNav();
     })
     .catch(() => {
       toast.error('حدث خطأ أثناء حفظ الصلاحيات', { timeout: 3000, position: 'bottom-right', rtl: true });
@@ -197,6 +204,7 @@ function importDefaultPages() {
     .then((response) => {
       toast.success(response.data.message || 'تم الاستيراد بنجاح', { timeout: 3000, position: 'bottom-right', rtl: true });
       loadData();
+      refreshAuthNav();
     })
     .catch(() => {
       toast.error('تعذر استيراد الصفحات الافتراضية', { timeout: 3000, position: 'bottom-right', rtl: true });

@@ -79,7 +79,7 @@ Route::get('sync-monitor', function () {
     ]);
 })->name('sync.monitor');
 
-Route::group(['middleware' => ['auth','verified', 'check.license']], function () {
+Route::group(['middleware' => ['auth','verified', 'check.license', 'page.permission']], function () {
 
     // المستخدمون المتصلون (JSON - يستخدم جلسة الويب)
     Route::get('online-users', [OnlineUsersController::class, 'index'])->name('onlineUsers');

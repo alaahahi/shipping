@@ -1,8 +1,8 @@
 // Service Worker - PWA محسّن - دعم Offline سريع
 // الهدف: تسريع التطبيق + دعم offline بدون تخزين IndexedDB
 
-const CACHE_NAME = 'shipping-v3.0.0'; // ⬆️ تحديث الإصدار - PWA محسّن
-const RUNTIME_CACHE = 'shipping-runtime-v3.0.0';
+const CACHE_NAME = 'shipping-v3.0.1'; // ⬆️ تحديث الإصدار - PWA محسّن
+const RUNTIME_CACHE = 'shipping-runtime-v3.0.1';
 const ASSETS_TO_CACHE = [
   '/',
   '/offline.html',

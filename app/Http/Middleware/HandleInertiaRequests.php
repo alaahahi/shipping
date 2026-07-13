@@ -42,7 +42,7 @@ class HandleInertiaRequests extends Middleware
         $hasPagesTable = Schema::hasTable('app_pages');
 
         return array_merge(parent::share($request), [
-            'auth' => [
+            'auth' => fn () => [
                 'user' => $user,
                 'allowedRoutes' => ($user && $hasPagesTable) ? $permissions->getAllowedRouteNamesForUser($user) : [],
                 'navPages' => ($user && $hasPagesTable) ? $permissions->getNavPagesForUser($user) : [],
