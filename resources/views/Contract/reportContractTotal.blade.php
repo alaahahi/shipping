@@ -7,6 +7,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
+    .report-logo {
+      max-width: 125px;
+      height: auto;
+    }
     @page {
       size: landscape; /* Set page orientation to landscape */
 
@@ -54,7 +58,7 @@
     <h5 class="pt-3">  جميع عقود البيع </h5>
     </div>
     <div class="col-4 text-center py-3"> 
-        @include('Components.logo')
+        <img src="/img/logo.jpg" class="report-logo" alt="logo" onerror="this.src='/img/logo.png'; this.onerror=null;" />
 
     </div>
     </div>
