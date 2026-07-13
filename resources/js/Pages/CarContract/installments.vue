@@ -212,7 +212,7 @@ loadContracts();
         </div>
 
         <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-          <table class="min-w-full text-sm text-center">
+          <table class="min-w-full text-sm text-center text-slate-800 dark:text-white">
             <thead class="bg-slate-800 text-white">
               <tr>
                 <th class="px-3 py-3">#</th>
@@ -227,20 +227,20 @@ loadContracts();
                 <th class="px-3 py-3">{{ t('installments.actions') }}</th>
               </tr>
             </thead>
-            <tbody>
-              <tr v-for="contract in contracts" :key="contract.id" class="border-t border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                <td class="px-3 py-3 font-semibold">{{ contract.id }}</td>
+            <tbody class="bg-white dark:bg-gray-900">
+              <tr v-for="contract in contracts" :key="contract.id" class="border-t border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                <td class="px-3 py-3 font-semibold text-slate-900 dark:text-white">{{ contract.id }}</td>
                 <td class="px-3 py-3">
                   <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-bold" :class="contractTypeClass(contract.contract_type)">
                     {{ contractTypeLabel(contract.contract_type) }}
                   </span>
                 </td>
-                <td class="px-3 py-3">{{ contract.name_buyer }}</td>
-                <td class="px-3 py-3">{{ contract.car_name }}</td>
-                <td class="px-3 py-3 font-mono text-xs">{{ contract.vin }}</td>
-                <td class="px-3 py-3 font-mono">{{ formatAmount(contract.car_price) }}</td>
-                <td class="px-3 py-3 text-emerald-600 font-semibold font-mono">{{ formatAmount(contract.car_paid) }}</td>
-                <td class="px-3 py-3 font-bold text-rose-600 font-mono">{{ formatAmount(remaining(contract)) }}</td>
+                <td class="px-3 py-3 text-slate-800 dark:text-white">{{ contract.name_buyer }}</td>
+                <td class="px-3 py-3 text-slate-800 dark:text-white">{{ contract.car_name }}</td>
+                <td class="px-3 py-3 font-mono text-xs text-slate-700 dark:text-slate-200">{{ contract.vin }}</td>
+                <td class="px-3 py-3 font-mono text-slate-800 dark:text-white">{{ formatAmount(contract.car_price) }}</td>
+                <td class="px-3 py-3 text-emerald-600 dark:text-emerald-400 font-semibold font-mono">{{ formatAmount(contract.car_paid) }}</td>
+                <td class="px-3 py-3 font-bold text-rose-600 dark:text-rose-400 font-mono">{{ formatAmount(remaining(contract)) }}</td>
                 <td class="px-3 py-3">
                   <button
                     type="button"
@@ -262,7 +262,7 @@ loadContracts();
                 </td>
               </tr>
               <tr v-if="!loading && !contracts.length">
-                <td colspan="10" class="px-4 py-12 text-slate-500">{{ t('installments.empty') }}</td>
+                <td colspan="10" class="px-4 py-12 text-slate-500 dark:text-slate-300">{{ t('installments.empty') }}</td>
               </tr>
             </tbody>
           </table>
@@ -292,20 +292,20 @@ loadContracts();
         <div class="p-5 overflow-y-auto">
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
             <div class="rounded-xl bg-slate-100 dark:bg-slate-800 p-3 text-center">
-              <div class="text-xs text-slate-500">{{ t('carPrice') }}</div>
-              <div class="font-bold text-lg font-mono">{{ formatAmount(selectedContract?.car_price) }}</div>
+              <div class="text-xs text-slate-500 dark:text-slate-300">{{ t('carPrice') }}</div>
+              <div class="font-bold text-lg font-mono text-slate-900 dark:text-white">{{ formatAmount(selectedContract?.car_price) }}</div>
             </div>
             <div class="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 p-3 text-center">
-              <div class="text-xs text-emerald-700">{{ t('paid') }}</div>
-              <div class="font-bold text-lg text-emerald-700 font-mono">{{ formatAmount(selectedContract?.car_paid) }}</div>
+              <div class="text-xs text-emerald-700 dark:text-emerald-300">{{ t('paid') }}</div>
+              <div class="font-bold text-lg text-emerald-700 dark:text-emerald-300 font-mono">{{ formatAmount(selectedContract?.car_paid) }}</div>
             </div>
             <div class="rounded-xl bg-rose-50 dark:bg-rose-900/20 p-3 text-center">
-              <div class="text-xs text-rose-700">{{ t('remaining') }}</div>
-              <div class="font-bold text-lg text-rose-700 font-mono">{{ formatAmount(remaining(selectedContract)) }}</div>
+              <div class="text-xs text-rose-700 dark:text-rose-300">{{ t('remaining') }}</div>
+              <div class="font-bold text-lg text-rose-700 dark:text-rose-300 font-mono">{{ formatAmount(remaining(selectedContract)) }}</div>
             </div>
           </div>
 
-          <div v-if="loadingHistory" class="text-center py-10 text-slate-500">{{ t('installments.loadingPayments') }}</div>
+          <div v-if="loadingHistory" class="text-center py-10 text-slate-500 dark:text-slate-300">{{ t('installments.loadingPayments') }}</div>
 
           <div v-else-if="installments.length" class="space-y-3">
             <div
@@ -314,12 +314,12 @@ loadContracts();
               class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 dark:border-slate-700 p-4 hover:border-sky-300 dark:hover:border-sky-700 transition"
             >
               <div class="flex items-center gap-3 min-w-0">
-                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700 font-bold text-sm">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-200 font-bold text-sm">
                   {{ installments.length - index }}
                 </div>
                 <div class="text-right min-w-0">
-                  <div class="font-bold text-emerald-600 text-lg font-mono">{{ formatAmount(item.amount) }}</div>
-                  <div class="text-xs text-slate-500 mt-0.5">
+                  <div class="font-bold text-emerald-600 dark:text-emerald-400 text-lg font-mono">{{ formatAmount(item.amount) }}</div>
+                  <div class="text-xs text-slate-500 dark:text-slate-300 mt-0.5">
                     {{ item.created }} · {{ t('installments.receivedBy') }}: {{ item.received_by || '—' }}
                     <span v-if="item.note"> · {{ item.note }}</span>
                   </div>
@@ -341,13 +341,13 @@ loadContracts();
             </div>
           </div>
 
-          <div v-else class="text-center py-10 text-slate-500 rounded-xl border border-dashed border-slate-300">
+          <div v-else class="text-center py-10 text-slate-500 dark:text-slate-300 rounded-xl border border-dashed border-slate-300 dark:border-slate-600">
             {{ t('installments.noPayments') }}
           </div>
         </div>
 
         <div class="border-t border-slate-200 dark:border-slate-700 p-4 flex flex-wrap justify-end gap-2 shrink-0">
-          <button type="button" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700" @click="closeModals">{{ t('installments.close') }}</button>
+          <button type="button" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 dark:text-white" @click="closeModals">{{ t('installments.close') }}</button>
           <button
             v-if="remaining(selectedContract) > 0"
             type="button"
@@ -377,7 +377,7 @@ loadContracts();
             <div class="sm:col-span-2">
               <InputLabel :value="t('installments.paymentAmount')" />
               <div class="relative mt-1">
-                <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 font-bold">$</span>
+                <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 dark:text-slate-300 font-bold">$</span>
                 <TextInput v-model="paymentForm.amount" type="number" step="0.01" min="0" class="block w-full text-lg font-semibold pr-8" placeholder="0" />
               </div>
             </div>
@@ -397,7 +397,7 @@ loadContracts();
         </div>
 
         <div class="border-t border-slate-200 dark:border-slate-700 p-4 flex justify-end gap-2">
-          <button type="button" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700" @click="closeModals">{{ t('cancel') }}</button>
+          <button type="button" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 dark:text-white" @click="closeModals">{{ t('cancel') }}</button>
           <button type="button" class="px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold" :disabled="saving" @click="savePayment">
             {{ saving ? t('saving') : t('installments.saveAndPrint') }}
           </button>
