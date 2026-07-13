@@ -16,14 +16,9 @@ class PagePermissionService
         return $typeId === 1 || $typeId === 6 || $userId === 1;
     }
 
-    public function isSuperAdmin(User $user): bool
-    {
-        return $this->isPermissionManager($user);
-    }
-
     public function cacheKeyForUser(User $user): string
     {
-        return 'app_pages_user_' . $user->id . '_type_' . $user->type_id;
+        return 'app_pages_v2_user_' . $user->id . '_type_' . $user->type_id;
     }
 
     public function clearUserCache(User $user): void
@@ -38,37 +33,30 @@ class PagePermissionService
 
     public function getAllowedRouteNamesForUser(User $user): array
     {
-        if ($this->isSuperAdmin($user)) {
-            return AppPage::query()
-                ->where('is_active', true)
-                ->whereNotNull('route_name')
-                ->orderBy('sort_order')
-                ->pluck('route_name')
-                ->all();
-        }
-
         return Cache::remember($this->cacheKeyForUser($user), 300, function () use ($user) {
-            return AppPage::query()
+            $routes = AppPage::query()
                 ->where('is_active', true)
                 ->whereNotNull('route_name')
                 ->whereHas('userTypes', fn ($query) => $query->where('user_type.id', $user->type_id))
                 ->orderBy('sort_order')
                 ->pluck('route_name')
                 ->all();
+
+            if ($this->isPermissionManager($user) && !in_array('pagePermissions', $routes, true)) {
+                $routes[] = 'pagePermissions';
+            }
+
+            return $routes;
         });
     }
 
     public function getNavPagesForUser(User $user): array
     {
-        $query = AppPage::query()
+        $pages = AppPage::query()
             ->where('is_active', true)
-            ->orderBy('sort_order');
-
-        if (!$this->isSuperAdmin($user)) {
-            $query->whereHas('userTypes', fn ($q) => $q->where('user_type.id', $user->type_id));
-        }
-
-        return $query->get(['id', 'slug', 'route_name', 'path', 'label', 'nav_group', 'sort_order'])
+            ->whereHas('userTypes', fn ($q) => $q->where('user_type.id', $user->type_id))
+            ->orderBy('sort_order')
+            ->get(['id', 'slug', 'route_name', 'path', 'label', 'nav_group', 'sort_order'])
             ->map(fn (AppPage $page) => [
                 'slug' => $page->slug,
                 'route_name' => $page->route_name,
@@ -78,6 +66,21 @@ class PagePermissionService
                 'sort_order' => $page->sort_order,
             ])
             ->all();
+
+        if ($this->isPermissionManager($user) && !$this->navPagesContainRoute($pages, 'pagePermissions')) {
+            $pages[] = [
+                'slug' => 'page_permissions',
+                'route_name' => 'pagePermissions',
+                'path' => '/page-permissions',
+                'label' => 'صلاحيات الصفحات',
+                'nav_group' => 'more',
+                'sort_order' => 999,
+            ];
+
+            usort($pages, fn ($a, $b) => ($a['sort_order'] ?? 0) <=> ($b['sort_order'] ?? 0));
+        }
+
+        return $pages;
     }
 
     public function canAccessRoute(User $user, ?string $routeName): bool
@@ -86,10 +89,21 @@ class PagePermissionService
             return true;
         }
 
-        if ($this->isSuperAdmin($user)) {
+        if ($routeName === 'pagePermissions' && $this->isPermissionManager($user)) {
             return true;
         }
 
         return in_array($routeName, $this->getAllowedRouteNamesForUser($user), true);
+    }
+
+    protected function navPagesContainRoute(array $pages, string $routeName): bool
+    {
+        foreach ($pages as $page) {
+            if (($page['route_name'] ?? null) === $routeName) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

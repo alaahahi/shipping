@@ -108,8 +108,8 @@ onUnmounted(() => {
             :class="[
                 'inline-flex items-center px-2 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out select-none whitespace-nowrap',
                 active
-                    ? 'border-indigo-400 text-gray-900 dark:text-gray-200'
-                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100 hover:border-gray-300',
+                    ? 'border-indigo-400 dark:border-white text-gray-900 dark:text-gray-100'
+                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100 hover:border-gray-300 dark:hover:border-white',
             ]"
         >
             المزيد

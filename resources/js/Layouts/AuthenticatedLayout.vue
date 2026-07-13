@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { usePage } from "@inertiajs/inertia-vue3";
-import { isAdminOrOwner, mainNavPages, moreNavPages } from "@/utils/navAccess";
+import { mainNavPages, moreNavPages } from "@/utils/navAccess";
 import Dropdown from "@/Components/Dropdown.vue";
 import DropdownLink from "@/Components/DropdownLink.vue";
 import NavLink from "@/Components/NavLink.vue";
@@ -15,7 +15,6 @@ import OnlineUsersIndicator from '@/Components/OnlineUsersIndicator.vue';
 
 const showingNavigationDropdown = ref(false);
 const page = usePage();
-const hasFullNavAccess = computed(() => isAdminOrOwner(page.props.value.auth?.user));
 const mainPages = computed(() => mainNavPages(page.props.value.auth?.navPages || []));
 const morePages = computed(() => moreNavPages(page.props.value.auth?.navPages || []));
 const i18n = useI18n();
@@ -354,6 +353,12 @@ function isPageActive(navPage) {
 .nav-scroll::-webkit-scrollbar-thumb {
   background: rgba(156, 163, 175, 0.5);
   border-radius: 999px;
+}
+.dark .nav-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.45);
+}
+.dark .nav-scroll {
+  scrollbar-color: rgba(255, 255, 255, 0.45) transparent;
 }
 nav,
 nav > div {
