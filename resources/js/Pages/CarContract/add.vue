@@ -535,13 +535,13 @@ function VinApi1 (v){
     >
       <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4 animate-[fadeIn_0.5s_ease-out]">
         <div>
-          <div class="text-xs font-semibold text-white/80 uppercase tracking-wide">نوع العقد</div>
+          <div class="text-xs font-semibold text-white/80 uppercase tracking-wide">{{ t('externalContract.contractTypeLabel') }}</div>
           <h1 class="text-xl font-bold text-white">
-            {{ isExternalContract ? 'عقد خارجي — دفع بالدينار فقط' : 'عقد شركة' }}
+            {{ isExternalContract ? t('externalContract.externalHeader') : t('externalContract.companyHeader') }}
           </h1>
         </div>
         <span class="rounded-full px-4 py-2 text-sm font-bold text-white bg-black/20 backdrop-blur">
-          {{ isExternalContract ? 'خارجي' : 'شركة' }}
+          {{ isExternalContract ? t('externalContract.badgeExternal') : t('externalContract.badgeCompany') }}
         </span>
       </div>
     </div>
@@ -968,16 +968,6 @@ function VinApi1 (v){
                           type="text"
                           class="mt-1 block w-full"
                           v-model="form.color"
-                        />
-                      </div>
-                    </div>
-                    <div class="md:w-1/3 w-full">
-                      <div className="mb-4 mx-5">
-                        <InputLabel for="size" :value="t('number')" />
-                        <TextInput
-                          type="number"
-                          class="mt-1 block w-full"
-                          v-model="form.size"
                         />
                       </div>
                     </div>

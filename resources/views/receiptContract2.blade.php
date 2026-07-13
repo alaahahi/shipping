@@ -106,6 +106,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
     />
     <div class="t2-meta">
       <span>الرقم: {{ $data['id'] ?? '' }}</span>
+      <span style="font-weight:700;font-size:13px;">{{ $contractTitleKu }} — {{ $contractTitleAr }}</span>
       <span>التاريخ: {{ $data['created'] ?? '' }}</span>
     </div>
 
@@ -154,7 +155,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
       <div class="t2-section-title">تفاصيل السيارة</div>
       <div class="t2-car-grid" style="padding:5px 8px;border:1px solid var(--t2-primary);border-radius:var(--t2-radius);">
         <div class="t2-car-item"><span class="label">نوع السيارة:</span><span class="value">{{ $data['car_name'] ?? '' }}</span></div>
-        <div class="t2-car-item"><span class="label">رقم السيارة:</span><span class="value">{{ $data['no'] ?? '' }}</span></div>
+        <div class="t2-car-item"><span class="label">رقم السيارة:</span><span class="value">{{ strtoupper((string) ($data['no'] ?? '')) }}</span></div>
         <div class="t2-car-item"><span class="label">رقم الشاصي:</span><span class="value">{{ $data['vin'] ?? '' }}</span></div>
         <div class="t2-car-item"><span class="label">لون السيارة:</span><span class="value">{{ $data['color'] ?? '' }}</span></div>
         <div class="t2-car-item"><span class="label">الموديل:</span><span class="value">{{ $data['modal'] ?? '' }}</span></div>
@@ -167,7 +168,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
       <div class="t2-section-title">السيارة البديلة</div>
       <div class="t2-car-grid" style="padding:5px 8px;border:1px solid var(--t2-primary);border-radius:var(--t2-radius);">
         <div class="t2-car-item"><span class="label">نوع السيارة:</span><span class="value">{{ $data['car_name_s'] ?? '' }}</span></div>
-        <div class="t2-car-item"><span class="label">رقم السيارة:</span><span class="value">{{ $data['no_s'] ?? '' }}</span></div>
+        <div class="t2-car-item"><span class="label">رقم السيارة:</span><span class="value">{{ strtoupper((string) ($data['no_s'] ?? '')) }}</span></div>
         <div class="t2-car-item"><span class="label">رقم الشاصي:</span><span class="value">{{ $data['vin_s'] ?? '' }}</span></div>
         <div class="t2-car-item"><span class="label">لون السيارة:</span><span class="value">{{ $data['color_s'] ?? '' }}</span></div>
         <div class="t2-car-item"><span class="label">الموديل:</span><span class="value">{{ $data['modal_s'] ?? '' }}</span></div>

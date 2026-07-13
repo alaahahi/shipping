@@ -218,7 +218,10 @@ class CarContractController extends Controller
         // أولوية: organizer_name في العقد ← اسم منظم العقد من المستخدم المنشئ (users.organizer_name)
         $creatorOrganizer = $data->user?->organizer_name ?? '';
         $contractOrganizer = $data->organizer_name ?? $creatorOrganizer;
-        return view($viewName, compact('data', 'config', 'verificationUrl', 'contractOrganizer'));
+        $isExternalContract = $data && ($data->contract_type ?? '') === 'external';
+        $contractTitleKu = $isExternalContract ? 'گرێبەستی دەرەکی' : 'گرێبەستی فرۆشتن و کڕینی ئۆتۆمبێل';
+        $contractTitleAr = $isExternalContract ? 'عقد خارجي' : 'عقد بيع وشراء سيارة';
+        return view($viewName, compact('data', 'config', 'verificationUrl', 'contractOrganizer', 'isExternalContract', 'contractTitleKu', 'contractTitleAr'));
     }
     public function index(Request $request)
     {

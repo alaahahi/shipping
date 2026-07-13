@@ -1,6 +1,10 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Link } from '@inertiajs/inertia-vue3';
+import { useI18n } from 'vue-i18n';
+import { navPageLabel } from '@/utils/navAccess';
+
+const { t, te } = useI18n();
 
 const props = defineProps({
     active: {
@@ -108,11 +112,11 @@ onUnmounted(() => {
             :class="[
                 'inline-flex items-center px-2 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out select-none whitespace-nowrap',
                 active
-                    ? 'border-indigo-400 dark:border-white text-gray-900 dark:text-gray-100'
-                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100 hover:border-gray-300 dark:hover:border-white',
+                    ? 'border-indigo-400 dark:border-indigo-300 text-gray-900 dark:text-white'
+                    : 'border-transparent text-gray-600 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-400',
             ]"
         >
-            المزيد
+            {{ t('nav.more') }}
             <svg
                 class="mr-1 h-4 w-4 transition-transform"
                 :class="{ 'rotate-180': open }"
@@ -132,7 +136,7 @@ onUnmounted(() => {
             <div v-if="open" class="fixed inset-0 z-[9998]" @click="close"></div>
             <div
                 v-if="open"
-                class="fixed z-[9999] min-w-[13rem] rounded-md border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-700 dark:bg-gray-800"
+                class="fixed z-[9999] min-w-[13rem] rounded-md border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-600 dark:bg-gray-800 dark:shadow-black/40"
                 :style="panelStyle"
                 @click.stop
             >
@@ -143,12 +147,12 @@ onUnmounted(() => {
                     :class="[
                         'block w-full px-4 py-2 text-right text-sm leading-5 transition duration-150 ease-in-out',
                         isCurrent(item.route_name)
-                            ? 'bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
-                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700',
+                            ? 'bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-white'
+                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-700 dark:hover:text-white',
                     ]"
                     @click="close"
                 >
-                    {{ item.label }}
+                    {{ navPageLabel(item, t, te) }}
                 </Link>
             </div>
         </Teleport>

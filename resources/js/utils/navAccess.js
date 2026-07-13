@@ -23,3 +23,19 @@ export function mainNavPages(navPages = []) {
 export function moreNavPages(navPages = []) {
     return navPages.filter((page) => page.nav_group === 'more');
 }
+
+export function navPageLabel(navPage, t, te) {
+    if (!navPage) {
+        return '';
+    }
+
+    const slug = navPage.slug;
+    if (slug) {
+        const key = `nav.${slug}`;
+        if (typeof te === 'function' && te(key)) {
+            return t(key);
+        }
+    }
+
+    return navPage.label || slug || '';
+}

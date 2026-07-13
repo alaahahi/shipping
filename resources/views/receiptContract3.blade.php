@@ -434,11 +434,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
       </div>
       <div class="c3-head-bar">
         <span>الرقم: {{ $data['id'] ?? '' }}</span>
-        <span class="mid">گرێبەستی فرۆشتن و کڕینی ئۆتۆمبێل -
-          
-          عقد بيع وشراء سيارة
-
-        </span>
+        <span class="mid">{{ $contractTitleKu }} — {{ $contractTitleAr }}</span>
         <span>التاريخ: {{ $contractDate }}</span>
       </div>
     </header>

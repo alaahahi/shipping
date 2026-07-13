@@ -535,7 +535,7 @@ function getResultsCarSearchLocal () {
                                 </div>
                               </div>
                               <div class="rounded-lg bg-white dark:bg-gray-800 p-4 border border-violet-200 dark:border-violet-800">
-                                <h3 class="font-semibold text-violet-700 dark:text-violet-300 mb-3">عقود خارجية</h3>
+                                <h3 class="font-semibold text-violet-700 dark:text-violet-300 mb-3">{{ t('nav.external_car_contract') }}</h3>
                                 <div class="flex flex-wrap items-center gap-4">
                                   <div><span class="text-xl font-bold text-violet-600">{{ completedContractsThisMonthExternal }}</span> <span class="text-sm text-gray-500">هذا الشهر</span></div>
                                   <div><span class="text-xl font-bold text-purple-600">{{ completedContractsLastMonthExternal }}</span> <span class="text-sm text-gray-500">الشهر الماضي</span></div>
@@ -554,7 +554,7 @@ function getResultsCarSearchLocal () {
                                 <Link v-for="c in recentContracts" :key="c.id" :href="`/contract/${c.id}?type=${c.contract_type || 'company'}`" class="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition">
                                   <div class="text-right">
                                     <div class="flex items-center gap-2 justify-end">
-                                      <span v-if="c.contract_type === 'external'" class="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">خارجي</span>
+                                      <span v-if="c.contract_type === 'external'" class="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">{{ t('externalContract.badgeExternal') }}</span>
                                       <span v-else class="text-[10px] px-2 py-0.5 rounded-full bg-sky-100 text-sky-700">شركة</span>
                                       <div class="font-medium dark:text-white">{{ c.car_name || c.no || '—' }}</div>
                                     </div>

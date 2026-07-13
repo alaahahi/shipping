@@ -27,7 +27,7 @@ $carLogo = MyHelp::carBrandLogo($carName ?? '');
       </div>
       <div class="c3-spec-item">
         <span class="lbl">ئوتومبێلی ژمارە:</span>
-        <span class="val">{{ $no ?? '' }}</span>
+        <span class="val">{{ strtoupper((string) ($no ?? '')) }}</span>
       </div>
       <div class="c3-spec-item c3-spec-full">
         <span class="lbl">ژمارە لشە (الشاصی):</span>

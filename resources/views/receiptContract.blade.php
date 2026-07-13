@@ -338,6 +338,12 @@ body {
       </div>
     </div>
 
+    @if(!empty($isExternalContract))
+    <div style="text-align:center;font-weight:700;font-size:14px;padding:6px 12px;margin-bottom:8px;border:1px solid #c00;border-radius:8px;background:#fff;">
+      {{ $contractTitleKu }} — {{ $contractTitleAr }}
+    </div>
+    @endif
+
     <div class="party-grid">
       <div class="party-card">
         <div class="party-card__header">
@@ -402,7 +408,7 @@ body {
         (بيع سيارة الطرف الأول إلى سيارة الطرف الثاني رقم)
         :
         <b class="px-3">
-          {{$data['no'] ?? ''}}
+          {{ strtoupper((string) ($data['no'] ?? '')) }}
         </b>
         </div>
         <div class="pt-2">
@@ -474,7 +480,7 @@ body {
         (السيارة البديلة)
         :
         <b class="px-3">
-          {{$data['no_s'] ?? ''}}
+          {{ strtoupper((string) ($data['no_s'] ?? '')) }}
         </b>
         </div>
         <div class="pt-2">

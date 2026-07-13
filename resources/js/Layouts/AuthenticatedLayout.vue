@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { usePage } from "@inertiajs/inertia-vue3";
-import { mainNavPages, moreNavPages } from "@/utils/navAccess";
+import { mainNavPages, moreNavPages, navPageLabel } from "@/utils/navAccess";
 import Dropdown from "@/Components/Dropdown.vue";
 import DropdownLink from "@/Components/DropdownLink.vue";
 import NavLink from "@/Components/NavLink.vue";
@@ -18,7 +18,7 @@ const page = usePage();
 const mainPages = computed(() => mainNavPages(page.props.value.auth?.navPages || []));
 const morePages = computed(() => moreNavPages(page.props.value.auth?.navPages || []));
 const i18n = useI18n();
-const locale = ref("en"); // Default locale
+const { t, te } = i18n;
 const switchLocale = (locale) => {
   i18n.locale.value = locale;
   localStorage.setItem('lang', locale);
@@ -56,7 +56,7 @@ function isPageActive(navPage) {
     <SyncStatusBadge />
     
     <div class="min-h-screen bg-gray-100 dark:bg-gray-800">
-      <nav class="bg-white border-gray-100 dark:bg-gray-900 print:hidden overflow-visible">
+      <nav class="bg-white border-b border-gray-200 dark:border-gray-700 dark:bg-gray-900 print:hidden overflow-visible">
         <!-- Primary Navigation Menu -->
         <div class="max-w-8xl mx-auto px-4 sm:px-2  ">
           <div class="flex justify-between h-16 gap-2 overflow-visible">
@@ -76,7 +76,7 @@ function isPageActive(navPage) {
                 :active="isPageActive(navPage)"
                 class="shrink-0"
               >
-                {{ navPage.label }}
+                {{ navPageLabel(navPage, t, te) }}
               </NavLink>
               <NavMoreMenu v-if="morePages.length" :active="moreMenuActive" :pages="morePages" />
               <NavLink
@@ -85,7 +85,7 @@ function isPageActive(navPage) {
                 :active="route().current('pagePermissions')"
                 class="shrink-0"
               >
-                صلاحيات الصفحات
+                {{ t('nav.page_permissions') }}
               </NavLink>
               </div>
               <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
@@ -138,7 +138,7 @@ function isPageActive(navPage) {
                     <span class="inline-flex rounded-md">
                       <button
                         type="button"
-                        class="dark:bg-gray-800  dark:text-gray-300 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150"
+                        class="dark:bg-gray-800 dark:text-gray-100 dark:hover:text-white inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150"
                       >
                         {{ $t("lang") }}
                         <svg
@@ -179,7 +179,7 @@ function isPageActive(navPage) {
                     <span class="inline-flex rounded-md">
                       <button
                         type="button"
-                        class="dark:bg-gray-800  dark:text-gray-300 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150"
+                        class="dark:bg-gray-800 dark:text-gray-100 dark:hover:text-white inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150"
                       >
                         {{ $page.props.auth.user?.name || 'غير مسجل' }}
 
@@ -220,7 +220,7 @@ function isPageActive(navPage) {
               <DarkModeToggle />
               <button
                 @click="showingNavigationDropdown = !showingNavigationDropdown"
-                class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500  focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out"
+                class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 focus:text-gray-700 dark:focus:text-white transition duration-150 ease-in-out"
               >
                 <svg
                   class="h-6 w-6"
@@ -260,7 +260,7 @@ function isPageActive(navPage) {
             block: showingNavigationDropdown,
             hidden: !showingNavigationDropdown,
           }"
-          class="sm:hidden"
+          class="sm:hidden dark:bg-gray-900"
         >
           <div class="pt-2 pb-3 space-y-1">
             <ResponsiveNavLink
@@ -272,12 +272,12 @@ function isPageActive(navPage) {
           </div>
 
           <!-- Responsive Settings Options -->
-          <div class="pt-4 pb-1 border-t border-gray-200">
+          <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-700">
             <div class="px-4">
-              <div class="font-medium text-base text-gray-800">
+              <div class="font-medium text-base text-gray-800 dark:text-gray-100">
                 {{ $page.props.auth.user?.name || 'غير مسجل' }}
               </div>
-              <div class="font-medium text-sm text-gray-500">
+              <div class="font-medium text-sm text-gray-500 dark:text-gray-400">
                 {{ $page.props.auth.user?.email || '' }}
               </div>
             </div>
@@ -288,14 +288,14 @@ function isPageActive(navPage) {
                 :href="pageHref(navPage)"
                 :active="isPageActive(navPage)"
               >
-                {{ navPage.label }}
+                {{ navPageLabel(navPage, t, te) }}
               </ResponsiveNavLink>
 
               <div
                 v-if="morePages.length"
-                class="px-4 pt-2 pb-1 text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500"
+                class="px-4 pt-2 pb-1 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-300"
               >
-                المزيد
+                {{ t('nav.more') }}
               </div>
               <ResponsiveNavLink
                 v-for="navPage in morePages"
@@ -303,7 +303,7 @@ function isPageActive(navPage) {
                 :href="pageHref(navPage)"
                 :active="isPageActive(navPage)"
               >
-                {{ navPage.label }}
+                {{ navPageLabel(navPage, t, te) }}
               </ResponsiveNavLink>
 
               <ResponsiveNavLink
@@ -311,7 +311,7 @@ function isPageActive(navPage) {
                 :href="route('pagePermissions')"
                 :active="route().current('pagePermissions')"
               >
-                صلاحيات الصفحات
+                {{ t('nav.page_permissions') }}
               </ResponsiveNavLink>
 
               <ResponsiveNavLink

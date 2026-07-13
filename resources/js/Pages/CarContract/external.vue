@@ -13,6 +13,5 @@ const props = defineProps({
   <ContractIndex
     v-bind="props"
     contract-type="external"
-    page-title="عقود خارجية"
   />
 </template>
