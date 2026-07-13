@@ -154,12 +154,27 @@ class PagePermissionController extends Controller
         $this->authorizeManager();
 
         $result = $defaults->importMissingOnly();
+        $linked = $defaults->ensureDefaultTypeLinks();
         $this->permissions->clearAllCaches();
 
         return Response::json([
-            'message' => "تم استيراد {$result['created']} صفحة، وتخطي {$result['skipped']} موجودة مسبقاً",
+            'message' => "تم استيراد {$result['created']} صفحة، وتخطي {$result['skipped']} موجودة مسبقاً، وربط {$linked['linked']} صلاحية نوع",
             'created' => $result['created'],
             'skipped' => $result['skipped'],
+            'linked' => $linked['linked'],
+        ], 200);
+    }
+
+    public function syncDefaultTypeLinks(AppPageDefaults $defaults)
+    {
+        $this->authorizeManager();
+
+        $linked = $defaults->ensureDefaultTypeLinks();
+        $this->permissions->clearAllCaches();
+
+        return Response::json([
+            'message' => "تم ربط {$linked['linked']} صلاحية افتراضية للأنواع",
+            'linked' => $linked['linked'],
         ], 200);
     }
 

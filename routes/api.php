@@ -200,6 +200,7 @@ Route::put('system-config', [SystemConfigController::class, 'update'])->name('sy
 
 Route::get('page-permissions', [PagePermissionController::class, 'getData'])->name('pagePermissions.data');
 Route::post('page-permissions/import-defaults', [PagePermissionController::class, 'importDefaults'])->name('pagePermissions.importDefaults');
+Route::post('page-permissions/sync-default-type-links', [PagePermissionController::class, 'syncDefaultTypeLinks'])->name('pagePermissions.syncDefaultTypeLinks');
 Route::post('page-permissions', [PagePermissionController::class, 'store'])->name('pagePermissions.store');
 Route::put('page-permissions/{id}', [PagePermissionController::class, 'update'])->name('pagePermissions.update')->whereNumber('id');
 Route::delete('page-permissions/{id}', [PagePermissionController::class, 'destroy'])->name('pagePermissions.destroy')->whereNumber('id');

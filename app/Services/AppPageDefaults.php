@@ -77,6 +77,65 @@ class AppPageDefaults
         return ['created' => $created, 'skipped' => $skipped];
     }
 
+    /**
+     * @return array{linked: int}
+     */
+    public function ensureDefaultTypeLinks(): array
+    {
+        $linked = 0;
+
+        foreach ($this->definitions() as $pageDef) {
+            $page = AppPage::where('slug', $pageDef['slug'])->first();
+            if (!$page) {
+                continue;
+            }
+
+            foreach ($pageDef['types'] as $typeId) {
+                $exists = DB::table('app_page_user_type')
+                    ->where('app_page_id', $page->id)
+                    ->where('user_type_id', $typeId)
+                    ->exists();
+
+                if ($exists) {
+                    continue;
+                }
+
+                DB::table('app_page_user_type')->insert([
+                    'app_page_id' => $page->id,
+                    'user_type_id' => $typeId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $linked++;
+            }
+        }
+
+        return ['linked' => $linked];
+    }
+
+    public function defaultPageIdsForType(int $typeId): array
+    {
+        $slugs = [];
+
+        foreach ($this->definitions() as $page) {
+            if (in_array($typeId, $page['types'] ?? [], true)) {
+                $slugs[] = $page['slug'];
+            }
+        }
+
+        if ($slugs === []) {
+            return [];
+        }
+
+        return AppPage::query()
+            ->where('is_active', true)
+            ->whereIn('slug', $slugs)
+            ->orderBy('sort_order')
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
     protected function resolveTypeIds(array $names = [], array $fallbackIds = []): array
     {
         $ids = [];

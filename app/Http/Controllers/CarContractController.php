@@ -1345,30 +1345,7 @@ class CarContractController extends Controller
         $contract = $installment->carContract;
         $config = SystemConfig::first();
         $owner_id = $ownerId;
-        $transactions_id = $installment->id;
 
-        $description = 'دفعة قسط — عقد #' . $contract->id . ' — ' . $contract->car_name;
-        if ($contract->vin) {
-            $description .= ' (' . $contract->vin . ')';
-        }
-        if ($installment->note) {
-            $description .= ' — ' . $installment->note;
-        }
-
-        $transaction = (object) [
-            'currency' => '$',
-            'description' => $description,
-            'amount' => (float) $installment->amount,
-            'discount' => 0,
-            'created_at' => $installment->created,
-        ];
-
-        $clientData = [
-            'client' => (object) [
-                'name' => $contract->name_buyer,
-            ],
-        ];
-
-        return view('receiptPayment', compact('installment', 'contract', 'config', 'owner_id', 'transactions_id', 'transaction', 'clientData'));
+        return view('receiptCarContractInstallment', compact('installment', 'contract', 'config', 'owner_id'));
     }
 }

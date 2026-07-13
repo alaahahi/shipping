@@ -193,6 +193,7 @@ function groupLabel(group) {
 }
 
 const importing = ref(false);
+const syncingTypes = ref(false);
 
 function importDefaultPages() {
   if (!confirm('استيراد كل الصفحات الافتراضية دفعة واحدة؟ لن تُستبدل الصفحات الموجودة.')) {
@@ -213,6 +214,26 @@ function importDefaultPages() {
       importing.value = false;
     });
 }
+
+function syncDefaultTypeLinks() {
+  if (!confirm('ربط الصلاحيات الافتراضية لكل أنواع المستخدمين؟ لن تُحذف الربطات الموجودة.')) {
+    return;
+  }
+
+  syncingTypes.value = true;
+  axios.post('/api/page-permissions/sync-default-type-links')
+    .then((response) => {
+      toast.success(response.data.message || 'تم الربط بنجاح', { timeout: 3000, position: 'bottom-right', rtl: true });
+      loadData();
+      refreshAuthNav();
+    })
+    .catch(() => {
+      toast.error('تعذر ربط الصلاحيات الافتراضية', { timeout: 3000, position: 'bottom-right', rtl: true });
+    })
+    .finally(() => {
+      syncingTypes.value = false;
+    });
+}
 </script>
 
 <template>
@@ -231,6 +252,14 @@ function importDefaultPages() {
                 </p>
               </div>
               <div class="flex flex-wrap gap-2">
+                <button
+                  v-if="activeTab === 'pages'"
+                  @click="syncDefaultTypeLinks"
+                  :disabled="syncingTypes"
+                  class="px-4 py-2 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white rounded-lg font-medium"
+                >
+                  {{ syncingTypes ? 'جاري الربط...' : 'ربط صلاحيات الأنواع' }}
+                </button>
                 <button
                   v-if="activeTab === 'pages'"
                   @click="importDefaultPages"

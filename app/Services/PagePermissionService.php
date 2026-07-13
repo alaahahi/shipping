@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AppPage;
 use App\Models\User;
+use App\Services\AppPageDefaults;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -19,7 +20,7 @@ class PagePermissionService
 
     public function cacheKeyForUser(User $user): string
     {
-        return 'app_pages_v3_user_' . $user->id . '_type_' . $user->type_id;
+        return 'app_pages_v4_user_' . $user->id . '_type_' . $user->type_id;
     }
 
     public function clearUserCache(User $user): void
@@ -34,11 +35,17 @@ class PagePermissionService
 
     public function pageIdsForType(int $typeId): array
     {
-        return DB::table('app_page_user_type')
+        $pageIds = DB::table('app_page_user_type')
             ->where('user_type_id', $typeId)
             ->pluck('app_page_id')
             ->map(fn ($id) => (int) $id)
             ->all();
+
+        if ($pageIds !== []) {
+            return $pageIds;
+        }
+
+        return app(AppPageDefaults::class)->defaultPageIdsForType($typeId);
     }
 
     public function getAllowedRouteNamesForUser(User $user): array
