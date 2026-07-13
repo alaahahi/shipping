@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/inertia-vue3';
 import ModalAddCarExpensesFav from "@/Components/ModalAddCarExpensesFav.vue";
 import ModalAddCarExpenses from "@/Components/ModalAddCarExpenses.vue";
+import ModalCarRegistrationDetails from "@/Components/ModalCarRegistrationDetails.vue";
 import ModalArchiveCar from "@/Components/ModalArchiveCar.vue";
 import ModalArchiveCarBack from "@/Components/ModalArchiveCarBack.vue";
 import ModalArchiveCarLink from "@/Components/ModalArchiveCarLink.vue";
@@ -33,6 +34,8 @@ const toast = useToast();
 let searchTerm = ref('');
 let showModalAddCarExpensesFav =  ref(false);
 let showModalAddCarExpenses =  ref(false);
+let showModalCarRegistrationDetails = ref(false);
+let registrationCarId = ref(null);
 let showModalArchiveCarExpenses=  ref(false);
 let showModalArchiveCarExpensesBack=  ref(false);
 let showModalArchiveCarLink = ref(false);
@@ -49,6 +52,19 @@ function openwshowModalAddCarExpenses(form={}) {
   formData.value=form
   showModalAddCarExpenses.value = true;
 }
+
+function carHasRegistrationWorkflow(car) {
+  if (car?.has_registration_workflow !== undefined) {
+    return Boolean(car.has_registration_workflow);
+  }
+  return [1, 2, 4].includes(Number(car?.car_have_expenses));
+}
+
+function openModalCarRegistrationDetails(car) {
+  registrationCarId.value = car.id;
+  showModalCarRegistrationDetails.value = true;
+}
+
 function openwshowModalArchiveCarExpenses(form={}) {
   formData.value=form
   showModalArchiveCarExpenses.value = true;
@@ -606,6 +622,12 @@ function confirmDelCarFav(V) {
         <template #header>
           </template>
     </ModalAddCarExpenses>
+    <ModalCarRegistrationDetails
+      :show="showModalCarRegistrationDetails"
+      :car-id="registrationCarId"
+      @close="showModalCarRegistrationDetails = false; registrationCarId = null"
+      @updated="refresh()"
+    />
     <ModalDelCar
       :show="showModalDelCar ? true : false"
       :formData="formData"
@@ -944,6 +966,15 @@ function confirmDelCarFav(V) {
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center car-expenses-cell-dollar font-semibold">{{ formatNumber(calculateSum(car.carexpenses)) }}</td>
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center car-expenses-cell-dinar font-semibold">{{ formatNumber(calculateSumDinar(car.carexpenses)) }}</td>
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">
+                                    <button
+                                      v-if="!isExternalTab && carHasRegistrationWorkflow(car)"
+                                      tabIndex="1"
+                                      class="px-2 py-1 text-white mx-1 bg-teal-600 rounded mt-3 sm:mt-0 text-xs font-bold"
+                                      title="تفاصيل التسجيل"
+                                      @click="openModalCarRegistrationDetails(car)"
+                                    >
+                                      تسجيل
+                                    </button>
                                     <button
                                       tabIndex="1"
                                       class="px-2 py-1  text-white mx-1 bg-emerald-500 rounded"

@@ -76,6 +76,9 @@ const conversionMatchesCar = computed(() => {
   return inSales === convertedUsdTotal.value;
 });
 
+const verificationChecks = computed(() => details.value?.verification?.checks ?? []);
+const registrationIsValid = computed(() => Boolean(details.value?.verification?.is_valid));
+
 function resetAddForm() {
   addForm.value = {
     currency: 'dinar',
@@ -324,7 +327,33 @@ async function submitAddExpense() {
           <div class="modal-body px-4 pb-4">
             <div v-if="loading" class="registration-details-loading text-center py-8 font-medium">جاري التحميل...</div>
 
-            <template v-else-if="details?.has_registration">
+            <template v-else>
+              <div
+                v-if="details?.verification"
+                class="registration-verification mb-4 rounded-lg border overflow-hidden"
+                :class="registrationIsValid ? 'registration-verification-ok' : 'registration-verification-warn'"
+              >
+                <p class="registration-verification-title px-3 py-2 text-sm font-bold text-center">
+                  {{ registrationIsValid ? '✓ التسجيل مكتمل' : 'تحقق من التسجيل' }}
+                </p>
+                <ul class="registration-verification-list px-3 pb-3 space-y-1.5">
+                  <li
+                    v-for="check in verificationChecks"
+                    :key="check.key"
+                    class="registration-verification-item flex items-center justify-between gap-2 text-sm font-semibold"
+                  >
+                    <span>{{ check.label }}</span>
+                    <span
+                      class="registration-verification-badge shrink-0"
+                      :class="check.ok ? 'registration-verification-badge-ok' : 'registration-verification-badge-miss'"
+                    >
+                      {{ check.ok ? '✓' : '✗' }}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+
+              <template v-if="details?.has_registration">
               <div class="registration-details-summary grid grid-cols-2 gap-3 mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-700 text-center font-bold">
                 <div class="registration-details-summary-dollar">
                   <span class="registration-details-label">دولار:</span>
@@ -494,7 +523,8 @@ async function submitAddExpense() {
               </div>
             </template>
 
-            <p v-else class="registration-details-empty text-center py-6 font-medium">لا توجد مصاريف تسجيل مسجّلة لهذه السيارة</p>
+              <p v-else-if="details" class="registration-details-empty text-center py-6 font-medium">لا توجد مصاريف تسجيل مسجّلة لهذه السيارة</p>
+            </template>
           </div>
 
           <div class="modal-footer px-4 pb-4">
@@ -570,6 +600,60 @@ async function submitAddExpense() {
 
 .conversion-warn {
   color: #dc2626 !important;
+}
+
+.registration-verification-ok {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.registration-verification-warn {
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+
+.registration-verification-title {
+  color: #1f2937;
+}
+
+.registration-verification-item {
+  color: #374151;
+}
+
+.registration-verification-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.registration-verification-badge-ok {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.registration-verification-badge-miss {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+:global(.dark) .registration-verification-ok {
+  border-color: #166534;
+  background: #052e16;
+}
+
+:global(.dark) .registration-verification-warn {
+  border-color: #92400e;
+  background: #451a03;
+}
+
+:global(.dark) .registration-verification-title,
+:global(.dark) .registration-verification-item {
+  color: #f3f4f6;
 }
 
 .registration-details-loading,

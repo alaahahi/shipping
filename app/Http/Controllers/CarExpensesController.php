@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Transactions;
 use App\Models\Expenses;
 use App\Models\CarExpenses;
+use App\Models\CarContract;
 use App\Models\CarVinSearchArchive;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -30,6 +31,8 @@ use Inertia\Inertia;
 class CarExpensesController extends Controller
 {
     public const CAR_HAVE_EXPENSES_LINKED = 4;
+
+    public const REGISTRATION_CONTRACT_DEFAULT_DINAR = 200000;
 
     protected $accountingController;
     protected $userClient;
@@ -494,6 +497,20 @@ class CarExpensesController extends Controller
             $linkedPortionInSales = (int) ($car->registration_linked_usd ?? max(0, (int) ($car->expenses_s ?? 0) - $preLinkS));
         }
 
+        $convertedUsdTotal = $linkRate
+            ? self::computeLinkedRegistrationTotal($expenses, $linkRate)
+            : null;
+
+        $verification = $inWorkflow
+            ? self::buildRegistrationVerification(
+                $car,
+                $expenses,
+                $linkRate,
+                $linkedPortionInSales,
+                $convertedUsdTotal
+            )
+            : null;
+
         return response()->json([
             'car' => [
                 'id' => $car->id,
@@ -513,7 +530,116 @@ class CarExpensesController extends Controller
             'linked_portion_in_sales' => $linkedPortionInSales,
             'is_linked' => self::isCarLinked($car),
             'can_edit' => $inWorkflow,
+            'verification' => $verification,
         ], 200);
+    }
+
+    public static function buildRegistrationVerification(
+        Car $car,
+        $expenses,
+        ?int $linkRate,
+        ?int $linkedPortionInSales,
+        ?int $convertedUsdTotal
+    ): array {
+        $allItems = [];
+
+        foreach ($expenses as $expense) {
+            $parsed = self::parseRegistrationNote($expense->note ?? '');
+            foreach ($parsed['items'] as $item) {
+                $allItems[] = $item;
+            }
+        }
+
+        $hasRegistrationLine = collect($allItems)->contains(function ($item) {
+            return ($item['type'] ?? '') === 'registration';
+        });
+
+        $contractItems = collect($allItems)->filter(function ($item) {
+            return ($item['type'] ?? '') === 'contract';
+        });
+        $contractAmount = (int) round($contractItems->sum(function ($item) {
+            return (float) ($item['amount'] ?? 0);
+        }));
+        $hasContractLine = $contractItems->isNotEmpty();
+        $contractAmountOk = $hasContractLine
+            && $contractAmount >= self::REGISTRATION_CONTRACT_DEFAULT_DINAR;
+
+        $vin = strtoupper(trim((string) ($car->vin ?? '')));
+        $carContractId = null;
+        $hasCarContract = false;
+
+        if (strlen($vin) === 17) {
+            $carContract = CarContract::query()
+                ->where('owner_id', $car->owner_id)
+                ->where(function ($query) use ($vin) {
+                    $query->where('vin', $vin)->orWhere('vin_s', $vin);
+                })
+                ->where('contract_type', 'company')
+                ->orderByDesc('id')
+                ->first();
+
+            if ($carContract) {
+                $hasCarContract = true;
+                $carContractId = $carContract->id;
+            }
+        }
+
+        $isLinked = self::isCarLinked($car);
+        $hasExchangeRate = $linkRate !== null && preg_match('/^\d{6}$/', (string) $linkRate);
+        $conversionOk = null;
+
+        if ($isLinked && $convertedUsdTotal !== null && $linkedPortionInSales !== null) {
+            $conversionOk = $linkedPortionInSales === $convertedUsdTotal;
+        }
+
+        $checks = [
+            [
+                'key' => 'registration_fee',
+                'label' => 'بند التسجيل',
+                'ok' => $hasRegistrationLine,
+            ],
+            [
+                'key' => 'company_contract',
+                'label' => 'بند عقد الشركة (' . number_format(self::REGISTRATION_CONTRACT_DEFAULT_DINAR) . ' د)',
+                'ok' => $contractAmountOk,
+            ],
+            [
+                'key' => 'car_contract',
+                'label' => 'عقد شركة مسجّل بالنظام (نفس الشانصي)',
+                'ok' => $hasCarContract,
+                'optional' => true,
+                'contract_id' => $carContractId,
+            ],
+        ];
+
+        if ($isLinked) {
+            $checks[] = [
+                'key' => 'exchange_rate',
+                'label' => 'سعر التحويل (6 أرقام)',
+                'ok' => $hasExchangeRate,
+            ];
+            $checks[] = [
+                'key' => 'conversion',
+                'label' => 'تطابق التحويل مع مصاريف المبيعات',
+                'ok' => $conversionOk === true,
+            ];
+        }
+
+        $isValid = collect($checks)
+            ->filter(function ($check) {
+                return empty($check['optional']);
+            })
+            ->every(function ($check) {
+                return ($check['ok'] ?? false) === true;
+            });
+
+        return [
+            'checks' => $checks,
+            'is_valid' => $isValid,
+            'has_contract_line' => $hasContractLine,
+            'contract_amount' => $contractAmount,
+            'car_contract_id' => $carContractId,
+        ];
     }
 
     public function deleteRegistrationExpenseLine(Request $request)
