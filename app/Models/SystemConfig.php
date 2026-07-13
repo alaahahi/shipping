@@ -26,6 +26,8 @@ class SystemConfig extends Model
         'usd_to_dinar_rate',
         'contract_terms',
         'contract_terms_2',
+        'external_contract_terms',
+        'external_contract_terms_2',
         'contract_template',
         'contract_currency',
         'primary_color',
@@ -35,5 +37,7 @@ class SystemConfig extends Model
         'default_price_p' => 'array',
         'contract_terms' => 'array',
         'contract_terms_2' => 'array',
+        'external_contract_terms' => 'array',
+        'external_contract_terms_2' => 'array',
     ];
 }

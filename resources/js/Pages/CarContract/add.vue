@@ -36,13 +36,15 @@ const props = defineProps({
   client2: Array,
   data:Object,
   defaultOrganizerName: { type: String, default: '' },
+  contractType: {
+    type: String,
+    default: 'company',
+  },
   showBrokerage: {
     type: Boolean,
     default: false,
   },
 });
-const showBrokerageSection = computed(() => props.showBrokerage);
-
 // تفعيل نظام Offline (SQLite مباشرة)
 const { isOnline, isSyncing, saveContract } = useOfflineSync();
 const pendingCount = ref(0); // لم نعد نحتاجه
@@ -271,6 +273,7 @@ const createEmptyForm = () => ({
   tex_seller_dinar_paid: 0,
   tex_buyer_paid: 0,
   tex_buyer_dinar_paid: 0,
+  contract_type: props.contractType || 'company',
 });
 
 const form = ref(createEmptyForm());
@@ -279,6 +282,7 @@ if (props.data) {
   form.value = {
     ...createEmptyForm(),
     ...props.data,
+    contract_type: props.data.contract_type ?? props.contractType ?? 'company',
     seller_id_number: props.data.seller_id_number ?? "",
     buyer_id_number: props.data.buyer_id_number ?? "",
     organizer_name: props.data.organizer_name ?? props.defaultOrganizerName ?? "",
@@ -286,6 +290,11 @@ if (props.data) {
 } else if (props.defaultOrganizerName) {
   form.value.organizer_name = props.defaultOrganizerName;
 }
+form.value.contract_type = props.contractType || form.value.contract_type || 'company';
+
+const isExternalContract = computed(() => props.contractType === 'external' || form.value.contract_type === 'external');
+const showBrokerageSection = computed(() => props.showBrokerage || isExternalContract.value);
+const contractListRoute = computed(() => (isExternalContract.value ? '/external_car_contract' : '/car_contract'));
 
 
 const isLoading = ref(false);
@@ -318,11 +327,8 @@ const submit = async (V, shouldPrint = true) => {
   }
 
   try {
-    // 🚀 استخدام نظام Offline الذكي
-    console.log('🚀 بدء عملية الحفظ...');
-    console.log('📝 البيانات المُرسلة:', V);
-    
-    const result = await saveContract(V);
+    const payload = { ...V, contract_type: form.value.contract_type || props.contractType || 'company' };
+    const result = await saveContract(payload);
     
     console.log('📬 نتيجة الحفظ:', result);
 
@@ -347,11 +353,11 @@ const submit = async (V, shouldPrint = true) => {
             if (result.data && result.data.id) {
               window.location = `/contract_print/${result.data.id}`;
             } else {
-              window.location = '/car_contract';
+              window.location = contractListRoute.value;
             }
           } else {
             // العودة لقائمة العقود
-            window.location = '/car_contract';
+            window.location = contractListRoute.value;
           }
         }, 1000);
       } else {
@@ -373,11 +379,11 @@ const submit = async (V, shouldPrint = true) => {
               const contractId = result.id || result.data?.id;
               window.location = `/contract_print/${contractId}`;
             } else {
-              window.location = '/car_contract';
+              window.location = contractListRoute.value;
             }
           } else {
             // العودة لقائمة العقود
-            window.location = '/car_contract';
+            window.location = contractListRoute.value;
           }
         }, 1000);
       }
@@ -521,6 +527,24 @@ function VinApi1 (v){
 <template>
   <Head title="Dashboard" />
   <AuthenticatedLayout>
+    <div
+      class="sticky top-0 z-30 border-b shadow-md transition-all duration-500"
+      :class="isExternalContract
+        ? 'bg-gradient-to-l from-violet-700 via-violet-600 to-fuchsia-700 border-violet-500'
+        : 'bg-gradient-to-l from-sky-700 via-sky-600 to-blue-700 border-sky-500'"
+    >
+      <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4 animate-[fadeIn_0.5s_ease-out]">
+        <div>
+          <div class="text-xs font-semibold text-white/80 uppercase tracking-wide">نوع العقد</div>
+          <h1 class="text-xl font-bold text-white">
+            {{ isExternalContract ? 'عقد خارجي — دفع بالدينار فقط' : 'عقد شركة' }}
+          </h1>
+        </div>
+        <span class="rounded-full px-4 py-2 text-sm font-bold text-white bg-black/20 backdrop-blur">
+          {{ isExternalContract ? 'خارجي' : 'شركة' }}
+        </span>
+      </div>
+    </div>
     
     <!-- 🔔 مؤشر حالة الاتصال -->
     <div v-if="!isOnline" class="fixed bottom-4 left-4 bg-yellow-500 text-white px-4 py-3 rounded-lg shadow-xl z-50">
@@ -633,7 +657,7 @@ function VinApi1 (v){
                         </div>
                     <template v-if="showBrokerageSection">
                     <div class="flex justify-center">
-                      <div className="mb-4 ml-5">
+                      <div v-if="!isExternalContract" className="mb-4 ml-5">
                         <InputLabel for="tex_seller" :value="t('brokerageUsd')" />
                         <TextInput
                           type="number"
@@ -642,7 +666,7 @@ function VinApi1 (v){
                           v-model="form.tex_seller"
                         />
                       </div>
-                      <div className="mb-4">
+                      <div className="mb-4" :class="{ 'ml-5': !isExternalContract }">
                         <InputLabel for="tex_seller_dinar" :value="t('brokerageIqd')" />
                         <TextInput
                           type="number"
@@ -653,7 +677,7 @@ function VinApi1 (v){
                       </div>
                     </div>
                     <div class="flex justify-center">
-                      <div className="mb-4 ml-5">
+                      <div v-if="!isExternalContract" className="mb-4 ml-5">
                         <InputLabel for="tex_seller_paid" :value="t('paidUsd')" />
                         <TextInput
                           type="number"
@@ -663,7 +687,7 @@ function VinApi1 (v){
                           v-model="form.tex_seller_paid"
                         />
                       </div>
-                      <div className="mb-4">
+                      <div className="mb-4" :class="{ 'ml-5': !isExternalContract }">
                         <InputLabel for="tex_seller_dinar_paid" :value="t('paidIqd')" />
                         <TextInput
                           type="number"
@@ -675,7 +699,7 @@ function VinApi1 (v){
                       </div>
                     </div>
                     <div class="flex justify-center">
-                      <div className="mb-4 ml-5">
+                      <div v-if="!isExternalContract" className="mb-4 ml-5">
                         <InputLabel for="debit" :value="t('remainingUsd')" />
                         <TextInput
                           type="number"
@@ -684,7 +708,7 @@ function VinApi1 (v){
                           disabled
                         />
                       </div>
-                      <div className="mb-4">
+                      <div className="mb-4" :class="{ 'ml-5': !isExternalContract }">
                         <InputLabel for="debit_dinar" :value="t('remainingIqd')" />
                         <TextInput
                           type="number"
@@ -801,7 +825,7 @@ function VinApi1 (v){
 
                     <template v-if="showBrokerageSection">
                     <div class="flex justify-center">
-                      <div className="mb-4 ml-5">
+                      <div v-if="!isExternalContract" className="mb-4 ml-5">
                         <InputLabel for="tex_buyer" :value="t('brokerageUsd')" />
                         <TextInput
                           type="number"
@@ -810,7 +834,7 @@ function VinApi1 (v){
                           v-model="form.tex_buyer"
                         />
                       </div>
-                      <div className="mb-4">
+                      <div className="mb-4" :class="{ 'ml-5': !isExternalContract }">
                         <InputLabel for="tex_buyer_dinar" :value="t('brokerageIqd')" />
                         <TextInput
                           type="number"
@@ -821,7 +845,7 @@ function VinApi1 (v){
                       </div>
                     </div>
                     <div class="flex justify-center">
-                      <div className="mb-4 ml-5">
+                      <div v-if="!isExternalContract" className="mb-4 ml-5">
                         <InputLabel for="tex_buyer_paid" :value="t('paidUsd')" />
                         <TextInput
                           type="number"
@@ -830,7 +854,7 @@ function VinApi1 (v){
                           v-model="form.tex_buyer_paid"
                         />
                       </div>
-                      <div className="mb-4">
+                      <div className="mb-4" :class="{ 'ml-5': !isExternalContract }">
                         <InputLabel for="tex_buyer_dinar_paid" :value="t('paidIqd')" />
                         <TextInput
                           type="number"
@@ -841,7 +865,7 @@ function VinApi1 (v){
                       </div>
                     </div>
                     <div class="flex justify-center">
-                      <div className="mb-4 ml-5">
+                      <div v-if="!isExternalContract" className="mb-4 ml-5">
                         <InputLabel for="phone_number" :value="t('remainingUsd')" />
                         <TextInput
                           type="number"
@@ -850,7 +874,7 @@ function VinApi1 (v){
                           disabled
                         />
                       </div>
-                      <div className="mb-4">
+                      <div className="mb-4" :class="{ 'ml-5': !isExternalContract }">
                         <InputLabel for="phone_number" :value="t('remainingIqd')" />
                         <TextInput
                           type="number"
@@ -977,7 +1001,7 @@ function VinApi1 (v){
                       <div className="mb-4 mx-5">
                         <InputLabel
                           for="car_price"
-                          :value="t('carPriceUsd')"
+                          :value="isExternalContract ? 'سعر السيارة (دينار)' : t('carPriceUsd')"
                         />
                         <TextInput
                           type="number"
@@ -991,7 +1015,7 @@ function VinApi1 (v){
                       <div className="mb-4 mx-5">
                         <InputLabel
                           for="car_paid"
-                          :value="t('paidMainUsd')"
+                          :value="isExternalContract ? 'المدفوع (دينار)' : t('paidMainUsd')"
                         />
                         <TextInput
                           type="number"
@@ -1003,7 +1027,7 @@ function VinApi1 (v){
                     </div>
                     <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
-                        <InputLabel for="relatives" :value="t('remainingMainUsd')" />
+                        <InputLabel for="relatives" :value="isExternalContract ? 'المتبقي (دينار)' : t('remainingMainUsd')" />
                         <TextInput
                           type="number"
                           class="mt-1 block w-full"
@@ -1108,7 +1132,7 @@ function VinApi1 (v){
      
         <Link
           className="px-6 mx-2 py-2 mb-12 text-white bg-gray-500 rounded-md focus:outline-none rounded"
-          :href="route('car_contract')"
+          :href="contractListRoute"
         >
           {{ t("return") }}
         </Link>

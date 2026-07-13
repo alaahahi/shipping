@@ -23,6 +23,7 @@ use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\LogViewerController;
 use App\Http\Controllers\OnlineUsersController;
+use App\Http\Controllers\PagePermissionController;
 
 
 use App\Models\SystemConfig;
@@ -99,6 +100,8 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
     Route::get('connected-systems', function () {
         return Inertia::render('Admin/ConnectedSystems');
     })->name('connectedSystems');
+
+    Route::get('page-permissions', [PagePermissionController::class, 'index'])->name('pagePermissions');
 
     Route::get('log-viewer', [LogViewerController::class, 'index'])->name('logViewer');
     Route::get('log-viewer/content', [LogViewerController::class, 'getLog'])->name('logViewer.content');
@@ -224,6 +227,9 @@ Route::group(['middleware' => ['auth','verified', 'check.license']], function ()
     Route::get('car_check',[CarExpensesController::class, 'car_check'])->name('car_check');
 
     Route::get('car_contract',[CarContractController::class, 'index'])->name('car_contract');
+    Route::get('external_car_contract',[CarContractController::class, 'externalIndex'])->name('external_car_contract');
+    Route::get('contract_installments',[CarContractController::class, 'installmentsIndex'])->name('contract_installments');
+    Route::get('contract_installment_print/{id}', [CarContractController::class, 'contractInstallmentPrint'])->name('contract_installment_print');
     Route::get('contract_account',[CarContractController::class, 'contract_account'])->name('contract_account');
     Route::get('company_treasury',[CompanyTreasuryController::class, 'index'])->name('company_treasury');
     Route::get('contract/{id?}', [CarContractController::class, 'contract'])->name('contract');

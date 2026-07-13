@@ -54,6 +54,7 @@ class CarContract extends Model
         'owner_id',
         'year_date',
         'status',
+        'contract_type',
         'verification_token',
         'created_at',
         'updated_at'
@@ -69,6 +70,16 @@ class CarContract extends Model
     public function contractImages()
     {
         return $this->hasMany(CarContractImage::class, 'car_contract_id');
+    }
+
+    public function installments()
+    {
+        return $this->hasMany(CarContractInstallment::class, 'car_contract_id');
+    }
+
+    public function isExternal(): bool
+    {
+        return $this->contract_type === 'external';
     }
 
     // public function car()

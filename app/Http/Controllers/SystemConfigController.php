@@ -52,6 +52,8 @@ class SystemConfigController extends Controller
             'usd_to_dinar_rate' => 'nullable|numeric|min:0',
             'contract_terms' => 'nullable|array',
             'contract_terms_2' => 'nullable|array',
+            'external_contract_terms' => 'nullable|array',
+            'external_contract_terms_2' => 'nullable|array',
             'contract_template' => 'nullable|in:1,2,3',
             'contract_currency' => 'nullable|in:usd,dinar',
             'primary_color' => 'nullable|string|max:20',
@@ -80,6 +82,8 @@ class SystemConfigController extends Controller
                 'usd_to_dinar_rate' => $request->usd_to_dinar_rate ?? 150.00,
                 'contract_terms' => $request->contract_terms ?? null,
                 'contract_terms_2' => $request->contract_terms_2 ?? null,
+                'external_contract_terms' => $request->external_contract_terms ?? null,
+                'external_contract_terms_2' => $request->external_contract_terms_2 ?? null,
                 'contract_template' => $request->contract_template ?? 1,
                 'contract_currency' => $request->contract_currency ?? 'usd',
                 'primary_color' => $request->primary_color ?? '#c00',
@@ -98,6 +102,8 @@ class SystemConfigController extends Controller
             if ($request->has('usd_to_dinar_rate')) $updateData['usd_to_dinar_rate'] = $request->usd_to_dinar_rate;
             if ($request->has('contract_terms')) $updateData['contract_terms'] = $request->contract_terms;
             if ($request->has('contract_terms_2')) $updateData['contract_terms_2'] = $request->contract_terms_2;
+            if ($request->has('external_contract_terms')) $updateData['external_contract_terms'] = $request->external_contract_terms;
+            if ($request->has('external_contract_terms_2')) $updateData['external_contract_terms_2'] = $request->external_contract_terms_2;
             if ($request->has('contract_template')) $updateData['contract_template'] = (int) $request->contract_template;
             if ($request->has('contract_currency')) $updateData['contract_currency'] = $request->contract_currency;
             if ($request->has('primary_color')) $updateData['primary_color'] = $request->primary_color ?: '#c00';

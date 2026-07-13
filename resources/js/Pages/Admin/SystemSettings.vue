@@ -27,6 +27,8 @@ const systemConfig = ref({
   usd_to_dinar_rate: 150.00,
   contract_terms: [],
   contract_terms_2: [],
+  external_contract_terms: [],
+  external_contract_terms_2: [],
   contract_template: 1,
   contract_currency: 'usd',
   primary_color: '#c00',
@@ -37,6 +39,8 @@ const defaultPriceSItems = ref([]);
 const defaultPricePItems = ref([]);
 const contractTermsItems = ref([]);
 const contractTerms2Items = ref([]);
+const externalContractTermsItems = ref([]);
+const externalContractTerms2Items = ref([]);
 
 // Connected Systems
 const systems = ref([]);
@@ -96,6 +100,8 @@ function loadSystemConfig() {
       const priceP = systemConfig.value.default_price_p || [];
       const terms = systemConfig.value.contract_terms || [];
       const terms2 = systemConfig.value.contract_terms_2 || [];
+      const externalTerms = systemConfig.value.external_contract_terms || [];
+      const externalTerms2 = systemConfig.value.external_contract_terms_2 || [];
       
       defaultPriceSItems.value = convertArrayToItems(priceS);
       defaultPricePItems.value = convertArrayToItems(priceP);
@@ -117,6 +123,17 @@ function loadSystemConfig() {
         contractTerms2Items.value = terms2.map((term, index) => ({ id: Date.now() + index + 1000, text: term }));
       } else {
         contractTerms2Items.value = [];
+      }
+
+      if (Array.isArray(externalTerms) && externalTerms.length > 0) {
+        externalContractTermsItems.value = externalTerms.map((term, index) => ({ id: Date.now() + index + 2000, text: term }));
+      } else {
+        externalContractTermsItems.value = [];
+      }
+      if (Array.isArray(externalTerms2) && externalTerms2.length > 0) {
+        externalContractTerms2Items.value = externalTerms2.map((term, index) => ({ id: Date.now() + index + 3000, text: term }));
+      } else {
+        externalContractTerms2Items.value = [];
       }
       
     })
@@ -145,6 +162,12 @@ function saveSystemConfig() {
   const terms2 = contractTerms2Items.value
     .filter(item => item.text && item.text.trim())
     .map(item => item.text.trim());
+  const externalTerms = externalContractTermsItems.value
+    .filter(item => item.text && item.text.trim())
+    .map(item => item.text.trim());
+  const externalTerms2 = externalContractTerms2Items.value
+    .filter(item => item.text && item.text.trim())
+    .map(item => item.text.trim());
   
   const dataToSave = {
     ...systemConfig.value,
@@ -152,6 +175,8 @@ function saveSystemConfig() {
     default_price_p: priceP,
     contract_terms: terms,
     contract_terms_2: terms2,
+    external_contract_terms: externalTerms,
+    external_contract_terms_2: externalTerms2,
     contract_template: systemConfig.value.contract_template ?? 1,
     contract_currency: systemConfig.value.contract_currency ?? 'usd',
     primary_color: systemConfig.value.primary_color ?? '#c00',
@@ -171,6 +196,8 @@ function saveSystemConfig() {
       
       const terms = systemConfig.value.contract_terms || [];
       const terms2 = systemConfig.value.contract_terms_2 || [];
+      const externalTerms = systemConfig.value.external_contract_terms || [];
+      const externalTerms2 = systemConfig.value.external_contract_terms_2 || [];
       if (Array.isArray(terms) && terms.length > 0) {
         contractTermsItems.value = terms.map((term, index) => ({ id: Date.now() + index, text: term }));
       }
@@ -178,6 +205,12 @@ function saveSystemConfig() {
         contractTerms2Items.value = terms2.map((term, index) => ({ id: Date.now() + index + 1000, text: term }));
       } else {
         contractTerms2Items.value = [];
+      }
+      if (Array.isArray(externalTerms) && externalTerms.length > 0) {
+        externalContractTermsItems.value = externalTerms.map((term, index) => ({ id: Date.now() + index + 2000, text: term }));
+      }
+      if (Array.isArray(externalTerms2) && externalTerms2.length > 0) {
+        externalContractTerms2Items.value = externalTerms2.map((term, index) => ({ id: Date.now() + index + 3000, text: term }));
       }
     })
     .catch(error => {
@@ -353,6 +386,18 @@ function addContractTerm2() {
 }
 function removeContractTerm2(index) {
   contractTerms2Items.value.splice(index, 1);
+}
+function addExternalContractTerm() {
+  externalContractTermsItems.value.push({ id: Date.now(), text: '' });
+}
+function removeExternalContractTerm(index) {
+  externalContractTermsItems.value.splice(index, 1);
+}
+function addExternalContractTerm2() {
+  externalContractTerms2Items.value.push({ id: Date.now(), text: '' });
+}
+function removeExternalContractTerm2(index) {
+  externalContractTerms2Items.value.splice(index, 1);
 }
 
 const testingConnection = ref(false);
@@ -858,6 +903,32 @@ function printCarTagDetails(tag) {
                   <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
                     💡 شروط قالب العقد الثاني. إذا كانت فارغة، يُستخدم قالب 1 كبديل.
                   </p>
+                </div>
+
+                <div class="mt-6 border-t pt-6">
+                  <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-md font-semibold text-violet-700 dark:text-violet-300">شروط العقد الخارجي — قالب 1</h4>
+                    <button @click="addExternalContractTerm" type="button" class="px-4 py-2 bg-violet-600 text-white text-sm rounded hover:bg-violet-700">إضافة شرط</button>
+                  </div>
+                  <div class="space-y-3">
+                    <div v-for="(term, index) in externalContractTermsItems" :key="term.id || index" class="flex gap-2 items-start">
+                      <textarea v-model="term.text" rows="2" class="flex-1 w-full text-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md px-3 py-2" :placeholder="`شرط خارجي ${index + 1}`"></textarea>
+                      <button @click="removeExternalContractTerm(index)" type="button" class="px-3 py-2 bg-red-600 text-white text-sm rounded">حذف</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-6 border-t pt-6">
+                  <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-md font-semibold text-violet-700 dark:text-violet-300">شروط العقد الخارجي — قالب 2</h4>
+                    <button @click="addExternalContractTerm2" type="button" class="px-4 py-2 bg-violet-600 text-white text-sm rounded hover:bg-violet-700">إضافة شرط</button>
+                  </div>
+                  <div class="space-y-3">
+                    <div v-for="(term, index) in externalContractTerms2Items" :key="term.id || index" class="flex gap-2 items-start">
+                      <textarea v-model="term.text" rows="2" class="flex-1 w-full text-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md px-3 py-2" :placeholder="`شرط خارجي 2 - ${index + 1}`"></textarea>
+                      <button @click="removeExternalContractTerm2(index)" type="button" class="px-3 py-2 bg-red-600 text-white text-sm rounded">حذف</button>
+                    </div>
+                  </div>
                 </div>
 
                 <div class="mt-6 border-t pt-6">

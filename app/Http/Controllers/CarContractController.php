@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\SystemConfig;
 use App\Models\CarContract;
 use App\Models\CarContractImage;
+use App\Models\CarContractInstallment;
 use App\Models\TransactionsContract;
 use Carbon\Carbon;
 use Inertia\Inertia;
@@ -64,6 +65,75 @@ class CarContractController extends Controller
         return $id;
     }
 
+    protected function normalizeContractType(?string $type): string
+    {
+        return in_array($type, ['company', 'external'], true) ? $type : 'company';
+    }
+
+    protected function applyExternalContractRules(array &$contract): void
+    {
+        $contract['tex_seller'] = 0;
+        $contract['tex_buyer'] = 0;
+        $contract['tex_seller_paid'] = 0;
+        $contract['tex_buyer_paid'] = 0;
+    }
+
+    protected function resolveContractStatus(
+        string $contractType,
+        $texSeller,
+        $texSellerDinar,
+        $texBuyer,
+        $texBuyerDinar,
+        $texSellerPaid,
+        $texSellerDinarPaid,
+        $texBuyerPaid,
+        $texBuyerDinarPaid
+    ): int {
+        if ($contractType === 'external') {
+            $status = 2;
+            if ($texSellerDinar != $texSellerDinarPaid || $texBuyerDinar != $texBuyerDinarPaid) {
+                $status = 1;
+            }
+            if ($texSellerDinarPaid == 0 && $texBuyerDinarPaid == 0) {
+                $status = 0;
+            }
+
+            return $status;
+        }
+
+        $status = 2;
+        if ($texSeller != $texSellerPaid || $texSellerDinar != $texSellerDinarPaid || $texBuyer != $texBuyerPaid || $texBuyerDinar != $texBuyerDinarPaid) {
+            $status = 1;
+        }
+        if ($texSellerPaid == 0 && $texSellerDinarPaid == 0 && $texBuyerPaid == 0 && $texBuyerDinarPaid == 0) {
+            $status = 0;
+        }
+
+        return $status;
+    }
+
+    protected function applyContractTypeScope($query, ?string $contractType)
+    {
+        $type = $this->normalizeContractType($contractType);
+        if ($contractType && in_array($contractType, ['company', 'external'], true)) {
+            return $query->where('contract_type', $type);
+        }
+
+        return $query;
+    }
+
+    protected function contractIdsForType(int $ownerId, ?string $contractType): ?array
+    {
+        if (!$contractType || !in_array($contractType, ['company', 'external'], true)) {
+            return null;
+        }
+
+        return CarContract::where('owner_id', $ownerId)
+            ->where('contract_type', $contractType)
+            ->pluck('id')
+            ->all();
+    }
+
     public function contract(Request $request)
     {
         $id=$request->id;
@@ -78,12 +148,14 @@ class CarContractController extends Controller
         ->groupBy('name_buyer')
         ->get();
         $defaultOrganizer = Auth::user()->organizer_name ?? '';
+        $contractType = $this->normalizeContractType($request->query('type', $data?->contract_type ?? 'company'));
         return Inertia::render('CarContract/add', [
             'client1'=>$client1,
             'data'=>$data,
             'client2'=>$client2,
             'showBrokerage' => $this->showBrokerage,
             'defaultOrganizerName' => $defaultOrganizer,
+            'contractType' => $contractType,
         ]);   
     }
     public function contract_print(Request $request)
@@ -97,6 +169,15 @@ class CarContractController extends Controller
         $owner_id=Auth::user()->owner_id;
         $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
         $config = SystemConfig::first();
+        if ($data && $data->contract_type === 'external' && $config) {
+            if (!empty($config->external_contract_terms)) {
+                $config->contract_terms = $config->external_contract_terms;
+            }
+            if (!empty($config->external_contract_terms_2)) {
+                $config->contract_terms_2 = $config->external_contract_terms_2;
+            }
+            $config->contract_currency = 'dinar';
+        }
         $verificationUrl = $data ? route('contract.verify', $data->verification_token) : null;
         $template = (int) ($request->query('template') ?? $config->contract_template ?? 1);
         $viewName = match ($template) {
@@ -122,8 +203,38 @@ class CarContractController extends Controller
             'user'=>$q,
             'contractCreators'=>$contractCreators,
             'showBrokerage' => $this->showBrokerage,
+            'contractType' => 'company',
+            'pageTitle' => 'عقود الشركة',
         ]);
     }
+
+    public function externalIndex(Request $request)
+    {
+        $owner_id=Auth::user()->owner_id;
+        $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
+        $q= $_GET['q'] ?? '';
+        $creatorIds = CarContract::where('owner_id', $owner_id)->where('contract_type', 'external')->whereNotNull('user_id')->distinct()->pluck('user_id');
+        $contractCreators = User::whereIn('id', $creatorIds)->orderBy('name')->get(['id', 'name']);
+        return Inertia::render('CarContract/external', [
+            'client'=>$client,
+            'user'=>$q,
+            'contractCreators'=>$contractCreators,
+            'showBrokerage' => $this->showBrokerage,
+            'contractType' => 'external',
+            'pageTitle' => 'عقود خارجية',
+        ]);
+    }
+
+    public function installmentsIndex(Request $request)
+    {
+        $owner_id=Auth::user()->owner_id;
+        $client = User::where('type_id', $this->userClient)->where('owner_id',$owner_id)->get();
+        return Inertia::render('CarContract/installments', [
+            'client'=>$client,
+            'showBrokerage' => $this->showBrokerage,
+        ]);
+    }
+
     public function contract_account(Request $request)
     {
         $owner_id=Auth::user()->owner_id;
@@ -146,28 +257,6 @@ class CarContractController extends Controller
         $year_date = Carbon::now()->format('Y');
         $created = Carbon::now()->format('Y-m-d');
 
-        $tex_seller = $request->tex_seller;
-        $tex_seller_dinar = $request->tex_seller_dinar;
-        $tex_buyer = $request->tex_buyer;
-        $tex_buyer_dinar = $request->tex_buyer_dinar;
-        $tex_seller_paid = $request->tex_seller_paid;
-        $tex_seller_dinar_paid = $request->tex_seller_dinar_paid;
-        $tex_buyer_paid = $request->tex_buyer_paid;
-        $tex_buyer_dinar_paid = $request->tex_buyer_dinar_paid;
-
-        $status = 2;
-        if ($tex_seller != $tex_seller_paid || $tex_seller_dinar != $tex_seller_dinar_paid || $tex_buyer != $tex_buyer_paid || $tex_buyer_dinar != $tex_buyer_dinar_paid) {
-            $status = 1;
-        }
-        if ($tex_seller_paid == 0 && $tex_seller_dinar_paid == 0 && $tex_buyer_paid == 0 && $tex_buyer_dinar_paid == 0) {
-            $status = 0;
-        }
-        $contract['status'] = $status;
-        $contract['owner_id'] = $owner_id;
-        $contract['user_id'] = $user_id;
-        $contract['year_date'] = $year_date;
-        $contract['created'] = $created;
-
         $hasUuidColumn = Schema::hasColumn('car_contract', 'uuid');
         $requestUuid = $request->input('uuid');
         if (is_string($requestUuid)) {
@@ -183,6 +272,40 @@ class CarContractController extends Controller
             $oldContract = CarContract::find($contract['id'] ?? 0);
         }
 
+        $contractType = $oldContract
+            ? $this->normalizeContractType($oldContract->contract_type ?? 'company')
+            : $this->normalizeContractType($request->input('contract_type', 'company'));
+        $contract['contract_type'] = $contractType;
+
+        if ($contractType === 'external') {
+            $this->applyExternalContractRules($contract);
+        }
+
+        $tex_seller = $contract['tex_seller'] ?? 0;
+        $tex_seller_dinar = $contract['tex_seller_dinar'] ?? 0;
+        $tex_buyer = $contract['tex_buyer'] ?? 0;
+        $tex_buyer_dinar = $contract['tex_buyer_dinar'] ?? 0;
+        $tex_seller_paid = $contract['tex_seller_paid'] ?? 0;
+        $tex_seller_dinar_paid = $contract['tex_seller_dinar_paid'] ?? 0;
+        $tex_buyer_paid = $contract['tex_buyer_paid'] ?? 0;
+        $tex_buyer_dinar_paid = $contract['tex_buyer_dinar_paid'] ?? 0;
+
+        $contract['status'] = $this->resolveContractStatus(
+            $contractType,
+            $tex_seller,
+            $tex_seller_dinar,
+            $tex_buyer,
+            $tex_buyer_dinar,
+            $tex_seller_paid,
+            $tex_seller_dinar_paid,
+            $tex_buyer_paid,
+            $tex_buyer_dinar_paid
+        );
+        $contract['owner_id'] = $owner_id;
+        $contract['user_id'] = $user_id;
+        $contract['year_date'] = $year_date;
+        $contract['created'] = $created;
+
         if ($oldContract) {
             $contractId = (int) $oldContract->id;
             $contract['id'] = $contractId;
@@ -191,10 +314,15 @@ class CarContractController extends Controller
                 $contract['uuid'] = $requestUuid;
             }
             $desc = 'تم تعديل عقد بيع للسيارة ' . ($contract['car_name']) . ' البائع ' . ($contract['name_seller'] ?? 0) . ' دفع مبلغ ' . ($contract['tex_seller_paid'] ?? 0) . ' و المشتري ' . ($contract['tex_buyer_paid'] ?? 0) . ' دفع مبلغ ' . ($contract['name_buyer'] ?? 0) . ' رقم' . ($contract['vin']);
-            $this->handlePaymentChange($contract['tex_seller_paid'], $oldContract['tex_seller_paid'], '$', $desc, $contractId, 'seller');
-            $this->handlePaymentChange($contract['tex_buyer_paid'], $oldContract['tex_buyer_paid'], '$', $desc, $contractId, 'buyer');
-            $this->handlePaymentChange($contract['tex_seller_dinar_paid'], $oldContract['tex_seller_dinar_paid'], 'IQD', $desc, $contractId, 'seller');
-            $this->handlePaymentChange($contract['tex_buyer_dinar_paid'], $oldContract['tex_buyer_dinar_paid'], 'IQD', $desc, $contractId, 'buyer');
+            if ($contractType === 'external') {
+                $this->handlePaymentChange($contract['tex_seller_dinar_paid'], $oldContract['tex_seller_dinar_paid'], 'IQD', $desc, $contractId, 'seller');
+                $this->handlePaymentChange($contract['tex_buyer_dinar_paid'], $oldContract['tex_buyer_dinar_paid'], 'IQD', $desc, $contractId, 'buyer');
+            } else {
+                $this->handlePaymentChange($contract['tex_seller_paid'], $oldContract['tex_seller_paid'], '$', $desc, $contractId, 'seller');
+                $this->handlePaymentChange($contract['tex_buyer_paid'], $oldContract['tex_buyer_paid'], '$', $desc, $contractId, 'buyer');
+                $this->handlePaymentChange($contract['tex_seller_dinar_paid'], $oldContract['tex_seller_dinar_paid'], 'IQD', $desc, $contractId, 'seller');
+                $this->handlePaymentChange($contract['tex_buyer_dinar_paid'], $oldContract['tex_buyer_dinar_paid'], 'IQD', $desc, $contractId, 'buyer');
+            }
         } else {
             if ($hasUuidColumn) {
                 $contract['uuid'] = $requestUuid ?: Str::uuid()->toString();
@@ -216,11 +344,17 @@ class CarContractController extends Controller
 
         if (!$oldContract) {
             $desc = ' عقد بيع للسيارة ' . ($contract['car_name']) . ' البائع ' . ($contract['name_seller'] ?? 0) . ' دفع مبلغ ' . ($contract['tex_seller_paid'] ?? 0) . ' و المشتري ' . ($contract['tex_buyer_paid'] ?? 0) . ' دفع مبلغ ' . ($contract['name_buyer'] ?? 0) . ' رقم' . ($contract['vin']);
-            if (($contract['tex_seller_paid'] ?? 0) || ($contract['tex_buyer_paid'] ?? 0)) {
-                $this->increaseWallet(($contract['tex_seller_paid'] ?? 0) + ($contract['tex_buyer_paid'] ?? 0), $desc, $this->mainBoxContract->where('owner_id', $owner_id)->first()->id, $car->id, 'App\Models\CarContract', 0, 0, '$', 0, 0, 'in', ($contract['tex_seller_paid'] ?? 0), ($contract['tex_buyer_paid'] ?? 0));
-            }
-            if (($contract['tex_seller_dinar_paid'] ?? 0) || ($contract['tex_buyer_dinar_paid'] ?? 0)) {
-                $this->increaseWallet(($contract['tex_seller_dinar_paid'] ?? 0) + ($contract['tex_buyer_dinar_paid'] ?? 0), $desc, $this->mainBoxContract->where('owner_id', $owner_id)->first()->id, $car->id, 'App\Models\CarContract', 0, 0, 'IQD', 0, 0, 'in', ($contract['tex_seller_paid'] ?? 0), ($contract['tex_buyer_paid'] ?? 0));
+            if ($contractType === 'external') {
+                if (($contract['tex_seller_dinar_paid'] ?? 0) || ($contract['tex_buyer_dinar_paid'] ?? 0)) {
+                    $this->increaseWallet(($contract['tex_seller_dinar_paid'] ?? 0) + ($contract['tex_buyer_dinar_paid'] ?? 0), $desc, $this->mainBoxContract->where('owner_id', $owner_id)->first()->id, $car->id, 'App\Models\CarContract', 0, 0, 'IQD', 0, 0, 'in', 0, 0);
+                }
+            } else {
+                if (($contract['tex_seller_paid'] ?? 0) || ($contract['tex_buyer_paid'] ?? 0)) {
+                    $this->increaseWallet(($contract['tex_seller_paid'] ?? 0) + ($contract['tex_buyer_paid'] ?? 0), $desc, $this->mainBoxContract->where('owner_id', $owner_id)->first()->id, $car->id, 'App\Models\CarContract', 0, 0, '$', 0, 0, 'in', ($contract['tex_seller_paid'] ?? 0), ($contract['tex_buyer_paid'] ?? 0));
+                }
+                if (($contract['tex_seller_dinar_paid'] ?? 0) || ($contract['tex_buyer_dinar_paid'] ?? 0)) {
+                    $this->increaseWallet(($contract['tex_seller_dinar_paid'] ?? 0) + ($contract['tex_buyer_dinar_paid'] ?? 0), $desc, $this->mainBoxContract->where('owner_id', $owner_id)->first()->id, $car->id, 'App\Models\CarContract', 0, 0, 'IQD', 0, 0, 'in', ($contract['tex_seller_paid'] ?? 0), ($contract['tex_buyer_paid'] ?? 0));
+                }
             }
         }
 
@@ -244,6 +378,7 @@ class CarContractController extends Controller
         $from = $request->query('from');
         $to = $request->query('to');
         $user_id_filter = $request->query('user_id');
+        $contract_type = $request->query('contract_type');
         $deleted_only = filter_var($request->query('deleted_only', false), FILTER_VALIDATE_BOOLEAN);
         $limit = (int) $request->query('limit', 100);
         if ($limit < 1) {
@@ -261,6 +396,8 @@ class CarContractController extends Controller
         if ($user_id_filter && (int) $user_id_filter > 0) {
             $data->where('user_id', (int) $user_id_filter);
         }
+
+        $this->applyContractTypeScope($data, $contract_type);
 
         if ($from && $to) {
             $data->whereBetween('created', [$from, $to]);
@@ -380,6 +517,9 @@ class CarContractController extends Controller
             $allContract->where('user_id', $current_user_id);
         }
 
+        $contract_type = $_GET['contract_type'] ?? null;
+        $this->applyContractTypeScope($allContract, $contract_type);
+
         $from =  $_GET['from'] ?? 0;
         $to =$_GET['to'] ?? 0;
         $user_id_filter = $_GET['user_id'] ?? null;
@@ -406,6 +546,13 @@ class CarContractController extends Controller
         $sumAllContractBuyerPaidDinar = $allContract->sum('tex_buyer_dinar_paid');
 
         $data = TransactionsContract::orderBy('id', 'desc');
+
+        $contract_type = $_GET['contract_type'] ?? null;
+        $contractIds = $this->contractIdsForType($owner_id, $contract_type);
+        if ($contractIds !== null) {
+            $data->where('morphed_type', 'App\Models\CarContract')
+                ->whereIn('morphed_id', $contractIds);
+        }
 
         if ($from && $to) {
             $data->whereBetween('created', [$from, $to]); ;
@@ -464,6 +611,13 @@ class CarContractController extends Controller
             $limit =$_GET['limit'] ?? 0;
 
             $data = TransactionsContract::orderBy('id', 'desc');
+
+            $contract_type = $_GET['contract_type'] ?? null;
+            $contractIds = $this->contractIdsForType($owner_id, $contract_type);
+            if ($contractIds !== null) {
+                $data->where('morphed_type', 'App\Models\CarContract')
+                    ->whereIn('morphed_id', $contractIds);
+            }
 
             if ($from && $to) {
                 $data->whereBetween('created', [$from, $to]);
@@ -814,6 +968,7 @@ class CarContractController extends Controller
         $type = $_GET['type'] ?? 0;
         $print = $_GET['print'] ?? 0;
         $searchType = $_GET['searchType'] ?? '';
+        $contract_type = $_GET['contract_type'] ?? null;
         $owner_id=Auth::user()->owner_id;
         $current_user_id=Auth::user()->id;
         $current_user_type_id=Auth::user()->type_id;
@@ -827,6 +982,9 @@ class CarContractController extends Controller
             $dataQuery1->where('user_id', $current_user_id);
             $dataQuery2->where('user_id', $current_user_id);
         }
+
+        $this->applyContractTypeScope($dataQuery1, $contract_type);
+        $this->applyContractTypeScope($dataQuery2, $contract_type);
 
         $dataQuery1 = $dataQuery1->select('name_seller', 
                  DB::raw('MAX(phone_seller) as phone_seller'), 
@@ -867,21 +1025,26 @@ class CarContractController extends Controller
         $data1 = $dataQuery1->get();
         $data2 = $dataQuery2->get();
         if($print==1){
-            $data = TransactionsContract::whereBetween('created', [$from, $to])->where('description', 'like', "%$type%")->get();
-            $totalDollar = TransactionsContract::whereBetween('created', [$from, $to])->where('currency', '$')->where('description', 'like', "%$type%")->sum('amount');
-            $totalDinar = TransactionsContract::whereBetween('created', [$from, $to])->where('currency', 'IQD')->where('description', 'like', "%$type%")->sum('amount');
+            $transactionsQuery = TransactionsContract::whereBetween('created', [$from, $to])->where('description', 'like', "%$type%");
+            $contractIds = $this->contractIdsForType($owner_id, $contract_type);
+            if ($contractIds !== null) {
+                $transactionsQuery->where('morphed_type', 'App\Models\CarContract')
+                    ->whereIn('morphed_id', $contractIds);
+            }
+            $data = $transactionsQuery->get();
+            $totalDollar = (clone $transactionsQuery)->where('currency', '$')->sum('amount');
+            $totalDinar = (clone $transactionsQuery)->where('currency', 'IQD')->sum('amount');
 
             $config=SystemConfig::first();
             return view('Contract.receiptExpensesContractTotal',compact('data','config','totalDollar','totalDinar'));
         }
         if($print==2){
+            $contractsQuery = CarContract::where('owner_id', $owner_id)->whereBetween('created', [$from, $to]);
+            $this->applyContractTypeScope($contractsQuery, $contract_type);
             if($q){
-                $data = CarContract::where('owner_id', $owner_id)
-                ->whereBetween('created', [$from, $to])
-                ->where('name_seller', 'like', '%' . $q . '%')
-                ->get();
+                $data = $contractsQuery->where('name_seller', 'like', '%' . $q . '%')->get();
             }else{
-                $data =  CarContract::where('owner_id', $owner_id)->whereBetween('created', [$from, $to])->get();
+                $data = $contractsQuery->get();
             }
             
             $config=SystemConfig::first();
@@ -959,5 +1122,96 @@ class CarContractController extends Controller
             'config' => $config,
             'verificationUrl' => $verificationUrl,
         ]);
+    }
+
+    public function getContractInstallments(Request $request)
+    {
+        $ownerId = (int) Auth::user()->owner_id;
+        $q = trim((string) $request->query('q', ''));
+        $limit = (int) $request->query('limit', 50);
+
+        $query = CarContract::with(['user', 'installments'])
+            ->where('owner_id', $ownerId)
+            ->whereColumn('car_paid', '<', 'car_price')
+            ->where('car_price', '>', 0)
+            ->orderByDesc('id');
+
+        if ($q !== '') {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('name_buyer', 'LIKE', '%' . $q . '%')
+                    ->orWhere('vin', 'LIKE', '%' . $q . '%')
+                    ->orWhere('car_name', 'LIKE', '%' . $q . '%')
+                    ->orWhere('name_seller', 'LIKE', '%' . $q . '%');
+            });
+        }
+
+        return Response::json($query->paginate($limit), 200);
+    }
+
+    public function getContractInstallmentDetails($id)
+    {
+        $ownerId = (int) Auth::user()->owner_id;
+        $contract = CarContract::with(['installments' => fn ($q) => $q->orderByDesc('id'), 'user'])
+            ->where('owner_id', $ownerId)
+            ->findOrFail($id);
+
+        return Response::json($contract, 200);
+    }
+
+    public function addContractInstallment(Request $request)
+    {
+        $ownerId = (int) Auth::user()->owner_id;
+        $contractId = (int) $request->input('car_contract_id');
+        $amount = (float) $request->input('amount', 0);
+        $receivedBy = trim((string) $request->input('received_by', ''));
+        $note = trim((string) $request->input('note', ''));
+        $created = $request->input('created') ?: Carbon::now()->format('Y-m-d');
+
+        if ($contractId <= 0 || $amount <= 0) {
+            return Response::json(['error' => 'بيانات الدفعة غير مكتملة'], 422);
+        }
+
+        $contract = CarContract::where('owner_id', $ownerId)->find($contractId);
+        if (!$contract) {
+            return Response::json(['error' => 'العقد غير موجود'], 404);
+        }
+
+        $remaining = (float) $contract->car_price - (float) $contract->car_paid;
+        if ($amount > $remaining) {
+            return Response::json(['error' => 'المبلغ أكبر من المتبقي'], 422);
+        }
+
+        $installment = CarContractInstallment::create([
+            'car_contract_id' => $contract->id,
+            'owner_id' => $ownerId,
+            'user_id' => Auth::id(),
+            'amount' => $amount,
+            'received_by' => $receivedBy ?: (Auth::user()->name ?? ''),
+            'note' => $note,
+            'created' => $created,
+        ]);
+
+        $contract->increment('car_paid', $amount);
+
+        return Response::json([
+            'installment' => $installment,
+            'contract' => $contract->fresh(['installments']),
+        ], 200);
+    }
+
+    public function contractInstallmentPrint($id)
+    {
+        $ownerId = (int) Auth::user()->owner_id;
+        $installment = CarContractInstallment::with(['carContract.user'])
+            ->where('owner_id', $ownerId)
+            ->findOrFail($id);
+
+        $contract = $installment->carContract;
+        $config = SystemConfig::first();
+        $paidTotal = (float) ($contract->car_paid ?? 0);
+        $priceTotal = (float) ($contract->car_price ?? 0);
+        $remaining = max(0, $priceTotal - $paidTotal);
+
+        return view('receiptCarContractInstallment', compact('installment', 'contract', 'config', 'paidTotal', 'remaining'));
     }
 }

@@ -1,50 +1,46 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { Link, usePage } from '@inertiajs/inertia-vue3';
-import { isAdminOrOwner } from '@/utils/navAccess';
+import { Link } from '@inertiajs/inertia-vue3';
 
-defineProps({
+const props = defineProps({
     active: {
         type: Boolean,
         default: false,
     },
-});
-
-const page = usePage();
-
-const hasFullAccess = computed(() => isAdminOrOwner(page.props.value.auth?.user));
-
-const allItems = [
-    { href: () => route('dashboard.statistics'), label: 'احصائات', name: 'dashboard.statistics' },
-    { href: () => route('sync.monitor'), label: '🔄 المزامنة', name: 'sync.monitor' },
-    { href: () => route('online_contracts'), label: 'العقود الالكترونية', name: 'online_contracts' },
-    { href: () => route('car_check'), label: 'مراجعة السيارات', name: 'car_check' },
-    { href: () => route('damage_report.index'), label: 'تقارير الضرر', name: 'damage_report.index' },
-    { href: () => route('hunter'), label: 'عاطل', name: 'hunter' },
-    { href: () => route('external_cars'), label: 'السيارات الخارجية', name: 'external_cars' },
-    { href: () => route('systemSettings'), label: 'إعدادات النظام', name: 'systemSettings' },
-    { href: () => route('logViewer'), label: '📋 لوغ الأخطاء', name: 'logViewer' },
-];
-
-const adminOnlyNames = ['dashboard.statistics', 'sync.monitor', 'online_contracts', 'car_check', 'damage_report.index', 'hunter', 'external_cars'];
-
-const items = computed(() => {
-    const list = hasFullAccess.value
-        ? allItems
-        : allItems.filter((item) => !adminOnlyNames.includes(item.name));
-
-    return list.map((item) => ({
-        ...item,
-        href: item.href(),
-    }));
+    pages: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 const open = ref(false);
 const triggerRef = ref(null);
 const panelStyle = ref({ top: '0px', left: '0px' });
 
-function isCurrent(name) {
-    return route().current(name);
+const items = computed(() => {
+    return props.pages.map((page) => ({
+        ...page,
+        href: pageHref(page),
+    }));
+});
+
+function pageHref(navPage) {
+    if (navPage.route_name) {
+        try {
+            if (typeof route().has === 'function' && !route().has(navPage.route_name)) {
+                return navPage.path || '#';
+            }
+            return route(navPage.route_name);
+        } catch (e) {
+            return navPage.path || '#';
+        }
+    }
+    return navPage.path || '#';
+}
+
+function isCurrent(routeName) {
+    if (!routeName) return false;
+    return route().current(routeName);
 }
 
 function updatePosition() {
@@ -142,11 +138,11 @@ onUnmounted(() => {
             >
                 <Link
                     v-for="item in items"
-                    :key="item.name"
+                    :key="item.slug"
                     :href="item.href"
                     :class="[
                         'block w-full px-4 py-2 text-right text-sm leading-5 transition duration-150 ease-in-out',
-                        isCurrent(item.name)
+                        isCurrent(item.route_name)
                             ? 'bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
                             : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700',
                     ]"

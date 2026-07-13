@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { usePage } from "@inertiajs/inertia-vue3";
-import { isAdminOrOwner } from "@/utils/navAccess";
+import { isAdminOrOwner, mainNavPages, moreNavPages } from "@/utils/navAccess";
 import Dropdown from "@/Components/Dropdown.vue";
 import DropdownLink from "@/Components/DropdownLink.vue";
 import NavLink from "@/Components/NavLink.vue";
@@ -16,6 +16,8 @@ import OnlineUsersIndicator from '@/Components/OnlineUsersIndicator.vue';
 const showingNavigationDropdown = ref(false);
 const page = usePage();
 const hasFullNavAccess = computed(() => isAdminOrOwner(page.props.value.auth?.user));
+const mainPages = computed(() => mainNavPages(page.props.value.auth?.navPages || []));
+const morePages = computed(() => moreNavPages(page.props.value.auth?.navPages || []));
 const i18n = useI18n();
 const locale = ref("en"); // Default locale
 const switchLocale = (locale) => {
@@ -24,18 +26,29 @@ const switchLocale = (locale) => {
 };
 
 const moreMenuActive = computed(() => {
-  return [
-    'dashboard.statistics',
-    'sync.monitor',
-    'online_contracts',
-    'car_check',
-    'damage_report.index',
-    'hunter',
-    'external_cars',
-    'systemSettings',
-    'logViewer',
-  ].some((name) => route().current(name));
+  return morePages.value.some((navPage) => isPageActive(navPage));
 });
+
+function pageHref(navPage) {
+  if (navPage.route_name) {
+    try {
+      if (typeof route().has === 'function' && !route().has(navPage.route_name)) {
+        return navPage.path || '#';
+      }
+      return route(navPage.route_name);
+    } catch (e) {
+      return navPage.path || '#';
+    }
+  }
+  return navPage.path || '#';
+}
+
+function isPageActive(navPage) {
+  if (!navPage.route_name) {
+    return false;
+  }
+  return route().current(navPage.route_name);
+}
 </script>
 
 <template>
@@ -58,118 +71,15 @@ const moreMenuActive = computed(() => {
 
               <div class="hidden sm:flex sm:items-center sm:gap-4 sm:ml-4 min-w-0 flex-1 overflow-x-auto nav-scroll">
               <NavLink
-                :href="route('dashboard')"
-                :active="route().current('dashboard')"
+                v-for="navPage in mainPages"
+                :key="navPage.slug"
+                :href="pageHref(navPage)"
+                :active="isPageActive(navPage)"
                 class="shrink-0"
               >
-                {{ $t("home") }}
+                {{ navPage.label }}
               </NavLink>
-              <NavLink
-                v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6"
-                :href="route('purchases')"
-                :active="route().current('purchases')"
-                class="shrink-0"
-              >
-                {{ $t("purchases") }}
-              </NavLink>
-              <NavLink
-                v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6"
-                :href="route('sales')"
-                :active="route().current('sales')"
-                class="shrink-0"
-              >
-                {{ $t("sales") }}
-              </NavLink>
-              <NavLink
-                v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6"
-                :href="route('clients')"
-                :active="route().current('clients')"
-                class="shrink-0"
-              >
-                {{ $t("clients") }}
-              </NavLink>
-              <NavLink
-                v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6"
-                :href="route('accounting')"
-                :active="route().current('accounting')"
-                class="shrink-0"
-              >
-                المحاسبة
-              </NavLink>
-              <NavLink
-                v-if="hasFullNavAccess"
-                :href="route('annual_information')"
-                :active="route().current('annual_information')"
-                class="shrink-0"
-              >
-                معلومات السنوية
-              </NavLink>
-              <NavLink
-                v-if="hasFullNavAccess"
-                :href="route('car_expenses')"
-                :active="route().current('car_expenses')"
-                class="shrink-0"
-              >
-                تسجيل السيارات
-              </NavLink>
-
-              <NavLink
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==8||$page.props.auth.user.type_id==10)"
-                :href="route('contract')"
-                :active="route().current('contract')"
-                class="shrink-0"
-              >
-                {{ $t("newContract") }}
-              </NavLink>
-              <NavLink
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==8||$page.props.auth.user.type_id==10)"
-                :href="route('car_contract')"
-                :active="route().current('car_contract')"
-                class="shrink-0"
-              >
-                {{ $t("SalesContracts") }}
-              </NavLink>
-              <NavLink
-                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8"
-                :href="route('company_treasury')"
-                :active="route().current('company_treasury')"
-                class="shrink-0"
-              >
-                {{ $t("CompanyTreasury") }}
-              </NavLink>
-              <NavLink
-                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8"
-                :href="route('contract_account')"
-                :active="route().current('contract_account')"
-                class="shrink-0"
-              >
-                {{ $t("CompanyExpenses") }}
-              </NavLink>
-              <NavLink
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)"
-                :href="route('trips')"
-                :active="route().current('trips') || route().current('trips.create') || route().current('trips.show')"
-                class="shrink-0"
-              >
-                🚢 الرحلات
-              </NavLink>
-              <NavLink
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)"
-                :href="route('consigneeBalances.index')"
-                :active="route().current('consigneeBalances.index')"
-                class="shrink-0"
-              >
-                💰 أرصدة الزبائن
-              </NavLink>
-              <NavLink
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)"
-                :href="route('companyBalances.index')"
-                :active="route().current('companyBalances.index') || route().current('companyBalances.show')"
-                class="shrink-0"
-              >
-                🚢 حسابات الشركات
-              </NavLink>
-              <NavMoreMenu :active="moreMenuActive" />
+              <NavMoreMenu v-if="morePages.length" :active="moreMenuActive" :pages="morePages" />
               </div>
               <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                 <NavLink
@@ -366,164 +276,27 @@ const moreMenuActive = computed(() => {
             </div>
             <div class="mt-3 space-y-1">
               <ResponsiveNavLink
-                :href="route('dashboard')"
-                :active="route().current('dashboard')"
+                v-for="navPage in mainPages"
+                :key="'m-' + navPage.slug"
+                :href="pageHref(navPage)"
+                :active="isPageActive(navPage)"
               >
-                {{ $t("home") }}
+                {{ navPage.label }}
               </ResponsiveNavLink>
 
-              <ResponsiveNavLink
-                :href="route('purchases')"
-                :active="route().current('purchases')"
-                v-if="$page.props.auth.user && $page.props.auth.user.type_id == 1"
-              >
-              {{ $t("purchases") }}
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('sales')"
-                :active="route().current('sales')"
-                v-if="$page.props.auth.user && $page.props.auth.user.type_id == 1"
-              >
-              {{ $t("sales") }}
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('accounting')"
-                :active="route().current('accounting')"
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id == 1||$page.props.auth.user.type_id==6)"
-              >
-              المحاسبة  
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('trips')"
-                :active="route().current('trips') || route().current('trips.create') || route().current('trips.show')"
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)"
-              >
-              🚢 الرحلات
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('consigneeBalances.index')"
-                :active="route().current('consigneeBalances.index')"
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)"
-              >
-              💰 أرصدة الزبائن
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('companyBalances.index')"
-                :active="route().current('companyBalances.index') || route().current('companyBalances.show')"
-                v-if="$page.props.auth.user && ($page.props.auth.user.type_id==15)"
-              >
-              🚢 حسابات الشركات
-              </ResponsiveNavLink>
-              
-              <ResponsiveNavLink
-                :href="route('annual_information')"
-                :active="route().current('annual_information')"
-                v-if="hasFullNavAccess"
-              >
-              معلومات السنوية
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('car_expenses')"
-                :active="route().current('car_expenses')"
-                v-if="hasFullNavAccess"
-              >
-              تسجيل السيارات
-              </ResponsiveNavLink>
-
-              <!-- المزيد — قائمة الهاتف -->
               <div
+                v-if="morePages.length"
                 class="px-4 pt-2 pb-1 text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500"
               >
                 المزيد
               </div>
               <ResponsiveNavLink
-                :href="route('dashboard.statistics')"
-                :active="route().current('dashboard.statistics')"
-                v-if="hasFullNavAccess"
+                v-for="navPage in morePages"
+                :key="'mm-' + navPage.slug"
+                :href="pageHref(navPage)"
+                :active="isPageActive(navPage)"
               >
-              احصائات
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('sync.monitor')"
-                :active="route().current('sync.monitor')"
-                v-if="hasFullNavAccess"
-              >
-              🔄 المزامنة
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('car_check')"
-                :active="route().current('car_check')"
-                v-if="hasFullNavAccess"
-              >
-              مراجعة السيارات
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('online_contracts')"
-                :active="route().current('online_contracts')"
-                v-if="hasFullNavAccess"
-              >
-              {{ $t("online_contracts") }}
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('damage_report.index')"
-                :active="route().current('damage_report.index')"
-                v-if="hasFullNavAccess"
-              >
-              تقارير الضرر
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('contract')"
-                :active="route().current('contract')"
-                v-if="$page.props.auth.user.type_id==8||$page.props.auth.user.type_id==10"
-              >
-              عقد جديد   
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('car_contract')"
-                :active="route().current('car_contract')"
-                v-if="$page.props.auth.user.type_id==8||$page.props.auth.user.type_id==10"
-              >
-              عقود البيع  
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('company_treasury')"
-                :active="route().current('company_treasury')"
-                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8"
-              >
-              قاصة الشركة
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('contract_account')"
-                :active="route().current('contract_account')"
-                v-if="$page.props.auth.user && $page.props.auth.user.type_id==8"
-              >
-              محاسبة عقود
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('hunter')"
-                :active="route().current('hunter')"
-                v-if="hasFullNavAccess"
-              >
-              عاطل 
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('external_cars')"
-                :active="route().current('external_cars')"
-                v-if="hasFullNavAccess"
-              >
-              السيارات الخارجية
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('systemSettings')"
-                :active="route().current('systemSettings')"
-              >
-              إعدادات النظام
-              </ResponsiveNavLink>
-              <ResponsiveNavLink
-                :href="route('logViewer')"
-                :active="route().current('logViewer')"
-              >
-              📋 لوغ الأخطاء
+                {{ navPage.label }}
               </ResponsiveNavLink>
 
               <ResponsiveNavLink

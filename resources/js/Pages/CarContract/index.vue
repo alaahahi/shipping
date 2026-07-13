@@ -32,6 +32,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  contractType: {
+    type: String,
+    default: 'company',
+  },
+  pageTitle: {
+    type: String,
+    default: 'عقود الشركة',
+  },
 });
 
 const showBrokerageSection = computed(() => props.showBrokerage);
@@ -88,6 +96,9 @@ const getResultsCar = async ($state) => {
     }
     if (deletedOnly.value) {
       params.deleted_only = '1';
+    }
+    if (props.contractType) {
+      params.contract_type = props.contractType;
     }
     const response = await axios.get(`/api/getIndexContractCar`, { params });
 
@@ -221,6 +232,10 @@ function getDownloadUrl(name) {
   />
 
   <AuthenticatedLayout>
+    <div class="max-w-9xl mx-auto px-4 py-3">
+      <h1 class="text-xl font-bold text-slate-900 dark:text-white">{{ pageTitle }}</h1>
+      <p v-if="contractType === 'external'" class="text-sm text-violet-600 dark:text-violet-300 mt-1">دفع بالدينار فقط — بدون ربط بجدول السيارات</p>
+    </div>
     <div class="py-2" v-if="$page.props.auth.user.type_id == 8||$page.props.auth.user.type_id==10">
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
         <div class="bg-white overflow-hidden shadow-sm">
@@ -577,7 +592,7 @@ function getDownloadUrl(name) {
                           <Link
                             tabIndex="1"
                             class="px-1 py-1 text-white mx-1 bg-slate-500 rounded inline-flex"
-                            :href="`/contract/${car.id}`"
+                            :href="`/contract/${car.id}?type=${contractType}`"
                           >
                             <edit />
                           </Link>

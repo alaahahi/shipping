@@ -62,6 +62,7 @@ let user_id = 0;
 let page = 1;
 let q = '';
 let allTransfers=ref([]);
+const contractTypeFilter = ref('');
 
 const refresh = () => {
   page = 1;
@@ -84,7 +85,8 @@ const getResults = async ($state) => {
         page: page,
         q: q,
         from:from.value,
-        to: to.value
+        to: to.value,
+        contract_type: contractTypeFilter.value || undefined,
       }
     });
 
@@ -109,7 +111,7 @@ const getResults = async ($state) => {
 };
  
 const getcountTotalInfo = async () => {
-  axios.get(`/api/totalInfoContract?from=${from.value}&to=${to.value}`)
+  axios.get(`/api/totalInfoContract?from=${from.value}&to=${to.value}${contractTypeFilter.value ? `&contract_type=${contractTypeFilter.value}` : ''}`)
   .then(response => {
     allContract.value=response.data.contract
     sum_contract.value=response.data.sum_contract
@@ -417,6 +419,11 @@ function UpdatePage (){
     <div>
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
         <div class="overflow-hidden shadow-sm sm:rounded-lg">
+          <div class="px-4 pt-4 flex flex-wrap gap-2">
+            <button type="button" class="px-4 py-2 rounded-lg text-sm font-bold" :class="contractTypeFilter === '' ? 'bg-sky-600 text-white' : 'bg-gray-200 dark:bg-gray-700'" @click="contractTypeFilter=''; refresh(); getcountTotalInfo();">الكل</button>
+            <button type="button" class="px-4 py-2 rounded-lg text-sm font-bold" :class="contractTypeFilter === 'company' ? 'bg-sky-600 text-white' : 'bg-gray-200 dark:bg-gray-700'" @click="contractTypeFilter='company'; refresh(); getcountTotalInfo();">شركة</button>
+            <button type="button" class="px-4 py-2 rounded-lg text-sm font-bold" :class="contractTypeFilter === 'external' ? 'bg-violet-600 text-white' : 'bg-gray-200 dark:bg-gray-700'" @click="contractTypeFilter='external'; refresh(); getcountTotalInfo();">خارجي</button>
+          </div>
           <div class=" border-b border-gray-200">
             <div class="mt-4  mb-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
                 <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
@@ -536,7 +543,7 @@ function UpdatePage (){
                             <InputLabel for="pay" :value="t('expenseReport')" />
                             <a
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-orange-500 rounded" style="display: block;text-align: center;"
-                            :href="`api/contract_account_report?type=سحب دفعة &from=${from}&to=${to}&print=1`"
+                            :href="`api/contract_account_report?type=سحب دفعة &from=${from}&to=${to}&print=1${contractTypeFilter ? `&contract_type=${contractTypeFilter}` : ''}`"
                             target="_blank"
                             >
                             
@@ -548,7 +555,7 @@ function UpdatePage (){
                             <InputLabel for="pay" :value="t('contractsReport')" />
                             <a
                             class="px-6 mb-12 py-2 mt-1 font-bold text-white bg-blue-500 rounded" style="display: block;text-align: center;"
-                            :href="`api/contract_account_report?type=contract-report&from=${from}&to=${to}&print=2&q=${q}`"
+                            :href="`api/contract_account_report?type=contract-report&from=${from}&to=${to}&print=2&q=${q}${contractTypeFilter ? `&contract_type=${contractTypeFilter}` : ''}`"
                             target="_blank"
                             >
                             

@@ -30,6 +30,7 @@ use App\Http\Controllers\AdminLicenseController;
 use App\Http\Controllers\DatabaseStatusController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\SystemConfigController;
+use App\Http\Controllers\PagePermissionController;
 use App\Http\Controllers\CarHistoryController;
 use App\Http\Controllers\TripController;
 use Illuminate\Support\Facades\Cache;
@@ -196,6 +197,12 @@ Route::post('send-external-transfer', [TransfersController::class, 'sendExternal
 // System Config routes
 Route::get('system-config', [SystemConfigController::class, 'index'])->name('systemConfig.index');
 Route::put('system-config', [SystemConfigController::class, 'update'])->name('systemConfig.update');
+
+Route::get('page-permissions', [PagePermissionController::class, 'getData'])->name('pagePermissions.data');
+Route::post('page-permissions', [PagePermissionController::class, 'store'])->name('pagePermissions.store');
+Route::put('page-permissions/{id}', [PagePermissionController::class, 'update'])->name('pagePermissions.update');
+Route::delete('page-permissions/{id}', [PagePermissionController::class, 'destroy'])->name('pagePermissions.destroy');
+Route::put('user-type-pages/{userTypeId}', [PagePermissionController::class, 'syncUserTypePages'])->name('userTypePages.sync');
 
 // Online users (المستخدمون المتصلون) - يتطلب تسجيل دخول
 Route::middleware('auth:sanctum')->get('online-users', [\App\Http\Controllers\OnlineUsersController::class, 'index'])->name('api.onlineUsers');
@@ -404,6 +411,9 @@ Route::post('convertDinarDollarContract',[CarContractController::class, 'convert
 Route::post('DropFromBoxContract',[CarContractController::class, 'DropFromBoxContract'])->name('DropFromBoxContract');
 Route::get('getIndexClientsContract',[CarContractController::class, 'getIndexClientsContract'])->name('getIndexClientsContract');
 Route::get('contract_account_report',[CarContractController::class, 'contract_account_report'])->name('contract_account_report');
+Route::get('contract-installments',[CarContractController::class, 'getContractInstallments'])->name('contract-installments.index');
+Route::get('contract-installments/{id}',[CarContractController::class, 'getContractInstallmentDetails'])->name('contract-installments.show');
+Route::post('contract-installments',[CarContractController::class, 'addContractInstallment'])->name('contract-installments.store');
 
 Route::get('companyTreasuryEntries',[CompanyTreasuryController::class, 'getEntries'])->name('companyTreasuryEntries');
 Route::get('companyTreasurySummary',[CompanyTreasuryController::class, 'getSummary'])->name('companyTreasurySummary');
