@@ -207,7 +207,6 @@ class CarContractController extends Controller
             if (!empty($config->external_contract_terms_2)) {
                 $config->contract_terms_2 = $config->external_contract_terms_2;
             }
-            $config->contract_currency = 'dinar';
         }
         $verificationUrl = $data ? route('contract.verify', $data->verification_token) : null;
         $template = (int) ($request->query('template') ?? $config->contract_template ?? 1);

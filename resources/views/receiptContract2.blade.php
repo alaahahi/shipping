@@ -177,26 +177,15 @@ html, body { width: 210mm; margin: 0; padding: 0; }
     @endif
 
     @php
-      $cfg = is_array($config) ? $config : (array) $config;
-      $currency = $cfg['contract_currency'] ?? 'usd';
-      $rate = (float) ($cfg['usd_to_dinar_rate'] ?? 0);
-      if ($rate < 100) { $rate = 150000; }
       $price = (float) ($data['car_price'] ?? 0);
       $paid = (float) ($data['car_paid'] ?? 0);
       $remain = $price - $paid;
-      if ($currency === 'dinar') {
-        $priceVal = round($price * ($rate / 100));
-        $paidVal = round($paid * ($rate / 100));
-        $remainVal = round($remain * ($rate / 100));
-        $sym = ' د.ع';
-        $wordsCurrency = 'iqd';
-      } else {
-        $priceVal = $price;
-        $paidVal = $paid;
-        $remainVal = $remain;
-        $sym = ' $';
-        $wordsCurrency = 'usd';
-      }
+      // سعر السيارة والمدفوع والمتبقي دائماً بالدولار
+      $priceVal = $price;
+      $paidVal = $paid;
+      $remainVal = $remain;
+      $sym = ' $';
+      $wordsCurrency = 'usd';
     @endphp
     <div class="t2-section">
       <div class="t2-money-box">

@@ -671,7 +671,7 @@ function VinApi1 (v){
                         <TextInput
                           type="number"
                           class="mt-1"
-                          @focus="form.tex_seller_dinar=form.tex_seller_dinar?'form.tex_seller_dinar':'150000'"
+                          @focus="form.tex_seller_dinar = form.tex_seller_dinar || 25000"
                           v-model="form.tex_seller_dinar"
                         />
                       </div>
@@ -839,7 +839,7 @@ function VinApi1 (v){
                         <TextInput
                           type="number"
                           class="mt-1"
-                          @focus="form.tex_buyer_dinar=form.tex_buyer_dinar?form.tex_buyer_dinar:'150000'"
+                          @focus="form.tex_buyer_dinar = form.tex_buyer_dinar || 25000"
                           v-model="form.tex_buyer_dinar"
                         />
                       </div>
@@ -1001,7 +1001,7 @@ function VinApi1 (v){
                       <div className="mb-4 mx-5">
                         <InputLabel
                           for="car_price"
-                          :value="isExternalContract ? 'سعر السيارة (دينار)' : t('carPriceUsd')"
+                          :value="t('carPriceUsd')"
                         />
                         <TextInput
                           type="number"
@@ -1015,7 +1015,7 @@ function VinApi1 (v){
                       <div className="mb-4 mx-5">
                         <InputLabel
                           for="car_paid"
-                          :value="isExternalContract ? 'المدفوع (دينار)' : t('paidMainUsd')"
+                          :value="t('paidMainUsd')"
                         />
                         <TextInput
                           type="number"
@@ -1027,7 +1027,7 @@ function VinApi1 (v){
                     </div>
                     <div class="md:w-1/3 w-full">
                       <div className="mb-4 mx-5">
-                        <InputLabel for="relatives" :value="isExternalContract ? 'المتبقي (دينار)' : t('remainingMainUsd')" />
+                        <InputLabel for="relatives" :value="t('remainingMainUsd')" />
                         <TextInput
                           type="number"
                           class="mt-1 block w-full"

@@ -2,26 +2,15 @@
 @php
 use App\Helpers\Help as MyHelp;
 $Help = new MyHelp();
-$cfg = is_array($config ?? null) ? ($config ?? []) : (array) ($config ?? new stdClass);
-$contractCurrency = $cfg['contract_currency'] ?? 'usd';
-$usdToDinarRate = (float) ($cfg['usd_to_dinar_rate'] ?? 0);
-if ($usdToDinarRate < 100) { $usdToDinarRate = 150000; }
 $priceUsd = (float) ($data['car_price'] ?? 0);
 $paidUsd = (float) ($data['car_paid'] ?? 0);
 $remainUsd = $priceUsd - $paidUsd;
-if ($contractCurrency === 'dinar') {
-  $priceVal = round($priceUsd * ($usdToDinarRate / 100));
-  $paidVal = round($paidUsd * ($usdToDinarRate / 100));
-  $remainVal = round($remainUsd * ($usdToDinarRate / 100));
-  $priceSym = ' د.ع';
-  $wordsCurrency = 'iqd';
-} else {
-  $priceVal = $priceUsd;
-  $paidVal = $paidUsd;
-  $remainVal = $remainUsd;
-  $priceSym = ' $';
-  $wordsCurrency = 'usd';
-}
+// سعر السيارة والمدفوع والمتبقي دائماً بالدولار
+$priceVal = $priceUsd;
+$paidVal = $paidUsd;
+$remainVal = $remainUsd;
+$priceSym = ' $';
+$wordsCurrency = 'usd';
 $contractNote = trim((string) (($data['note'] ?? null) ?: ($data->note ?? '')));
 @endphp
 <!DOCTYPE html>
