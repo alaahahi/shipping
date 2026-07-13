@@ -1247,6 +1247,24 @@ class CarContractController extends Controller
         ], 200);
     }
 
+    public function deleteContractInstallment($id)
+    {
+        $ownerId = (int) Auth::user()->owner_id;
+        $installment = CarContractInstallment::where('owner_id', $ownerId)->findOrFail($id);
+        $contract = CarContract::where('owner_id', $ownerId)->findOrFail($installment->car_contract_id);
+        $amount = (float) $installment->amount;
+
+        $installment->delete();
+
+        $newPaid = max(0, (float) $contract->car_paid - $amount);
+        $contract->update(['car_paid' => $newPaid]);
+
+        return Response::json([
+            'success' => true,
+            'contract' => $contract->fresh(['installments']),
+        ], 200);
+    }
+
     public function getContractInstallmentPayments(Request $request)
     {
         $ownerId = (int) Auth::user()->owner_id;
@@ -1285,10 +1303,30 @@ class CarContractController extends Controller
         $contract = $installment->carContract;
         $config = SystemConfig::first();
         $owner_id = $ownerId;
-        $paidTotal = (float) ($contract->car_paid ?? 0);
-        $priceTotal = (float) ($contract->car_price ?? 0);
-        $remaining = max(0, $priceTotal - $paidTotal);
+        $transactions_id = $installment->id;
 
-        return view('receiptCarContractInstallment', compact('installment', 'contract', 'config', 'paidTotal', 'remaining'));
+        $description = 'دفعة قسط — عقد #' . $contract->id . ' — ' . $contract->car_name;
+        if ($contract->vin) {
+            $description .= ' (' . $contract->vin . ')';
+        }
+        if ($installment->note) {
+            $description .= ' — ' . $installment->note;
+        }
+
+        $transaction = (object) [
+            'currency' => '$',
+            'description' => $description,
+            'amount' => (float) $installment->amount,
+            'discount' => 0,
+            'created_at' => $installment->created,
+        ];
+
+        $clientData = [
+            'client' => (object) [
+                'name' => $contract->name_buyer,
+            ],
+        ];
+
+        return view('receiptPayment', compact('installment', 'contract', 'config', 'owner_id', 'transactions_id', 'transaction', 'clientData'));
     }
 }

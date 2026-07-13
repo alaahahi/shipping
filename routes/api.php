@@ -416,6 +416,7 @@ Route::get('contract-installments',[CarContractController::class, 'getContractIn
 Route::get('contract-installment-payments',[CarContractController::class, 'getContractInstallmentPayments'])->name('contract-installment-payments.index');
 Route::get('contract-installments/{id}',[CarContractController::class, 'getContractInstallmentDetails'])->name('contract-installments.show')->whereNumber('id');
 Route::post('contract-installments',[CarContractController::class, 'addContractInstallment'])->name('contract-installments.store');
+Route::delete('contract-installments/{id}',[CarContractController::class, 'deleteContractInstallment'])->name('contract-installments.destroy')->whereNumber('id');
 
 Route::get('companyTreasuryEntries',[CompanyTreasuryController::class, 'getEntries'])->name('companyTreasuryEntries');
 Route::get('companyTreasurySummary',[CompanyTreasuryController::class, 'getSummary'])->name('companyTreasurySummary');

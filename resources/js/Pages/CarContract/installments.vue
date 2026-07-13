@@ -17,6 +17,7 @@ const showPaymentModal = ref(false);
 const showHistoryModal = ref(false);
 const loadingHistory = ref(false);
 const saving = ref(false);
+const deletingId = ref(null);
 const paymentForm = ref({
   amount: '',
   received_by: '',
@@ -117,12 +118,44 @@ async function savePayment() {
   }
 }
 
+async function deletePayment(item) {
+  if (!item?.id) return;
+
+  const confirmed = window.confirm(
+    `هل تريد حذف الدفعة بقيمة ${formatAmount(item.amount)}؟\nسيتم خصم المبلغ من المدفوع (حذف ناعم).`
+  );
+  if (!confirmed) return;
+
+  deletingId.value = item.id;
+  try {
+    const response = await axios.delete(`/api/contract-installments/${item.id}`);
+    toast.success('تم حذف الدفعة', { timeout: 2200, position: 'bottom-right', rtl: true });
+    if (response.data?.contract) {
+      selectedContract.value = response.data.contract;
+      installments.value = response.data.contract.installments ?? [];
+    } else if (selectedContract.value?.id) {
+      await fetchContractDetails(selectedContract.value.id);
+    }
+    await loadContracts();
+  } catch (error) {
+    const msg = error?.response?.data?.error || 'تعذر حذف الدفعة';
+    toast.error(msg, { timeout: 2800, position: 'bottom-right', rtl: true });
+  } finally {
+    deletingId.value = null;
+  }
+}
+
 function remaining(contract) {
   return Math.max(0, Number(contract?.car_price || 0) - Number(contract?.car_paid || 0));
 }
 
 function formatAmount(value) {
-  return Number(value || 0).toLocaleString('ar-IQ');
+  const num = Number(value || 0);
+  return `$${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
+function formatModalAmount(value) {
+  return Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
 loadContracts();
@@ -135,7 +168,7 @@ loadContracts();
     <div class="py-6 max-w-7xl mx-auto sm:px-6 lg:px-8">
       <div class="mb-6">
         <h1 class="text-2xl font-bold text-slate-900 dark:text-white">أقساط السيارات</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">قائمة السيارات ذات المتبقي — اعرض الدفعات أو سجّل دفعة جديدة من نفس الصفحة.</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">جميع المبالغ بالدولار ($) — اعرض الدفعات أو سجّل دفعة جديدة.</p>
       </div>
 
       <div class="bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
@@ -157,9 +190,9 @@ loadContracts();
                 <th class="px-3 py-3">المشتري</th>
                 <th class="px-3 py-3">السيارة</th>
                 <th class="px-3 py-3">الشانصي</th>
-                <th class="px-3 py-3">السعر</th>
-                <th class="px-3 py-3">المدفوع</th>
-                <th class="px-3 py-3">المتبقي</th>
+                <th class="px-3 py-3">السعر ($)</th>
+                <th class="px-3 py-3">المدفوع ($)</th>
+                <th class="px-3 py-3">المتبقي ($)</th>
                 <th class="px-3 py-3">الدفعات</th>
                 <th class="px-3 py-3">الإجراءات</th>
               </tr>
@@ -170,9 +203,9 @@ loadContracts();
                 <td class="px-3 py-3">{{ contract.name_buyer }}</td>
                 <td class="px-3 py-3">{{ contract.car_name }}</td>
                 <td class="px-3 py-3 font-mono text-xs">{{ contract.vin }}</td>
-                <td class="px-3 py-3">{{ formatAmount(contract.car_price) }}</td>
-                <td class="px-3 py-3 text-emerald-600 font-semibold">{{ formatAmount(contract.car_paid) }}</td>
-                <td class="px-3 py-3 font-bold text-rose-600">{{ formatAmount(remaining(contract)) }}</td>
+                <td class="px-3 py-3 font-mono">{{ formatAmount(contract.car_price) }}</td>
+                <td class="px-3 py-3 text-emerald-600 font-semibold font-mono">{{ formatAmount(contract.car_paid) }}</td>
+                <td class="px-3 py-3 font-bold text-rose-600 font-mono">{{ formatAmount(remaining(contract)) }}</td>
                 <td class="px-3 py-3">
                   <button
                     type="button"
@@ -221,15 +254,15 @@ loadContracts();
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
             <div class="rounded-xl bg-slate-100 dark:bg-slate-800 p-3 text-center">
               <div class="text-xs text-slate-500">السعر</div>
-              <div class="font-bold text-lg">{{ formatAmount(selectedContract?.car_price) }}</div>
+              <div class="font-bold text-lg font-mono">{{ formatAmount(selectedContract?.car_price) }}</div>
             </div>
             <div class="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 p-3 text-center">
               <div class="text-xs text-emerald-700">المدفوع</div>
-              <div class="font-bold text-lg text-emerald-700">{{ formatAmount(selectedContract?.car_paid) }}</div>
+              <div class="font-bold text-lg text-emerald-700 font-mono">{{ formatAmount(selectedContract?.car_paid) }}</div>
             </div>
             <div class="rounded-xl bg-rose-50 dark:bg-rose-900/20 p-3 text-center">
               <div class="text-xs text-rose-700">المتبقي</div>
-              <div class="font-bold text-lg text-rose-700">{{ formatAmount(remaining(selectedContract)) }}</div>
+              <div class="font-bold text-lg text-rose-700 font-mono">{{ formatAmount(remaining(selectedContract)) }}</div>
             </div>
           </div>
 
@@ -246,16 +279,26 @@ loadContracts();
                   {{ installments.length - index }}
                 </div>
                 <div class="text-right min-w-0">
-                  <div class="font-bold text-emerald-600 text-lg">{{ formatAmount(item.amount) }} د.ع</div>
+                  <div class="font-bold text-emerald-600 text-lg font-mono">{{ formatAmount(item.amount) }}</div>
                   <div class="text-xs text-slate-500 mt-0.5">
                     {{ item.created }} · المستلم: {{ item.received_by || '—' }}
                     <span v-if="item.note"> · {{ item.note }}</span>
                   </div>
                 </div>
               </div>
-              <button type="button" class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-bold text-white hover:bg-sky-700 shrink-0" @click="printReceipt(item.id)">
-                طباعة الوصل
-              </button>
+              <div class="flex flex-wrap gap-2 shrink-0">
+                <button type="button" class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-bold text-white hover:bg-sky-700" @click="printReceipt(item.id)">
+                  طباعة الوصل
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-50"
+                  :disabled="deletingId === item.id"
+                  @click="deletePayment(item)"
+                >
+                  {{ deletingId === item.id ? 'جاري الحذف...' : 'حذف' }}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -284,15 +327,18 @@ loadContracts();
         <div class="bg-gradient-to-l from-emerald-600 to-teal-600 px-5 py-4 text-white">
           <h2 class="text-lg font-bold">تسجيل دفعة جديدة</h2>
           <p class="text-sm text-emerald-100 mt-1">
-            عقد #{{ selectedContract?.id }} — المتبقي: {{ formatAmount(remaining(selectedContract)) }} د.ع
+            عقد #{{ selectedContract?.id }} — المتبقي: ${{ formatModalAmount(remaining(selectedContract)) }}
           </p>
         </div>
 
         <div class="p-5">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="sm:col-span-2">
-              <InputLabel value="مبلغ الدفعة (د.ع)" />
-              <TextInput v-model="paymentForm.amount" type="number" class="mt-1 block w-full text-lg font-semibold" placeholder="0" />
+              <InputLabel value="مبلغ الدفعة ($)" />
+              <div class="relative mt-1">
+                <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 font-bold">$</span>
+                <TextInput v-model="paymentForm.amount" type="number" step="0.01" min="0" class="block w-full text-lg font-semibold pr-8" placeholder="0" />
+              </div>
             </div>
             <div>
               <InputLabel value="المستلم" />
