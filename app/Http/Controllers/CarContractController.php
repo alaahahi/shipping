@@ -1177,7 +1177,7 @@ class CarContractController extends Controller
         $q = trim((string) $request->query('q', ''));
         $limit = (int) $request->query('limit', 50);
 
-        $query = CarContract::with(['user', 'installments'])
+        $query = CarContract::withCount('installments')
             ->where('owner_id', $ownerId)
             ->whereColumn('car_paid', '<', 'car_price')
             ->where('car_price', '>', 0)
@@ -1284,6 +1284,7 @@ class CarContractController extends Controller
 
         $contract = $installment->carContract;
         $config = SystemConfig::first();
+        $owner_id = $ownerId;
         $paidTotal = (float) ($contract->car_paid ?? 0);
         $priceTotal = (float) ($contract->car_price ?? 0);
         $remaining = max(0, $priceTotal - $paidTotal);
