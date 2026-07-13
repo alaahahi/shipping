@@ -134,6 +134,37 @@ class CarContractController extends Controller
             ->all();
     }
 
+    protected function applyInstallmentContractScope($query): void
+    {
+        $query->where(function ($q) {
+            $q->whereIn('contract_type', ['company', 'external'])
+                ->orWhereNull('contract_type');
+        });
+    }
+
+    protected function applyInstallmentUserScope($query): void
+    {
+        $currentUserId = Auth::id();
+        $currentUserTypeId = Auth::user()->type_id;
+        if ($this->userCarContractUser && $currentUserTypeId == $this->userCarContractUser) {
+            $query->where('user_id', $currentUserId);
+        }
+    }
+
+    protected function isInstallmentEligibleContract(?CarContract $contract): bool
+    {
+        if (!$contract) {
+            return false;
+        }
+
+        $type = $this->normalizeContractType($contract->contract_type ?? 'company');
+        if (!in_array($type, ['company', 'external'], true)) {
+            return false;
+        }
+
+        return (float) $contract->car_price > 0;
+    }
+
     public function contract(Request $request)
     {
         $id=$request->id;
@@ -1176,12 +1207,17 @@ class CarContractController extends Controller
         $ownerId = (int) Auth::user()->owner_id;
         $q = trim((string) $request->query('q', ''));
         $limit = (int) $request->query('limit', 50);
+        $contractType = $request->query('contract_type');
 
         $query = CarContract::withCount('installments')
-            ->where('owner_id', $ownerId)
-            ->whereColumn('car_paid', '<', 'car_price')
+            ->where('owner_id', $ownerId);
+        $this->applyInstallmentUserScope($query);
+        $this->applyInstallmentContractScope($query);
+        $query->whereColumn('car_paid', '<', 'car_price')
             ->where('car_price', '>', 0)
             ->orderByDesc('id');
+
+        $this->applyContractTypeScope($query, $contractType);
 
         if ($q !== '') {
             $query->where(function ($sub) use ($q) {
@@ -1199,8 +1235,10 @@ class CarContractController extends Controller
     {
         $ownerId = (int) Auth::user()->owner_id;
         $contract = CarContract::with(['installments' => fn ($q) => $q->orderByDesc('id'), 'user'])
-            ->where('owner_id', $ownerId)
-            ->findOrFail($id);
+            ->where('owner_id', $ownerId);
+        $this->applyInstallmentUserScope($contract);
+        $this->applyInstallmentContractScope($contract);
+        $contract = $contract->findOrFail($id);
 
         return Response::json($contract, 200);
     }
@@ -1221,6 +1259,10 @@ class CarContractController extends Controller
         $contract = CarContract::where('owner_id', $ownerId)->find($contractId);
         if (!$contract) {
             return Response::json(['error' => 'العقد غير موجود'], 404);
+        }
+
+        if (!$this->isInstallmentEligibleContract($contract)) {
+            return Response::json(['error' => 'هذا العقد غير مؤهل للأقساط'], 422);
         }
 
         $remaining = (float) $contract->car_price - (float) $contract->car_paid;

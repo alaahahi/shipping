@@ -11,6 +11,7 @@ const toast = useToast();
 const contracts = ref([]);
 const loading = ref(false);
 const q = ref('');
+const contractTypeFilter = ref('');
 const selectedContract = ref(null);
 const installments = ref([]);
 const showPaymentModal = ref(false);
@@ -29,7 +30,11 @@ async function loadContracts() {
   loading.value = true;
   try {
     const response = await axios.get('/api/contract-installments', {
-      params: { q: q.value || undefined, limit: 100 },
+      params: {
+        q: q.value || undefined,
+        contract_type: contractTypeFilter.value || undefined,
+        limit: 100,
+      },
     });
     contracts.value = response.data.data ?? [];
   } catch (error) {
@@ -158,6 +163,16 @@ function formatModalAmount(value) {
   return Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
+function contractTypeLabel(type) {
+  return type === 'external' ? 'خارجي' : 'شركة';
+}
+
+function contractTypeClass(type) {
+  return type === 'external'
+    ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-200'
+    : 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-200';
+}
+
 loadContracts();
 </script>
 
@@ -168,7 +183,7 @@ loadContracts();
     <div class="py-6 max-w-7xl mx-auto sm:px-6 lg:px-8">
       <div class="mb-6">
         <h1 class="text-2xl font-bold text-slate-900 dark:text-white">أقساط السيارات</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">جميع المبالغ بالدولار ($) — اعرض الدفعات أو سجّل دفعة جديدة.</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">عقود الشركة والعقود الخارجية — جميع المبالغ بالدولار ($).</p>
       </div>
 
       <div class="bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
@@ -176,6 +191,18 @@ loadContracts();
           <div class="flex-1 min-w-[220px]">
             <InputLabel value="بحث" />
             <TextInput v-model="q" class="mt-1 block w-full" placeholder="مشتري، شانصي، نوع السيارة..." @keyup.enter="loadContracts" />
+          </div>
+          <div class="min-w-[160px]">
+            <InputLabel value="نوع العقد" />
+            <select
+              v-model="contractTypeFilter"
+              class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              @change="loadContracts"
+            >
+              <option value="">الكل (شركة + خارجي)</option>
+              <option value="company">عقود الشركة</option>
+              <option value="external">عقود خارجية</option>
+            </select>
           </div>
           <button type="button" class="px-4 py-2 rounded-lg bg-sky-600 text-white font-semibold hover:bg-sky-700" @click="loadContracts">
             {{ loading ? 'جاري التحميل...' : 'بحث' }}
@@ -187,6 +214,7 @@ loadContracts();
             <thead class="bg-slate-800 text-white">
               <tr>
                 <th class="px-3 py-3">#</th>
+                <th class="px-3 py-3">النوع</th>
                 <th class="px-3 py-3">المشتري</th>
                 <th class="px-3 py-3">السيارة</th>
                 <th class="px-3 py-3">الشانصي</th>
@@ -200,6 +228,11 @@ loadContracts();
             <tbody>
               <tr v-for="contract in contracts" :key="contract.id" class="border-t border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40">
                 <td class="px-3 py-3 font-semibold">{{ contract.id }}</td>
+                <td class="px-3 py-3">
+                  <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-bold" :class="contractTypeClass(contract.contract_type)">
+                    {{ contractTypeLabel(contract.contract_type) }}
+                  </span>
+                </td>
                 <td class="px-3 py-3">{{ contract.name_buyer }}</td>
                 <td class="px-3 py-3">{{ contract.car_name }}</td>
                 <td class="px-3 py-3 font-mono text-xs">{{ contract.vin }}</td>
@@ -227,7 +260,7 @@ loadContracts();
                 </td>
               </tr>
               <tr v-if="!loading && !contracts.length">
-                <td colspan="9" class="px-4 py-12 text-slate-500">لا توجد سيارات بمتبقي دفع حالياً.</td>
+                <td colspan="10" class="px-4 py-12 text-slate-500">لا توجد سيارات بمتبقي دفع حالياً.</td>
               </tr>
             </tbody>
           </table>
@@ -243,7 +276,11 @@ loadContracts();
             <div>
               <h2 class="text-lg font-bold">سجل دفعات السيارة</h2>
               <p class="text-sm text-indigo-100 mt-1">
-                عقد #{{ selectedContract?.id }} — {{ selectedContract?.name_buyer }} — {{ selectedContract?.car_name }}
+                عقد #{{ selectedContract?.id }}
+                <span class="mx-1">·</span>
+                {{ contractTypeLabel(selectedContract?.contract_type) }}
+                <span class="mx-1">·</span>
+                {{ selectedContract?.name_buyer }} — {{ selectedContract?.car_name }}
               </p>
             </div>
             <button type="button" class="text-white/90 hover:text-white text-xl leading-none" @click="closeModals">×</button>
@@ -327,7 +364,9 @@ loadContracts();
         <div class="bg-gradient-to-l from-emerald-600 to-teal-600 px-5 py-4 text-white">
           <h2 class="text-lg font-bold">تسجيل دفعة جديدة</h2>
           <p class="text-sm text-emerald-100 mt-1">
-            عقد #{{ selectedContract?.id }} — المتبقي: ${{ formatModalAmount(remaining(selectedContract)) }}
+            عقد #{{ selectedContract?.id }}
+            ({{ contractTypeLabel(selectedContract?.contract_type) }})
+            — المتبقي: ${{ formatModalAmount(remaining(selectedContract)) }}
           </p>
         </div>
 
