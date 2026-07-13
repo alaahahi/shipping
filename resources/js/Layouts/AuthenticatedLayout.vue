@@ -80,6 +80,14 @@ function isPageActive(navPage) {
                 {{ navPage.label }}
               </NavLink>
               <NavMoreMenu v-if="morePages.length" :active="moreMenuActive" :pages="morePages" />
+              <NavLink
+                v-if="$page.props.auth.canManagePermissions && !mainPages.length && !morePages.length"
+                :href="route('pagePermissions')"
+                :active="route().current('pagePermissions')"
+                class="shrink-0"
+              >
+                صلاحيات الصفحات
+              </NavLink>
               </div>
               <!-- <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                 <NavLink
@@ -297,6 +305,14 @@ function isPageActive(navPage) {
                 :active="isPageActive(navPage)"
               >
                 {{ navPage.label }}
+              </ResponsiveNavLink>
+
+              <ResponsiveNavLink
+                v-if="$page.props.auth.canManagePermissions && !mainPages.length && !morePages.length"
+                :href="route('pagePermissions')"
+                :active="route().current('pagePermissions')"
+              >
+                صلاحيات الصفحات
               </ResponsiveNavLink>
 
               <ResponsiveNavLink

@@ -46,6 +46,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user,
                 'allowedRoutes' => ($user && $hasPagesTable) ? $permissions->getAllowedRouteNamesForUser($user) : [],
                 'navPages' => ($user && $hasPagesTable) ? $permissions->getNavPagesForUser($user) : [],
+                'canManagePermissions' => $user ? $permissions->isPermissionManager($user) : false,
             ],
             'ziggy' => function () use ($request) {
                 return array_merge((new Ziggy)->toArray(), [

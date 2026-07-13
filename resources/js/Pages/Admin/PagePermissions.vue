@@ -184,6 +184,27 @@ function saveUserTypePages() {
 function groupLabel(group) {
   return group === 'more' ? 'قائمة المزيد' : 'القائمة الرئيسية';
 }
+
+const importing = ref(false);
+
+function importDefaultPages() {
+  if (!confirm('استيراد كل الصفحات الافتراضية دفعة واحدة؟ لن تُستبدل الصفحات الموجودة.')) {
+    return;
+  }
+
+  importing.value = true;
+  axios.post('/api/page-permissions/import-defaults')
+    .then((response) => {
+      toast.success(response.data.message || 'تم الاستيراد بنجاح', { timeout: 3000, position: 'bottom-right', rtl: true });
+      loadData();
+    })
+    .catch(() => {
+      toast.error('تعذر استيراد الصفحات الافتراضية', { timeout: 3000, position: 'bottom-right', rtl: true });
+    })
+    .finally(() => {
+      importing.value = false;
+    });
+}
 </script>
 
 <template>
@@ -201,13 +222,30 @@ function groupLabel(group) {
                   تحكم بصفحات النظام وأنواع المستخدمين المسموح لها بالوصول
                 </p>
               </div>
-              <button
-                v-if="activeTab === 'pages'"
-                @click="openAddModal"
-                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium"
-              >
-                + إضافة صفحة
-              </button>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-if="activeTab === 'pages'"
+                  @click="importDefaultPages"
+                  :disabled="importing"
+                  class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white rounded-lg font-medium"
+                >
+                  {{ importing ? 'جاري الاستيراد...' : 'استيراد الصفحات الافتراضية' }}
+                </button>
+                <button
+                  v-if="activeTab === 'pages'"
+                  @click="openAddModal"
+                  class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium"
+                >
+                  + إضافة صفحة
+                </button>
+              </div>
+            </div>
+
+            <div
+              v-if="!loading && pages.length === 0"
+              class="mb-6 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-4 text-sm text-amber-800 dark:text-amber-200"
+            >
+              لا توجد صفحات مسجّلة. اضغط «استيراد الصفحات الافتراضية» لإضافة كل صفحات النظام دفعة واحدة، أو أضفها يدوياً.
             </div>
 
             <div class="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">

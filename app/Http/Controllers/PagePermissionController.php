@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AppPage;
 use App\Models\UserType;
+use App\Services\AppPageDefaults;
 use App\Services\PagePermissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -146,6 +147,20 @@ class PagePermissionController extends Controller
         $this->permissions->clearAllCaches();
 
         return Response::json($userType->load(['appPages:id,label,route_name']), 200);
+    }
+
+    public function importDefaults(AppPageDefaults $defaults)
+    {
+        $this->authorizeManager();
+
+        $result = $defaults->importMissingOnly();
+        $this->permissions->clearAllCaches();
+
+        return Response::json([
+            'message' => "تم استيراد {$result['created']} صفحة، وتخطي {$result['skipped']} موجودة مسبقاً",
+            'created' => $result['created'],
+            'skipped' => $result['skipped'],
+        ], 200);
     }
 
     protected function makeUniqueSlug(string $source): string

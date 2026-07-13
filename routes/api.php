@@ -202,6 +202,7 @@ Route::get('page-permissions', [PagePermissionController::class, 'getData'])->na
 Route::post('page-permissions', [PagePermissionController::class, 'store'])->name('pagePermissions.store');
 Route::put('page-permissions/{id}', [PagePermissionController::class, 'update'])->name('pagePermissions.update');
 Route::delete('page-permissions/{id}', [PagePermissionController::class, 'destroy'])->name('pagePermissions.destroy');
+Route::post('page-permissions/import-defaults', [PagePermissionController::class, 'importDefaults'])->name('pagePermissions.importDefaults');
 Route::put('user-type-pages/{userTypeId}', [PagePermissionController::class, 'syncUserTypePages'])->name('userTypePages.sync');
 
 // Online users (المستخدمون المتصلون) - يتطلب تسجيل دخول
