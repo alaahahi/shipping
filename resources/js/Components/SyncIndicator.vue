@@ -269,12 +269,9 @@ const updateSyncStatus = async () => {
     }
 };
 
-const handleOnline = async () => {
+const handleOnline = () => {
     isOnline.value = true;
     console.log('🌐 الاتصال عاد');
-    
-    // مزامنة تلقائية
-    await syncNow();
 };
 
 const handleOffline = () => {
@@ -319,8 +316,8 @@ onMounted(() => {
     updateSyncStatus();
     updateLocation();
     
-    // تحديث دوري
-    const interval = setInterval(updateSyncStatus, 30000); // كل 30 ثانية
+    // تحديث دوري خفيف (حالة محلية فقط — بدون طلبات مزامنة للسيرفر)
+    const interval = setInterval(updateSyncStatus, 5 * 60 * 1000);
     
     // حفظ الـ interval للتنظيف لاحقاً
     onUnmounted(() => {

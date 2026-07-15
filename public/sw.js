@@ -164,70 +164,10 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// 🚀 Background Sync - مزامنة SQLite تلقائياً عند عودة الإنترنت
+// Background Sync معطّل — لا مزامنة تلقائية عند مشاكل الاتصال
 self.addEventListener('sync', (event) => {
-  console.log('🔄 Background Sync event:', event.tag);
-  
-  if (event.tag === 'sync-database') {
-    event.waitUntil(syncDatabase());
-  }
+  console.log('Background Sync ignored:', event.tag);
 });
-
-// دالة المزامنة على نمط Git: Pull أولاً (من السيرفر) ثم Push (إلى السيرفر)
-async function syncDatabase() {
-  try {
-    console.log('🔄 بدء مزامنة قاعدة البيانات (نمط Git: Pull ثم Push)...');
-    
-    // 1. Pull: MySQL → SQLite (سحب التحديثات من السيرفر أولاً)
-    console.log('📥 Pull: جلب التحديثات من MySQL...');
-    const responseDown = await fetch('/api/sync-monitor/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ direction: 'down' })
-    });
-    
-    if (!responseDown.ok) {
-      console.error('❌ فشل Pull:', responseDown.status);
-      throw new Error('فشل سحب التحديثات من السيرفر');
-    }
-    const resultDown = await responseDown.json();
-    console.log('✅ تم Pull بنجاح:', resultDown);
-    
-    // 2. Push: SQLite → MySQL (رفع التعديلات المحلية)
-    console.log('📤 Push: رفع التعديلات المحلية إلى MySQL...');
-    const responseUp = await fetch('/api/sync-monitor/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        direction: 'up',
-        safe_mode: true,
-        create_backup: true
-      })
-    });
-    
-    let resultUp = null;
-    if (!responseUp.ok) {
-      console.error('❌ فشل Push:', responseUp.status);
-    } else {
-      resultUp = await responseUp.json();
-      console.log('✅ تم Push بنجاح:', resultUp);
-    }
-    
-    // إرسال رسالة للتطبيق
-    const clients = await self.clients.matchAll();
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'SYNC_COMPLETE',
-        success: true,
-        data: { pull: resultDown, push: resultUp }
-      });
-    });
-    
-  } catch (error) {
-    console.error('❌ خطأ في Background Sync:', error);
-    throw error; // لإعادة المحاولة تلقائياً
-  }
-}
 
 console.log('🚀 Service Worker loaded!');
 

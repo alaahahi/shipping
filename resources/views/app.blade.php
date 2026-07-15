@@ -120,7 +120,6 @@
                 const localUrl = connectionInfo.local_url || (window.location.origin + '/');
                 let isChecking = false;
                 let lastCheckTime = 0;
-                const CHECK_INTERVAL = 5000; // 5 ثوانٍ
                 const CHECK_COOLDOWN = 2000; // 2 ثانية بين الفحوصات
 
                 // التحقق من الاتصال الفعلي
@@ -222,17 +221,7 @@
                     setTimeout(checkConnection, 1000);
                 });
 
-                // فحص عند تحميل الصفحة
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', () => {
-                        setTimeout(checkConnection, 2000);
-                    });
-                } else {
-                    setTimeout(checkConnection, 2000);
-                }
-
-                // فحص دوري كل 5 ثوانٍ
-                setInterval(checkConnection, CHECK_INTERVAL);
+                // فحص عند تغيير الاتصال فقط — بدون فحص دوري لتقليل الطلبات
 
                 // حفظ معلومات الاتصال في window للوصول من المكونات
                 window.connectionInfo = connectionInfo;

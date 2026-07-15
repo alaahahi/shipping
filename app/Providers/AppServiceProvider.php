@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -150,120 +148,7 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureDatabaseFailover(): void
     {
-        $fallbackConnection = env('DB_FALLBACK_CONNECTION', 'sync_sqlite');
-
-        // الأولوية 0: لا اتصال ريموتلي عند العمل محلياً
-        if (env('LOCAL_NO_REMOTE', false)) {
-            config(['database.default' => $fallbackConnection]);
-            return;
-        }
-
-        if (!env('DB_FAILOVER_ENABLED', false)) {
-            return;
-        }
-
-        $primaryConnection = env('DB_PRIMARY_CONNECTION', 'mysql');
-        
-        // الأولوية 1: في البيئة المحلية (Local)، استخدم SQLite دائماً حتى مع وجود اتصال
-        if (app()->environment('local')) {
-            config(['database.default' => $fallbackConnection]);
-            Log::channel(env('LOG_CHANNEL', 'stack'))->info('Database switched to SQLite (Local Environment)', [
-                'fallback' => $fallbackConnection,
-                'mode' => 'local_environment',
-                'env' => app()->environment()
-            ]);
-            return;
-        }
-        
-        // الأولوية 2: التحقق من الوضع اليدوي من ConnectionService
-        // إذا كان المستخدم اختار Local من الواجهة، استخدم SQLite دائماً
-        if (class_exists(\App\Services\ConnectionService::class)) {
-            $manualMode = \App\Services\ConnectionService::getManualMode();
-            
-            if ($manualMode === 'local') {
-                // الوضع اليدوي: Local - استخدم SQLite دائماً
-                config(['database.default' => $fallbackConnection]);
-                Log::channel(env('LOG_CHANNEL', 'stack'))->info('Database switched to SQLite (Manual Local Mode)', [
-                    'fallback' => $fallbackConnection,
-                    'mode' => 'manual_local'
-                ]);
-                return;
-            }
-            
-            if ($manualMode === 'online') {
-                // الوضع اليدوي: Online - استخدم MySQL دائماً
-                config(['database.default' => $primaryConnection]);
-                Log::channel(env('LOG_CHANNEL', 'stack'))->info('Database switched to MySQL (Manual Online Mode)', [
-                    'mode' => 'manual_online'
-                ]);
-                return;
-            }
-        }
-
-        // الأولوية 3: الوضع التلقائي - التحقق من توفر MySQL
-        $cacheKey = 'db-failover:use-fallback';
-        $ttl = max((int) env('DB_FAILOVER_CACHE_TTL', 60), 15);
-        $shouldUseFallback = Cache::get($cacheKey, false);
-
-        if (!$shouldUseFallback) {
-            $shouldUseFallback = !$this->primaryDatabaseReachable();
-
-            if ($shouldUseFallback) {
-                Cache::put($cacheKey, true, $ttl);
-            }
-        } else {
-            // Re-check after TTL expires by clearing the cache when the primary is back.
-            if ($this->primaryDatabaseReachable()) {
-                Cache::forget($cacheKey);
-                $shouldUseFallback = false;
-            }
-        }
-
-        if ($shouldUseFallback) {
-            config(['database.default' => $fallbackConnection]);
-            Log::channel(env('LOG_CHANNEL', 'stack'))->info('Database failover activated', [
-                'fallback' => $fallbackConnection,
-                'mode' => 'auto_failover'
-            ]);
-        }
-    }
-
-    /**
-     * Attempt to reach the primary database host quickly using a socket ping.
-     *
-     * @return bool
-     */
-    protected function primaryDatabaseReachable(): bool
-    {
-        $primaryConnection = env('DB_PRIMARY_CONNECTION', config('database.default'));
-        $connectionConfig = config("database.connections.{$primaryConnection}");
-
-        if (empty($connectionConfig)) {
-            return false;
-        }
-
-        $host = Arr::get($connectionConfig, 'host');
-        $port = (int) Arr::get($connectionConfig, 'port', 3306);
-        $timeout = (float) env('DB_FAILOVER_TIMEOUT', 2);
-
-        if (!$host) {
-            return false;
-        }
-
-        $socket = @fsockopen($host, $port, $errno, $errstr, $timeout);
-
-        if ($socket) {
-            fclose($socket);
-            return true;
-        }
-
-        Log::debug('Primary database unreachable', [
-            'host' => $host,
-            'port' => $port,
-            'errno' => $errno ?? null,
-            'error' => $errstr ?? null,
-        ]);
-
-        return false;
+        // تعطيل التبديل التلقائي إلى SQLite عند مشاكل الاتصال — MySQL فقط
+        return;
     }
 }

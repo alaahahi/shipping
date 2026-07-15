@@ -69,7 +69,8 @@ class ExternalCarController extends Controller
             });
         }
 
-        $totals = (clone $query)->selectRaw(
+        // reorder() clears ORDER BY — aggregates + ORDER BY without GROUP BY fail under ONLY_FULL_GROUP_BY
+        $totals = (clone $query)->reorder()->selectRaw(
             'COALESCE(SUM(paid_dollar), 0) as total_paid_dollar, COALESCE(SUM(paid_dinar), 0) as total_paid_dinar'
         )->first();
 

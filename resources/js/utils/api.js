@@ -97,37 +97,20 @@ class ApiService {
      * POST Request مع دعم Offline Queue
      */
     async post(url, data, options = {}) {
-        try {
-            if (this.isOnline) {
-                const response = await axios.post(url, data, options);
-                
-                // احفظ نسخة محلية
-                if (options.saveLocal !== false) {
-                    await this.saveToLocalStore(url, data, response.data);
-                }
-                
-                return { 
-                    data: response.data, 
-                    queued: false,
-                    status: response.status 
-                };
-            }
-        } catch (error) {
-            console.warn('⚠️ فشل الإرسال للسيرفر:', error.message);
+        if (!this.isOnline) {
+            throw new Error('لا يوجد اتصال بالإنترنت');
         }
 
-        // إذا كنا offline، احفظ في القائمة
-        console.log('📴 Offline - حفظ في قائمة المزامنة');
-        
-        const storeName = this.getStoreNameFromUrl(url);
-        await db.save(storeName, data);
-        await db.addToSyncQueue(storeName, 'save', data);
+        const response = await axios.post(url, data, options);
 
-        return { 
-            data: data, 
-            queued: true,
-            status: 202, // Accepted
-            message: 'تم الحفظ محلياً - سيتم المزامنة عند عودة الاتصال'
+        if (options.saveLocal !== false) {
+            await this.saveToLocalStore(url, data, response.data);
+        }
+
+        return {
+            data: response.data,
+            queued: false,
+            status: response.status
         };
     }
 
@@ -135,33 +118,20 @@ class ApiService {
      * PUT/PATCH Request
      */
     async put(url, data, options = {}) {
-        try {
-            if (this.isOnline) {
-                const response = await axios.put(url, data, options);
-                
-                if (options.saveLocal !== false) {
-                    await this.saveToLocalStore(url, data, response.data);
-                }
-                
-                return { 
-                    data: response.data, 
-                    queued: false,
-                    status: response.status 
-                };
-            }
-        } catch (error) {
-            console.warn('⚠️ فشل التحديث:', error.message);
+        if (!this.isOnline) {
+            throw new Error('لا يوجد اتصال بالإنترنت');
         }
 
-        const storeName = this.getStoreNameFromUrl(url);
-        await db.save(storeName, data);
-        await db.addToSyncQueue(storeName, 'update', data);
+        const response = await axios.put(url, data, options);
 
-        return { 
-            data: data, 
-            queued: true,
-            status: 202,
-            message: 'تم الحفظ محلياً - سيتم المزامنة عند عودة الاتصال'
+        if (options.saveLocal !== false) {
+            await this.saveToLocalStore(url, data, response.data);
+        }
+
+        return {
+            data: response.data,
+            queued: false,
+            status: response.status
         };
     }
 
@@ -169,34 +139,22 @@ class ApiService {
      * DELETE Request
      */
     async delete(url, options = {}) {
-        const id = this.getIdFromUrl(url);
-        
-        try {
-            if (this.isOnline) {
-                const response = await axios.delete(url, options);
-                
-                const storeName = this.getStoreNameFromUrl(url);
-                await db.delete(storeName, id);
-                
-                return { 
-                    data: response.data, 
-                    queued: false,
-                    status: response.status 
-                };
-            }
-        } catch (error) {
-            console.warn('⚠️ فشل الحذف:', error.message);
+        if (!this.isOnline) {
+            throw new Error('لا يوجد اتصال بالإنترنت');
         }
 
-        const storeName = this.getStoreNameFromUrl(url);
-        await db.delete(storeName, id);
-        await db.addToSyncQueue(storeName, 'delete', { id });
+        const id = this.getIdFromUrl(url);
+        const response = await axios.delete(url, options);
 
-        return { 
-            data: { id }, 
-            queued: true,
-            status: 202,
-            message: 'تم الحذف محلياً - سيتم المزامنة عند عودة الاتصال'
+        const storeName = this.getStoreNameFromUrl(url);
+        if (storeName && id) {
+            await db.delete(storeName, id);
+        }
+
+        return {
+            data: response.data,
+            queued: false,
+            status: response.status
         };
     }
 
@@ -288,11 +246,10 @@ class ApiService {
 // إنشاء نسخة واحدة
 const api = new ApiService();
 
-// تحديث حالة الاتصال
+// تحديث حالة الاتصال فقط — بدون مزامنة تلقائية
 window.addEventListener('online', () => {
     api.isOnline = true;
-    console.log('🌐 الاتصال عاد - جاري المزامنة...');
-    api.syncNow().catch(err => console.error('فشل المزامنة:', err));
+    console.log('🌐 الاتصال عاد');
 });
 
 window.addEventListener('offline', () => {

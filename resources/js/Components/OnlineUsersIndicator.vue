@@ -7,8 +7,46 @@ const props = defineProps({
 });
 
 const displayUsers = ref([]);
-const POLL_INTERVAL = 15000;
+const POLL_INTERVAL = 5 * 60 * 1000; // فحص الكاش كل 5 دقائق
+const CACHE_TTL = 60 * 60 * 1000; // كاش الهيدر: ساعة واحدة
+const CACHE_KEY_PREFIX = 'header_online_users_';
 let pollTimer = null;
+
+function getCacheKey(userId) {
+  return `${CACHE_KEY_PREFIX}${userId}`;
+}
+
+function readCachedUsers(userId) {
+  try {
+    const raw = localStorage.getItem(getCacheKey(userId));
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed?.expiresAt || Date.now() > parsed.expiresAt) {
+      localStorage.removeItem(getCacheKey(userId));
+      return null;
+    }
+
+    return Array.isArray(parsed.users) ? parsed.users : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedUsers(userId, users) {
+  try {
+    localStorage.setItem(getCacheKey(userId), JSON.stringify({
+      users,
+      expiresAt: Date.now() + CACHE_TTL,
+    }));
+  } catch {
+    // تجاهل إذا امتلأ التخزين
+  }
+}
+
+function applyUsers(list) {
+  displayUsers.value = list.length > 0 ? list : [buildUserFromAuth(props.user)];
+}
 
 function getInitials(name) {
   if (!name || typeof name !== 'string') return '?';
@@ -37,22 +75,42 @@ function updateFromUser() {
   }
 }
 
-function fetchOnlineUsers() {
+function fetchOnlineUsers(force = false) {
   if (!props.user?.id) return;
+
+  if (!force) {
+    const cached = readCachedUsers(props.user.id);
+    if (cached) {
+      applyUsers(cached);
+      return;
+    }
+  }
+
   axios.get('/online-users', { withCredentials: true })
     .then(res => {
       const list = res.data?.online_users || [];
-      displayUsers.value = list.length > 0 ? list : [buildUserFromAuth(props.user)];
+      writeCachedUsers(props.user.id, list);
+      applyUsers(list);
     })
     .catch(() => {
+      const cached = readCachedUsers(props.user.id);
+      if (cached) {
+        applyUsers(cached);
+        return;
+      }
       displayUsers.value = [buildUserFromAuth(props.user)];
     });
 }
 
 onMounted(() => {
   updateFromUser();
-  fetchOnlineUsers();
-  pollTimer = setInterval(fetchOnlineUsers, POLL_INTERVAL);
+  const cached = props.user?.id ? readCachedUsers(props.user.id) : null;
+  if (cached) {
+    applyUsers(cached);
+  } else {
+    fetchOnlineUsers(true);
+  }
+  pollTimer = setInterval(() => fetchOnlineUsers(false), POLL_INTERVAL);
 });
 
 watch(() => props.user, (user) => {

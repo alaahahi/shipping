@@ -95,12 +95,6 @@ class LocalDatabase {
 
             request.onsuccess = () => {
                 console.log(`✅ تم حفظ البيانات في ${storeName}`);
-                
-                // إذا كنا offline، أضف للـ sync queue
-                if (!this.isOnline) {
-                    this.addToSyncQueue(storeName, 'save', data);
-                }
-                
                 resolve(request.result);
             };
             request.onerror = () => reject(request.error);
@@ -158,9 +152,6 @@ class LocalDatabase {
             const request = store.delete(id);
 
             request.onsuccess = () => {
-                if (!this.isOnline) {
-                    this.addToSyncQueue(storeName, 'delete', { id });
-                }
                 resolve(request.result);
             };
             request.onerror = () => reject(request.error);
@@ -513,11 +504,7 @@ class LocalDatabase {
                 const paymentId = request.result;
                 payment.id = paymentId;
                 
-                console.log('💰 تمت إضافة دفعة offline:', payment);
-                
-                // إضافة للـ sync queue
-                await this.addToSyncQueue('payments', 'save', payment);
-                
+                console.log('💰 تمت إضافة دفعة محلية:', payment);
                 resolve(payment);
             };
             request.onerror = () => reject(request.error);
@@ -548,11 +535,7 @@ class LocalDatabase {
                 const withdrawalId = request.result;
                 withdrawal.id = withdrawalId;
                 
-                console.log('💸 تمت إضافة سحب offline:', withdrawal);
-                
-                // إضافة للـ sync queue
-                await this.addToSyncQueue('payments', 'save', withdrawal);
-                
+                console.log('💸 تمت إضافة سحب محلي:', withdrawal);
                 resolve(withdrawal);
             };
             request.onerror = () => reject(request.error);

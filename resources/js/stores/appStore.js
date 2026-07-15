@@ -105,10 +105,7 @@ export const useAppStore = defineStore('app', {
                 // إضافة مستمعين للأحداث
                 this.setupEventListeners();
                 
-                // إذا كنا online، قم بالمزامنة
-                if (this.isOnline && this.settings.autoSync) {
-                    this.syncData();
-                }
+                // لا مزامنة تلقائية عند التحميل
                 
                 console.log('✅ التطبيق جاهز!');
             } catch (error) {
@@ -152,12 +149,8 @@ export const useAppStore = defineStore('app', {
             
             this.addNotification({
                 type: 'success',
-                message: 'عاد الاتصال! جاري المزامنة...'
+                message: 'عاد الاتصال!'
             });
-            
-            if (this.settings.autoSync) {
-                this.syncData();
-            }
         },
 
         /**

@@ -44,25 +44,9 @@ class LicenseService
                     return $license;
                 }
             } catch (\Exception $e) {
-                // إذا فشل في Connection الافتراضي، جرب SQLite مباشرة
-                Log::debug('Failed to get license from default connection, trying SQLite', [
+                Log::debug('Failed to get license from default connection', [
                     'error' => $e->getMessage()
                 ]);
-                
-                try {
-                    $license = License::on('sync_sqlite')
-                        ->where('domain', $domain)
-                        ->where('is_active', true)
-                        ->first();
-                    
-                    if ($license) {
-                        return $license;
-                    }
-                } catch (\Exception $e2) {
-                    Log::warning('Failed to get license from SQLite', [
-                        'error' => $e2->getMessage()
-                    ]);
-                }
             }
 
             // محاولة الحصول من ملف الترخيص
@@ -179,27 +163,9 @@ class LicenseService
             // استخدام Connection الافتراضي (سيتم تبديله تلقائياً إلى SQLite في Local)
             $license->update(['last_verified_at' => now()]);
         } catch (\Exception $e) {
-            // في حالة فشل التحديث (مثلاً MySQL غير متاح)، جرب SQLite
-            Log::debug('Failed to update license in default connection, trying SQLite', [
+            Log::debug('Failed to update license last_verified_at', [
                 'error' => $e->getMessage()
             ]);
-            
-            try {
-                // محاولة التحديث في SQLite مباشرة
-                $sqliteLicense = License::on('sync_sqlite')
-                    ->where('id', $license->id)
-                    ->first();
-                
-                if ($sqliteLicense) {
-                    $sqliteLicense->update(['last_verified_at' => now()]);
-                }
-            } catch (\Exception $e2) {
-                // إذا فشل أيضاً، نتابع بدون تحديث last_verified_at
-                // لا نوقف النظام بسبب فشل تحديث timestamp
-                Log::debug('Failed to update license in SQLite, continuing without update', [
-                    'error' => $e2->getMessage()
-                ]);
-            }
         }
 
         return $license->isValid();

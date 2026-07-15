@@ -11,7 +11,7 @@ class OnlineUsersController extends Controller
     /**
      * عدد الدقائق لاعتبار المستخدم متصل
      */
-    const ONLINE_MINUTES = 2;
+    const ONLINE_MINUTES = 6;
 
     /**
      * جلب قائمة المستخدمين المتصلين (نفس owner_id)
@@ -51,7 +51,9 @@ class OnlineUsersController extends Controller
 
         $onlineUsers = collect([$currentUser])->merge($others->values())->values()->all();
 
-        return response()->json(['online_users' => $onlineUsers]);
+        return response()
+            ->json(['online_users' => $onlineUsers])
+            ->header('Cache-Control', 'private, max-age=3600');
     }
 
     /**
