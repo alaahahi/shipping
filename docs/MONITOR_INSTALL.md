@@ -1,89 +1,155 @@
-# Laravel Monitor Module — Installation & Reuse
+# Laravel Monitor Module — نسخ وربط مركزي
 
-This monitoring module lives under `app/Monitor` and writes telemetry to JSONL files in `storage/logs/monitor/`. It does **not** use database tables.
+وحدة مراقبة **بدون جداول DB** — تكتب JSONL في `storage/logs/monitor/` وتعرض Laravel logs عبر API عام.
 
-Compatible with **Laravel 9+** and **PHP 8.0+**.
+متوافقة مع **Laravel 9+** و **PHP 8.0+**.
 
-Designed for **central monitoring**: each Laravel app exposes a public JSON API. A central dashboard can poll all systems and aggregate results.
+---
 
-## What It Provides
+## ماذا توفر؟
 
-- Per-request logging (duration, memory, queries, optional DB snapshot)
-- Exception logging for SQL/connection failures
-- Queue and console/scheduler job logging
-- Threshold-based alerts (`alerts.log`)
-- **Public JSON API** (no auth by default) for central hub integration
-- `GET /monitor/dashboard` — optional HTML UI that loads data **only from API**
-- `php artisan monitor:clean` — retention cleanup
+| الميزة | الوصف |
+|--------|--------|
+| Request telemetry | مدة، ذاكرة، استعلامات، DB snapshot |
+| Exceptions | أخطاء SQL والاتصال |
+| Queue / Scheduler | مهام الخلفية والـ cron |
+| Alerts | تنبيهات عند تجاوز الحدود |
+| Monitor JSONL API | بيانات مجمّعة لكل نظام |
+| **Laravel Log API** | قراءة `storage/logs/laravel*.log` للعرض المركزي |
+| Dashboard | واجهة HTML تقرأ **فقط من API** |
 
-## API Endpoints (no authentication)
+---
 
-All responses include: `project`, `hostname`, `environment`, `server_time`.
+## API — بدون مصادقة (افتراضياً)
 
-| Endpoint | Description |
-|----------|-------------|
-| `GET /monitor/api/overview?date=YYYY-MM-DD` | **Main endpoint** — status + metrics + alerts + dates |
-| `GET /monitor/api/status` | Live DB/memory snapshot |
-| `GET /monitor/api/metrics?date=YYYY-MM-DD` | Aggregated metrics from log files |
-| `GET /monitor/api/alerts?limit=100` | Alert records |
-| `GET /monitor/api/logs?date=&type=&limit=500` | Raw JSONL records (filter by type) |
-| `GET /monitor/api/dates` | Available log dates |
-| `GET /monitor/status` | Alias of API status (backward compatible) |
+كل استجابة تحتوي: `project`, `hostname`, `environment`, `server_time`.
 
-### Central hub polling example
+### نقاط النهاية الرئيسية
+
+| Endpoint | الاستخدام |
+|----------|-----------|
+| `GET /monitor/api/overview?date=YYYY-MM-DD` | **الأهم للنظام المركزي** — status + metrics + alerts + laravel_logs |
+| `GET /monitor/api/status` | MySQL + الذاكرة الحية |
+| `GET /monitor/api/metrics?date=` | مقاييس من JSONL |
+| `GET /monitor/api/alerts?limit=100` | التنبيهات |
+| `GET /monitor/api/logs?date=&type=` | سجلات JSONL الخام |
+| `GET /monitor/api/dates` | تواريخ ملفات المراقبة |
+| `GET /monitor/api/laravel-logs?file=&level=&search=&limit=` | **Laravel application log** |
+| `GET /monitor/api/laravel-log-files` | قائمة ملفات `laravel*.log` |
+| `GET /monitor/dashboard` | واجهة محلية (اختياري) |
+
+### مثال Laravel Log API
+
+```http
+GET /monitor/api/laravel-logs?file=laravel.log&level=ERROR&limit=50
+```
+
+```json
+{
+  "project": "Shipping ERP",
+  "hostname": "server-1",
+  "environment": "production",
+  "server_time": "2026-07-16T10:00:00+00:00",
+  "file": "laravel.log",
+  "total": 12,
+  "limit": 50,
+  "entries": [
+    {
+      "timestamp": "2026-07-16 09:55:01",
+      "channel": "local",
+      "level": "ERROR",
+      "message": "SQLSTATE[HY000] ...",
+      "context": null,
+      "raw": "[2026-07-16 09:55:01] local.ERROR: ..."
+    }
+  ]
+}
+```
+
+### مثال النظام المركزي (JavaScript)
 
 ```javascript
-const systems = [
-  'https://shipping.example.com/monitor/api/overview',
-  'https://erp2.example.com/monitor/api/overview',
+const SYSTEMS = [
+  { name: 'Shipping', url: 'https://shipping.example.com/monitor/api/overview' },
+  { name: 'ERP-2',    url: 'https://erp2.example.com/monitor/api/overview' },
 ];
 
-const results = await Promise.all(systems.map(url => fetch(url).then(r => r.json())));
+async function pollAll() {
+  const results = await Promise.allSettled(
+    SYSTEMS.map(async (s) => ({
+      ...s,
+      data: await fetch(s.url).then((r) => r.json()),
+    }))
+  );
+  return results;
+}
+
+async function fetchLaravelErrors(baseUrl) {
+  const res = await fetch(`${baseUrl}/laravel-logs?level=ERROR&limit=30`);
+  return res.json();
+}
 ```
 
-Each system should set a unique `MONITOR_PROJECT_NAME` in `.env`.
+---
 
-## Environment Variables
+## نسخ سريع لمشروع Laravel آخر
 
-```env
-MONITOR_ENABLED=true
-MONITOR_PROJECT_NAME="Shipping ERP"
-MONITOR_SLOW_QUERY_MS=500
-MONITOR_SLOW_REQUEST_MS=2000
-MONITOR_RETENTION_DAYS=30
-MONITOR_CORS_ORIGIN=*
+### الطريقة 1 — سكربت PowerShell (Windows)
+
+من مجلد المشروع المصدر (`shipping`):
+
+```powershell
+.\scripts\copy-monitor-module.ps1 -Target "C:\xampp\htdocs\other-project"
 ```
 
-Optional middleware (comma-separated), default empty = fully public:
+### الطريقة 2 — سكربت Bash (Linux/Mac)
 
-```env
-MONITOR_API_MIDDLEWARE=
-MONITOR_DASHBOARD_MIDDLEWARE=
-MONITOR_STATUS_MIDDLEWARE=
+```bash
+./scripts/copy-monitor-module.sh /var/www/other-project
 ```
 
-## Install In Another Laravel Project
+### الطريقة 3 — نسخ يدوي
 
-### 1. Copy module files
+انسخ هذه المسارات كما هي:
 
 ```
-app/Monitor/
-config/monitor.php
-resources/views/monitor/dashboard.blade.php
-docs/MONITOR_INSTALL.md
+app/Monitor/                          → app/Monitor/
+config/monitor.php                    → config/monitor.php
+resources/views/monitor/              → resources/views/monitor/
+docs/MONITOR_INSTALL.md               → docs/MONITOR_INSTALL.md
+scripts/copy-monitor-module.ps1       → scripts/  (اختياري)
+scripts/copy-monitor-module.sh        → scripts/  (اختياري)
+tests/Unit/Monitor/                   → tests/Unit/Monitor/  (اختياري)
+tests/Feature/Monitor/                → tests/Feature/Monitor/ (اختياري)
 ```
 
-### 2. Register the service provider
+---
 
-In `config/app.php`:
+## خطوات التثبيت (Checklist)
+
+### 1) تسجيل Service Provider
+
+**Laravel 9** — `config/app.php`:
 
 ```php
-App\Monitor\Providers\MonitorServiceProvider::class,
+'providers' => [
+    // ...
+    App\Monitor\Providers\MonitorServiceProvider::class,
+],
 ```
 
-### 3. Wire exception reporting
+**Laravel 11+** — `bootstrap/providers.php`:
 
-In `app/Exceptions/Handler.php` inside `register()`:
+```php
+return [
+    App\Providers\AppServiceProvider::class,
+    App\Monitor\Providers\MonitorServiceProvider::class,
+];
+```
+
+### 2) ربط Exception Handler
+
+في `app/Exceptions/Handler.php` داخل `register()`:
 
 ```php
 $this->reportable(function (Throwable $e) {
@@ -93,37 +159,116 @@ $this->reportable(function (Throwable $e) {
 });
 ```
 
-### 4. Ensure log directory is writable
+### 3) إعداد `.env` — **مهم لكل مشروع**
+
+```env
+MONITOR_ENABLED=true
+MONITOR_PROJECT_NAME="اسم المشروع الفريد"
+MONITOR_CORS_ORIGIN=*
+
+# Laravel logs في API
+MONITOR_LARAVEL_LOG_ENABLED=true
+MONITOR_LARAVEL_LOG_PATTERNS=laravel.log,laravel-*.log
+MONITOR_LARAVEL_LOG_IN_OVERVIEW=true
+
+# اختياري — حماية لاحقاً
+MONITOR_API_MIDDLEWARE=
+```
+
+> `MONITOR_PROJECT_NAME` يميّز كل نظام في اللوحة المركزية.
+
+### 4) صلاحيات المجلدات
 
 ```bash
 mkdir -p storage/logs/monitor
-chmod -R 775 storage/logs/monitor
+chmod -R 775 storage/logs storage/logs/monitor
 ```
 
-### 5. Run tests
+### 5) اختبار
 
 ```bash
 php artisan test tests/Unit/Monitor tests/Feature/Monitor
+curl http://localhost/monitor/api/overview
+curl "http://localhost/monitor/api/laravel-logs?level=ERROR&limit=10"
 ```
 
-## Security Notes
+---
 
-- API is **public by default** for multi-system central monitoring
-- Restrict access at network level (VPN, firewall, internal IPs) in production
-- Set `MONITOR_CORS_ORIGIN` to your central dashboard domain if needed
-- Logs stay under `storage/` (never in public web root)
-- Monitoring fails silently — never breaks requests
+## تخصيص مرن
 
-## Log Format
+كل شيء عبر `config/monitor.php` أو `.env` — **لا حاجة لتعديل الكود** في أغلب الحالات.
 
-Daily file: `storage/logs/monitor/YYYY-MM-DD.log`  
-Alerts: `storage/logs/monitor/alerts.log`
+| الإعداد | الغرض |
+|---------|--------|
+| `MONITOR_PROJECT_NAME` | اسم النظام في API المركزي |
+| `MONITOR_CORS_ORIGIN` | CORS للوحة المركزية |
+| `MONITOR_API_MIDDLEWARE` | middleware مفصول بفاصلة (مثلاً `throttle:60,1`) |
+| `MONITOR_LARAVEL_LOG_PATH` | مسار اللوغات (افتراضي `storage/logs`) |
+| `MONITOR_LARAVEL_LOG_PATTERNS` | ملفات مسموحة: `laravel.log,laravel-*.log` |
+| `MONITOR_IGNORE_ROUTES` | في config — مسارات لا تُسجّل |
+| `MONITOR_RETENTION_DAYS` | حذف JSONL القديم |
 
-Record types: `request`, `exception`, `queue`, `queue_failed`, `schedule`, `alert`
+### إذا المشروع يستخدم `type_id` للأدمن
 
-## Maintenance
+اترك `MONITOR_API_MIDDLEWARE` فارغاً للوصول العام، أو أضف middleware مخصص لاحقاً.
+
+### إذا تريد حماية API
+
+```env
+MONITOR_API_MIDDLEWARE=throttle:120,1
+# أو middleware مخصص من مشروعك
+```
+
+---
+
+## بنية الملفات
+
+```
+app/Monitor/
+  Console/CleanMonitorLogsCommand.php
+  Http/Controllers/MonitorApiController.php
+  Http/Controllers/DashboardController.php
+  Http/Middleware/MonitorRequests.php
+  Listeners/...
+  Providers/MonitorServiceProvider.php
+  Services/
+    JsonLineWriter.php
+    LogReader.php
+    LaravelLogReader.php      ← Laravel log parser
+    MetricsAggregator.php
+    DbStatusService.php
+    ...
+config/monitor.php
+resources/views/monitor/dashboard.blade.php
+storage/logs/monitor/         ← JSONL telemetry
+storage/logs/laravel*.log       ← يُقرأ عبر API
+```
+
+---
+
+## صيانة
 
 ```bash
 php artisan monitor:clean
 php artisan monitor:clean --days=14
 ```
+
+---
+
+## أمان
+
+- API **عام افتراضياً** لتسهيل الربط المركزي
+- قيّد الوصول عبر VPN / firewall / IP داخلي في الإنتاج
+- Laravel logs قد تحتوي بيانات حساسة — لا تعرّضها للإنترنت العام
+- المسارات محمية من path traversal — فقط ملفات داخل `MONITOR_LARAVEL_LOG_PATH`
+
+---
+
+## استخراج كـ Composer Package (لاحقاً)
+
+1. انقل `app/Monitor` → `packages/monitoring/src`
+2. أضف `composer.json` مع PSR-4 + `extra.laravel.providers`
+3. انشر `config/monitor.php` و `dashboard.blade.php`
+4. غيّر namespace إن رغبت (`Vendor\Monitoring`)
+
+البنية الحالية جاهزة لهذا الانتقال بأقل تغيير.

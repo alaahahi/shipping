@@ -25,6 +25,8 @@ return [
         'monitor.api.logs',
         'monitor.api.dates',
         'monitor.api.overview',
+        'monitor.api.laravel-logs',
+        'monitor.api.laravel-log-files',
     ],
 
     'ignore_path_prefixes' => [
@@ -56,5 +58,24 @@ return [
     'status_middleware' => array_filter(explode(',', env('MONITOR_STATUS_MIDDLEWARE', ''))),
 
     'snapshot_db_every_request' => env('MONITOR_DB_SNAPSHOT', true),
+
+  /*
+    |--------------------------------------------------------------------------
+    | Laravel application logs (storage/logs/laravel*.log)
+    |--------------------------------------------------------------------------
+    */
+    'laravel_log' => [
+        'enabled' => env('MONITOR_LARAVEL_LOG_ENABLED', true),
+        'path' => env('MONITOR_LARAVEL_LOG_PATH', storage_path('logs')),
+        'patterns' => array_filter(array_map('trim', explode(',', env(
+            'MONITOR_LARAVEL_LOG_PATTERNS',
+            'laravel.log,laravel-*.log'
+        )))),
+        'default_limit' => (int) env('MONITOR_LARAVEL_LOG_LIMIT', 100),
+        'max_limit' => (int) env('MONITOR_LARAVEL_LOG_MAX_LIMIT', 500),
+        'max_read_bytes' => (int) env('MONITOR_LARAVEL_LOG_MAX_BYTES', 2097152),
+        'include_in_overview' => env('MONITOR_LARAVEL_LOG_IN_OVERVIEW', true),
+        'overview_limit' => (int) env('MONITOR_LARAVEL_LOG_OVERVIEW_LIMIT', 30),
+    ],
 
 ];

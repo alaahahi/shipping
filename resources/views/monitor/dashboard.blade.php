@@ -24,6 +24,10 @@
         a { color: #38bdf8; }
         .error { color: #f87171; }
         .loading { color: #94a3b8; }
+        .level-ERROR, .level-CRITICAL, .level-ALERT, .level-EMERGENCY { color: #f87171; font-weight: 700; }
+        .level-WARNING { color: #fbbf24; }
+        .level-INFO { color: #38bdf8; }
+        .level-DEBUG { color: #94a3b8; }
         @media (max-width: 900px) { .charts { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -37,7 +41,7 @@
         <select id="date"></select>
         <button type="button" id="refresh">تحديث</button>
         <a href="{{ $apiBase }}/overview" target="_blank">API Overview</a>
-        <a href="{{ $apiBase }}/status" target="_blank">API Status</a>
+        <a href="{{ $apiBase }}/laravel-logs" target="_blank">Laravel Logs API</a>
         <span id="meta" class="muted"></span>
     </div>
     <p id="status-msg" class="loading">جاري التحميل...</p>
@@ -73,6 +77,24 @@
     <div class="panel">
         <h2>استثناءات قاعدة البيانات</h2>
         <div id="exceptions-table"></div>
+    </div>
+
+    <div class="panel">
+        <h2>Laravel Log</h2>
+        <div class="filter">
+            <label for="laravel-file">الملف:</label>
+            <select id="laravel-file"></select>
+            <label for="laravel-level">المستوى:</label>
+            <select id="laravel-level">
+                <option value="">الكل</option>
+                <option value="ERROR">ERROR</option>
+                <option value="WARNING">WARNING</option>
+                <option value="INFO">INFO</option>
+                <option value="DEBUG">DEBUG</option>
+            </select>
+            <button type="button" id="laravel-refresh">تحديث اللوغ</button>
+        </div>
+        <div id="laravel-logs-table"></div>
     </div>
 </div>
 
@@ -172,6 +194,52 @@ function fillDateSelect(dates, selected) {
     select.innerHTML = list.map(d => `<option value="${esc(d)}" ${d === selected ? 'selected' : ''}>${esc(d)}</option>`).join('');
 }
 
+function fillLaravelFileSelect(files, selected) {
+    const select = document.getElementById('laravel-file');
+    const list = files?.length ? files : [];
+    if (!list.length) {
+        select.innerHTML = `<option value="laravel.log">laravel.log</option>`;
+        return;
+    }
+    select.innerHTML = list.map(f => {
+        const name = f.file || f;
+        return `<option value="${esc(name)}" ${name === selected ? 'selected' : ''}>${esc(name)}</option>`;
+    }).join('');
+}
+
+function renderLaravelLogs(laravelLogs) {
+    const files = laravelLogs?.available_files || [];
+    fillLaravelFileSelect(files, laravelLogs?.file);
+
+    const rows = laravelLogs?.recent || [];
+    document.getElementById('laravel-logs-table').innerHTML = tableHtml([
+        { label: 'الوقت', key: 'timestamp' },
+        { label: 'المستوى', value: r => r.level || '-' },
+        { label: 'القناة', key: 'channel' },
+        { label: 'الرسالة', value: r => (r.message || '').slice(0, 300) },
+    ], rows, 'لا يوجد Laravel log');
+}
+
+async function loadLaravelLogs() {
+    const file = document.getElementById('laravel-file').value;
+    const level = document.getElementById('laravel-level').value;
+    const params = new URLSearchParams({ file, limit: '100' });
+    if (level) params.set('level', level);
+
+    try {
+        const response = await fetch(`${API_BASE}/laravel-logs?${params}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        renderLaravelLogs({
+            file: data.file,
+            available_files: (await (await fetch(`${API_BASE}/laravel-log-files`)).json()).files,
+            recent: data.entries,
+        });
+    } catch (error) {
+        document.getElementById('laravel-logs-table').innerHTML = `<p class="error">${esc(error.message)}</p>`;
+    }
+}
+
 async function loadOverview(date) {
     const statusEl = document.getElementById('status-msg');
     statusEl.textContent = 'جاري التحميل...';
@@ -190,6 +258,7 @@ async function loadOverview(date) {
         renderSummary(data.metrics?.summary, data.status);
         renderCharts(data.metrics);
         renderTables(data.metrics, data.alerts);
+        renderLaravelLogs(data.laravel_logs);
 
         statusEl.textContent = '';
     } catch (error) {
@@ -200,6 +269,8 @@ async function loadOverview(date) {
 
 document.getElementById('date').addEventListener('change', (e) => loadOverview(e.target.value));
 document.getElementById('refresh').addEventListener('click', () => loadOverview(document.getElementById('date').value));
+document.getElementById('laravel-refresh').addEventListener('click', loadLaravelLogs);
+document.getElementById('laravel-level').addEventListener('change', loadLaravelLogs);
 
 loadOverview(new Date().toISOString().slice(0, 10));
 </script>

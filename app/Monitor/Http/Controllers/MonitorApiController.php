@@ -4,6 +4,7 @@ namespace App\Monitor\Http\Controllers;
 
 use App\Monitor\Http\Controllers\Concerns\RespondsWithMonitorApi;
 use App\Monitor\Services\DbStatusService;
+use App\Monitor\Services\LaravelLogReader;
 use App\Monitor\Services\LogReader;
 use App\Monitor\Services\MetricsAggregator;
 use Illuminate\Http\JsonResponse;
@@ -102,7 +103,8 @@ class MonitorApiController
         Request $request,
         DbStatusService $dbStatus,
         LogReader $reader,
-        MetricsAggregator $aggregator
+        MetricsAggregator $aggregator,
+        LaravelLogReader $laravelLogs
     ): JsonResponse {
         $date = $request->query('date', now()->format('Y-m-d'));
         $records = $reader->readDailyLog($date);
@@ -111,7 +113,7 @@ class MonitorApiController
         $alertLimit = min((int) $request->query('alert_limit', 50), 200);
         $alerts = array_slice(array_reverse($reader->readAlerts()), 0, $alertLimit);
 
-        return $this->monitorJson([
+        $payload = [
             'date' => $date,
             'available_dates' => array_map(
                 fn ($file) => str_replace('.log', '', $file),
@@ -128,6 +130,33 @@ class MonitorApiController
             ],
             'metrics' => $metrics,
             'alerts' => $alerts,
+        ];
+
+        if (config('monitor.laravel_log.include_in_overview', true)) {
+            $payload['laravel_logs'] = $laravelLogs->summary(
+                (int) config('monitor.laravel_log.overview_limit', 30)
+            );
+        }
+
+        return $this->monitorJson($payload);
+    }
+
+    public function laravelLogFiles(LaravelLogReader $reader): JsonResponse
+    {
+        return $this->monitorJson([
+            'files' => $reader->listFiles(),
         ]);
+    }
+
+    public function laravelLogs(Request $request, LaravelLogReader $reader): JsonResponse
+    {
+        $result = $reader->readEntries([
+            'file' => $request->query('file'),
+            'level' => $request->query('level'),
+            'search' => $request->query('search'),
+            'limit' => $request->query('limit'),
+        ]);
+
+        return $this->monitorJson($result);
     }
 }

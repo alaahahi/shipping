@@ -11,6 +11,7 @@ use App\Monitor\Services\AlertEvaluator;
 use App\Monitor\Services\DbStatusService;
 use App\Monitor\Services\ExceptionMonitor;
 use App\Monitor\Services\JsonLineWriter;
+use App\Monitor\Services\LaravelLogReader;
 use App\Monitor\Services\LogReader;
 use App\Monitor\Services\LogRetentionService;
 use App\Monitor\Services\MetricsAggregator;
@@ -38,6 +39,7 @@ class MonitorServiceProvider extends ServiceProvider
         $this->app->singleton(DbStatusService::class);
         $this->app->singleton(AlertEvaluator::class);
         $this->app->singleton(LogReader::class);
+        $this->app->singleton(LaravelLogReader::class);
         $this->app->singleton(MetricsAggregator::class);
         $this->app->singleton(LogRetentionService::class);
         $this->app->singleton(ExceptionMonitor::class);
@@ -84,6 +86,10 @@ class MonitorServiceProvider extends ServiceProvider
                     ->name('monitor.api.dates');
                 Route::get('/overview', [\App\Monitor\Http\Controllers\MonitorApiController::class, 'overview'])
                     ->name('monitor.api.overview');
+                Route::get('/laravel-logs', [\App\Monitor\Http\Controllers\MonitorApiController::class, 'laravelLogs'])
+                    ->name('monitor.api.laravel-logs');
+                Route::get('/laravel-log-files', [\App\Monitor\Http\Controllers\MonitorApiController::class, 'laravelLogFiles'])
+                    ->name('monitor.api.laravel-log-files');
             });
 
         Route::middleware($statusMiddleware)

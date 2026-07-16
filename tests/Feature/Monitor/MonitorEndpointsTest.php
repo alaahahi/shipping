@@ -104,4 +104,28 @@ class MonitorEndpointsTest extends TestCase
             ->assertOk()
             ->assertSee('كل البيانات تُقرأ من API', false);
     }
+
+    public function test_laravel_logs_api_returns_parsed_entries(): void
+    {
+        $laravelDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'monitor-laravel-api-' . uniqid();
+        mkdir($laravelDir, 0755, true);
+        config(['monitor.laravel_log.path' => $laravelDir]);
+
+        file_put_contents(
+            $laravelDir . DIRECTORY_SEPARATOR . 'laravel.log',
+            "[2026-07-16 12:00:00] local.ERROR: Central hub test\n"
+        );
+
+        $this->getJson('/monitor/api/laravel-logs?file=laravel.log')
+            ->assertOk()
+            ->assertJsonPath('entries.0.level', 'ERROR')
+            ->assertJsonPath('entries.0.message', 'Central hub test');
+
+        $this->getJson('/monitor/api/laravel-log-files')
+            ->assertOk()
+            ->assertJsonStructure(['files' => [['file', 'size', 'modified']]]);
+
+        array_map('unlink', glob($laravelDir . '/*') ?: []);
+        rmdir($laravelDir);
+    }
 }
