@@ -119,7 +119,7 @@ class UserController extends Controller
         
         // تحسين مفتاح الكاش - إزالة الصفحة من المفتاح لتجنب التكرار
         $cacheKey = 'clients_fast_' . md5($q . $owner_id . $userClient . $from . $to);
-        $cacheDuration = 600; // زيادة مدة الكاش إلى 10 دقائق
+        $cacheDuration = 3600; // كاش ساعة واحدة
 
         // استخدام الكاش مع استعلام محسن
         $query = Cache::remember($cacheKey, $cacheDuration, function () use ($owner_id, $userClient, $q, $from, $to) {
