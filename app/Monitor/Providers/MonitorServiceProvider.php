@@ -65,11 +65,32 @@ class MonitorServiceProvider extends ServiceProvider
 
     protected function registerRoutes(): void
     {
-        Route::middleware(config('monitor.status_middleware', ['web', 'auth', 'monitor.admin']))
-            ->get('/monitor/status', \App\Monitor\Http\Controllers\StatusController::class)
+        $apiMiddleware = config('monitor.api_middleware', []);
+        $statusMiddleware = config('monitor.status_middleware', []);
+        $dashboardMiddleware = config('monitor.dashboard_middleware', []);
+
+        Route::middleware($apiMiddleware)
+            ->prefix('monitor/api')
+            ->group(function () {
+                Route::get('/status', [\App\Monitor\Http\Controllers\MonitorApiController::class, 'status'])
+                    ->name('monitor.api.status');
+                Route::get('/metrics', [\App\Monitor\Http\Controllers\MonitorApiController::class, 'metrics'])
+                    ->name('monitor.api.metrics');
+                Route::get('/alerts', [\App\Monitor\Http\Controllers\MonitorApiController::class, 'alerts'])
+                    ->name('monitor.api.alerts');
+                Route::get('/logs', [\App\Monitor\Http\Controllers\MonitorApiController::class, 'logs'])
+                    ->name('monitor.api.logs');
+                Route::get('/dates', [\App\Monitor\Http\Controllers\MonitorApiController::class, 'dates'])
+                    ->name('monitor.api.dates');
+                Route::get('/overview', [\App\Monitor\Http\Controllers\MonitorApiController::class, 'overview'])
+                    ->name('monitor.api.overview');
+            });
+
+        Route::middleware($statusMiddleware)
+            ->get('/monitor/status', [\App\Monitor\Http\Controllers\MonitorApiController::class, 'status'])
             ->name('monitor.status');
 
-        Route::middleware(config('monitor.dashboard_middleware', ['web', 'auth', 'monitor.admin']))
+        Route::middleware($dashboardMiddleware)
             ->get('/monitor/dashboard', \App\Monitor\Http\Controllers\DashboardController::class)
             ->name('monitor.dashboard');
     }

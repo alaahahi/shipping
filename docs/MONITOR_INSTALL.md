@@ -4,17 +4,67 @@ This monitoring module lives under `app/Monitor` and writes telemetry to JSONL f
 
 Compatible with **Laravel 9+** and **PHP 8.0+**.
 
+Designed for **central monitoring**: each Laravel app exposes a public JSON API. A central dashboard can poll all systems and aggregate results.
+
 ## What It Provides
 
 - Per-request logging (duration, memory, queries, optional DB snapshot)
 - Exception logging for SQL/connection failures
 - Queue and console/scheduler job logging
 - Threshold-based alerts (`alerts.log`)
-- `GET /monitor/status` — JSON health snapshot
-- `GET /monitor/dashboard` — Blade dashboard (Chart.js, log files only)
+- **Public JSON API** (no auth by default) for central hub integration
+- `GET /monitor/dashboard` — optional HTML UI that loads data **only from API**
 - `php artisan monitor:clean` — retention cleanup
 
-## Files To Copy
+## API Endpoints (no authentication)
+
+All responses include: `project`, `hostname`, `environment`, `server_time`.
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /monitor/api/overview?date=YYYY-MM-DD` | **Main endpoint** — status + metrics + alerts + dates |
+| `GET /monitor/api/status` | Live DB/memory snapshot |
+| `GET /monitor/api/metrics?date=YYYY-MM-DD` | Aggregated metrics from log files |
+| `GET /monitor/api/alerts?limit=100` | Alert records |
+| `GET /monitor/api/logs?date=&type=&limit=500` | Raw JSONL records (filter by type) |
+| `GET /monitor/api/dates` | Available log dates |
+| `GET /monitor/status` | Alias of API status (backward compatible) |
+
+### Central hub polling example
+
+```javascript
+const systems = [
+  'https://shipping.example.com/monitor/api/overview',
+  'https://erp2.example.com/monitor/api/overview',
+];
+
+const results = await Promise.all(systems.map(url => fetch(url).then(r => r.json())));
+```
+
+Each system should set a unique `MONITOR_PROJECT_NAME` in `.env`.
+
+## Environment Variables
+
+```env
+MONITOR_ENABLED=true
+MONITOR_PROJECT_NAME="Shipping ERP"
+MONITOR_SLOW_QUERY_MS=500
+MONITOR_SLOW_REQUEST_MS=2000
+MONITOR_RETENTION_DAYS=30
+MONITOR_CORS_ORIGIN=*
+```
+
+Optional middleware (comma-separated), default empty = fully public:
+
+```env
+MONITOR_API_MIDDLEWARE=
+MONITOR_DASHBOARD_MIDDLEWARE=
+MONITOR_STATUS_MIDDLEWARE=
+```
+
+## Install In Another Laravel Project
+
+### 1. Copy module files
 
 ```
 app/Monitor/
@@ -23,38 +73,15 @@ resources/views/monitor/dashboard.blade.php
 docs/MONITOR_INSTALL.md
 ```
 
-Optional tests:
-
-```
-tests/Unit/Monitor/
-tests/Feature/Monitor/
-```
-
-## Install In Another Laravel Project
-
-### 1. Copy module files
-
-Copy the directories/files listed above into the target project.
-
 ### 2. Register the service provider
 
-In `config/app.php` providers array:
+In `config/app.php`:
 
 ```php
 App\Monitor\Providers\MonitorServiceProvider::class,
 ```
 
-(Laravel 11+: register in `bootstrap/providers.php`.)
-
-### 3. Publish config (optional)
-
-```bash
-php artisan vendor:publish --tag=monitor-config
-```
-
-Or keep `config/monitor.php` as committed project config.
-
-### 4. Wire exception reporting
+### 3. Wire exception reporting
 
 In `app/Exceptions/Handler.php` inside `register()`:
 
@@ -66,58 +93,33 @@ $this->reportable(function (Throwable $e) {
 });
 ```
 
-### 5. Configure access control
-
-Edit `config/monitor.php`:
-
-- `admin_type_ids` — user `type_id` values allowed to open dashboard/status
-- `dashboard_middleware` / `status_middleware` — default: `web`, `auth`, `monitor.admin`
-
-Adjust `MonitorAdmin` middleware if your app uses roles/permissions instead of `type_id`.
-
-### 6. Environment variables
-
-```env
-MONITOR_ENABLED=true
-MONITOR_PROJECT_NAME="My App"
-MONITOR_SLOW_QUERY_MS=500
-MONITOR_SLOW_REQUEST_MS=2000
-MONITOR_RETENTION_DAYS=30
-MONITOR_ADMIN_TYPES=1
-```
-
-### 7. Ensure log directory is writable
+### 4. Ensure log directory is writable
 
 ```bash
 mkdir -p storage/logs/monitor
 chmod -R 775 storage/logs/monitor
 ```
 
-### 8. Run tests (optional)
+### 5. Run tests
 
 ```bash
-php artisan test --filter=Monitor
+php artisan test tests/Unit/Monitor tests/Feature/Monitor
 ```
 
-## Routes
+## Security Notes
 
-| Route | Description |
-|-------|-------------|
-| `/monitor/status` | JSON DB/memory snapshot |
-| `/monitor/dashboard` | HTML dashboard from log files |
-
-Monitor routes are ignored from request logging via `ignore_routes` config.
+- API is **public by default** for multi-system central monitoring
+- Restrict access at network level (VPN, firewall, internal IPs) in production
+- Set `MONITOR_CORS_ORIGIN` to your central dashboard domain if needed
+- Logs stay under `storage/` (never in public web root)
+- Monitoring fails silently — never breaks requests
 
 ## Log Format
 
 Daily file: `storage/logs/monitor/YYYY-MM-DD.log`  
 Alerts: `storage/logs/monitor/alerts.log`
 
-Each line is JSON with fields such as:
-
-- `type`: `request`, `exception`, `queue`, `queue_failed`, `schedule`, `alert`
-- `timestamp`, `project`, `hostname`, `environment`
-- Type-specific payload (URL, queries, DB stats, etc.)
+Record types: `request`, `exception`, `queue`, `queue_failed`, `schedule`, `alert`
 
 ## Maintenance
 
@@ -125,20 +127,3 @@ Each line is JSON with fields such as:
 php artisan monitor:clean
 php artisan monitor:clean --days=14
 ```
-
-Retention also runs opportunistically once per day via cache key `monitor:last_retention_cleanup`.
-
-## Extracting To A Composer Package Later
-
-1. Move `app/Monitor` → `packages/monitoring/src`
-2. Namespace stays `App\Monitor` or rename to `Vendor\Monitoring`
-3. Add `composer.json` with PSR-4 autoload + `extra.laravel.providers`
-4. Publish config/views via package service provider
-
-The current layout is intentionally package-friendly.
-
-## Security Notes
-
-- Logs stay under `storage/` (never public)
-- Protect dashboard/status with auth + admin middleware
-- Monitoring fails silently — never breaks requests

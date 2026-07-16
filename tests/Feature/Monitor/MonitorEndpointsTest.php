@@ -2,70 +2,106 @@
 
 namespace Tests\Feature\Monitor;
 
-use App\Models\User;
+use App\Monitor\Services\JsonLineWriter;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
 
 class MonitorEndpointsTest extends TestCase
 {
-    protected function makeAdminUser(): User
+    protected string $logPath;
+
+    protected function setUp(): void
     {
-        $user = new User([
-            'name' => 'Monitor Admin',
-            'email' => 'monitor-admin@example.com',
-            'type_id' => 1,
+        parent::setUp();
+
+        $this->logPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'monitor-api-' . uniqid();
+        config([
+            'monitor.enabled' => true,
+            'monitor.log_path' => $this->logPath,
+            'monitor.api_middleware' => [],
+            'monitor.dashboard_middleware' => [],
+            'monitor.status_middleware' => [],
         ]);
-        $user->id = 999001;
-
-        return $user;
     }
 
-    public function test_status_endpoint_requires_admin(): void
+    protected function tearDown(): void
     {
-        $this->get('/monitor/status')->assertRedirect();
+        if (File::isDirectory($this->logPath)) {
+            File::deleteDirectory($this->logPath);
+        }
+
+        parent::tearDown();
     }
 
-    public function test_dashboard_endpoint_requires_admin(): void
+    public function test_status_endpoint_is_public(): void
     {
-        $this->get('/monitor/dashboard')->assertRedirect();
-    }
-
-    public function test_status_endpoint_returns_json_for_admin(): void
-    {
-        $response = $this->actingAs($this->makeAdminUser())
-            ->getJson('/monitor/status');
-
-        $response->assertOk()
+        $this->getJson('/monitor/status')
+            ->assertOk()
             ->assertJsonStructure([
                 'project',
-                'database',
-                'threads_connected',
-                'threads_running',
-                'connections',
-                'max_used_connections',
-                'memory',
-                'uptime',
+                'hostname',
+                'environment',
+                'server_time',
+                'status' => [
+                    'threads_connected',
+                    'memory',
+                ],
             ]);
     }
 
-    public function test_dashboard_renders_for_admin(): void
+    public function test_api_status_endpoint_is_public(): void
     {
-        config(['monitor.log_path' => storage_path('logs/monitor')]);
-
-        $response = $this->actingAs($this->makeAdminUser())
-            ->get('/monitor/dashboard');
-
-        $response->assertOk()
-            ->assertSee('مراقبة النظام', false);
+        $this->getJson('/monitor/api/status')->assertOk();
     }
 
-    public function test_non_admin_is_denied(): void
+    public function test_api_overview_returns_metrics_from_logs(): void
     {
-        $user = $this->makeAdminUser();
-        $user->type_id = 99;
+        $writer = app(JsonLineWriter::class);
+        $writer->appendDaily([
+            'type' => 'request',
+            'url' => '/test',
+            'execution_time_ms' => 120,
+            'status' => 200,
+            'peak_memory' => 1048576,
+            'database' => ['threads_connected' => 5],
+            'queries' => ['slow_queries' => []],
+        ]);
 
-        $this->actingAs($user)
-            ->get('/monitor/dashboard')
-            ->assertForbidden();
+        $this->getJson('/monitor/api/overview?date=' . now()->format('Y-m-d'))
+            ->assertOk()
+            ->assertJsonPath('metrics.summary.total_requests', 1)
+            ->assertJsonStructure([
+                'project',
+                'date',
+                'available_dates',
+                'status',
+                'metrics',
+                'alerts',
+            ]);
+    }
+
+    public function test_api_metrics_endpoint(): void
+    {
+        $this->getJson('/monitor/api/metrics?date=' . now()->format('Y-m-d'))
+            ->assertOk()
+            ->assertJsonStructure(['metrics' => ['summary']]);
+    }
+
+    public function test_api_alerts_and_logs_endpoints(): void
+    {
+        $writer = app(JsonLineWriter::class);
+        $writer->appendAlert(['metric' => 'memory_mb', 'value' => 200, 'threshold' => 128]);
+        $writer->appendDaily(['type' => 'exception', 'message' => 'db error']);
+
+        $this->getJson('/monitor/api/alerts')->assertOk()->assertJsonPath('count', 1);
+        $this->getJson('/monitor/api/logs?type=exception')->assertOk()->assertJsonPath('total', 1);
+        $this->getJson('/monitor/api/dates')->assertOk()->assertJsonStructure(['dates']);
+    }
+
+    public function test_dashboard_renders_without_auth(): void
+    {
+        $this->get('/monitor/dashboard')
+            ->assertOk()
+            ->assertSee('كل البيانات تُقرأ من API', false);
     }
 }

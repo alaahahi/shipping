@@ -19,41 +19,30 @@
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { border-bottom: 1px solid #334155; padding: 8px; text-align: right; vertical-align: top; }
         th { color: #94a3b8; }
-        .filter { margin-bottom: 16px; }
-        select, button { background: #334155; color: #fff; border: 0; padding: 8px 12px; border-radius: 8px; }
+        .filter { margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        select, button { background: #334155; color: #fff; border: 0; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
         a { color: #38bdf8; }
+        .error { color: #f87171; }
+        .loading { color: #94a3b8; }
         @media (max-width: 900px) { .charts { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>مراقبة النظام — {{ $project }}</h1>
-    <p class="muted">قراءة فقط من ملفات JSONL — بدون قاعدة بيانات</p>
+    <h1>مراقبة النظام — <span id="project-name">{{ $project }}</span></h1>
+    <p class="muted">كل البيانات تُقرأ من API — جاهز للربط مع نظام مركزي</p>
 
-    <form class="filter" method="get">
+    <div class="filter">
         <label for="date">التاريخ:</label>
-        <select name="date" id="date" onchange="this.form.submit()">
-            @foreach($availableDates as $file)
-                @php $d = str_replace('.log', '', $file); @endphp
-                <option value="{{ $d }}" @selected($date === $d)>{{ $d }}</option>
-            @endforeach
-            @if(empty($availableDates))
-                <option value="{{ $date }}" selected>{{ $date }}</option>
-            @endif
-        </select>
-        <a href="{{ route('monitor.status') }}" style="margin-right:12px;">JSON Status</a>
-    </form>
-
-    <div class="grid">
-        <div class="card"><h3>اتصالات MySQL الحالية</h3><div class="value">{{ $metrics['summary']['threads_connected'] ?? 0 }}</div></div>
-        <div class="card"><h3>أقصى اتصالات اليوم</h3><div class="value">{{ $metrics['summary']['max_connections_today'] ?? 0 }}</div></div>
-        <div class="card"><h3>عدد الطلبات</h3><div class="value">{{ $metrics['summary']['total_requests'] ?? 0 }}</div></div>
-        <div class="card"><h3>متوسط الاستجابة (ms)</h3><div class="value">{{ $metrics['summary']['avg_response_ms'] ?? 0 }}</div></div>
-        <div class="card"><h3>طلبات بطيئة</h3><div class="value">{{ $metrics['summary']['slow_requests_count'] ?? 0 }}</div></div>
-        <div class="card"><h3>طلبات فاشلة</h3><div class="value">{{ $metrics['summary']['failed_requests_count'] ?? 0 }}</div></div>
-        <div class="card"><h3>استثناءات SQL</h3><div class="value">{{ $metrics['summary']['exceptions_count'] ?? 0 }}</div></div>
-        <div class="card"><h3>Queue Jobs</h3><div class="value">{{ $metrics['summary']['queue_jobs_count'] ?? 0 }}</div></div>
+        <select id="date"></select>
+        <button type="button" id="refresh">تحديث</button>
+        <a href="{{ $apiBase }}/overview" target="_blank">API Overview</a>
+        <a href="{{ $apiBase }}/status" target="_blank">API Status</a>
+        <span id="meta" class="muted"></span>
     </div>
+    <p id="status-msg" class="loading">جاري التحميل...</p>
+
+    <div class="grid" id="summary-cards"></div>
 
     <div class="charts">
         <div class="panel">
@@ -68,96 +57,151 @@
 
     <div class="panel">
         <h2>تنبيهات</h2>
-        <table>
-            <thead><tr><th>الوقت</th><th>المقياس</th><th>القيمة</th><th>الحد</th><th>المصدر</th></tr></thead>
-            <tbody>
-            @forelse($alerts as $alert)
-                <tr>
-                    <td>{{ $alert['timestamp'] ?? '-' }}</td>
-                    <td>{{ $alert['metric'] ?? '-' }}</td>
-                    <td>{{ $alert['value'] ?? '-' }}</td>
-                    <td>{{ $alert['threshold'] ?? '-' }}</td>
-                    <td>{{ $alert['url'] ?? $alert['route'] ?? '-' }}</td>
-                </tr>
-            @empty
-                <tr><td colspan="5">لا توجد تنبيهات</td></tr>
-            @endforelse
-            </tbody>
-        </table>
+        <div id="alerts-table"></div>
     </div>
 
     <div class="panel">
         <h2>طلبات بطيئة</h2>
-        <table>
-            <thead><tr><th>الوقت</th><th>المسار</th><th>المدة ms</th><th>الحالة</th><th>Threads</th></tr></thead>
-            <tbody>
-            @forelse($metrics['slow_requests'] as $row)
-                <tr>
-                    <td>{{ $row['timestamp'] ?? '-' }}</td>
-                    <td>{{ $row['route'] ?? $row['url'] ?? '-' }}</td>
-                    <td>{{ $row['execution_time_ms'] ?? '-' }}</td>
-                    <td>{{ $row['status'] ?? '-' }}</td>
-                    <td>{{ $row['database']['threads_connected'] ?? '-' }}</td>
-                </tr>
-            @empty
-                <tr><td colspan="5">لا يوجد</td></tr>
-            @endforelse
-            </tbody>
-        </table>
+        <div id="slow-requests-table"></div>
     </div>
 
     <div class="panel">
         <h2>استعلامات بطيئة</h2>
-        <table>
-            <thead><tr><th>المسار</th><th>المدة ms</th><th>SQL</th></tr></thead>
-            <tbody>
-            @forelse($metrics['slow_queries'] as $row)
-                <tr>
-                    <td>{{ $row['route'] ?? $row['url'] ?? '-' }}</td>
-                    <td>{{ $row['time_ms'] ?? '-' }}</td>
-                    <td><code>{{ \Illuminate\Support\Str::limit($row['sql'] ?? '', 180) }}</code></td>
-                </tr>
-            @empty
-                <tr><td colspan="3">لا يوجد</td></tr>
-            @endforelse
-            </tbody>
-        </table>
+        <div id="slow-queries-table"></div>
     </div>
 
     <div class="panel">
         <h2>استثناءات قاعدة البيانات</h2>
-        <table>
-            <thead><tr><th>الوقت</th><th>النوع</th><th>الرسالة</th></tr></thead>
-            <tbody>
-            @forelse($metrics['exceptions'] as $row)
-                <tr>
-                    <td>{{ $row['timestamp'] ?? '-' }}</td>
-                    <td>{{ $row['exception_class'] ?? '-' }}</td>
-                    <td>{{ \Illuminate\Support\Str::limit($row['message'] ?? '', 200) }}</td>
-                </tr>
-            @empty
-                <tr><td colspan="3">لا يوجد</td></tr>
-            @endforelse
-            </tbody>
-        </table>
+        <div id="exceptions-table"></div>
     </div>
 </div>
 
 <script>
-const rpm = @json($metrics['requests_per_minute'] ?? ['labels'=>[], 'values'=>[]]);
-const mem = @json($metrics['memory_trend'] ?? ['labels'=>[], 'values'=>[]]);
+const API_BASE = @json($apiBase);
+let rpmChart = null;
+let memoryChart = null;
 
-new Chart(document.getElementById('rpmChart'), {
-    type: 'line',
-    data: { labels: rpm.labels, datasets: [{ label: 'Requests/min', data: rpm.values, borderColor: '#38bdf8', tension: 0.2 }] },
-    options: { plugins: { legend: { labels: { color: '#e2e8f0' } } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } } }
-});
+function esc(value) {
+    return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
-new Chart(document.getElementById('memoryChart'), {
-    type: 'line',
-    data: { labels: mem.labels, datasets: [{ label: 'Peak MB', data: mem.values, borderColor: '#34d399', tension: 0.2 }] },
-    options: { plugins: { legend: { labels: { color: '#e2e8f0' } } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } } }
-});
+function tableHtml(columns, rows, emptyText) {
+    if (!rows || !rows.length) {
+        return `<table><tbody><tr><td>${esc(emptyText)}</td></tr></tbody></table>`;
+    }
+    const head = columns.map(c => `<th>${esc(c.label)}</th>`).join('');
+    const body = rows.map(row => {
+        return '<tr>' + columns.map(c => `<td>${esc(typeof c.value === 'function' ? c.value(row) : row[c.key])}</td>`).join('') + '</tr>';
+    }).join('');
+    return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+}
+
+function renderSummary(summary, status) {
+    const cards = [
+        ['اتصالات MySQL الحالية', status?.threads_connected ?? summary?.threads_connected ?? 0],
+        ['أقصى اتصالات اليوم', summary?.max_connections_today ?? 0],
+        ['عدد الطلبات', summary?.total_requests ?? 0],
+        ['متوسط الاستجابة (ms)', summary?.avg_response_ms ?? 0],
+        ['طلبات بطيئة', summary?.slow_requests_count ?? 0],
+        ['طلبات فاشلة', summary?.failed_requests_count ?? 0],
+        ['استثناءات SQL', summary?.exceptions_count ?? 0],
+        ['Queue Jobs', summary?.queue_jobs_count ?? 0],
+    ];
+    document.getElementById('summary-cards').innerHTML = cards.map(([title, value]) =>
+        `<div class="card"><h3>${esc(title)}</h3><div class="value">${esc(value)}</div></div>`
+    ).join('');
+}
+
+function renderCharts(metrics) {
+    const rpm = metrics?.requests_per_minute ?? { labels: [], values: [] };
+    const mem = metrics?.memory_trend ?? { labels: [], values: [] };
+    const chartOpts = {
+        plugins: { legend: { labels: { color: '#e2e8f0' } } },
+        scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } }
+    };
+
+    if (rpmChart) rpmChart.destroy();
+    if (memoryChart) memoryChart.destroy();
+
+    rpmChart = new Chart(document.getElementById('rpmChart'), {
+        type: 'line',
+        data: { labels: rpm.labels, datasets: [{ label: 'Requests/min', data: rpm.values, borderColor: '#38bdf8', tension: 0.2 }] },
+        options: chartOpts
+    });
+
+    memoryChart = new Chart(document.getElementById('memoryChart'), {
+        type: 'line',
+        data: { labels: mem.labels, datasets: [{ label: 'Peak MB', data: mem.values, borderColor: '#34d399', tension: 0.2 }] },
+        options: chartOpts
+    });
+}
+
+function renderTables(metrics, alerts) {
+    document.getElementById('alerts-table').innerHTML = tableHtml([
+        { label: 'الوقت', key: 'timestamp' },
+        { label: 'المقياس', key: 'metric' },
+        { label: 'القيمة', key: 'value' },
+        { label: 'الحد', key: 'threshold' },
+        { label: 'المصدر', value: r => r.url || r.route || '-' },
+    ], alerts, 'لا توجد تنبيهات');
+
+    document.getElementById('slow-requests-table').innerHTML = tableHtml([
+        { label: 'الوقت', key: 'timestamp' },
+        { label: 'المسار', value: r => r.route || r.url || '-' },
+        { label: 'المدة ms', key: 'execution_time_ms' },
+        { label: 'الحالة', key: 'status' },
+        { label: 'Threads', value: r => r.database?.threads_connected ?? '-' },
+    ], metrics?.slow_requests, 'لا يوجد');
+
+    document.getElementById('slow-queries-table').innerHTML = tableHtml([
+        { label: 'المسار', value: r => r.route || r.url || '-' },
+        { label: 'المدة ms', key: 'time_ms' },
+        { label: 'SQL', value: r => (r.sql || '').slice(0, 180) },
+    ], metrics?.slow_queries, 'لا يوجد');
+
+    document.getElementById('exceptions-table').innerHTML = tableHtml([
+        { label: 'الوقت', key: 'timestamp' },
+        { label: 'النوع', key: 'exception_class' },
+        { label: 'الرسالة', value: r => (r.message || '').slice(0, 200) },
+    ], metrics?.exceptions, 'لا يوجد');
+}
+
+function fillDateSelect(dates, selected) {
+    const select = document.getElementById('date');
+    const list = dates?.length ? dates : [selected];
+    select.innerHTML = list.map(d => `<option value="${esc(d)}" ${d === selected ? 'selected' : ''}>${esc(d)}</option>`).join('');
+}
+
+async function loadOverview(date) {
+    const statusEl = document.getElementById('status-msg');
+    statusEl.textContent = 'جاري التحميل...';
+    statusEl.className = 'loading';
+
+    try {
+        const url = `${API_BASE}/overview?date=${encodeURIComponent(date || '')}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+
+        document.getElementById('project-name').textContent = data.project || @json($project);
+        document.getElementById('meta').textContent = `${data.hostname || ''} | ${data.environment || ''} | ${data.server_time || ''}`;
+
+        fillDateSelect(data.available_dates, data.date);
+        renderSummary(data.metrics?.summary, data.status);
+        renderCharts(data.metrics);
+        renderTables(data.metrics, data.alerts);
+
+        statusEl.textContent = '';
+    } catch (error) {
+        statusEl.textContent = 'فشل تحميل البيانات من API: ' + error.message;
+        statusEl.className = 'error';
+    }
+}
+
+document.getElementById('date').addEventListener('change', (e) => loadOverview(e.target.value));
+document.getElementById('refresh').addEventListener('click', () => loadOverview(document.getElementById('date').value));
+
+loadOverview(new Date().toISOString().slice(0, 10));
 </script>
 </body>
 </html>

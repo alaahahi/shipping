@@ -19,11 +19,18 @@ return [
     'ignore_routes' => [
         'monitor.dashboard',
         'monitor.status',
+        'monitor.api.status',
+        'monitor.api.metrics',
+        'monitor.api.alerts',
+        'monitor.api.logs',
+        'monitor.api.dates',
+        'monitor.api.overview',
     ],
 
     'ignore_path_prefixes' => [
         '_debugbar',
         'livewire',
+        'monitor',
     ],
 
     'ignore_commands' => [
@@ -40,10 +47,13 @@ return [
 
     'retention_days' => (int) env('MONITOR_RETENTION_DAYS', 30),
 
-    'admin_type_ids' => array_filter(array_map('intval', explode(',', env('MONITOR_ADMIN_TYPES', '1')))),
+    // Public API — no auth. Restrict via firewall/VPN or set MONITOR_CORS_ORIGIN in production.
+    'cors_origin' => env('MONITOR_CORS_ORIGIN', '*'),
 
-    'dashboard_middleware' => ['web', 'auth', 'monitor.admin'],
-    'status_middleware' => ['web', 'auth', 'monitor.admin'],
+    'api_middleware' => array_filter(explode(',', env('MONITOR_API_MIDDLEWARE', ''))),
+
+    'dashboard_middleware' => array_filter(explode(',', env('MONITOR_DASHBOARD_MIDDLEWARE', ''))),
+    'status_middleware' => array_filter(explode(',', env('MONITOR_STATUS_MIDDLEWARE', ''))),
 
     'snapshot_db_every_request' => env('MONITOR_DB_SNAPSHOT', true),
 

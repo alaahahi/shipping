@@ -91,7 +91,8 @@ class MonitorRequests
 
         $path = ltrim($request->path(), '/');
         foreach (config('monitor.ignore_path_prefixes', []) as $prefix) {
-            if (str_starts_with($path, $prefix)) {
+            $prefix = trim($prefix, '/');
+            if ($path === $prefix || str_starts_with($path, $prefix . '/')) {
                 return true;
             }
         }
