@@ -33,8 +33,8 @@ class MonitorServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(base_path('config/monitor.php'), 'monitor');
 
-        $this->app->singleton(MonitorContext::class);
-        $this->app->singleton(QueryStatsCollector::class);
+        $this->app->scoped(MonitorContext::class);
+        $this->app->scoped(QueryStatsCollector::class);
         $this->app->singleton(JsonLineWriter::class);
         $this->app->singleton(DbStatusService::class);
         $this->app->singleton(AlertEvaluator::class);

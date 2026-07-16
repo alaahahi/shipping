@@ -15,6 +15,7 @@ return [
 
     'slow_query_threshold_ms' => (int) env('MONITOR_SLOW_QUERY_MS', 500),
     'slow_request_threshold_ms' => (int) env('MONITOR_SLOW_REQUEST_MS', 2000),
+    'max_request_duration_ms' => (int) env('MONITOR_MAX_REQUEST_MS', 300000),
 
     'ignore_routes' => [
         'monitor.dashboard',

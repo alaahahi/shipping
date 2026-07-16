@@ -51,7 +51,16 @@ class MonitorRequests
                 return;
             }
 
+            if ($this->context->startedAt <= 0) {
+                return;
+            }
+
             $durationMs = round((microtime(true) - $this->context->startedAt) * 1000, 2);
+            $maxDuration = (int) config('monitor.max_request_duration_ms', 300000);
+
+            if ($durationMs < 0 || $durationMs > $maxDuration) {
+                return;
+            }
             $status = method_exists($response, 'getStatusCode') ? $response->getStatusCode() : null;
 
             $dbSnapshot = null;
@@ -79,6 +88,9 @@ class MonitorRequests
             $this->alerts->evaluateRequest($record);
         } catch (\Throwable) {
             // fail silently
+        } finally {
+            $this->context->reset();
+            $this->queries->reset();
         }
     }
 

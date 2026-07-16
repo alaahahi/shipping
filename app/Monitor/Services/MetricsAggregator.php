@@ -11,13 +11,17 @@ class MetricsAggregator
         $queues = array_values(array_filter($records, fn ($r) => in_array($r['type'] ?? '', ['queue', 'queue_failed'], true)));
         $schedules = array_values(array_filter($records, fn ($r) => ($r['type'] ?? '') === 'schedule'));
 
-        $durations = array_map(fn ($r) => (float) ($r['execution_time_ms'] ?? 0), $requests);
+        $durations = array_values(array_filter(
+            array_map(fn ($r) => (float) ($r['execution_time_ms'] ?? 0), $requests),
+            fn ($ms) => $ms > 0 && $ms <= (int) config('monitor.max_request_duration_ms', 300000)
+        ));
         $avgResponse = count($durations) ? round(array_sum($durations) / count($durations), 2) : 0;
 
         $slowThreshold = (int) config('monitor.slow_request_threshold_ms', 2000);
+        $maxDuration = (int) config('monitor.max_request_duration_ms', 300000);
         $slowRequests = array_values(array_filter(
             $requests,
-            fn ($r) => (float) ($r['execution_time_ms'] ?? 0) >= $slowThreshold
+            fn ($r) => ($ms = (float) ($r['execution_time_ms'] ?? 0)) >= $slowThreshold && $ms <= $maxDuration
         ));
 
         $failedRequests = array_values(array_filter(
