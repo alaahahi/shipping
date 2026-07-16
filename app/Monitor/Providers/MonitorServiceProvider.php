@@ -1,0 +1,142 @@
+<?php
+
+namespace App\Monitor\Providers;
+
+use App\Monitor\Console\CleanMonitorLogsCommand;
+use App\Monitor\Http\Middleware\MonitorAdmin;
+use App\Monitor\Http\Middleware\MonitorRequests;
+use App\Monitor\Listeners\MonitorQueueListener;
+use App\Monitor\Listeners\MonitorScheduleListener;
+use App\Monitor\Services\AlertEvaluator;
+use App\Monitor\Services\DbStatusService;
+use App\Monitor\Services\ExceptionMonitor;
+use App\Monitor\Services\JsonLineWriter;
+use App\Monitor\Services\LogReader;
+use App\Monitor\Services\LogRetentionService;
+use App\Monitor\Services\MetricsAggregator;
+use App\Monitor\Services\QueryStatsCollector;
+use App\Monitor\Support\MonitorContext;
+use Illuminate\Console\Events\CommandFinished;
+use Illuminate\Console\Events\CommandStarting;
+use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobProcessing;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\ServiceProvider;
+
+class MonitorServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        $this->mergeConfigFrom(base_path('config/monitor.php'), 'monitor');
+
+        $this->app->singleton(MonitorContext::class);
+        $this->app->singleton(QueryStatsCollector::class);
+        $this->app->singleton(JsonLineWriter::class);
+        $this->app->singleton(DbStatusService::class);
+        $this->app->singleton(AlertEvaluator::class);
+        $this->app->singleton(LogReader::class);
+        $this->app->singleton(MetricsAggregator::class);
+        $this->app->singleton(LogRetentionService::class);
+        $this->app->singleton(ExceptionMonitor::class);
+    }
+
+    public function boot(): void
+    {
+        $this->publishes([
+            base_path('config/monitor.php') => config_path('monitor.php'),
+        ], 'monitor-config');
+
+        $this->registerRoutes();
+        $this->registerMiddleware();
+        $this->registerQueryListener();
+        $this->registerQueueListeners();
+        $this->registerConsoleListeners();
+        $this->registerRetentionCleanup();
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                CleanMonitorLogsCommand::class,
+            ]);
+        }
+    }
+
+    protected function registerRoutes(): void
+    {
+        Route::middleware(config('monitor.status_middleware', ['web', 'auth', 'monitor.admin']))
+            ->get('/monitor/status', \App\Monitor\Http\Controllers\StatusController::class)
+            ->name('monitor.status');
+
+        Route::middleware(config('monitor.dashboard_middleware', ['web', 'auth', 'monitor.admin']))
+            ->get('/monitor/dashboard', \App\Monitor\Http\Controllers\DashboardController::class)
+            ->name('monitor.dashboard');
+    }
+
+    protected function registerMiddleware(): void
+    {
+        $router = $this->app['router'];
+        $router->aliasMiddleware('monitor.admin', MonitorAdmin::class);
+
+        if (config('monitor.capture_web', true)) {
+            $router->pushMiddlewareToGroup('web', MonitorRequests::class);
+        }
+
+        if (config('monitor.capture_api', true)) {
+            $router->pushMiddlewareToGroup('api', MonitorRequests::class);
+        }
+    }
+
+    protected function registerQueryListener(): void
+    {
+        DB::listen(function ($query) {
+            try {
+                if (!config('monitor.enabled', true)) {
+                    return;
+                }
+
+                $context = app(MonitorContext::class);
+                $context->dbTouched = true;
+
+                app(QueryStatsCollector::class)->record(
+                    $query->sql,
+                    $query->bindings ?? [],
+                    (float) $query->time
+                );
+            } catch (\Throwable) {
+                // fail silently
+            }
+        });
+    }
+
+    protected function registerQueueListeners(): void
+    {
+        $listener = $this->app->make(MonitorQueueListener::class);
+        Event::listen(JobProcessing::class, [$listener, 'handleProcessing']);
+        Event::listen(JobProcessed::class, [$listener, 'handleProcessed']);
+        Event::listen(JobFailed::class, [$listener, 'handleFailed']);
+    }
+
+    protected function registerConsoleListeners(): void
+    {
+        $listener = $this->app->make(MonitorScheduleListener::class);
+        Event::listen(CommandStarting::class, [$listener, 'handleStarting']);
+        Event::listen(CommandFinished::class, [$listener, 'handleFinished']);
+    }
+
+    protected function registerRetentionCleanup(): void
+    {
+        try {
+            $cacheKey = 'monitor:last_retention_cleanup';
+            if (\Illuminate\Support\Facades\Cache::get($cacheKey)) {
+                return;
+            }
+
+            app(LogRetentionService::class)->clean();
+            \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->addDay());
+        } catch (\Throwable) {
+            // fail silently
+        }
+    }
+}
