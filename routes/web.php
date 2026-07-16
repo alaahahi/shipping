@@ -2,7 +2,9 @@
 
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\FormRegistrationController;
@@ -42,15 +44,74 @@ use App\Models\SystemConfig;
 Route::resource('/users', UserController::class)->middleware(['auth', 'verified']);
 
 
-Route::get('/db-status', function () {
-    $threads = DB::select("SHOW STATUS LIKE 'Threads_connected'");
-    $processes = DB::select('SHOW PROCESSLIST');
+Route::get('/db-status', function (Request $request) {
+    $connectionId = DB::selectOne("SELECT CONNECTION_ID() AS id");
+    $threadsRunning = DB::selectOne("SHOW STATUS LIKE 'Threads_running'");
+    $threadsConnected = DB::selectOne("SHOW STATUS LIKE 'Threads_connected'");
+    $maxUsedConnections = DB::selectOne("SHOW STATUS LIKE 'Max_used_connections'");
+    $processes = DB::select('SHOW FULL PROCESSLIST');
 
-    return [
-        'threads_connected' => $threads,
-        'process_count' => count($processes),
-        'processes' => $processes,
+    $processSummary = [];
+    foreach ($processes as $process) {
+        $host = $process->Host ?? 'unknown';
+        $dbName = $process->db ?? '-';
+        $command = $process->Command ?? 'unknown';
+        $state = $process->State ?? '-';
+        $key = $host . '|' . $dbName . '|' . $command . '|' . $state;
+
+        if (!isset($processSummary[$key])) {
+            $processSummary[$key] = [
+                'host' => $host,
+                'db' => $dbName,
+                'command' => $command,
+                'state' => $state,
+                'count' => 0,
+                'sample_ids' => [],
+            ];
+        }
+
+        $processSummary[$key]['count']++;
+        if (count($processSummary[$key]['sample_ids']) < 5) {
+            $processSummary[$key]['sample_ids'][] = $process->Id ?? null;
+        }
+    }
+
+    usort($processSummary, function ($a, $b) {
+        return $b['count'] <=> $a['count'];
+    });
+
+    $requestInfo = [
+        'app_user_id' => optional(auth()->user())->id,
+        'ip' => $request->ip(),
+        'forwarded_for' => $request->header('X-Forwarded-For'),
+        'real_ip' => $request->header('X-Real-IP'),
+        'method' => $request->method(),
+        'path' => $request->path(),
+        'full_url' => $request->fullUrl(),
+        'host' => $request->getHost(),
+        'user_agent' => $request->userAgent(),
+        'referer' => $request->header('referer'),
     ];
+
+    $payload = [
+        'request' => $requestInfo,
+        'database' => [
+            'connection_name' => DB::connection()->getName(),
+            'database' => DB::connection()->getDatabaseName(),
+            'connection_id' => $connectionId?->id,
+            'threads_running' => $threadsRunning?->Value,
+            'threads_connected' => $threadsConnected?->Value,
+            'max_used_connections' => $maxUsedConnections?->Value,
+            'process_count' => count($processes),
+            'top_process_sources' => array_slice($processSummary, 0, 20),
+        ],
+    ];
+
+    if ($request->boolean('log', true)) {
+        Log::channel(env('LOG_CHANNEL', 'stack'))->warning('DB status snapshot', $payload);
+    }
+
+    return response()->json($payload);
 });
 
 Route::get('/', function () {
