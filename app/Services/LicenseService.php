@@ -157,17 +157,6 @@ class LicenseService
             return false;
         }
 
-        // تحديث آخر تحقق (باستخدام Connection الافتراضي)
-        // إذا فشل، نتابع بدون تحديث (لعدم إيقاف النظام)
-        try {
-            // استخدام Connection الافتراضي (سيتم تبديله تلقائياً إلى SQLite في Local)
-            $license->update(['last_verified_at' => now()]);
-        } catch (\Exception $e) {
-            Log::debug('Failed to update license last_verified_at', [
-                'error' => $e->getMessage()
-            ]);
-        }
-
         return $license->isValid();
     }
 
