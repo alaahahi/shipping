@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -28,6 +29,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->configureSqliteConnection();
+
         // تسجيل Observers للمزامنة
         if (class_exists(\App\Models\Car::class)) {
             \App\Models\Car::observe(\App\Observers\CarObserver::class);
@@ -137,6 +140,26 @@ class AppServiceProvider extends ServiceProvider
 
         if (!file_exists($path)) {
             @touch($path);
+        }
+    }
+
+    /**
+     * SQLite pragmas for safer concurrent reads when DB_CONNECTION=sqlite.
+     */
+    protected function configureSqliteConnection(): void
+    {
+        try {
+            $connection = DB::connection();
+            if ($connection->getDriverName() !== 'sqlite') {
+                return;
+            }
+
+            $connection->getPdo()->exec('PRAGMA foreign_keys = ON');
+            $connection->getPdo()->exec('PRAGMA journal_mode = WAL');
+            $connection->getPdo()->exec('PRAGMA busy_timeout = 5000');
+            $connection->getPdo()->exec('PRAGMA synchronous = NORMAL');
+        } catch (\Throwable $e) {
+            Log::debug('SQLite pragma setup skipped: '.$e->getMessage());
         }
     }
 

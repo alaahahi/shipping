@@ -12,7 +12,6 @@ class AppPageDefaults
         $adminTypes = $this->resolveTypeIds(['admin'], [1, 6]);
         $contractTypes = $this->resolveTypeIds(['car_contract', 'car_contract_user'], [8, 10]);
         $contractAdminTypes = $this->resolveTypeIds(['car_contract'], [8]);
-        $shippingTypes = $this->resolveTypeIds(['shipping_trips_admin'], [15]);
         $allTypes = DB::table('user_type')->pluck('id')->map(fn ($id) => (int) $id)->all();
 
         return [
@@ -29,9 +28,6 @@ class AppPageDefaults
             ['slug' => 'contract_installments', 'route_name' => 'contract_installments', 'path' => '/contract_installments', 'label' => 'أقساط السيارات', 'nav_group' => 'main', 'sort_order' => 11, 'types' => $contractTypes],
             ['slug' => 'company_treasury', 'route_name' => 'company_treasury', 'path' => '/company_treasury', 'label' => 'قاصة الشركة', 'nav_group' => 'main', 'sort_order' => 12, 'types' => $contractAdminTypes],
             ['slug' => 'contract_account', 'route_name' => 'contract_account', 'path' => '/contract_account', 'label' => 'محاسبة عقود', 'nav_group' => 'main', 'sort_order' => 13, 'types' => $contractAdminTypes],
-            ['slug' => 'trips', 'route_name' => 'trips', 'path' => '/trips', 'label' => 'الرحلات', 'nav_group' => 'main', 'sort_order' => 14, 'types' => $shippingTypes],
-            ['slug' => 'consignee_balances', 'route_name' => 'consigneeBalances.index', 'path' => '/consignee-balances', 'label' => 'أرصدة الزبائن', 'nav_group' => 'main', 'sort_order' => 15, 'types' => $shippingTypes],
-            ['slug' => 'company_balances', 'route_name' => 'companyBalances.index', 'path' => '/company-balances', 'label' => 'حسابات الشركات', 'nav_group' => 'main', 'sort_order' => 16, 'types' => $shippingTypes],
             ['slug' => 'dashboard_statistics', 'route_name' => 'dashboard.statistics', 'path' => '/dashboard/admin', 'label' => 'احصائات', 'nav_group' => 'more', 'sort_order' => 20, 'types' => $adminTypes],
             ['slug' => 'sync_monitor', 'route_name' => 'sync.monitor', 'path' => '/sync-monitor', 'label' => 'المزامنة', 'nav_group' => 'more', 'sort_order' => 21, 'types' => $adminTypes],
             ['slug' => 'online_contracts', 'route_name' => 'online_contracts', 'path' => '/online_contracts', 'label' => 'العقود الالكترونية', 'nav_group' => 'more', 'sort_order' => 22, 'types' => $adminTypes],

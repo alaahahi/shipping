@@ -1224,12 +1224,25 @@ class DashboardController extends Controller
             $trans = $this->accountingController->decreaseWallet(($car->total_s ?? 0)-($car->paid ?? 0) , $desc,$car->client->id,$car->id,'App\Models\Car');
         }
         $car->delete();
-        DB::statement('SET @row_number = 0');
-        DB::table('car')
-            ->whereNull('deleted_at') // Apply soft delete constraint
-            ->orderBy('id') // Assuming 'id' is the primary key column
-            ->update(['no' => DB::raw('(@row_number:=@row_number + 1)')]);
+        $this->renumberCarNos();
         return Response::json('delete is done', 200);
+    }
+
+    /**
+     * Portable car.no resequence (MySQL user variables are not available on SQLite).
+     */
+    protected function renumberCarNos(): void
+    {
+        $ids = DB::table('car')
+            ->whereNull('deleted_at')
+            ->orderBy('id')
+            ->pluck('id');
+
+        $n = 1;
+        foreach ($ids as $id) {
+            DB::table('car')->where('id', $id)->update(['no' => $n]);
+            $n++;
+        }
     }
 
     public function getCarTags(Request $request)

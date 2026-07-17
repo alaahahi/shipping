@@ -36,6 +36,7 @@ use App\Imports\ImportInfo;
 use App\Exports\ExportInfo;
 use App\Exports\ExportAccount;
 use App\Services\AccountingCacheService;
+use App\Support\DatabaseDriver;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -210,19 +211,14 @@ class AccountingController extends Controller
      $driver_q = $request->get('driver_name') ?: $request->get('q_driver');
      if ($driver_q !== null && $driver_q !== '') {
          $driverLike = '%' . $driver_q . '%';
-         if (DB::connection()->getDriverName() === 'sqlite') {
-             $transactions = $transactions->whereRaw("json_extract(details, '$.driver_name') LIKE ?", [$driverLike]);
-         } else {
-             $transactions = $transactions->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(details, '$.driver_name')) LIKE ?", [$driverLike]);
-         }
+         $transactions = $transactions->whereRaw(
+             DatabaseDriver::jsonStringExtract('details', 'driver_name') . ' LIKE ?',
+             [$driverLike]
+         );
      }
      $loans_only = $request->get('loans_only');
      if ($loans_only) {
-         if (DB::connection()->getDriverName() === 'sqlite') {
-             $transactions = $transactions->whereRaw("json_extract(details, '$.loan') = 1");
-         } else {
-             $transactions = $transactions->whereRaw("JSON_EXTRACT(details, '$.loan') = true");
-         }
+         $transactions = $transactions->whereRaw(DatabaseDriver::jsonTruthy('details', 'loan'));
      }
      if($type=='wallet'){
         $allTransactions = $transactions
