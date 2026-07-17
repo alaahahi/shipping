@@ -121,24 +121,29 @@ class AccountingController extends Controller
             ->get();
 
         $clientTypeId = $this->accounting->userClient();
+
+        // One pass over transactions instead of correlated EXISTS per user (critical on SQLite).
+        $boxMoveUserIds = collect();
+        if ($clientTypeId) {
+            $boxMoveUserIds = DB::table('transactions')
+                ->where('morphed_type', User::class)
+                ->whereIn('type', ['inUserBox', 'outUserBox'])
+                ->whereNull('deleted_at')
+                ->distinct()
+                ->pluck('morphed_id');
+        }
+
         $walletUsers = User::query()
             ->where('owner_id', $owner_id)
-            ->where(function ($query) use ($clientTypeId) {
+            ->where(function ($query) use ($clientTypeId, $boxMoveUserIds) {
                 $query->where(function ($base) {
                     $base->where('email', '!=', 'mainBox@account.com')
                         ->whereHas('wallet');
                 });
-                if ($clientTypeId) {
-                    $query->orWhere(function ($traders) use ($clientTypeId) {
+                if ($clientTypeId && $boxMoveUserIds->isNotEmpty()) {
+                    $query->orWhere(function ($traders) use ($clientTypeId, $boxMoveUserIds) {
                         $traders->where('type_id', $clientTypeId)
-                            ->whereExists(function ($subQuery) {
-                                $subQuery->select(DB::raw(1))
-                                    ->from('transactions')
-                                    ->whereColumn('transactions.morphed_id', 'users.id')
-                                    ->where('transactions.morphed_type', User::class)
-                                    ->whereIn('transactions.type', ['inUserBox', 'outUserBox'])
-                                    ->whereNull('transactions.deleted_at');
-                            });
+                            ->whereIn('id', $boxMoveUserIds);
                     });
                 }
             })
@@ -221,18 +226,18 @@ class AccountingController extends Controller
          $transactions = $transactions->whereRaw(DatabaseDriver::jsonTruthy('details', 'loan'));
      }
      if($type=='wallet'){
+        // simplePaginate skips COUNT(*) — expensive on large SQLite tables.
         $allTransactions = $transactions
         ->whereIn('type', ['inUser', 'outUser', 'inUserAmanah', 'outUserAmanah'])
         ->where('wallet_id', $user->wallet->id)
-        ->paginate(1000);
+        ->simplePaginate(1000);
          }elseif($type=='printExcel'){
-            $allTransactions = $transactions->paginate(1000);
+            $allTransactions = $transactions->simplePaginate(1000);
         }
          else{
-        $allTransactions = $transactions->paginate(100);
+        $allTransactions = $transactions->simplePaginate(100);
      }
-     // التأكد من تحميل المرفقات (TransactionsImages) في كل الحالات بما فيها عند الفلترة بالتاريخ
-     $allTransactions->getCollection()->load('TransactionsImages');
+     // TransactionsImages already eager-loaded above; avoid a second query.
      $sumAllTransactions = $allTransactions->where('currency','$')->sum('amount');
      $sumDebitTransactions = $allTransactions->where('currency','$')->whereIn('type', ['debt','outUserBox'])->sum('amount');
      $sumInTransactions = $allTransactions->where('currency','$')->whereIn('type', ['in', 'inUserBox'])->sum('amount');
