@@ -1,13 +1,17 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, router } from '@inertiajs/inertia-vue3';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch } from 'vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { useToast } from 'vue-toastification';
 import axios from 'axios';
+import VuePincodeInput from 'vue3-pincode-input';
 
 const toast = useToast();
+const PAGE_PIN = 12457;
+const pincode = ref('');
+const isUnlocked = computed(() => Number(pincode.value) === PAGE_PIN);
 
 const pages = ref([]);
 const userTypes = ref([]);
@@ -16,6 +20,7 @@ const activeTab = ref('pages');
 const showModal = ref(false);
 const editingPage = ref(null);
 const selectedUserTypeId = ref(null);
+const dataLoaded = ref(false);
 
 const formData = ref({
   label: '',
@@ -37,8 +42,10 @@ const selectedUserType = computed(() => {
   return userTypes.value.find((t) => t.id === selectedUserTypeId.value) || null;
 });
 
-onMounted(() => {
-  loadData();
+watch(isUnlocked, (ok) => {
+  if (ok && !dataLoaded.value) {
+    loadData();
+  }
 });
 
 function refreshAuthNav() {
@@ -46,11 +53,13 @@ function refreshAuthNav() {
 }
 
 function loadData() {
+  if (!isUnlocked.value) return;
   loading.value = true;
   axios.get('/api/page-permissions')
     .then((response) => {
       pages.value = response.data.pages || [];
       userTypes.value = response.data.userTypes || [];
+      dataLoaded.value = true;
       if (!selectedUserTypeId.value && userTypes.value.length) {
         selectUserType(userTypes.value[0].id);
       } else {
@@ -240,7 +249,23 @@ function syncDefaultTypeLinks() {
   <Head title="صلاحيات الصفحات" />
 
   <AuthenticatedLayout>
-    <div class="py-8">
+    <div v-if="!isUnlocked" class="py-8">
+      <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
+        <div class="overflow-hidden shadow-sm d-flex text-center" dir="ltr">
+          <VuePincodeInput
+            v-model="pincode"
+            :digits="5"
+            :secure="true"
+            class="justify-center"
+            :autofocus="true"
+            success-class="border-2 border-green-400"
+            input-class="rounded-full text-gray-500 border-2 border-gray-200 shadow mx-2 mt-5"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div v-else class="py-8">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <div class="bg-white dark:bg-gray-900 overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6">

@@ -3,12 +3,15 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link } from '@inertiajs/inertia-vue3';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { TailwindPagination } from 'laravel-vue-pagination';
 import { useToast } from 'vue-toastification';
 import axios from 'axios';
+import VuePincodeInput from 'vue3-pincode-input';
 
 const toast = useToast();
+const PAGE_PIN = 12457;
+const pincode = ref('');
 
 const props = defineProps({
     url: String,
@@ -28,6 +31,7 @@ const filterBranchId = ref('');
 const showEditModal = ref(false);
 const saving = ref(false);
 const editErrors = ref({});
+const dataLoaded = ref(false);
 
 const editForm = ref({
     id: null,
@@ -43,6 +47,8 @@ const editForm = ref({
 
 let searchTimer = null;
 
+const isUnlocked = computed(() => Number(pincode.value) === PAGE_PIN);
+
 const typeLabel = (name) => props.typeLabels?.[name] || name || '—';
 
 const branchLabel = (ownerId) => {
@@ -54,6 +60,7 @@ const branchLabel = (ownerId) => {
 const canEditUser = (user) => user?.email !== 'admin@admin.com';
 
 const getResults = async (page = 1) => {
+    if (!isUnlocked.value) return;
     loading.value = true;
     try {
         const params = new URLSearchParams({ page: String(page) });
@@ -64,6 +71,7 @@ const getResults = async (page = 1) => {
         }
         const response = await fetch(`/getIndex?${params.toString()}`);
         laravelData.value = await response.json();
+        dataLoaded.value = true;
     } catch (e) {
         toast.error('تعذر تحميل المستخدمين', { timeout: 3000, position: 'bottom-right', rtl: true });
     } finally {
@@ -71,14 +79,22 @@ const getResults = async (page = 1) => {
     }
 };
 
-watch([filterTypeId, filterBranchId], () => getResults(1));
+watch(isUnlocked, (ok) => {
+    if (ok && !dataLoaded.value) {
+        getResults(1);
+    }
+});
+
+watch([filterTypeId, filterBranchId], () => {
+    if (isUnlocked.value) getResults(1);
+});
 
 watch(search, () => {
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => getResults(1), 350);
+    searchTimer = setTimeout(() => {
+        if (isUnlocked.value) getResults(1);
+    }, 350);
 });
-
-onMounted(() => getResults());
 
 function openEdit(user) {
     if (!canEditUser(user)) {
@@ -190,6 +206,7 @@ const usersCount = computed(() => laravelData.value?.total ?? laravelData.value?
                     </p>
                 </div>
                 <Link
+                    v-if="isUnlocked"
                     class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-md transition"
                     :href="route('users.create')"
                 >
@@ -198,7 +215,23 @@ const usersCount = computed(() => laravelData.value?.total ?? laravelData.value?
             </div>
         </template>
 
-        <div class="py-8">
+        <div v-if="!isUnlocked" class="py-8">
+            <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
+                <div class="overflow-hidden shadow-sm d-flex text-center" dir="ltr">
+                    <VuePincodeInput
+                        v-model="pincode"
+                        :digits="5"
+                        :secure="true"
+                        class="justify-center"
+                        :autofocus="true"
+                        success-class="border-2 border-green-400"
+                        input-class="rounded-full text-gray-500 border-2 border-gray-200 shadow mx-2 mt-5"
+                    />
+                </div>
+            </div>
+        </div>
+
+        <div v-else class="py-8">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-4">
                 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3">

@@ -84,6 +84,15 @@ function onLogoSelected(event) {
   }
 }
 
+function onSettingsLogoError(event) {
+  const src = String(event?.target?.src || '');
+  if (src.includes('/uploads/system/') || src.includes('/storage/system/')) {
+    return;
+  }
+  event.target.onerror = null;
+  event.target.src = '/img/logo.jpg';
+}
+
 function uploadLogo() {
   if (!selectedLogoFile.value) return;
   const formDataLogo = new FormData();
@@ -982,7 +991,7 @@ function printCarTagDetails(tag) {
                           :src="logoPreview || systemConfig.logo_url || '/img/logo.png'"
                           alt="Logo"
                           class="h-16 w-auto max-w-[160px] object-contain rounded border border-gray-200 dark:border-gray-700 bg-white p-1"
-                          @error="($event) => { $event.target.src = '/img/logo.jpg' }"
+                          @error="onSettingsLogoError"
                         />
                         <div class="flex flex-col gap-2">
                           <input

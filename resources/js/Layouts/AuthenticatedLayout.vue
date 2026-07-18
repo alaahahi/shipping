@@ -42,6 +42,16 @@ function pageHref(navPage) {
   return navPage.path || '#';
 }
 
+function onSystemLogoError(event) {
+  const src = String(event?.target?.src || '');
+  // لا نستبدل شعار الكونفيغ المرفوع — فقط الافتراضي عند فشله
+  if (src.includes('/uploads/system/') || src.includes('/storage/system/')) {
+    return;
+  }
+  event.target.onerror = null;
+  event.target.src = '/img/logo.jpg';
+}
+
 function isPageActive(navPage) {
   if (!navPage.route_name) {
     return false;
@@ -64,7 +74,12 @@ function isPageActive(navPage) {
               <!-- Logo -->
               <div class="shrink-0 flex items-center pe-2">
                 <Link :href="route('dashboard')" class="flex items-center">
-                  <img :src="$page.props.systemLogo || '/img/logo.png'" alt="Logo" class="h-9 w-auto object-contain" onerror="this.src='/img/logo.jpg'; this.onerror=null;" />
+                  <img
+                    :src="$page.props.systemLogo || '/img/logo.png'"
+                    alt="Logo"
+                    class="h-9 w-auto object-contain"
+                    @error="onSystemLogoError"
+                  />
                 </Link>
               </div>
 

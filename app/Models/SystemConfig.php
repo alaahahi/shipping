@@ -92,18 +92,30 @@ class SystemConfig extends Model
 
     public function getLogoUrlAttribute(): string
     {
-        return self::resolveLogoUrl($this->logo ?? '');
+        $stored = $this->attributes['logo'] ?? null;
+
+        return self::resolveLogoUrl(
+            (is_string($stored) && $stored !== '') ? $stored : null
+        );
     }
 
     public function getLoginBackgroundUrlAttribute(): ?string
     {
-        return self::resolveLoginBackgroundUrl($this->login_background ?? '');
+        $stored = $this->attributes['login_background'] ?? null;
+
+        return self::resolveLoginBackgroundUrl(
+            (is_string($stored) && $stored !== '') ? $stored : null
+        );
     }
 
+    /**
+     * URL الشعار من system_config.logo (المسار المخزّن بعد الرفع).
+     * لا نرجع للشعار القديم إذا وُجد مسار في الكونفيغ.
+     */
     public static function resolveLogoUrl(?string $logo = null): string
     {
         $path = $logo;
-        if ($path === null) {
+        if ($path === null || $path === '') {
             try {
                 self::ensureMediaColumns();
                 $path = static::query()->value('logo');
@@ -112,12 +124,17 @@ class SystemConfig extends Model
             }
         }
 
-        if (is_string($path) && $path !== '') {
-            $relative = ltrim(str_replace('\\', '/', $path), '/');
+        if (is_string($path) && trim($path) !== '') {
+            $relative = ltrim(str_replace('\\', '/', trim($path)), '/');
             $absolute = public_path($relative);
+            $url = '/'.$relative;
+
+            // Always prefer config path; cache-bust only when file is readable locally.
             if (is_file($absolute)) {
-                return '/'.$relative.'?v='.filemtime($absolute);
+                $url .= '?v='.filemtime($absolute);
             }
+
+            return $url;
         }
 
         if (is_file(public_path('img/logo.png'))) {
@@ -128,12 +145,12 @@ class SystemConfig extends Model
     }
 
     /**
-     * Custom login background URL, or null to use the built-in atmospheric design.
+     * Custom login background URL from system_config.login_background.
      */
     public static function resolveLoginBackgroundUrl(?string $path = null): ?string
     {
         $value = $path;
-        if ($value === null) {
+        if ($value === null || $value === '') {
             try {
                 self::ensureMediaColumns();
                 $value = static::query()->value('login_background');
@@ -142,12 +159,15 @@ class SystemConfig extends Model
             }
         }
 
-        if (is_string($value) && $value !== '') {
-            $relative = ltrim(str_replace('\\', '/', $value), '/');
+        if (is_string($value) && trim($value) !== '') {
+            $relative = ltrim(str_replace('\\', '/', trim($value)), '/');
             $absolute = public_path($relative);
+            $url = '/'.$relative;
             if (is_file($absolute)) {
-                return '/'.$relative.'?v='.filemtime($absolute);
+                $url .= '?v='.filemtime($absolute);
             }
+
+            return $url;
         }
 
         return null;
