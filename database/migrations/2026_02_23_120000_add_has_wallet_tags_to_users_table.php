@@ -8,15 +8,23 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->boolean('has_wallet_tags')->default(0)->after('has_internal_sales');
-        });
+        if (! Schema::hasTable('users')) {
+            return;
+        }
+
+        if (! Schema::hasColumn('users', 'has_wallet_tags')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->boolean('has_wallet_tags')->default(0);
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('has_wallet_tags');
-        });
+        if (Schema::hasTable('users') && Schema::hasColumn('users', 'has_wallet_tags')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->dropColumn('has_wallet_tags');
+            });
+        }
     }
 };

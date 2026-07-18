@@ -9,6 +9,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class User extends Authenticatable
 {
@@ -85,6 +87,49 @@ class User extends Authenticatable
         'type_id' => 'integer',
         'public_key' => 'string',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function () {
+            static::ensureOptionalColumns();
+        });
+    }
+
+    /**
+     * Ensure optional users columns exist (SQLite prod when migrate was skipped).
+     */
+    public static function ensureOptionalColumns(): void
+    {
+        static $checked = false;
+        if ($checked) {
+            return;
+        }
+        $checked = true;
+
+        try {
+            if (! Schema::hasTable('users')) {
+                return;
+            }
+
+            $columns = [
+                'has_internal_sales' => fn (Blueprint $table) => $table->boolean('has_internal_sales')->default(0),
+                'has_wallet_tags' => fn (Blueprint $table) => $table->boolean('has_wallet_tags')->default(0),
+                'show_in_dashboard' => fn (Blueprint $table) => $table->boolean('show_in_dashboard')->default(0),
+                'percentage' => fn (Blueprint $table) => $table->decimal('percentage', 8, 2)->default(0),
+                'is_band' => fn (Blueprint $table) => $table->boolean('is_band')->default(0),
+            ];
+
+            foreach ($columns as $column => $definition) {
+                if (! Schema::hasColumn('users', $column)) {
+                    Schema::table('users', function (Blueprint $table) use ($definition) {
+                        $definition($table);
+                    });
+                }
+            }
+        } catch (\Throwable $e) {
+            // Ignore — create will surface a clear SQL error if schema cannot change.
+        }
+    }
 
     public function morphed()
     {

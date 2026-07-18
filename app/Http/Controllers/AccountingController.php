@@ -169,6 +169,8 @@ class AccountingController extends Controller
 
     public function toggleWalletTags(Request $request)
     {
+        User::ensureOptionalColumns();
+
         $validated = $request->validate([
             'user_id' => 'required|integer|exists:users,id',
             'has_wallet_tags' => 'required|boolean',

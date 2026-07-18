@@ -31,6 +31,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Accounting Extra Expense Buttons
+    |--------------------------------------------------------------------------
+    |
+    | When false, hides branch/company expense shortcuts on the Accounting page:
+    | company expenses, Haji Omran transfers, Kirkuk transfers, Dubai/Iran/border/COC.
+    |
+    */
+
+    'show_accounting_extra_buttons' => env('SHOW_ACCOUNTING_EXTRA_BUTTONS', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

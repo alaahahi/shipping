@@ -382,6 +382,8 @@ class UserController extends Controller
             'show_in_dashboard' => 'nullable|boolean',
         ])->validate();
 
+        User::ensureOptionalColumns();
+
         $user = User::create([
             'name' => $request->name,
             'type_id' => $this->accounting->userClient(),

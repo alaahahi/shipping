@@ -98,6 +98,7 @@ class HandleInertiaRequests extends Middleware
                     return null;
                 }
             },
+            'showAccountingExtraButtons' => (bool) config('app.show_accounting_extra_buttons', true),
         ]);
     }
 }

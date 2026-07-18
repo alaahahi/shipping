@@ -1,8 +1,8 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
-import { Head, Link, useForm } from "@inertiajs/inertia-vue3";
-import { ref } from "vue";
+import { Head, Link, useForm, usePage } from "@inertiajs/inertia-vue3";
+import { computed, ref } from "vue";
 import ModalAddSales from "@/Components/ModalAddSales.vue";
 import ModalAddDebt from "@/Components/ModalAddDebt.vue";
 import ModalAddExpenses from "@/Components/ModalAddExpenses.vue";
@@ -11,28 +11,26 @@ import TextInput from "@/Components/TextInput.vue";
 import ModalAddGenExpenses from "@/Components/ModalAddGenExpenses.vue";
 import ModalAddExpensesToMainBransh from "@/Components/ModalAddExpensesToMainBransh.vue";
 import ModalExpensesFromOtherBransh from "@/Components/ModalExpensesFromOtherBransh.vue";
-
-
 import ModalConvertDollarDinar from "@/Components/ModalConvertDollarDinar.vue";
 import ModalConvertDinarDollar from "@/Components/ModalConvertDinarDollar.vue";
 import ModalDel from "@/Components/ModalDel.vue";
 import ModalUploader from "@/Components/ModalUploader.vue";
 import ModalAssignTransactionToWallet from "@/Components/ModalAssignTransactionToWallet.vue";
-
-
-
 import axios from 'axios';
 import show from "@/Components/icon/show.vue";
 import imags from "@/Components/icon/imags.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
 import print from "@/Components/icon/print.vue";
-
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
 import debounce from 'lodash/debounce';
 import { formatBaghdadTimestamp } from "@/utils/datetime";
 
+const inertiaPage = usePage();
+const showAccountingExtraButtons = computed(
+  () => inertiaPage.props.value?.showAccountingExtraButtons !== false
+);
 
 const laravelData = ref({});
 const searchTerm = ref('');
@@ -789,7 +787,7 @@ function getOrangeColorClass(index) {
                             <span v-else>جاري الحفظ...</span>
                           </button>
               </div>
-              <div class=" mr-5 print:hidden" >
+              <div v-if="showAccountingExtraButtons" class=" mr-5 print:hidden" >
                             <InputLabel for="pay" value="قاسه" />
                            <Link
                           v-if="$page.props.auth.user.owner_id==1"
@@ -801,7 +799,7 @@ function getOrangeColorClass(index) {
                           </Link>
               </div>
 
-              <div class="mr-5">
+              <div v-if="showAccountingExtraButtons" class="mr-5">
                 <InputLabel for="to" value="مصاريف" />
                           <Link
                           v-if="$page.props.auth.user.owner_id==1"
@@ -816,9 +814,9 @@ function getOrangeColorClass(index) {
               
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
-              <div>
+              <div v-if="showAccountingExtraButtons || $page.props.auth.user.type_id==6">
                           <button
-                          v-if="$page.props.auth.user.owner_id==1"
+                          v-if="showAccountingExtraButtons && $page.props.auth.user.owner_id==1"
                             type="button"
                             @click="openModalExpensesFromOtherBransh(1)"
                             style="min-width:150px;"
@@ -834,7 +832,7 @@ function getOrangeColorClass(index) {
                               تحويل لفرع أربيل
                           </button>
                         </div>
-                        <div  v-if="$page.props.auth.user.type_id==1">
+                        <div v-if="showAccountingExtraButtons && $page.props.auth.user.type_id==1">
                           <button
                             type="button"
                             @click="openAddGenExpenses(2)"
@@ -843,7 +841,7 @@ function getOrangeColorClass(index) {
                             {{ $t('dubai') }}
                           </button>
                         </div>
-                        <div  v-if="$page.props.auth.user.type_id==1">
+                        <div v-if="showAccountingExtraButtons && $page.props.auth.user.type_id==1">
                           <button
                             type="button"
                             @click="openAddGenExpenses(3)"
@@ -852,7 +850,7 @@ function getOrangeColorClass(index) {
                             {{ $t('iran') }}
                           </button>
                         </div>
-                       <div  v-if="$page.props.auth.user.type_id==1">
+                       <div v-if="showAccountingExtraButtons && $page.props.auth.user.type_id==1">
                           <button
                             type="button"
                             @click="openAddGenExpenses(4)"
@@ -861,7 +859,7 @@ function getOrangeColorClass(index) {
                             {{ $t('border') }} 
                           </button>
                         </div> 
-                        <div  v-if="$page.props.auth.user.type_id==1">
+                        <div v-if="showAccountingExtraButtons && $page.props.auth.user.type_id==1">
                           <button
                             type="button"
                             @click="openAddGenExpenses(5)"

@@ -13,9 +13,15 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->boolean('show_in_dashboard')->default(false)->after('has_internal_sales');
-        });
+        if (! Schema::hasTable('users')) {
+            return;
+        }
+
+        if (! Schema::hasColumn('users', 'show_in_dashboard')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->boolean('show_in_dashboard')->default(false);
+            });
+        }
     }
 
     /**
@@ -25,8 +31,10 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('show_in_dashboard');
-        });
+        if (Schema::hasTable('users') && Schema::hasColumn('users', 'show_in_dashboard')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->dropColumn('show_in_dashboard');
+            });
+        }
     }
 };
