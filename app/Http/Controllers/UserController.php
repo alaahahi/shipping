@@ -226,8 +226,8 @@ class UserController extends Controller
         $page = request()->input('page', 1);
         $print = request()->input('print', 0);
         
-        // تحسين مفتاح الكاش - إزالة الصفحة من المفتاح لتجنب التكرار
-        $cacheKey = 'clients_fast_' . md5($q . $owner_id . $userClient . $from . $to);
+        // مفتاح كاش يتضمن إصدار الإحصائيات حتى لا تُعاد بيانات قديمة بلا car_count
+        $cacheKey = 'clients_fast_v2_' . md5($q . $owner_id . $userClient . $from . $to);
         $cacheDuration = 3600; // كاش ساعة واحدة
 
         // استخدام الكاش مع استعلام محسن
@@ -245,9 +245,12 @@ class UserController extends Controller
                 ->where('users.owner_id', $owner_id)
                 ->where('users.type_id', $userClient);
             
-            // إضافة الرصيد فقط - أسرع استعلام ممكن
+            // الرصيد + إحصائيات السيارات/العقود (مطلوبة لطباعة التقرير والواجهة)
             $baseQuery->addSelect([
-                DB::raw('(SELECT COALESCE(balance, 0) FROM wallets WHERE user_id = users.id LIMIT 1) as balance')
+                DB::raw('(SELECT COALESCE(balance, 0) FROM wallets WHERE user_id = users.id LIMIT 1) as balance'),
+                DB::raw('(SELECT COUNT(*) FROM car WHERE car.client_id = users.id) as car_count'),
+                DB::raw('(SELECT COUNT(*) FROM car WHERE car.client_id = users.id AND car.results = 2) as car_count_completed'),
+                DB::raw('(SELECT COUNT(*) FROM contract WHERE contract.user_id = users.id) as contract_count'),
             ]);
             
             // تطبيق البحث المحسن - فقط عند الحاجة (مع استثناء فلاتر الخيارات الجاهزة)
@@ -441,6 +444,7 @@ class UserController extends Controller
         foreach ($queries as $q) {
             foreach ($ranges as [$from, $to]) {
                 Cache::forget('clients_fast_' . md5($q . $ownerId . $userClient . $from . $to));
+                Cache::forget('clients_fast_v2_' . md5($q . $ownerId . $userClient . $from . $to));
             }
         }
     }

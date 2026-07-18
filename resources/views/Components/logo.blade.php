@@ -5,7 +5,7 @@
 <img
     src="{{ $logoSrc }}"
     alt="logo"
-    style="max-width:100%;height:auto;display:block;"
+    style="max-width:125px;height:auto;display:block;"
     @if($isDefaultLogo)
         onerror="this.src='/img/logo.jpg'; this.onerror=null;"
     @endif

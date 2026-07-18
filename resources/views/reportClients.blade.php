@@ -80,9 +80,9 @@
     $totalcar = 0;
     $totalcontract = 0;
     foreach ($data as $item) {
-        $totalBalance += $item->balance;
-        $totalcar += $item->car_count;
-        $totalcontract += $item->contract_count;
+        $totalBalance += (float) ($item->balance ?? 0);
+        $totalcar += (int) ($item->car_count ?? 0);
+        $totalcontract += (int) ($item->contract_count ?? 0);
     }
   @endphp
   <div class="row p-2 text-center border-bottom alert-primary "  style="font-size: 14px">
@@ -125,17 +125,17 @@
           </tr>
         </thead>
         <tbody>
-            @foreach ($data as $key=>$data)
+            @foreach ($data as $key => $row)
             <tr>
-              <td>{{$key+1}}</td>
-              <td>{{$data->name}}</td>
-              <td>{{$data->phone}}</td>
-              <td>{{$data->car_count}}</td>
-              <td>{{$data->car_count-$data->car_count_completed}}</td>
-              <td>{{$data->car_count_completed}}</td>
-              <td>{{$data->contract_count}}</td>
-              <td>{{$data->car_count-$data->contract_count}}</td>
-              <td>{{$data->balance}} $</td>
+              <td>{{ $key + 1 }}</td>
+              <td>{{ $row->name }}</td>
+              <td>{{ $row->phone }}</td>
+              <td>{{ $row->car_count ?? 0 }}</td>
+              <td>{{ ($row->car_count ?? 0) - ($row->car_count_completed ?? 0) }}</td>
+              <td>{{ $row->car_count_completed ?? 0 }}</td>
+              <td>{{ $row->contract_count ?? 0 }}</td>
+              <td>{{ ($row->car_count ?? 0) - ($row->contract_count ?? 0) }}</td>
+              <td>{{ $row->balance ?? 0 }} $</td>
             </tr>
             @endforeach
         </tbody>
