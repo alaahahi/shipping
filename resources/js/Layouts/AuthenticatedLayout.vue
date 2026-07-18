@@ -45,7 +45,7 @@ function pageHref(navPage) {
 function onSystemLogoError(event) {
   const src = String(event?.target?.src || '');
   // لا نستبدل شعار الكونفيغ المرفوع — فقط الافتراضي عند فشله
-  if (src.includes('/uploads/system/') || src.includes('/storage/system/')) {
+  if (src.includes('/media/system/') || src.includes('/uploads/system/') || src.includes('/img/system/') || src.includes('/storage/system/')) {
     return;
   }
   event.target.onerror = null;

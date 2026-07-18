@@ -109,8 +109,58 @@ class SystemConfig extends Model
     }
 
     /**
+     * Locate a system media file on disk (supports legacy upload folders).
+     */
+    public static function resolveMediaAbsolutePath(?string $storedPath): ?string
+    {
+        if (! is_string($storedPath) || trim($storedPath) === '') {
+            return null;
+        }
+
+        $relative = ltrim(str_replace('\\', '/', trim($storedPath)), '/');
+        $basename = basename($relative);
+
+        $candidates = array_values(array_unique([
+            public_path($relative),
+            public_path('img/system/'.$basename),
+            public_path('uploads/system/'.$basename),
+            public_path('storage/system/'.$basename),
+        ]));
+
+        foreach ($candidates as $absolute) {
+            if (is_file($absolute)) {
+                return $absolute;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Public URL served via Laravel route (works even when static /uploads is blocked).
+     */
+    public static function mediaServeUrl(?string $storedPath): ?string
+    {
+        if (! is_string($storedPath) || trim($storedPath) === '') {
+            return null;
+        }
+
+        $basename = basename(str_replace('\\', '/', trim($storedPath)));
+        if ($basename === '' || $basename === '.' || $basename === '..') {
+            return null;
+        }
+
+        $absolute = self::resolveMediaAbsolutePath($storedPath);
+        $url = '/media/system/'.$basename;
+        if ($absolute) {
+            $url .= '?v='.filemtime($absolute);
+        }
+
+        return $url;
+    }
+
+    /**
      * URL الشعار من system_config.logo (المسار المخزّن بعد الرفع).
-     * لا نرجع للشعار القديم إذا وُجد مسار في الكونفيغ.
      */
     public static function resolveLogoUrl(?string $logo = null): string
     {
@@ -124,17 +174,9 @@ class SystemConfig extends Model
             }
         }
 
-        if (is_string($path) && trim($path) !== '') {
-            $relative = ltrim(str_replace('\\', '/', trim($path)), '/');
-            $absolute = public_path($relative);
-            $url = '/'.$relative;
-
-            // Always prefer config path; cache-bust only when file is readable locally.
-            if (is_file($absolute)) {
-                $url .= '?v='.filemtime($absolute);
-            }
-
-            return $url;
+        $served = self::mediaServeUrl($path);
+        if ($served) {
+            return $served;
         }
 
         if (is_file(public_path('img/logo.png'))) {
@@ -159,17 +201,6 @@ class SystemConfig extends Model
             }
         }
 
-        if (is_string($value) && trim($value) !== '') {
-            $relative = ltrim(str_replace('\\', '/', trim($value)), '/');
-            $absolute = public_path($relative);
-            $url = '/'.$relative;
-            if (is_file($absolute)) {
-                $url .= '?v='.filemtime($absolute);
-            }
-
-            return $url;
-        }
-
-        return null;
+        return self::mediaServeUrl($value);
     }
 }

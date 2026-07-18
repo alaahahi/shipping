@@ -196,8 +196,8 @@ class SystemConfigController extends Controller
             ], 500);
         }
 
-        if ($oldLogo && $oldLogo !== $relativePath && File::exists(public_path($oldLogo))) {
-            File::delete(public_path($oldLogo));
+        if ($oldLogo && $oldLogo !== $relativePath) {
+            $this->deleteStoredMedia($oldLogo);
         }
 
         $fresh = SystemConfig::find($config->id);
@@ -222,9 +222,7 @@ class SystemConfigController extends Controller
 
         $config = SystemConfig::first();
         if ($config && $config->logo) {
-            if (File::exists(public_path($config->logo))) {
-                File::delete(public_path($config->logo));
-            }
+            $this->deleteStoredMedia($config->logo);
             $config->update(['logo' => null]);
         }
 
@@ -276,8 +274,8 @@ class SystemConfigController extends Controller
             ], 500);
         }
 
-        if ($oldBg && $oldBg !== $relativePath && File::exists(public_path($oldBg))) {
-            File::delete(public_path($oldBg));
+        if ($oldBg && $oldBg !== $relativePath) {
+            $this->deleteStoredMedia($oldBg);
         }
 
         $fresh = SystemConfig::find($config->id);
@@ -302,9 +300,7 @@ class SystemConfigController extends Controller
 
         $config = SystemConfig::first();
         if ($config && $config->login_background) {
-            if (File::exists(public_path($config->login_background))) {
-                File::delete(public_path($config->login_background));
-            }
+            $this->deleteStoredMedia($config->login_background);
             $config->update(['login_background' => null]);
         }
 
@@ -313,6 +309,29 @@ class SystemConfigController extends Controller
             'config' => $config?->fresh(),
             'login_background_url' => null,
         ], 200);
+    }
+
+    /**
+     * Serve stored system media (logo / login background) through Laravel.
+     * Fixes hosts where /uploads/* is not publicly reachable.
+     */
+    public function serveSystemMedia(string $file)
+    {
+        if (! preg_match('/^[A-Za-z0-9._-]+$/', $file)) {
+            abort(404);
+        }
+
+        $absolute = SystemConfig::resolveMediaAbsolutePath('img/system/'.$file)
+            ?: SystemConfig::resolveMediaAbsolutePath('uploads/system/'.$file)
+            ?: SystemConfig::resolveMediaAbsolutePath('storage/system/'.$file);
+
+        if (! $absolute) {
+            abort(404);
+        }
+
+        return response()->file($absolute, [
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
     }
 
     protected function firstOrCreateConfig(): SystemConfig
@@ -353,12 +372,20 @@ class SystemConfigController extends Controller
         }
     }
 
+    protected function deleteStoredMedia(?string $storedPath): void
+    {
+        $absolute = SystemConfig::resolveMediaAbsolutePath($storedPath);
+        if ($absolute && File::exists($absolute)) {
+            File::delete($absolute);
+        }
+    }
+
     /**
-     * Store under public/uploads/system (always web-accessible; avoids broken public/storage symlink).
+     * Store under public/img/system (same public area as existing /img/logo.*).
      */
     protected function storeSystemImage($file, string $prefix): string
     {
-        $dir = public_path('uploads/system');
+        $dir = public_path('img/system');
         if (! File::isDirectory($dir)) {
             File::makeDirectory($dir, 0755, true);
         }
@@ -367,7 +394,7 @@ class SystemConfigController extends Controller
         $filename = $prefix.'_'.time().'_'.bin2hex(random_bytes(4)).'.'.$ext;
         $file->move($dir, $filename);
 
-        $relativePath = 'uploads/system/'.$filename;
+        $relativePath = 'img/system/'.$filename;
         if (! is_file(public_path($relativePath))) {
             throw new \RuntimeException('File missing after move: '.$relativePath);
         }

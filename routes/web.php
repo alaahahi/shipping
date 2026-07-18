@@ -24,6 +24,7 @@ use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\LogViewerController;
 use App\Http\Controllers\OnlineUsersController;
 use App\Http\Controllers\PagePermissionController;
+use App\Http\Controllers\SystemConfigController;
 
 
 use App\Models\SystemConfig;
@@ -41,6 +42,10 @@ use App\Models\SystemConfig;
 
 Route::resource('/users', UserController::class)->middleware(['auth', 'verified']);
 
+// Public system media (logo / login background) — no auth so receipts & login can load it
+Route::get('/media/system/{file}', [SystemConfigController::class, 'serveSystemMedia'])
+    ->where('file', '[A-Za-z0-9._-]+')
+    ->name('system.media');
 
 Route::get('/db-status', function (Request $request) {
     $requestInfo = [
