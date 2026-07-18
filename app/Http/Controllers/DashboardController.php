@@ -560,6 +560,7 @@ class DashboardController extends Controller
                     'land_shipping' => $land_shipping,
                     'land_shipping_dinar' => $land_shipping_dinar,
                     'profit' => 0,
+                    'registration_sync_sales' => 0,
                 ]);
 
                 if (!empty($carData['hunter_price_p']) || !empty($carData['hunter_price_s'])) {

@@ -46,6 +46,7 @@ class Car extends Model
         'land_shipping_s' => 0,
         'land_shipping_dinar' => 0,
         'land_shipping_dinar_s' => 0,
+        'registration_sync_sales' => 0,
     ];
 
     protected $fillable = [
