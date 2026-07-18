@@ -4,12 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Laravel\Scout\Searchable;
 
 class SystemConfig extends Model
 {
     use HasFactory;
-   // use Searchable;
+
     protected $table = 'system_config';
     public $timestamps = false;
     protected $fillable = [
@@ -31,6 +30,7 @@ class SystemConfig extends Model
         'contract_template',
         'contract_currency',
         'primary_color',
+        'logo',
     ];
     protected $casts = [
         'default_price_s' => 'array',
@@ -40,4 +40,36 @@ class SystemConfig extends Model
         'external_contract_terms' => 'array',
         'external_contract_terms_2' => 'array',
     ];
+
+    protected $appends = [
+        'logo_url',
+    ];
+
+    public function getLogoUrlAttribute(): string
+    {
+        // Pass '' when null so we do not hit the DB again for an already-loaded model.
+        return self::resolveLogoUrl($this->logo ?? '');
+    }
+
+    public static function resolveLogoUrl(?string $logo = null): string
+    {
+        $path = $logo;
+        if ($path === null) {
+            try {
+                $path = static::query()->value('logo');
+            } catch (\Throwable $e) {
+                $path = null;
+            }
+        }
+
+        if (is_string($path) && $path !== '' && is_file(public_path($path))) {
+            return '/'.ltrim($path, '/');
+        }
+
+        if (is_file(public_path('img/logo.png'))) {
+            return '/img/logo.png';
+        }
+
+        return '/img/logo.jpg';
+    }
 }

@@ -64,7 +64,7 @@ function isPageActive(navPage) {
               <!-- Logo -->
               <div class="shrink-0 flex items-center pe-2">
                 <Link :href="route('dashboard')" class="flex items-center">
-                  <img src="/img/logo.png" alt="Logo" class="h-9 w-auto object-contain" onerror="this.src='/img/logo.jpg'; this.onerror=null;" />
+                  <img :src="$page.props.systemLogo || '/img/logo.png'" alt="Logo" class="h-9 w-auto object-contain" onerror="this.src='/img/logo.jpg'; this.onerror=null;" />
                 </Link>
               </div>
 

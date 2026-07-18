@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use App\Models\SystemConfig;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 
 class SystemConfigController extends Controller
@@ -114,6 +115,86 @@ class SystemConfigController extends Controller
         return Response::json([
             'message' => 'تم تحديث الإعدادات بنجاح',
             'config' => $config->fresh()
+        ], 200);
+    }
+
+    /**
+     * رفع شعار النظام وتخزين المسار في system_config.logo
+     */
+    public function uploadLogo(Request $request)
+    {
+        if (auth()->user() && auth()->user()->type_id == 10) {
+            return Response::json(['error' => 'غير مسموح الوصول'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'logo' => 'required|image|mimes:jpeg,jpg,png,webp,gif|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return Response::json([
+                'error' => 'خطأ في التحقق من البيانات',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $config = SystemConfig::first();
+        if (! $config) {
+            $config = SystemConfig::create([
+                'first_title_ar' => '',
+                'first_title_kr' => '',
+                'second_title_ar' => '',
+                'second_title_kr' => '',
+                'third_title_ar' => '',
+                'third_title_kr' => '',
+            ]);
+        }
+
+        $dir = public_path('storage/system');
+        if (! File::isDirectory($dir)) {
+            File::makeDirectory($dir, 0755, true);
+        }
+
+        if ($config->logo && File::exists(public_path($config->logo))) {
+            File::delete(public_path($config->logo));
+        }
+
+        $file = $request->file('logo');
+        $filename = 'logo_'.time().'.'.$file->getClientOriginalExtension();
+        $file->move($dir, $filename);
+
+        $relativePath = 'storage/system/'.$filename;
+        $config->update(['logo' => $relativePath]);
+        $fresh = $config->fresh();
+
+        return Response::json([
+            'message' => 'تم تحديث الشعار بنجاح',
+            'config' => $fresh,
+            'logo_url' => $fresh->logo_url,
+        ], 200);
+    }
+
+    /**
+     * حذف الشعار المخصص والرجوع للافتراضي
+     */
+    public function deleteLogo()
+    {
+        if (auth()->user() && auth()->user()->type_id == 10) {
+            return Response::json(['error' => 'غير مسموح الوصول'], 403);
+        }
+
+        $config = SystemConfig::first();
+        if ($config && $config->logo) {
+            if (File::exists(public_path($config->logo))) {
+                File::delete(public_path($config->logo));
+            }
+            $config->update(['logo' => null]);
+        }
+
+        return Response::json([
+            'message' => 'تم حذف الشعار المخصص',
+            'config' => $config?->fresh(),
+            'logo_url' => SystemConfig::resolveLogoUrl(),
         ], 200);
     }
 }

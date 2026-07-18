@@ -32,7 +32,14 @@ const systemConfig = ref({
   contract_template: 1,
   contract_currency: 'usd',
   primary_color: '#c00',
+  logo: null,
+  logo_url: '/img/logo.png',
 });
+
+const logoInput = ref(null);
+const selectedLogoFile = ref(null);
+const logoPreview = ref('');
+const uploadingLogo = ref(false);
 
 // تحويل JSON arrays إلى arrays من objects {key, value}
 const defaultPriceSItems = ref([]);
@@ -57,6 +64,87 @@ onMounted(() => {
   loadSystemConfig();
   loadSystems();
 });
+
+function onLogoSelected(event) {
+  const file = event.target.files?.[0] || null;
+  selectedLogoFile.value = file;
+  if (logoPreview.value) {
+    URL.revokeObjectURL(logoPreview.value);
+    logoPreview.value = '';
+  }
+  if (file) {
+    logoPreview.value = URL.createObjectURL(file);
+  }
+}
+
+function uploadLogo() {
+  if (!selectedLogoFile.value) return;
+  const formDataLogo = new FormData();
+  formDataLogo.append('logo', selectedLogoFile.value);
+  uploadingLogo.value = true;
+  axios.post('/api/system-config/logo', formDataLogo, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+    .then((response) => {
+      systemConfig.value = response.data.config;
+      selectedLogoFile.value = null;
+      if (logoPreview.value) {
+        URL.revokeObjectURL(logoPreview.value);
+        logoPreview.value = '';
+      }
+      if (logoInput.value) logoInput.value.value = '';
+      toast.success('تم رفع الشعار بنجاح', {
+        timeout: 2000,
+        position: 'bottom-right',
+        rtl: true,
+      });
+      // تحديث شعار الشريط دون إعادة تحميل كاملة
+      if (response.data.logo_url && window?.location) {
+        setTimeout(() => window.location.reload(), 400);
+      }
+    })
+    .catch((error) => {
+      console.error('Error uploading logo:', error);
+      toast.error(error.response?.data?.error || 'فشل رفع الشعار', {
+        timeout: 3000,
+        position: 'bottom-right',
+        rtl: true,
+      });
+    })
+    .finally(() => {
+      uploadingLogo.value = false;
+    });
+}
+
+function removeLogo() {
+  uploadingLogo.value = true;
+  axios.delete('/api/system-config/logo')
+    .then((response) => {
+      if (response.data.config) {
+        systemConfig.value = response.data.config;
+      } else {
+        systemConfig.value.logo = null;
+        systemConfig.value.logo_url = response.data.logo_url || '/img/logo.png';
+      }
+      toast.success('تم حذف الشعار المخصص', {
+        timeout: 2000,
+        position: 'bottom-right',
+        rtl: true,
+      });
+      setTimeout(() => window.location.reload(), 400);
+    })
+    .catch((error) => {
+      console.error('Error deleting logo:', error);
+      toast.error('فشل حذف الشعار', {
+        timeout: 3000,
+        position: 'bottom-right',
+        rtl: true,
+      });
+    })
+    .finally(() => {
+      uploadingLogo.value = false;
+    });
+}
 
 function convertArrayToItems(data) {
   // إذا كان array، خذ العنصر الأول
@@ -799,6 +887,48 @@ function printCarTagDetails(tag) {
                       <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         اللون المستخدم في حدود وعناوين العقود (مثل #c00 للأحمر)
                       </p>
+                    </div>
+                    <div>
+                      <InputLabel value="شعار النظام" class="mb-2" />
+                      <div class="flex items-start gap-4">
+                        <img
+                          :src="logoPreview || systemConfig.logo_url || '/img/logo.png'"
+                          alt="Logo"
+                          class="h-16 w-auto max-w-[160px] object-contain rounded border border-gray-200 dark:border-gray-700 bg-white p-1"
+                          @error="($event) => { $event.target.src = '/img/logo.jpg' }"
+                        />
+                        <div class="flex flex-col gap-2">
+                          <input
+                            ref="logoInput"
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                            class="block w-full text-sm text-gray-600 dark:text-gray-300 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-indigo-600 file:text-white hover:file:bg-indigo-700"
+                            @change="onLogoSelected"
+                          />
+                          <div class="flex gap-2">
+                            <button
+                              type="button"
+                              class="px-3 py-1.5 text-sm rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                              :disabled="!selectedLogoFile || uploadingLogo"
+                              @click="uploadLogo"
+                            >
+                              {{ uploadingLogo ? 'جاري الرفع...' : 'رفع الشعار' }}
+                            </button>
+                            <button
+                              v-if="systemConfig.logo"
+                              type="button"
+                              class="px-3 py-1.5 text-sm rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 disabled:opacity-50"
+                              :disabled="uploadingLogo"
+                              @click="removeLogo"
+                            >
+                              حذف المخصص
+                            </button>
+                          </div>
+                          <p class="text-xs text-gray-500 dark:text-gray-400">
+                            PNG / JPG / WEBP حتى 2MB — يُحفظ في الإعدادات ويظهر في الواجهة والإيصالات.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

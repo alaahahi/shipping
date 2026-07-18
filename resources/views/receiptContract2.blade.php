@@ -3,6 +3,7 @@ use App\Helpers\Help as MyHelp;
 $Help = new MyHelp();
 $contractTerms = is_array($config) ? ($config['contract_terms_2'] ?? $config['contract_terms'] ?? []) : ($config->contract_terms_2 ?? $config->contract_terms ?? []);
 $primaryColor = is_array($config) ? ($config['primary_color'] ?? '#c00') : ($config->primary_color ?? '#c00');
+$logoSrc = \App\Models\SystemConfig::resolveLogoUrl(is_array($config) ? ($config['logo'] ?? '') : ($config->logo ?? ''));
 $contractOrganizer = $contractOrganizer ?? '';
 if (is_string($contractTerms)) {
   $contractTerms = json_decode($contractTerms, true) ?? [];
@@ -100,7 +101,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   <div class="t2-page">
     <img
       class="t2-watermark"
-      src="{{ asset('img/logo.png') }}"
+      src="{{ asset(ltrim($logoSrc, '/')) }}"
       alt=""
       onerror="this.src='{{ asset('img/logo.jpg') }}'; this.onerror=null;"
     />
@@ -126,7 +127,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
       @endif
       <div class="t2-header-left">
         <div class="t2-logo-wrap">
-          <img src="{{ asset('img/logo.png') }}" alt="Logo" class="t2-logo" onerror="this.src='{{ asset('img/logo.jpg') }}'; this.onerror=null;" />
+          <img src="{{ asset(ltrim($logoSrc, '/')) }}" alt="Logo" class="t2-logo" onerror="this.src='{{ asset('img/logo.jpg') }}'; this.onerror=null;" />
         </div>
         <div class="t2-phones mt-1">
           @foreach(config('car_contract.phones', []) as $p) <span>{{ $p }}</span> @endforeach

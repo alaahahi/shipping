@@ -3,6 +3,7 @@ use App\Helpers\Help as MyHelp;
 $Help = new MyHelp();
 $contractTerms = is_array($config) ? ($config['contract_terms_2'] ?? $config['contract_terms'] ?? []) : ($config->contract_terms_2 ?? $config->contract_terms ?? []);
 $primaryColor = is_array($config) ? ($config['primary_color'] ?? '#c00') : ($config->primary_color ?? '#c00');
+$logoSrc = \App\Models\SystemConfig::resolveLogoUrl(is_array($config) ? ($config['logo'] ?? '') : ($config->logo ?? ''));
 $contractOrganizer = $contractOrganizer ?? '';
 if (is_string($contractTerms)) {
   $contractTerms = json_decode($contractTerms, true) ?? [];
@@ -406,7 +407,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   <div class="c3-sheet">
     <img
       class="c3-watermark"
-      src="{{ asset('img/logo.png') }}"
+      src="{{ asset(ltrim($logoSrc, '/')) }}"
       alt=""
       onerror="this.src='{{ asset('img/logo.jpg') }}'; this.onerror=null;"
     />
@@ -416,7 +417,7 @@ html, body { width: 210mm; margin: 0; padding: 0; }
     <header class="c3-head">
       <div class="c3-head-main">
         <div class="c3-head-logo">
-          <img src="{{ asset('img/logo.png') }}" alt="" onerror="this.src='{{ asset('img/logo.jpg') }}'; this.onerror=null;" />
+          <img src="{{ asset(ltrim($logoSrc, '/')) }}" alt="" onerror="this.src='{{ asset('img/logo.jpg') }}'; this.onerror=null;" />
         </div>
         <div class="c3-head-info">
           <h1>{{ $companyName }}</h1>

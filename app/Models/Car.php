@@ -14,6 +14,40 @@ class Car extends Model
 {
     use HasFactory, TracksHistory;
     protected $table = 'car';
+
+    /**
+     * Defaults for NOT NULL columns (MySQL has DEFAULT 0; SQLite export often drops DEFAULT).
+     */
+    protected $attributes = [
+        'discount' => 0,
+        'paid' => 0,
+        'profit' => 0,
+        'results' => 0,
+        'expenses' => 0,
+        'expenses_s' => 0,
+        'total' => 0,
+        'total_s' => 0,
+        'dinar' => 0,
+        'dolar_price' => 0,
+        'dolar_custom' => 0,
+        'checkout' => 0,
+        'shipping_dolar' => 0,
+        'coc_dolar' => 0,
+        'dinar_s' => 0,
+        'dolar_price_s' => 0,
+        'dolar_custom_s' => 0,
+        'checkout_s' => 0,
+        'shipping_dolar_s' => 0,
+        'coc_dolar_s' => 0,
+        'is_exit' => 0,
+        'contract_id' => 0,
+        'car_have_expenses' => 0,
+        'land_shipping' => 0,
+        'land_shipping_s' => 0,
+        'land_shipping_dinar' => 0,
+        'land_shipping_dinar_s' => 0,
+    ];
+
     protected $fillable = [
         'id',
         'no',

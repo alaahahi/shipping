@@ -196,6 +196,8 @@ Route::post('send-external-transfer', [TransfersController::class, 'sendExternal
 // System Config routes
 Route::get('system-config', [SystemConfigController::class, 'index'])->name('systemConfig.index');
 Route::put('system-config', [SystemConfigController::class, 'update'])->name('systemConfig.update');
+Route::post('system-config/logo', [SystemConfigController::class, 'uploadLogo'])->name('systemConfig.uploadLogo');
+Route::delete('system-config/logo', [SystemConfigController::class, 'deleteLogo'])->name('systemConfig.deleteLogo');
 
 Route::get('page-permissions', [PagePermissionController::class, 'getData'])->name('pagePermissions.data');
 Route::post('page-permissions/import-defaults', [PagePermissionController::class, 'importDefaults'])->name('pagePermissions.importDefaults');

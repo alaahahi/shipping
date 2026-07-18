@@ -7,6 +7,7 @@ use Inertia\Middleware;
 use Tightenco\Ziggy\Ziggy;
 use App\Services\ConnectionService;
 use App\Services\PagePermissionService;
+use App\Models\SystemConfig;
 use Illuminate\Support\Facades\Schema;
 
 class HandleInertiaRequests extends Middleware
@@ -58,6 +59,17 @@ class HandleInertiaRequests extends Middleware
             ],
             'connection' => ConnectionService::getConnectionInfo(),
             'company_name' => config('app.company_name'),
+            'systemLogo' => function () {
+                try {
+                    if (! Schema::hasTable('system_config')) {
+                        return '/img/logo.png';
+                    }
+
+                    return SystemConfig::resolveLogoUrl();
+                } catch (\Throwable $e) {
+                    return '/img/logo.png';
+                }
+            },
         ]);
     }
 }
