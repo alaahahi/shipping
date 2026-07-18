@@ -47,9 +47,73 @@ class UserController extends Controller
      */
     
     public function index()
-    {         
+    {
         $this->accounting->loadAccounts(Auth::user()->owner_id);
-        return Inertia::render('Users/Index');
+
+        return Inertia::render('Users/Index', [
+            'url' => $this->url,
+            'usersType' => $this->assignableStaffTypes(),
+            'typeLabels' => $this->userTypeLabels(),
+        ]);
+    }
+
+    /**
+     * Client / internal-sales-client type IDs — staff user management excludes these.
+     */
+    protected function excludedClientTypeIds(): array
+    {
+        $ids = array_values(array_filter([
+            (int) ($this->accounting->userClient() ?? 0),
+            (int) ($this->accounting->userInternalSalesClient() ?? 0),
+        ]));
+
+        if ($ids === []) {
+            $ids = UserType::query()
+                ->whereIn('name', ['client', 'internal_sales_client'])
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+        }
+
+        return $ids;
+    }
+
+    /**
+     * Roles that can be assigned to staff (non-client) users.
+     */
+    protected function assignableStaffTypes()
+    {
+        $excluded = $this->excludedClientTypeIds();
+
+        return UserType::query()
+            ->when($excluded !== [], fn ($q) => $q->whereNotIn('id', $excluded))
+            ->orderBy('id')
+            ->get(['id', 'name']);
+    }
+
+    /**
+     * Arabic labels for user_type.name values.
+     */
+    protected function userTypeLabels(): array
+    {
+        return [
+            'admin' => 'مدير النظام',
+            'client' => 'زبون',
+            'account' => 'حساب / صندوق',
+            'selesKirkuk' => 'مبيعات',
+            'car_expenses' => 'مصاريف سيارات',
+            'car_contract_user' => 'مستخدم عقود',
+            'car_contract' => 'إدارة عقود',
+            'internal_sales_client' => 'زبون مبيعات داخلية',
+            'shipping_company' => 'شركة شحن',
+        ];
+    }
+
+    protected function assertStaffUser(User $user): void
+    {
+        if (in_array((int) $user->type_id, $this->excludedClientTypeIds(), true)) {
+            abort(403, 'لا يمكن تعديل حسابات الزبائن من هذه الصفحة.');
+        }
     }
 
     public function clients()
@@ -100,12 +164,36 @@ class UserController extends Controller
     public function show ()
     {
         $this->accounting->loadAccounts(Auth::user()->owner_id);
-        return Inertia::render('Users/Index', ['url'=>$this->url]);
+
+        return Inertia::render('Users/Index', [
+            'url' => $this->url,
+            'usersType' => $this->assignableStaffTypes(),
+            'typeLabels' => $this->userTypeLabels(),
+        ]);
     }
     public function getIndex()
     {
-        $data = User::with('userType:id,name','wallet')->whereIn('type_id', [$this->accounting->userSelesKirkuk(),$this->accounting->userCarExpenses()])->paginate(10);
-        return Response::json($data, 200);
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
+
+        $ownerId = Auth::user()->owner_id;
+        $excluded = $this->excludedClientTypeIds();
+        $q = trim((string) request()->input('q', ''));
+        $typeId = request()->input('type_id');
+
+        $query = User::with(['userType:id,name', 'wallet:id,user_id,balance'])
+            ->where('owner_id', $ownerId)
+            ->when($excluded !== [], fn ($builder) => $builder->whereNotIn('type_id', $excluded))
+            ->when($typeId, fn ($builder) => $builder->where('type_id', (int) $typeId))
+            ->when($q !== '', function ($builder) use ($q) {
+                $builder->where(function ($inner) use ($q) {
+                    $inner->where('name', 'LIKE', "%{$q}%")
+                        ->orWhere('email', 'LIKE', "%{$q}%")
+                        ->orWhere('phone', 'LIKE', "%{$q}%");
+                });
+            })
+            ->orderByDesc('id');
+
+        return Response::json($query->paginate(15), 200);
     }
     public function getIndexClients()
     {
@@ -225,29 +313,42 @@ class UserController extends Controller
     
     public function create()
     {
-        $usersType = UserType::all();
         $this->accounting->loadAccounts(Auth::user()->owner_id);
 
-        return Inertia::render('Users/Create',['usersType'=>$usersType]);
+        return Inertia::render('Users/Create', [
+            'usersType' => $this->assignableStaffTypes(),
+            'typeLabels' => $this->userTypeLabels(),
+        ]);
     }
+
     public function store(Request $request)
     {
-        Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:users',
-           ])->validate();
-        $user = User::create([
-                    'name' => $request->name,
-                    'type_id' => $request->userType,
-                    'email' => $request->email,
-                    'created' =>Carbon::now()->format('Y-m-d'),
-                    'password' => Hash::make($request->password),
-                    'phone' => $request->phone
-                ]);
-  
-                Wallet::create(['user_id' => $user->id]);
-                $this->accounting->loadAccounts(Auth::user()->owner_id);
+        $assignableIds = $this->assignableStaffTypes()->pluck('id')->all();
 
-        return Inertia::render('Users/Index', ['url'=>$this->url]);
+        $validated = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|max:255|unique:users,email',
+            'password' => ['required', Rules\Password::defaults()],
+            'userType' => 'required|integer|in:' . implode(',', $assignableIds ?: [0]),
+            'phone' => 'nullable|string|max:255',
+            'organizer_name' => 'nullable|string|max:255',
+        ])->validate();
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'type_id' => $validated['userType'],
+            'email' => $validated['email'],
+            'created' => Carbon::now()->format('Y-m-d'),
+            'password' => Hash::make($validated['password']),
+            'phone' => $validated['phone'] ?? null,
+            'organizer_name' => $validated['organizer_name'] ?? null,
+            'owner_id' => Auth::user()->owner_id,
+        ]);
+
+        Wallet::create(['user_id' => $user->id]);
+        $this->accounting->loadAccounts(Auth::user()->owner_id);
+
+        return redirect()->route('users.index')->with('success', 'تم إنشاء المستخدم بنجاح');
     }
     public function clientsStore(Request $request)
     {
@@ -1569,105 +1670,134 @@ class UserController extends Controller
      */
     public function edit(User $User)
     {
-        $usersType = UserType::all();
-        $user = User::find($User->id);
+        $user = User::with('userType:id,name')->findOrFail($User->id);
+        $this->assertStaffUser($user);
         $this->accounting->loadAccounts(Auth::user()->owner_id);
-        return Inertia::render('Users/Edit', ['usersType'=>$usersType,'user'=>$user]);
+
+        return Inertia::render('Users/Edit', [
+            'usersType' => $this->assignableStaffTypes(),
+            'typeLabels' => $this->userTypeLabels(),
+            'user' => $user,
+        ]);
     }
-    
+
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return Response
+     * Update staff user: profile, optional password, and role (not clients).
      */
     public function update($id, Request $request)
     {
-        $username = User::where('id', $id)->first()->email;
-        switch ($username) {
-            case $request->email:
-                if ($request->password) {
-                    $request->validate([
-                        'name' => 'required|string|max:255',
-                        'password' => [Rules\Password::defaults()],
-                    ]);
-                    $user = User::find($id)->update([
-                        'name' => $request->name,
-                        'password' => Hash::make($request->password),
-                        'percentage' => $request->percentage,
-                        'organizer_name' => $request->organizer_name,
-                    ]);
-                } else {
-                    $request->validate([
-                        'name' => 'required|string|max:255',
-                    ]);
-                    $user = User::find($id)->update([
-                        'name' => $request->name,
-                        'percentage' => $request->percentage,
-                        'organizer_name' => $request->organizer_name,
-                    ]);
-                }
-                break;
-                
-            default:
-                if ($request->password) {
-                    $request->validate([
-                        'name' => 'required|string|max:255',
-                        'email' => 'required|string|max:255|unique:users',
-                    ]);
-                    $user = User::find($id)->update([
-                        'name' => $request->name,
-                        'email' => $request->email,
-                        'organizer_name' => $request->organizer_name,
-                    ]);
-                } else {
-                    $request->validate([
-                        'name' => 'required|string|max:255',
-                        'email' => 'required|string|max:255|unique:users',
-                        'password' => [Rules\Password::defaults()],
-                    ]);
-                    $user = User::find($id)->update([
-                        'name' => $request->name,
-                        'email' => $request->email,
-                        'password' => Hash::make($request->password),
-                        'organizer_name' => $request->organizer_name,
-                    ]);
-                }
-                break;
+        $user = User::where('id', $id)
+            ->where('owner_id', Auth::user()->owner_id)
+            ->firstOrFail();
+
+        $this->assertStaffUser($user);
+
+        $assignableIds = $this->assignableStaffTypes()->pluck('id')->all();
+        $typeId = (int) ($request->input('type_id') ?? $request->input('userType') ?? $user->type_id);
+
+        $rules = [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|max:255|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string|max:255',
+            'organizer_name' => 'nullable|string|max:255',
+            'type_id' => 'nullable|integer|in:' . implode(',', $assignableIds ?: [0]),
+            'userType' => 'nullable|integer|in:' . implode(',', $assignableIds ?: [0]),
+            'password' => ['nullable', 'string', Rules\Password::defaults()],
+        ];
+
+        $validated = Validator::make($request->all(), $rules)->validate();
+
+        if (! in_array($typeId, $assignableIds, true)) {
+            abort(422, 'صلاحية غير مسموحة.');
         }
+
+        $payload = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? $user->phone,
+            'organizer_name' => $validated['organizer_name'] ?? $user->organizer_name,
+            'type_id' => $typeId,
+        ];
+
+        if (! empty($validated['password'])) {
+            $payload['password'] = Hash::make($validated['password']);
+        }
+
+        // Protect primary admin login identity from accidental role demotion via UI mistakes
+        if ($user->email === 'admin@admin.com') {
+            unset($payload['type_id'], $payload['email']);
+        }
+
+        $user->update($payload);
         $this->accounting->loadAccounts(Auth::user()->owner_id);
 
-        return Inertia::render('Users/Index', ['url'=>$this->url]);
+        if ($request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return Response::json([
+                'status' => 200,
+                'message' => 'تم تحديث المستخدم بنجاح',
+                'data' => $user->fresh(['userType:id,name', 'wallet:id,user_id,balance']),
+            ], 200);
+        }
 
+        return redirect()->route('users.index')->with('success', 'تم تحديث المستخدم بنجاح');
     }
-    
-    
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return Response
-     */
+
     public function destroy($id)
-    {   
-     
-       // User::where('parent_id',$id)->update(['parent_id' =>null]);
-        User::find($id)->delete();
+    {
+        $user = User::where('id', $id)
+            ->where('owner_id', Auth::user()->owner_id)
+            ->firstOrFail();
+
+        $this->assertStaffUser($user);
+
+        if ($user->email === 'admin@admin.com') {
+            abort(403, 'لا يمكن حذف حساب المدير الرئيسي.');
+        }
+
+        $user->delete();
+        Log::info('Staff user deleted', ['user_id' => $id, 'by' => Auth::id()]);
         $this->accounting->loadAccounts(Auth::user()->owner_id);
 
-        return Inertia::render('Users/Index', ['url'=>$this->url]); 
+        return redirect()->route('users.index')->with('success', 'تم حذف المستخدم');
     }
+
     public function ban($id)
     {
-        User::find($id)->update(['is_band' => 1]);
+        $user = User::where('id', $id)
+            ->where('owner_id', Auth::user()->owner_id)
+            ->firstOrFail();
+
+        $this->assertStaffUser($user);
+
+        if ($user->email === 'admin@admin.com') {
+            abort(403, 'لا يمكن تقييد حساب المدير الرئيسي.');
+        }
+
+        $user->update(['is_band' => 1]);
         $this->accounting->loadAccounts(Auth::user()->owner_id);
 
-        return Inertia::render('Users/Index', ['url'=>$this->url]); 
+        if (request()->wantsJson() || request()->header('X-Requested-With') === 'XMLHttpRequest') {
+            return Response::json(['status' => 200, 'message' => 'تم تقييد المستخدم'], 200);
+        }
+
+        return redirect()->route('users.index');
     }
+
     public function unban($id)
     {
-        User::find($id)->update(['is_band' => 0]);
+        $user = User::where('id', $id)
+            ->where('owner_id', Auth::user()->owner_id)
+            ->firstOrFail();
+
+        $this->assertStaffUser($user);
+        $user->update(['is_band' => 0]);
         $this->accounting->loadAccounts(Auth::user()->owner_id);
 
-        return Inertia::render('Users/Index', ['url'=>$this->url]); 
+        if (request()->wantsJson() || request()->header('X-Requested-With') === 'XMLHttpRequest') {
+            return Response::json(['status' => 200, 'message' => 'تم إلغاء التقييد'], 200);
+        }
+
+        return redirect()->route('users.index');
     }
     public function login(LoginRequest $request)
     {

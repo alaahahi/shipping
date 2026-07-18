@@ -12,12 +12,12 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('system_config', function (Blueprint $table) {
-            if (! Schema::hasColumn('system_config', 'logo')) {
-                $table->string('logo', 255)->nullable()->after('primary_color')
-                    ->comment('مسار شعار النظام داخل public');
-            }
-        });
+        // SQLite-safe: no after()/comment(); check column outside Blueprint.
+        if (! Schema::hasColumn('system_config', 'logo')) {
+            Schema::table('system_config', function (Blueprint $table) {
+                $table->string('logo', 255)->nullable();
+            });
+        }
     }
 
     public function down(): void

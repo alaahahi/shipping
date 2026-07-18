@@ -65,9 +65,24 @@ class HandleInertiaRequests extends Middleware
                         return '/img/logo.png';
                     }
 
+                    SystemConfig::ensureMediaColumns();
+
                     return SystemConfig::resolveLogoUrl();
                 } catch (\Throwable $e) {
                     return '/img/logo.png';
+                }
+            },
+            'loginBackground' => function () {
+                try {
+                    if (! Schema::hasTable('system_config')) {
+                        return null;
+                    }
+
+                    SystemConfig::ensureMediaColumns();
+
+                    return SystemConfig::resolveLoginBackgroundUrl();
+                } catch (\Throwable $e) {
+                    return null;
                 }
             },
         ]);

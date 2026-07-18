@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class SystemConfig extends Model
 {
@@ -31,6 +33,7 @@ class SystemConfig extends Model
         'contract_currency',
         'primary_color',
         'logo',
+        'login_background',
     ];
 
     protected $attributes = [
@@ -58,12 +61,43 @@ class SystemConfig extends Model
 
     protected $appends = [
         'logo_url',
+        'login_background_url',
     ];
+
+    /**
+     * Ensure media columns exist (covers SQLite prod when migrate was skipped).
+     */
+    public static function ensureMediaColumns(): void
+    {
+        try {
+            if (! Schema::hasTable('system_config')) {
+                return;
+            }
+
+            if (! Schema::hasColumn('system_config', 'logo')) {
+                Schema::table('system_config', function (Blueprint $table) {
+                    $table->string('logo', 255)->nullable();
+                });
+            }
+
+            if (! Schema::hasColumn('system_config', 'login_background')) {
+                Schema::table('system_config', function (Blueprint $table) {
+                    $table->string('login_background', 255)->nullable();
+                });
+            }
+        } catch (\Throwable $e) {
+            // Ignore — uploads will still surface a clear error if schema cannot change.
+        }
+    }
 
     public function getLogoUrlAttribute(): string
     {
-        // Pass '' when null so we do not hit the DB again for an already-loaded model.
         return self::resolveLogoUrl($this->logo ?? '');
+    }
+
+    public function getLoginBackgroundUrlAttribute(): ?string
+    {
+        return self::resolveLoginBackgroundUrl($this->login_background ?? '');
     }
 
     public static function resolveLogoUrl(?string $logo = null): string
@@ -71,14 +105,19 @@ class SystemConfig extends Model
         $path = $logo;
         if ($path === null) {
             try {
+                self::ensureMediaColumns();
                 $path = static::query()->value('logo');
             } catch (\Throwable $e) {
                 $path = null;
             }
         }
 
-        if (is_string($path) && $path !== '' && is_file(public_path($path))) {
-            return '/'.ltrim($path, '/');
+        if (is_string($path) && $path !== '') {
+            $relative = ltrim(str_replace('\\', '/', $path), '/');
+            $absolute = public_path($relative);
+            if (is_file($absolute)) {
+                return '/'.$relative.'?v='.filemtime($absolute);
+            }
         }
 
         if (is_file(public_path('img/logo.png'))) {
@@ -86,5 +125,31 @@ class SystemConfig extends Model
         }
 
         return '/img/logo.jpg';
+    }
+
+    /**
+     * Custom login background URL, or null to use the built-in atmospheric design.
+     */
+    public static function resolveLoginBackgroundUrl(?string $path = null): ?string
+    {
+        $value = $path;
+        if ($value === null) {
+            try {
+                self::ensureMediaColumns();
+                $value = static::query()->value('login_background');
+            } catch (\Throwable $e) {
+                $value = null;
+            }
+        }
+
+        if (is_string($value) && $value !== '') {
+            $relative = ltrim(str_replace('\\', '/', $value), '/');
+            $absolute = public_path($relative);
+            if (is_file($absolute)) {
+                return '/'.$relative.'?v='.filemtime($absolute);
+            }
+        }
+
+        return null;
     }
 }

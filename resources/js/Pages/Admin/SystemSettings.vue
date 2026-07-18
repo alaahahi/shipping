@@ -34,12 +34,19 @@ const systemConfig = ref({
   primary_color: '#c00',
   logo: null,
   logo_url: '/img/logo.png',
+  login_background: null,
+  login_background_url: null,
 });
 
 const logoInput = ref(null);
 const selectedLogoFile = ref(null);
 const logoPreview = ref('');
 const uploadingLogo = ref(false);
+
+const bgInput = ref(null);
+const selectedBgFile = ref(null);
+const bgPreview = ref('');
+const uploadingBg = ref(false);
 
 // تحويل JSON arrays إلى arrays من objects {key, value}
 const defaultPriceSItems = ref([]);
@@ -87,6 +94,9 @@ function uploadLogo() {
   })
     .then((response) => {
       systemConfig.value = response.data.config;
+      if (response.data.logo_url) {
+        systemConfig.value.logo_url = response.data.logo_url;
+      }
       selectedLogoFile.value = null;
       if (logoPreview.value) {
         URL.revokeObjectURL(logoPreview.value);
@@ -98,15 +108,13 @@ function uploadLogo() {
         position: 'bottom-right',
         rtl: true,
       });
-      // تحديث شعار الشريط دون إعادة تحميل كاملة
-      if (response.data.logo_url && window?.location) {
-        setTimeout(() => window.location.reload(), 400);
-      }
+      // تحديث الشريط بعد ثبّت المسار في DB والملف على القرص
+      setTimeout(() => window.location.reload(), 600);
     })
     .catch((error) => {
       console.error('Error uploading logo:', error);
       toast.error(error.response?.data?.error || 'فشل رفع الشعار', {
-        timeout: 3000,
+        timeout: 4000,
         position: 'bottom-right',
         rtl: true,
       });
@@ -143,6 +151,82 @@ function removeLogo() {
     })
     .finally(() => {
       uploadingLogo.value = false;
+    });
+}
+
+function onBgSelected(event) {
+  const file = event.target.files?.[0] || null;
+  selectedBgFile.value = file;
+  if (bgPreview.value) {
+    URL.revokeObjectURL(bgPreview.value);
+    bgPreview.value = '';
+  }
+  if (file) {
+    bgPreview.value = URL.createObjectURL(file);
+  }
+}
+
+function uploadLoginBackground() {
+  if (!selectedBgFile.value) return;
+  const formDataBg = new FormData();
+  formDataBg.append('login_background', selectedBgFile.value);
+  uploadingBg.value = true;
+  axios.post('/api/system-config/login-background', formDataBg, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+    .then((response) => {
+      systemConfig.value = response.data.config;
+      selectedBgFile.value = null;
+      if (bgPreview.value) {
+        URL.revokeObjectURL(bgPreview.value);
+        bgPreview.value = '';
+      }
+      if (bgInput.value) bgInput.value.value = '';
+      toast.success('تم رفع خلفية تسجيل الدخول', {
+        timeout: 2000,
+        position: 'bottom-right',
+        rtl: true,
+      });
+    })
+    .catch((error) => {
+      console.error('Error uploading login background:', error);
+      toast.error(error.response?.data?.error || 'فشل رفع الخلفية', {
+        timeout: 3000,
+        position: 'bottom-right',
+        rtl: true,
+      });
+    })
+    .finally(() => {
+      uploadingBg.value = false;
+    });
+}
+
+function removeLoginBackground() {
+  uploadingBg.value = true;
+  axios.delete('/api/system-config/login-background')
+    .then((response) => {
+      if (response.data.config) {
+        systemConfig.value = response.data.config;
+      } else {
+        systemConfig.value.login_background = null;
+        systemConfig.value.login_background_url = null;
+      }
+      toast.success('تم حذف خلفية تسجيل الدخول', {
+        timeout: 2000,
+        position: 'bottom-right',
+        rtl: true,
+      });
+    })
+    .catch((error) => {
+      console.error('Error deleting login background:', error);
+      toast.error('فشل حذف الخلفية', {
+        timeout: 3000,
+        position: 'bottom-right',
+        rtl: true,
+      });
+    })
+    .finally(() => {
+      uploadingBg.value = false;
     });
 }
 
@@ -925,9 +1009,62 @@ function printCarTagDetails(tag) {
                             </button>
                           </div>
                           <p class="text-xs text-gray-500 dark:text-gray-400">
-                            PNG / JPG / WEBP حتى 2MB — يُحفظ في الإعدادات ويظهر في الواجهة والإيصالات.
+                            PNG / JPG / WEBP حتى 2MB — يظهر في الواجهة والإيصالات وصفحة الدخول.
                           </p>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-6">
+                    <InputLabel value="خلفية صفحة تسجيل الدخول" class="mb-2" />
+                    <div class="flex flex-col md:flex-row items-start gap-4">
+                      <div
+                        class="w-full md:w-64 h-36 rounded border border-gray-200 dark:border-gray-700 overflow-hidden bg-slate-900 relative"
+                      >
+                        <img
+                          v-if="bgPreview || systemConfig.login_background_url"
+                          :src="bgPreview || systemConfig.login_background_url"
+                          alt="Login background"
+                          class="absolute inset-0 w-full h-full object-cover"
+                        />
+                        <div
+                          v-else
+                          class="absolute inset-0 flex items-center justify-center text-xs text-gray-400 px-3 text-center"
+                        >
+                          بدون صورة — تُستخدم الخلفية الافتراضية
+                        </div>
+                      </div>
+                      <div class="flex flex-col gap-2 flex-1">
+                        <input
+                          ref="bgInput"
+                          type="file"
+                          accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                          class="block w-full text-sm text-gray-600 dark:text-gray-300 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-rose-600 file:text-white hover:file:bg-rose-700"
+                          @change="onBgSelected"
+                        />
+                        <div class="flex gap-2 flex-wrap">
+                          <button
+                            type="button"
+                            class="px-3 py-1.5 text-sm rounded bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50"
+                            :disabled="!selectedBgFile || uploadingBg"
+                            @click="uploadLoginBackground"
+                          >
+                            {{ uploadingBg ? 'جاري الرفع...' : 'رفع الخلفية' }}
+                          </button>
+                          <button
+                            v-if="systemConfig.login_background"
+                            type="button"
+                            class="px-3 py-1.5 text-sm rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 disabled:opacity-50"
+                            :disabled="uploadingBg"
+                            @click="removeLoginBackground"
+                          >
+                            حذف الخلفية
+                          </button>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                          صورة أفقية مفضّلة (1920×1080) — PNG / JPG / WEBP حتى 5MB. تظهر كخلفية كاملة في صفحة تسجيل الدخول.
+                        </p>
                       </div>
                     </div>
                   </div>
