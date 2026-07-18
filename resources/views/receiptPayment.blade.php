@@ -60,7 +60,9 @@ $Help = new MyHelp();
     <h5 class="pt-1">Cash Receipt Voucher </h5>
     </div>
     <div class="col-4 text-center py-3"> 
-        @include('Components.logo')
+        <div style="max-width:125px;margin:0 auto;">
+            @include('Components.logo')
+        </div>
 
     </div>
     </div>
@@ -187,7 +189,9 @@ $Help = new MyHelp();
       <h5 class="pt-1">Cash Receipt Voucher </h5>
       </div>
       <div class="col-4 text-center py-3"> 
-          @include('Components.logo')
+          <div style="max-width:125px;margin:0 auto;">
+              @include('Components.logo')
+          </div>
   
       </div>
       </div>
