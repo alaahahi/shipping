@@ -159,6 +159,16 @@ function openModalUploader(tran){
   showModalUploader.value = true;
 }
 
+function isContractOut(tran) {
+  const t = String(tran?.type || '').toLowerCase();
+  return t === 'out' || t === 'outuser' || t === 'debt' || t.startsWith('out');
+}
+
+function isContractIn(tran) {
+  const t = String(tran?.type || '').toLowerCase();
+  return t === 'in' || t === 'inuser' || t.startsWith('in');
+}
+
 const props = defineProps({
   url: String,
   users:Array,
@@ -685,7 +695,7 @@ function UpdatePage (){
                     <th className="px-2 py-2" style="width: 180px;">{{ t("transactionDate") }}</th>
                     <th className="px-2 py-2">{{ t("description") }}</th>
                     <th className="px-2 py-2">{{ t("transactionAmount") }}</th>
-                    <th className="px-2 py-2" style="width: 100px;">{{ t("execute") }}</th>
+                    <th className="px-2 py-2" style="min-width: 160px;">{{ t("execute") }}</th>
                     <th v-if="false"
                       scope="col"
                       class="px-1 py-2 text-base print:hidden" style="width: 100px;"
@@ -727,23 +737,38 @@ function UpdatePage (){
                         <imags />
                       </button>
 
+                      <!-- صرف / سحب -->
                       <a
-                        v-if="tran.type === 'out' || tran.type === 'outUser' || tran.type === 'debt'"
+                        v-if="isContractOut(tran)"
                         :href="`/api/printContractTransaction?print=2&transactions_id=${tran.id}`"
                         target="_blank"
-                        class="px-1 py-1 text-white bg-slate-700 rounded-md inline-flex"
+                        class="px-2 py-1 text-xs text-white bg-slate-700 hover:bg-slate-800 rounded-md inline-flex items-center gap-1"
                         title="طباعة وصل سحب / صرف"
                       >
-                        <print />
+                        <print class="w-4 h-4" />
+                        <span>سحب</span>
                       </a>
+                      <!-- قبض -->
                       <a
-                        v-if="tran.type === 'in' || tran.type === 'inUser'"
+                        v-if="isContractIn(tran)"
                         :href="`/api/printContractTransaction?print=3&transactions_id=${tran.id}`"
                         target="_blank"
-                        class="px-1 py-1 text-white bg-emerald-700 rounded-md inline-flex"
+                        class="px-2 py-1 text-xs text-white bg-emerald-700 hover:bg-emerald-800 rounded-md inline-flex items-center gap-1"
                         title="طباعة وصل قبض"
                       >
-                        <print />
+                        <print class="w-4 h-4" />
+                        <span>قبض</span>
+                      </a>
+                      <!-- احتياط إذا النوع غير معروف -->
+                      <a
+                        v-if="!isContractOut(tran) && !isContractIn(tran)"
+                        :href="`/api/printContractTransaction?print=3&transactions_id=${tran.id}`"
+                        target="_blank"
+                        class="px-2 py-1 text-xs text-white bg-indigo-700 hover:bg-indigo-800 rounded-md inline-flex items-center gap-1"
+                        title="طباعة وصل"
+                      >
+                        <print class="w-4 h-4" />
+                        <span>وصل</span>
                       </a>
                     </div>
                   </td>
