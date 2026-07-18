@@ -391,7 +391,9 @@ class UserController extends Controller
             'year_date' => $year_date,
             'owner_id' => $owner_id,
             'created' => Carbon::now()->format('Y-m-d'),
-            'show_in_dashboard' => (bool) $request->boolean('show_in_dashboard'),
+            'show_in_dashboard' => $request->has('show_in_dashboard')
+                ? (bool) $request->boolean('show_in_dashboard')
+                : true,
         ]);
 
         Wallet::create(['user_id' => $user->id]);

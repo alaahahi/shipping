@@ -343,8 +343,8 @@ const printUrl = () =>
           </div>
 
           <div class="relative overflow-x-auto">
-            <table class="w-full text-center text-sm text-gray-600 dark:text-gray-300">
-              <thead class="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+            <table class="w-full text-center text-sm">
+              <thead class="bg-slate-200 text-xs uppercase text-slate-800 dark:bg-slate-800 dark:text-slate-100">
                 <tr>
                   <th class="px-2 py-3">#</th>
                   <th class="px-2 py-3">{{ $t('name') }}</th>
@@ -359,28 +359,32 @@ const printUrl = () =>
                 <tr
                   v-for="(user, i) in laravelData"
                   :key="user?.id || i"
-                  class="border-b dark:border-gray-800"
+                  class="border-b border-slate-200 dark:border-slate-700"
                   :class="
                     Number(user.balance) <= 0
-                      ? 'bg-green-50 dark:bg-green-950/40'
-                      : 'bg-red-50 dark:bg-red-950/40'
+                      ? 'bg-emerald-100 text-slate-900 dark:bg-emerald-900 dark:text-emerald-50'
+                      : 'bg-rose-100 text-slate-900 dark:bg-rose-900 dark:text-rose-50'
                   "
                 >
                   <template v-if="user?.id">
-                    <td class="px-2 py-2">{{ i + 1 }}</td>
-                    <td class="px-2 py-2 text-base font-bold text-gray-900 dark:text-white">
+                    <td class="px-2 py-2 font-medium">{{ i + 1 }}</td>
+                    <td class="px-2 py-2 text-base font-extrabold text-slate-900 dark:text-white">
                       {{ user.name }}
                     </td>
-                    <td class="px-2 py-2">{{ user.phone || '—' }}</td>
-                    <td class="px-2 py-2 font-semibold">{{ user.balance }} $</td>
+                    <td class="px-2 py-2 font-medium text-slate-800 dark:text-slate-100">
+                      {{ user.phone || '—' }}
+                    </td>
+                    <td class="px-2 py-2 font-bold text-slate-900 dark:text-white">
+                      {{ user.balance }} $
+                    </td>
                     <td class="px-2 py-2">
                       <button
                         type="button"
                         class="rounded px-2 py-1 text-sm font-semibold"
                         :class="
                           user.has_internal_sales
-                            ? 'bg-green-500 text-white hover:bg-green-600'
-                            : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+                            ? 'bg-green-600 text-white hover:bg-green-700'
+                            : 'bg-slate-500 text-white hover:bg-slate-600'
                         "
                         @click="toggleInternalSalesQuick(user)"
                       >
@@ -394,7 +398,7 @@ const printUrl = () =>
                         :class="
                           user.show_in_dashboard
                             ? 'bg-orange-500 text-white hover:bg-orange-600'
-                            : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+                            : 'bg-slate-500 text-white hover:bg-slate-600'
                         "
                         @click="toggleShowInDashboardQuick(user)"
                       >
