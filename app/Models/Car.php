@@ -47,6 +47,11 @@ class Car extends Model
         'land_shipping_dinar' => 0,
         'land_shipping_dinar_s' => 0,
         'registration_sync_sales' => 0,
+        'car_price' => 0,
+        'registration_exchange_rate' => 0,
+        'registration_pre_expenses' => 0,
+        'registration_pre_expenses_s' => 0,
+        'registration_linked_usd' => 0,
     ];
 
     protected $fillable = [
