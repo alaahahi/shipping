@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ModalAddClient from '@/Components/ModalAddClient.vue';
 import ModalEditClient from '@/Components/ModalEditClient.vue';
 import ModalDelClient from '@/Components/ModalDelCar.vue';
+import UiSwitch from '@/Components/UiSwitch.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import show from '@/Components/icon/show.vue';
@@ -24,6 +25,7 @@ const showModalAddBox = ref(false);
 const showModalEditClient = ref(false);
 const showModalDelClient = ref(false);
 const saving = ref(false);
+const togglingId = ref(null);
 
 const laravelData = ref([]);
 const formData = ref({});
@@ -168,45 +170,67 @@ async function confirmDelClient(payload) {
   }
 }
 
-async function toggleInternalSalesQuick(user) {
+const isFlagOn = (value) => value === true || value === 1 || value === '1';
+
+async function toggleInternalSalesQuick(user, nextValue = null) {
+  if (!user?.id || togglingId.value === `sales-${user.id}`) return;
+
+  const next = nextValue === null ? !isFlagOn(user.has_internal_sales) : !!nextValue;
+  const prev = user.has_internal_sales;
+  user.has_internal_sales = next;
+  togglingId.value = `sales-${user.id}`;
+
   try {
     const response = await axios.post('/api/toggleInternalSales', {
       client_id: user.id,
-      has_internal_sales: !(user.has_internal_sales || false),
+      has_internal_sales: next,
     });
-    user.has_internal_sales = response.data.has_internal_sales;
+    user.has_internal_sales = isFlagOn(response.data.has_internal_sales);
     toast.success('تم تحديث حالة المبيعات الداخلية', {
-      timeout: 2000,
+      timeout: 1800,
       position: 'bottom-right',
       rtl: true,
     });
   } catch (error) {
-    toast.error('فشل تحديث حالة المبيعات الداخلية', {
+    user.has_internal_sales = prev;
+    toast.error(error?.response?.data?.message || 'فشل تحديث المبيعات الداخلية', {
       timeout: 3000,
       position: 'bottom-right',
       rtl: true,
     });
+  } finally {
+    togglingId.value = null;
   }
 }
 
-async function toggleShowInDashboardQuick(user) {
+async function toggleShowInDashboardQuick(user, nextValue = null) {
+  if (!user?.id || togglingId.value === `dash-${user.id}`) return;
+
+  const next = nextValue === null ? !isFlagOn(user.show_in_dashboard) : !!nextValue;
+  const prev = user.show_in_dashboard;
+  user.show_in_dashboard = next;
+  togglingId.value = `dash-${user.id}`;
+
   try {
     const response = await axios.post('/api/toggleShowInDashboard', {
       client_id: user.id,
-      show_in_dashboard: !(user.show_in_dashboard || false),
+      show_in_dashboard: next,
     });
-    user.show_in_dashboard = response.data.show_in_dashboard;
-    toast.success('تم تحديث حالة العرض في لوحة التحكم', {
-      timeout: 2000,
+    user.show_in_dashboard = isFlagOn(response.data.show_in_dashboard);
+    toast.success('تم تحديث العرض في لوحة التحكم', {
+      timeout: 1800,
       position: 'bottom-right',
       rtl: true,
     });
   } catch (error) {
-    toast.error('فشل تحديث حالة العرض في لوحة التحكم', {
+    user.show_in_dashboard = prev;
+    toast.error(error?.response?.data?.message || 'فشل تحديث العرض في لوحة التحكم', {
       timeout: 3000,
       position: 'bottom-right',
       rtl: true,
     });
+  } finally {
+    togglingId.value = null;
   }
 }
 
@@ -378,32 +402,30 @@ const printUrl = () =>
                       {{ user.balance }} $
                     </td>
                     <td class="px-2 py-2">
-                      <button
-                        type="button"
-                        class="rounded px-2 py-1 text-sm font-semibold"
-                        :class="
-                          user.has_internal_sales
-                            ? 'bg-green-600 text-white hover:bg-green-700'
-                            : 'bg-slate-500 text-white hover:bg-slate-600'
-                        "
-                        @click="toggleInternalSalesQuick(user)"
-                      >
-                        {{ user.has_internal_sales ? '✓ مفعل' : '✗ معطل' }}
-                      </button>
+                      <div class="inline-flex flex-col items-center gap-1">
+                        <UiSwitch
+                          :model-value="user.has_internal_sales"
+                          on-color="bg-emerald-500"
+                          :disabled="togglingId === `sales-${user.id}`"
+                          @change="(v) => toggleInternalSalesQuick(user, v)"
+                        />
+                        <span class="text-[11px] font-semibold">
+                          {{ isFlagOn(user.has_internal_sales) ? 'مفعل' : 'معطل' }}
+                        </span>
+                      </div>
                     </td>
                     <td class="px-2 py-2">
-                      <button
-                        type="button"
-                        class="rounded px-2 py-1 text-sm font-semibold"
-                        :class="
-                          user.show_in_dashboard
-                            ? 'bg-orange-500 text-white hover:bg-orange-600'
-                            : 'bg-slate-500 text-white hover:bg-slate-600'
-                        "
-                        @click="toggleShowInDashboardQuick(user)"
-                      >
-                        {{ user.show_in_dashboard ? '✓ مفعل' : '✗ معطل' }}
-                      </button>
+                      <div class="inline-flex flex-col items-center gap-1">
+                        <UiSwitch
+                          :model-value="user.show_in_dashboard"
+                          on-color="bg-orange-500"
+                          :disabled="togglingId === `dash-${user.id}`"
+                          @change="(v) => toggleShowInDashboardQuick(user, v)"
+                        />
+                        <span class="text-[11px] font-semibold">
+                          {{ isFlagOn(user.show_in_dashboard) ? 'مفعل' : 'معطل' }}
+                        </span>
+                      </div>
                     </td>
                     <td class="px-2 py-2">
                       <div class="inline-flex flex-wrap items-center justify-center gap-1">

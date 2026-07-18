@@ -467,6 +467,8 @@ class UserController extends Controller
     // Internal Sales Functions
     public function toggleInternalSales(Request $request)
     {
+        User::ensureOptionalColumns();
+
         $validated = Validator::make($request->all(), [
             'client_id' => 'required|integer|exists:users,id',
             'has_internal_sales' => 'required|boolean',
@@ -476,17 +478,20 @@ class UserController extends Controller
             ->where('owner_id', Auth::user()->owner_id)
             ->firstOrFail();
 
-        $client->has_internal_sales = $validated['has_internal_sales'];
+        $client->has_internal_sales = (bool) $validated['has_internal_sales'];
         $client->save();
+        $this->forgetClientsListCache(Auth::user()->owner_id);
 
         return response()->json([
             'message' => 'Internal sales status updated successfully',
-            'has_internal_sales' => $client->has_internal_sales,
+            'has_internal_sales' => (bool) $client->has_internal_sales,
         ], 200);
     }
 
     public function toggleShowInDashboard(Request $request)
     {
+        User::ensureOptionalColumns();
+
         $validated = Validator::make($request->all(), [
             'client_id' => 'required|integer|exists:users,id',
             'show_in_dashboard' => 'required|boolean',
@@ -496,12 +501,13 @@ class UserController extends Controller
             ->where('owner_id', Auth::user()->owner_id)
             ->firstOrFail();
 
-        $client->show_in_dashboard = $validated['show_in_dashboard'];
+        $client->show_in_dashboard = (bool) $validated['show_in_dashboard'];
         $client->save();
+        $this->forgetClientsListCache(Auth::user()->owner_id);
 
         return response()->json([
             'message' => 'Show in dashboard status updated successfully',
-            'show_in_dashboard' => $client->show_in_dashboard,
+            'show_in_dashboard' => (bool) $client->show_in_dashboard,
         ], 200);
     }
 
