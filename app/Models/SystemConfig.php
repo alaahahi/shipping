@@ -32,6 +32,21 @@ class SystemConfig extends Model
         'primary_color',
         'logo',
     ];
+
+    protected $attributes = [
+        'usd_to_aed_rate' => 3.67,
+        'usd_to_dinar_rate' => 150,
+        'contract_template' => 1,
+        'contract_currency' => 'usd',
+        'primary_color' => '#c00',
+        'first_title_ar' => '',
+        'first_title_kr' => '',
+        'second_title_ar' => '',
+        'second_title_kr' => '',
+        'third_title_ar' => '',
+        'third_title_kr' => '',
+    ];
+
     protected $casts = [
         'default_price_s' => 'array',
         'default_price_p' => 'array',

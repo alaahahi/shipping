@@ -11,6 +11,11 @@ class CarContract extends Model
     use HasFactory,SoftDeletes;
     protected $table = 'car_contract';
 
+    protected $attributes = [
+        'status' => 0,
+        'contract_type' => 'company',
+    ];
+
     protected $fillable = [
         'id',
         'uuid',

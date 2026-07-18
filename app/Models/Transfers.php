@@ -11,6 +11,15 @@ class Transfers extends Model
 {
     use HasFactory, SoftDeletes;
     protected $table = 'transfers';
+
+    protected $attributes = [
+        'amount' => 0,
+        'currency' => '$',
+        'is_archived' => 0,
+        'is_external' => 0,
+        'fee' => 0,
+    ];
+
     protected $fillable = [
         'id',
         'no',

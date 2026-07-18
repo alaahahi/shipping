@@ -12,6 +12,10 @@ class IranInvoiceItem extends Model
 
     protected $table = 'iran_invoice_items';
 
+    protected $attributes = [
+        'sort_order' => 0,
+    ];
+
     protected $fillable = [
         'invoice_id',
         'car_id',

@@ -11,6 +11,10 @@ class SalePayment extends Model
 
     protected $table = 'sale_payments';
 
+    protected $attributes = [
+        'amount' => 0,
+    ];
+
     protected $fillable = [
         'car_sale_id',
         'amount',

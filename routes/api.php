@@ -414,6 +414,7 @@ Route::post('convertDinarDollarContract',[CarContractController::class, 'convert
 Route::post('DropFromBoxContract',[CarContractController::class, 'DropFromBoxContract'])->name('DropFromBoxContract');
 Route::get('getIndexClientsContract',[CarContractController::class, 'getIndexClientsContract'])->name('getIndexClientsContract');
 Route::get('contract_account_report',[CarContractController::class, 'contract_account_report'])->name('contract_account_report');
+Route::get('printContractTransaction',[CarContractController::class, 'printContractTransaction'])->name('printContractTransaction');
 Route::get('contract-installments',[CarContractController::class, 'getContractInstallments'])->name('contract-installments.index');
 Route::get('contract-installment-payments',[CarContractController::class, 'getContractInstallmentPayments'])->name('contract-installment-payments.index');
 Route::get('contract-installments/{id}',[CarContractController::class, 'getContractInstallmentDetails'])->name('contract-installments.show')->whereNumber('id');

@@ -11,6 +11,11 @@ class ExternalCar extends Model
 
     protected $table = 'external_cars';
 
+    protected $attributes = [
+        'paid_dollar' => 0,
+        'paid_dinar' => 0,
+    ];
+
     protected $fillable = [
         'owner_id',
         'user_id',

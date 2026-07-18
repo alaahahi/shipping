@@ -10,6 +10,13 @@ class CompanyTreasuryEntry extends Model
     use SoftDeletes;
     protected $table = 'company_treasury_entries';
 
+    protected $attributes = [
+        'currency' => '$',
+        'debit' => 0,
+        'credit' => 0,
+        'balance' => 0,
+    ];
+
     protected $fillable = [
         'owner_id',
         'user_id',

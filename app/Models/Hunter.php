@@ -11,6 +11,12 @@ class Hunter extends Model
     use HasFactory,SoftDeletes;
     protected $table = 'hunter';
 
+    protected $attributes = [
+        'status' => 1,
+        'price_p' => 0,
+        'price_s' => 0,
+    ];
+
     protected $fillable = [
         'car_type',
         'date',

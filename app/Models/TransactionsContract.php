@@ -11,6 +11,16 @@ class TransactionsContract extends Model
     use HasFactory,SoftDeletes;
     protected $table = 'transactions_contract';
 
+    protected $attributes = [
+        'type' => 'in',
+        'is_pay' => 0,
+        'currency' => '$',
+        'discount' => 0,
+        'parent_id' => 0,
+        's_amount' => 0,
+        'b_amount' => 0,
+    ];
+
     protected $fillable = [
         'wallet_id',
         'amount',

@@ -23,6 +23,7 @@ import show from "@/Components/icon/show.vue";
 import imags from "@/Components/icon/imags.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
+import print from "@/Components/icon/print.vue";
 
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
@@ -176,7 +177,9 @@ function confirm(V) {
   axios.post('/api/addToBoxContract',V)
   .then(response => {
     showModalAddSales.value=false;
-    //getResults();
+    if (response.data?.id) {
+      window.open(`/api/printContractTransaction?print=3&transactions_id=${response.data.id}`, '_blank');
+    }
     window.location.reload();
   })
   .catch(error => {
@@ -189,6 +192,9 @@ function confirmdebt(V) {
   .then(response => {
     showModaldebtSales.value=false;
     showModalAddExpenses.value = false;
+    if (response.data?.id) {
+      window.open(`/api/printContractTransaction?print=2&transactions_id=${response.data.id}`, '_blank');
+    }
     window.location.reload();
 
   })
@@ -712,14 +718,34 @@ function UpdatePage (){
                   <th className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.description }}</th>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.amount+' '+(tran.currency ?? '$')  }}</td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
-                    <button class="px-1 py-1 text-white bg-rose-500 rounded-md focus:outline-none" @click="openModalDel(tran)" >
-                      <trash />
-                    </button>
+                    <div class="flex items-center justify-center gap-1 flex-wrap">
+                      <button class="px-1 py-1 text-white bg-rose-500 rounded-md focus:outline-none" @click="openModalDel(tran)" title="حذف">
+                        <trash />
+                      </button>
 
-                    <button class="px-1 mx-2 py-1 text-white bg-purple-600 rounded-md focus:outline-none" v-if="false" @click="openModalUploader(tran)" >
-                      <imags />
-                    </button>
-                    
+                      <button class="px-1 py-1 text-white bg-purple-600 rounded-md focus:outline-none" v-if="false" @click="openModalUploader(tran)" >
+                        <imags />
+                      </button>
+
+                      <a
+                        v-if="tran.type === 'out' || tran.type === 'outUser' || tran.type === 'debt'"
+                        :href="`/api/printContractTransaction?print=2&transactions_id=${tran.id}`"
+                        target="_blank"
+                        class="px-1 py-1 text-white bg-slate-700 rounded-md inline-flex"
+                        title="طباعة وصل سحب / صرف"
+                      >
+                        <print />
+                      </a>
+                      <a
+                        v-if="tran.type === 'in' || tran.type === 'inUser'"
+                        :href="`/api/printContractTransaction?print=3&transactions_id=${tran.id}`"
+                        target="_blank"
+                        class="px-1 py-1 text-white bg-emerald-700 rounded-md inline-flex"
+                        title="طباعة وصل قبض"
+                      >
+                        <print />
+                      </a>
+                    </div>
                   </td>
                   <td v-if="false">
                     <a

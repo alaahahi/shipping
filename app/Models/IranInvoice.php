@@ -13,6 +13,12 @@ class IranInvoice extends Model
 
     protected $table = 'iran_invoices';
 
+    protected $attributes = [
+        'currency' => 'USD',
+        'is_archived' => 0,
+        'total_price' => 0,
+    ];
+
     protected $fillable = [
         'invoice_no',
         'verification_token',

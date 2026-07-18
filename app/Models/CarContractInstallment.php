@@ -10,6 +10,10 @@ class CarContractInstallment extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $attributes = [
+        'amount' => 0,
+    ];
+
     protected $fillable = [
         'car_contract_id',
         'owner_id',

@@ -707,7 +707,7 @@ class CarContractController extends Controller
             throw $e;
         }
     }
-    public function addToBoxContract(Request $request)
+     public function addToBoxContract(Request $request)
     {
      $owner_id=Auth::user()->owner_id;
      $note= $request->amountNote??'';
@@ -715,6 +715,7 @@ class CarContractController extends Controller
      $amountDinar= $request->amountDinar??0;
      $desc="وصل قبض مباشر"." ".' '.$note;
      $date= $request->date??0;
+     $transaction = null;
      if($amountDollar){
       $transaction=$this->increaseWallet($amountDollar,$desc,$this->mainBoxContract->where('owner_id',$owner_id)->first()->id,$this->mainBoxContract->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'$',$date);
      }
@@ -738,6 +739,7 @@ class CarContractController extends Controller
 
       $desc=" سحب دفعة  ".' '.$note;
       $date= $request->date??0;
+      $transaction = null;
       if($amountDollar){
         $transaction=$this->decreaseWallet($amountDollar,$desc,$this->mainBoxContract->where('owner_id',$owner_id)->first()->id,$this->mainBoxContract->where('owner_id',$owner_id)->first()->id,'App\Models\User',0,0,'$',$date);
       }
@@ -748,9 +750,46 @@ class CarContractController extends Controller
       }
 
   
-      return Response::json($request, 200);
+      return Response::json($transaction, 200);
   
       }
+
+    /**
+     * طباعة وصل قبض/صرف لحركة محاسبة العقود (نفس قوالب المحاسبة).
+     * print=2 صرف/سحب ، print=3 قبض
+     */
+    public function printContractTransaction(Request $request)
+    {
+        $print = (int) $request->get('print', 0);
+        $transactions_id = (int) $request->get('transactions_id', 0);
+        $owner_id = Auth::user()->owner_id;
+        $config = SystemConfig::first();
+        $transaction = TransactionsContract::with('wallet.user')->find($transactions_id);
+
+        if (! $transaction) {
+            abort(404, 'الحركة غير موجودة');
+        }
+
+        $client = optional($transaction->wallet)->user
+            ?? User::find($transaction->morphed_id)
+            ?? (object) ['name' => config('app.company_name')];
+
+        $clientData = [
+            'client' => $client,
+            'data' => [],
+            'transactions' => collect([$transaction]),
+        ];
+
+        if ($print === 2) {
+            return view('receipt', compact('clientData', 'config', 'transactions_id', 'owner_id', 'transaction'));
+        }
+
+        if ($print === 3) {
+            return view('receiptPayment', compact('clientData', 'config', 'transactions_id', 'transaction', 'owner_id'));
+        }
+
+        abort(400, 'نوع الطباعة غير صالح');
+    }
 
     public function increaseWallet(int $amount,$desc,$user_id,$morphed_id='',$morphed_type='',$is_pay=0,$discount=0,$currency='$',$created=0,$parent_id=0,$type='in',$s_amount=0,$b_amount=0) 
      {

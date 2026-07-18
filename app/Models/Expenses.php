@@ -13,6 +13,11 @@ class Expenses extends Model
     public $timestamps = false;
     use HasFactory, SoftDeletes;
     protected $table = 'expenses';
+
+    protected $attributes = [
+        'amount' => 0,
+    ];
+
     protected $fillable = [
         'id',
         'user_id',
