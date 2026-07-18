@@ -15,6 +15,18 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
+     * Defaults for NOT NULL columns (MySQL has DEFAULT 0; SQLite export often drops DEFAULT).
+     */
+    protected $attributes = [
+        'is_band' => 0,
+        'has_wallet_tags' => 0,
+        'show_in_dashboard' => 0,
+        'has_internal_sales' => 0,
+        'percentage' => 0,
+        'owner_id' => 1,
+    ];
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
