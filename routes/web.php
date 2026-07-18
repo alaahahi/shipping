@@ -262,6 +262,7 @@ Route::group(['middleware' => ['auth','verified', 'check.license', 'page.permiss
     Route::get('contract_installments',[CarContractController::class, 'installmentsIndex'])->name('contract_installments');
     Route::get('contract_installment_print/{id}', [CarContractController::class, 'contractInstallmentPrint'])->name('contract_installment_print');
     Route::get('contract_account',[CarContractController::class, 'contract_account'])->name('contract_account');
+    Route::get('printContractTransaction',[CarContractController::class, 'printContractTransaction'])->name('printContractTransaction');
     Route::get('company_treasury',[CompanyTreasuryController::class, 'index'])->name('company_treasury');
     Route::get('contract/{id?}', [CarContractController::class, 'contract'])->name('contract');
     Route::get('contract_print/{id}', [CarContractController::class, 'contract_print'])->name('contract_print');

@@ -188,7 +188,7 @@ function confirm(V) {
   .then(response => {
     showModalAddSales.value=false;
     if (response.data?.id) {
-      window.open(`/api/printContractTransaction?print=3&transactions_id=${response.data.id}`, '_blank');
+      window.open(`/printContractTransaction?print=3&transactions_id=${response.data.id}`, '_blank');
     }
     window.location.reload();
   })
@@ -203,7 +203,7 @@ function confirmdebt(V) {
     showModaldebtSales.value=false;
     showModalAddExpenses.value = false;
     if (response.data?.id) {
-      window.open(`/api/printContractTransaction?print=2&transactions_id=${response.data.id}`, '_blank');
+      window.open(`/printContractTransaction?print=2&transactions_id=${response.data.id}`, '_blank');
     }
     window.location.reload();
 
@@ -740,7 +740,7 @@ function UpdatePage (){
                       <!-- صرف / سحب -->
                       <a
                         v-if="isContractOut(tran)"
-                        :href="`/api/printContractTransaction?print=2&transactions_id=${tran.id}`"
+                        :href="`/printContractTransaction?print=2&transactions_id=${tran.id}`"
                         target="_blank"
                         class="px-2 py-1 text-xs text-white bg-slate-700 hover:bg-slate-800 rounded-md inline-flex items-center gap-1"
                         title="طباعة وصل سحب / صرف"
@@ -751,7 +751,7 @@ function UpdatePage (){
                       <!-- قبض -->
                       <a
                         v-if="isContractIn(tran)"
-                        :href="`/api/printContractTransaction?print=3&transactions_id=${tran.id}`"
+                        :href="`/printContractTransaction?print=3&transactions_id=${tran.id}`"
                         target="_blank"
                         class="px-2 py-1 text-xs text-white bg-emerald-700 hover:bg-emerald-800 rounded-md inline-flex items-center gap-1"
                         title="طباعة وصل قبض"
@@ -762,7 +762,7 @@ function UpdatePage (){
                       <!-- احتياط إذا النوع غير معروف -->
                       <a
                         v-if="!isContractOut(tran) && !isContractIn(tran)"
-                        :href="`/api/printContractTransaction?print=3&transactions_id=${tran.id}`"
+                        :href="`/printContractTransaction?print=3&transactions_id=${tran.id}`"
                         target="_blank"
                         class="px-2 py-1 text-xs text-white bg-indigo-700 hover:bg-indigo-800 rounded-md inline-flex items-center gap-1"
                         title="طباعة وصل"
