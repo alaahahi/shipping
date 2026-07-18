@@ -112,10 +112,10 @@ class SystemConfigController extends Controller
             if ($request->has('third_title_kr')) {
                 $updateData['third_title_kr'] = $request->third_title_kr;
             }
-            if ($request->has('default_price_s')) {
+            if ($request->has('default_price_s') && (int) auth()->user()->type_id === 1) {
                 $updateData['default_price_s'] = $request->default_price_s;
             }
-            if ($request->has('default_price_p')) {
+            if ($request->has('default_price_p') && (int) auth()->user()->type_id === 1) {
                 $updateData['default_price_p'] = $request->default_price_p;
             }
             if ($request->has('usd_to_aed_rate')) {

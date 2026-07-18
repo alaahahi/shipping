@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/inertia-vue3';
+import { Head, usePage } from '@inertiajs/inertia-vue3';
 import { ref, onMounted, computed } from 'vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -8,6 +8,8 @@ import { useToast } from "vue-toastification";
 import axios from 'axios';
 
 const toast = useToast();
+const page = usePage();
+const isAdmin = computed(() => Number(page.props.value?.auth?.user?.type_id) === 1);
 
 const activeTab = ref('system-config');
 const loading = ref(false);
@@ -352,8 +354,6 @@ function saveSystemConfig() {
   
   const dataToSave = {
     ...systemConfig.value,
-    default_price_s: priceS,
-    default_price_p: priceP,
     contract_terms: terms,
     contract_terms_2: terms2,
     external_contract_terms: externalTerms,
@@ -362,6 +362,15 @@ function saveSystemConfig() {
     contract_currency: systemConfig.value.contract_currency ?? 'usd',
     primary_color: systemConfig.value.primary_color ?? '#c00',
   };
+
+  // الأسعار الافتراضية للمدير (type_id=1) فقط
+  if (isAdmin.value) {
+    dataToSave.default_price_s = priceS;
+    dataToSave.default_price_p = priceP;
+  } else {
+    delete dataToSave.default_price_s;
+    delete dataToSave.default_price_p;
+  }
   
   saving.value = true;
   axios.put('/api/system-config', dataToSave)
@@ -1210,7 +1219,7 @@ function printCarTagDetails(tag) {
                   </div>
                 </div>
 
-                <div class="mt-6 border-t pt-6">
+                <div v-if="isAdmin" class="mt-6 border-t pt-6">
                   <h4 class="text-md font-semibold mb-4">الأسعار الافتراضية</h4>
                   
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
