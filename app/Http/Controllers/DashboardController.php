@@ -547,6 +547,8 @@ class DashboardController extends Controller
                     'coc_dolar' => $coc_dolar,
                     'checkout' => $checkout,
                     'total' => 0,
+                    'paid' => 0,
+                    'discount' => 0,
                     'year' => $carData['year'] ?? $request->year,
                     'year_date' => $year_date,
                     'car_color' => $carData['car_color'] ?: $request->car_color,

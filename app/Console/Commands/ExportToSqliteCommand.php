@@ -196,7 +196,11 @@ class ExportToSqliteCommand extends Command
 
             $notNull = stripos($rest, 'NOT NULL') !== false ? ' NOT NULL' : '';
             $auto = stripos($rest, 'AUTO_INCREMENT') !== false;
-            $def = "\"{$name}\" {$type}{$notNull}";
+            $defaultSql = '';
+            if (preg_match('/\bDEFAULT\s+((?:\'(?:\\\\\'|[^\'])*\'|\"(?:\\\\\"|[^\"])*\"|NULL|CURRENT_TIMESTAMP(?:\(\))?|-?\d+(?:\.\d+)?))/i', $rest, $dm)) {
+                $defaultSql = ' DEFAULT '.$dm[1];
+            }
+            $def = "\"{$name}\" {$type}{$notNull}{$defaultSql}";
             if ($auto) {
                 $def = "\"{$name}\" INTEGER PRIMARY KEY AUTOINCREMENT";
                 $primary = $name;
