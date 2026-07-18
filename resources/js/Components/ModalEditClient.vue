@@ -1,142 +1,204 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { reactive, watch } from 'vue';
 
 const props = defineProps({
   show: Boolean,
-
-  formData:Object
+  formData: {
+    type: Object,
+    default: () => ({}),
+  },
 });
 
-</script>
-  <template>
-    <Transition name="modal">
-      <div v-if="show" class="modal-mask ">
-        <div class="modal-wrapper  max-h-[80vh]">
-          <div class="modal-container dark:bg-gray-900 overflow-auto  max-h-[80vh]">
-            <div class="modal-header">
-              <slot name="header"></slot>
-            </div>
-            <div class="modal-body">
-                        <h2 class="text-center dark:text-gray-200">
-                          تعديل زبون 
-                        </h2>
-                        <div className="mb-4 mx-5">
-                        <label  class="dark:text-gray-200" for="name" >{{ $t('name') }}</label>
-                        <input
-                          id="name"
-                          type="text"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                          v-model="formData.name" />
-                        </div>
-                        <div className="mb-4 mx-5">
-                        <label  class="dark:text-gray-200" for="phone" >{{ $t('phone') }} </label>
-                        <input
-                          id="phone"
-                          type="text"
-                          class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 "
-                          v-model="formData.phone" />
-                        </div>
-                        <div className="mb-4 mx-5">
-                        <label class="flex items-center cursor-pointer">
-                          <span class="mr-3 text-sm font-medium dark:text-gray-200">تفعيل المبيعات الداخلية</span>
-                          <div class="relative">
-                            <input 
-                              type="checkbox" 
-                              class="sr-only peer" 
-                              v-model="formData.has_internal_sales"
-                            >
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                          </div>
-                        </label>
-                        </div>
-            </div>
-  
-            <div class="modal-footer my-2">
-              <div class="flex flex-row">
-                <div class="basis-1/2 px-4"> 
-                  <button class="modal-default-button py-3  bg-gray-500 rounded"
-                    @click="$emit('close');">{{ $t('cancel') }}</button>
-                  </div>
-              <div class="basis-1/2 px-4">
-                <button class="modal-default-button py-3  bg-rose-500 rounded col-6"  @click="$emit('a',formData);formData=''" :disabled="!(formData.name)">{{ $t('yes') }}</button>
-                </div>
+const emit = defineEmits(['close', 'confirm']);
 
+const form = reactive({
+  id: null,
+  name: '',
+  phone: '',
+  has_internal_sales: false,
+  show_in_dashboard: false,
+});
+
+watch(
+  () => props.show,
+  (open) => {
+    if (open && props.formData) {
+      form.id = props.formData.id ?? null;
+      form.name = props.formData.name || '';
+      form.phone = props.formData.phone || '';
+      form.has_internal_sales = !!(props.formData.has_internal_sales);
+      form.show_in_dashboard = !!(props.formData.show_in_dashboard);
+    }
+  }
+);
+
+function submit() {
+  if (!form.name?.trim()) return;
+  emit('confirm', {
+    id: form.id,
+    name: form.name.trim(),
+    phone: form.phone?.trim() || '',
+    has_internal_sales: !!form.has_internal_sales,
+    show_in_dashboard: !!form.show_in_dashboard,
+  });
+}
+</script>
+
+<template>
+  <Transition name="modal">
+    <div v-if="show" class="modal-mask" @click.self="emit('close')">
+      <div class="modal-wrapper">
+        <div class="modal-container dark:bg-gray-900 max-h-[85vh] overflow-auto">
+          <div class="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+                تعديل تاجر
+              </h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                تحديث بيانات التاجر وخيارات العرض والمبيعات الداخلية.
+              </p>
             </div>
-  
-     
+            <button
+              type="button"
+              class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+              @click="emit('close')"
+              aria-label="إغلاق"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200" for="edit-client-name">
+                الاسم
+              </label>
+              <input
+                id="edit-client-name"
+                v-model="form.name"
+                type="text"
+                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+              />
             </div>
+
+            <div>
+              <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200" for="edit-client-phone">
+                رقم الهاتف
+              </label>
+              <input
+                id="edit-client-phone"
+                v-model="form.phone"
+                type="text"
+                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+              />
+            </div>
+
+            <label
+              class="flex cursor-pointer items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/60"
+            >
+              <div>
+                <div class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                  تفعيل المبيعات الداخلية
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                  يسمح بإدارة مبيعات داخلية لهذا التاجر
+                </div>
+              </div>
+              <div class="relative">
+                <input v-model="form.has_internal_sales" type="checkbox" class="sr-only peer" />
+                <div
+                  class="h-6 w-11 rounded-full bg-gray-300 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:bg-gray-600"
+                ></div>
+              </div>
+            </label>
+
+            <label
+              class="flex cursor-pointer items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/60"
+            >
+              <div>
+                <div class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                  عرض في لوحة التحكم
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                  يظهر هذا الحساب ضمن المحافظ المميزة في المحاسبة
+                </div>
+              </div>
+              <div class="relative">
+                <input v-model="form.show_in_dashboard" type="checkbox" class="sr-only peer" />
+                <div
+                  class="h-6 w-11 rounded-full bg-gray-300 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-orange-500 peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-300 dark:bg-gray-600"
+                ></div>
+              </div>
+            </label>
+          </div>
+
+          <div class="mt-6 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              class="rounded-lg bg-gray-500 px-4 py-3 font-semibold text-white hover:bg-gray-600"
+              @click="emit('close')"
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              class="rounded-lg bg-rose-600 px-4 py-3 font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="!form.name?.trim()"
+              @click="submit"
+            >
+              حفظ التعديلات
+            </button>
           </div>
         </div>
       </div>
-    </Transition>
-  </template>
-  
-  <style>
-  .modal-mask {
-    position: fixed;
-    z-index: 9998;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: table;
-    transition: opacity 0.3s ease;
-  }
-  
-  .modal-wrapper {
-    display: table-cell;
-    vertical-align: middle;
-  }
-  
-  .modal-container {
-    width: 50%;
-    min-width: 350px;
-    margin: 0px auto;
-    padding: 20px  30px;
-    padding-bottom: 60px;
-    background-color: #fff;
-    border-radius: 2px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
-    transition: all 0.3s ease;
-    border-radius: 10px;
-  }
-  
-  .modal-header h3 {
-    margin-top: 0;
-    color: #42b983;
-  }
-  
-  .modal-body {
-    margin: 20px 0;
-  }
-  
-  .modal-default-button {
-    float: right;
-    width: 100%;
-    color: #fff;
-  }
-  
-  /*
-   * The following styles are auto-applied to elements with
-   * transition="modal" when their visibility is toggled
-   * by Vue.js.
-   *
-   * You can easily play with the modal transition by editing
-   * these styles.
-   */
-  
-  .modal-enter-from {
-    opacity: 0;
-  }
-  
-  .modal-leave-to {
-    opacity: 0;
-  }
-  
-  .modal-enter-from .modal-container,
-  .modal-leave-to .modal-container {
-    -webkit-transform: scale(1.1);
-    transform: scale(1.1);
-  }
-  </style>
+    </div>
+  </Transition>
+</template>
+
+<style scoped>
+.modal-mask {
+  position: fixed;
+  z-index: 9998;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: table;
+  transition: opacity 0.3s ease;
+}
+
+.modal-wrapper {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.modal-container {
+  width: min(520px, 92vw);
+  margin: 0 auto;
+  padding: 24px;
+  background-color: #fff;
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  transition: all 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal-container,
+.modal-leave-to .modal-container {
+  transform: scale(1.05);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+</style>

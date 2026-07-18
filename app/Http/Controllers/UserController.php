@@ -373,39 +373,72 @@ class UserController extends Controller
     }
     public function clientsStore(Request $request)
     {
-        $year_date=Carbon::now()->format('Y');
+        $year_date = Carbon::now()->format('Y');
+        $owner_id = Auth::user()->owner_id;
 
-        $owner_id=Auth::user()->owner_id;
         Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:users',
-           ])->validate();
-           //$userChief_id =User::where('type_id',  $this->userChief)->first()->id ?? 0 ;
-                $user = User::create([
-                    'name' => $request->name,
-                    'type_id' => $this->accounting->userClient(),
-                    'phone' => $request->phone,
-                    'year_date'=>$year_date,
-                    'owner_id'=>$owner_id,
-                    'created' =>Carbon::now()->format('Y-m-d'),
-                ]);
-  
-                Wallet::create(['user_id' => $user->id]);
-     
-                return Response::json($user, 200);
+            'phone' => 'nullable|string|max:255',
+            'show_in_dashboard' => 'nullable|boolean',
+        ])->validate();
+
+        $user = User::create([
+            'name' => $request->name,
+            'type_id' => $this->accounting->userClient(),
+            'phone' => $request->phone,
+            'year_date' => $year_date,
+            'owner_id' => $owner_id,
+            'created' => Carbon::now()->format('Y-m-d'),
+            'show_in_dashboard' => (bool) $request->boolean('show_in_dashboard'),
+        ]);
+
+        Wallet::create(['user_id' => $user->id]);
+        $this->forgetClientsListCache($owner_id);
+
+        return Response::json($user, 200);
     }
+
     public function clientsEdit(Request $request)
     {
         Validator::make($request->all(), [
+            'id' => 'required|integer|exists:users,id',
             'name' => 'required|string|max:255',
-           ])->validate();
-           //$userChief_id =User::where('type_id',  $this->userChief)->first()->id ?? 0 ;
-                $user = User::find($request->id)->update([
-                    'name' => $request->name,
-                    'phone' => $request->phone,
-                    'has_internal_sales' => $request->has_internal_sales ?? 0,
-                ]);
-       
-        return Response::json($user, 200);
+            'phone' => 'nullable|string|max:255',
+            'has_internal_sales' => 'nullable|boolean',
+            'show_in_dashboard' => 'nullable|boolean',
+        ])->validate();
+
+        $user = User::where('id', $request->id)
+            ->where('owner_id', Auth::user()->owner_id)
+            ->firstOrFail();
+
+        $user->update([
+            'name' => $request->name,
+            'phone' => $request->phone,
+            'has_internal_sales' => (bool) ($request->has_internal_sales ?? false),
+            'show_in_dashboard' => (bool) ($request->show_in_dashboard ?? false),
+        ]);
+
+        $this->forgetClientsListCache(Auth::user()->owner_id);
+
+        return Response::json($user->fresh(), 200);
+    }
+
+    protected function forgetClientsListCache($ownerId): void
+    {
+        $userClient = $this->accounting->userClient() ?? 0;
+        $queries = ['', '0', 'debit', 'box_movement'];
+        $ranges = [
+            [0, 0],
+            ['0', '0'],
+            ['', ''],
+        ];
+
+        foreach ($queries as $q) {
+            foreach ($ranges as [$from, $to]) {
+                Cache::forget('clients_fast_' . md5($q . $ownerId . $userClient . $from . $to));
+            }
+        }
     }
     public function updateClientPhone(Request $request)
     {
