@@ -58,7 +58,20 @@ class HandleInertiaRequests extends Middleware
                 'message' => session('message'),
             ],
             'connection' => ConnectionService::getConnectionInfo(),
-            'company_name' => config('app.company_name'),
+            'company_name' => function () {
+                try {
+                    if (Schema::hasTable('system_config')) {
+                        $title = SystemConfig::query()->value('first_title_ar');
+                        if (is_string($title) && trim($title) !== '') {
+                            return trim($title);
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // fallback below
+                }
+
+                return config('app.company_name');
+            },
             'systemLogo' => function () {
                 try {
                     if (! Schema::hasTable('system_config')) {

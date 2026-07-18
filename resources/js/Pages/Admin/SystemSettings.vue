@@ -818,14 +818,17 @@ function printCarTagDetails(tag) {
               <div v-else class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <InputLabel for="first_title_ar" value="العنوان الأول (عربي)" />
+                    <InputLabel for="first_title_ar" value="اسم الشركة / العنوان الأول (عربي)" />
                     <TextInput
                       id="first_title_ar"
                       v-model="systemConfig.first_title_ar"
                       type="text"
                       class="mt-1 block w-full"
-                      placeholder="العنوان الأول بالعربية"
+                      placeholder="مثال: شركة كمال كمال جلال"
                     />
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      يظهر في صفحة تسجيل الدخول والإيصالات كاسم الشركة.
+                    </p>
                   </div>
                   <div>
                     <InputLabel for="first_title_kr" value="العنوان الأول (كردي)" />

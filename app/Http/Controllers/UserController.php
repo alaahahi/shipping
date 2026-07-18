@@ -54,7 +54,24 @@ class UserController extends Controller
             'url' => $this->url,
             'usersType' => $this->assignableStaffTypes(),
             'typeLabels' => $this->userTypeLabels(),
+            'branches' => $this->branchOptions(),
         ]);
+    }
+
+    /**
+     * فروع النظام: owner_id 1 = أربيل ، 2 = كركوك
+     */
+    protected function branchOptions(): array
+    {
+        return [
+            ['id' => 1, 'name' => 'أربيل'],
+            ['id' => 2, 'name' => 'كركوك'],
+        ];
+    }
+
+    protected function allowedBranchIds(): array
+    {
+        return array_map(fn ($b) => (int) $b['id'], $this->branchOptions());
     }
 
     /**
@@ -169,19 +186,23 @@ class UserController extends Controller
             'url' => $this->url,
             'usersType' => $this->assignableStaffTypes(),
             'typeLabels' => $this->userTypeLabels(),
+            'branches' => $this->branchOptions(),
         ]);
     }
     public function getIndex()
     {
         $this->accounting->loadAccounts(Auth::user()->owner_id);
 
-        $ownerId = Auth::user()->owner_id;
+        $auth = Auth::user();
         $excluded = $this->excludedClientTypeIds();
         $q = trim((string) request()->input('q', ''));
         $typeId = request()->input('type_id');
+        $branchId = request()->input('owner_id');
+        $isAdmin = (int) $auth->type_id === 1;
 
         $query = User::with(['userType:id,name', 'wallet:id,user_id,balance'])
-            ->where('owner_id', $ownerId)
+            ->when(! $isAdmin, fn ($builder) => $builder->where('owner_id', $auth->owner_id))
+            ->when($isAdmin && $branchId !== null && $branchId !== '', fn ($builder) => $builder->where('owner_id', (int) $branchId))
             ->when($excluded !== [], fn ($builder) => $builder->whereNotIn('type_id', $excluded))
             ->when($typeId, fn ($builder) => $builder->where('type_id', (int) $typeId))
             ->when($q !== '', function ($builder) use ($q) {
@@ -1686,14 +1707,20 @@ class UserController extends Controller
      */
     public function update($id, Request $request)
     {
-        $user = User::where('id', $id)
-            ->where('owner_id', Auth::user()->owner_id)
-            ->firstOrFail();
+        $auth = Auth::user();
+        $isAdmin = (int) $auth->type_id === 1;
+
+        $userQuery = User::where('id', $id);
+        if (! $isAdmin) {
+            $userQuery->where('owner_id', $auth->owner_id);
+        }
+        $user = $userQuery->firstOrFail();
 
         $this->assertStaffUser($user);
 
         $assignableIds = $this->assignableStaffTypes()->pluck('id')->all();
         $typeId = (int) ($request->input('type_id') ?? $request->input('userType') ?? $user->type_id);
+        $branchIds = $this->allowedBranchIds();
 
         $rules = [
             'name' => 'required|string|max:255',
@@ -1702,6 +1729,7 @@ class UserController extends Controller
             'organizer_name' => 'nullable|string|max:255',
             'type_id' => 'nullable|integer|in:' . implode(',', $assignableIds ?: [0]),
             'userType' => 'nullable|integer|in:' . implode(',', $assignableIds ?: [0]),
+            'owner_id' => 'nullable|integer|in:' . implode(',', $branchIds ?: [0]),
             'password' => ['nullable', 'string', Rules\Password::defaults()],
         ];
 
@@ -1711,12 +1739,23 @@ class UserController extends Controller
             abort(422, 'صلاحية غير مسموحة.');
         }
 
+        $ownerId = (int) ($validated['owner_id'] ?? $user->owner_id);
+        if (! in_array($ownerId, $branchIds, true)) {
+            abort(422, 'فرع غير صالح.');
+        }
+
+        // Non-admins cannot move users to another branch
+        if (! $isAdmin) {
+            $ownerId = (int) $auth->owner_id;
+        }
+
         $payload = [
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? $user->phone,
             'organizer_name' => $validated['organizer_name'] ?? $user->organizer_name,
             'type_id' => $typeId,
+            'owner_id' => $ownerId,
         ];
 
         if (! empty($validated['password'])) {
@@ -1725,11 +1764,11 @@ class UserController extends Controller
 
         // Protect primary admin login identity from accidental role demotion via UI mistakes
         if ($user->email === 'admin@admin.com') {
-            unset($payload['type_id'], $payload['email']);
+            unset($payload['type_id'], $payload['email'], $payload['owner_id']);
         }
 
         $user->update($payload);
-        $this->accounting->loadAccounts(Auth::user()->owner_id);
+        $this->accounting->loadAccounts($auth->owner_id);
 
         if ($request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
             return Response::json([

@@ -13,10 +13,7 @@ const page = usePage();
 const showPassword = ref(false);
 
 const companyName = computed(
-    () => page.props.company_name || 'شركة سلام جلال أيوب'
-);
-const systemLogo = computed(
-    () => page.props.systemLogo || '/img/logo.png'
+    () => page.props.company_name || 'نظام الشحن'
 );
 const loginBackground = computed(
     () => page.props.loginBackground || null
@@ -32,11 +29,6 @@ const submit = () => {
     form.post(route('login'), {
         onFinish: () => form.reset('password'),
     });
-};
-
-const onLogoError = (event) => {
-    event.target.src = '/img/logo.jpg';
-    event.target.onerror = null;
 };
 </script>
 
@@ -65,12 +57,6 @@ const onLogoError = (event) => {
         <main class="login-shell">
             <section class="login-brand">
                 <div class="login-brand__inner">
-                    <img
-                        :src="systemLogo"
-                        alt=""
-                        class="login-logo"
-                        @error="onLogoError"
-                    />
                     <p class="login-kicker">نظام إدارة الشحن</p>
                     <h1 class="login-title">{{ companyName }}</h1>
                     <p class="login-subtitle">

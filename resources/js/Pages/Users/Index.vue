@@ -14,12 +14,17 @@ const props = defineProps({
     url: String,
     usersType: { type: Array, default: () => [] },
     typeLabels: { type: Object, default: () => ({}) },
+    branches: { type: Array, default: () => [
+        { id: 1, name: 'أربيل' },
+        { id: 2, name: 'كركوك' },
+    ] },
 });
 
 const laravelData = ref({ data: [], links: [], total: 0 });
 const loading = ref(false);
 const search = ref('');
 const filterTypeId = ref('');
+const filterBranchId = ref('');
 const showEditModal = ref(false);
 const saving = ref(false);
 const editErrors = ref({});
@@ -31,6 +36,7 @@ const editForm = ref({
     phone: '',
     organizer_name: '',
     type_id: '',
+    owner_id: 1,
     password: '',
     password_confirmation: '',
 });
@@ -38,6 +44,12 @@ const editForm = ref({
 let searchTimer = null;
 
 const typeLabel = (name) => props.typeLabels?.[name] || name || '—';
+
+const branchLabel = (ownerId) => {
+    const id = Number(ownerId);
+    const found = props.branches.find((b) => Number(b.id) === id);
+    return found?.name || (id ? `فرع ${id}` : '—');
+};
 
 const canEditUser = (user) => user?.email !== 'admin@admin.com';
 
@@ -47,6 +59,9 @@ const getResults = async (page = 1) => {
         const params = new URLSearchParams({ page: String(page) });
         if (search.value.trim()) params.set('q', search.value.trim());
         if (filterTypeId.value) params.set('type_id', String(filterTypeId.value));
+        if (filterBranchId.value !== '' && filterBranchId.value !== null) {
+            params.set('owner_id', String(filterBranchId.value));
+        }
         const response = await fetch(`/getIndex?${params.toString()}`);
         laravelData.value = await response.json();
     } catch (e) {
@@ -56,7 +71,7 @@ const getResults = async (page = 1) => {
     }
 };
 
-watch([filterTypeId], () => getResults(1));
+watch([filterTypeId, filterBranchId], () => getResults(1));
 
 watch(search, () => {
     clearTimeout(searchTimer);
@@ -78,6 +93,7 @@ function openEdit(user) {
         phone: user.phone || '',
         organizer_name: user.organizer_name || '',
         type_id: user.type_id || user.user_type?.id || '',
+        owner_id: Number(user.owner_id) || 1,
         password: '',
         password_confirmation: '',
     };
@@ -106,6 +122,7 @@ async function saveEdit() {
         phone: editForm.value.phone || null,
         organizer_name: editForm.value.organizer_name || null,
         type_id: Number(editForm.value.type_id),
+        owner_id: Number(editForm.value.owner_id),
     };
 
     if (editForm.value.password) {
@@ -184,7 +201,7 @@ const usersCount = computed(() => laravelData.value?.total ?? laravelData.value?
         <div class="py-8">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-4">
                 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <div class="md:col-span-2">
                             <InputLabel for="user-search" value="بحث" />
                             <TextInput
@@ -212,6 +229,23 @@ const usersCount = computed(() => laravelData.value?.total ?? laravelData.value?
                                 </option>
                             </select>
                         </div>
+                        <div>
+                            <InputLabel for="branch-filter" value="الفرع" />
+                            <select
+                                id="branch-filter"
+                                v-model="filterBranchId"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
+                            >
+                                <option value="">الكل</option>
+                                <option
+                                    v-for="b in branches"
+                                    :key="b.id"
+                                    :value="b.id"
+                                >
+                                    {{ b.name }}
+                                </option>
+                            </select>
+                        </div>
                     </div>
                     <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">
                         عدد النتائج: {{ usersCount }}
@@ -228,6 +262,7 @@ const usersCount = computed(() => laravelData.value?.total ?? laravelData.value?
                                     <th class="px-3 py-3 border-b dark:border-gray-700">الاسم</th>
                                     <th class="px-3 py-3 border-b dark:border-gray-700">اسم المستخدم</th>
                                     <th class="px-3 py-3 border-b dark:border-gray-700">الصلاحية</th>
+                                    <th class="px-3 py-3 border-b dark:border-gray-700">الفرع</th>
                                     <th class="px-3 py-3 border-b dark:border-gray-700">الهاتف</th>
                                     <th class="px-3 py-3 border-b dark:border-gray-700">الرصيد</th>
                                     <th class="px-3 py-3 border-b dark:border-gray-700">الحالة</th>
@@ -236,7 +271,7 @@ const usersCount = computed(() => laravelData.value?.total ?? laravelData.value?
                             </thead>
                             <tbody class="dark:text-gray-200">
                                 <tr v-if="!loading && !(laravelData.data || []).length">
-                                    <td colspan="8" class="px-4 py-10 text-gray-500">لا يوجد مستخدمون</td>
+                                    <td colspan="9" class="px-4 py-10 text-gray-500">لا يوجد مستخدمون</td>
                                 </tr>
                                 <tr
                                     v-for="user in laravelData.data"
@@ -252,6 +287,11 @@ const usersCount = computed(() => laravelData.value?.total ?? laravelData.value?
                                     <td class="px-3 py-3">
                                         <span class="inline-flex px-2 py-0.5 rounded text-xs bg-slate-100 dark:bg-slate-700">
                                             {{ typeLabel(user.user_type?.name) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-3">
+                                        <span class="inline-flex px-2 py-0.5 rounded text-xs bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200">
+                                            {{ branchLabel(user.owner_id) }}
                                         </span>
                                     </td>
                                     <td class="px-3 py-3">{{ user.phone || '—' }}</td>
@@ -373,6 +413,21 @@ const usersCount = computed(() => laravelData.value?.total ?? laravelData.value?
                             <p v-if="editErrors.type_id || editErrors.userType" class="mt-1 text-sm text-red-600">
                                 {{ editErrors.type_id || editErrors.userType }}
                             </p>
+                        </div>
+
+                        <div>
+                            <InputLabel for="edit-branch" value="الفرع" />
+                            <select
+                                id="edit-branch"
+                                v-model="editForm.owner_id"
+                                required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
+                            >
+                                <option v-for="b in branches" :key="b.id" :value="b.id">
+                                    {{ b.name }}
+                                </option>
+                            </select>
+                            <p v-if="editErrors.owner_id" class="mt-1 text-sm text-red-600">{{ editErrors.owner_id }}</p>
                         </div>
 
                         <div class="rounded-md border border-dashed border-gray-300 dark:border-gray-600 p-3 space-y-3">
