@@ -8,11 +8,15 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
     @page {
-      size: auto; /* auto is the initial value */
-
-      /* this affects the margin in the printer settings */
+      size: auto;
       margin: 15px;
       margin-top: 60px;
+    }
+    .app-print-logo,
+    .report-header-logo img {
+      width: 125px !important;
+      max-width: 125px !important;
+      height: auto !important;
     }
     </style>
 </head>
@@ -33,8 +37,8 @@
        
     <h5 class="pt-3">   تقرير الزبائن  </h5>
     </div>
-    <div class="col-4 text-center py-3"> 
-        @include('Components.logo')
+    <div class="col-4 text-center py-3 report-header-logo"> 
+        @include('Components.logo', ['logoMaxWidth' => 125])
 
     </div>
     </div>

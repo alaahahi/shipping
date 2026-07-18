@@ -90,8 +90,9 @@ html, body { width: 210mm; margin: 0; padding: 0; }
   flex: 0 0 auto;
 }
 .c3-head-logo img {
-  max-height: 82px;
-  max-width: 145px;
+  max-height: 70px;
+  max-width: 125px;
+  width: 125px;
   display: block;
   object-fit: contain;
 }

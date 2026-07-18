@@ -58,7 +58,7 @@
     <h5 class="pt-3">  جميع عقود البيع </h5>
     </div>
     <div class="col-4 text-center py-3"> 
-        <img src="/img/logo.jpg" class="report-logo" alt="logo" onerror="this.src='/img/logo.png'; this.onerror=null;" />
+        @include('Components.logo', ['logoMaxWidth' => 125])
 
     </div>
     </div>

@@ -53,7 +53,7 @@ $secondTitle = $config->second_title_ar ?? ($config['second_title_ar'] ?? '');
             <h5 class="pt-1">Cash Receipt Voucher</h5>
         </div>
         <div class="col-4 text-center py-3">
-            <img src="/img/logo.jpg" class="receipt-logo" alt="logo" onerror="this.src='/img/logo.png'; this.onerror=null;" />
+            @include('Components.logo', ['logoMaxWidth' => 125])
         </div>
     </div>
 
