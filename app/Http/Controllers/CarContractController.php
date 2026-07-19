@@ -302,7 +302,8 @@ class CarContractController extends Controller
         if ($hasUuidColumn && $requestUuid) {
             $oldContract = CarContract::where('uuid', $requestUuid)->where('owner_id', $owner_id)->first();
         } else {
-            $oldContract = CarContract::find($contract['id'] ?? 0);
+            $incomingId = (int) ($contract['id'] ?? 0);
+            $oldContract = $incomingId > 0 ? CarContract::find($incomingId) : null;
         }
 
         $contractType = $oldContract
@@ -339,6 +340,11 @@ class CarContractController extends Controller
         $contract['year_date'] = $year_date;
         $contract['created'] = $created;
 
+        // Never mass-assign id=0 — SQLite treats it as a real PK and hits UNIQUE.
+        if (! isset($contract['id']) || (int) $contract['id'] <= 0) {
+            unset($contract['id']);
+        }
+
         if ($oldContract) {
             $contractId = (int) $oldContract->id;
             $contract['id'] = $contractId;
@@ -356,19 +362,18 @@ class CarContractController extends Controller
                 $this->handlePaymentChange($contract['tex_seller_dinar_paid'], $oldContract['tex_seller_dinar_paid'], 'IQD', $desc, $contractId, 'seller');
                 $this->handlePaymentChange($contract['tex_buyer_dinar_paid'], $oldContract['tex_buyer_dinar_paid'], 'IQD', $desc, $contractId, 'buyer');
             }
+
+            $car = CarContract::updateOrCreate(
+                ['id' => $contractId],
+                $contract
+            );
         } else {
             if ($hasUuidColumn) {
                 $contract['uuid'] = $requestUuid ?: Str::uuid()->toString();
             }
-            if (isset($contract['id']) && (int) $contract['id'] === 0) {
-                unset($contract['id']);
-            }
+            unset($contract['id']);
+            $car = CarContract::create($contract);
         }
-
-        $car = CarContract::updateOrCreate(
-            ['id' => $contract['id'] ?? 0],
-            $contract
-        );
 
         if ($car && empty($car->verification_token)) {
             $car->verification_token = Str::uuid()->toString();

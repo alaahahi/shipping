@@ -17,7 +17,6 @@ class CarContract extends Model
     ];
 
     protected $fillable = [
-        'id',
         'uuid',
         'name_seller',
         'phone_seller',
@@ -66,6 +65,16 @@ class CarContract extends Model
     ];
 
     protected $dates = ['deleted_at'];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $model) {
+            // SQLite: explicit id=0 breaks AUTOINCREMENT / UNIQUE
+            if (! $model->getKey() || (int) $model->getKey() <= 0) {
+                $model->offsetUnset($model->getKeyName());
+            }
+        });
+    }
 
     public function user()
     {
