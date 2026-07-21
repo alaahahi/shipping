@@ -23,7 +23,10 @@ export function useOfflineSync() {
 
     const saveContract = async (contractData) => {
         const payload = { ...contractData };
-        if (!payload.uuid && (!payload.id || payload.id === 0)) {
+        if (!payload.id || Number(payload.id) <= 0) {
+            delete payload.id;
+        }
+        if (!payload.uuid && !payload.id) {
             payload.uuid = generateUuid();
         }
 

@@ -70,6 +70,25 @@ class CarContractController extends Controller
         return in_array($type, ['company', 'external'], true) ? $type : 'company';
     }
 
+    /**
+     * Normalize contract payload — never pass id=0 to SQLite/MySQL (breaks AUTOINCREMENT / UNIQUE).
+     */
+    protected function sanitizeContractInput(array $raw): array
+    {
+        $offlineOnlyKeys = ['_id', '_offline', '_createdAt', '_status', '_lastAttempt', '_retryCount', '_timestamp'];
+        $contract = array_diff_key($raw, array_flip($offlineOnlyKeys));
+
+        if (! isset($contract['id']) || (int) $contract['id'] <= 0) {
+            unset($contract['id']);
+        }
+
+        if (array_key_exists('contract_type', $contract)) {
+            $contract['contract_type'] = $this->normalizeContractType($contract['contract_type']);
+        }
+
+        return $contract;
+    }
+
     protected function applyExternalContractRules(array &$contract): void
     {
         $contract['tex_seller'] = 0;
@@ -114,24 +133,41 @@ class CarContractController extends Controller
 
     protected function applyContractTypeScope($query, ?string $contractType)
     {
-        $type = $this->normalizeContractType($contractType);
-        if ($contractType && in_array($contractType, ['company', 'external'], true)) {
-            return $query->where('contract_type', $type);
+        if (! $contractType || ! in_array($contractType, ['company', 'external'], true)) {
+            return $query;
         }
 
-        return $query;
+        $type = $this->normalizeContractType($contractType);
+
+        // Legacy rows may have NULL contract_type — treat as company.
+        if ($type === 'company') {
+            return $query->where(function ($q) {
+                $q->where('contract_type', 'company')
+                    ->orWhereNull('contract_type');
+            });
+        }
+
+        return $query->where('contract_type', 'external');
     }
 
     protected function contractIdsForType(int $ownerId, ?string $contractType): ?array
     {
-        if (!$contractType || !in_array($contractType, ['company', 'external'], true)) {
+        if (! $contractType || ! in_array($contractType, ['company', 'external'], true)) {
             return null;
         }
 
-        return CarContract::where('owner_id', $ownerId)
-            ->where('contract_type', $contractType)
-            ->pluck('id')
-            ->all();
+        $query = CarContract::where('owner_id', $ownerId);
+
+        if ($this->normalizeContractType($contractType) === 'company') {
+            $query->where(function ($q) {
+                $q->where('contract_type', 'company')
+                    ->orWhereNull('contract_type');
+            });
+        } else {
+            $query->where('contract_type', 'external');
+        }
+
+        return $query->pluck('id')->all();
     }
 
     protected function applyInstallmentContractScope($query): void
@@ -280,10 +316,7 @@ class CarContractController extends Controller
  
     public function addCarContract(Request $request)
     {
-        $raw = $request->all();
-        // Strip offline-only keys so they are not saved to DB
-        $offlineOnlyKeys = ['_id', '_offline', '_createdAt', '_status', '_lastAttempt', '_retryCount', '_timestamp'];
-        $contract = array_diff_key($raw, array_flip($offlineOnlyKeys));
+        $contract = $this->sanitizeContractInput($request->all());
 
         $owner_id = Auth::user()->owner_id;
         $user_id = Auth::user()->id;
@@ -291,7 +324,7 @@ class CarContractController extends Controller
         $created = Carbon::now()->format('Y-m-d');
 
         $hasUuidColumn = Schema::hasColumn('car_contract', 'uuid');
-        $requestUuid = $request->input('uuid');
+        $requestUuid = $contract['uuid'] ?? null;
         if (is_string($requestUuid)) {
             $requestUuid = trim($requestUuid);
         }
@@ -299,16 +332,17 @@ class CarContractController extends Controller
             $requestUuid = null;
         }
 
+        $incomingId = (int) ($contract['id'] ?? 0);
+
         if ($hasUuidColumn && $requestUuid) {
             $oldContract = CarContract::where('uuid', $requestUuid)->where('owner_id', $owner_id)->first();
         } else {
-            $incomingId = (int) ($contract['id'] ?? 0);
             $oldContract = $incomingId > 0 ? CarContract::find($incomingId) : null;
         }
 
         $contractType = $oldContract
             ? $this->normalizeContractType($oldContract->contract_type ?? 'company')
-            : $this->normalizeContractType($request->input('contract_type', 'company'));
+            : $this->normalizeContractType($contract['contract_type'] ?? 'company');
         $contract['contract_type'] = $contractType;
 
         if ($contractType === 'external') {
@@ -339,11 +373,6 @@ class CarContractController extends Controller
         $contract['user_id'] = $user_id;
         $contract['year_date'] = $year_date;
         $contract['created'] = $created;
-
-        // Never mass-assign id=0 — SQLite treats it as a real PK and hits UNIQUE.
-        if (! isset($contract['id']) || (int) $contract['id'] <= 0) {
-            unset($contract['id']);
-        }
 
         if ($oldContract) {
             $contractId = (int) $oldContract->id;
@@ -400,6 +429,7 @@ class CarContractController extends Controller
             'success' => true,
             'id' => $car->id,
             'uuid' => $hasUuidColumn ? ($car->uuid ?? null) : null,
+            'contract_type' => $car->contract_type ?? $contractType,
             'message' => 'تم حفظ العقد بنجاح'
         ], 200);
     }
@@ -447,6 +477,10 @@ class CarContractController extends Controller
                     ->orWhere('vin', 'LIKE', '%' . $q . '%')
                     ->orWhere('car_name', 'LIKE', '%' . $q . '%')
                     ->orWhere('name_buyer', 'LIKE', '%' . $q . '%');
+
+                if (ctype_digit((string) $q)) {
+                    $query->orWhere('id', (int) $q);
+                }
             });
         }
 
@@ -542,6 +576,76 @@ class CarContractController extends Controller
             return response()->json(['error' => $e->getMessage()], 400);
         }
     }
+
+    public function restoreCarContract(Request $request)
+    {
+        try {
+            if ((int) Auth::user()->type_id === 10) {
+                return response()->json(['error' => 'غير مسموح باسترجاع العقود'], 403);
+            }
+
+            $owner_id = Auth::user()->owner_id;
+            $contract = CarContract::onlyTrashed()
+                ->where('owner_id', $owner_id)
+                ->findOrFail($request->id);
+
+            $totalDollarPaid = ($contract->tex_seller_paid ?? 0) + ($contract->tex_buyer_paid ?? 0);
+            $totalDinarPaid = ($contract->tex_seller_dinar_paid ?? 0) + ($contract->tex_buyer_dinar_paid ?? 0);
+
+            $contract->restore();
+
+            $desc = ' استرجاع عقد بيع للسيارة ' . ($contract->car_name) . ' البائع ' . ($contract->name_seller ?? '') . ' المشتري ' . ($contract->name_buyer ?? '');
+
+            $mainBox = $this->mainBoxContract->where('owner_id', $owner_id)->first();
+            if ($mainBox) {
+                if ($totalDollarPaid > 0) {
+                    $this->increaseWallet(
+                        $totalDollarPaid,
+                        $desc,
+                        $mainBox->id,
+                        $contract->id,
+                        'App\Models\CarContract',
+                        0,
+                        0,
+                        '$',
+                        0,
+                        0,
+                        'in',
+                        ($contract->tex_seller_paid ?? 0),
+                        ($contract->tex_buyer_paid ?? 0)
+                    );
+                }
+
+                if ($totalDinarPaid > 0) {
+                    $this->increaseWallet(
+                        $totalDinarPaid,
+                        $desc,
+                        $mainBox->id,
+                        $contract->id,
+                        'App\Models\CarContract',
+                        0,
+                        0,
+                        'IQD',
+                        0,
+                        0,
+                        'in',
+                        ($contract->tex_seller_paid ?? 0),
+                        ($contract->tex_buyer_paid ?? 0)
+                    );
+                }
+            }
+
+            return response()->json([
+                'message' => 'تم استرجاع العقد بنجاح',
+                'id' => $contract->id,
+            ], 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'العقد المحذوف غير موجود'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
     public function totalInfoContract(Request $request){
         try {
             $owner_id=Auth::user()->owner_id;

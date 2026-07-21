@@ -407,6 +407,7 @@ Route::post('updateRegistrationExchangeRate',[CarExpensesController::class, 'upd
 Route::post('addCarContract',[CarContractController::class, 'addCarContract'])->name('addCarContract');
 Route::get('getIndexContractCar',[CarContractController::class, 'getIndexContractCar'])->name('getIndexContractCar');
 Route::post('DelCarContract',[CarContractController::class, 'DelCarContract'])->name('DelCarContract');
+Route::post('restoreCarContract',[CarContractController::class, 'restoreCarContract'])->name('restoreCarContract');
 Route::get('totalInfoContract',[CarContractController::class, 'totalInfoContract'])->name('totalInfoContract');
 Route::get('getListTransactionsContract',[CarContractController::class, 'getListTransactionsContract'])->name('getListTransactionsContract');
 Route::post('addToBoxContract',[CarContractController::class, 'addToBoxContract'])->name('addToBoxContract');

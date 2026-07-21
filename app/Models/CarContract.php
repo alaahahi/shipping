@@ -11,6 +11,8 @@ class CarContract extends Model
     use HasFactory,SoftDeletes;
     protected $table = 'car_contract';
 
+    public $incrementing = true;
+
     protected $attributes = [
         'status' => 0,
         'contract_type' => 'company',
@@ -68,10 +70,14 @@ class CarContract extends Model
 
     protected static function booted(): void
     {
-        static::creating(function (self $model) {
-            // SQLite: explicit id=0 breaks AUTOINCREMENT / UNIQUE
+        static::saving(function (self $model) {
+            if ($model->exists) {
+                return;
+            }
+
+            $key = $model->getKeyName();
             if (! $model->getKey() || (int) $model->getKey() <= 0) {
-                $model->offsetUnset($model->getKeyName());
+                $model->offsetUnset($key);
             }
         });
     }

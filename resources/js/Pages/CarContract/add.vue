@@ -274,11 +274,19 @@ const createEmptyForm = () => ({
 
 const form = ref(createEmptyForm());
 
+function resolveContractType() {
+  const isEdit = props.data?.id && Number(props.data.id) > 0;
+  if (isEdit) {
+    return props.data.contract_type === 'external' ? 'external' : 'company';
+  }
+  return props.contractType === 'external' ? 'external' : 'company';
+}
+
 if (props.data) {
   form.value = {
     ...createEmptyForm(),
     ...props.data,
-    contract_type: props.data.contract_type ?? props.contractType ?? 'company',
+    contract_type: resolveContractType(),
     seller_id_number: props.data.seller_id_number ?? "",
     buyer_id_number: props.data.buyer_id_number ?? "",
     organizer_name: props.data.organizer_name ?? props.defaultOrganizerName ?? "",
@@ -286,7 +294,7 @@ if (props.data) {
 } else if (props.defaultOrganizerName) {
   form.value.organizer_name = props.defaultOrganizerName;
 }
-form.value.contract_type = props.contractType || form.value.contract_type || 'company';
+form.value.contract_type = resolveContractType();
 
 const isExternalContract = computed(() => props.contractType === 'external' || form.value.contract_type === 'external');
 const showBrokerageSection = computed(() => props.showBrokerage || isExternalContract.value);
@@ -322,7 +330,12 @@ const submit = async (V, shouldPrint = true) => {
   }
 
   try {
-    const payload = { ...V, contract_type: form.value.contract_type || props.contractType || 'company' };
+    const contractType = resolveContractType();
+    const payload = { ...V, contract_type: contractType };
+    if (!payload.id || Number(payload.id) <= 0) {
+      delete payload.id;
+    }
+
     const response = await axios.post('/api/addCarContract', payload, {
       headers: { Accept: 'application/json' },
     });

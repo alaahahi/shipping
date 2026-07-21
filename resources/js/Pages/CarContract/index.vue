@@ -170,6 +170,34 @@ function confirmDelCarContract(V) {
     });
 }
 
+const restoringId = ref(null);
+
+async function confirmRestoreCarContract(item) {
+  if (!item?.id || restoringId.value) return;
+  if (!confirm(t('contractRestoreConfirm', { id: item.id, name: item.car_name || item.name_seller || '' }))) {
+    return;
+  }
+
+  restoringId.value = item.id;
+  try {
+    await axios.post('/api/restoreCarContract', { id: item.id });
+    toast.success(t('contractRestored'), {
+      timeout: 3000,
+      position: 'bottom-right',
+      rtl: true,
+    });
+    refresh();
+  } catch (error) {
+    toast.error(error?.response?.data?.error || t('contractRestoreFailed'), {
+      timeout: 3500,
+      position: 'bottom-right',
+      rtl: true,
+    });
+  } finally {
+    restoringId.value = null;
+  }
+}
+
 const debouncedGetResultsCar = debounce(refresh, 500); // Adjust the debounce delay (in milliseconds) as needed
 
 function setFilterThisMonth() {
@@ -597,6 +625,17 @@ function getDownloadUrl(name) {
                         <td
                           className="border dark:border-gray-800 text-start px-1 py-2"
                         >
+                          <template v-if="deletedOnly">
+                            <button
+                              type="button"
+                              class="px-3 py-1.5 text-sm font-bold text-white mx-1 bg-emerald-600 rounded hover:bg-emerald-700 disabled:opacity-50"
+                              :disabled="restoringId === car.id"
+                              @click="confirmRestoreCarContract(car)"
+                            >
+                              {{ restoringId === car.id ? t('contractRestoring') : t('contractRestore') }}
+                            </button>
+                          </template>
+                          <template v-else>
                           <button
                             tabIndex="1"
                             class="px-1 py-1 text-white mx-1 bg-purple-600 rounded inline-flex"
@@ -614,7 +653,7 @@ function getDownloadUrl(name) {
                           </Link>
 
                           <button
-                            v-if="$page.props.auth.user && $page.props.auth.user.type_id != 10 && !deletedOnly"
+                            v-if="$page.props.auth.user && $page.props.auth.user.type_id != 10"
                             tabIndex="1"
                             class="px-1 py-1 text-white mx-1 bg-orange-500 rounded"
                             @click="openModalDelCar(car)"
@@ -629,6 +668,7 @@ function getDownloadUrl(name) {
                           >
                             <print />
                           </a>
+                          </template>
                           <!-- <button
                                       v-if="car.total_s != (car.paid+ car.discount)"
                                       tabIndex="1"
