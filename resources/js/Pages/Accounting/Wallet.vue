@@ -639,7 +639,7 @@ function printTagDetails() {
     <ModalAddSales
             :show="showModalAddSales ? true : false"
             :tagOptions="tagOptions"
-            :showExtendedFields="false"
+            :showExtendedFields="hasWalletTags"
             :showTagSelect="hasWalletTags"
             @a="confirm($event)"
             @close="showModalAddSales = false"
@@ -655,7 +655,7 @@ function printTagDetails() {
             :boxes="boxes"
             :tagOptions="tagOptions"
             :driverSuggestions="driverSuggestions"
-            :showExtendedFields="true"
+            :showExtendedFields="hasWalletTags"
             :showTagSelect="hasWalletTags"
             :sum_transactions="laravelData.sum_transactions"
             :sum_transactions_dinar="laravelData.sum_transactions_dinar"
