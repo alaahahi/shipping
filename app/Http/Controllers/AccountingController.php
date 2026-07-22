@@ -204,9 +204,9 @@ class AccountingController extends Controller
      $owner_id = $owner_id ?? Auth::user()->owner_id;
      $user = User::with('wallet')->where('id',$user_id)->first();
      if($from && $to ){
-         $transactions = Transactions ::with('TransactionsImages')->with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('id','desc')->whereBetween('created', [$from, $to]);
+         $transactions = Transactions ::with('TransactionsImages')->with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('created_at','desc')->orderBy('id','desc')->whereBetween('created', [$from, $to]);
      }else{
-         $transactions = Transactions ::with('TransactionsImages')->with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('id','desc');
+         $transactions = Transactions ::with('TransactionsImages')->with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('created_at','desc')->orderBy('id','desc');
      }
      if($q){
         $transactions = Transactions::with('TransactionsImages')->with('morphed')->where('wallet_id', $user->wallet->id)
@@ -214,6 +214,7 @@ class AccountingController extends Controller
             $query->where('id', $q)
                   ->orWhere('description', 'LIKE', '%' . $q . '%');
         })
+        ->orderBy('created_at', 'desc')
         ->orderBy('id', 'desc');
     }
      $tag_filter = $request->get('tag');

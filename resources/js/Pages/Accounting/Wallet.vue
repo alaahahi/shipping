@@ -103,6 +103,11 @@ function setYearFilter(year) {
   refresh();
 }
 
+const yearFilterLabel = computed(() => {
+  if (!selectedYear.value) return 'الكل';
+  return String(selectedYear.value);
+});
+
 const refresh = () => {
   page = 0;
   transactions.value.length = 0;
@@ -760,6 +765,16 @@ function printTagDetails() {
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">السنة:</span>
                 <button
+                  type="button"
+                  class="px-4 py-2 rounded-md text-sm font-semibold transition"
+                  :class="!selectedYear
+                    ? 'bg-orange-600 text-white shadow'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'"
+                  @click="setYearFilter(null)"
+                >
+                  الكل
+                </button>
+                <button
                   v-for="year in legacyExpenseYears"
                   :key="year"
                   type="button"
@@ -852,7 +867,7 @@ function printTagDetails() {
             <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-6 gap-3 lg:gap-3">
               <div class=" px-4">
                             <div >
-                              <InputLabel for="to" :value="isLegacyExpenseBox ? `مصاريف ${selectedYear} بالدولار` : `حساب ${boxes.name} بالدولار`" />
+                              <InputLabel for="to" :value="isLegacyExpenseBox ? `مصاريف ${yearFilterLabel} بالدولار` : `حساب ${boxes.name} بالدولار`" />
                               <TextInput
                                 id="to"
                                 type="number"
@@ -866,7 +881,7 @@ function printTagDetails() {
 
               <div class=" px-4">
                             <div >
-                              <InputLabel for="to" :value="isLegacyExpenseBox ? `مصاريف ${selectedYear} بالدينار` : `حساب ${boxes.name} بالدينار العراقي`" />
+                              <InputLabel for="to" :value="isLegacyExpenseBox ? `مصاريف ${yearFilterLabel} بالدينار` : `حساب ${boxes.name} بالدينار العراقي`" />
                               <TextInput
                                 id="to"
                                 type="number"
@@ -1003,6 +1018,7 @@ function printTagDetails() {
                   class="text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center"
                 >
                   <tr class="rounded-l-lg mb-2 sm:mb-0">
+                    <th className="px-2 py-2">تسلسل</th>
                     <th className="px-2 py-2">رقم الوصل</th>
                     <th className="px-2 py-2">التاريخ</th>
                     <th className="px-2 py-2">الوصف</th>
@@ -1024,6 +1040,9 @@ function printTagDetails() {
                       ]"  
                       class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
 
+                  <td className="border dark:border-gray-800 text-center px-2 py-1 font-semibold">
+                    {{ index + 1 }}
+                  </td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">
                     {{ tran.id }}
                     <span v-if="tran.type == 'inUserAmanah' || tran.type == 'outUserAmanah'" class="text-xs text-blue-600 dark:text-blue-300 font-bold">(أمانة)</span>
