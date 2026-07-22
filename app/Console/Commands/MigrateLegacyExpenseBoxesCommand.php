@@ -10,9 +10,9 @@ class MigrateLegacyExpenseBoxesCommand extends Command
 {
     protected $signature = 'accounting:migrate-legacy-expense-boxes
                             {--owner=1 : Owner ID to migrate}
-                            {--dry-run : Preview changes without updating users}';
+                            {--dry-run : Preview changes without writing to the database}';
 
-    protected $description = 'Promote legacy GenExpenses accounts (Dubai, Iran, Border, COC) to dashboard treasury boxes without deleting data';
+    protected $description = 'Migrate legacy GenExpenses boxes to dashboard treasuries (non-destructive: no deletes)';
 
     public function handle(MigrateLegacyExpenseBoxesService $service): int
     {
@@ -20,19 +20,21 @@ class MigrateLegacyExpenseBoxesCommand extends Command
         $dryRun = (bool) $this->option('dry-run');
 
         if (! Schema::hasTable('users')) {
-            $this->error('جدول users غير موجود — شغّل migrations أو استخدم قاعدة البيانات الصحيحة.');
+            $this->error('Table "users" not found. On local dev try LOCAL_NO_REMOTE=false, or run on the server.');
+            $this->line('No data is deleted by this command.');
 
             return self::FAILURE;
         }
 
         if ($dryRun) {
-            $this->info('وضع المعاينة (dry-run) — لن يُجرَ أي تعديل على المستخدمين.');
+            $this->info('DRY-RUN mode — no database changes will be made.');
         } else {
-            $this->warn('سيتم تفعيل القاسات وتحديث الأسماء. لن يُحذف أي سجل مالي.');
+            $this->warn('This will update display flags and transaction types (in → inUser).');
+            $this->line('Safety: no rows are deleted from transactions, expenses, wallets, or users.');
         }
 
         $this->newLine();
-        $this->info("المالك (owner_id): {$ownerId}");
+        $this->info("Owner ID: {$ownerId}");
         $this->newLine();
 
         $results = $service->migrate($ownerId, $dryRun, null);
@@ -50,23 +52,37 @@ class MigrateLegacyExpenseBoxesCommand extends Command
                 $row['balance_dinar'] ?? '-',
                 $row['transactions_count'] ?? '-',
                 $row['expenses_count'] ?? '-',
+                $row['legacy_transactions_pending'] ?? '-',
+                $row['transactions_migrated'] ?? '-',
+                isset($row['calc_balance_dollar']) ? number_format($row['calc_balance_dollar'], 2) : '-',
+                isset($row['stored_balance_dollar']) ? number_format($row['stored_balance_dollar'], 2) : '-',
+                $row['diff_dollar'] ?? '-',
+                isset($row['expenses_table_sum']) ? number_format($row['expenses_table_sum'], 2) : '-',
+                isset($row['balance_ok']) ? ($row['balance_ok'] ? 'OK' : 'DIFF') : '-',
                 $row['message'] ?? '',
             ];
         }
 
         $this->table(
             [
-                'المفتاح',
-                'الحالة',
+                'Key',
+                'Status',
                 'user_id',
                 'wallet_id',
-                'الاسم القديم',
-                'الاسم الجديد',
-                'رصيد $',
-                'رصيد د.ع',
-                'معاملات',
-                'مصاريف',
-                'ملاحظة',
+                'Old name',
+                'New name',
+                'Balance $',
+                'Balance IQD',
+                'Transactions',
+                'Expenses',
+                'Legacy in',
+                'Converted',
+                'Calc $',
+                'Stored $',
+                'Diff $',
+                'Expenses sum',
+                'Balanced',
+                'Note',
             ],
             $rows
         );
@@ -74,18 +90,19 @@ class MigrateLegacyExpenseBoxesCommand extends Command
         $failed = collect($results)->contains(fn ($r) => in_array($r['status'] ?? '', ['missing', 'missing_wallet'], true));
 
         if ($failed) {
-            $this->error('بعض الحسابات غير موجودة — راجع الجدول أعلاه.');
+            $this->error('Some system accounts were not found — see the table above.');
 
             return self::FAILURE;
         }
 
         if ($dryRun) {
             $this->newLine();
-            $this->info('لتطبيق الترحيل شغّل الأمر بدون --dry-run:');
+            $this->info('To apply the migration, run without --dry-run:');
             $this->line('  php artisan accounting:migrate-legacy-expense-boxes --owner='.$ownerId);
         } else {
             $this->newLine();
-            $this->info('تم الترحيل. تأكد من إخفاء الأزرار القديمة: SHOW_ACCOUNTING_EXTRA_BUTTONS=false');
+            $this->info('Migration complete. Hide legacy UI buttons: SHOW_ACCOUNTING_EXTRA_BUTTONS=false');
+            $this->line('All historical transactions and expenses records were preserved.');
         }
 
         return self::SUCCESS;

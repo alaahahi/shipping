@@ -9,6 +9,17 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Non-destructive migration for legacy GenExpenses system accounts.
+ *
+ * This service NEVER deletes or soft-deletes:
+ * - transactions
+ * - expenses
+ * - wallets
+ * - users
+ *
+ * It only updates: user display name/flag, transaction type labels, wallet balance cache fields.
+ */
 class MigrateLegacyExpenseBoxesService
 {
     public const LEGACY_BOXES = [
@@ -16,21 +27,25 @@ class MigrateLegacyExpenseBoxesService
             'cache_key' => 'dubai',
             'display_name' => 'قاسة دبي',
             'expenses_type_id' => 2,
+            'description_pattern' => '/مصاريف\s+دبي/ui',
         ],
         'iran' => [
             'cache_key' => 'iran',
             'display_name' => 'قاسة إيران',
             'expenses_type_id' => 3,
+            'description_pattern' => '/مصاريف\s+(ايران|إيران)/ui',
         ],
         'border' => [
             'cache_key' => 'border',
             'display_name' => 'قاسة الحدود',
             'expenses_type_id' => 4,
+            'description_pattern' => '/مصاريف\s+الحدود/ui',
         ],
         'shipping_coc' => [
             'cache_key' => 'shipping_coc',
             'display_name' => 'قاسة COC',
             'expenses_type_id' => 5,
+            'description_pattern' => '/مصاريف\s+شهادة\s*coc/ui',
         ],
     ];
 
@@ -46,14 +61,18 @@ class MigrateLegacyExpenseBoxesService
         User::ensureOptionalColumns();
         $this->accounting->loadAccounts($ownerId);
 
+        $mainBox = $this->accounting->mainBox();
+        $mainBoxWalletId = $mainBox?->wallet?->id;
+
         $results = [];
-        $migrationNote = 'تم ترحيل هذا الحساب من نظام المصاريف القديم (GenExpenses) إلى قاسة لوحة المحاسبة. لم يُحذف أي سجل.';
+        $migrationNote = 'Migrated from legacy GenExpenses to dashboard treasury box. No records were deleted.';
 
         foreach (self::LEGACY_BOXES as $legacyKey => $config) {
             $results[] = $this->migrateBox(
                 $ownerId,
                 $legacyKey,
                 $config,
+                $mainBoxWalletId,
                 $dryRun,
                 $migratedBy,
                 $migrationNote
@@ -64,17 +83,111 @@ class MigrateLegacyExpenseBoxesService
             $this->accounting->refresh();
         }
 
+        $reconcileResults = $this->reconcileBalances($ownerId, $dryRun);
+        foreach ($results as $index => $result) {
+            if (isset($reconcileResults[$result['legacy_key'] ?? ''])) {
+                $results[$index] = array_merge($result, $reconcileResults[$result['legacy_key']]);
+            }
+        }
+
         return $results;
     }
 
     /**
-     * @param  array{cache_key: string, display_name: string, expenses_type_id: int}  $config
+     * @return array<string, array<string, mixed>>
+     */
+    public function reconcileBalances(int $ownerId, bool $dryRun = false): array
+    {
+        $this->accounting->loadAccounts($ownerId);
+        $report = [];
+
+        foreach (self::LEGACY_BOXES as $legacyKey => $config) {
+            $account = $this->accounting->getAccount($config['cache_key']);
+            if (! $account) {
+                continue;
+            }
+
+            $account->loadMissing('wallet');
+            if (! $account->wallet) {
+                continue;
+            }
+
+            $walletId = $account->wallet->id;
+
+            $calcDollar = (float) Transactions::query()
+                ->where('wallet_id', $walletId)
+                ->whereNull('deleted_at')
+                ->where('currency', '$')
+                ->sum('amount');
+
+            $calcDinar = (float) Transactions::query()
+                ->where('wallet_id', $walletId)
+                ->whereNull('deleted_at')
+                ->where('currency', 'IQD')
+                ->sum('amount');
+
+            $storedDollar = (float) ($account->wallet->balance ?? 0);
+            $storedDinar = (float) ($account->wallet->balance_dinar ?? 0);
+
+            $expensesSum = (float) Expenses::query()
+                ->where('user_id', $account->id)
+                ->where('expenses_type_id', $config['expenses_type_id'])
+                ->sum('amount');
+
+            $legacyInCount = Transactions::query()
+                ->where('wallet_id', $walletId)
+                ->where('type', 'in')
+                ->whereNull('deleted_at')
+                ->count();
+
+            $inUserCount = Transactions::query()
+                ->where('wallet_id', $walletId)
+                ->where('type', 'inUser')
+                ->whereNull('deleted_at')
+                ->count();
+
+            $diffDollar = round($calcDollar - $storedDollar, 2);
+            $diffDinar = round($calcDinar - $storedDinar, 2);
+            $balanced = abs($diffDollar) < 0.01 && abs($diffDinar) < 0.01;
+
+            if (! $dryRun && ! $balanced) {
+                $account->wallet->update([
+                    'balance' => (int) round($calcDollar),
+                    'balance_dinar' => (int) round($calcDinar),
+                ]);
+                $storedDollar = (float) round($calcDollar);
+                $storedDinar = (float) round($calcDinar);
+                $diffDollar = 0;
+                $diffDinar = 0;
+                $balanced = true;
+            }
+
+            $report[$legacyKey] = [
+                'calc_balance_dollar' => $calcDollar,
+                'calc_balance_dinar' => $calcDinar,
+                'stored_balance_dollar' => $storedDollar,
+                'stored_balance_dinar' => $storedDinar,
+                'diff_dollar' => $diffDollar,
+                'diff_dinar' => $diffDinar,
+                'balance_ok' => $balanced,
+                'expenses_table_sum' => $expensesSum,
+                'legacy_in_remaining' => $legacyInCount,
+                'in_user_count' => $inUserCount,
+            ];
+        }
+
+        return $report;
+    }
+
+    /**
+     * @param  array{cache_key: string, display_name: string, expenses_type_id: int, description_pattern: string}  $config
      * @return array<string, mixed>
      */
     protected function migrateBox(
         int $ownerId,
         string $legacyKey,
         array $config,
+        ?int $mainBoxWalletId,
         bool $dryRun,
         ?int $migratedBy,
         string $migrationNote
@@ -85,7 +198,7 @@ class MigrateLegacyExpenseBoxesService
             return [
                 'legacy_key' => $legacyKey,
                 'status' => 'missing',
-                'message' => 'حساب النظام غير موجود لهذا المالك.',
+                'message' => 'System account not found for this owner.',
             ];
         }
 
@@ -96,7 +209,7 @@ class MigrateLegacyExpenseBoxesService
                 'legacy_key' => $legacyKey,
                 'status' => 'missing_wallet',
                 'user_id' => $account->id,
-                'message' => 'المستخدم موجود لكن بدون محفظة.',
+                'message' => 'User exists but has no wallet.',
             ];
         }
 
@@ -114,12 +227,18 @@ class MigrateLegacyExpenseBoxesService
             ->where('expenses_type_id', $config['expenses_type_id'])
             ->count();
 
-        $alreadyMigrated = (bool) $account->show_in_dashboard
-            && $account->name === $config['display_name'];
+        $legacyTransactionIds = $this->findLegacyGenExpenseTransactionIds($walletId);
+
+        $userFlagsNeedUpdate = ! (
+            (bool) $account->show_in_dashboard
+            && $account->name === $config['display_name']
+        );
+
+        $transactionsNeedUpdate = $legacyTransactionIds->isNotEmpty();
 
         $result = [
             'legacy_key' => $legacyKey,
-            'status' => $alreadyMigrated ? 'skipped' : ($dryRun ? 'dry_run' : 'migrated'),
+            'status' => $this->resolveStatus($userFlagsNeedUpdate, $transactionsNeedUpdate, $dryRun),
             'user_id' => $account->id,
             'wallet_id' => $walletId,
             'email' => $account->email,
@@ -130,29 +249,160 @@ class MigrateLegacyExpenseBoxesService
             'balance_dinar' => $balanceDinar,
             'transactions_count' => $transactionsCount,
             'expenses_count' => $expensesCount,
-            'message' => $alreadyMigrated
-                ? 'القاسة مفعّلة مسبقاً — لم يُجرَ تعديل.'
-                : ($dryRun ? 'جاهز للترحيل (معاينة فقط).' : 'تم الترحيل بنجاح.'),
+            'legacy_transactions_pending' => $legacyTransactionIds->count(),
+            'transactions_migrated' => 0,
+            'parents_migrated' => 0,
+            'message' => $this->resolveMessage($userFlagsNeedUpdate, $transactionsNeedUpdate, $legacyTransactionIds->count(), $dryRun),
         ];
-
-        if ($alreadyMigrated) {
-            return $result;
-        }
 
         if ($dryRun) {
             return $result;
         }
 
-        DB::transaction(function () use ($account, $config, $migrationNote) {
-            $account->update([
-                'name' => $config['display_name'],
-                'show_in_dashboard' => true,
-            ]);
+        if (! $userFlagsNeedUpdate && ! $transactionsNeedUpdate) {
+            return $result;
+        }
+
+        DB::transaction(function () use (
+            $account,
+            $config,
+            $legacyTransactionIds,
+            $mainBoxWalletId,
+            $userFlagsNeedUpdate,
+            &$result
+        ) {
+            if ($userFlagsNeedUpdate) {
+                $account->update([
+                    'name' => $config['display_name'],
+                    'show_in_dashboard' => true,
+                ]);
+            }
+
+            if ($legacyTransactionIds->isNotEmpty()) {
+                $migrationStats = $this->migrateGenExpenseTransactions(
+                    $legacyTransactionIds,
+                    $account->id,
+                    $mainBoxWalletId
+                );
+                $result['transactions_migrated'] = $migrationStats['transactions_migrated'];
+                $result['parents_migrated'] = $migrationStats['parents_migrated'];
+            }
         });
 
         $this->writeLog($ownerId, $legacyKey, $result, $migrationNote, $migratedBy, false);
 
         return $result;
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    protected function findLegacyGenExpenseTransactionIds(int $walletId)
+    {
+        // Legacy expense wallets (dubai/iran/...) only hold GenExpenses — convert every type=in row in place.
+        return Transactions::query()
+            ->where('wallet_id', $walletId)
+            ->where('type', 'in')
+            ->whereNull('deleted_at')
+            ->pluck('id')
+            ->values();
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, int>  $transactionIds
+     * @return array{transactions_migrated: int, parents_migrated: int}
+     */
+    protected function migrateGenExpenseTransactions(
+        $transactionIds,
+        int $accountUserId,
+        ?int $mainBoxWalletId
+    ): array {
+        $transactionsMigrated = 0;
+        $parentsMigrated = 0;
+
+        foreach ($transactionIds as $transactionId) {
+            $child = Transactions::query()
+                ->where('id', $transactionId)
+                ->where('type', 'in')
+                ->whereNull('deleted_at')
+                ->first();
+
+            if (! $child) {
+                continue;
+            }
+
+            $details = is_array($child->details) ? $child->details : [];
+            $details['legacy_gen_expense_migrated'] = true;
+
+            $child->type = 'inUser';
+            $child->morphed_id = $accountUserId;
+            $child->morphed_type = User::class;
+            $child->details = $details;
+            $child->save();
+            $transactionsMigrated++;
+
+            if (! $child->parent_id || ! $mainBoxWalletId) {
+                continue;
+            }
+
+            $parent = Transactions::query()
+                ->where('id', $child->parent_id)
+                ->where('wallet_id', $mainBoxWalletId)
+                ->whereIn('type', ['out', 'outUserBox'])
+                ->whereNull('deleted_at')
+                ->first();
+
+            if (! $parent || $parent->type === 'outUserBox') {
+                continue;
+            }
+
+            $parentDetails = is_array($parent->details) ? $parent->details : [];
+            $parentDetails['legacy_gen_expense_migrated'] = true;
+
+            $parent->type = 'outUserBox';
+            $parent->morphed_id = $accountUserId;
+            $parent->morphed_type = User::class;
+            $parent->details = $parentDetails;
+            $parent->save();
+            $parentsMigrated++;
+        }
+
+        return [
+            'transactions_migrated' => $transactionsMigrated,
+            'parents_migrated' => $parentsMigrated,
+        ];
+    }
+
+    protected function resolveStatus(bool $userFlagsNeedUpdate, bool $transactionsNeedUpdate, bool $dryRun): string
+    {
+        if (! $userFlagsNeedUpdate && ! $transactionsNeedUpdate) {
+            return 'skipped';
+        }
+
+        return $dryRun ? 'dry_run' : 'migrated';
+    }
+
+    protected function resolveMessage(
+        bool $userFlagsNeedUpdate,
+        bool $transactionsNeedUpdate,
+        int $pendingCount,
+        bool $dryRun
+    ): string {
+        if (! $userFlagsNeedUpdate && ! $transactionsNeedUpdate) {
+            return 'Already migrated — nothing to change.';
+        }
+
+        $parts = [];
+        if ($userFlagsNeedUpdate) {
+            $parts[] = $dryRun ? 'Will enable dashboard display' : 'Dashboard display enabled';
+        }
+        if ($transactionsNeedUpdate) {
+            $parts[] = $dryRun
+                ? "Will convert {$pendingCount} payment(s) from in to inUser (no deletes)"
+                : "Converted {$pendingCount} payment(s) to treasury model (no deletes)";
+        }
+
+        return implode(' — ', $parts);
     }
 
     /**
@@ -180,7 +430,7 @@ class MigrateLegacyExpenseBoxesService
             'transactions_count' => $result['transactions_count'] ?? 0,
             'expenses_count' => $result['expenses_count'] ?? 0,
             'display_name' => $result['new_name'] ?? null,
-            'note' => $migrationNote,
+            'note' => trim($migrationNote.' | payments converted: '.($result['transactions_migrated'] ?? 0)),
             'migrated_by' => $migratedBy,
             'dry_run' => $dryRun,
         ]);
