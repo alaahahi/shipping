@@ -115,18 +115,24 @@
     $balanceDinar = $totalInDinar - $totalOutDinar;
 @endphp
 
+@php
+    $fmtAmount = function ($value) {
+        return (string) (int) round(abs((float) $value));
+    };
+@endphp
+
 <div class="row p-2 text-center border-bottom alert-primary" style="font-size: 14px">
     <div class="col-3"> 
         إجمالي الإيداع بالدولار:
-        {{number_format($totalInDollar, 2)}}
+        {{ $fmtAmount($totalInDollar) }}
     </div>
     <div class="col-3">
         إجمالي السحب بالدولار:
-        {{number_format($totalOutDollar, 2)}}
+        {{ $fmtAmount($totalOutDollar) }}
     </div>
     <div class="col-3">
         الرصيد بالدولار:
-        {{number_format($balanceDollar, 2)}}
+        {{ (int) round($balanceDollar) }}
     </div>
     <div class="col-3">
         عدد المعاملات:
@@ -138,15 +144,15 @@
 <div class="row p-2 text-center border-bottom alert-info" style="font-size: 14px">
     <div class="col-3"> 
         إجمالي الإيداع بالدينار:
-        {{number_format($totalInDinar, 2)}}
+        {{ $fmtAmount($totalInDinar) }}
     </div>
     <div class="col-3">
         إجمالي السحب بالدينار:
-        {{number_format($totalOutDinar, 2)}}
+        {{ $fmtAmount($totalOutDinar) }}
     </div>
     <div class="col-3">
         الرصيد بالدينار:
-        {{number_format($balanceDinar, 2)}}
+        {{ (int) round($balanceDinar) }}
     </div>
     <div class="col-3"></div>
 </div>
@@ -192,14 +198,14 @@
                 <td>{{ $transactionObj->description ?? '' }}</td>
                 <td>
                     @if(in_array($type, ['inUser', 'inUserAmanah']))
-                        {{ number_format(abs($transactionObj->amount ?? 0), 2) }}
+                        {{ $fmtAmount($transactionObj->amount ?? 0) }}
                     @else
                         -
                     @endif
                 </td>
                 <td>
                     @if(in_array($type, ['outUser', 'outUserAmanah']))
-                        {{ number_format(abs($transactionObj->amount ?? 0), 2) }}
+                        {{ $fmtAmount($transactionObj->amount ?? 0) }}
                     @else
                         -
                     @endif
