@@ -216,6 +216,7 @@ Route::middleware('auth:sanctum')->get('online-users', [\App\Http\Controllers\On
 Route::get('getIndexAccountsSelas',[AccountingController::class, 'getIndexAccountsSelas'])->name('getIndexAccountsSelas');
 
 Route::post('deleteTransactions',[AccountingController::class, 'delTransactions'])->name('deleteTransactions');
+Route::post('restoreTransaction',[AccountingController::class, 'restoreTransaction'])->name('restoreTransaction.sanctum');
 Route::post('updateTransactionDescription',[AccountingController::class, 'updateTransactionDescription'])->name('updateTransactionDescription');
 Route::post('updateTransaction',[AccountingController::class, 'updateTransaction'])->name('updateTransaction');
 Route::post('toggleWalletTags',[AccountingController::class, 'toggleWalletTags'])->name('toggleWalletTags');
@@ -374,6 +375,7 @@ Route::post('companyStoreEdit',[CarConfigController::class, 'storeEdit'])->name(
 
 Route::post('salesDebt',[AccountingController::class, 'salesDebt'])->name('salesDebt');
 Route::post('delTransactions',[AccountingController::class, 'delTransactions'])->name('delTransactions');
+Route::post('restoreTransaction',[AccountingController::class, 'restoreTransaction'])->name('restoreTransaction');
 Route::post('receiptArrived',[AccountingController::class, 'receiptArrived'])->name('receiptArrived');
 Route::post('receiptArrivedUser',[AccountingController::class, 'receiptArrivedUser'])->name('receiptArrivedUser');
 Route::post('salesDebtUser',[AccountingController::class, 'salesDebtUser'])->name('salesDebtUser');

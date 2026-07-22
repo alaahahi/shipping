@@ -37,6 +37,7 @@ use App\Exports\ExportInfo;
 use App\Exports\ExportAccount;
 use App\Services\AccountingCacheService;
 use App\Services\MigrateLegacyExpenseBoxesService;
+use App\Services\RestoreTransactionService;
 use App\Support\DatabaseDriver;
 use Illuminate\Support\Facades\Auth;
 
@@ -203,20 +204,38 @@ class AccountingController extends Controller
      $transactions_id = $_GET['transactions_id'] ?? 0;
      $owner_id = $owner_id ?? Auth::user()->owner_id;
      $user = User::with('wallet')->where('id',$user_id)->first();
-     if($from && $to ){
-         $transactions = Transactions ::with('TransactionsImages')->with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('created_at','desc')->orderBy('id','desc')->whereBetween('created', [$from, $to]);
-     }else{
-         $transactions = Transactions ::with('TransactionsImages')->with('morphed')->where('wallet_id', $user->wallet->id)->orderBy('created_at','desc')->orderBy('id','desc');
+     if (!$user || !$user->wallet) {
+         return response()->json(['message' => 'Wallet not found'], 404);
      }
-     if($q){
-        $transactions = Transactions::with('TransactionsImages')->with('morphed')->where('wallet_id', $user->wallet->id)
-        ->where(function ($query) use ($q) {
+
+     $deletedOnly = $request->boolean('deleted_only')
+         || (string) $request->get('deleted_only') === '1';
+
+     $transactionsQuery = $deletedOnly
+         ? Transactions::onlyTrashed()
+         : Transactions::query();
+
+     $transactionsQuery = $transactionsQuery
+         ->with(['TransactionsImages', 'morphed'])
+         ->where('wallet_id', $user->wallet->id);
+
+     if ($from && $to) {
+         if ($deletedOnly) {
+             $transactionsQuery->whereBetween('deleted_at', [$from.' 00:00:00', $to.' 23:59:59']);
+         } else {
+             $transactionsQuery->whereBetween('created', [$from, $to]);
+         }
+     }
+
+     $transactionsQuery->orderBy($deletedOnly ? 'deleted_at' : 'created_at', 'desc')->orderBy('id', 'desc');
+
+     if ($q) {
+        $transactionsQuery->where(function ($query) use ($q) {
             $query->where('id', $q)
                   ->orWhere('description', 'LIKE', '%' . $q . '%');
-        })
-        ->orderBy('created_at', 'desc')
-        ->orderBy('id', 'desc');
+        });
     }
+     $transactions = $transactionsQuery;
      $tag_filter = $request->get('tag');
      if ($tag_filter !== null && $tag_filter !== '') {
          $transactions = $transactions->where('tag', $tag_filter);
@@ -274,6 +293,7 @@ class AccountingController extends Controller
      $data = [
          'user' => $user,
          'transactions' => $allTransactions,
+         'deleted_only' => $deletedOnly,
          'sum_transactions' => $sumAllTransactions,
          'sum_transactions_debit' => $sumDebitTransactions,
          'sum_transactions_in' => $sumInTransactions,
@@ -1520,6 +1540,29 @@ class AccountingController extends Controller
         return $Transactions;
     }
  
+    public function restoreTransaction(Request $request, RestoreTransactionService $restoreService)
+    {
+        $validated = $request->validate([
+            'id' => ['required', 'integer'],
+        ]);
+
+        try {
+            $transaction = $restoreService->restore(
+                (int) $validated['id'],
+                (int) Auth::user()->owner_id
+            );
+        } catch (\RuntimeException $e) {
+            $status = str_contains($e->getMessage(), 'authorized') ? 403 : 404;
+
+            return Response::json(['message' => $e->getMessage()], $status);
+        }
+
+        return Response::json([
+            'message' => 'تم استرجاع الدفعة بنجاح',
+            'transaction' => $transaction,
+        ], 200);
+    }
+
     public function delTransactions(Request $request)
     {
         $this->accounting->loadAccounts(Auth::user()->owner_id);

@@ -74,6 +74,8 @@ let user_id = 0;
 let page = 1;
 let q = '';
 let allTransfers=ref([]);
+let deletedOnly = ref(false);
+let restoringId = ref(null);
 
 const editingDescriptionId = ref(null);
 const descriptionDraft = ref('');
@@ -92,16 +94,18 @@ const debouncedGetResultsCar = debounce(refresh, 500);
 
 const getResults = async ($state) => {
   try {
-    const response = await axios.get(`/getIndexAccounting`, {
-      params: {
-        limit: 100,
-        page: page,
-        q: q,
-        user_id: props.boxes[0].id,
-        from:from.value,
-        to: to.value
-      }
-    });
+    const params = {
+      limit: 100,
+      page: page,
+      q: q,
+      user_id: props.boxes[0].id,
+      from: from.value,
+      to: to.value,
+    };
+    if (deletedOnly.value) {
+      params.deleted_only = 1;
+    }
+    const response = await axios.get(`/getIndexAccounting`, { params });
 
     const json = response.data;
 
@@ -122,6 +126,37 @@ const getResults = async ($state) => {
     //$state.error();
   }
 };
+
+function toggleDeletedPayments() {
+  deletedOnly.value = !deletedOnly.value;
+  if (deletedOnly.value) {
+    from.value = '';
+    to.value = '';
+  } else {
+    from.value = getTodayDate();
+    to.value = getTodayDate();
+  }
+  refresh();
+}
+
+async function restoreDeletedTransaction(tran) {
+  if (!tran?.id || restoringId.value) {
+    return;
+  }
+  if (!window.confirm(`استرجاع الدفعة رقم ${tran.id}؟`)) {
+    return;
+  }
+  restoringId.value = tran.id;
+  try {
+    await axios.post('/api/restoreTransaction', { id: tran.id });
+    transactions.value = transactions.value.filter((t) => t.id !== tran.id);
+  } catch (error) {
+    const message = error?.response?.data?.message || 'تعذر استرجاع الدفعة';
+    window.alert(message);
+  } finally {
+    restoringId.value = null;
+  }
+}
  
 const getcountTotalInfo = async () => {
   axios.get('/api/totalInfo')
@@ -787,6 +822,17 @@ function getOrangeColorClass(index) {
                             <span v-else>جاري الحفظ...</span>
                           </button>
               </div>
+              <div class=" mr-5 print:hidden" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5">
+                            <InputLabel for="deleted_payments" value="محذوف" />
+                            <button
+                              type="button"
+                              @click.prevent="toggleDeletedPayments()"
+                              class="px-6 mb-6 py-2 mt-1 font-bold text-white rounded w-full"
+                              :class="deletedOnly ? 'bg-amber-600 hover:bg-amber-700' : 'bg-slate-700 hover:bg-slate-800'"
+                            >
+                              {{ deletedOnly ? 'إخفاء المحذوف' : 'الدفعات المحذوفة' }}
+                            </button>
+              </div>
               <div v-if="showAccountingExtraButtons" class=" mr-5 print:hidden" >
                             <InputLabel for="pay" value="قاسه" />
                            <Link
@@ -968,6 +1014,9 @@ function getOrangeColorClass(index) {
 
             </div>
          
+         <div v-if="deletedOnly" class="mt-4 mx-2 px-4 py-2 rounded bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100 text-sm font-semibold">
+              عرض الدفعات المحذوفة فقط — يمكنك استرجاع أي دفعة من عمود التنفيذ
+            </div>
          <div class="overflow-x-auto shadow-lg mt-5 rounded-lg">
               <table class="w-full text-right text-gray-100 dark:text-gray-100 text-center bg-slate-900 rounded-lg overflow-hidden">
                 <thead class="uppercase bg-slate-800 text-gray-100 text-center">
@@ -975,7 +1024,7 @@ function getOrangeColorClass(index) {
                     <th className="px-2 py-2" style="width: 200px;">حساب
                     </th>
                     <!-- <th className="px-2 py-2">الحساب</th> -->
-                    <th className="px-2 py-2" style="width: 180px;">التاريخ</th>
+                    <th className="px-2 py-2" style="width: 180px;">{{ deletedOnly ? 'تاريخ الحذف' : 'التاريخ' }}</th>
                     <th className="px-2 py-2">الوصف</th>
                     <th className="px-2 py-2">ايداع</th>
                     <th className="px-2 py-2">سحب</th>
@@ -1009,7 +1058,7 @@ function getOrangeColorClass(index) {
                     </td>
 
                     <td class="border border-transparent text-center px-2 py-1 whitespace-nowrap">
-                      {{ formatBaghdadTimestamp(tran?.created_at) }}
+                      {{ formatBaghdadTimestamp(deletedOnly ? tran?.deleted_at : tran?.created_at) }}
                     </td>
                     <th class="border border-transparent text-center px-2 py-1 align-top">
                     <div v-if="editingDescriptionId === tran.id" class="space-y-2 text-right">
@@ -1069,6 +1118,18 @@ function getOrangeColorClass(index) {
                     </td>
                     <td class="border border-transparent text-center px-2 py-1">
                       <div class="action-group">
+                        <template v-if="deletedOnly">
+                          <button
+                            type="button"
+                            class="action-btn bg-emerald-600 hover:bg-emerald-700"
+                            title="استرجاع الدفعة"
+                            :disabled="restoringId === tran.id"
+                            @click="restoreDeletedTransaction(tran)"
+                          >
+                            {{ restoringId === tran.id ? '...' : 'استرجاع' }}
+                          </button>
+                        </template>
+                        <template v-else>
                         <button
                           class="action-btn action-btn--edit"
                           title="تعديل الوصف"
@@ -1127,6 +1188,7 @@ function getOrangeColorClass(index) {
                         >
                           <print class="inline-flex" />
                         </a>
+                        </template>
                       </div>
                    </td>
                   <td>
