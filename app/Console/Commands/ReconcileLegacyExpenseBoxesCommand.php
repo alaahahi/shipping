@@ -45,7 +45,7 @@ class ReconcileLegacyExpenseBoxesCommand extends Command
                 $row['diff_dinar'],
                 number_format($row['expenses_table_sum'], 2),
                 $row['legacy_in_remaining'],
-                $row['in_user_count'],
+                $row['out_user_count'] ?? ($row['in_user_count'] ?? '-'),
                 $row['balance_ok'] ? 'OK' : 'DIFF',
             ];
         }
@@ -60,8 +60,8 @@ class ReconcileLegacyExpenseBoxesCommand extends Command
                 'Stored IQD',
                 'Diff IQD',
                 'Expenses sum',
-                'Legacy in',
-                'inUser',
+                'Legacy in/inUser',
+                'outUser',
                 'OK',
             ],
             $rows
@@ -71,7 +71,7 @@ class ReconcileLegacyExpenseBoxesCommand extends Command
         $hasLegacy = collect($report)->contains(fn ($r) => ($r['legacy_in_remaining'] ?? 0) > 0);
 
         if ($hasLegacy) {
-            $this->warn('Legacy type "in" transactions remain — run: php artisan accounting:migrate-legacy-expense-boxes --owner='.$ownerId);
+            $this->warn('Legacy in/inUser transactions remain — run: php artisan accounting:migrate-legacy-expense-boxes --owner='.$ownerId);
         }
 
         if ($dryRun && $hasDiff) {

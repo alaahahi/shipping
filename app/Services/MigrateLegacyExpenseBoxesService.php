@@ -49,6 +49,14 @@ class MigrateLegacyExpenseBoxesService
         ],
     ];
 
+    /** @var list<string> */
+    public const LEGACY_EMAILS = ['dubai', 'iran', 'border', 'shipping-coc'];
+
+    public static function isLegacyExpenseEmail(?string $email): bool
+    {
+        return in_array($email ?? '', self::LEGACY_EMAILS, true);
+    }
+
     public function __construct(
         protected AccountingCacheService $accounting
     ) {}
@@ -118,12 +126,14 @@ class MigrateLegacyExpenseBoxesService
                 ->where('wallet_id', $walletId)
                 ->whereNull('deleted_at')
                 ->where('currency', '$')
+                ->where('type', 'outUser')
                 ->sum('amount');
 
             $calcDinar = (float) Transactions::query()
                 ->where('wallet_id', $walletId)
                 ->whereNull('deleted_at')
                 ->where('currency', 'IQD')
+                ->where('type', 'outUser')
                 ->sum('amount');
 
             $storedDollar = (float) ($account->wallet->balance ?? 0);
@@ -136,27 +146,28 @@ class MigrateLegacyExpenseBoxesService
 
             $legacyInCount = Transactions::query()
                 ->where('wallet_id', $walletId)
-                ->where('type', 'in')
+                ->whereIn('type', ['in', 'inUser'])
                 ->whereNull('deleted_at')
                 ->count();
 
             $inUserCount = Transactions::query()
                 ->where('wallet_id', $walletId)
-                ->where('type', 'inUser')
+                ->where('type', 'outUser')
                 ->whereNull('deleted_at')
                 ->count();
 
-            $diffDollar = round($calcDollar - $storedDollar, 2);
-            $diffDinar = round($calcDinar - $storedDinar, 2);
+            // Legacy expense treasuries use zero stored balance; totals come from outUser rows.
+            $diffDollar = round($storedDollar, 2);
+            $diffDinar = round($storedDinar, 2);
             $balanced = abs($diffDollar) < 0.01 && abs($diffDinar) < 0.01;
 
             if (! $dryRun && ! $balanced) {
                 $account->wallet->update([
-                    'balance' => (int) round($calcDollar),
-                    'balance_dinar' => (int) round($calcDinar),
+                    'balance' => 0,
+                    'balance_dinar' => 0,
                 ]);
-                $storedDollar = (float) round($calcDollar);
-                $storedDinar = (float) round($calcDinar);
+                $storedDollar = 0;
+                $storedDinar = 0;
                 $diffDollar = 0;
                 $diffDinar = 0;
                 $balanced = true;
@@ -172,7 +183,7 @@ class MigrateLegacyExpenseBoxesService
                 'balance_ok' => $balanced,
                 'expenses_table_sum' => $expensesSum,
                 'legacy_in_remaining' => $legacyInCount,
-                'in_user_count' => $inUserCount,
+                'out_user_count' => $inUserCount,
             ];
         }
 
@@ -287,6 +298,8 @@ class MigrateLegacyExpenseBoxesService
                 $result['transactions_migrated'] = $migrationStats['transactions_migrated'];
                 $result['parents_migrated'] = $migrationStats['parents_migrated'];
             }
+
+            $this->zeroLegacyWalletBalance($account);
         });
 
         $this->writeLog($ownerId, $legacyKey, $result, $migrationNote, $migratedBy, false);
@@ -299,13 +312,25 @@ class MigrateLegacyExpenseBoxesService
      */
     protected function findLegacyGenExpenseTransactionIds(int $walletId)
     {
-        // Legacy expense wallets (dubai/iran/...) only hold GenExpenses — convert every type=in row in place.
+        // Convert legacy GenExpenses deposits (in / inUser) to treasury withdrawals (outUser).
         return Transactions::query()
             ->where('wallet_id', $walletId)
-            ->where('type', 'in')
+            ->whereIn('type', ['in', 'inUser'])
             ->whereNull('deleted_at')
             ->pluck('id')
             ->values();
+    }
+
+    protected function zeroLegacyWalletBalance(User $account): void
+    {
+        if (! $account->wallet) {
+            return;
+        }
+
+        $account->wallet->update([
+            'balance' => 0,
+            'balance_dinar' => 0,
+        ]);
     }
 
     /**
@@ -323,7 +348,7 @@ class MigrateLegacyExpenseBoxesService
         foreach ($transactionIds as $transactionId) {
             $child = Transactions::query()
                 ->where('id', $transactionId)
-                ->where('type', 'in')
+                ->whereIn('type', ['in', 'inUser'])
                 ->whereNull('deleted_at')
                 ->first();
 
@@ -333,8 +358,9 @@ class MigrateLegacyExpenseBoxesService
 
             $details = is_array($child->details) ? $child->details : [];
             $details['legacy_gen_expense_migrated'] = true;
+            $details['legacy_expense_withdrawal'] = true;
 
-            $child->type = 'inUser';
+            $child->type = 'outUser';
             $child->morphed_id = $accountUserId;
             $child->morphed_type = User::class;
             $child->details = $details;
@@ -398,8 +424,8 @@ class MigrateLegacyExpenseBoxesService
         }
         if ($transactionsNeedUpdate) {
             $parts[] = $dryRun
-                ? "Will convert {$pendingCount} payment(s) from in to inUser (no deletes)"
-                : "Converted {$pendingCount} payment(s) to treasury model (no deletes)";
+                ? "Will convert {$pendingCount} payment(s) to outUser / withdrawal (no deletes)"
+                : "Converted {$pendingCount} payment(s) to withdrawal model (no deletes)";
         }
 
         return implode(' — ', $parts);

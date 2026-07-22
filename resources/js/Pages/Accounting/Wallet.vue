@@ -86,6 +86,23 @@ let page = 1;
 let q = ref('');
 let qDriver = ref('');
 let filterTag = ref('');
+const legacyExpenseYears = [2026, 2025, 2024];
+const selectedYear = ref(new Date().getFullYear());
+
+const props = defineProps({
+  url: String,
+  boxes: Object,
+  isLegacyExpenseBox: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+function setYearFilter(year) {
+  selectedYear.value = year;
+  refresh();
+}
+
 const refresh = () => {
   page = 0;
   transactions.value.length = 0;
@@ -104,6 +121,9 @@ const getResults = async ($state) => {
     };
     if (qDriver.value) params.q_driver = qDriver.value;
     if (filterTag.value) params.tag = filterTag.value;
+    if (props.isLegacyExpenseBox && selectedYear.value) {
+      params.year = selectedYear.value;
+    }
     const response = await axios.get(`/getIndexAccounting`, { params });
 
     const json = response.data;
@@ -210,11 +230,6 @@ function openModalEditTransaction(tran) {
   tranIdForEdit.value = tran;
   showModalEditTransaction.value = true;
 }
-
-const props = defineProps({
-  url: String,
-  boxes: Object,
-});
 
 const hasWalletTags = ref(!!props.boxes?.has_wallet_tags);
 watch(() => props.boxes?.has_wallet_tags, (v) => { hasWalletTags.value = !!v; }, { immediate: true });
@@ -401,7 +416,12 @@ function calculateBalance(transaction, index) {
     const tran = sortedTransactions[i];
     
     // نأخذ فقط معاملات الصندوق (ليس الأمانة) لحساب الرصيد
-    if (tran.type === 'inUser') {
+    // Legacy expense treasuries: running total of withdrawals (expenses)
+    if (props.isLegacyExpenseBox) {
+      if (tran.type === 'outUser') {
+        balance += Math.abs(parseFloat(tran.amount) || 0);
+      }
+    } else if (tran.type === 'inUser') {
       balance += parseFloat(tran.amount) || 0;
     } else if (tran.type === 'outUser') {
       balance -= Math.abs(parseFloat(tran.amount) || 0);
@@ -436,13 +456,15 @@ function conGenfirmExpenses(V) {
 
 function printAmanah() {
   if(props.boxes?.id) {
-    window.open(`/getIndexAccounting?user_id=${props.boxes.id}&type=wallet&print=7`, '_blank');
+    const yearQuery = props.isLegacyExpenseBox && selectedYear.value ? `&year=${selectedYear.value}` : '';
+    window.open(`/getIndexAccounting?user_id=${props.boxes.id}&type=wallet&print=7${yearQuery}`, '_blank');
   }
 }
 
 function printWallet() {
   if(props.boxes?.id) {
-    window.open(`/getIndexAccounting?user_id=${props.boxes.id}&type=wallet&print=8`, '_blank');
+    const yearQuery = props.isLegacyExpenseBox && selectedYear.value ? `&year=${selectedYear.value}` : '';
+    window.open(`/getIndexAccounting?user_id=${props.boxes.id}&type=wallet&print=8${yearQuery}`, '_blank');
   }
 }
 
@@ -734,8 +756,25 @@ function printTagDetails() {
             </div>
           </div>
           <div v-if="!hasWalletTags || activeTab === 'payments'" class=" border-b border-gray-200 dark:border-gray-700">
+            <div v-if="isLegacyExpenseBox" class="px-4 pt-4 print:hidden">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">السنة:</span>
+                <button
+                  v-for="year in legacyExpenseYears"
+                  :key="year"
+                  type="button"
+                  class="px-4 py-2 rounded-md text-sm font-semibold transition"
+                  :class="selectedYear === year
+                    ? 'bg-orange-600 text-white shadow'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'"
+                  @click="setYearFilter(year)"
+                >
+                  {{ year }}
+                </button>
+              </div>
+            </div>
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-3 mb-4">
-              <div class="pt-5 print:hidden">
+              <div v-if="!isLegacyExpenseBox" class="pt-5 print:hidden">
                 <button style="width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5" 
                         className="px-4 py-2 text-white bg-green-800 rounded-md focus:outline-none hover:bg-green-900 transition"
                         @click="openAddSales()">
@@ -751,7 +790,7 @@ function printTagDetails() {
                 </button>
               </div>
 
-              <div class="pt-5 print:hidden">
+              <div v-if="!isLegacyExpenseBox" class="pt-5 print:hidden">
                 <button style="width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2 || $page.props.auth.user.type_id==5" 
                         className="px-4 py-2 text-white bg-green-600 rounded-md focus:outline-none border-2 border-green-300 hover:bg-green-700 transition"
                         @click="openAddSalesAmanah()">
@@ -759,7 +798,7 @@ function printTagDetails() {
                 </button>
               </div>
 
-              <div class="pt-5 print:hidden">
+              <div v-if="!isLegacyExpenseBox" class="pt-5 print:hidden">
                 <button style="width: 100%; margin-top: 4px;" v-if="$page.props.auth.user.type_id==1 || $page.props.auth.user.type_id==2|| $page.props.auth.user.type_id==5" 
                         className="px-4 py-2 text-white bg-red-600 rounded-md focus:outline-none border-2 border-red-300 hover:bg-red-700 transition"
                         @click="opendebtSalesAmanah()">
@@ -813,13 +852,13 @@ function printTagDetails() {
             <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-6 gap-3 lg:gap-3">
               <div class=" px-4">
                             <div >
-                              <InputLabel for="to" :value="`حساب ${boxes.name} بالدولار`" />
+                              <InputLabel for="to" :value="isLegacyExpenseBox ? `مصاريف ${selectedYear} بالدولار` : `حساب ${boxes.name} بالدولار`" />
                               <TextInput
                                 id="to"
                                 type="number"
                                 disabled
                                 class="mt-1 block w-full"
-                                :value="laravelData.sumInTransactionsUser-laravelData.sumOutTransactionsUser"
+                                :value="isLegacyExpenseBox ? (laravelData.sumOutTransactionsUser || 0) : (laravelData.sumInTransactionsUser - laravelData.sumOutTransactionsUser)"
                               />
                             </div>
               </div>
@@ -827,17 +866,17 @@ function printTagDetails() {
 
               <div class=" px-4">
                             <div >
-                              <InputLabel for="to" :value="`حساب ${boxes.name} بالدينار العراقي`" />
+                              <InputLabel for="to" :value="isLegacyExpenseBox ? `مصاريف ${selectedYear} بالدينار` : `حساب ${boxes.name} بالدينار العراقي`" />
                               <TextInput
                                 id="to"
                                 type="number"
                                 disabled
                                 class="mt-1 block w-full"
-                                :value="laravelData.sumInTransactionsDinarUser-laravelData.sumOutTransactionsDinarUser"
+                                :value="isLegacyExpenseBox ? (laravelData.sumOutTransactionsDinarUser || 0) : (laravelData.sumInTransactionsDinarUser - laravelData.sumOutTransactionsDinarUser)"
                               />
                             </div>
               </div>
-              <div class=" px-4">
+              <div v-if="!isLegacyExpenseBox" class=" px-4">
                             <div >
                               <InputLabel for="to" :value="`أمانة ${boxes.name} بالدولار`" />
                               <TextInput
@@ -849,7 +888,7 @@ function printTagDetails() {
                               />
                             </div>
               </div>
-              <div class=" px-4">
+              <div v-if="!isLegacyExpenseBox" class=" px-4">
                             <div >
                               <InputLabel for="to" :value="`أمانة ${boxes.name} بالدينار العراقي`" />
                               <TextInput
@@ -968,9 +1007,9 @@ function printTagDetails() {
                     <th className="px-2 py-2">التاريخ</th>
                     <th className="px-2 py-2">الوصف</th>
                     <th v-if="hasWalletTags" className="px-2 py-2">التاغ / التفاصيل</th>
-                    <th className="px-2 py-2">ايداع</th>
+                    <th v-if="!isLegacyExpenseBox" className="px-2 py-2">ايداع</th>
                     <th className="px-2 py-2">سحب</th>
-                    <th className="px-2 py-2">الرصيد</th>
+                    <th className="px-2 py-2">{{ isLegacyExpenseBox ? 'مجموع تراكمي' : 'الرصيد' }}</th>
                     <th className="px-2 py-2">المرفقات</th>
                     <th className="px-2 py-2">تنفيذ</th>
                   </tr>
@@ -1005,7 +1044,7 @@ function printTagDetails() {
                       </div>
                     </template>
                   </td>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">
+                  <td v-if="!isLegacyExpenseBox" className="border dark:border-gray-800 text-center px-2 py-1">
                     {{ (tran.type == 'inUser' || tran.type == 'inUserAmanah') ? tran.amount+' '+(tran.currency ?? '$') : '' }}
                   </td>
                   <td className="border dark:border-gray-800 text-center px-2 py-1">

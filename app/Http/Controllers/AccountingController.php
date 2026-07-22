@@ -36,6 +36,7 @@ use App\Imports\ImportInfo;
 use App\Exports\ExportInfo;
 use App\Exports\ExportAccount;
 use App\Services\AccountingCacheService;
+use App\Services\MigrateLegacyExpenseBoxesService;
 use App\Support\DatabaseDriver;
 use Illuminate\Support\Facades\Auth;
 
@@ -164,7 +165,11 @@ class AccountingController extends Controller
         $boxes = User::with('wallet')->where('owner_id',$owner_id)->where('id',$id)->first();
         $this->accounting->loadAccounts(Auth::user()->owner_id);
 
-        return Inertia::render('Accounting/Wallet', ['boxes'=>$boxes,'accounts'=>$this->accounting->mainAccount()]);
+        return Inertia::render('Accounting/Wallet', [
+            'boxes' => $boxes,
+            'accounts' => $this->accounting->mainAccount(),
+            'isLegacyExpenseBox' => MigrateLegacyExpenseBoxesService::isLegacyExpenseEmail($boxes?->email),
+        ]);
     }
 
     public function toggleWalletTags(Request $request)
@@ -226,6 +231,13 @@ class AccountingController extends Controller
      $loans_only = $request->get('loans_only');
      if ($loans_only) {
          $transactions = $transactions->whereRaw(DatabaseDriver::jsonTruthy('details', 'loan'));
+     }
+     $year = (int) $request->get('year');
+     if ($year >= 2000 && $year <= 2100) {
+         $transactions = $transactions->where(function ($query) use ($year) {
+             $query->whereYear('created_at', $year)
+                 ->orWhere('created', 'LIKE', $year.'-%');
+         });
      }
      if($type=='wallet'){
         // simplePaginate skips COUNT(*) — expensive on large SQLite tables.
@@ -324,14 +336,16 @@ class AccountingController extends Controller
         // Filter only Amanah transactions - get collection from paginated result
         $amanahTransactions = collect($allTransactions->items())->whereIn('type', ['inUserAmanah', 'outUserAmanah'])->values();
         $data['transactions'] = $amanahTransactions;
-        return view('receiptWalletTotal',compact('data','config'));
+        $filterYear = ($year >= 2000 && $year <= 2100) ? $year : null;
+        return view('receiptWalletTotal',compact('data','config','filterYear'));
      }
      elseif($print==8){
         $config=SystemConfig::first();
         // Filter only Wallet transactions (excluding Amanah) - get collection from paginated result
         $walletTransactions = collect($allTransactions->items())->whereIn('type', ['inUser', 'outUser'])->values();
         $data['transactions'] = $walletTransactions;
-        return view('receiptWalletTotal',compact('data','config'));
+        $filterYear = ($year >= 2000 && $year <= 2100) ? $year : null;
+        return view('receiptWalletTotal',compact('data','config','filterYear'));
      }
      elseif($print==9){
         // طباعة وصل قبض للدفعات (inUser)

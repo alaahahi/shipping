@@ -53,6 +53,9 @@
             @else
                 كشف حساب الصندوق
             @endif
+            @if(!empty($filterYear))
+                — {{ $filterYear }}
+            @endif
         </h5>
     </div>
     <div class="col-4 text-center py-3"> 
