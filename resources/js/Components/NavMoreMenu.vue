@@ -110,10 +110,10 @@ onUnmounted(() => {
             type="button"
             @click.stop="toggle"
             :class="[
-                'inline-flex items-center px-2 pt-1 border-b-2 text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out select-none whitespace-nowrap',
+                'inline-flex min-h-[44px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-semibold outline-none transition duration-200 ease-out xl:px-4 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900',
                 active
-                    ? 'border-indigo-400 dark:border-indigo-300 text-gray-900 dark:text-white'
-                    : 'border-transparent text-gray-600 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-400',
+                    ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm dark:border-white dark:bg-white dark:text-slate-900'
+                    : 'border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800/80 dark:hover:text-white',
             ]"
         >
             {{ t('nav.more') }}
@@ -136,7 +136,7 @@ onUnmounted(() => {
             <div v-if="open" class="fixed inset-0 z-[9998]" @click="close"></div>
             <div
                 v-if="open"
-                class="fixed z-[9999] min-w-[13rem] rounded-md border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-600 dark:bg-gray-800 dark:shadow-black/40"
+                class="fixed z-[9999] min-w-[13rem] rounded-2xl border border-slate-200 bg-white/95 py-1 shadow-xl backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 dark:shadow-black/40"
                 :style="panelStyle"
                 @click.stop
             >

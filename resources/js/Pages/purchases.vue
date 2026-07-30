@@ -79,7 +79,6 @@ let showModalAddCarPayment =  ref(false);
 let showModalEditCars=ref(false);
 let showModalBulkEdit = ref(false);
 let showModalDelCar =  ref(false);
-let mainAccount= ref(0)
 let allCars= ref(0)
 let sumTotal= ref(0)
 let sumPaid= ref(0)
@@ -275,7 +274,6 @@ loadCarTags();
 const getcountTotalInfo = async () => {
   axios.get('/api/totalInfo')
   .then(response => {
-    mainAccount.value = response.data.data.mainAccount;
     sumTotal.value= response.data.data.sumTotal;
     sumPaid.value= response.data.data.sumPaid;
     allCars.value =response.data.data.allCars;
@@ -648,17 +646,6 @@ const excelPurchasesExportUrl = computed(() => {
                         
 
                         <div class="mt-4 mb-5 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6">     
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                            <div class="mr-4" >
-                              <h2 class="font-semibold ">{{ $t('capital') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(mainAccount) }}</p>
-                            </div>
-                          </div>
                           <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
                             <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

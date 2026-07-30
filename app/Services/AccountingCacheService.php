@@ -134,6 +134,23 @@ class AccountingCacheService
          return response()->json(['message' => ' 1 تم تحديث الكاش بنجاح']);
     }
 
+    public function forgetOwnerAccounts(?int $ownerId = null): void
+    {
+        $ownerId = $ownerId ?? Cache::get('owner_id');
+        if (! $ownerId) {
+            return;
+        }
+
+        foreach ([
+            'main_account', 'in_account', 'out_account', 'debt_account',
+            'transfers_account', 'out_supplier', 'debt_supplier',
+            'howler', 'shipping_coc', 'border', 'iran', 'dubai', 'main_box',
+            'online_contracts', 'online_contracts_dinar', 'debt_online_contracts', 'debt_online_contracts_dinar',
+        ] as $key) {
+            Cache::forget("account_{$ownerId}_$key");
+        }
+    }
+
     public function refreshIfNeeded()
     {
         $this->refresh();

@@ -18,6 +18,7 @@ class SystemConfigController extends Controller
     public function index()
     {
         SystemConfig::ensureMediaColumns();
+        SystemConfig::ensureWhatsAppColumns();
 
         $config = SystemConfig::first();
 
@@ -61,6 +62,16 @@ class SystemConfigController extends Controller
             'contract_template' => 'nullable|in:1,2,3',
             'contract_currency' => 'nullable|in:usd,dinar',
             'primary_color' => 'nullable|string|max:20',
+            'wa_enabled' => 'nullable|boolean',
+            'wa_tenant' => 'nullable|string|max:100',
+            'wa_base_url' => 'nullable|string|max:255',
+            'wa_created_by' => 'nullable|string|max:100',
+            'wa_notify_client_debt' => 'nullable|boolean',
+            'wa_notify_payment_receipt' => 'nullable|boolean',
+            'wa_notify_car_added' => 'nullable|boolean',
+            'wa_msg_client_debt' => 'nullable|string|max:4096',
+            'wa_msg_payment_receipt' => 'nullable|string|max:4096',
+            'wa_msg_car_added' => 'nullable|string|max:4096',
         ]);
 
         if ($validator->fails()) {
@@ -144,6 +155,39 @@ class SystemConfigController extends Controller
             }
             if ($request->has('primary_color')) {
                 $updateData['primary_color'] = $request->primary_color ?: '#c00';
+            }
+
+            SystemConfig::ensureWhatsAppColumns();
+
+            if ($request->has('wa_enabled')) {
+                $updateData['wa_enabled'] = filter_var($request->input('wa_enabled'), FILTER_VALIDATE_BOOLEAN);
+            }
+            if ($request->has('wa_tenant')) {
+                $updateData['wa_tenant'] = $request->wa_tenant ? trim((string) $request->wa_tenant) : null;
+            }
+            if ($request->has('wa_base_url')) {
+                $updateData['wa_base_url'] = $request->wa_base_url ? rtrim(trim((string) $request->wa_base_url), '/') : null;
+            }
+            if ($request->has('wa_created_by')) {
+                $updateData['wa_created_by'] = $request->wa_created_by ? trim((string) $request->wa_created_by) : null;
+            }
+            if ($request->has('wa_notify_client_debt')) {
+                $updateData['wa_notify_client_debt'] = filter_var($request->input('wa_notify_client_debt'), FILTER_VALIDATE_BOOLEAN);
+            }
+            if ($request->has('wa_notify_payment_receipt')) {
+                $updateData['wa_notify_payment_receipt'] = filter_var($request->input('wa_notify_payment_receipt'), FILTER_VALIDATE_BOOLEAN);
+            }
+            if ($request->has('wa_notify_car_added')) {
+                $updateData['wa_notify_car_added'] = filter_var($request->input('wa_notify_car_added'), FILTER_VALIDATE_BOOLEAN);
+            }
+            if ($request->has('wa_msg_client_debt')) {
+                $updateData['wa_msg_client_debt'] = $request->wa_msg_client_debt;
+            }
+            if ($request->has('wa_msg_payment_receipt')) {
+                $updateData['wa_msg_payment_receipt'] = $request->wa_msg_payment_receipt;
+            }
+            if ($request->has('wa_msg_car_added')) {
+                $updateData['wa_msg_car_added'] = $request->wa_msg_car_added;
             }
 
             $config->update($updateData);

@@ -2,16 +2,27 @@
 import { computed } from 'vue';
 import { Link } from '@inertiajs/inertia-vue3';
 
-const props = defineProps(['href', 'active']);
+const props = defineProps({
+    href: String,
+    active: Boolean,
+    method: {
+        type: String,
+        default: 'get',
+    },
+    as: {
+        type: String,
+        default: 'a',
+    },
+});
 
 const classes = computed(() => props.active
-    ? 'block pl-3 pr-4 py-2 border-l-4 border-indigo-400 dark:border-indigo-300 text-base font-medium text-indigo-700 dark:text-indigo-200 bg-indigo-50 dark:bg-indigo-950/50 focus:outline-none focus:text-indigo-800 dark:focus:text-indigo-100 focus:bg-indigo-100 dark:focus:bg-indigo-900/60 focus:border-indigo-700 dark:focus:border-indigo-300 transition duration-150 ease-in-out'
-    : 'block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 dark:text-gray-200 hover:text-gray-800 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-500 focus:outline-none focus:text-gray-800 dark:focus:text-white focus:bg-gray-50 dark:focus:bg-gray-800 focus:border-gray-300 dark:focus:border-gray-500 transition duration-150 ease-in-out'
+    ? 'block min-h-[48px] rounded-2xl border border-indigo-600 bg-indigo-600 px-4 py-3 text-base font-bold text-white shadow-sm transition duration-200 ease-out dark:border-white dark:bg-white dark:text-slate-900'
+    : 'block min-h-[48px] rounded-2xl border border-transparent px-4 py-3 text-base font-medium text-slate-700 transition duration-200 ease-out hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:text-slate-200 dark:hover:border-slate-700 dark:hover:bg-slate-800/80 dark:hover:text-white dark:focus-visible:ring-offset-slate-900'
 );
 </script>
 
 <template>
-    <Link :href="href" :class="classes">
+    <Link :href="href" :method="method" :as="as" :class="classes" :aria-current="active ? 'page' : undefined">
         <slot />
     </Link>
 </template>

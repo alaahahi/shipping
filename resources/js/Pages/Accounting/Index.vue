@@ -54,7 +54,6 @@ let GenExpenses = ref({});
 let isLoading=ref(false);
 let from = ref(getTodayDate());
 let to = ref(getTodayDate());
-let mainAccount= ref(0)
 let onlineContracts= ref(0)
 let howler= ref(0)
 let shippingCoc= ref(0)
@@ -161,7 +160,6 @@ async function restoreDeletedTransaction(tran) {
 const getcountTotalInfo = async () => {
   axios.get('/api/totalInfo')
   .then(response => {
-    mainAccount.value = response.data.data.mainAccount;
     onlineContracts.value=  response.data.data.onlineContracts
     howler.value=  response.data.data.howler
     shippingCoc.value=  response.data.data.shippingCoc

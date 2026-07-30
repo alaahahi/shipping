@@ -46,18 +46,6 @@ class CarExpensesController extends Controller
     $this->userClient = $clientType?->id;
     }
 
-    private function resolveMainAccountId(?int $ownerId = null): int
-    {
-        $ownerId = $ownerId ?? (int) Auth::user()->owner_id;
-        $this->accounting->loadAccounts($ownerId);
-
-        $mainAccount = $this->accounting->mainAccount();
-        if (!$mainAccount || !$mainAccount->id) {
-            throw new \RuntimeException('حساب الصندوق الرئيسي غير مهيأ');
-        }
-
-        return (int) $mainAccount->id;
-    }
     public function searchVINs(Request $request)
     {
             $ownerId = (int) Auth::user()->owner_id;
@@ -325,7 +313,6 @@ class CarExpensesController extends Controller
 
             $car = Car::with('carexpenses')->findOrFail($carId);
             $owner_id = Auth::user()->owner_id;
-            $mainAccountId = $this->resolveMainAccountId((int) $owner_id);
 
             if ((int) $car->owner_id !== (int) $owner_id) {
                 return response()->json(['error' => 'غير مصرح'], 403);
@@ -398,16 +385,6 @@ class CarExpensesController extends Controller
             );
 
             $desc = 'مصروف تسجيل + ' . $expenseToAdd . '$ — ' . $car->car_type . ' ' . $car->vin;
-
-            if ($newTotal > $oldTotal) {
-                $this->accountingController->decreaseWallet(
-                    ($newTotal - $oldTotal),
-                    $desc,
-                    $mainAccountId,
-                    $car->id,
-                    'App\Models\Car'
-                );
-            }
 
             if ($newTotalS > $oldTotalS) {
                 $this->accountingController->increaseWallet(
@@ -856,7 +833,6 @@ class CarExpensesController extends Controller
 
                 $car = Car::with('carexpenses')->findOrFail($carId);
                 $owner_id = Auth::user()->owner_id;
-                $mainAccountId = $this->resolveMainAccountId((int) $owner_id);
 
                 if ((int) $car->owner_id !== (int) $owner_id) {
                     return response()->json(['error' => 'غير مصرح'], 403);
@@ -950,16 +926,6 @@ class CarExpensesController extends Controller
                 );
 
                 $desc = 'إلغاء ربط مصاريف السيارة ' . $car->car_type . ' ' . $car->vin;
-
-                if ($oldTotal > $newTotal) {
-                    $this->accountingController->increaseWallet(
-                        ($oldTotal - $newTotal),
-                        $desc,
-                        $mainAccountId,
-                        $car->id,
-                        'App\Models\Car'
-                    );
-                }
 
                 if ($oldTotalS > $newTotalS) {
                     $this->accountingController->decreaseWallet(
@@ -1557,9 +1523,6 @@ class CarExpensesController extends Controller
             throw new \Exception('تعذر التعديل: المصاريف المسجلة أقل من المربوطة');
         }
 
-        $mainAccountId = $this->resolveMainAccountId((int) $car->owner_id);
-
-        $oldTotal = (int) ($car->total ?? 0);
         $oldTotalS = (int) ($car->total_s ?? 0);
 
         $dolar_price_input = $car->dolar_price ?? 1;
@@ -1593,24 +1556,6 @@ class CarExpensesController extends Controller
             + $newExpensesS
             + ($car->land_shipping_s ?? 0)
         );
-
-        if ($newTotal > $oldTotal) {
-            $this->accountingController->decreaseWallet(
-                ($newTotal - $oldTotal),
-                $desc,
-                $mainAccountId,
-                $car->id,
-                'App\Models\Car'
-            );
-        } elseif ($oldTotal > $newTotal) {
-            $this->accountingController->increaseWallet(
-                ($oldTotal - $newTotal),
-                $desc,
-                $mainAccountId,
-                $car->id,
-                'App\Models\Car'
-            );
-        }
 
         if ($newTotalS > $oldTotalS) {
             $this->accountingController->increaseWallet(

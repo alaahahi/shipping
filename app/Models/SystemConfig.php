@@ -34,6 +34,16 @@ class SystemConfig extends Model
         'primary_color',
         'logo',
         'login_background',
+        'wa_enabled',
+        'wa_tenant',
+        'wa_base_url',
+        'wa_created_by',
+        'wa_notify_client_debt',
+        'wa_notify_payment_receipt',
+        'wa_notify_car_added',
+        'wa_msg_client_debt',
+        'wa_msg_payment_receipt',
+        'wa_msg_car_added',
     ];
 
     protected $attributes = [
@@ -57,6 +67,10 @@ class SystemConfig extends Model
         'contract_terms_2' => 'array',
         'external_contract_terms' => 'array',
         'external_contract_terms_2' => 'array',
+        'wa_enabled' => 'boolean',
+        'wa_notify_client_debt' => 'boolean',
+        'wa_notify_payment_receipt' => 'boolean',
+        'wa_notify_car_added' => 'boolean',
     ];
 
     protected $appends = [
@@ -87,6 +101,41 @@ class SystemConfig extends Model
             }
         } catch (\Throwable $e) {
             // Ignore — uploads will still surface a clear error if schema cannot change.
+        }
+    }
+
+    /**
+     * Ensure WhatsApp queue columns exist when migrate was skipped.
+     */
+    public static function ensureWhatsAppColumns(): void
+    {
+        try {
+            if (! Schema::hasTable('system_config')) {
+                return;
+            }
+
+            $columns = [
+                'wa_enabled' => fn (Blueprint $table) => $table->boolean('wa_enabled')->default(false),
+                'wa_tenant' => fn (Blueprint $table) => $table->string('wa_tenant', 100)->nullable(),
+                'wa_base_url' => fn (Blueprint $table) => $table->string('wa_base_url', 255)->nullable(),
+                'wa_created_by' => fn (Blueprint $table) => $table->string('wa_created_by', 100)->nullable(),
+                'wa_notify_client_debt' => fn (Blueprint $table) => $table->boolean('wa_notify_client_debt')->default(true),
+                'wa_notify_payment_receipt' => fn (Blueprint $table) => $table->boolean('wa_notify_payment_receipt')->default(true),
+                'wa_notify_car_added' => fn (Blueprint $table) => $table->boolean('wa_notify_car_added')->default(true),
+                'wa_msg_client_debt' => fn (Blueprint $table) => $table->text('wa_msg_client_debt')->nullable(),
+                'wa_msg_payment_receipt' => fn (Blueprint $table) => $table->text('wa_msg_payment_receipt')->nullable(),
+                'wa_msg_car_added' => fn (Blueprint $table) => $table->text('wa_msg_car_added')->nullable(),
+            ];
+
+            foreach ($columns as $name => $definition) {
+                if (! Schema::hasColumn('system_config', $name)) {
+                    Schema::table('system_config', function (Blueprint $table) use ($definition) {
+                        $definition($table);
+                    });
+                }
+            }
+        } catch (\Throwable $e) {
+            // Ignore — service will report disabled until schema is ready.
         }
     }
 

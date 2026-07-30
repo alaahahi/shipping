@@ -89,6 +89,48 @@ const vinSearchInput = ref(props.q ?? '');
 
 const activeVinQuery = computed(() => String(vinSearchInput.value ?? props.q ?? '').trim());
 
+const vinMatchCount = computed(() => {
+  const query = getNormalizedVinQuery();
+  if (!query || query.length < 2) {
+    return 0;
+  }
+  const cars = laravelData.value?.data;
+  if (!Array.isArray(cars) || !cars.length) {
+    return 0;
+  }
+  return cars.reduce((count, car) => count + (identifierMatchesQuery(car, query) ? 1 : 0), 0);
+});
+
+const vinSearchStatusText = computed(() => {
+  const query = activeVinQuery.value;
+  if (!query) {
+    return '';
+  }
+  if (query.length < 2) {
+    return 'أدخل حرفين على الأقل…';
+  }
+  if (!isDataLoaded.value) {
+    return 'جاري التحميل…';
+  }
+  if (vinMatchCount.value > 0) {
+    return `نتيجة: ${vinMatchCount.value}`;
+  }
+  return 'لا توجد مطابقة';
+});
+
+function clearVinSearch() {
+  vinSearchInput.value = '';
+  resetQueryBehaviour();
+}
+
+function focusVinSearchResult() {
+  if (!activeVinQuery.value || activeVinQuery.value.length < 2) {
+    return;
+  }
+  resetQueryBehaviour();
+  applyVinSearchBehavior(laravelData.value?.data || []);
+}
+
 const currentClientId = computed(() => {
   if (client_Select.value && client_Select.value !== 0 && client_Select.value !== "undefined") {
     return client_Select.value;
@@ -1164,9 +1206,13 @@ watch(() => props.q, (newQ) => {
 });
 
 const debouncedVinSearch = debounce(() => {
+  if (!activeVinQuery.value || activeVinQuery.value.length < 2) {
+    matchedRowElement.value = null;
+    return;
+  }
   resetQueryBehaviour();
   applyVinSearchBehavior(laravelData.value?.data || []);
-}, 250);
+}, 400);
 
 watch(vinSearchInput, () => {
   debouncedVinSearch();
@@ -1196,13 +1242,12 @@ watch(
 );
 
 watch(
-  () => mergedData.value,
+  () => [laravelData.value?.data?.length, isDataLoaded.value],
   () => {
-    if (activeVinQuery.value && shouldAutoScrollToQuery.value) {
+    if (activeVinQuery.value && activeVinQuery.value.length >= 2 && shouldAutoScrollToQuery.value) {
       nextTick(() => scrollToHighlightedCar());
     }
-  },
-  { deep: true }
+  }
 );
 
 
@@ -1317,15 +1362,8 @@ async function savePaymentDescription(payment) {
 </script>
 
 <template>
-  <Head title="Dashboard" />
+  <Head :title="props.client?.name || 'التاجر'" />
   <AuthenticatedLayout>
-    <template #header>
-      <h2
-        class="font-semibold text-xl dark:text-gray-400 text-gray-800 leading-tight"
-      >
-        {{ props.company_name || 'شركة سلام جلال' }}
-      </h2>
-    </template>
     <ModalAddCarContracts
             :formData="formData"
             :show="showModalAddCarContracts ? true : false"
@@ -1515,26 +1553,58 @@ async function savePaymentDescription(payment) {
       </div>
     </div>
     <div class="py-4" v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==6">
-      <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
-        <h2 class="text-center pb-2 dark:text-gray-400 flex-1 min-w-[180px]">
-          {{ $t("sales_bill") }}
-        </h2>
-        <div class="print:hidden w-full sm:w-auto sm:min-w-[240px] px-1">
-          <TextInput
-            v-model="vinSearchInput"
-            type="search"
-            placeholder="بحث برقم الشاصي"
-            class="w-full"
-          />
+      <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
+        <!-- Toolbar: client + VIN search -->
+        <div class="mb-4 flex flex-col gap-3 rounded-xl border border-slate-700/80 bg-slate-900/70 p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between print:hidden">
+          <div class="min-w-0">
+            <p class="text-[11px] font-medium uppercase tracking-wide text-slate-400">التاجر</p>
+            <h2 class="truncate text-lg font-semibold text-slate-100">
+              {{ props.client?.name || '—' }}
+            </h2>
+          </div>
+          <div class="flex w-full flex-col gap-2 sm:max-w-md sm:flex-1 lg:max-w-lg">
+            <label for="vin-search-input" class="sr-only">بحث برقم الشاصي</label>
+            <div class="relative">
+              <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
+                <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+                </svg>
+              </div>
+              <input
+                id="vin-search-input"
+                v-model="vinSearchInput"
+                type="search"
+                autocomplete="off"
+                spellcheck="false"
+                enterkeyhint="search"
+                class="block w-full rounded-lg border border-slate-600 bg-slate-950/80 py-2.5 pe-10 ps-10 text-sm text-slate-100 placeholder:text-slate-500 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                placeholder="بحث برقم الشاصي أو رقم السيارة"
+                @keydown.enter.prevent="focusVinSearchResult"
+              />
+              <button
+                v-if="vinSearchInput"
+                type="button"
+                class="absolute inset-y-0 end-0 flex items-center pe-3 text-slate-400 hover:text-slate-200"
+                aria-label="مسح البحث"
+                @click="clearVinSearch"
+              >
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p v-if="vinSearchStatusText" class="text-xs text-slate-400">
+              {{ vinSearchStatusText }}
+            </p>
+          </div>
+          <Link
+            v-if="props.client?.has_internal_sales"
+            :href="`/internalSales/${currentClientId}`"
+            class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-500"
+          >
+            المبيعات الداخلية
+          </Link>
         </div>
-        <Link 
-          v-if="props.client?.has_internal_sales"
-          :href="`/internalSales/${currentClientId}`" 
-          class="px-4 py-2 text-white bg-purple-600 rounded hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 flex items-center gap-2"
-        >
-          <span>💰</span>
-          <span>المبيعات الداخلية</span>
-        </Link>
       </div>
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 p-6 dark:bg-gray-900">
         <div class="overflow-hidden shadow-sm sm:rounded-lg">

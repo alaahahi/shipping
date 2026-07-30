@@ -38,6 +38,7 @@ use App\Exports\ExportAccount;
 use App\Services\AccountingCacheService;
 use App\Services\MigrateLegacyExpenseBoxesService;
 use App\Services\RestoreTransactionService;
+use App\Services\WhatsAppQueueService;
 use App\Support\DatabaseDriver;
 use Illuminate\Support\Facades\Auth;
 
@@ -140,6 +141,7 @@ class AccountingController extends Controller
             ->where(function ($query) use ($clientTypeId, $boxMoveUserIds) {
                 $query->where(function ($base) {
                     $base->where('email', '!=', 'mainBox@account.com')
+                        ->where('email', '!=', 'main@account.com')
                         ->whereHas('wallet');
                 });
                 if ($clientTypeId && $boxMoveUserIds->isNotEmpty()) {
@@ -541,6 +543,17 @@ class AccountingController extends Controller
 
         }
 
+        try {
+            app(WhatsAppQueueService::class)->notifyPaymentReceipt(
+                $user,
+                $amountDollar,
+                $amountDinar,
+                isset($transaction) ? (int) $transaction->id : null
+            );
+        } catch (\Throwable $e) {
+            \Log::warning('WhatsApp payment receipt notify failed', ['message' => $e->getMessage()]);
+        }
+
         return Response::json($transaction, 200);
 
         }
@@ -828,7 +841,6 @@ class AccountingController extends Controller
         $wallet = Wallet::where('user_id',$car->client_id)->first();
         $desc=trans('text.addPayment').' '.$amount.' '.$car->car_type.' رقم الشانص'.' '.$car->vin.' '.$note;
         $tran=$this->increaseWallet($amount,$desc,$this->accounting->mainBox()->id,$car->client_id,'App\Models\User',0,0,'$',0,0,'in',$details);
-        $this->increaseWallet($amount, $desc,$this->accounting->mainAccount()->id,$car_id,'App\Models\Car',1,$discount??0,'$',$this->currentDate,$tran->id,'in',$details);
         $transaction=$this->decreaseWallet($amount+$discount, $desc,$car->client_id,$car_id,'App\Models\Car',1,$discount??0,'$',$this->currentDate,$tran->id,'out',$details);
 
         $car->increment('paid',$amount);
@@ -903,8 +915,6 @@ class AccountingController extends Controller
             $desc=trans('text.addPayment').' '.$amount_o.' '.$note;
 
             $tran=$this->increaseWallet($amount_o,$desc,$this->accounting->mainBox()->id,$client_id,'App\Models\User',0,0,'$');
-    
-            $this->increaseWallet($amount_o, $desc,$this->accounting->mainAccount()->id,$client_id,'App\Models\User',1,$discount,'$',$this->currentDate,$tran->id);
     
             $transaction = $this->decreaseWallet((int)$amount_o+(int)$discount, $desc,$client_id,$client_id,'App\Models\User',1,$discount,'$',$this->currentDate,$tran->id);
             return Response::json($transaction, 200);    

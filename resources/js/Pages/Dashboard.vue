@@ -1,10 +1,10 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { useToast } from "vue-toastification";
+import DashboardWidgets from '@/Components/Dashboard/DashboardWidgets.vue';
 import axios from 'axios';
-import { ref, watch } from 'vue'; // Import ref and watch from Vue
+import { ref, watch } from 'vue';
 import { useI18n } from "vue-i18n";
-import { Link } from "@inertiajs/inertia-vue3";
+import { Head, Link } from "@inertiajs/inertia-vue3";
 
 const props = defineProps({
   auth: Object,
@@ -82,88 +82,11 @@ const getResults = async (page = 1) => {
 getResults();
 
 let expenses_type_id = ref(0);
-
-const toast = useToast();
-
-let selectedUserIds = ref([]);
-
 let showModal = ref(false);
-
-function sendWhatsAppMessage(phoneNumber) {
-  if(phoneNumber){
-    phoneNumber= '964'+phoneNumber;
-    const message = `السلام عليكم: ${props.company_name || 'شركة سلام جلال أيوب'} - أربيل، يرجى الأخذ بالعلم تسديد المبلغ المستحق عليكم في أقرب وقت ممكن. في حال التأخير بالسداد لأكثر من أسبوع من تاريخ وصول السيارة، لا يتم حساب الجمرك على سعر 130000. شكرا لتعاونكم .......... سڵاو 
-تکایە بەزووترین کات حسابەکەتان واصل بكه ن نقل و گمرک،
-لە حاڵەتی نەدان، هیچ جیاوازی نرخی دۆلار بەرامبەر دینار ناگەڕێندرێتەوە بە هیچ شێوەیەک.
-هەروەها ئاگاداری دەکرێنەوە کە ناتوانرێت خروجی بۆ هیچ ئۆتۆمبێلێک بکرێت ئەگەر  واصل نه كرابێت.`;
-    const whatsappURL = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
-
-    // Open the WhatsApp app with the pre-filled message
-    window.open(whatsappURL);
-  }
-
-}
-
-  const sendWhatsAppMessageArray = (array) => {
-    const phoneNumbers = array;
-    const baseUrl = 'https://api.textmebot.com/send.php';
-    const apiKey = props.apiKey;
-const message = `السلام عليكم: ${props.company_name || 'شركة سلام جلال أيوب'} - أربيل، يرجى الأخذ بالعلم تسديد المبلغ المستحق عليكم في أقرب وقت ممكن. في حال التأخير بالسداد لأكثر من أسبوع من تاريخ وصول السيارة، لا يتم حساب الجمرك على سعر 130000. شكرا لتعاونكم .......... سڵاو 
-تکایە بەزووترین کات حسابەکەتان واصل بكه ن نقل و گمرک،
-لە حاڵەتی نەدان، هیچ جیاوازی نرخی دۆلار بەرامبەر دینار ناگەڕێندرێتەوە بە هیچ شێوەیەک.
-هەروەها ئاگاداری دەکرێنەوە کە ناتوانرێت خروجی بۆ هیچ ئۆتۆمبێلێک بکرێت ئەگەر  واصل نه كرابێت.`;
-
-    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-    let promise = Promise.resolve(); // Start with a resolved promise
-
-    phoneNumbers.forEach((phoneNumber) => {
-      if (phoneNumber) {
-        promise = promise.then(() => {
-          const url = `${baseUrl}?recipient=+964${phoneNumber}&apikey=${apiKey}&text=${encodeURIComponent(message)}&json=yes`;
-          return axios.get(url)
-          
-            .then(() => {
-              if (index !== -1) {
-                phoneNumbers.splice(index, 1);
-              }
-              toast.success("تم الارسال بنجاح", {
-                timeout: 2000,
-                position: "bottom-right",
-                rtl: true,
-              });
-     
-            })
-            .catch((error) => {
-              const index = phoneNumbers.indexOf(phoneNumber);
-              if (index !== -1) {
-                phoneNumbers.splice(index, 1);
-              }
-              if (error.code === 'ERR_NETWORK') {
-                toast.success("تم الارسال بنجاح", {
-                timeout: 2000,
-                position: "bottom-right",
-                rtl: true,
-              });
-              } else {
-                toast.error("خطأ في الارسال", {
-                  timeout: 2000,
-                  position: "bottom-right",
-                  rtl: true,
-                });
-              }
-            })
-            .then(() => delay(5000)); // Wait for 5 seconds before sending the next message
-        });
-      }
-    });
-  };
- 
 let searchTerm = ref('');
 let searchQuery = ref('');
 
 
-let mainAccount= ref(0)
 let onlineContracts= ref(0)
 let howler= ref(0)
 let shippingCoc= ref(0)
@@ -187,19 +110,7 @@ function openModal() {
 const formData = ref({});
 const car = ref([]);
 
-
-
-const handleCheckboxChange = (userId) => {
-  const index = selectedUserIds.value.indexOf(userId);
-  if (index > -1) {
-    selectedUserIds.value.splice(index, 1);
-  } else {
-    selectedUserIds.value.push(userId);
-  }
-  console.log(selectedUserIds.value);
-};
-
-import { debounce } from 'lodash'; // Import debounce function from Lodash
+import { debounce } from 'lodash';
 
 
 const debouncedGetResultsCarSearch = debounce(async (q = '', page = 1) => {
@@ -223,7 +134,6 @@ const getResultsCarSearch = (q = '', page = 1) => {
 const getcountTotalInfo = async () => {
   axios.get('/api/totalInfo')
   .then(response => {
-    mainAccount.value = response.data.data.mainAccount;
     onlineContracts.value=  response.data.data.onlineContracts
     howler.value=  response.data.data.howler
     shippingCoc.value=  response.data.data.shippingCoc
@@ -260,44 +170,52 @@ watch([searchTerm], () => {
 });
 
 getcountTotalInfo()
-function changeColor(total){
 
-  if(total >= 30000){
-    return 'bg-red-600  dark:bg-red-600'
+/** Debt severity accent for client cards (border + amount color). */
+function debtTone(total) {
+  const amount = Number(total) || 0;
+  if (amount < 0) {
+    return {
+      card: 'border-emerald-500/40 hover:border-emerald-400/70',
+      bar: 'bg-emerald-500',
+      amount: 'text-emerald-400',
+      badge: 'bg-emerald-500/15 text-emerald-300',
+    };
+  }
+  if (amount >= 30000) {
+    return {
+      card: 'border-rose-500/40 hover:border-rose-400/70',
+      bar: 'bg-rose-500',
+      amount: 'text-rose-400',
+      badge: 'bg-rose-500/15 text-rose-300',
+    };
+  }
+  if (amount >= 15000) {
+    return {
+      card: 'border-orange-500/40 hover:border-orange-400/70',
+      bar: 'bg-orange-500',
+      amount: 'text-orange-400',
+      badge: 'bg-orange-500/15 text-orange-300',
+    };
+  }
+  if (amount >= 5000) {
+    return {
+      card: 'border-amber-500/40 hover:border-amber-400/70',
+      bar: 'bg-amber-500',
+      amount: 'text-amber-400',
+      badge: 'bg-amber-500/15 text-amber-300',
+    };
+  }
+  return {
+    card: 'border-slate-600 hover:border-slate-500',
+    bar: 'bg-sky-500',
+    amount: 'text-sky-300',
+    badge: 'bg-sky-500/15 text-sky-300',
+  };
+}
 
-  }
-  if(total >= 25000){
-    return 'bg-pink-600  dark:bg-pink-600'
-
-  }
-  if(total >= 20000){
-    return 'bg-purple-600  dark:bg-purple-600'
-  }
-  if(total >= 15000){
-    return 'bg-indigo-600  dark:bg-indigo-600'
-
-  }
-  if(total >= 10000){
-    return 'bg-cyan-600  dark:bg-cyan-600'
-
-  }
-  if(total >= 5000){
-    return 'bg-blue-800  dark:bg-blue-800'
-
-  }
-  
-  if(total >= 1000){
-    return 'bg-teal-500  dark:bg-teal-500'
-
-  }
-  if(total >= 0){
-    return 'bg-yellow-600  dark:bg-yellow-600'
-
-  }
-  if(total < 0){
-    return 'bg-green-600  dark:bg-green-600'
-
-  }
+function changeColor(total) {
+  return debtTone(total).card;
 }
 function updateResults(input) {
   // Ensure the input is a number
@@ -326,195 +244,104 @@ function getResultsCarSearchLocal () {
             <div class="bg-white overflow-hidden shadow-sm ">
                 <div class="p-6  dark:bg-gray-900">
                     <div class="flex flex-col">
-         
-                      <div>
-                    
-                        <div class="relative overflow-x-auto shadow-md sm:rounded-lg" v-if="false">
-                
-                        </div>
-             
-                      </div>
-                      <div>
-                        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7"> 
-                          <div>
-                          <form class="flex items-center max-w-5xl">
-                            <label  class="dark:text-gray-200" for="simple-search"  ></label>
-                            <div class="relative w-full">
-                              <div
-                                class="
-                                  absolute
-                                  inset-y-0
-                                  left-0
-                                  flex
-                                  items-center
-                                  pl-3
-                                  pointer-events-none
-                                "
-                              >
-                                <svg
-                                  aria-hidden="true"
-                                  class="w-5 h-5 text-gray-500 dark:text-gray-200 dark:text-gray-400"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path
-                                    fill-rule="evenodd"
-                                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                    clip-rule="evenodd"
-                                  ></path>
-                                </svg>
-                              </div>
-                              <input
-                                v-model="searchTerm"
-                                @input="getResultsCarSearch(searchTerm)"
-                                type="text"
-                                id="simple-search"
-                                class="
-                                  bg-gray-50
-                                  border border-gray-300
-                                  text-gray-900 text-sm
-                                  rounded-lg
-                                  focus:ring-blue-500 focus:border-blue-500
-                                  block
-                                  w-full
-                                  pl-10
-                                  p-2.5
-                                  dark:bg-gray-700
-                                  dark:border-gray-600
-                                  dark:placeholder-gray-400
-                                  dark:text-white
-                                  dark:focus:ring-blue-500
-                                  dark:focus:border-blue-500
-                                "
-                                placeholder="بحث"
-                                required
-                              />
+                      <DashboardWidgets class="mb-4">
+                        <div class="flex h-full flex-col gap-2.5">
+                          <div class="flex flex-1 items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-3 shadow-lg">
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
                             </div>
-                          </form>
+                            <div class="mr-3 min-w-0">
+                              <h2 class="font-semibold text-sm">دين التجار</h2>
+                              <p class="mt-1 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(clientDebit) }} دولار</p>
+                            </div>
+                          </div>
+                          <div class="flex flex-1 items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-3 shadow-lg">
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                            <div class="mr-3 min-w-0">
+                              <h2 class="font-semibold text-sm">الصندوق</h2>
+                              <p class="mt-1 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(mainBoxDollar) }} دولار</p>
+                            </div>
+                          </div>
+                          <div class="flex flex-1 items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-3 shadow-lg">
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                            <div class="mr-3 min-w-0">
+                              <h2 class="font-semibold text-sm">الصندوق</h2>
+                              <p class="mt-1 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(mainBoxDinar) }} دينار</p>
+                            </div>
+                          </div>
+                        </div>
+                      </DashboardWidgets>
+
+                      <!-- Search row: two columns -->
+                      <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div class="relative w-full">
+                          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <svg aria-hidden="true" class="h-5 w-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
+                            </svg>
+                          </div>
+                          <input
+                            v-model="searchTerm"
+                            @input="getResultsCarSearch(searchTerm)"
+                            type="text"
+                            class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 pl-10 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+                            placeholder="بحث"
+                          />
                         </div>
                         <div class="relative w-full">
-                     
-                              <input
-                               v-model="searchQuery" placeholder="بحث بالاسم فقط"
-                                @input="getResultsCarSearchLocal(searchQuery)"
-                                type="text"
-                                id="simple-search"
-                                class="
-                                  bg-gray-50
-                                  border border-gray-300
-                                  text-gray-900 text-sm
-                                  rounded-lg
-                                  focus:ring-blue-500 focus:border-blue-500
-                                  block
-                                  w-full
-                                  pl-10
-                                  p-2.5
-                                  dark:bg-gray-700
-                                  dark:border-gray-600
-                                  dark:placeholder-gray-400
-                                  dark:text-white
-                                  dark:focus:ring-blue-500
-                                  dark:focus:border-blue-500
-                                "
-                                required
-                              />
-                            </div>
-                 
-                        </div>
-                        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">     
-                          
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg"  v-if="$page.props.auth.user.type_id==1">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                            <div class="mr-4" >
-                              <h2 class="font-semibold ">{{ $t('capital') }}</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{ updateResults(mainAccount) }}</p>
-                            </div>
-                          </div>
-                 
-                         
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                            <div class="mr-4" >
-                              <h2 class="font-semibold ">دين التجار</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{  updateResults(clientDebit) }} دولار</p>
-                            </div>
-                          </div>
-
-                      
-
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                            <div class="mr-4" >
-                              <h2 class="font-semibold ">الصندوق</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{  updateResults(mainBoxDollar) }} دولار</p>
-                            </div>
-                          </div>
-                          <div class="flex items-start rounded-xl dark:bg-gray-600 dark:text-gray-300 bg-white p-4 shadow-lg">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                            <div class="mr-4" >
-                              <h2 class="font-semibold ">الصندوق</h2>
-                              <p class="mt-2 text-sm text-gray-500 dark:text-gray-200">{{  updateResults(mainBoxDinar) }} دينار</p>
-                            </div>
-                          </div>
-                         
-                      
-                          <button @click="sendWhatsAppMessageArray(selectedUserIds)" v-if="selectedUserIds.length" type="button" class="text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 shadow-lg shadow-green-500/50 dark:shadow-lg dark:shadow-green-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">
-                            
-                            ارسال رسالة تذكير
-                          
-                            <span class="inline-flex items-center justify-center w-4 h-4 ms-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
-                            {{selectedUserIds.length}}
-                            </span>
-                          </button>
-
-
-                          </div>
-                          <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
-            
-                          
-                          <div v-for="(user,i) in laravelData" :key="i">
-                            <input type="checkbox" :id="'e'+user.id" :value="user.phone" class="hidden peer" @change="handleCheckboxChange(user.phone)">
-                            <label :for="'e'+user.id" class="inline-flex items-center justify-between w-full     border-4 border-gray-200  cursor-pointer  dark:border-gray-700 peer-checked:border-rose-700   dark:peer-checked:text-gray-300 peer-checked:text-gray-600" style="border-radius: 4rem;">
-                            <div   class="flex items-start  text-gray-200  dark:text-gray-300  p-4 shadow-lg w-full" style="border-radius: 4rem;"    :class="changeColor(user.balance)">
-                            <div   class="mr-4"  v-if="selectedUserIds.length">
-                            <div   style="display: block;" class="font-semibold">{{ user.name}}</div>
-                              <div   style="display: block;" class="mt-2 text-sm text-gray-200  dark:text-gray-200">{{ '$'+updateResults(user.balance) }}
-                              
-                              </div>
-                            </div>
-                            <div   class="mr-4"  v-if="!selectedUserIds.length">
-                              <Link :href="route('showClients', { id: user.id, q: searchTerm })" style="display: block;" class="font-semibold">{{ user.name}}</Link>
-                              <Link :href="route('showClients', { id: user.id, q: searchTerm })" style="display: block;" class="mt-2 text-sm text-gray-200  dark:text-gray-200">{{ '$'+updateResults(user.balance) }}
-                               
-                              </Link>
-                            </div>
-                            </div>
-                         
-                            </label>
-                          </div>
+                          <input
+                            v-model="searchQuery"
+                            @input="getResultsCarSearchLocal(searchQuery)"
+                            type="text"
+                            class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+                            placeholder="بحث بالاسم فقط"
+                          />
                         </div>
                       </div>
+
+                      <div>
+                        <div class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                          <Link
+                            v-for="(user, i) in laravelData"
+                            :key="user.id || i"
+                            :href="route('showClients', { id: user.id, q: searchTerm })"
+                            class="group relative overflow-hidden rounded-xl border bg-slate-900/80 p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-900"
+                            :class="debtTone(user.balance).card"
+                          >
+                            <span
+                              class="absolute inset-y-0 right-0 w-1 rounded-s-full"
+                              :class="debtTone(user.balance).bar"
+                              aria-hidden="true"
+                            />
+                            <div class="pr-2 text-right">
+                              <p class="truncate text-sm font-semibold text-slate-100" :title="user.name">
+                                {{ user.name }}
+                              </p>
+                              <p
+                                class="mt-2 font-mono text-base font-bold tabular-nums tracking-tight"
+                                :class="debtTone(user.balance).amount"
+                                dir="ltr"
+                              >
+                                ${{ updateResults(user.balance) }}
+                              </p>
+                            </div>
+                          </Link>
+                        </div>
                       </div>
-                    </div>
                     </div>
                 </div>
+            </div>
+        </div>
         </div>
         <div v-if="$page.props.auth.user.type_id==8">
           <div class="max-w-9xl mx-auto sm:px-6 lg:px-8 ">
@@ -567,38 +394,30 @@ function getResultsCarSearchLocal () {
                           </div>
                           <template v-if="showBrokerage">
                           <h2 class="my-3 dark:text-white" v-if="laravelData1">دين البائع</h2>
-                          <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
-                          <Link @dblclick="sendWhatsAppMessage(user.phone)"  v-for="(user,i) in laravelData1" :key="i" class="flex items-start rounded-xl text-gray-200  dark:text-gray-300  p-4 shadow-lg"  :href="route('car_contract', {   q:  user.name_seller })"   :class="changeColor(user.tex_seller -  user.tex_seller_paid)">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ user.name_seller}}</h2>
-                              <p class="mt-2 text-sm text-gray-200  dark:text-gray-200"> ${{ user.tex_seller -  user.tex_seller_paid }}
-                                - IQD {{ user.tex_seller_dinar -  user.tex_seller_dinar_paid }}
+                          <div class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                          <Link v-for="(user,i) in laravelData1" :key="i" class="relative overflow-hidden rounded-xl border bg-slate-900/80 p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"  :href="route('car_contract', {   q:  user.name_seller })"   :class="debtTone(user.tex_seller -  user.tex_seller_paid).card">
+                            <span class="absolute inset-y-0 right-0 w-1 rounded-s-full" :class="debtTone(user.tex_seller - user.tex_seller_paid).bar" aria-hidden="true" />
+                            <div class="pr-2 text-right">
+                              <h2 class="truncate text-sm font-semibold text-slate-100">{{ user.name_seller}}</h2>
+                              <p class="mt-2 font-mono text-sm font-bold tabular-nums" :class="debtTone(user.tex_seller - user.tex_seller_paid).amount" dir="ltr">
+                                ${{ user.tex_seller -  user.tex_seller_paid }}
+                                · IQD {{ user.tex_seller_dinar -  user.tex_seller_dinar_paid }}
                               </p>
-                            
                             </div>
                           </Link>
 
  
                         </div>
                         <h2 class="my-3 dark:text-white" v-if="laravelData2">دين المشتري</h2>
-                          <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
-                          <Link @dblclick="sendWhatsAppMessage(user.phone)"  v-for="(user,i) in laravelData2" :key="i" class="flex items-start rounded-xl text-gray-200  dark:text-gray-300  p-4 shadow-lg"  :href="route('car_contract', {q:  user.name_buyer })"   :class="changeColor(user.tex_buyer -  user.tex_buyer_paid)">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-red-100 bg-red-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                            <div class="mr-4">
-                              <h2 class="font-semibold">{{ user.name_buyer}}</h2>
-                              <p class="mt-2 text-sm text-gray-200  dark:text-gray-200">${{ user.tex_buyer -  user.tex_buyer_paid }}
-                                - IQD {{ user.tex_buyer_dinar -  user.tex_buyer_dinar_paid }}
+                          <div class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                          <Link v-for="(user,i) in laravelData2" :key="i" class="relative overflow-hidden rounded-xl border bg-slate-900/80 p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"  :href="route('car_contract', {q:  user.name_buyer })"   :class="debtTone(user.tex_buyer -  user.tex_buyer_paid).card">
+                            <span class="absolute inset-y-0 right-0 w-1 rounded-s-full" :class="debtTone(user.tex_buyer - user.tex_buyer_paid).bar" aria-hidden="true" />
+                            <div class="pr-2 text-right">
+                              <h2 class="truncate text-sm font-semibold text-slate-100">{{ user.name_buyer}}</h2>
+                              <p class="mt-2 font-mono text-sm font-bold tabular-nums" :class="debtTone(user.tex_buyer - user.tex_buyer_paid).amount" dir="ltr">
+                                ${{ user.tex_buyer -  user.tex_buyer_paid }}
+                                · IQD {{ user.tex_buyer_dinar -  user.tex_buyer_dinar_paid }}
                               </p>
-                            
                             </div>
                           </Link>
 

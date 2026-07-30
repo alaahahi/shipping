@@ -30,6 +30,7 @@ use App\Http\Controllers\AdminLicenseController;
 use App\Http\Controllers\DatabaseStatusController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\SystemConfigController;
+use App\Http\Controllers\WhatsAppController;
 use App\Http\Controllers\PagePermissionController;
 use App\Http\Controllers\CarHistoryController;
 use Illuminate\Support\Facades\Cache;
@@ -201,6 +202,8 @@ Route::delete('system-config/logo', [SystemConfigController::class, 'deleteLogo'
 Route::post('system-config/login-background', [SystemConfigController::class, 'uploadLoginBackground'])->name('systemConfig.uploadLoginBackground');
 Route::delete('system-config/login-background', [SystemConfigController::class, 'deleteLoginBackground'])->name('systemConfig.deleteLoginBackground');
 
+Route::post('whatsapp/notify-clients', [WhatsAppController::class, 'notifyClients'])->name('whatsapp.notifyClients');
+
 Route::get('page-permissions', [PagePermissionController::class, 'getData'])->name('pagePermissions.data');
 Route::post('page-permissions/import-defaults', [PagePermissionController::class, 'importDefaults'])->name('pagePermissions.importDefaults');
 Route::post('page-permissions/sync-default-type-links', [PagePermissionController::class, 'syncDefaultTypeLinks'])->name('pagePermissions.syncDefaultTypeLinks');
@@ -264,6 +267,8 @@ Route::get('client',[DashboardController::class, 'client'])->name('client');
 Route::get('getIndexCar',[DashboardController::class, 'getIndexCar'])->name('getIndexCar');
 Route::get('getIndexCarSearch',[DashboardController::class, 'getIndexCarSearch'])->name('getIndexCarSearch');
 Route::get('totalInfo',[DashboardController::class, 'totalInfo'])->name('totalInfo');
+Route::get('dashboardWeather',[DashboardController::class, 'weather'])->name('dashboardWeather');
+Route::get('dashboardExchangeRates',[DashboardController::class, 'exchangeRates'])->name('dashboardExchangeRates');
 
 
 Route::get('getIndexCarAnnual',[AnnualController::class, 'getIndexCarAnnual'])->name('getIndexCarAnnual');

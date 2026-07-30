@@ -38,6 +38,16 @@ const systemConfig = ref({
   logo_url: '/img/logo.png',
   login_background: null,
   login_background_url: null,
+  wa_enabled: false,
+  wa_tenant: '',
+  wa_base_url: 'https://wa.intellij-app.com',
+  wa_created_by: 'shipping-erp',
+  wa_notify_client_debt: true,
+  wa_notify_payment_receipt: true,
+  wa_notify_car_added: true,
+  wa_msg_client_debt: '',
+  wa_msg_payment_receipt: '',
+  wa_msg_car_added: '',
 });
 
 const logoInput = ref(null);
@@ -277,7 +287,20 @@ function loadSystemConfig() {
   loading.value = true;
   axios.get('/api/system-config')
     .then(response => {
-      systemConfig.value = response.data;
+      systemConfig.value = {
+        ...systemConfig.value,
+        ...response.data,
+        wa_enabled: !!response.data.wa_enabled,
+        wa_tenant: response.data.wa_tenant || '',
+        wa_base_url: response.data.wa_base_url || 'https://wa.intellij-app.com',
+        wa_created_by: response.data.wa_created_by || 'shipping-erp',
+        wa_notify_client_debt: response.data.wa_notify_client_debt !== false && response.data.wa_notify_client_debt !== 0,
+        wa_notify_payment_receipt: response.data.wa_notify_payment_receipt !== false && response.data.wa_notify_payment_receipt !== 0,
+        wa_notify_car_added: response.data.wa_notify_car_added !== false && response.data.wa_notify_car_added !== 0,
+        wa_msg_client_debt: response.data.wa_msg_client_debt || '',
+        wa_msg_payment_receipt: response.data.wa_msg_payment_receipt || '',
+        wa_msg_car_added: response.data.wa_msg_car_added || '',
+      };
       // تحويل JSON arrays إلى items للعرض
       const priceS = systemConfig.value.default_price_s || [];
       const priceP = systemConfig.value.default_price_p || [];
@@ -813,6 +836,15 @@ function printCarTagDetails(tag) {
                 >
                   الأنظمة المتصلة
                 </button>
+                <button
+                  @click="activeTab = 'whatsapp'"
+                  :class="activeTab === 'whatsapp' 
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+                  class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                >
+                  إشعارات واتساب
+                </button>
               </nav>
             </div>
 
@@ -1290,6 +1322,132 @@ function printCarTagDetails(tag) {
                     class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {{ saving ? 'جاري الحفظ...' : 'حفظ الإعدادات' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- WhatsApp Notifications Tab -->
+            <div v-show="activeTab === 'whatsapp'" class="space-y-6">
+              <div class="mb-2">
+                <h3 class="text-lg font-semibold">ربط طابور واتساب (WA Queue)</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  إرسال الإشعارات عبر
+                  <span class="font-mono text-xs">https://wa.intellij-app.com/{tenant}/api/v1/queue</span>
+                </p>
+              </div>
+
+              <div v-if="loading" class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+              </div>
+
+              <div v-else class="space-y-6">
+                <div class="flex items-center gap-3 p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                  <input
+                    id="wa_enabled"
+                    v-model="systemConfig.wa_enabled"
+                    type="checkbox"
+                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                  />
+                  <InputLabel for="wa_enabled" value="تفعيل إرسال واتساب عبر الطابور" class="!mb-0" />
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <InputLabel for="wa_tenant" value="Tenant ID" />
+                    <TextInput
+                      id="wa_tenant"
+                      v-model="systemConfig.wa_tenant"
+                      type="text"
+                      class="mt-1 block w-full"
+                      placeholder="مثال: kaml-kamal"
+                    />
+                    <p class="mt-1 text-xs text-gray-500">معرف الزبون في نظام الاراسل — لا تشارك الرابط علناً</p>
+                  </div>
+                  <div>
+                    <InputLabel for="wa_base_url" value="Base URL" />
+                    <TextInput
+                      id="wa_base_url"
+                      v-model="systemConfig.wa_base_url"
+                      type="text"
+                      class="mt-1 block w-full"
+                      placeholder="https://wa.intellij-app.com"
+                    />
+                  </div>
+                  <div>
+                    <InputLabel for="wa_created_by" value="Created By" />
+                    <TextInput
+                      id="wa_created_by"
+                      v-model="systemConfig.wa_created_by"
+                      type="text"
+                      class="mt-1 block w-full"
+                      placeholder="shipping-erp"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <h4 class="font-medium mb-3">الأحداث المفعّلة</h4>
+                  <div class="space-y-3">
+                    <label class="flex items-center gap-3">
+                      <input v-model="systemConfig.wa_notify_client_debt" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm" />
+                      <span>إخطار الزبائن (تذكير الدين من الداشبورد)</span>
+                    </label>
+                    <label class="flex items-center gap-3">
+                      <input v-model="systemConfig.wa_notify_payment_receipt" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm" />
+                      <span>وصل الدفع (قبض مباشر للزبون)</span>
+                    </label>
+                    <label class="flex items-center gap-3">
+                      <input v-model="systemConfig.wa_notify_car_added" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm" />
+                      <span>إضافة سيارة</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="space-y-4">
+                  <h4 class="font-medium">قوالب الرسائل (اختياري)</h4>
+                  <p class="text-xs text-gray-500">
+                    متغيرات متاحة: <code>{name}</code> <code>{amount}</code> <code>{vin}</code> <code>{count}</code> <code>{company}</code>
+                  </p>
+                  <div>
+                    <InputLabel for="wa_msg_client_debt" value="رسالة إخطار الزبائن" />
+                    <textarea
+                      id="wa_msg_client_debt"
+                      v-model="systemConfig.wa_msg_client_debt"
+                      rows="4"
+                      class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      placeholder="اتركه فارغاً لاستخدام الرسالة الافتراضية"
+                    />
+                  </div>
+                  <div>
+                    <InputLabel for="wa_msg_payment_receipt" value="رسالة وصل الدفع" />
+                    <textarea
+                      id="wa_msg_payment_receipt"
+                      v-model="systemConfig.wa_msg_payment_receipt"
+                      rows="3"
+                      class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      placeholder="السلام عليكم {name}، تم استلام دفعة بمبلغ {amount}. — {company}"
+                    />
+                  </div>
+                  <div>
+                    <InputLabel for="wa_msg_car_added" value="رسالة إضافة سيارة" />
+                    <textarea
+                      id="wa_msg_car_added"
+                      v-model="systemConfig.wa_msg_car_added"
+                      rows="3"
+                      class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      placeholder="السلام عليكم {name}، تم إضافة {count} سيارة برقم الشاصي: {vin}. — {company}"
+                    />
+                  </div>
+                </div>
+
+                <div class="flex justify-end mt-6">
+                  <button
+                    @click="saveSystemConfig"
+                    :disabled="saving"
+                    class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {{ saving ? 'جاري الحفظ...' : 'حفظ إعدادات واتساب' }}
                   </button>
                 </div>
               </div>
