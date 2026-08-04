@@ -1082,6 +1082,9 @@ const excelPurchasesExportUrl = computed(() => {
                                         <th scope="col" class="px-1 py-3 text-base">
                                           {{ $t('coc_dolar') }}
                                         </th>
+                                        <th v-if="$page.props.showContainerOpen" scope="col" class="px-1 py-3 text-base">
+                                          {{ $t('container_open') }}
+                                        </th>
                                         <th scope="col" class="px-1 py-3 text-base">
                                           {{ $t('checkout') }}
                                         </th>
@@ -1139,6 +1142,7 @@ const excelPurchasesExportUrl = computed(() => {
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.note }}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.shipping_dolar}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.coc_dolar  }}</td>
+                                      <td v-if="$page.props.showContainerOpen" className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.container_open }}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.checkout}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.expenses}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.land_shipping}}</td>

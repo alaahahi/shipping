@@ -453,6 +453,7 @@ class DashboardController extends Controller
         $checkout = $request->checkout ?? 0;
         $shipping_dolar = $request->shipping_dolar ?? 0;
         $coc_dolar = $request->coc_dolar ?? 0;
+        $container_open = $request->container_open ?? 0;
         $dinar = $request->dinar ?? 0;
         // keep the original exchange rate as entered (e.g., 140000)
         $dolar_price_input = $request->dolar_price ?? 1;
@@ -539,6 +540,7 @@ class DashboardController extends Controller
             $checkout,
             $shipping_dolar,
             $coc_dolar,
+            $container_open,
             $dinar,
             $dolar_price_input,
             $calc_rate,
@@ -565,6 +567,7 @@ class DashboardController extends Controller
                     'dolar_price' => $dolar_price_input,
                     'shipping_dolar' => $shipping_dolar,
                     'coc_dolar' => $coc_dolar,
+                    'container_open' => $container_open,
                     'checkout' => $checkout,
                     'total' => 0,
                     'paid' => 0,
@@ -601,7 +604,7 @@ class DashboardController extends Controller
                 }
                 $dolar_custom = (int) ($carDinar / $effectiveRate);
                 $land_shipping_dinar_custom = (int) ($land_shipping_dinar / $effectiveRate);
-                $total_amount = $checkout + $shipping_dolar + $carExpenses + $coc_dolar + $dolar_custom + $land_shipping + $land_shipping_dinar_custom;
+                $total_amount = $checkout + $shipping_dolar + $carExpenses + $coc_dolar + $container_open + $dolar_custom + $land_shipping + $land_shipping_dinar_custom;
                 $car->update([
                     'total' => $total_amount,
                     'profit' => ($total_amount * -1),
@@ -647,6 +650,7 @@ class DashboardController extends Controller
         $checkout=$request->checkout ;
         $shipping_dolar=$request->shipping_dolar ;
         $coc_dolar=$request->coc_dolar;
+        $container_open=$request->container_open ?? 0;
         $land_shipping=$request->land_shipping;
         $land_shipping_dinar=$request->land_shipping_dinar;
 
@@ -664,7 +668,7 @@ class DashboardController extends Controller
             $calc_rate=$calc_rate;
         }
 
-        $total = (int)(($checkout+$shipping_dolar+ $coc_dolar +(int)($dinar / ($calc_rate))+(int)($land_shipping_dinar / ($calc_rate))+$expenses+$land_shipping) ??0);
+        $total = (int)(($checkout+$shipping_dolar+ $coc_dolar + $container_open +(int)($dinar / ($calc_rate))+(int)($land_shipping_dinar / ($calc_rate))+$expenses+$land_shipping) ??0);
         $profit=$car->total_s-$total;
 
         if($car->client_id == $request->client_id)
@@ -739,6 +743,7 @@ class DashboardController extends Controller
         $checkout_s=$request->checkout_s ;
         $shipping_dolar_s=$request->shipping_dolar_s ;
         $coc_dolar_s=$request->coc_dolar_s ;
+        $container_open_s=$request->container_open_s ?? 0;
         $dinar_s=$request->dinar_s ;
         $land_shipping_s=$request->land_shipping_s;
         $land_shipping_dinar_s=$request->land_shipping_dinar_s;
@@ -751,13 +756,14 @@ class DashboardController extends Controller
         }else{
             $dolar_price_s=$dolar_price_s;
         }
-        $total_s = (($checkout_s+$shipping_dolar_s+ $coc_dolar_s +(int)($dinar_s / ($dolar_price_s))+(int)($land_shipping_dinar_s / ($dolar_price_s))+$expenses_s+$land_shipping_s) ??0);
+        $total_s = (($checkout_s+$shipping_dolar_s+ $coc_dolar_s + $container_open_s +(int)($dinar_s / ($dolar_price_s))+(int)($land_shipping_dinar_s / ($dolar_price_s))+$expenses_s+$land_shipping_s) ??0);
         
         // حساب المشتريات (Purchases) - إذا تم تعديل expenses
         if($request->has('expenses')) {
             $checkout=$request->checkout ?? $car->checkout;
             $shipping_dolar=$request->shipping_dolar ?? $car->shipping_dolar;
             $coc_dolar=$request->coc_dolar ?? $car->coc_dolar;
+            $container_open=$request->container_open ?? $car->container_open ?? 0;
             $dinar=$request->dinar ?? $car->dinar;
             $land_shipping=$request->land_shipping ?? $car->land_shipping;
             $land_shipping_dinar=$request->land_shipping_dinar ?? $car->land_shipping_dinar;
@@ -770,7 +776,7 @@ class DashboardController extends Controller
                 $dolar_price=$dolar_price/100;
             }
             
-            $total = (($checkout+$shipping_dolar+$coc_dolar+(int)($dinar/($dolar_price))+(int)($land_shipping_dinar/($dolar_price))+$expenses+$land_shipping) ??0);
+            $total = (($checkout+$shipping_dolar+$coc_dolar+$container_open+(int)($dinar/($dolar_price))+(int)($land_shipping_dinar/($dolar_price))+$expenses+$land_shipping) ??0);
         } else {
             $total = $car->total;
         }
@@ -831,6 +837,7 @@ class DashboardController extends Controller
             'dolar_price',
             'shipping_dolar',
             'coc_dolar',
+            'container_open',
             'checkout',
             'expenses',
             'land_shipping',
@@ -843,6 +850,7 @@ class DashboardController extends Controller
             $checkout = array_key_exists('checkout', $requestData) ? (float)$requestData['checkout'] : ($car->checkout ?? 0);
             $shipping_dolar = array_key_exists('shipping_dolar', $requestData) ? (float)$requestData['shipping_dolar'] : ($car->shipping_dolar ?? 0);
             $coc_dolar = array_key_exists('coc_dolar', $requestData) ? (float)$requestData['coc_dolar'] : ($car->coc_dolar ?? 0);
+            $container_open = array_key_exists('container_open', $requestData) ? (float)$requestData['container_open'] : ($car->container_open ?? 0);
             $expenses = array_key_exists('expenses', $requestData) ? (float)$requestData['expenses'] : ($car->expenses ?? 0);
             $land_shipping = array_key_exists('land_shipping', $requestData) ? (float)$requestData['land_shipping'] : ($car->land_shipping ?? 0);
             $land_shipping_dinar = array_key_exists('land_shipping_dinar', $requestData) ? (float)$requestData['land_shipping_dinar'] : ($car->land_shipping_dinar ?? 0);
@@ -861,7 +869,7 @@ class DashboardController extends Controller
             $dolar_custom = (int)($dinar / $calc_rate);
             $land_shipping_dinar_custom = (int)($land_shipping_dinar / $calc_rate);
             $total = (int)(
-                ($checkout + $shipping_dolar + $coc_dolar
+                ($checkout + $shipping_dolar + $coc_dolar + $container_open
                 + $dolar_custom
                 + $land_shipping_dinar_custom
                 + $expenses + $land_shipping) ?? 0
@@ -915,6 +923,7 @@ class DashboardController extends Controller
             'dolar_price_s',
             'shipping_dolar_s',
             'coc_dolar_s',
+            'container_open_s',
             'checkout_s',
             'expenses_s',
             'land_shipping_s',
@@ -927,6 +936,7 @@ class DashboardController extends Controller
             $checkout_s = array_key_exists('checkout_s', $requestData) ? (float)$requestData['checkout_s'] : ($car->checkout_s ?? 0);
             $shipping_dolar_s = array_key_exists('shipping_dolar_s', $requestData) ? (float)$requestData['shipping_dolar_s'] : ($car->shipping_dolar_s ?? 0);
             $coc_dolar_s = array_key_exists('coc_dolar_s', $requestData) ? (float)$requestData['coc_dolar_s'] : ($car->coc_dolar_s ?? 0);
+            $container_open_s = array_key_exists('container_open_s', $requestData) ? (float)$requestData['container_open_s'] : ($car->container_open_s ?? 0);
             $expenses_s = array_key_exists('expenses_s', $requestData) ? (float)$requestData['expenses_s'] : ($car->expenses_s ?? 0);
             $land_shipping_s = array_key_exists('land_shipping_s', $requestData) ? (float)$requestData['land_shipping_s'] : ($car->land_shipping_s ?? 0);
             $land_shipping_dinar_s = array_key_exists('land_shipping_dinar_s', $requestData) ? (float)$requestData['land_shipping_dinar_s'] : ($car->land_shipping_dinar_s ?? 0);
@@ -944,7 +954,7 @@ class DashboardController extends Controller
             $dinar_s = $car->dinar_s ?? 0;
             $dolar_custom_s = (int)($dinar_s / $calc_rate_s);
             $land_shipping_dinar_custom_s = (int)($land_shipping_dinar_s / $calc_rate_s);
-            $total_s = (($checkout_s + $shipping_dolar_s + $coc_dolar_s
+            $total_s = (($checkout_s + $shipping_dolar_s + $coc_dolar_s + $container_open_s
                 + $dolar_custom_s
                 + $land_shipping_dinar_custom_s
                 + $expenses_s + $land_shipping_s) ?? 0);

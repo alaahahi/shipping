@@ -214,6 +214,7 @@ class HunterController extends Controller
                 'checkout' => $car->checkout ?? 0,
                 'shipping_dolar' => $car->shipping_dolar ?? 0,
                 'coc_dolar' => $car->coc_dolar ?? 0,
+                'container_open' => $car->container_open ?? 0,
                 'dinar' => $car->dinar ?? 0,
                 'land_shipping' => $car->land_shipping ?? 0,
                 'land_shipping_dinar' => $car->land_shipping_dinar ?? 0,
@@ -226,6 +227,7 @@ class HunterController extends Controller
                 'checkout_s' => $car->checkout_s ?? 0,
                 'shipping_dolar_s' => $car->shipping_dolar_s ?? 0,
                 'coc_dolar_s' => $car->coc_dolar_s ?? 0,
+                'container_open_s' => $car->container_open_s ?? 0,
                 'dinar_s' => $car->dinar_s ?? 0,
                 'land_shipping_s' => $car->land_shipping_s ?? 0,
                 'land_shipping_dinar_s' => $car->land_shipping_dinar_s ?? 0,
@@ -342,6 +344,7 @@ class HunterController extends Controller
                 'checkout' => $car->checkout ?? 0,
                 'shipping_dolar' => $car->shipping_dolar ?? 0,
                 'coc_dolar' => $car->coc_dolar ?? 0,
+                'container_open' => $car->container_open ?? 0,
                 'dinar' => $car->dinar ?? 0,
                 'land_shipping' => $car->land_shipping ?? 0,
                 'land_shipping_dinar' => $car->land_shipping_dinar ?? 0,
@@ -354,6 +357,7 @@ class HunterController extends Controller
                 'checkout_s' => $car->checkout_s ?? 0,
                 'shipping_dolar_s' => $car->shipping_dolar_s ?? 0,
                 'coc_dolar_s' => $car->coc_dolar_s ?? 0,
+                'container_open_s' => $car->container_open_s ?? 0,
                 'dinar_s' => $car->dinar_s ?? 0,
                 'land_shipping_s' => $car->land_shipping_s ?? 0,
                 'land_shipping_dinar_s' => $car->land_shipping_dinar_s ?? 0,
@@ -555,6 +559,7 @@ class HunterController extends Controller
             if (isset($purchaseData['checkout'])) $updateData['checkout'] = $purchaseData['checkout'];
             if (isset($purchaseData['shipping_dolar'])) $updateData['shipping_dolar'] = $purchaseData['shipping_dolar'];
             if (isset($purchaseData['coc_dolar'])) $updateData['coc_dolar'] = $purchaseData['coc_dolar'];
+            if (isset($purchaseData['container_open'])) $updateData['container_open'] = $purchaseData['container_open'];
             if (isset($purchaseData['dinar'])) $updateData['dinar'] = $purchaseData['dinar'];
             if (isset($purchaseData['land_shipping'])) $updateData['land_shipping'] = $purchaseData['land_shipping'];
             if (isset($purchaseData['land_shipping_dinar'])) $updateData['land_shipping_dinar'] = $purchaseData['land_shipping_dinar'];
@@ -572,12 +577,13 @@ class HunterController extends Controller
             $checkout = $updateData['checkout'] ?? $car->checkout ?? 0;
             $shipping_dolar = $updateData['shipping_dolar'] ?? $car->shipping_dolar ?? 0;
             $coc_dolar = $updateData['coc_dolar'] ?? $car->coc_dolar ?? 0;
+            $container_open = $updateData['container_open'] ?? $car->container_open ?? 0;
             $dinar = $updateData['dinar'] ?? $car->dinar ?? 0;
             $expenses = $updateData['expenses'] ?? $car->expenses ?? 0;
             $land_shipping = $updateData['land_shipping'] ?? $car->land_shipping ?? 0;
             $land_shipping_dinar = $updateData['land_shipping_dinar'] ?? $car->land_shipping_dinar ?? 0;
 
-            $updateData['total'] = (int)(($checkout + $shipping_dolar + $coc_dolar + (int)($dinar / $calc_rate) + (int)($land_shipping_dinar / $calc_rate) + $expenses + $land_shipping) ?? 0);
+            $updateData['total'] = (int)(($checkout + $shipping_dolar + $coc_dolar + $container_open + (int)($dinar / $calc_rate) + (int)($land_shipping_dinar / $calc_rate) + $expenses + $land_shipping) ?? 0);
             
             $car->update($updateData);
         }
@@ -591,6 +597,7 @@ class HunterController extends Controller
             if (isset($salesData['checkout_s'])) $updateData['checkout_s'] = $salesData['checkout_s'];
             if (isset($salesData['shipping_dolar_s'])) $updateData['shipping_dolar_s'] = $salesData['shipping_dolar_s'];
             if (isset($salesData['coc_dolar_s'])) $updateData['coc_dolar_s'] = $salesData['coc_dolar_s'];
+            if (isset($salesData['container_open_s'])) $updateData['container_open_s'] = $salesData['container_open_s'];
             if (isset($salesData['dinar_s'])) $updateData['dinar_s'] = $salesData['dinar_s'];
             if (isset($salesData['land_shipping_s'])) $updateData['land_shipping_s'] = $salesData['land_shipping_s'];
             if (isset($salesData['land_shipping_dinar_s'])) $updateData['land_shipping_dinar_s'] = $salesData['land_shipping_dinar_s'];
@@ -608,12 +615,13 @@ class HunterController extends Controller
             $checkout_s = $updateData['checkout_s'] ?? $car->checkout_s ?? 0;
             $shipping_dolar_s = $updateData['shipping_dolar_s'] ?? $car->shipping_dolar_s ?? 0;
             $coc_dolar_s = $updateData['coc_dolar_s'] ?? $car->coc_dolar_s ?? 0;
+            $container_open_s = $updateData['container_open_s'] ?? $car->container_open_s ?? 0;
             $dinar_s = $updateData['dinar_s'] ?? $car->dinar_s ?? 0;
             $expenses_s = $updateData['expenses_s'] ?? $car->expenses_s ?? 0;
             $land_shipping_s = $updateData['land_shipping_s'] ?? $car->land_shipping_s ?? 0;
             $land_shipping_dinar_s = $updateData['land_shipping_dinar_s'] ?? $car->land_shipping_dinar_s ?? 0;
 
-            $updateData['total_s'] = (int)(($checkout_s + $shipping_dolar_s + $coc_dolar_s + (int)($dinar_s / $calc_rate_s) + (int)($land_shipping_dinar_s / $calc_rate_s) + $expenses_s + $land_shipping_s) ?? 0);
+            $updateData['total_s'] = (int)(($checkout_s + $shipping_dolar_s + $coc_dolar_s + $container_open_s + (int)($dinar_s / $calc_rate_s) + (int)($land_shipping_dinar_s / $calc_rate_s) + $expenses_s + $land_shipping_s) ?? 0);
             
             $car->update($updateData);
         }

@@ -135,6 +135,9 @@ $Help = new MyHelp();
             <th scope="col">كمرك</th>
             <th scope="col">تخليص</th>
             <th scope="col">شهادة</th>
+            @if(config('app.show_container_open'))
+            <th scope="col">فتح كونتينر</th>
+            @endif
             <th scope="col">نقل</th>
             <th scope="col">مصاريف</th>
             <th scope="col">مجموع</th>
@@ -161,6 +164,9 @@ $Help = new MyHelp();
                     ?></td>
                 <td>{{$data->checkout_s}}</td>
                 <td>{{$data->coc_dolar_s}}</td>
+                @if(config('app.show_container_open'))
+                <td>{{$data->container_open_s}}</td>
+                @endif
                 <td>{{$data->shipping_dolar_s}}</td>
                 <td>{{$data->expenses}}</td>
                 <td>{{$data->total_s}}</td>
@@ -264,6 +270,9 @@ $Help = new MyHelp();
               <th scope="col">كمرك</th>
               <th scope="col">تخليص</th>
               <th scope="col">شهادة</th>
+              @if(config('app.show_container_open'))
+              <th scope="col">فتح كونتينر</th>
+              @endif
               <th scope="col">نقل</th>
               <th scope="col">مصاريف</th>
               <th scope="col">مجموع</th>
@@ -290,6 +299,9 @@ $Help = new MyHelp();
                       ?></td>
                   <td>{{$data->checkout_s}}</td>
                   <td>{{$data->coc_dolar_s}}</td>
+                  @if(config('app.show_container_open'))
+                  <td>{{$data->container_open_s}}</td>
+                  @endif
                   <td>{{$data->shipping_dolar_s}}</td>
                   <td>{{$data->expenses}}</td>
                   <td>{{$data->total_s}}</td>

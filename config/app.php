@@ -43,6 +43,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Show Container Open Fields
+    |--------------------------------------------------------------------------
+    |
+    | When true, shows container_open / container_open_s in purchases, sales,
+    | and related UI. Hidden when false; stored values still count in totals.
+    |
+    */
+
+    'show_container_open' => filter_var(env('SHOW_CONTAINER_OPEN', false), FILTER_VALIDATE_BOOLEAN),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

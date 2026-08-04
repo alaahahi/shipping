@@ -2138,6 +2138,9 @@ async function savePaymentDescription(payment) {
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("coc_dolar") }}
                     </th>
+                    <th v-if="$page.props.showContainerOpen" scope="col" class="px-1 py-2 text-base">
+                      {{ $t("container_open") }}
+                    </th>
                     <th scope="col" class="px-1 py-2 text-base">
                       {{ $t("checkout") }}
                     </th>
@@ -2283,6 +2286,12 @@ async function savePaymentDescription(payment) {
                       className="border dark:border-gray-800 text-center px-2 py-1"
                     >
                       {{ item.data.coc_dolar_s }}
+                    </td>
+                    <td
+                      v-if="$page.props.showContainerOpen"
+                      className="border dark:border-gray-800 text-center px-2 py-1"
+                    >
+                      {{ item.data.container_open_s }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"

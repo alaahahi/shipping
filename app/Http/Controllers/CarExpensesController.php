@@ -360,6 +360,7 @@ class CarExpensesController extends Controller
                 ($car->checkout ?? 0)
                 + ($car->shipping_dolar ?? 0)
                 + ($car->coc_dolar ?? 0)
+                + ($car->container_open ?? 0)
                 + (int) (($car->dinar ?? 0) / $car_calc_rate)
                 + (int) (($car->land_shipping_dinar ?? 0) / $car_calc_rate)
                 + $newExpenses
@@ -378,6 +379,7 @@ class CarExpensesController extends Controller
                 ($car->checkout_s ?? 0)
                 + ($car->shipping_dolar_s ?? 0)
                 + ($car->coc_dolar_s ?? 0)
+                + ($car->container_open_s ?? 0)
                 + (int) (($car->dinar_s ?? 0) / $car_calc_rate_s)
                 + (int) (($car->land_shipping_dinar_s ?? 0) / $car_calc_rate_s)
                 + $newExpensesS
@@ -901,6 +903,7 @@ class CarExpensesController extends Controller
                     ($car->checkout ?? 0)
                     + ($car->shipping_dolar ?? 0)
                     + ($car->coc_dolar ?? 0)
+                    + ($car->container_open ?? 0)
                     + (int) (($car->dinar ?? 0) / $car_calc_rate)
                     + (int) (($car->land_shipping_dinar ?? 0) / $car_calc_rate)
                     + $newExpenses
@@ -919,6 +922,7 @@ class CarExpensesController extends Controller
                     ($car->checkout_s ?? 0)
                     + ($car->shipping_dolar_s ?? 0)
                     + ($car->coc_dolar_s ?? 0)
+                    + ($car->container_open_s ?? 0)
                     + (int) (($car->dinar_s ?? 0) / $car_calc_rate_s)
                     + (int) (($car->land_shipping_dinar_s ?? 0) / $car_calc_rate_s)
                     + $newExpensesS
@@ -1535,6 +1539,7 @@ class CarExpensesController extends Controller
             ($car->checkout ?? 0)
             + ($car->shipping_dolar ?? 0)
             + ($car->coc_dolar ?? 0)
+            + ($car->container_open ?? 0)
             + (int) (($car->dinar ?? 0) / $car_calc_rate)
             + (int) (($car->land_shipping_dinar ?? 0) / $car_calc_rate)
             + $newExpenses
@@ -1551,6 +1556,7 @@ class CarExpensesController extends Controller
             ($car->checkout_s ?? 0)
             + ($car->shipping_dolar_s ?? 0)
             + ($car->coc_dolar_s ?? 0)
+            + ($car->container_open_s ?? 0)
             + (int) (($car->dinar_s ?? 0) / $car_calc_rate_s)
             + (int) (($car->land_shipping_dinar_s ?? 0) / $car_calc_rate_s)
             + $newExpensesS

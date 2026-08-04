@@ -171,46 +171,41 @@ watch([searchTerm], () => {
 
 getcountTotalInfo()
 
-/** Debt severity accent for client cards (border + amount color). */
+/** Debt severity: full-card color for quick scanning. */
 function debtTone(total) {
   const amount = Number(total) || 0;
   if (amount < 0) {
     return {
-      card: 'border-emerald-500/40 hover:border-emerald-400/70',
-      bar: 'bg-emerald-500',
-      amount: 'text-emerald-400',
-      badge: 'bg-emerald-500/15 text-emerald-300',
+      card: 'border-emerald-600 bg-emerald-600 hover:bg-emerald-500',
+      name: 'text-white',
+      amount: 'text-emerald-50',
     };
   }
   if (amount >= 30000) {
     return {
-      card: 'border-rose-500/40 hover:border-rose-400/70',
-      bar: 'bg-rose-500',
-      amount: 'text-rose-400',
-      badge: 'bg-rose-500/15 text-rose-300',
+      card: 'border-rose-600 bg-rose-600 hover:bg-rose-500',
+      name: 'text-white',
+      amount: 'text-rose-50',
     };
   }
   if (amount >= 15000) {
     return {
-      card: 'border-orange-500/40 hover:border-orange-400/70',
-      bar: 'bg-orange-500',
-      amount: 'text-orange-400',
-      badge: 'bg-orange-500/15 text-orange-300',
+      card: 'border-orange-600 bg-orange-600 hover:bg-orange-500',
+      name: 'text-white',
+      amount: 'text-orange-50',
     };
   }
   if (amount >= 5000) {
     return {
-      card: 'border-amber-500/40 hover:border-amber-400/70',
-      bar: 'bg-amber-500',
-      amount: 'text-amber-400',
-      badge: 'bg-amber-500/15 text-amber-300',
+      card: 'border-amber-500 bg-amber-500 hover:bg-amber-400',
+      name: 'text-amber-950',
+      amount: 'text-amber-950',
     };
   }
   return {
-    card: 'border-slate-600 hover:border-slate-500',
-    bar: 'bg-sky-500',
-    amount: 'text-sky-300',
-    badge: 'bg-sky-500/15 text-sky-300',
+    card: 'border-sky-600 bg-sky-600 hover:bg-sky-500',
+    name: 'text-white',
+    amount: 'text-sky-50',
   };
 }
 
@@ -315,16 +310,15 @@ function getResultsCarSearchLocal () {
                             v-for="(user, i) in laravelData"
                             :key="user.id || i"
                             :href="route('showClients', { id: user.id, q: searchTerm })"
-                            class="group relative overflow-hidden rounded-xl border bg-slate-900/80 p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-900"
+                            class="group relative overflow-hidden rounded-xl border p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
                             :class="debtTone(user.balance).card"
                           >
-                            <span
-                              class="absolute inset-y-0 right-0 w-1 rounded-s-full"
-                              :class="debtTone(user.balance).bar"
-                              aria-hidden="true"
-                            />
-                            <div class="pr-2 text-right">
-                              <p class="truncate text-sm font-semibold text-slate-100" :title="user.name">
+                            <div class="text-right">
+                              <p
+                                class="truncate text-sm font-semibold"
+                                :class="debtTone(user.balance).name"
+                                :title="user.name"
+                              >
                                 {{ user.name }}
                               </p>
                               <p
@@ -395,10 +389,9 @@ function getResultsCarSearchLocal () {
                           <template v-if="showBrokerage">
                           <h2 class="my-3 dark:text-white" v-if="laravelData1">دين البائع</h2>
                           <div class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                          <Link v-for="(user,i) in laravelData1" :key="i" class="relative overflow-hidden rounded-xl border bg-slate-900/80 p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"  :href="route('car_contract', {   q:  user.name_seller })"   :class="debtTone(user.tex_seller -  user.tex_seller_paid).card">
-                            <span class="absolute inset-y-0 right-0 w-1 rounded-s-full" :class="debtTone(user.tex_seller - user.tex_seller_paid).bar" aria-hidden="true" />
-                            <div class="pr-2 text-right">
-                              <h2 class="truncate text-sm font-semibold text-slate-100">{{ user.name_seller}}</h2>
+                          <Link v-for="(user,i) in laravelData1" :key="i" class="relative overflow-hidden rounded-xl border p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"  :href="route('car_contract', {   q:  user.name_seller })"   :class="debtTone(user.tex_seller -  user.tex_seller_paid).card">
+                            <div class="text-right">
+                              <h2 class="truncate text-sm font-semibold" :class="debtTone(user.tex_seller - user.tex_seller_paid).name">{{ user.name_seller}}</h2>
                               <p class="mt-2 font-mono text-sm font-bold tabular-nums" :class="debtTone(user.tex_seller - user.tex_seller_paid).amount" dir="ltr">
                                 ${{ user.tex_seller -  user.tex_seller_paid }}
                                 · IQD {{ user.tex_seller_dinar -  user.tex_seller_dinar_paid }}
@@ -410,10 +403,9 @@ function getResultsCarSearchLocal () {
                         </div>
                         <h2 class="my-3 dark:text-white" v-if="laravelData2">دين المشتري</h2>
                           <div class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                          <Link v-for="(user,i) in laravelData2" :key="i" class="relative overflow-hidden rounded-xl border bg-slate-900/80 p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"  :href="route('car_contract', {q:  user.name_buyer })"   :class="debtTone(user.tex_buyer -  user.tex_buyer_paid).card">
-                            <span class="absolute inset-y-0 right-0 w-1 rounded-s-full" :class="debtTone(user.tex_buyer - user.tex_buyer_paid).bar" aria-hidden="true" />
-                            <div class="pr-2 text-right">
-                              <h2 class="truncate text-sm font-semibold text-slate-100">{{ user.name_buyer}}</h2>
+                          <Link v-for="(user,i) in laravelData2" :key="i" class="relative overflow-hidden rounded-xl border p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"  :href="route('car_contract', {q:  user.name_buyer })"   :class="debtTone(user.tex_buyer -  user.tex_buyer_paid).card">
+                            <div class="text-right">
+                              <h2 class="truncate text-sm font-semibold" :class="debtTone(user.tex_buyer - user.tex_buyer_paid).name">{{ user.name_buyer}}</h2>
                               <p class="mt-2 font-mono text-sm font-bold tabular-nums" :class="debtTone(user.tex_buyer - user.tex_buyer_paid).amount" dir="ltr">
                                 ${{ user.tex_buyer -  user.tex_buyer_paid }}
                                 · IQD {{ user.tex_buyer_dinar -  user.tex_buyer_dinar_paid }}

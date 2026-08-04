@@ -21,6 +21,7 @@ const purchaseExpenses = ref({
   checkout: 0,
   shipping_dolar: 0,
   coc_dolar: 0,
+  container_open: 0,
   dinar: 0,
   land_shipping: 0,
   land_shipping_dinar: 0,
@@ -33,6 +34,7 @@ const salesExpenses = ref({
   checkout_s: 0,
   shipping_dolar_s: 0,
   coc_dolar_s: 0,
+  container_open_s: 0,
   dinar_s: 0,
   land_shipping_s: 0,
   land_shipping_dinar_s: 0,
@@ -76,6 +78,7 @@ function calculatePurchaseTotal() {
     (purchaseExpenses.value.checkout || 0) +
     (purchaseExpenses.value.shipping_dolar || 0) +
     (purchaseExpenses.value.coc_dolar || 0) +
+    (purchaseExpenses.value.container_open || 0) +
     (purchaseExpenses.value.expenses || 0) +
     (purchaseExpenses.value.land_shipping || 0) +
     (parseInt(purchaseExpenses.value.dinar || 0) / rate) +
@@ -93,6 +96,7 @@ function calculateSalesTotal() {
     (salesExpenses.value.checkout_s || 0) +
     (salesExpenses.value.shipping_dolar_s || 0) +
     (salesExpenses.value.coc_dolar_s || 0) +
+    (salesExpenses.value.container_open_s || 0) +
     (salesExpenses.value.expenses_s || 0) +
     (salesExpenses.value.land_shipping_s || 0) +
     (parseInt(salesExpenses.value.dinar_s || 0) / rate) +
@@ -282,6 +286,15 @@ async function saveExpenses() {
                         class="w-full border dark:border-gray-600 rounded px-2 py-2 dark:bg-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
                       />
                     </div>
+                    <div v-if="$page.props.showContainerOpen">
+                      <label class="block text-sm dark:text-gray-300 mb-1 font-medium">فتح كونتينر ($)</label>
+                      <input
+                        v-model.number="purchaseExpenses.container_open"
+                        type="number"
+                        step="0.01"
+                        class="w-full border dark:border-gray-600 rounded px-2 py-2 dark:bg-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                      />
+                    </div>
                     <div>
                       <label class="block text-sm dark:text-gray-300 mb-1 font-medium">الدينار</label>
                       <input
@@ -382,6 +395,15 @@ async function saveExpenses() {
                       <label class="block text-sm dark:text-gray-300 mb-1 font-medium">COC ($)</label>
                       <input
                         v-model.number="salesExpenses.coc_dolar_s"
+                        type="number"
+                        step="0.01"
+                        class="w-full border dark:border-gray-600 rounded px-2 py-2 dark:bg-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-purple-500 dark:focus:border-purple-400"
+                      />
+                    </div>
+                    <div v-if="$page.props.showContainerOpen">
+                      <label class="block text-sm dark:text-gray-300 mb-1 font-medium">فتح كونتينر ($)</label>
+                      <input
+                        v-model.number="salesExpenses.container_open_s"
                         type="number"
                         step="0.01"
                         class="w-full border dark:border-gray-600 rounded px-2 py-2 dark:bg-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-purple-500 dark:focus:border-purple-400"

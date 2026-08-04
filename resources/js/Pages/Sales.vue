@@ -693,6 +693,9 @@ function getDownloadUrl(name) {
                         <th scope="col" class="px-1 py-3 text-base">
                           {{ $t("coc_dolar") }}
                         </th>
+                        <th v-if="$page.props.showContainerOpen" scope="col" class="px-1 py-3 text-base">
+                          {{ $t("container_open") }}
+                        </th>
                         <th scope="col" class="px-1 py-3 text-base">
                           {{ $t("checkout") }}
                         </th>
@@ -814,6 +817,12 @@ function getDownloadUrl(name) {
                           className="border dark:border-gray-800 text-center px-1 py-2 "
                         >
                           {{ car.coc_dolar_s }}
+                        </td>
+                        <td
+                          v-if="$page.props.showContainerOpen"
+                          className="border dark:border-gray-800 text-center px-1 py-2 "
+                        >
+                          {{ car.container_open_s }}
                         </td>
                         <td
                           className="border dark:border-gray-800 text-center px-1 py-2 "
