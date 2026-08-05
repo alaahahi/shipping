@@ -145,9 +145,12 @@ async function deletePayment(payment) {
               <span class="text-emerald-600">{{ formatNumber(paidDollar) }} $</span>
               <span class="text-indigo-600">{{ formatNumber(paidDinar) }} د</span>
             </div>
+            <p v-if="car?.expenses_posted" class="text-center text-xs font-bold text-emerald-600 mt-2">
+              مُرحَّل محاسبيًا — لا يمكن تعديل الدفعات
+            </p>
           </div>
 
-          <div class="px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div v-if="!car?.expenses_posted" class="px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-3">
             <label class="block">
               <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">مبلغ دولار</span>
               <input v-model="form.amount_dollar" type="number" min="0" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white px-3 py-2 text-sm" />
@@ -168,6 +171,7 @@ async function deletePayment(payment) {
 
           <div class="flex justify-center gap-3 px-4 pb-3">
             <button
+              v-if="!car?.expenses_posted"
               type="button"
               class="px-5 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:opacity-50"
               :disabled="saving"
@@ -220,9 +224,15 @@ async function deletePayment(payment) {
                     <td class="px-2 py-2 font-semibold text-emerald-600">{{ formatNumber(p.amount_dollar) }}</td>
                     <td class="px-2 py-2 font-semibold text-indigo-600">{{ formatNumber(p.amount_dinar) }}</td>
                     <td class="px-2 py-2">
-                      <button type="button" class="px-2 py-1 bg-red-500 text-white rounded" @click="deletePayment(p)">
+                      <button
+                        v-if="!car?.expenses_posted"
+                        type="button"
+                        class="px-2 py-1 bg-red-500 text-white rounded"
+                        @click="deletePayment(p)"
+                      >
                         <trash />
                       </button>
+                      <span v-else class="text-gray-400">—</span>
                     </td>
                   </tr>
                 </tbody>

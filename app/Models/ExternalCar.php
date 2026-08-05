@@ -14,6 +14,7 @@ class ExternalCar extends Model
     protected $attributes = [
         'paid_dollar' => 0,
         'paid_dinar' => 0,
+        'expenses_posted' => false,
     ];
 
     protected $fillable = [
@@ -27,6 +28,8 @@ class ExternalCar extends Model
         'car_number',
         'paid_dollar',
         'paid_dinar',
+        'expenses_posted',
+        'expenses_posted_at',
         'note',
         'date',
     ];
@@ -35,6 +38,8 @@ class ExternalCar extends Model
         'year' => 'integer',
         'paid_dollar' => 'integer',
         'paid_dinar' => 'integer',
+        'expenses_posted' => 'boolean',
+        'expenses_posted_at' => 'datetime',
         'date' => 'date',
     ];
 

@@ -93,6 +93,34 @@ function openPaymentsModal(car) {
   showPaymentsModal.value = true;
 }
 
+function postToWallet(car) {
+  if (!car?.id || car.expenses_posted) return;
+  const dollar = Number(car.paid_dollar) || 0;
+  const dinar = Number(car.paid_dinar) || 0;
+  if (dollar <= 0 && dinar <= 0) {
+    toast.error('لا يوجد مبلغ للترحيل', { timeout: 3000, position: 'bottom-right', rtl: true });
+    return;
+  }
+  if (!confirm(`ترحيل توتال السيارة إلى قاصة الترحيل؟\n${dollar}$ / ${dinar} د`)) return;
+
+  axios.post('/api/postExternalCarToWallet', { id: car.id })
+    .then((res) => {
+      toast.success('تم الترحيل بنجاح', { timeout: 2500, position: 'bottom-right', rtl: true });
+      if (res.data?.car) {
+        onPaymentsUpdated(res.data.car);
+      } else {
+        refresh();
+      }
+    })
+    .catch((error) => {
+      toast.error(error?.response?.data?.error || 'تعذر الترحيل', {
+        timeout: 3500,
+        position: 'bottom-right',
+        rtl: true,
+      });
+    });
+}
+
 function onPaymentsUpdated(updatedCar) {
   if (!updatedCar?.id) return;
   const idx = cars.value.findIndex((c) => c.id === updatedCar.id);
@@ -266,10 +294,21 @@ function confirmDelete(payload) {
                   <td class="border dark:border-gray-700 px-2 py-2 text-center">{{ car.year || '-' }}</td>
                   <td class="border dark:border-gray-700 px-2 py-2 text-center">{{ car.car_color || '-' }}</td>
                   <td class="border dark:border-gray-700 px-2 py-2 text-center">{{ car.car_number }}</td>
-                  <td class="border dark:border-gray-700 px-2 py-2 text-center">{{ formatNumber(car.paid_dollar) }}</td>
+                  <td class="border dark:border-gray-700 px-2 py-2 text-center">
+                    {{ formatNumber(car.paid_dollar) }}
+                    <span v-if="car.expenses_posted" class="block text-[10px] font-bold text-emerald-600">مُرحَّل</span>
+                  </td>
                   <td class="border dark:border-gray-700 px-2 py-2 text-center">{{ formatNumber(car.paid_dinar) }}</td>
                   <td class="border dark:border-gray-700 px-2 py-2 text-center">
                     <div class="flex justify-center gap-2 flex-wrap">
+                      <button
+                        v-if="!car.expenses_posted"
+                        type="button"
+                        class="px-2 py-1 bg-violet-600 text-white rounded text-xs"
+                        @click="postToWallet(car)"
+                      >
+                        ترحيل
+                      </button>
                       <button type="button" class="px-2 py-1 bg-emerald-600 text-white rounded text-xs" @click="openPaymentsModal(car)">
                         دفعات
                       </button>

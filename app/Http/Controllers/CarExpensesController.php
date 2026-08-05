@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\SystemConfig;
 use App\Services\AccountingCacheService;
+use App\Services\CarExpensesWalletPostingService;
 
 
 use Carbon\Carbon;
@@ -216,6 +217,14 @@ class CarExpensesController extends Controller
     }
     public function confirmExpensesCar(Request $request){
         $user=Auth::user();
+        $car = Car::find($request->id);
+        if (! $car || (int) $car->owner_id !== (int) $user->owner_id) {
+            return Response::json(['error' => 'غير مصرح'], 403);
+        }
+        if ($car->expenses_posted) {
+            return Response::json(['error' => 'السيارة مُرحَّلة محاسبيًا — لا يمكن إضافة دفعات جديدة'], 422);
+        }
+
         $expenses = new CarExpenses;
         $expenses->user_id = $user->id;
         $expenses->owner_id = $user->owner_id;
@@ -232,9 +241,59 @@ class CarExpensesController extends Controller
 
         
     }
+
+    /**
+     * ترحيل يدوي لتوتال مصاريف التسجيل إلى قاصة الترحيل الافتراضية.
+     */
+    public function postExpensesToWallet(Request $request, CarExpensesWalletPostingService $poster)
+    {
+        $ownerId = Auth::user()->owner_id;
+        $car = Car::with('carexpenses')->find($request->id);
+
+        if (! $car || (int) $car->owner_id !== (int) $ownerId) {
+            return Response::json(['error' => 'غير مصرح'], 403);
+        }
+
+        if ($car->expenses_posted) {
+            return Response::json(['error' => 'تم ترحيل هذه السيارة مسبقاً'], 422);
+        }
+
+        $amountDollar = (int) $car->carexpenses->sum('amount_dollar');
+        $amountDinar = (int) $car->carexpenses->sum('amount_dinar');
+
+        $note = trim(sprintf(
+            'مصاريف تسجيل %s %s إجمالي %s$ / %s د',
+            $car->car_type ?? '',
+            $car->vin ?? '',
+            number_format($amountDollar),
+            number_format($amountDinar)
+        ));
+
+        try {
+            $result = $poster->postTotalsToDefaultWallet($amountDollar, $amountDinar, $note);
+        } catch (\RuntimeException $e) {
+            return Response::json(['error' => $e->getMessage()], 422);
+        }
+
+        $car->update([
+            'expenses_posted' => true,
+            'expenses_posted_at' => now(),
+        ]);
+
+        return Response::json([
+            'ok' => true,
+            'car' => $car->fresh(['carexpenses', 'client']),
+            'posted' => $result,
+        ], 200);
+    }
+
     public function delExpensesCar(Request $request){
         try {
             $expenses = CarExpenses::findOrFail($request->id);
+            $car = Car::find($expenses->car_id);
+            if ($car && $car->expenses_posted) {
+                return response()->json(['error' => 'السيارة مُرحَّلة محاسبيًا — لا يمكن حذف دفعات'], 422);
+            }
             $expenses->delete();
     
             return response()->json('ok', 200);

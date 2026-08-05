@@ -397,6 +397,49 @@ function onExternalCarPaymentsUpdated(updatedCar) {
   getResultsCar();
 }
 
+function postCarExpensesToWallet(row) {
+  if (!row?.id) return;
+  if (row.expenses_posted) {
+    toast.info('السيارة مُرحَّلة مسبقاً', { timeout: 2500, position: 'bottom-right', rtl: true });
+    return;
+  }
+  const dollar = isExternalTab.value
+    ? Number(row.paid_dollar) || 0
+    : Number(calculateSum(row.carexpenses)) || 0;
+  const dinar = isExternalTab.value
+    ? Number(row.paid_dinar) || 0
+    : Number(calculateSumDinar(row.carexpenses)) || 0;
+  if (dollar <= 0 && dinar <= 0) {
+    toast.error('لا يوجد مبلغ للترحيل', { timeout: 3000, position: 'bottom-right', rtl: true });
+    return;
+  }
+  if (!confirm(`ترحيل توتال السيارة إلى قاصة الترحيل؟\n${dollar}$ / ${dinar} د`)) return;
+
+  const url = isExternalTab.value ? '/api/postExternalCarToWallet' : '/api/postCarExpensesToWallet';
+  axios.post(url, { id: row.id })
+    .then((res) => {
+      toast.success('تم الترحيل بنجاح', { timeout: 2500, position: 'bottom-right', rtl: true });
+      if (isExternalTab.value && res.data?.car) {
+        onExternalCarPaymentsUpdated(res.data.car);
+      } else if (res.data?.car) {
+        const idx = car.value.findIndex((c) => c.id === res.data.car.id);
+        if (idx >= 0) {
+          car.value[idx] = { ...car.value[idx], ...res.data.car };
+        }
+        refresh();
+      } else {
+        refresh();
+      }
+    })
+    .catch((error) => {
+      toast.error(error?.response?.data?.error || 'تعذر الترحيل', {
+        timeout: 3500,
+        position: 'bottom-right',
+        rtl: true,
+      });
+    });
+}
+
 function saveExternalCar(payload) {
   const url = payload.id ? '/api/updateExternalCar' : '/api/storeExternalCar';
   axios.post(url, payload)
@@ -909,9 +952,24 @@ function confirmDelCarFav(V) {
                               <td class="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ item.year || '-' }}</td>
                               <td class="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ item.car_color || '-' }}</td>
                               <td class="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ item.car_number }}</td>
-                              <td class="px-3 py-2 sm:px-4 sm:py-2 text-center car-expenses-cell-dollar font-semibold">{{ formatNumber(item.paid_dollar) }}</td>
+                              <td class="px-3 py-2 sm:px-4 sm:py-2 text-center car-expenses-cell-dollar font-semibold">
+                                {{ formatNumber(item.paid_dollar) }}
+                                <span
+                                  v-if="item.expenses_posted"
+                                  class="block mt-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300"
+                                >مُرحَّل</span>
+                              </td>
                               <td class="px-3 py-2 sm:px-4 sm:py-2 text-center car-expenses-cell-dinar font-semibold">{{ formatNumber(item.paid_dinar) }}</td>
                               <td class="px-3 py-2 sm:px-4 sm:py-2 text-center">
+                                <button
+                                  v-if="!item.expenses_posted"
+                                  type="button"
+                                  class="px-2 py-1 text-white mx-1 bg-violet-600 rounded text-xs font-bold"
+                                  title="ترحيل للقاسة"
+                                  @click="postCarExpensesToWallet(item)"
+                                >
+                                  ترحيل
+                                </button>
                                 <button
                                   type="button"
                                   class="px-2 py-1 text-white mx-1 bg-emerald-600 rounded"
@@ -1000,9 +1058,24 @@ function confirmDelCarFav(V) {
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ car.car_color }}</td>
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ car.vin }}</td>
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center text-gray-800 dark:text-gray-100">{{ car.car_number }}</td> 
-                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center car-expenses-cell-dollar font-semibold">{{ formatNumber(calculateSum(car.carexpenses)) }}</td>
+                                    <td className="px-3 py-2 sm:px-4 sm:py-2 text-center car-expenses-cell-dollar font-semibold">
+                                      {{ formatNumber(calculateSum(car.carexpenses)) }}
+                                      <span
+                                        v-if="car.expenses_posted"
+                                        class="block mt-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300"
+                                      >مُرحَّل</span>
+                                    </td>
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center car-expenses-cell-dinar font-semibold">{{ formatNumber(calculateSumDinar(car.carexpenses)) }}</td>
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">
+                                    <button
+                                      v-if="!car.expenses_posted && (Number(calculateSum(car.carexpenses)) > 0 || Number(calculateSumDinar(car.carexpenses)) > 0)"
+                                      type="button"
+                                      class="px-2 py-1 text-white mx-1 bg-violet-600 rounded mt-3 sm:mt-0 text-xs font-bold"
+                                      title="ترحيل التوتال للقاسة"
+                                      @click="postCarExpensesToWallet(car)"
+                                    >
+                                      ترحيل
+                                    </button>
                                     <button
                                       v-if="!isExternalTab && carHasRegistrationWorkflow(car)"
                                       tabIndex="1"

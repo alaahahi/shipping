@@ -398,6 +398,7 @@ Route::post('convertDinarDollar',[AccountingController::class, 'convertDinarDoll
 Route::post('addCarFavorite',[CarExpensesController::class, 'addCarFavorite'])->name('addCarFavorite');
 Route::post('confirmExpensesCar',[CarExpensesController::class, 'confirmExpensesCar'])->name('confirmExpensesCar');
 Route::post('delExpensesCar',[CarExpensesController::class, 'delExpensesCar'])->name('delExpensesCar');
+Route::post('postCarExpensesToWallet',[CarExpensesController::class, 'postExpensesToWallet'])->name('postCarExpensesToWallet');
 Route::post('confirmArchiveCar',[CarExpensesController::class, 'confirmArchiveCar'])->name('confirmArchiveCar');
 Route::post('confirmArchiveCarBack',[CarExpensesController::class, 'confirmArchiveCarBack'])->name('confirmArchiveCarBack');
 Route::post('confirmArchiveAllCars',[CarExpensesController::class, 'confirmArchiveAllCars'])->name('confirmArchiveAllCars');
@@ -457,6 +458,7 @@ Route::middleware('auth')->group(function () {
     Route::post('storeExternalCarPayment', [ExternalCarController::class, 'storePayment'])->name('storeExternalCarPayment');
     Route::post('deleteExternalCarPayment', [ExternalCarController::class, 'deletePayment'])->name('deleteExternalCarPayment');
     Route::get('printExternalCar', [ExternalCarController::class, 'printDetails'])->name('printExternalCar');
+    Route::post('postExternalCarToWallet', [ExternalCarController::class, 'postExpensesToWallet'])->name('postExternalCarToWallet');
 
     // Car History APIs
     Route::get('car/{carId}/history', [CarHistoryController::class, 'getHistory'])->name('car.history.api');

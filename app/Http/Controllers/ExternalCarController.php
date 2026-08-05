@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ExternalCar;
 use App\Models\ExternalCarPayment;
 use App\Models\SystemConfig;
+use App\Services\CarExpensesWalletPostingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -137,6 +138,9 @@ class ExternalCarController extends Controller
         if (! $car || ! $this->canAccess($car, $ownerId)) {
             return Response::json(['error' => 'غير مصرح'], 403);
         }
+        if ($car->expenses_posted) {
+            return Response::json(['error' => 'السيارة مُرحَّلة محاسبيًا — لا يمكن إضافة دفعات'], 422);
+        }
 
         $amountDollar = (int) ($request->amount_dollar ?? 0);
         $amountDinar = (int) ($request->amount_dinar ?? 0);
@@ -178,6 +182,9 @@ class ExternalCarController extends Controller
         if (! $car || ! $this->canAccess($car, $ownerId)) {
             return Response::json(['error' => 'غير مصرح'], 403);
         }
+        if ($car->expenses_posted) {
+            return Response::json(['error' => 'السيارة مُرحَّلة محاسبيًا — لا يمكن حذف دفعات'], 422);
+        }
 
         DB::transaction(function () use ($payment, $car) {
             $payment->delete();
@@ -187,6 +194,49 @@ class ExternalCarController extends Controller
         return Response::json([
             'ok' => true,
             'car' => $car->fresh(),
+        ], 200);
+    }
+
+    public function postExpensesToWallet(Request $request, CarExpensesWalletPostingService $poster)
+    {
+        $ownerId = Auth::user()->owner_id;
+        $car = ExternalCar::with('payments')->find($request->id);
+
+        if (! $car || ! $this->canAccess($car, $ownerId)) {
+            return Response::json(['error' => 'غير مصرح'], 403);
+        }
+
+        if ($car->expenses_posted) {
+            return Response::json(['error' => 'تم ترحيل هذه السيارة مسبقاً'], 422);
+        }
+
+        $amountDollar = (int) $car->payments->sum('amount_dollar');
+        $amountDinar = (int) $car->payments->sum('amount_dinar');
+
+        $note = trim(sprintf(
+            'سيارة خارجية %s %s %s إجمالي %s$ / %s د',
+            $car->dealer_name ?? '',
+            $car->car_type ?? '',
+            $car->vin ?: ($car->car_number ?? ''),
+            number_format($amountDollar),
+            number_format($amountDinar)
+        ));
+
+        try {
+            $result = $poster->postTotalsToDefaultWallet($amountDollar, $amountDinar, $note);
+        } catch (\RuntimeException $e) {
+            return Response::json(['error' => $e->getMessage()], 422);
+        }
+
+        $car->update([
+            'expenses_posted' => true,
+            'expenses_posted_at' => now(),
+        ]);
+
+        return Response::json([
+            'ok' => true,
+            'car' => $car->fresh(),
+            'posted' => $result,
         ], 200);
     }
 
