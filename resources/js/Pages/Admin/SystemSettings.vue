@@ -1330,8 +1330,6 @@ function printCarTagDetails(tag) {
                   </div>
                 </div>
 
-                </div>
-
                 <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
                   <h3 class="text-base font-semibold mb-2 text-gray-900 dark:text-gray-100">
                     ترحيل مصاريف التسجيل
