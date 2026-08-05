@@ -99,6 +99,7 @@ class HandleInertiaRequests extends Middleware
                 }
             },
             'showAccountingExtraButtons' => (bool) config('app.show_accounting_extra_buttons', true),
+            'showKirkukTransfers' => (bool) config('app.show_kirkuk_transfers', false),
             'showContainerOpen' => (bool) config('app.show_container_open', false),
         ]);
     }

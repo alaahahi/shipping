@@ -31,6 +31,9 @@ const inertiaPage = usePage();
 const showAccountingExtraButtons = computed(
   () => inertiaPage.props.value?.showAccountingExtraButtons !== false
 );
+const showKirkukTransfers = computed(
+  () => inertiaPage.props.value?.showKirkukTransfers === true
+);
 
 const laravelData = ref({});
 const searchTerm = ref('');
@@ -858,9 +861,9 @@ function getOrangeColorClass(index) {
               
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
-              <div v-if="showAccountingExtraButtons || $page.props.auth.user.type_id==6">
+              <div v-if="showKirkukTransfers || $page.props.auth.user.type_id==6">
                           <button
-                          v-if="showAccountingExtraButtons && $page.props.auth.user.owner_id==1"
+                          v-if="showKirkukTransfers && $page.props.auth.user.owner_id==1"
                             type="button"
                             @click="openModalExpensesFromOtherBransh(1)"
                             style="min-width:150px;"

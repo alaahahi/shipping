@@ -35,11 +35,24 @@ return [
     |--------------------------------------------------------------------------
     |
     | When false, hides branch/company expense shortcuts on the Accounting page:
-    | company expenses, Haji Omran transfers, Kirkuk transfers, Dubai/Iran/border/COC.
+    | company expenses, Haji Omran transfers, Dubai/Iran/border/COC.
+    | (Kirkuk transfers use SHOW_KIRKUK_TRANSFERS separately.)
     |
     */
 
     'show_accounting_extra_buttons' => env('SHOW_ACCOUNTING_EXTRA_BUTTONS', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Show Kirkuk Transfers Button
+    |--------------------------------------------------------------------------
+    |
+    | When true, shows "تحويلات كركوك" on the Accounting page (owner_id == 1).
+    | Default: hidden.
+    |
+    */
+
+    'show_kirkuk_transfers' => filter_var(env('SHOW_KIRKUK_TRANSFERS', false), FILTER_VALIDATE_BOOLEAN),
 
     /*
     |--------------------------------------------------------------------------
