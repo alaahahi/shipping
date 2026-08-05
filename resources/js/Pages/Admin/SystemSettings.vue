@@ -4,9 +4,8 @@ import { Head, usePage } from '@inertiajs/inertia-vue3';
 import { ref, onMounted, computed } from 'vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
+import WalletUserSearchSelect from '@/Components/WalletUserSearchSelect.vue';
 import { useToast } from "vue-toastification";
-import { ModelListSelect } from 'vue-search-select';
-import 'vue-search-select/dist/VueSearchSelect.css';
 import axios from 'axios';
 
 const toast = useToast();
@@ -53,7 +52,7 @@ const systemConfig = ref({
   car_expenses_wallet_user_id: '',
 });
 
-const carExpensesWallets = ref([]);
+const carExpensesWalletSelected = ref(null);
 const logoInput = ref(null);
 const selectedLogoFile = ref(null);
 const logoPreview = ref('');
@@ -304,9 +303,10 @@ function loadSystemConfig() {
         wa_msg_client_debt: response.data.wa_msg_client_debt || '',
         wa_msg_payment_receipt: response.data.wa_msg_payment_receipt || '',
         wa_msg_car_added: response.data.wa_msg_car_added || '',
-        car_expenses_wallet_user_id: response.data.car_expenses_wallet_user_id || '',
+        car_expenses_wallet_user_id: response.data.car_expenses_wallet_user_id || null,
       };
-      carExpensesWallets.value = response.data.car_expenses_wallets || [];
+      carExpensesWalletSelected.value = response.data.car_expenses_wallet || null;
+      delete systemConfig.value.car_expenses_wallet;
       delete systemConfig.value.car_expenses_wallets;
       // تحويل JSON arrays إلى items للعرض
       const priceS = systemConfig.value.default_price_s || [];
@@ -417,7 +417,10 @@ function saveSystemConfig() {
         rtl: true,
       });
       systemConfig.value = response.data.config;
-      carExpensesWallets.value = response.data.config?.car_expenses_wallets || carExpensesWallets.value;
+      carExpensesWalletSelected.value = response.data.config?.car_expenses_wallet || null;
+      if (systemConfig.value.car_expenses_wallet) {
+        delete systemConfig.value.car_expenses_wallet;
+      }
       if (systemConfig.value.car_expenses_wallets) {
         delete systemConfig.value.car_expenses_wallets;
       }
@@ -1339,16 +1342,13 @@ function printCarTagDetails(tag) {
                   <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     القاصة الافتراضية التي يُرحَّل إليها توتال دفعات السيارة عند الإكمال
                   </p>
-                  <div class="max-w-md wallet-select-wrap">
+                  <div class="max-w-md">
                     <InputLabel for="car_expenses_wallet_user_id" value="قاسة الترحيل الافتراضية" />
-                    <ModelListSelect
+                    <WalletUserSearchSelect
                       id="car_expenses_wallet_user_id"
                       v-model="systemConfig.car_expenses_wallet_user_id"
-                      :list="carExpensesWallets"
-                      option-value="id"
-                      option-text="label"
+                      v-model:selected-user="carExpensesWalletSelected"
                       placeholder="ابحث بالاسم أو نوع الزبون..."
-                      class="mt-1"
                     />
                   </div>
                 </div>
@@ -1787,34 +1787,3 @@ function printCarTagDetails(tag) {
     </div>
   </AuthenticatedLayout>
 </template>
-
-<style scoped>
-.wallet-select-wrap :deep(.ui.search.selection.dropdown) {
-  width: 100%;
-  min-height: 2.75rem;
-  font-size: 0.95rem;
-}
-
-.wallet-select-wrap :deep(.ui.search.selection.dropdown .menu) {
-  max-height: 320px;
-}
-
-:global(.dark) .wallet-select-wrap :deep(.ui.search.selection.dropdown) {
-  background: rgb(17 24 39);
-  color: rgb(243 244 246);
-  border-color: rgb(75 85 99);
-}
-
-:global(.dark) .wallet-select-wrap :deep(.ui.search.selection.dropdown .menu) {
-  background: rgb(31 41 55);
-  color: rgb(243 244 246);
-}
-
-:global(.dark) .wallet-select-wrap :deep(.ui.search.selection.dropdown .menu .item) {
-  color: rgb(243 244 246);
-}
-
-:global(.dark) .wallet-select-wrap :deep(.ui.search.selection.dropdown .menu .item:hover) {
-  background: rgb(55 65 81);
-}
-</style>

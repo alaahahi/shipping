@@ -36,7 +36,9 @@ class SystemConfigController extends Controller
         }
 
         $payload = $config->toArray();
-        $payload['car_expenses_wallets'] = $this->carExpensesWalletOptions();
+        $payload['car_expenses_wallet'] = $this->resolveCarExpensesWallet(
+            $payload['car_expenses_wallet_user_id'] ?? null
+        );
 
         return Response::json($payload, 200);
     }
@@ -207,7 +209,9 @@ class SystemConfigController extends Controller
 
         $fresh = $config->fresh();
         $payload = $fresh->toArray();
-        $payload['car_expenses_wallets'] = $this->carExpensesWalletOptions();
+        $payload['car_expenses_wallet'] = $this->resolveCarExpensesWallet(
+            $payload['car_expenses_wallet_user_id'] ?? null
+        );
 
         return Response::json([
             'message' => 'تم تحديث الإعدادات بنجاح',
@@ -216,16 +220,118 @@ class SystemConfigController extends Controller
     }
 
     /**
-     * قاصات متاحة لاختيار قاصة ترحيل مصاريف التسجيل.
+     * بحث وباجينيشن لقاصات ترحيل مصاريف التسجيل (كل الأنواع).
      */
-    private function carExpensesWalletOptions(): array
+    public function searchCarExpensesWallets(Request $request)
     {
-        $ownerId = Auth::user()?->owner_id;
-        if (! $ownerId) {
-            return [];
+        if (auth()->user() && (int) auth()->user()->type_id === 10) {
+            return Response::json(['error' => 'غير مسموح الوصول'], 403);
         }
 
-        $typeLabels = [
+        $ownerId = Auth::user()?->owner_id;
+        if (! $ownerId) {
+            return Response::json([
+                'data' => [],
+                'current_page' => 1,
+                'last_page' => 1,
+                'total' => 0,
+            ]);
+        }
+
+        $q = trim((string) $request->input('q', ''));
+        $typeLabels = $this->userTypeLabels();
+        $matchingTypeNames = $this->typeNamesMatchingSearch($q, $typeLabels);
+
+        $paginator = User::query()
+            ->leftJoin('user_type', 'users.type_id', '=', 'user_type.id')
+            ->where('users.owner_id', $ownerId)
+            ->where('users.email', '!=', 'mainBox@account.com')
+            ->where('users.email', '!=', 'main@account.com')
+            ->whereHas('wallet')
+            ->when($q !== '', function ($query) use ($q, $matchingTypeNames) {
+                $query->where(function ($inner) use ($q, $matchingTypeNames) {
+                    $inner->where('users.name', 'like', '%'.$q.'%')
+                        ->orWhere('user_type.name', 'like', '%'.$q.'%');
+                    if ($matchingTypeNames !== []) {
+                        $inner->orWhereIn('user_type.name', $matchingTypeNames);
+                    }
+                });
+            })
+            ->orderBy('users.name')
+            ->select([
+                'users.id',
+                'users.name',
+                'users.type_id',
+                'user_type.name as type_name',
+            ])
+            ->paginate(15);
+
+        $paginator->getCollection()->transform(function ($user) use ($typeLabels) {
+            $typeName = $user->type_name;
+            $typeLabel = $typeName ? ($typeLabels[$typeName] ?? $typeName) : '—';
+
+            return [
+                'id' => (int) $user->id,
+                'name' => $user->name,
+                'type' => $typeName,
+                'type_label' => $typeLabel,
+                'label' => trim((string) $user->name).' — '.$typeLabel,
+            ];
+        });
+
+        return Response::json($paginator);
+    }
+
+    /**
+     * @return array{id:int,name:string,type:?string,type_label:string,label:string}|null
+     */
+    private function resolveCarExpensesWallet(mixed $userId): ?array
+    {
+        if (! $userId) {
+            return null;
+        }
+
+        $ownerId = Auth::user()?->owner_id;
+        if (! $ownerId) {
+            return null;
+        }
+
+        $typeLabels = $this->userTypeLabels();
+
+        $user = User::query()
+            ->leftJoin('user_type', 'users.type_id', '=', 'user_type.id')
+            ->where('users.owner_id', $ownerId)
+            ->where('users.id', (int) $userId)
+            ->select([
+                'users.id',
+                'users.name',
+                'users.type_id',
+                'user_type.name as type_name',
+            ])
+            ->first();
+
+        if (! $user) {
+            return null;
+        }
+
+        $typeName = $user->type_name;
+        $typeLabel = $typeName ? ($typeLabels[$typeName] ?? $typeName) : '—';
+
+        return [
+            'id' => (int) $user->id,
+            'name' => $user->name,
+            'type' => $typeName,
+            'type_label' => $typeLabel,
+            'label' => trim((string) $user->name).' — '.$typeLabel,
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function userTypeLabels(): array
+    {
+        return [
             'admin' => 'مدير النظام',
             'client' => 'زبون',
             'account' => 'حساب / صندوق',
@@ -236,31 +342,30 @@ class SystemConfigController extends Controller
             'internal_sales_client' => 'زبون مبيعات داخلية',
             'shipping_company' => 'شركة شحن',
         ];
+    }
 
-        return User::query()
-            ->with('userType:id,name')
-            ->where('owner_id', $ownerId)
-            ->where('email', '!=', 'mainBox@account.com')
-            ->where('email', '!=', 'main@account.com')
-            ->whereHas('wallet')
-            ->orderBy('name')
-            ->get(['id', 'name', 'type_id'])
-            ->map(function (User $user) use ($typeLabels) {
-                $typeName = $user->userType?->name;
-                $typeLabel = $typeName
-                    ? ($typeLabels[$typeName] ?? $typeName)
-                    : '—';
+    /**
+     * @param  array<string, string>  $typeLabels
+     * @return list<string>
+     */
+    private function typeNamesMatchingSearch(string $q, array $typeLabels): array
+    {
+        $q = mb_strtolower(trim($q));
+        if ($q === '') {
+            return [];
+        }
 
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'type' => $typeName,
-                    'type_label' => $typeLabel,
-                    'label' => trim($user->name).' — '.$typeLabel,
-                ];
-            })
-            ->values()
-            ->all();
+        $names = [];
+        foreach ($typeLabels as $name => $label) {
+            if (
+                str_contains(mb_strtolower((string) $label), $q)
+                || str_contains(mb_strtolower((string) $name), $q)
+            ) {
+                $names[] = $name;
+            }
+        }
+
+        return $names;
     }
 
     /**

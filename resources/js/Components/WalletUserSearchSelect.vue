@@ -123,10 +123,13 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="rootEl" class="relative w-full">
-    <button
-      type="button"
-      class="mt-1 flex w-full items-center justify-between gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-start text-sm text-gray-900 shadow-sm transition hover:border-indigo-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-indigo-400"
+    <div
+      role="button"
+      tabindex="0"
+      class="mt-1 flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-start text-sm text-gray-900 shadow-sm transition hover:border-indigo-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-indigo-400"
       @click="toggle"
+      @keydown.enter.prevent="toggle"
+      @keydown.space.prevent="toggle"
     >
       <span v-if="displayText" class="truncate">{{ displayText }}</span>
       <span v-else class="truncate text-gray-400 dark:text-gray-500">اختر قاصة...</span>
@@ -144,7 +147,7 @@ onBeforeUnmount(() => {
           <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
         </svg>
       </span>
-    </button>
+    </div>
 
     <div
       v-if="open"

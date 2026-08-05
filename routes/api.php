@@ -197,6 +197,7 @@ Route::post('send-external-transfer', [TransfersController::class, 'sendExternal
 // System Config routes
 Route::get('system-config', [SystemConfigController::class, 'index'])->name('systemConfig.index');
 Route::put('system-config', [SystemConfigController::class, 'update'])->name('systemConfig.update');
+Route::get('system-config/car-expenses-wallets', [SystemConfigController::class, 'searchCarExpensesWallets'])->name('systemConfig.carExpensesWallets');
 Route::post('system-config/logo', [SystemConfigController::class, 'uploadLogo'])->name('systemConfig.uploadLogo');
 Route::delete('system-config/logo', [SystemConfigController::class, 'deleteLogo'])->name('systemConfig.deleteLogo');
 Route::post('system-config/login-background', [SystemConfigController::class, 'uploadLoginBackground'])->name('systemConfig.uploadLoginBackground');
