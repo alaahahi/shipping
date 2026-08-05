@@ -334,8 +334,10 @@ class SystemConfigController extends Controller
         return [
             'admin' => 'مدير النظام',
             'client' => 'زبون',
+            'clientAnnual' => 'زبون سنوي',
             'account' => 'حساب / صندوق',
-            'selesKirkuk' => 'مبيعات',
+            'seles' => 'مبيعات',
+            'selesKirkuk' => 'مبيعات كركوك',
             'car_expenses' => 'مصاريف سيارات',
             'car_contract_user' => 'مستخدم عقود',
             'car_contract' => 'إدارة عقود',

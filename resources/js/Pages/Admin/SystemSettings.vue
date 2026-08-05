@@ -396,6 +396,7 @@ function saveSystemConfig() {
       : null,
   };
   delete dataToSave.car_expenses_wallets;
+  delete dataToSave.car_expenses_wallet;
   delete dataToSave.logo_url;
   delete dataToSave.login_background_url;
 
