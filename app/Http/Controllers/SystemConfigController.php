@@ -225,17 +225,40 @@ class SystemConfigController extends Controller
             return [];
         }
 
+        $typeLabels = [
+            'admin' => 'مدير النظام',
+            'client' => 'زبون',
+            'account' => 'حساب / صندوق',
+            'selesKirkuk' => 'مبيعات',
+            'car_expenses' => 'مصاريف سيارات',
+            'car_contract_user' => 'مستخدم عقود',
+            'car_contract' => 'إدارة عقود',
+            'internal_sales_client' => 'زبون مبيعات داخلية',
+            'shipping_company' => 'شركة شحن',
+        ];
+
         return User::query()
+            ->with('userType:id,name')
             ->where('owner_id', $ownerId)
             ->where('email', '!=', 'mainBox@account.com')
             ->where('email', '!=', 'main@account.com')
             ->whereHas('wallet')
             ->orderBy('name')
-            ->get(['id', 'name'])
-            ->map(fn (User $user) => [
-                'id' => $user->id,
-                'name' => $user->name,
-            ])
+            ->get(['id', 'name', 'type_id'])
+            ->map(function (User $user) use ($typeLabels) {
+                $typeName = $user->userType?->name;
+                $typeLabel = $typeName
+                    ? ($typeLabels[$typeName] ?? $typeName)
+                    : '—';
+
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'type' => $typeName,
+                    'type_label' => $typeLabel,
+                    'label' => trim($user->name).' — '.$typeLabel,
+                ];
+            })
             ->values()
             ->all();
     }

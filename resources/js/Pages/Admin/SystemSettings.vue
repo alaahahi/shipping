@@ -5,6 +5,8 @@ import { ref, onMounted, computed } from 'vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { useToast } from "vue-toastification";
+import { ModelListSelect } from 'vue-search-select';
+import 'vue-search-select/dist/VueSearchSelect.css';
 import axios from 'axios';
 
 const toast = useToast();
@@ -1337,22 +1339,17 @@ function printCarTagDetails(tag) {
                   <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     القاصة الافتراضية التي يُرحَّل إليها توتال دفعات السيارة عند الإكمال
                   </p>
-                  <div class="max-w-md">
+                  <div class="max-w-md wallet-select-wrap">
                     <InputLabel for="car_expenses_wallet_user_id" value="قاسة الترحيل الافتراضية" />
-                    <select
+                    <ModelListSelect
                       id="car_expenses_wallet_user_id"
                       v-model="systemConfig.car_expenses_wallet_user_id"
-                      class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                    >
-                      <option value="">— اختر قاصة —</option>
-                      <option
-                        v-for="wallet in carExpensesWallets"
-                        :key="wallet.id"
-                        :value="wallet.id"
-                      >
-                        {{ wallet.name }}
-                      </option>
-                    </select>
+                      :list="carExpensesWallets"
+                      option-value="id"
+                      option-text="label"
+                      placeholder="ابحث بالاسم أو نوع الزبون..."
+                      class="mt-1"
+                    />
                   </div>
                 </div>
 
@@ -1790,3 +1787,34 @@ function printCarTagDetails(tag) {
     </div>
   </AuthenticatedLayout>
 </template>
+
+<style scoped>
+.wallet-select-wrap :deep(.ui.search.selection.dropdown) {
+  width: 100%;
+  min-height: 2.75rem;
+  font-size: 0.95rem;
+}
+
+.wallet-select-wrap :deep(.ui.search.selection.dropdown .menu) {
+  max-height: 320px;
+}
+
+:global(.dark) .wallet-select-wrap :deep(.ui.search.selection.dropdown) {
+  background: rgb(17 24 39);
+  color: rgb(243 244 246);
+  border-color: rgb(75 85 99);
+}
+
+:global(.dark) .wallet-select-wrap :deep(.ui.search.selection.dropdown .menu) {
+  background: rgb(31 41 55);
+  color: rgb(243 244 246);
+}
+
+:global(.dark) .wallet-select-wrap :deep(.ui.search.selection.dropdown .menu .item) {
+  color: rgb(243 244 246);
+}
+
+:global(.dark) .wallet-select-wrap :deep(.ui.search.selection.dropdown .menu .item:hover) {
+  background: rgb(55 65 81);
+}
+</style>
