@@ -453,6 +453,10 @@ Route::middleware('auth')->group(function () {
     Route::post('updateExternalCar', [ExternalCarController::class, 'update'])->name('updateExternalCar');
     Route::get('getIndexExternalCars', [ExternalCarController::class, 'getIndex'])->name('getIndexExternalCars');
     Route::post('deleteExternalCar', [ExternalCarController::class, 'delete'])->name('deleteExternalCar');
+    Route::get('getExternalCarPayments', [ExternalCarController::class, 'getPayments'])->name('getExternalCarPayments');
+    Route::post('storeExternalCarPayment', [ExternalCarController::class, 'storePayment'])->name('storeExternalCarPayment');
+    Route::post('deleteExternalCarPayment', [ExternalCarController::class, 'deletePayment'])->name('deleteExternalCarPayment');
+    Route::get('printExternalCar', [ExternalCarController::class, 'printDetails'])->name('printExternalCar');
 
     // Car History APIs
     Route::get('car/{carId}/history', [CarHistoryController::class, 'getHistory'])->name('car.history.api');

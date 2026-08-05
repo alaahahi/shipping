@@ -2,9 +2,11 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/inertia-vue3';
 import ModalExternalCarForm from '@/Components/ModalExternalCarForm.vue';
+import ModalExternalCarPayments from '@/Components/ModalExternalCarPayments.vue';
 import ModalDelCar from '@/Components/ModalDelCar.vue';
 import edit from '@/Components/icon/edit.vue';
 import trash from '@/Components/icon/trash.vue';
+import print from '@/Components/icon/print.vue';
 import InfiniteLoading from 'v3-infinite-loading';
 import 'v3-infinite-loading/lib/style.css';
 import debounce from 'lodash/debounce';
@@ -23,6 +25,8 @@ const resetData = ref(0);
 const totalPaidDollar = ref(0);
 const totalPaidDinar = ref(0);
 const showFormModal = ref(false);
+const showPaymentsModal = ref(false);
+const carForPayments = ref(null);
 const showDelModal = ref(false);
 const formData = ref({});
 
@@ -42,8 +46,6 @@ function emptyForm() {
     year: '',
     car_color: '',
     car_number: '',
-    paid_dollar: 0,
-    paid_dinar: 0,
     note: '',
     date: getTodayDate(),
   };
@@ -80,12 +82,24 @@ function openEditModal(car) {
     year: car.year ?? '',
     car_color: car.car_color ?? '',
     car_number: car.car_number ?? '',
-    paid_dollar: car.paid_dollar ?? 0,
-    paid_dinar: car.paid_dinar ?? 0,
     note: car.note ?? '',
     date: formatDate(car.date) || getTodayDate(),
   };
   showFormModal.value = true;
+}
+
+function openPaymentsModal(car) {
+  carForPayments.value = car;
+  showPaymentsModal.value = true;
+}
+
+function onPaymentsUpdated(updatedCar) {
+  if (!updatedCar?.id) return;
+  const idx = cars.value.findIndex((c) => c.id === updatedCar.id);
+  if (idx >= 0) {
+    cars.value[idx] = { ...cars.value[idx], ...updatedCar };
+  }
+  refresh();
 }
 
 function openDeleteModal(car) {
@@ -255,7 +269,17 @@ function confirmDelete(payload) {
                   <td class="border dark:border-gray-700 px-2 py-2 text-center">{{ formatNumber(car.paid_dollar) }}</td>
                   <td class="border dark:border-gray-700 px-2 py-2 text-center">{{ formatNumber(car.paid_dinar) }}</td>
                   <td class="border dark:border-gray-700 px-2 py-2 text-center">
-                    <div class="flex justify-center gap-2">
+                    <div class="flex justify-center gap-2 flex-wrap">
+                      <button type="button" class="px-2 py-1 bg-emerald-600 text-white rounded text-xs" @click="openPaymentsModal(car)">
+                        دفعات
+                      </button>
+                      <a
+                        :href="`/api/printExternalCar?external_car_id=${car.id}`"
+                        target="_blank"
+                        class="px-2 py-1 bg-blue-500 text-white rounded inline-flex"
+                      >
+                        <print />
+                      </a>
                       <button type="button" class="text-blue-600" @click="openEditModal(car)">
                         <edit />
                       </button>
@@ -284,6 +308,13 @@ function confirmDelete(payload) {
       :form-data="formData"
       @save="saveCar"
       @close="showFormModal = false"
+    />
+
+    <ModalExternalCarPayments
+      :show="showPaymentsModal"
+      :car="carForPayments"
+      @updated="onPaymentsUpdated"
+      @close="showPaymentsModal = false; carForPayments = null"
     />
 
     <ModalDelCar

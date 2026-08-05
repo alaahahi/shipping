@@ -37,4 +37,16 @@ class ExternalCar extends Model
         'paid_dinar' => 'integer',
         'date' => 'date',
     ];
+
+    public function payments()
+    {
+        return $this->hasMany(ExternalCarPayment::class, 'external_car_id');
+    }
+
+    public function syncPaidTotals(): void
+    {
+        $this->paid_dollar = (int) $this->payments()->sum('amount_dollar');
+        $this->paid_dinar = (int) $this->payments()->sum('amount_dinar');
+        $this->save();
+    }
 }

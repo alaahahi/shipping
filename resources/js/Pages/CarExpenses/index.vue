@@ -10,6 +10,7 @@ import ModalArchiveCarLink from "@/Components/ModalArchiveCarLink.vue";
 import ModalUnlinkCar from "@/Components/ModalUnlinkCar.vue";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
 import ModalExternalCarForm from "@/Components/ModalExternalCarForm.vue";
+import ModalExternalCarPayments from "@/Components/ModalExternalCarPayments.vue";
 
 
 import { useToast } from "vue-toastification";
@@ -42,6 +43,8 @@ let showModalArchiveCarLink = ref(false);
 let showModalUnlinkCar = ref(false);
 let showModalDelCar = ref(false);
 let showModalExternalCarForm = ref(false);
+let showModalExternalCarPayments = ref(false);
+let externalCarForPayments = ref(null);
 let externalDeleteMode = ref(false);
 
 let car = ref([]);
@@ -351,8 +354,6 @@ function emptyExternalForm() {
     year: '',
     car_color: '',
     car_number: '',
-    paid_dollar: 0,
-    paid_dinar: 0,
     note: '',
     date: getTodayDate(),
   };
@@ -373,8 +374,6 @@ function openExternalCarForm(row = null) {
       year: row.year ?? '',
       car_color: row.car_color ?? '',
       car_number: row.car_number ?? '',
-      paid_dollar: row.paid_dollar ?? 0,
-      paid_dinar: row.paid_dinar ?? 0,
       note: row.note ?? '',
       date: formatExternalDate(row.date) || getTodayDate(),
     };
@@ -382,6 +381,20 @@ function openExternalCarForm(row = null) {
     formData.value = emptyExternalForm();
   }
   showModalExternalCarForm.value = true;
+}
+
+function openExternalCarPayments(row) {
+  externalCarForPayments.value = row;
+  showModalExternalCarPayments.value = true;
+}
+
+function onExternalCarPaymentsUpdated(updatedCar) {
+  if (!updatedCar?.id) return;
+  const idx = car.value.findIndex((c) => c.id === updatedCar.id);
+  if (idx >= 0) {
+    car.value[idx] = { ...car.value[idx], ...updatedCar };
+  }
+  getResultsCar();
 }
 
 function saveExternalCar(payload) {
@@ -648,6 +661,13 @@ function confirmDelCarFav(V) {
       @close="showModalExternalCarForm = false"
     />
 
+    <ModalExternalCarPayments
+      :show="showModalExternalCarPayments"
+      :car="externalCarForPayments"
+      @updated="onExternalCarPaymentsUpdated"
+      @close="showModalExternalCarPayments = false; externalCarForPayments = null"
+    />
+
     <AuthenticatedLayout>
         <div class="py-2" v-if="$page.props.auth.user.type_id==1||$page.props.auth.user.type_id==7">
           <ul class="sm:px-6 lg:px-8 text-sm font-medium text-center rounded-lg flex dark:divide-gray-700">
@@ -892,6 +912,23 @@ function confirmDelCarFav(V) {
                               <td class="px-3 py-2 sm:px-4 sm:py-2 text-center car-expenses-cell-dollar font-semibold">{{ formatNumber(item.paid_dollar) }}</td>
                               <td class="px-3 py-2 sm:px-4 sm:py-2 text-center car-expenses-cell-dinar font-semibold">{{ formatNumber(item.paid_dinar) }}</td>
                               <td class="px-3 py-2 sm:px-4 sm:py-2 text-center">
+                                <button
+                                  type="button"
+                                  class="px-2 py-1 text-white mx-1 bg-emerald-600 rounded"
+                                  title="دفعات"
+                                  @click="openExternalCarPayments(item)"
+                                >
+                                  دفعات
+                                </button>
+                                <a
+                                  target="_blank"
+                                  style="display: inline-flex;"
+                                  :href="`/api/printExternalCar?external_car_id=${item.id}`"
+                                  class="px-2 py-1 text-white mx-1 bg-blue-500 rounded"
+                                  title="طباعة"
+                                >
+                                  <print />
+                                </a>
                                 <button
                                   type="button"
                                   class="px-2 py-1 text-white mx-1 bg-blue-600 rounded"
