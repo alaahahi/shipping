@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use App\Models\SystemConfig;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -33,7 +35,10 @@ class SystemConfigController extends Controller
             ]);
         }
 
-        return Response::json($config, 200);
+        $payload = $config->toArray();
+        $payload['car_expenses_wallets'] = $this->carExpensesWalletOptions();
+
+        return Response::json($payload, 200);
     }
 
     /**
@@ -72,6 +77,7 @@ class SystemConfigController extends Controller
             'wa_msg_client_debt' => 'nullable|string|max:4096',
             'wa_msg_payment_receipt' => 'nullable|string|max:4096',
             'wa_msg_car_added' => 'nullable|string|max:4096',
+            'car_expenses_wallet_user_id' => 'nullable|integer|exists:users,id',
         ]);
 
         if ($validator->fails()) {
@@ -189,14 +195,49 @@ class SystemConfigController extends Controller
             if ($request->has('wa_msg_car_added')) {
                 $updateData['wa_msg_car_added'] = $request->wa_msg_car_added;
             }
+            if ($request->exists('car_expenses_wallet_user_id')) {
+                $walletUserId = $request->input('car_expenses_wallet_user_id');
+                $updateData['car_expenses_wallet_user_id'] = $walletUserId !== null && $walletUserId !== ''
+                    ? (int) $walletUserId
+                    : null;
+            }
 
             $config->update($updateData);
         }
 
+        $fresh = $config->fresh();
+        $payload = $fresh->toArray();
+        $payload['car_expenses_wallets'] = $this->carExpensesWalletOptions();
+
         return Response::json([
             'message' => 'تم تحديث الإعدادات بنجاح',
-            'config' => $config->fresh(),
+            'config' => $payload,
         ], 200);
+    }
+
+    /**
+     * قاصات متاحة لاختيار قاصة ترحيل مصاريف التسجيل.
+     */
+    private function carExpensesWalletOptions(): array
+    {
+        $ownerId = Auth::user()?->owner_id;
+        if (! $ownerId) {
+            return [];
+        }
+
+        return User::query()
+            ->where('owner_id', $ownerId)
+            ->where('email', '!=', 'mainBox@account.com')
+            ->where('email', '!=', 'main@account.com')
+            ->whereHas('wallet')
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn (User $user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+            ])
+            ->values()
+            ->all();
     }
 
     /**

@@ -44,6 +44,7 @@ class SystemConfig extends Model
         'wa_msg_client_debt',
         'wa_msg_payment_receipt',
         'wa_msg_car_added',
+        'car_expenses_wallet_user_id',
     ];
 
     protected $attributes = [
@@ -71,6 +72,7 @@ class SystemConfig extends Model
         'wa_notify_client_debt' => 'boolean',
         'wa_notify_payment_receipt' => 'boolean',
         'wa_notify_car_added' => 'boolean',
+        'car_expenses_wallet_user_id' => 'integer',
     ];
 
     protected $appends = [

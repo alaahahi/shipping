@@ -48,8 +48,10 @@ const systemConfig = ref({
   wa_msg_client_debt: '',
   wa_msg_payment_receipt: '',
   wa_msg_car_added: '',
+  car_expenses_wallet_user_id: '',
 });
 
+const carExpensesWallets = ref([]);
 const logoInput = ref(null);
 const selectedLogoFile = ref(null);
 const logoPreview = ref('');
@@ -300,7 +302,10 @@ function loadSystemConfig() {
         wa_msg_client_debt: response.data.wa_msg_client_debt || '',
         wa_msg_payment_receipt: response.data.wa_msg_payment_receipt || '',
         wa_msg_car_added: response.data.wa_msg_car_added || '',
+        car_expenses_wallet_user_id: response.data.car_expenses_wallet_user_id || '',
       };
+      carExpensesWallets.value = response.data.car_expenses_wallets || [];
+      delete systemConfig.value.car_expenses_wallets;
       // تحويل JSON arrays إلى items للعرض
       const priceS = systemConfig.value.default_price_s || [];
       const priceP = systemConfig.value.default_price_p || [];
@@ -384,7 +389,13 @@ function saveSystemConfig() {
     contract_template: systemConfig.value.contract_template ?? 1,
     contract_currency: systemConfig.value.contract_currency ?? 'usd',
     primary_color: systemConfig.value.primary_color ?? '#c00',
+    car_expenses_wallet_user_id: systemConfig.value.car_expenses_wallet_user_id
+      ? Number(systemConfig.value.car_expenses_wallet_user_id)
+      : null,
   };
+  delete dataToSave.car_expenses_wallets;
+  delete dataToSave.logo_url;
+  delete dataToSave.login_background_url;
 
   // الأسعار الافتراضية للمدير (type_id=1) فقط
   if (isAdmin.value) {
@@ -404,6 +415,10 @@ function saveSystemConfig() {
         rtl: true,
       });
       systemConfig.value = response.data.config;
+      carExpensesWallets.value = response.data.config?.car_expenses_wallets || carExpensesWallets.value;
+      if (systemConfig.value.car_expenses_wallets) {
+        delete systemConfig.value.car_expenses_wallets;
+      }
       defaultPriceSItems.value = convertArrayToItems(systemConfig.value.default_price_s || []);
       defaultPricePItems.value = convertArrayToItems(systemConfig.value.default_price_p || []);
       
@@ -1312,6 +1327,34 @@ function printCarTagDetails(tag) {
                         </p>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                </div>
+
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                  <h3 class="text-base font-semibold mb-2 text-gray-900 dark:text-gray-100">
+                    ترحيل مصاريف التسجيل
+                  </h3>
+                  <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    القاصة الافتراضية التي يُرحَّل إليها توتال دفعات السيارة عند الإكمال
+                  </p>
+                  <div class="max-w-md">
+                    <InputLabel for="car_expenses_wallet_user_id" value="قاسة الترحيل الافتراضية" />
+                    <select
+                      id="car_expenses_wallet_user_id"
+                      v-model="systemConfig.car_expenses_wallet_user_id"
+                      class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                    >
+                      <option value="">— اختر قاصة —</option>
+                      <option
+                        v-for="wallet in carExpensesWallets"
+                        :key="wallet.id"
+                        :value="wallet.id"
+                      >
+                        {{ wallet.name }}
+                      </option>
+                    </select>
                   </div>
                 </div>
 
