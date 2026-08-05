@@ -55,6 +55,7 @@ let transactionsByTag = ref([]);
 let newTagName = ref('');
 let driversSummary = ref([]);
 let driversSummaryLoaded = ref(false);
+let showDriversSummary = ref(false);
 let showModalDriverLoan = ref(false);
 let showModalDriverLoanRepayment = ref(false);
 let loanForRepayment = ref(null);
@@ -152,16 +153,17 @@ const getResults = async ($state) => {
 };
  
 
-function loadTagOptionsIfNeeded() {
-  if (!hasWalletTags.value) return;
-  axios.get('/api/paymentTags').then((r) => {
+function loadTagOptionsIfNeeded(force = false) {
+  if (!hasWalletTags.value) return Promise.resolve([]);
+  if (!force && tagOptions.value.length) return Promise.resolve(tagOptions.value);
+  return axios.get('/api/paymentTags').then((r) => {
     tagOptions.value = r.data || [];
-  }).catch(() => {});
+    return tagOptions.value;
+  }).catch(() => tagOptions.value);
 }
 
 function prepareWalletModalData() {
-  loadTagOptionsIfNeeded();
-  loadDriversSummary();
+  return loadTagOptionsIfNeeded(true);
 }
 
 const driverSuggestions = computed(() => {
@@ -232,12 +234,18 @@ function openModalUploader(tran){
   showModalUploader.value = true;
 }
 function openModalEditTransaction(tran) {
+  prepareWalletModalData();
   tranIdForEdit.value = tran;
   showModalEditTransaction.value = true;
 }
 
 const hasWalletTags = ref(!!props.boxes?.has_wallet_tags);
 watch(() => props.boxes?.has_wallet_tags, (v) => { hasWalletTags.value = !!v; }, { immediate: true });
+watch(hasWalletTags, (enabled) => {
+  if (enabled) {
+    loadTagOptionsIfNeeded(true);
+  }
+}, { immediate: true });
 
 async function toggleWalletTagsFlag() {
   if (!props.boxes?.id) return;
@@ -247,6 +255,9 @@ async function toggleWalletTagsFlag() {
       has_wallet_tags: !hasWalletTags.value,
     });
     hasWalletTags.value = data.has_wallet_tags;
+    if (hasWalletTags.value) {
+      loadTagOptionsIfNeeded(true);
+    }
   } catch (e) {
     console.error(e);
   }
@@ -475,11 +486,11 @@ function printWallet() {
 
 function setActiveTab(tab) {
   if (tab === 'tags' && !tagsLoaded.value) {
-    axios.get('/api/paymentTags').then(r => {
-      tagOptions.value = r.data || [];
+    axios.get('/api/paymentTags', { params: { managed_only: 1 } }).then(r => {
       tagsList.value = r.data || [];
       tagsLoaded.value = true;
     });
+    loadTagOptionsIfNeeded(true);
   }
   activeTab.value = tab;
 }
@@ -489,7 +500,7 @@ function addTag() {
   if (!name) return;
   axios.post('/api/paymentTags', { name }).then(r => {
     tagsList.value = [...tagsList.value, r.data];
-    tagOptions.value = [...tagOptions.value, r.data];
+    loadTagOptionsIfNeeded(true);
     newTagName.value = '';
   }).catch(() => {});
 }
@@ -532,6 +543,7 @@ function fetchTagTransactions() {
 }
 
 function loadDriversSummary() {
+  showDriversSummary.value = true;
   if (driversSummaryLoaded.value) return;
   axios.get('/getIndexAccounting', { params: { user_id: props.boxes.id, type: 'wallet', group_by_driver: 1, limit: 1 } }).then(r => {
     driversSummary.value = r.data.drivers_summary || [];
@@ -947,7 +959,7 @@ function printTagDetails() {
                   <InputLabel for="filter_tag" value="فلتر التاغ" />
                   <select id="filter_tag" v-model="filterTag" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" @change="debouncedGetResultsCar()">
                     <option value="">— الكل —</option>
-                    <option v-for="t in tagOptions" :key="t.id" :value="t.name">{{ t.name }}</option>
+                    <option v-for="t in tagOptions" :key="String(t.id)" :value="t.name">{{ t.name }}</option>
                   </select>
                 </div>
                 <div class="flex items-end">
@@ -988,7 +1000,7 @@ function printTagDetails() {
                 </div>
               </div>
             </div>
-            <div v-if="hasWalletTags && driversSummary.length" class="mx-4 mb-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/60">
+            <div v-if="hasWalletTags && showDriversSummary && driversSummary.length" class="mx-4 mb-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/60">
               <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">مجموع التوصيلات حسب السائق</h4>
               <div class="overflow-x-auto">
                 <table class="w-full text-sm text-right text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700">
@@ -1034,9 +1046,10 @@ function printTagDetails() {
          
                   <tr v-for="(tran, index) in   transactions" :key="tran.id" 
                       :class="[
-                        tran.type == 'inUserAmanah' ? 'bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-500' :
-                        tran.type == 'outUserAmanah' ? 'bg-orange-100 dark:bg-orange-900 border-l-4 border-orange-500' :
-                        tran.type != 'inUser' ? 'bg-red-100 dark:bg-red-900' : 'bg-green-100 dark:bg-green-900'
+                        tran.type == 'inUserAmanah' ? 'bg-blue-100 dark:bg-blue-900 border-r-4 border-blue-500' :
+                        tran.type == 'outUserAmanah' ? 'bg-orange-100 dark:bg-orange-900 border-r-4 border-orange-500' :
+                        tran.type == 'inUser' ? 'bg-green-100 dark:bg-green-900/40 border-r-4 border-green-500' :
+                        'bg-red-100 dark:bg-red-900/40 border-r-4 border-red-500'
                       ]"  
                       class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
 

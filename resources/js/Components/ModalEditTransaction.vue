@@ -90,7 +90,11 @@ async function save() {
                 <input v-if="!tagOptions.length" v-model="form.tag" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm" />
                 <select v-else v-model="form.tag" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm">
                   <option value="">— بدون تاغ —</option>
-                  <option v-for="t in tagOptions" :key="t.id" :value="t.name">{{ t.name }}</option>
+                  <option
+                    v-if="form.tag && !tagOptions.some((t) => t.name === form.tag)"
+                    :value="form.tag"
+                  >{{ form.tag }}</option>
+                  <option v-for="t in tagOptions" :key="String(t.id)" :value="t.name">{{ t.name }}</option>
                 </select>
               </div>
               <div>

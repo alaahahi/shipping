@@ -1326,7 +1326,55 @@ class AccountingController extends Controller
     public function getPaymentTags(Request $request)
     {
         $owner_id = Auth::user()->owner_id;
-        $tags = PaymentTag::where('owner_id', $owner_id)->orderBy('name')->get(['id', 'name']);
+        $managedOnly = filter_var($request->get('managed_only', false), FILTER_VALIDATE_BOOLEAN);
+
+        $managed = PaymentTag::where('owner_id', $owner_id)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        if ($managedOnly) {
+            return Response::json($managed, 200);
+        }
+
+        $walletIds = Wallet::query()
+            ->whereIn('user_id', User::where('owner_id', $owner_id)->select('id'))
+            ->pluck('id');
+
+        $usedNames = Transactions::query()
+            ->when($walletIds->isNotEmpty(), fn ($q) => $q->whereIn('wallet_id', $walletIds))
+            ->whereNotNull('tag')
+            ->where('tag', '!=', '')
+            ->distinct()
+            ->orderBy('tag')
+            ->pluck('tag');
+
+        $byName = [];
+        foreach ($managed as $tag) {
+            $key = mb_strtolower(trim((string) $tag->name));
+            if ($key === '') {
+                continue;
+            }
+            $byName[$key] = [
+                'id' => $tag->id,
+                'name' => $tag->name,
+            ];
+        }
+
+        foreach ($usedNames as $name) {
+            $trimmed = trim((string) $name);
+            $key = mb_strtolower($trimmed);
+            if ($key === '' || isset($byName[$key])) {
+                continue;
+            }
+            $byName[$key] = [
+                'id' => 'used:'.$trimmed,
+                'name' => $trimmed,
+            ];
+        }
+
+        $tags = array_values($byName);
+        usort($tags, fn ($a, $b) => strcmp((string) $a['name'], (string) $b['name']));
+
         return Response::json($tags, 200);
     }
 

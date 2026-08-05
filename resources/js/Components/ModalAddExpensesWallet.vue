@@ -135,7 +135,7 @@ const restform = () => {
                           <input v-if="!tagOptions.length" id="tag_select" type="text" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md shadow-sm" v-model="form.tag" placeholder="اختياري" />
                           <select v-else id="tag_select" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md shadow-sm" v-model="form.tag">
                             <option value="">— بدون تاغ —</option>
-                            <option v-for="t in tagOptions" :key="t.id" :value="t.name">{{ t.name }}</option>
+                            <option v-for="t in tagOptions" :key="String(t.id)" :value="t.name">{{ t.name }}</option>
                           </select>
                         </div>
 
