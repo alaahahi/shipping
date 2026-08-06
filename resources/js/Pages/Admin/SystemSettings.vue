@@ -1343,14 +1343,19 @@ function printCarTagDetails(tag) {
                   <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     القاصة الافتراضية التي يُرحَّل إليها توتال دفعات السيارة عند الإكمال
                   </p>
-                  <div class="max-w-md">
+                  <div class="max-w-lg">
                     <InputLabel for="car_expenses_wallet_user_id" value="قاسة الترحيل الافتراضية" />
                     <WalletUserSearchSelect
-                      id="car_expenses_wallet_user_id"
                       v-model="systemConfig.car_expenses_wallet_user_id"
                       v-model:selected-user="carExpensesWalletSelected"
-                      placeholder="ابحث بالاسم أو نوع الزبون..."
                     />
+                    <p
+                      v-if="carExpensesWalletSelected?.name"
+                      class="mt-2 text-xs text-green-700 dark:text-green-400"
+                    >
+                      المحدد حالياً: {{ carExpensesWalletSelected.name }}
+                      — {{ carExpensesWalletSelected.type_label || '—' }}
+                    </p>
                   </div>
                 </div>
 
