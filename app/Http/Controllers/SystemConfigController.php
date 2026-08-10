@@ -245,13 +245,18 @@ class SystemConfigController extends Controller
         $paginator = User::query()
             ->leftJoin('user_type', 'users.type_id', '=', 'user_type.id')
             ->where('users.owner_id', $ownerId)
-            ->where('users.email', '!=', 'mainBox@account.com')
-            ->where('users.email', '!=', 'main@account.com')
+            ->where(function ($query) {
+                $query->whereNull('users.email')
+                    ->orWhereNotIn('users.email', ['mainBox@account.com', 'main@account.com']);
+            })
             ->whereHas('wallet')
             ->when($q !== '', function ($query) use ($q, $matchingTypeNames) {
                 $query->where(function ($inner) use ($q, $matchingTypeNames) {
                     $inner->where('users.name', 'like', '%'.$q.'%')
                         ->orWhere('user_type.name', 'like', '%'.$q.'%');
+                    if (ctype_digit($q)) {
+                        $inner->orWhere('users.id', (int) $q);
+                    }
                     if ($matchingTypeNames !== []) {
                         $inner->orWhereIn('user_type.name', $matchingTypeNames);
                     }
@@ -264,7 +269,7 @@ class SystemConfigController extends Controller
                 'users.type_id',
                 'user_type.name as type_name',
             ])
-            ->paginate(15);
+            ->paginate(20);
 
         $paginator->getCollection()->transform(function ($user) use ($typeLabels) {
             $typeName = $user->type_name;
@@ -275,7 +280,7 @@ class SystemConfigController extends Controller
                 'name' => $user->name,
                 'type' => $typeName,
                 'type_label' => $typeLabel,
-                'label' => trim((string) $user->name).' — '.$typeLabel,
+                'label' => trim((string) $user->name).' — '.$typeLabel.' (#'.$user->id.')',
             ];
         });
 
@@ -322,7 +327,7 @@ class SystemConfigController extends Controller
             'name' => $user->name,
             'type' => $typeName,
             'type_label' => $typeLabel,
-            'label' => trim((string) $user->name).' — '.$typeLabel,
+            'label' => trim((string) $user->name).' — '.$typeLabel.' (#'.$user->id.')',
         ];
     }
 

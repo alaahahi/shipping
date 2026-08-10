@@ -94,7 +94,7 @@ onMounted(() => {
       v-model="search"
       type="search"
       class="mt-1 block w-full dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600"
-      placeholder="ابحث بالاسم أو نوع الزبون..."
+      placeholder="ابحث بالاسم أو الرقم أو نوع الزبون..."
     />
 
     <select
@@ -109,7 +109,7 @@ onMounted(() => {
         :key="item.id"
         :value="item.id"
       >
-        {{ item.name }} — {{ item.type_label || item.type || '—' }}
+        {{ item.name }} — {{ item.type_label || item.type || '—' }} (#{{ item.id }})
       </option>
     </select>
 

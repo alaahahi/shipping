@@ -137,35 +137,35 @@ async function deletePayment(payment) {
   <Transition name="modal">
     <div v-if="show" class="modal-mask">
       <div class="modal-wrapper max-h-[90vh]">
-        <div class="modal-container external-pay-modal overflow-auto max-h-[90vh]">
+        <div class="modal-container overflow-auto max-h-[90vh] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100">
           <div class="px-4 pt-4">
             <h2 class="text-center text-lg font-bold text-gray-900 dark:text-white">دفعات السيارة الخارجية</h2>
-            <p class="text-center text-sm text-gray-500 dark:text-gray-300 mt-1">{{ carTitle }}</p>
+            <p class="text-center text-sm text-gray-600 dark:text-gray-300 mt-1">{{ carTitle }}</p>
             <div class="flex justify-center gap-4 mt-2 text-sm font-semibold">
-              <span class="text-emerald-600">{{ formatNumber(paidDollar) }} $</span>
-              <span class="text-indigo-600">{{ formatNumber(paidDinar) }} د</span>
+              <span class="text-emerald-700 dark:text-emerald-400">{{ formatNumber(paidDollar) }} $</span>
+              <span class="text-indigo-700 dark:text-indigo-400">{{ formatNumber(paidDinar) }} د</span>
             </div>
-            <p v-if="car?.expenses_posted" class="text-center text-xs font-bold text-emerald-600 mt-2">
+            <p v-if="car?.expenses_posted" class="text-center text-xs font-bold text-emerald-700 dark:text-emerald-400 mt-2">
               مُرحَّل محاسبيًا — لا يمكن تعديل الدفعات
             </p>
           </div>
 
           <div v-if="!car?.expenses_posted" class="px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-3">
             <label class="block">
-              <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">مبلغ دولار</span>
-              <input v-model="form.amount_dollar" type="number" min="0" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white px-3 py-2 text-sm" />
+              <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">مبلغ دولار</span>
+              <input v-model="form.amount_dollar" type="number" min="0" class="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white px-3 py-2 text-sm" />
             </label>
             <label class="block">
-              <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">مبلغ دينار</span>
-              <input v-model="form.amount_dinar" type="number" min="0" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white px-3 py-2 text-sm" />
+              <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">مبلغ دينار</span>
+              <input v-model="form.amount_dinar" type="number" min="0" class="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white px-3 py-2 text-sm" />
             </label>
             <label class="block">
-              <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">التاريخ</span>
-              <input v-model="form.created" type="date" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white px-3 py-2 text-sm" />
+              <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">التاريخ</span>
+              <input v-model="form.created" type="date" class="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white px-3 py-2 text-sm" />
             </label>
             <label class="block">
-              <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">ملاحظة</span>
-              <input v-model="form.note" type="text" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white px-3 py-2 text-sm" />
+              <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">ملاحظة</span>
+              <input v-model="form.note" type="text" class="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white px-3 py-2 text-sm" />
             </label>
           </div>
 
@@ -198,10 +198,10 @@ async function deletePayment(payment) {
           </div>
 
           <div class="px-4 pb-4">
-            <div v-if="loading" class="text-center text-gray-500 py-4">جاري التحميل...</div>
+            <div v-if="loading" class="text-center text-gray-500 dark:text-gray-400 py-4">جاري التحميل...</div>
             <div v-else class="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
               <table class="w-full text-sm text-center">
-                <thead class="bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+                <thead class="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100">
                   <tr>
                     <th class="px-2 py-2">التاريخ</th>
                     <th class="px-2 py-2">ملاحظة</th>
@@ -212,22 +212,22 @@ async function deletePayment(payment) {
                 </thead>
                 <tbody>
                   <tr v-if="!payments.length">
-                    <td colspan="5" class="px-2 py-4 text-gray-400">لا توجد دفعات</td>
+                    <td colspan="5" class="px-2 py-4 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900">لا توجد دفعات</td>
                   </tr>
                   <tr
                     v-for="p in payments"
                     :key="p.id"
-                    class="border-t border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100"
+                    class="border-t border-gray-200 bg-white text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                   >
                     <td class="px-2 py-2">{{ formatDate(p.created) }}</td>
                     <td class="px-2 py-2">{{ p.note || '—' }}</td>
-                    <td class="px-2 py-2 font-semibold text-emerald-600">{{ formatNumber(p.amount_dollar) }}</td>
-                    <td class="px-2 py-2 font-semibold text-indigo-600">{{ formatNumber(p.amount_dinar) }}</td>
+                    <td class="px-2 py-2 font-semibold text-emerald-700 dark:text-emerald-400">{{ formatNumber(p.amount_dollar) }}</td>
+                    <td class="px-2 py-2 font-semibold text-indigo-700 dark:text-indigo-400">{{ formatNumber(p.amount_dinar) }}</td>
                     <td class="px-2 py-2">
                       <button
                         v-if="!car?.expenses_posted"
                         type="button"
-                        class="px-2 py-1 bg-red-500 text-white rounded"
+                        class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                         @click="deletePayment(p)"
                       >
                         <trash />
@@ -260,13 +260,8 @@ async function deletePayment(payment) {
 .modal-container {
   width: min(720px, 95vw);
   margin: 0 auto;
-  background: #fff;
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-}
-:global(.dark) .external-pay-modal {
-  background: #111827;
-  border: 1px solid #6b7280;
 }
 .modal-enter-from,
 .modal-leave-to {
