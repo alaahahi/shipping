@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/inertia-vue3';
 import ModalExternalCarForm from '@/Components/ModalExternalCarForm.vue';
 import ModalExternalCarPayments from '@/Components/ModalExternalCarPayments.vue';
+import ModalPostExpensesToWallet from '@/Components/ModalPostExpensesToWallet.vue';
 import ModalDelCar from '@/Components/ModalDelCar.vue';
 import edit from '@/Components/icon/edit.vue';
 import trash from '@/Components/icon/trash.vue';
@@ -27,6 +28,9 @@ const totalPaidDinar = ref(0);
 const showFormModal = ref(false);
 const showPaymentsModal = ref(false);
 const carForPayments = ref(null);
+const showPostModal = ref(false);
+const postTarget = ref(null);
+const postingWallet = ref(false);
 const showDelModal = ref(false);
 const formData = ref({});
 
@@ -105,11 +109,19 @@ function postToWallet(car) {
     toast.error('لا يوجد مبلغ للترحيل', { timeout: 3000, position: 'bottom-right', rtl: true });
     return;
   }
-  if (!confirm(`ترحيل المصاريف الجديدة إلى قاصة الترحيل؟`)) return;
+  postTarget.value = car;
+  showPostModal.value = true;
+}
 
-  axios.post('/api/postExternalCarToWallet', { id: car.id })
+function confirmPostToWallet(note) {
+  const car = postTarget.value;
+  if (!car?.id || postingWallet.value) return;
+  postingWallet.value = true;
+  axios.post('/api/postExternalCarToWallet', { id: car.id, note })
     .then((res) => {
       toast.success('تم الترحيل بنجاح', { timeout: 2500, position: 'bottom-right', rtl: true });
+      showPostModal.value = false;
+      postTarget.value = null;
       if (res.data?.car) {
         onPaymentsUpdated(res.data.car);
       } else {
@@ -122,6 +134,9 @@ function postToWallet(car) {
         position: 'bottom-right',
         rtl: true,
       });
+    })
+    .finally(() => {
+      postingWallet.value = false;
     });
 }
 
@@ -351,6 +366,16 @@ function confirmDelete(payload) {
       :form-data="formData"
       @save="saveCar"
       @close="showFormModal = false"
+    />
+
+    <ModalPostExpensesToWallet
+      :show="showPostModal"
+      :title="postTarget ? [postTarget.dealer_name, postTarget.car_type, postTarget.car_number].filter(Boolean).join(' — ') : ''"
+      :amount-dollar="postTarget?.paid_dollar || 0"
+      :amount-dinar="postTarget?.paid_dinar || 0"
+      :saving="postingWallet"
+      @close="showPostModal = false; postTarget = null"
+      @confirm="confirmPostToWallet"
     />
 
     <ModalExternalCarPayments

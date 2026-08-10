@@ -223,6 +223,10 @@ class ExternalCarController extends Controller
             number_format($amountDollar),
             number_format($amountDinar)
         ));
+        $userNote = mb_substr(trim((string) $request->input('note', '')), 0, 500);
+        if ($userNote !== '') {
+            $note .= ' — '.$userNote;
+        }
 
         try {
             $result = $poster->postTotalsToDefaultWallet($amountDollar, $amountDinar, $note);

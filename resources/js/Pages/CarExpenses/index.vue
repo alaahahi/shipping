@@ -11,6 +11,7 @@ import ModalUnlinkCar from "@/Components/ModalUnlinkCar.vue";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
 import ModalExternalCarForm from "@/Components/ModalExternalCarForm.vue";
 import ModalExternalCarPayments from "@/Components/ModalExternalCarPayments.vue";
+import ModalPostExpensesToWallet from "@/Components/ModalPostExpensesToWallet.vue";
 
 
 import { useToast } from "vue-toastification";
@@ -46,6 +47,9 @@ let showModalExternalCarForm = ref(false);
 let showModalExternalCarPayments = ref(false);
 let externalCarForPayments = ref(null);
 let externalDeleteMode = ref(false);
+const showPostModal = ref(false);
+const postTarget = ref(null);
+const postingWallet = ref(false);
 
 let car = ref([]);
 function openwModalAddCarExpensesFav(form={}) {
@@ -425,23 +429,34 @@ function onExternalCarPaymentsUpdated(updatedCar) {
   getResultsCar();
 }
 
+function postTitle(row) {
+  if (!row) return '';
+  if (isExternalTab.value) {
+    return [row.dealer_name, row.car_type, row.car_number].filter(Boolean).join(' — ');
+  }
+  return [row.car_type, row.vin || row.car_number].filter(Boolean).join(' — ');
+}
+
 function postCarExpensesToWallet(row) {
   if (!row?.id) return;
   if (!hasUnposted(row)) {
     toast.error('لا يوجد مصروف جديد للترحيل', { timeout: 3000, position: 'bottom-right', rtl: true });
     return;
   }
-  const dollar = unpostedDollar(row);
-  const dinar = unpostedDinar(row);
-  const confirmText = dollar > 0 || dinar > 0
-    ? `ترحيل المصاريف الجديدة إلى قاصة الترحيل؟\n${dollar}$ / ${dinar} د`
-    : 'ترحيل المصاريف الجديدة إلى قاصة الترحيل؟';
-  if (!confirm(confirmText)) return;
+  postTarget.value = row;
+  showPostModal.value = true;
+}
 
+function confirmPostToWallet(note) {
+  const row = postTarget.value;
+  if (!row?.id || postingWallet.value) return;
+  postingWallet.value = true;
   const url = isExternalTab.value ? '/api/postExternalCarToWallet' : '/api/postCarExpensesToWallet';
-  axios.post(url, { id: row.id })
+  axios.post(url, { id: row.id, note })
     .then((res) => {
       toast.success('تم الترحيل بنجاح', { timeout: 2500, position: 'bottom-right', rtl: true });
+      showPostModal.value = false;
+      postTarget.value = null;
       if (isExternalTab.value && res.data?.car) {
         onExternalCarPaymentsUpdated(res.data.car);
       } else if (res.data?.car) {
@@ -460,6 +475,9 @@ function postCarExpensesToWallet(row) {
         position: 'bottom-right',
         rtl: true,
       });
+    })
+    .finally(() => {
+      postingWallet.value = false;
     });
 }
 
@@ -691,6 +709,15 @@ function confirmDelCarFav(V) {
         <template #header>
           </template>
     </ModalAddCarExpensesFav>
+    <ModalPostExpensesToWallet
+      :show="showPostModal"
+      :title="postTitle(postTarget)"
+      :amount-dollar="postTarget ? unpostedDollar(postTarget) : 0"
+      :amount-dinar="postTarget ? unpostedDinar(postTarget) : 0"
+      :saving="postingWallet"
+      @close="showPostModal = false; postTarget = null"
+      @confirm="confirmPostToWallet"
+    />
     <ModalAddCarExpenses
             :formData="formData"
             :show="showModalAddCarExpenses ? true : false"
