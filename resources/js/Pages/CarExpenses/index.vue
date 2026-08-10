@@ -203,7 +203,11 @@ function confirmExpensesCar(V) {
     refresh();
   })
   .catch((error) => {
-    console.error(error);
+    toast.error(error?.response?.data?.error || 'تعذر إضافة الدفعة', {
+      timeout: 3500,
+      position: 'bottom-right',
+      rtl: true,
+    });
   })
   .finally(() => {
     isSubmittingExpense.value = false;
@@ -224,6 +228,30 @@ function  calculateSum(carexpenses) {
 function  calculateSumDinar(carexpenses) {
       return (carexpenses ?? []).reduce((sum, expense) => sum + (Number(expense.amount_dinar) || 0), 0);
     }
+function unpostedExpenses(row) {
+  return (row?.carexpenses ?? []).filter((expense) => !expense.is_posted);
+}
+function unpostedDollar(row) {
+  if (isExternalTab.value) {
+    return (row?.payments ?? []).filter((p) => !p.is_posted)
+      .reduce((sum, p) => sum + (Number(p.amount_dollar) || 0), 0);
+  }
+  return calculateSum(unpostedExpenses(row));
+}
+function unpostedDinar(row) {
+  if (isExternalTab.value) {
+    return (row?.payments ?? []).filter((p) => !p.is_posted)
+      .reduce((sum, p) => sum + (Number(p.amount_dinar) || 0), 0);
+  }
+  return calculateSumDinar(unpostedExpenses(row));
+}
+function hasUnposted(row) {
+  if (isExternalTab.value) {
+    if (Number(row?.unposted_count) > 0) return true;
+    return unpostedDollar(row) > 0 || unpostedDinar(row) > 0;
+  }
+  return unpostedDollar(row) > 0 || unpostedDinar(row) > 0;
+}
 
 const summaryPrintUrl = computed(() => {
   const params = new URLSearchParams();
@@ -399,21 +427,16 @@ function onExternalCarPaymentsUpdated(updatedCar) {
 
 function postCarExpensesToWallet(row) {
   if (!row?.id) return;
-  if (row.expenses_posted) {
-    toast.info('السيارة مُرحَّلة مسبقاً', { timeout: 2500, position: 'bottom-right', rtl: true });
+  if (!hasUnposted(row)) {
+    toast.error('لا يوجد مصروف جديد للترحيل', { timeout: 3000, position: 'bottom-right', rtl: true });
     return;
   }
-  const dollar = isExternalTab.value
-    ? Number(row.paid_dollar) || 0
-    : Number(calculateSum(row.carexpenses)) || 0;
-  const dinar = isExternalTab.value
-    ? Number(row.paid_dinar) || 0
-    : Number(calculateSumDinar(row.carexpenses)) || 0;
-  if (dollar <= 0 && dinar <= 0) {
-    toast.error('لا يوجد مبلغ للترحيل', { timeout: 3000, position: 'bottom-right', rtl: true });
-    return;
-  }
-  if (!confirm(`ترحيل توتال السيارة إلى قاصة الترحيل؟\n${dollar}$ / ${dinar} د`)) return;
+  const dollar = unpostedDollar(row);
+  const dinar = unpostedDinar(row);
+  const confirmText = dollar > 0 || dinar > 0
+    ? `ترحيل المصاريف الجديدة إلى قاصة الترحيل؟\n${dollar}$ / ${dinar} د`
+    : 'ترحيل المصاريف الجديدة إلى قاصة الترحيل؟';
+  if (!confirm(confirmText)) return;
 
   const url = isExternalTab.value ? '/api/postExternalCarToWallet' : '/api/postCarExpensesToWallet';
   axios.post(url, { id: row.id })
@@ -962,7 +985,7 @@ function confirmDelCarFav(V) {
                               <td class="px-3 py-2 sm:px-4 sm:py-2 text-center car-expenses-cell-dinar font-semibold">{{ formatNumber(item.paid_dinar) }}</td>
                               <td class="px-3 py-2 sm:px-4 sm:py-2 text-center">
                                 <button
-                                  v-if="!item.expenses_posted"
+                                  v-if="hasUnposted(item)"
                                   type="button"
                                   class="px-2 py-1 text-white mx-1 bg-violet-600 rounded text-xs font-bold"
                                   title="ترحيل للقاسة"
@@ -1068,10 +1091,10 @@ function confirmDelCarFav(V) {
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center car-expenses-cell-dinar font-semibold">{{ formatNumber(calculateSumDinar(car.carexpenses)) }}</td>
                                     <td className="px-3 py-2 sm:px-4 sm:py-2 text-center">
                                     <button
-                                      v-if="!car.expenses_posted && (Number(calculateSum(car.carexpenses)) > 0 || Number(calculateSumDinar(car.carexpenses)) > 0)"
+                                      v-if="hasUnposted(car)"
                                       type="button"
                                       class="px-2 py-1 text-white mx-1 bg-violet-600 rounded mt-3 sm:mt-0 text-xs font-bold"
-                                      title="ترحيل التوتال للقاسة"
+                                      title="ترحيل المصاريف الجديدة للقاسة"
                                       @click="postCarExpensesToWallet(car)"
                                     >
                                       ترحيل

@@ -94,14 +94,18 @@ function openPaymentsModal(car) {
 }
 
 function postToWallet(car) {
-  if (!car?.id || car.expenses_posted) return;
+  if (!car?.id) return;
+  if (!(Number(car.unposted_count) > 0) && car.expenses_posted) {
+    toast.info('لا يوجد مصروف جديد للترحيل', { timeout: 2500, position: 'bottom-right', rtl: true });
+    return;
+  }
   const dollar = Number(car.paid_dollar) || 0;
   const dinar = Number(car.paid_dinar) || 0;
   if (dollar <= 0 && dinar <= 0) {
     toast.error('لا يوجد مبلغ للترحيل', { timeout: 3000, position: 'bottom-right', rtl: true });
     return;
   }
-  if (!confirm(`ترحيل توتال السيارة إلى قاصة الترحيل؟\n${dollar}$ / ${dinar} د`)) return;
+  if (!confirm(`ترحيل المصاريف الجديدة إلى قاصة الترحيل؟`)) return;
 
   axios.post('/api/postExternalCarToWallet', { id: car.id })
     .then((res) => {
@@ -302,7 +306,7 @@ function confirmDelete(payload) {
                   <td class="border dark:border-gray-700 px-2 py-2 text-center">
                     <div class="flex justify-center gap-2 flex-wrap">
                       <button
-                        v-if="!car.expenses_posted"
+                        v-if="!car.expenses_posted || Number(car.unposted_count) > 0"
                         type="button"
                         class="px-2 py-1 bg-violet-600 text-white rounded text-xs"
                         @click="postToWallet(car)"

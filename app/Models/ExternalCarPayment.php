@@ -15,6 +15,7 @@ class ExternalCarPayment extends Model
     protected $attributes = [
         'amount_dollar' => 0,
         'amount_dinar' => 0,
+        'is_posted' => false,
     ];
 
     protected $fillable = [
@@ -23,6 +24,7 @@ class ExternalCarPayment extends Model
         'user_id',
         'amount_dollar',
         'amount_dinar',
+        'is_posted',
         'note',
         'created',
     ];
@@ -30,6 +32,7 @@ class ExternalCarPayment extends Model
     protected $casts = [
         'amount_dollar' => 'integer',
         'amount_dinar' => 'integer',
+        'is_posted' => 'boolean',
         'created' => 'date',
     ];
 

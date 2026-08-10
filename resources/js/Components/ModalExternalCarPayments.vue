@@ -146,11 +146,11 @@ async function deletePayment(payment) {
               <span class="text-indigo-700 dark:text-indigo-400">{{ formatNumber(paidDinar) }} د</span>
             </div>
             <p v-if="car?.expenses_posted" class="text-center text-xs font-bold text-emerald-700 dark:text-emerald-400 mt-2">
-              مُرحَّل محاسبيًا — لا يمكن تعديل الدفعات
+              تم الترحيل — يمكنك إضافة دفعة جديدة ثم ترحيلها
             </p>
           </div>
 
-          <div v-if="!car?.expenses_posted" class="px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-3">
             <label class="block">
               <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">مبلغ دولار</span>
               <input v-model="form.amount_dollar" type="number" min="0" class="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white px-3 py-2 text-sm" />
@@ -171,7 +171,6 @@ async function deletePayment(payment) {
 
           <div class="flex justify-center gap-3 px-4 pb-3">
             <button
-              v-if="!car?.expenses_posted"
               type="button"
               class="px-5 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:opacity-50"
               :disabled="saving"
@@ -224,15 +223,18 @@ async function deletePayment(payment) {
                     <td class="px-2 py-2 font-semibold text-emerald-700 dark:text-emerald-400">{{ formatNumber(p.amount_dollar) }}</td>
                     <td class="px-2 py-2 font-semibold text-indigo-700 dark:text-indigo-400">{{ formatNumber(p.amount_dinar) }}</td>
                     <td class="px-2 py-2">
+                      <span
+                        v-if="p.is_posted"
+                        class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400"
+                      >مُرحَّل</span>
                       <button
-                        v-if="!car?.expenses_posted"
+                        v-else
                         type="button"
                         class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                         @click="deletePayment(p)"
                       >
                         <trash />
                       </button>
-                      <span v-else class="text-gray-400">—</span>
                     </td>
                   </tr>
                 </tbody>

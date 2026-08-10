@@ -221,10 +221,6 @@ class CarExpensesController extends Controller
         if (! $car || (int) $car->owner_id !== (int) $user->owner_id) {
             return Response::json(['error' => 'غير مصرح'], 403);
         }
-        if ($car->expenses_posted) {
-            return Response::json(['error' => 'السيارة مُرحَّلة محاسبيًا — لا يمكن إضافة دفعات جديدة'], 422);
-        }
-
         $expenses = new CarExpenses;
         $expenses->user_id = $user->id;
         $expenses->owner_id = $user->owner_id;
@@ -254,17 +250,19 @@ class CarExpensesController extends Controller
             return Response::json(['error' => 'غير مصرح'], 403);
         }
 
-        if ($car->expenses_posted) {
-            return Response::json(['error' => 'تم ترحيل هذه السيارة مسبقاً'], 422);
+        $unposted = $car->carexpenses->filter(fn ($expense) => ! $expense->is_posted);
+        $amountDollar = (int) $unposted->sum('amount_dollar');
+        $amountDinar = (int) $unposted->sum('amount_dinar');
+
+        if ($amountDollar <= 0 && $amountDinar <= 0) {
+            return Response::json(['error' => 'لا يوجد مصروف جديد للترحيل'], 422);
         }
 
-        $amountDollar = (int) $car->carexpenses->sum('amount_dollar');
-        $amountDinar = (int) $car->carexpenses->sum('amount_dinar');
-
         $note = trim(sprintf(
-            'مصاريف تسجيل %s %s إجمالي %s$ / %s د',
+            'مصاريف تسجيل %s %s %s %s$ / %s د',
             $car->car_type ?? '',
             $car->vin ?? '',
+            $car->expenses_posted ? 'إضافي' : 'إجمالي',
             number_format($amountDollar),
             number_format($amountDinar)
         ));
@@ -274,6 +272,10 @@ class CarExpensesController extends Controller
         } catch (\RuntimeException $e) {
             return Response::json(['error' => $e->getMessage()], 422);
         }
+
+        CarExpenses::query()
+            ->whereIn('id', $unposted->pluck('id')->all())
+            ->update(['is_posted' => true]);
 
         $car->update([
             'expenses_posted' => true,
@@ -291,8 +293,8 @@ class CarExpensesController extends Controller
         try {
             $expenses = CarExpenses::findOrFail($request->id);
             $car = Car::find($expenses->car_id);
-            if ($car && $car->expenses_posted) {
-                return response()->json(['error' => 'السيارة مُرحَّلة محاسبيًا — لا يمكن حذف دفعات'], 422);
+            if ($expenses->is_posted) {
+                return response()->json(['error' => 'هذا المصروف مُرحَّل — لا يمكن حذفه'], 422);
             }
             $expenses->delete();
     
@@ -696,6 +698,10 @@ class CarExpensesController extends Controller
                     return response()->json(['error' => 'السيارة ليست ضمن تسجيل المصاريف'], 422);
                 }
 
+                if ($expense->is_posted) {
+                    return response()->json(['error' => 'هذا المصروف مُرحَّل — لا يمكن حذف بنوده'], 422);
+                }
+
                 $lineIndex = (int) $request->line_index;
                 $parsed = self::parseRegistrationNote($expense->note ?? '');
 
@@ -772,8 +778,9 @@ class CarExpensesController extends Controller
                 $linkRate = self::resolveLinkRateForCar($car);
 
                 $linePart = self::formatRegistrationLineItem($itemType, $currency, $amount, $itemNote);
+                $latest = $car->carexpenses->sortByDesc('id')->first();
 
-                if ($createNew || $car->carexpenses->isEmpty()) {
+                if ($createNew || ! $latest || $latest->is_posted) {
                     $linkSuffix = '';
                     if ($isLinked && $linkRate) {
                         $linkSuffix = ' [مربوط]';

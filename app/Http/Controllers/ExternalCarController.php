@@ -61,7 +61,11 @@ class ExternalCarController extends Controller
         $to = $request->get('to');
         $limit = (int) ($request->get('limit', 50));
 
-        $query = ExternalCar::where('owner_id', $ownerId)->orderByDesc('id');
+        $query = ExternalCar::where('owner_id', $ownerId)
+            ->withCount([
+                'payments as unposted_count' => fn ($q) => $q->where('is_posted', false),
+            ])
+            ->orderByDesc('id');
 
         if ($from && $to) {
             $query->whereBetween('date', [$from, $to]);
@@ -138,10 +142,6 @@ class ExternalCarController extends Controller
         if (! $car || ! $this->canAccess($car, $ownerId)) {
             return Response::json(['error' => 'غير مصرح'], 403);
         }
-        if ($car->expenses_posted) {
-            return Response::json(['error' => 'السيارة مُرحَّلة محاسبيًا — لا يمكن إضافة دفعات'], 422);
-        }
-
         $amountDollar = (int) ($request->amount_dollar ?? 0);
         $amountDinar = (int) ($request->amount_dinar ?? 0);
         if ($amountDollar <= 0 && $amountDinar <= 0) {
@@ -165,7 +165,7 @@ class ExternalCarController extends Controller
 
         return Response::json([
             'payment' => $payment,
-            'car' => $car->fresh(),
+            'car' => $this->externalCarPayload($car->fresh()),
         ], 200);
     }
 
@@ -182,8 +182,8 @@ class ExternalCarController extends Controller
         if (! $car || ! $this->canAccess($car, $ownerId)) {
             return Response::json(['error' => 'غير مصرح'], 403);
         }
-        if ($car->expenses_posted) {
-            return Response::json(['error' => 'السيارة مُرحَّلة محاسبيًا — لا يمكن حذف دفعات'], 422);
+        if ($payment->is_posted) {
+            return Response::json(['error' => 'هذه الدفعة مُرحَّلة — لا يمكن حذفها'], 422);
         }
 
         DB::transaction(function () use ($payment, $car) {
@@ -193,7 +193,7 @@ class ExternalCarController extends Controller
 
         return Response::json([
             'ok' => true,
-            'car' => $car->fresh(),
+            'car' => $this->externalCarPayload($car->fresh()),
         ], 200);
     }
 
@@ -206,18 +206,20 @@ class ExternalCarController extends Controller
             return Response::json(['error' => 'غير مصرح'], 403);
         }
 
-        if ($car->expenses_posted) {
-            return Response::json(['error' => 'تم ترحيل هذه السيارة مسبقاً'], 422);
+        $unposted = $car->payments->filter(fn ($payment) => ! $payment->is_posted);
+        $amountDollar = (int) $unposted->sum('amount_dollar');
+        $amountDinar = (int) $unposted->sum('amount_dinar');
+
+        if ($amountDollar <= 0 && $amountDinar <= 0) {
+            return Response::json(['error' => 'لا يوجد مصروف جديد للترحيل'], 422);
         }
 
-        $amountDollar = (int) $car->payments->sum('amount_dollar');
-        $amountDinar = (int) $car->payments->sum('amount_dinar');
-
         $note = trim(sprintf(
-            'سيارة خارجية %s %s %s إجمالي %s$ / %s د',
+            'سيارة خارجية %s %s %s %s %s$ / %s د',
             $car->dealer_name ?? '',
             $car->car_type ?? '',
             $car->vin ?: ($car->car_number ?? ''),
+            $car->expenses_posted ? 'إضافي' : 'إجمالي',
             number_format($amountDollar),
             number_format($amountDinar)
         ));
@@ -228,6 +230,10 @@ class ExternalCarController extends Controller
             return Response::json(['error' => $e->getMessage()], 422);
         }
 
+        ExternalCarPayment::query()
+            ->whereIn('id', $unposted->pluck('id')->all())
+            ->update(['is_posted' => true]);
+
         $car->update([
             'expenses_posted' => true,
             'expenses_posted_at' => now(),
@@ -235,7 +241,7 @@ class ExternalCarController extends Controller
 
         return Response::json([
             'ok' => true,
-            'car' => $car->fresh(),
+            'car' => $this->externalCarPayload($car->fresh()),
             'posted' => $result,
         ], 200);
     }
@@ -290,5 +296,14 @@ class ExternalCarController extends Controller
     private function canAccess(ExternalCar $car, int $ownerId): bool
     {
         return (int) $car->owner_id === (int) $ownerId || (int) Auth::user()->type_id === 1;
+    }
+
+    private function externalCarPayload(ExternalCar $car): ExternalCar
+    {
+        $car->loadCount([
+            'payments as unposted_count' => fn ($q) => $q->where('is_posted', false),
+        ]);
+
+        return $car;
     }
 }

@@ -11,15 +11,24 @@ class CarExpenses extends Model
     protected $table = 'car_expenses';
     protected $dates = ['deleted_at'];
 
+    protected $attributes = [
+        'is_posted' => false,
+    ];
+
     protected $fillable = [
         'user_id',
         'car_id',
         'note',
         'amount_dinar',
         'amount_dollar',
+        'is_posted',
         'reason_id',
         'created',
         'owner_id'
+    ];
+
+    protected $casts = [
+        'is_posted' => 'boolean',
     ];
     public function user()
     {

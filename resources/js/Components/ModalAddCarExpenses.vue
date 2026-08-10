@@ -189,7 +189,13 @@ function openModalDelClient(expense) {
         });
         setTimeout(() => location.reload(), 2000);
       })
-      .catch((error) => console.error(error));
+      .catch((error) => {
+        toast.error(error?.response?.data?.error || 'تعذر حذف الدفعة', {
+          timeout: 3500,
+          position: 'bottom-right',
+          rtl: true,
+        });
+      });
   }
 }
 </script>
@@ -408,7 +414,12 @@ function openModalDelClient(expense) {
                       <td class="record-table__cell record-table__cell--note">{{ expense.note }}</td>
                       <td class="record-table__cell">{{ expense.user?.name }}</td>
                       <td class="record-table__cell print:hidden">
+                        <span
+                          v-if="expense.is_posted"
+                          class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400"
+                        >مُرحَّل</span>
                         <button
+                          v-else
                           type="button"
                           class="record-table__delete"
                           @click="openModalDelClient(expense)"
