@@ -18,6 +18,7 @@ class CarNoteFormatter
             return CarExpenseBreakdownService::linesForPrint($breakdown, $side);
         }
 
-        return CarExpenseBreakdownService::expenseLinesFromNote($car->note);
+        // لا نستخدم ملاحظة السيارة كمصاريف — الملاحظة عامة فقط
+        return [];
     }
 }

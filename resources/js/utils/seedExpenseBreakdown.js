@@ -1,6 +1,6 @@
 /**
- * Seed expenses_breakdown from legacy expenses + note (one first line).
- * Does not overwrite existing breakdown. Safe for old cars.
+ * Seed expenses_breakdown from legacy expenses totals only.
+ * Never uses car.note — note stays a general car note.
  *
  * @param {Record<string, any>|null|undefined} formData
  * @param {'purchase'|'sales'} mode
@@ -24,9 +24,7 @@ export function seedExpenseBreakdownFromLegacy(formData, mode = "purchase") {
   const purchase = Number(formData.expenses) || 0;
   const salesRaw = Number(formData.expenses_s) || 0;
   const sales = salesRaw > 0 ? salesRaw : purchase;
-  const note = String(formData.note || "").trim();
 
-  // فقط إذا في مبلغ مصاريف قديم — الملاحظة وحدها قد تكون عامة
   if (purchase <= 0 && sales <= 0) {
     if (!Array.isArray(formData.expenses_breakdown)) {
       formData.expenses_breakdown = [];
@@ -35,17 +33,14 @@ export function seedExpenseBreakdownFromLegacy(formData, mode = "purchase") {
     return false;
   }
 
-  const description = note
-    ? note.replace(/\r\n|\r|\n/g, " | ")
-    : "مصاريف";
-
   formData.expenses_breakdown = [
     {
-      description,
+      description: "مصاريف",
       purchase,
       sales: mode === "sales" ? sales : salesRaw > 0 ? salesRaw : null,
     },
   ];
+
   formData._expenseBreakdownSeeded = true;
 
   return true;

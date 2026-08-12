@@ -162,24 +162,38 @@ const canApplyRegistrationFees = computed(() => {
     || parseFloat(registrationData.value.expenses || 0) > 0;
 });
 
-// تطبيق رسوم التسجيل على المصاريف والملاحظة
+// تطبيق رسوم التسجيل على تفصيل المصاريف (بدون كتابة بالملاحظة)
 function applyRegistrationFees() {
   const totalUSD = calculateRegistrationTotal.value;
   const noteText = registrationData.value.noteToAdd?.trim();
 
   if (!noteText && totalUSD <= 0) return;
 
-  if (totalUSD > 0) {
-    props.formData.expenses = Math.round(parseFloat(props.formData.expenses || 0) + totalUSD);
-    props.formData.expenses_s = Math.round(parseFloat(props.formData.expenses_s || 0) + totalUSD);
+  if (!Array.isArray(props.formData.expenses_breakdown)) {
+    props.formData.expenses_breakdown = [];
   }
 
-  if (noteText) {
-    if (props.formData.note) {
-      props.formData.note += ' ' + noteText;
-    } else {
-      props.formData.note = noteText;
-    }
+  if (totalUSD > 0) {
+    const description = noteText || `رسوم تسجيل ${totalUSD}$`;
+    props.formData.expenses_breakdown.push({
+      description,
+      purchase: Math.round(totalUSD),
+      sales: Math.round(totalUSD),
+      from_sales: true,
+    });
+
+    const purchaseSum = props.formData.expenses_breakdown.reduce(
+      (sum, item) => sum + (Number(item.purchase) || 0),
+      0
+    );
+    const salesSum = props.formData.expenses_breakdown.reduce(
+      (sum, item) => sum + (Number(item.sales ?? item.purchase) || 0),
+      0
+    );
+    props.formData.expenses = purchaseSum;
+    props.formData.expenses_s = salesSum;
+    useExpenseLines.value = true;
+    breakdownDirty.value = true;
   }
 
   registrationData.value = {
@@ -195,7 +209,7 @@ function applyRegistrationFees() {
   activeTab.value = 'edit';
 
   toast.success(
-    totalUSD > 0 ? '✅ تم إضافة رسوم التسجيل بنجاح!' : '✅ تم تسجيل المصروف في الملاحظة',
+    totalUSD > 0 ? '✅ تم إضافة رسوم التسجيل لتفصيل المصاريف' : '✅ تم',
     {
       timeout: 3000,
       position: 'bottom-right'
@@ -914,21 +928,21 @@ async function removeTagFromCar(tagValue) {
               </div>
             </div>
 
-            <!-- الملاحظة التي سيتم إضافتها -->
+            <!-- وصف بند المصاريف (ليس ملاحظة السيارة) -->
             <div class="mt-4">
               <label class="dark:text-gray-200 font-medium flex items-center gap-2" for="reg_note">
                 <span>📝</span>
-                <span>الملاحظة التي سيتم إضافتها</span>
+                <span>وصف بند المصاريف</span>
               </label>
               <textarea
                 id="reg_note"
                 v-model="registrationData.noteToAdd"
                 rows="2"
                 class="mt-2 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
-                placeholder="+ رسوم تسجيل ومصاريف XXX$"
+                placeholder="وصف البند في تفصيل المصاريف"
               ></textarea>
               <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                💡 يمكنك تعديل الملاحظة قبل تطبيق الرسوم
+                💡 يُضاف لتفصيل المصاريف فقط — لا يُكتب في ملاحظة السيارة
               </p>
             </div>
 
@@ -944,7 +958,7 @@ async function removeTagFromCar(tagValue) {
                     : 'bg-gray-400 cursor-not-allowed'
                 ]"
               >
-                ✅ تطبيق الرسوم على المصاريف والملاحظة
+                ✅ تطبيق الرسوم على تفصيل المصاريف
               </button>
               <p class="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
                 سيتم إضافة {{ calculateRegistrationTotal }}$ على المصاريف الموجودة

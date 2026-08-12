@@ -172,13 +172,7 @@
                 <td>{{$data->land_shipping_s}}</td>
                 <td>{{$data->total_s}}</td>
                 <td>
-                    @if($isSingleCarPrint)
-                        @if($hasExpenseBreakdown)
-                            {{ $data->note }}
-                        @endif
-                    @else
-                        {{ $data->note }}
-                    @endif
+                    {{ $data->note }}
                 </td>
               </tr>
             @endforeach

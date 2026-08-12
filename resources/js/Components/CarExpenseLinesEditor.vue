@@ -81,10 +81,6 @@ function onSalesAmountInput(item) {
   }
 }
 
-function canEditDescription(item) {
-  return props.mode === "purchase" || item.from_sales;
-}
-
 function initSalesFromPurchase() {
   if (props.mode !== "sales" || !items.value.length) {
     return;
@@ -174,7 +170,6 @@ defineExpose({ useLines });
                 type="text"
                 class="w-full rounded border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 text-sm"
                 v-model="item.description"
-                :readonly="!canEditDescription(item)"
                 placeholder="مثال: رافعة"
               />
             </td>
@@ -189,9 +184,14 @@ defineExpose({ useLines });
             <template v-else>
               <td
                 v-if="showPurchaseInSales"
-                class="border dark:border-gray-700 px-1 py-1 text-center text-gray-500 dark:text-gray-400"
+                class="border dark:border-gray-700 px-1 py-1"
               >
-                {{ item.purchase ?? 0 }}
+                <input
+                  type="number"
+                  min="0"
+                  class="w-full rounded border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 text-sm text-center"
+                  v-model.number="item.purchase"
+                />
               </td>
               <td class="border dark:border-gray-700 px-1 py-1">
                 <input
