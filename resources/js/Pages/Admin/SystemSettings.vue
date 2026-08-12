@@ -821,6 +821,65 @@ function printCarTagDetails(tag) {
   }
   window.open(`/printCarTagDetails?${query.toString()}`, '_blank');
 }
+
+// ─── Database Insights ───────────────────────────────────────────────────────
+const dbData    = ref(null);
+const dbLoading = ref(false);
+const vacuuming = ref(false);
+const dbColors  = ['#6366f1','#22c55e','#f59e0b','#3b82f6','#ec4899','#14b8a6','#fb923c','#a855f7','#ef4444','#64748b'];
+
+const dbTopTables = computed(() => (dbData.value?.tables ?? []).slice(0, 10));
+
+const dbChartGradient = computed(() => {
+  const tables = dbTopTables.value;
+  if (!tables.length) return '#334155';
+  const total = dbData.value?.db_size ?? tables.reduce((s, r) => s + (r.size_bytes ?? 0), 0);
+  let offset = 0;
+  const stops = [];
+  tables.forEach((row, idx) => {
+    const pct = total > 0 ? ((row.size_bytes ?? 0) / total) * 100 : 0;
+    const color = dbColors[idx % dbColors.length];
+    stops.push(`${color} ${offset.toFixed(2)}%`);
+    offset += pct;
+    stops.push(`${color} ${offset.toFixed(2)}%`);
+  });
+  if (offset < 100) { stops.push(`#334155 ${offset.toFixed(2)}%`, '#334155 100%'); }
+  return `conic-gradient(${stops.join(', ')})`;
+});
+
+function formatDbBytes(bytes) {
+  if (bytes == null) return '—';
+  if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(2) + ' GB';
+  if (bytes >= 1048576)    return (bytes / 1048576).toFixed(1) + ' MB';
+  if (bytes >= 1024)       return (bytes / 1024).toFixed(0) + ' KB';
+  return bytes + ' B';
+}
+
+async function loadDbInsights() {
+  if (dbLoading.value) return;
+  dbLoading.value = true;
+  try {
+    const { data } = await axios.get('/system/database-insights');
+    dbData.value = data;
+  } catch (e) {
+    toast.error('تعذّر تحميل معلومات قاعدة البيانات');
+  } finally {
+    dbLoading.value = false;
+  }
+}
+
+async function runVacuum() {
+  vacuuming.value = true;
+  try {
+    const { data } = await axios.post('/system/database-vacuum');
+    toast.success(data.message + (data.saved ? ` | وُفِّر: ${formatDbBytes(data.saved)}` : ''));
+    await loadDbInsights();
+  } catch (e) {
+    toast.error('فشل VACUUM');
+  } finally {
+    vacuuming.value = false;
+  }
+}
 </script>
 
 <template>
@@ -865,6 +924,15 @@ function printCarTagDetails(tag) {
                   class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
                 >
                   إشعارات واتساب
+                </button>
+                <button
+                  @click="activeTab = 'database'; loadDbInsights()"
+                  :class="activeTab === 'database' 
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+                  class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                >
+                  🗄️ قاعدة البيانات
                 </button>
               </nav>
             </div>
@@ -1704,6 +1772,99 @@ function printCarTagDetails(tag) {
             </table>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Database Tab -->
+    <div v-show="activeTab === 'database'" class="space-y-6 px-4 sm:px-6 lg:px-8 py-6">
+      <!-- Vacuum hint -->
+      <div v-if="dbData && dbData.free_bytes > 10 * 1024 * 1024"
+        class="flex flex-wrap items-center gap-3 p-4 rounded-xl border border-amber-400 bg-amber-50 dark:bg-amber-900/20">
+        <span class="text-amber-700 dark:text-amber-300 font-medium flex-1">
+          ⚠️ {{ formatDbBytes(dbData.free_bytes) }} مساحة حرة قابلة للاسترجاع — شغّل VACUUM لتصغير ملف قاعدة البيانات
+        </span>
+        <button :disabled="vacuuming"
+          @click="runVacuum"
+          class="px-4 py-2 bg-amber-500 text-white rounded-lg font-bold hover:bg-amber-600 disabled:opacity-60 flex items-center gap-2">
+          <span v-if="vacuuming" class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+          {{ vacuuming ? 'جارٍ التنفيذ…' : '🗜️ تشغيل VACUUM' }}
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div v-if="dbLoading" class="flex items-center gap-3 text-gray-500 py-8 justify-center">
+        <span class="animate-spin inline-block w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full"></span>
+        جارٍ تحليل قاعدة البيانات…
+      </div>
+
+      <template v-else-if="dbData">
+        <!-- Summary stats -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+            <p class="text-xs text-gray-500 mb-1">الحجم الإجمالي</p>
+            <p class="text-xl font-bold">{{ formatDbBytes(dbData.db_size) }}</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+            <p class="text-xs text-gray-500 mb-1">مستخدم</p>
+            <p class="text-xl font-bold">{{ formatDbBytes(dbData.used_bytes) }}</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+            <p class="text-xs text-gray-500 mb-1">مساحة حرة</p>
+            <p class="text-xl font-bold text-green-600">{{ formatDbBytes(dbData.free_bytes) }}</p>
+          </div>
+        </div>
+
+        <!-- Chart + table list -->
+        <div class="flex flex-col lg:flex-row gap-6">
+          <!-- Donut -->
+          <div class="flex-shrink-0 flex justify-center">
+            <div class="relative w-40 h-40">
+              <div class="w-40 h-40 rounded-full" :style="{ background: dbChartGradient }"></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-20 h-20 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center">
+                  <span class="text-xs text-gray-500 text-center">{{ dbTopTables.length }}<br>جدول</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table list -->
+          <div class="flex-1 overflow-x-auto">
+            <table class="w-full text-sm text-right">
+              <thead class="text-xs text-gray-500 border-b dark:border-gray-700">
+                <tr>
+                  <th class="py-2 font-medium">الجدول</th>
+                  <th class="py-2 font-medium text-center">الصفوف</th>
+                  <th class="py-2 font-medium text-center">الحجم</th>
+                  <th class="py-2 font-medium text-center">%</th>
+                  <th class="py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, idx) in dbTopTables" :key="row.name" class="border-b dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                  <td class="py-2 flex items-center gap-2">
+                    <span class="inline-block w-3 h-3 rounded-full flex-shrink-0" :style="{ background: dbColors[idx % dbColors.length] }"></span>
+                    <code class="text-xs">{{ row.name }}</code>
+                  </td>
+                  <td class="py-2 text-center text-gray-500">{{ (row.rows ?? 0).toLocaleString() }}</td>
+                  <td class="py-2 text-center font-semibold">{{ formatDbBytes(row.size_bytes) }}</td>
+                  <td class="py-2 text-center text-gray-500">{{ row.percent != null ? row.percent.toFixed(1) + '%' : '—' }}</td>
+                  <td class="py-2">
+                    <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">
+                      <div class="h-1.5 rounded-full" :style="{ width: Math.max(row.percent ?? 0, 1) + '%', background: dbColors[idx % dbColors.length] }"></div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </template>
+
+      <div v-else-if="!dbLoading" class="text-center text-gray-400 py-8">
+        <button @click="loadDbInsights" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+          تحميل المعلومات
+        </button>
       </div>
     </div>
 

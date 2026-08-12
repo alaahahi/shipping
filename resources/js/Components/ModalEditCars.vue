@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import axios from "axios";
+import CarExpenseLinesEditor from "@/Components/CarExpenseLinesEditor.vue";
 const tagInput = ref("");
 const selectedTagToAdd = ref("");
 const tagActionLoading = ref(false);
@@ -38,6 +39,57 @@ function check_vin(v){
 let showClient = ref(false);
 let showErrorVin = ref(false);
 let exchangeRateError= ref(false);
+const useExpenseLines = ref(false);
+
+function ensureBreakdownArray() {
+  if (!props.formData) {
+    return;
+  }
+  if (!Array.isArray(props.formData.expenses_breakdown)) {
+    props.formData.expenses_breakdown = [];
+  }
+}
+
+if (props.formData) {
+  ensureBreakdownArray();
+  useExpenseLines.value = (props.formData.expenses_breakdown || []).length > 0;
+}
+
+function onExpenseTotal(total) {
+  if (useExpenseLines.value && props.formData) {
+    props.formData.expenses = total;
+  }
+}
+
+function onUseLinesChange(active) {
+  useExpenseLines.value = active;
+  if (active) {
+    ensureBreakdownArray();
+  }
+}
+
+function prepareFormForSave() {
+  if (!props.formData) {
+    return;
+  }
+  const hasLines = useExpenseLines.value
+    && Array.isArray(props.formData.expenses_breakdown)
+    && props.formData.expenses_breakdown.some((item) => String(item.description || "").trim() !== "");
+  if (!hasLines) {
+    delete props.formData.expenses_breakdown;
+  }
+}
+
+function saveForm() {
+  if (!props.formData) {
+    return;
+  }
+  props.formData.date = props.formData.date ? props.formData.date : getTodayDate();
+  prepareFormForSave();
+  emit("a", props.formData);
+}
+
+const emit = defineEmits(["close", "a"]);
 function validateExchangeRate(v) {
       const input = props.formData.dolar_price;
       if (/^\d{6}$/.test(input)) {
@@ -359,6 +411,12 @@ async function removeTagFromCar(tagValue) {
                   v-model="formData.checkout"
                 />
               </div>
+              <CarExpenseLinesEditor
+                mode="purchase"
+                v-model="formData.expenses_breakdown"
+                @total-change="onExpenseTotal"
+                @use-lines-change="onUseLinesChange"
+              />
               <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="expenses">
                   {{ $t("expenses") }}</label
@@ -368,7 +426,11 @@ async function removeTagFromCar(tagValue) {
                   type="number"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.expenses"
+                  :readonly="useExpenseLines"
                 />
+                <p v-if="useExpenseLines" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  المجموع محسوب من البنود أعلاه
+                </p>
               </div>
               <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="car_price">
@@ -493,13 +555,7 @@ async function removeTagFromCar(tagValue) {
               <div class="basis-1/2 px-4">
                 <button
                   class="modal-default-button py-3 bg-rose-500 rounded col-6"
-                  @click="
-                    formData.date = formData.date
-                      ? formData.date
-                      : getTodayDate();
-                    $emit('a', formData);
-                    formData = '';
-                  "
+                  @click="saveForm()"
                   :disabled="(!formData.client_id)&&(!formData.client_name)">
                   {{ $t("yes") }}
                 </button>

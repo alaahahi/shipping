@@ -133,6 +133,9 @@ Route::group(['middleware' => ['auth','verified', 'check.license', 'page.permiss
         return Inertia::render('Admin/SystemSettings');
     })->name('systemSettings');
     
+    Route::get('system/database-insights', [SystemConfigController::class, 'databaseInsights'])->name('system.db.insights');
+    Route::post('system/database-vacuum', [SystemConfigController::class, 'vacuumDatabase'])->name('system.db.vacuum');
+
     Route::get('connected-systems', function () {
         return Inertia::render('Admin/ConnectedSystems');
     })->name('connectedSystems');

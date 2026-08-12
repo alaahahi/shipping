@@ -14,6 +14,18 @@
       margin: 15px;
       margin-top: 60px;
     }
+    .expense-print-list {
+      list-style: none;
+      padding: 0;
+      margin: 4px 0 0;
+      font-size: 10px;
+      line-height: 1.4;
+      text-align: right;
+    }
+    .expense-print-list li {
+      border-bottom: 1px dotted #ccc;
+      padding: 1px 0;
+    }
     </style>
 </head>
 <body style="direction: rtl;">
@@ -116,6 +128,13 @@
         </thead>
         <tbody>
             @foreach ($clientData['data'] as $key=>$data)
+            @php
+                $isSingleCarPrint = ($clientData['print'] ?? 0) == 6;
+                $expensePrintLines = $isSingleCarPrint
+                    ? \App\Support\CarNoteFormatter::expensePrintLines($data, 'sales')
+                    : [];
+                $hasExpenseBreakdown = \App\Services\CarExpenseBreakdownService::hasBreakdown($data->expenses_breakdown ?? null);
+            @endphp
             <tr>
                 <th scope="row">{{$key+1}}</th>
                 <td>{{$data->car_type}}</td>
@@ -140,10 +159,27 @@
                 <td>{{$data->container_open_s}}</td>
                 @endif
                 <td>{{$data->shipping_dolar_s}}</td>
-                <td>{{$data->expenses_s}}</td>
+                <td>
+                    <strong>{{$data->expenses_s}}</strong>
+                    @if($isSingleCarPrint && count($expensePrintLines))
+                        <ul class="expense-print-list">
+                            @foreach($expensePrintLines as $expenseLine)
+                                <li>{{ $expenseLine }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </td>
                 <td>{{$data->land_shipping_s}}</td>
                 <td>{{$data->total_s}}</td>
-                <td>{{$data->note}}</td>
+                <td>
+                    @if($isSingleCarPrint)
+                        @if($hasExpenseBreakdown)
+                            {{ $data->note }}
+                        @endif
+                    @else
+                        {{ $data->note }}
+                    @endif
+                </td>
               </tr>
             @endforeach
         </tbody>

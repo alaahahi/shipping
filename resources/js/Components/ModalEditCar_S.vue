@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import axios from 'axios';
 import Uploader  from 'vue-media-upload';
 import { useToast } from "vue-toastification";
+import CarExpenseLinesEditor from "@/Components/CarExpenseLinesEditor.vue";
 
 const toast = useToast();
 
@@ -22,6 +23,71 @@ const props = defineProps({
 const tagInput = ref("");
 const selectedTagToAdd = ref("");
 const tagActionLoading = ref(false);
+const useExpenseLines = ref(false);
+
+const emit = defineEmits(["close", "a"]);
+
+function ensureBreakdownArray() {
+  if (!props.formData) {
+    return;
+  }
+  if (!Array.isArray(props.formData.expenses_breakdown)) {
+    props.formData.expenses_breakdown = [];
+  }
+}
+
+function syncExpenseLinesState() {
+  if (!props.formData) {
+    return;
+  }
+  ensureBreakdownArray();
+  useExpenseLines.value = (props.formData.expenses_breakdown || []).length > 0;
+}
+
+function onExpenseTotal(total) {
+  if (useExpenseLines.value && props.formData) {
+    props.formData.expenses_s = total;
+  }
+}
+
+function onUseLinesChange(active) {
+  useExpenseLines.value = active;
+  if (active) {
+    ensureBreakdownArray();
+  }
+}
+
+function prepareFormForSave() {
+  if (!props.formData) {
+    return;
+  }
+  const hasLines = useExpenseLines.value
+    && Array.isArray(props.formData.expenses_breakdown)
+    && props.formData.expenses_breakdown.some((item) => String(item.description || "").trim() !== "");
+  if (!hasLines) {
+    delete props.formData.expenses_breakdown;
+    return;
+  }
+  // المبيعات: لا ترسل breakdown فارغاً حتى لا تُمسح بيانات المشتريات القديمة
+  if (props.formData.expenses_breakdown.length === 0) {
+    delete props.formData.expenses_breakdown;
+  }
+}
+
+function saveForm() {
+  if (!props.formData) {
+    return;
+  }
+  props.formData.date = props.formData.date ? props.formData.date : getTodayDate();
+  prepareFormForSave();
+  emit("a", props.formData);
+}
+
+watch(
+  () => props.formData,
+  () => syncExpenseLinesState(),
+  { immediate: true, deep: true }
+);
 
 // حقول التسجيل (Frontend فقط)
 const registrationData = ref({
@@ -571,6 +637,12 @@ async function removeTagFromCar(tagValue) {
                   v-model="formData.car_number"
                 />
               </div>
+              <CarExpenseLinesEditor
+                mode="sales"
+                v-model="formData.expenses_breakdown"
+                @total-change="onExpenseTotal"
+                @use-lines-change="onUseLinesChange"
+              />
               <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="expenses">
                   {{ $t("expenses") }}</label
@@ -580,7 +652,11 @@ async function removeTagFromCar(tagValue) {
                   type="number"
                   class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
                   v-model="formData.expenses_s"
+                  :readonly="useExpenseLines"
                 />
+                <p v-if="useExpenseLines" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  المجموع محسوب من بنود المبيعات — عدّل مبلغ المبيعات لكل بند
+                </p>
               </div>
               <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="dinar_s">
@@ -976,13 +1052,7 @@ async function removeTagFromCar(tagValue) {
               <div class="basis-1/2 px-4">
                 <button
                   class="modal-default-button py-3 bg-rose-500 rounded col-6"
-                  @click="
-                    formData.date = formData.date
-                      ? formData.date
-                      : getTodayDate();
-                    $emit('a', formData);
-                    formData = '';
-                  "
+                  @click="saveForm()"
                   :disabled="(!formData.client_id)&&(!formData.client_name)">
                   {{ $t("yes") }}
                 </button>

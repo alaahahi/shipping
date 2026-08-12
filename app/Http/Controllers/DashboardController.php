@@ -26,6 +26,7 @@ use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\SystemConfig;
 use App\Services\AccountingCacheService;
+use App\Services\CarExpenseBreakdownService;
 use App\Services\ExchangeRateService;
 use App\Services\WeatherService;
 use App\Services\WhatsAppQueueService;
@@ -656,6 +657,15 @@ class DashboardController extends Controller
 
         $dinar=$request->dinar;
         $expenses=($request->expenses??0);
+        $expensesBreakdownItems = null;
+
+        if ($request->has('expenses_breakdown')) {
+            $expensesBreakdownItems = CarExpenseBreakdownService::normalizeItems($request->input('expenses_breakdown', []));
+            if (count($expensesBreakdownItems) > 0) {
+                $expenses = CarExpenseBreakdownService::sumPurchase($expensesBreakdownItems);
+            }
+        }
+
         // keep original exchange rate as entered
         $dolar_price_input = $request->dolar_price;
         // calculate effective rate for math
@@ -701,6 +711,13 @@ class DashboardController extends Controller
             // If 'purchase_price' and 'paid_amount' are calculated separately, add them to $dataToUpdate
             $dataToUpdate['total']=$total;
             $dataToUpdate['profit']=$profit;
+
+            if ($request->has('expenses_breakdown')) {
+                $dataToUpdate['expenses'] = $expenses;
+                $dataToUpdate['expenses_breakdown'] = ($expensesBreakdownItems && count($expensesBreakdownItems) > 0)
+                    ? $expensesBreakdownItems
+                    : null;
+            }
             
             if($car->paid){
                 if($total > $car->paid +$car->discount){
@@ -748,6 +765,16 @@ class DashboardController extends Controller
         $land_shipping_s=$request->land_shipping_s;
         $land_shipping_dinar_s=$request->land_shipping_dinar_s;
         $expenses_s=($request->expenses_s??0);
+        $expensesBreakdownItems = null;
+
+        if ($request->has('expenses_breakdown')) {
+            $expensesBreakdownItems = CarExpenseBreakdownService::normalizeItems($request->input('expenses_breakdown', []));
+            if (count($expensesBreakdownItems) > 0) {
+                $expensesBreakdownItems = CarExpenseBreakdownService::initSalesFromPurchase($expensesBreakdownItems);
+                $expenses_s = CarExpenseBreakdownService::sumSales($expensesBreakdownItems);
+            }
+        }
+
         $dolar_price_s=$request->dolar_price_s ;
         if($dolar_price_s==0){
             $dolar_price_s=1;
@@ -794,6 +821,13 @@ class DashboardController extends Controller
             $dataToUpdate['total']=$total;
             $dataToUpdate['total_s']=$total_s;
             $dataToUpdate['profit']=$profit;
+
+            if ($request->has('expenses_breakdown')) {
+                $dataToUpdate['expenses_s'] = $expenses_s;
+                if ($expensesBreakdownItems && count($expensesBreakdownItems) > 0) {
+                    $dataToUpdate['expenses_breakdown'] = $expensesBreakdownItems;
+                }
+            }
 
             if($car->paid){
                 if($total_s >($car->paid+$car->discount)){
