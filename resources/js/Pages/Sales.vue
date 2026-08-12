@@ -13,6 +13,7 @@ import ModalAddCarPayment from "@/Components/ModalAddCarPayment.vue";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
 import ModalEditCars from "@/Components/ModalEditCar_S.vue";
 import ModalBulkEditCarSales from "@/Components/ModalBulkEditCarSales.vue";
+import ModalCarExpensesBreakdown from "@/Components/ModalCarExpensesBreakdown.vue";
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
 import debounce from "lodash/debounce";
@@ -35,9 +36,20 @@ let showModalAddCarPayment = ref(false);
 let showModalEditCars = ref(false);
 let showModalBulkEdit = ref(false);
 let showModalDelCar = ref(false);
+let showModalExpensesBreakdown = ref(false);
+let expensesBreakdownCar = ref(null);
 let allCars = ref(0);
 const selectedCarIds = ref([]);
 const bulkFormData = ref({});
+
+function openExpensesBreakdown(car) {
+  expensesBreakdownCar.value = car;
+  showModalExpensesBreakdown.value = true;
+}
+
+function onExpensesBreakdownSaved() {
+  refresh();
+}
 
 function openModalEditCars(form = {}) {
   formData.value = form;
@@ -406,6 +418,13 @@ function getDownloadUrl(name) {
   >
     <template #header> </template>
   </ModalEditCars>
+  <ModalCarExpensesBreakdown
+    :show="showModalExpensesBreakdown"
+    :car="expensesBreakdownCar"
+    mode="sales"
+    @close="showModalExpensesBreakdown = false; expensesBreakdownCar = null"
+    @saved="onExpensesBreakdownSaved"
+  />
   <div
     v-if="showTagManagerModal"
     class="fixed inset-0 z-[10000] bg-black/50 flex items-center justify-center p-4"
@@ -830,7 +849,9 @@ function getDownloadUrl(name) {
                           {{ car.checkout_s }}
                         </td>
                         <td
-                          className="border dark:border-gray-800 text-center px-1 py-2 "
+                          className="border dark:border-gray-800 text-center px-1 py-2 cursor-pointer text-indigo-600 dark:text-indigo-300 font-semibold hover:bg-indigo-50 dark:hover:bg-indigo-900/30 underline"
+                          title="اضغط لتفصيل المصاريف"
+                          @click="openExpensesBreakdown(car)"
                         >
                           {{ car.expenses_s }}
                         </td>

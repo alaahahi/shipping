@@ -17,6 +17,7 @@ import ModalAddExitCar from "@/Components/ModalAddExitCar.vue";
 import ModalShowExitCar from "@/Components/ModalShowExitCar.vue";
 import ModalShowDriving from "@/Components/ModalShowDriving.vue";
 import ModalCarRegistrationDetails from "@/Components/ModalCarRegistrationDetails.vue";
+import ModalCarExpensesBreakdown from "@/Components/ModalCarExpensesBreakdown.vue";
 
 
 import print from "@/Components/icon/print.vue";
@@ -48,6 +49,17 @@ let showTransactions= ref(false);
 let showComplatedCars = ref(false);
 let showPaymentsInTable = ref(false);
 let isDataLoaded = ref(false);
+let showModalExpensesBreakdown = ref(false);
+let expensesBreakdownCar = ref(null);
+
+function openExpensesBreakdown(carItem) {
+  expensesBreakdownCar.value = carItem;
+  showModalExpensesBreakdown.value = true;
+}
+
+function onExpensesBreakdownSaved() {
+  getResultsSelect();
+}
 let showModalAddCarContracts =  ref(false);
 let showModalEditCarContracts =  ref(false);
 let showModalAddExitCar = ref(false);
@@ -1459,6 +1471,13 @@ async function savePaymentDescription(payment) {
     >
       <template #header> </template>
     </ModalEditCars>
+    <ModalCarExpensesBreakdown
+      :show="showModalExpensesBreakdown"
+      :car="expensesBreakdownCar"
+      mode="sales"
+      @close="showModalExpensesBreakdown = false; expensesBreakdownCar = null"
+      @saved="onExpensesBreakdownSaved"
+    />
     <div
       v-if="showTagManagerModal"
       class="fixed inset-0 z-[10000] bg-black/50 flex items-center justify-center p-4"
@@ -2299,7 +2318,9 @@ async function savePaymentDescription(payment) {
                       {{ item.data.checkout_s }}
                     </td>
                     <td
-                      className="border dark:border-gray-800 text-center px-2 py-1"
+                      className="border dark:border-gray-800 text-center px-2 py-1 cursor-pointer text-indigo-600 dark:text-indigo-300 font-semibold hover:bg-indigo-50 dark:hover:bg-indigo-900/30 underline"
+                      title="اضغط لتفصيل المصاريف"
+                      @click="openExpensesBreakdown(item.data)"
                     >
                       {{ item.data.expenses_s }}
                     </td>

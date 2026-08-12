@@ -12,6 +12,7 @@ import ModalSpanFromBox from "@/Components/ModalSpanFromBox.vue";
 import ModalAddTransfers from "@/Components/ModalAddTransfers.vue";
 import ModalAddCarPayment from "@/Components/ModalAddCarPayment.vue";
 import ModalDelCar from "@/Components/ModalDelCar.vue";
+import ModalCarExpensesBreakdown from "@/Components/ModalCarExpensesBreakdown.vue";
 import { TailwindPagination } from "laravel-vue-pagination";
 import { useToast } from "vue-toastification";
 import axios from 'axios';
@@ -46,6 +47,17 @@ let from = ref('');
 let to = ref('');
 // const columnTypes = ref({ 'date': new Plugin(),'numeric': new NumberColumnType('0,0') });
 const toast = useToast();
+let showModalExpensesBreakdown = ref(false);
+let expensesBreakdownCar = ref(null);
+
+function openExpensesBreakdown(carItem) {
+  expensesBreakdownCar.value = carItem;
+  showModalExpensesBreakdown.value = true;
+}
+
+function onExpensesBreakdownSaved() {
+  refresh();
+}
 
 //   const handleEdit = (event) => {
 
@@ -539,6 +551,13 @@ const excelPurchasesExportUrl = computed(() => {
             @close="showModalEditCars = false"
             >
     </ModalEditCars>
+    <ModalCarExpensesBreakdown
+      :show="showModalExpensesBreakdown"
+      :car="expensesBreakdownCar"
+      mode="purchase"
+      @close="showModalExpensesBreakdown = false; expensesBreakdownCar = null"
+      @saved="onExpensesBreakdownSaved"
+    />
     <div
       v-if="showTagManagerModal"
       class="fixed inset-0 z-[10000] bg-black/50 flex items-center justify-center p-4"
@@ -1144,7 +1163,11 @@ const excelPurchasesExportUrl = computed(() => {
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.coc_dolar  }}</td>
                                       <td v-if="$page.props.showContainerOpen" className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.container_open }}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.checkout}}</td>
-                                      <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.expenses}}</td>
+                                      <td
+                                        className="border dark:border-gray-800 text-center px-1 py-2 cursor-pointer text-indigo-600 dark:text-indigo-300 font-semibold hover:bg-indigo-50 dark:hover:bg-indigo-900/30 underline"
+                                        title="اضغط لتفصيل المصاريف"
+                                        @click="openExpensesBreakdown(car)"
+                                      >{{ car.expenses}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.land_shipping}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ car.land_shipping_dinar}}</td>
                                       <td className="border dark:border-gray-800 text-center px-1 py-2 ">{{ (Number(car.total) || 0).toFixed(0)  }}</td>
