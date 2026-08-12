@@ -25,6 +25,7 @@ const tagInput = ref("");
 const selectedTagToAdd = ref("");
 const tagActionLoading = ref(false);
 const useExpenseLines = ref(false);
+const breakdownDirty = ref(false);
 
 const emit = defineEmits(["close", "a"]);
 
@@ -47,12 +48,13 @@ function syncExpenseLinesState() {
 }
 
 function onExpenseTotal(total) {
-  if (useExpenseLines.value && props.formData) {
+  if ((useExpenseLines.value || breakdownDirty.value) && props.formData) {
     props.formData.expenses_s = total;
   }
 }
 
 function onUseLinesChange(active) {
+  breakdownDirty.value = true;
   useExpenseLines.value = active;
   if (active) {
     ensureBreakdownArray();
@@ -63,13 +65,29 @@ function prepareFormForSave() {
   if (!props.formData) {
     return;
   }
-  const hasLines = useExpenseLines.value
-    && Array.isArray(props.formData.expenses_breakdown)
-    && props.formData.expenses_breakdown.some((item) => String(item.description || "").trim() !== "");
-  if (!hasLines) {
+  delete props.formData._expenseBreakdownSeeded;
+
+  if (!Array.isArray(props.formData.expenses_breakdown)) {
+    return;
+  }
+
+  const validLines = props.formData.expenses_breakdown.filter(
+    (item) => String(item.description || "").trim() !== ""
+  );
+
+  if (validLines.length > 0) {
+    props.formData.expenses_breakdown = validLines.map(({ description, purchase, sales, from_sales }) => ({
+      description,
+      purchase,
+      sales,
+      ...(from_sales ? { from_sales: true } : {}),
+    }));
+  } else if (useExpenseLines.value || breakdownDirty.value) {
+    // حذف كل البنود من المبيعات/المشتريات → امسح التفصيل من DB
+    props.formData.expenses_breakdown = [];
+  } else {
     delete props.formData.expenses_breakdown;
   }
-  delete props.formData._expenseBreakdownSeeded;
 }
 
 function saveForm() {
@@ -85,6 +103,7 @@ watch(
   () => [props.show, props.formData?.id],
   () => {
     if (props.show && props.formData) {
+      breakdownDirty.value = false;
       if (!(props.formData.expenses_breakdown || []).length) {
         delete props.formData._expenseBreakdownSeeded;
       }

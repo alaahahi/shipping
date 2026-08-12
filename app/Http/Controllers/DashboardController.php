@@ -826,6 +826,50 @@ class DashboardController extends Controller
                 $dataToUpdate['expenses_s'] = $expenses_s;
                 if ($expensesBreakdownItems && count($expensesBreakdownItems) > 0) {
                     $dataToUpdate['expenses_breakdown'] = $expensesBreakdownItems;
+
+                    // مزامنة مصاريف المشتريات من البنود (مثلاً بند أُضيف من المبيعات)
+                    $expenses = CarExpenseBreakdownService::sumPurchase($expensesBreakdownItems);
+                    $dataToUpdate['expenses'] = $expenses;
+
+                    $checkout = $request->checkout ?? $car->checkout;
+                    $shipping_dolar = $request->shipping_dolar ?? $car->shipping_dolar;
+                    $coc_dolar = $request->coc_dolar ?? $car->coc_dolar;
+                    $container_open = $request->container_open ?? $car->container_open ?? 0;
+                    $dinar = $request->dinar ?? $car->dinar;
+                    $land_shipping = $request->land_shipping ?? $car->land_shipping;
+                    $land_shipping_dinar = $request->land_shipping_dinar ?? $car->land_shipping_dinar;
+                    $dolar_price = $request->dolar_price ?? $car->dolar_price;
+                    if ($dolar_price == 0) {
+                        $dolar_price = 1;
+                    } elseif ($dolar_price > 9999) {
+                        $dolar_price = $dolar_price / 100;
+                    }
+                    $total = (($checkout+$shipping_dolar+$coc_dolar+$container_open+(int)($dinar/($dolar_price))+(int)($land_shipping_dinar/($dolar_price))+$expenses+$land_shipping) ??0);
+                    $dataToUpdate['total'] = $total;
+                    $dataToUpdate['profit'] = $total_s - $total;
+                } else {
+                    // حذف كل البنود من المبيعات → امسح التفصيل وزامِن المجاميع
+                    $dataToUpdate['expenses_breakdown'] = null;
+                    $expenses = (int) ($request->expenses ?? 0);
+                    $dataToUpdate['expenses'] = $expenses;
+                    $dataToUpdate['expenses_s'] = (int) $expenses_s;
+
+                    $checkout = $request->checkout ?? $car->checkout;
+                    $shipping_dolar = $request->shipping_dolar ?? $car->shipping_dolar;
+                    $coc_dolar = $request->coc_dolar ?? $car->coc_dolar;
+                    $container_open = $request->container_open ?? $car->container_open ?? 0;
+                    $dinar = $request->dinar ?? $car->dinar;
+                    $land_shipping = $request->land_shipping ?? $car->land_shipping;
+                    $land_shipping_dinar = $request->land_shipping_dinar ?? $car->land_shipping_dinar;
+                    $dolar_price = $request->dolar_price ?? $car->dolar_price;
+                    if ($dolar_price == 0) {
+                        $dolar_price = 1;
+                    } elseif ($dolar_price > 9999) {
+                        $dolar_price = $dolar_price / 100;
+                    }
+                    $total = (($checkout+$shipping_dolar+$coc_dolar+$container_open+(int)($dinar/($dolar_price))+(int)($land_shipping_dinar/($dolar_price))+$expenses+$land_shipping) ??0);
+                    $dataToUpdate['total'] = $total;
+                    $dataToUpdate['profit'] = $total_s - $total;
                 }
             }
 

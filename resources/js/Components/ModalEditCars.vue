@@ -41,6 +41,7 @@ let showClient = ref(false);
 let showErrorVin = ref(false);
 let exchangeRateError= ref(false);
 const useExpenseLines = ref(false);
+const breakdownDirty = ref(false);
 
 function ensureBreakdownArray() {
   if (!props.formData) {
@@ -61,12 +62,13 @@ function syncExpenseLinesState() {
 }
 
 function onExpenseTotal(total) {
-  if (useExpenseLines.value && props.formData) {
+  if ((useExpenseLines.value || breakdownDirty.value) && props.formData) {
     props.formData.expenses = total;
   }
 }
 
 function onUseLinesChange(active) {
+  breakdownDirty.value = true;
   useExpenseLines.value = active;
   if (active) {
     ensureBreakdownArray();
@@ -77,13 +79,27 @@ function prepareFormForSave() {
   if (!props.formData) {
     return;
   }
-  const hasLines = useExpenseLines.value
-    && Array.isArray(props.formData.expenses_breakdown)
-    && props.formData.expenses_breakdown.some((item) => String(item.description || "").trim() !== "");
-  if (!hasLines) {
+  delete props.formData._expenseBreakdownSeeded;
+
+  if (!Array.isArray(props.formData.expenses_breakdown)) {
+    return;
+  }
+
+  const validLines = props.formData.expenses_breakdown.filter(
+    (item) => String(item.description || "").trim() !== ""
+  );
+
+  if (validLines.length > 0) {
+    props.formData.expenses_breakdown = validLines.map(({ description, purchase, sales }) => ({
+      description,
+      purchase,
+      sales,
+    }));
+  } else if (useExpenseLines.value || breakdownDirty.value) {
+    props.formData.expenses_breakdown = [];
+  } else {
     delete props.formData.expenses_breakdown;
   }
-  delete props.formData._expenseBreakdownSeeded;
 }
 
 function saveForm() {
@@ -101,6 +117,7 @@ watch(
   () => [props.show, props.formData?.id],
   () => {
     if (props.show && props.formData) {
+      breakdownDirty.value = false;
       if (!(props.formData.expenses_breakdown || []).length) {
         delete props.formData._expenseBreakdownSeeded;
       }

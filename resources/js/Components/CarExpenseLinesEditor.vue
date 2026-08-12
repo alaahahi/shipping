@@ -53,12 +53,14 @@ function emitTotal() {
 }
 
 function addLine() {
+  const fromSales = props.mode === "sales";
   const next = [
     ...items.value,
     {
       description: "",
       purchase: 0,
-      sales: props.mode === "sales" ? 0 : null,
+      sales: fromSales ? 0 : null,
+      from_sales: fromSales,
     },
   ];
   emit("update:modelValue", next);
@@ -70,6 +72,17 @@ function removeLine(index) {
   next.splice(index, 1);
   emit("update:modelValue", next);
   emitTotal();
+}
+
+function onSalesAmountInput(item) {
+  // البنود المضافة من المبيعات: نفس المبلغ يروح للمشتريات
+  if (item.from_sales) {
+    item.purchase = Number(item.sales) || 0;
+  }
+}
+
+function canEditDescription(item) {
+  return props.mode === "purchase" || item.from_sales;
 }
 
 function initSalesFromPurchase() {
@@ -113,7 +126,6 @@ defineExpose({ useLines });
     <div class="flex items-center justify-between gap-2 mb-3">
       <label class="dark:text-gray-200 font-medium">تفصيل المصاريف</label>
       <button
-        v-if="mode === 'purchase'"
         type="button"
         class="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
         @click="addLine"
@@ -124,6 +136,9 @@ defineExpose({ useLines });
 
     <p v-if="!items.length" class="text-xs text-gray-500 dark:text-gray-400 mb-2">
       اختياري: أضف بنوداً (وصف + مبلغ). إن لم تُستخدم البنود، يبقى الإدخال اليدوي كما هو للسيارات القديمة.
+    </p>
+    <p v-else-if="mode === 'sales'" class="text-xs text-gray-500 dark:text-gray-400 mb-2">
+      البنود الجديدة من المبيعات تُضاف بنفس المبلغ للمشتريات تلقائياً.
     </p>
 
     <div v-if="items.length" class="overflow-x-auto">
@@ -159,7 +174,7 @@ defineExpose({ useLines });
                 type="text"
                 class="w-full rounded border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 text-sm"
                 v-model="item.description"
-                :readonly="mode === 'sales'"
+                :readonly="!canEditDescription(item)"
                 placeholder="مثال: رافعة"
               />
             </td>
@@ -184,14 +199,15 @@ defineExpose({ useLines });
                   min="0"
                   class="w-full rounded border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900 text-sm text-center"
                   v-model.number="item.sales"
+                  @input="onSalesAmountInput(item)"
                 />
               </td>
             </template>
             <td class="border dark:border-gray-700 px-1 py-1 text-center">
               <button
-                v-if="mode === 'purchase'"
                 type="button"
-                class="text-red-600 font-bold px-1"
+                class="text-red-600 font-bold px-2 text-lg leading-none"
+                title="حذف البند"
                 @click="removeLine(index)"
               >
                 ×
