@@ -4,6 +4,7 @@ import axios from 'axios';
 import Uploader  from 'vue-media-upload';
 import { useToast } from "vue-toastification";
 import CarExpenseLinesEditor from "@/Components/CarExpenseLinesEditor.vue";
+import { seedExpenseBreakdownFromLegacy } from "@/utils/seedExpenseBreakdown";
 
 const toast = useToast();
 
@@ -40,6 +41,7 @@ function syncExpenseLinesState() {
   if (!props.formData) {
     return;
   }
+  seedExpenseBreakdownFromLegacy(props.formData, "sales");
   ensureBreakdownArray();
   useExpenseLines.value = (props.formData.expenses_breakdown || []).length > 0;
 }
@@ -66,12 +68,8 @@ function prepareFormForSave() {
     && props.formData.expenses_breakdown.some((item) => String(item.description || "").trim() !== "");
   if (!hasLines) {
     delete props.formData.expenses_breakdown;
-    return;
   }
-  // المبيعات: لا ترسل breakdown فارغاً حتى لا تُمسح بيانات المشتريات القديمة
-  if (props.formData.expenses_breakdown.length === 0) {
-    delete props.formData.expenses_breakdown;
-  }
+  delete props.formData._expenseBreakdownSeeded;
 }
 
 function saveForm() {
@@ -84,9 +82,16 @@ function saveForm() {
 }
 
 watch(
-  () => props.formData,
-  () => syncExpenseLinesState(),
-  { immediate: true, deep: true }
+  () => [props.show, props.formData?.id],
+  () => {
+    if (props.show && props.formData) {
+      if (!(props.formData.expenses_breakdown || []).length) {
+        delete props.formData._expenseBreakdownSeeded;
+      }
+      syncExpenseLinesState();
+    }
+  },
+  { immediate: true }
 );
 
 // حقول التسجيل (Frontend فقط)
@@ -637,12 +642,14 @@ async function removeTagFromCar(tagValue) {
                   v-model="formData.car_number"
                 />
               </div>
-              <CarExpenseLinesEditor
-                mode="sales"
-                v-model="formData.expenses_breakdown"
-                @total-change="onExpenseTotal"
-                @use-lines-change="onUseLinesChange"
-              />
+              <div class="col-span-full">
+                <CarExpenseLinesEditor
+                  mode="sales"
+                  v-model="formData.expenses_breakdown"
+                  @total-change="onExpenseTotal"
+                  @use-lines-change="onUseLinesChange"
+                />
+              </div>
               <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="expenses">
                   {{ $t("expenses") }}</label

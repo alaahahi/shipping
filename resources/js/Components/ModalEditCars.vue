@@ -1,7 +1,8 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import axios from "axios";
 import CarExpenseLinesEditor from "@/Components/CarExpenseLinesEditor.vue";
+import { seedExpenseBreakdownFromLegacy } from "@/utils/seedExpenseBreakdown";
 const tagInput = ref("");
 const selectedTagToAdd = ref("");
 const tagActionLoading = ref(false);
@@ -50,7 +51,11 @@ function ensureBreakdownArray() {
   }
 }
 
-if (props.formData) {
+function syncExpenseLinesState() {
+  if (!props.formData) {
+    return;
+  }
+  seedExpenseBreakdownFromLegacy(props.formData, "purchase");
   ensureBreakdownArray();
   useExpenseLines.value = (props.formData.expenses_breakdown || []).length > 0;
 }
@@ -78,6 +83,7 @@ function prepareFormForSave() {
   if (!hasLines) {
     delete props.formData.expenses_breakdown;
   }
+  delete props.formData._expenseBreakdownSeeded;
 }
 
 function saveForm() {
@@ -90,6 +96,19 @@ function saveForm() {
 }
 
 const emit = defineEmits(["close", "a"]);
+
+watch(
+  () => [props.show, props.formData?.id],
+  () => {
+    if (props.show && props.formData) {
+      if (!(props.formData.expenses_breakdown || []).length) {
+        delete props.formData._expenseBreakdownSeeded;
+      }
+      syncExpenseLinesState();
+    }
+  },
+  { immediate: true }
+);
 function validateExchangeRate(v) {
       const input = props.formData.dolar_price;
       if (/^\d{6}$/.test(input)) {
@@ -411,12 +430,14 @@ async function removeTagFromCar(tagValue) {
                   v-model="formData.checkout"
                 />
               </div>
-              <CarExpenseLinesEditor
-                mode="purchase"
-                v-model="formData.expenses_breakdown"
-                @total-change="onExpenseTotal"
-                @use-lines-change="onUseLinesChange"
-              />
+              <div class="col-span-full">
+                <CarExpenseLinesEditor
+                  mode="purchase"
+                  v-model="formData.expenses_breakdown"
+                  @total-change="onExpenseTotal"
+                  @use-lines-change="onUseLinesChange"
+                />
+              </div>
               <div className="mb-4 mx-1">
                 <label class="dark:text-gray-200" for="expenses">
                   {{ $t("expenses") }}</label
