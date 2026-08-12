@@ -1,5 +1,5 @@
 <script setup>
-import { computed, watch, onMounted } from "vue";
+import { computed, watch, onMounted, ref } from "vue";
 
 const props = defineProps({
   mode: {
@@ -14,6 +14,20 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["update:modelValue", "totalChange", "useLinesChange"]);
+
+const showPurchaseInSales = ref(false);
+const salesHeaderClicks = ref(0);
+
+function onSalesHeaderClick() {
+  if (props.mode !== "sales" || showPurchaseInSales.value) {
+    return;
+  }
+  salesHeaderClicks.value += 1;
+  if (salesHeaderClicks.value >= 3) {
+    showPurchaseInSales.value = true;
+    salesHeaderClicks.value = 0;
+  }
+}
 
 const items = computed({
   get() {
@@ -121,8 +135,19 @@ defineExpose({ useLines });
               مبلغ شراء $
             </th>
             <template v-else>
-              <th class="border dark:border-gray-700 px-2 py-1 text-center w-24">شراء $</th>
-              <th class="border dark:border-gray-700 px-2 py-1 text-center w-28">مبيعات $</th>
+              <th
+                v-if="showPurchaseInSales"
+                class="border dark:border-gray-700 px-2 py-1 text-center w-24"
+              >
+                شراء $
+              </th>
+              <th
+                class="border dark:border-gray-700 px-2 py-1 text-center w-28 select-none cursor-pointer"
+                title="اضغط 3 مرات لإظهار عمود الشراء"
+                @click="onSalesHeaderClick"
+              >
+                مبيعات $
+              </th>
             </template>
             <th class="border dark:border-gray-700 px-2 py-1 w-12"></th>
           </tr>
@@ -147,7 +172,10 @@ defineExpose({ useLines });
               />
             </td>
             <template v-else>
-              <td class="border dark:border-gray-700 px-1 py-1 text-center text-gray-500 dark:text-gray-400">
+              <td
+                v-if="showPurchaseInSales"
+                class="border dark:border-gray-700 px-1 py-1 text-center text-gray-500 dark:text-gray-400"
+              >
                 {{ item.purchase ?? 0 }}
               </td>
               <td class="border dark:border-gray-700 px-1 py-1">
