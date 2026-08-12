@@ -1,0 +1,27 @@
+---
+description: Modal footer primary actions must be 50% width each
+alwaysApply: true
+---
+
+# Modal Footer Buttons (50% / 50%)
+
+For popup/modals that have primary cancel/close and confirm/save actions:
+
+- Put **إغلاق / تراجع / Cancel** and **حفظ / نعم / Save** in one row
+- Each button takes **50% of the modal width** (`basis-1/2` + `w-full` on the button)
+- Do not leave them as small auto-width buttons on the sides
+
+```html
+<div class="flex flex-row w-full">
+  <div class="basis-1/2 px-2">
+    <button class="w-full py-3 bg-gray-500 text-white rounded">إغلاق</button>
+  </div>
+  <div class="basis-1/2 px-2">
+    <button class="w-full py-3 bg-rose-600 text-white rounded">حفظ</button>
+  </div>
+</div>
+```
+
+Secondary actions (طباعة، إلخ) go **above** that row as full-width, not squeezed beside the 50/50 pair.
+
+Apply this pattern to every new or edited modal.

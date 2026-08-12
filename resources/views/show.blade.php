@@ -14,17 +14,27 @@
       margin: 15px;
       margin-top: 60px;
     }
-    .expense-print-list {
-      list-style: none;
-      padding: 0;
-      margin: 4px 0 0;
-      font-size: 10px;
-      line-height: 1.4;
+    .expense-print-section {
+      margin-top: 18px;
+      page-break-inside: avoid;
+    }
+    .expense-print-section h5 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 8px;
       text-align: right;
     }
-    .expense-print-list li {
-      border-bottom: 1px dotted #ccc;
-      padding: 1px 0;
+    .expense-print-table {
+      font-size: 13px;
+      width: 100%;
+      max-width: 520px;
+      margin-right: auto;
+      margin-left: 0;
+    }
+    .expense-print-table th,
+    .expense-print-table td {
+      padding: 6px 10px !important;
+      vertical-align: middle;
     }
     </style>
 </head>
@@ -101,6 +111,14 @@
     {{$clientData['car_total']}}
     </div>
   </div>
+  @php
+      $isSingleCarPrint = ($clientData['print'] ?? 0) == 6;
+      $singleCar = $isSingleCarPrint ? ($clientData['data'][0] ?? null) : null;
+      $expenseBreakdown = $singleCar
+          ? \App\Services\CarExpenseBreakdownService::normalizeItems($singleCar->expenses_breakdown ?? [])
+          : [];
+      $expenseBreakdown = \App\Services\CarExpenseBreakdownService::initSalesFromPurchase($expenseBreakdown);
+  @endphp
   <div class="row text-center py-2">
     <table class="table table-sm table-striped table-bordered" style="font-size: 12px">
         <thead>
@@ -128,13 +146,6 @@
         </thead>
         <tbody>
             @foreach ($clientData['data'] as $key=>$data)
-            @php
-                $isSingleCarPrint = ($clientData['print'] ?? 0) == 6;
-                $expensePrintLines = $isSingleCarPrint
-                    ? \App\Support\CarNoteFormatter::expensePrintLines($data, 'sales')
-                    : [];
-                $hasExpenseBreakdown = \App\Services\CarExpenseBreakdownService::hasBreakdown($data->expenses_breakdown ?? null);
-            @endphp
             <tr>
                 <th scope="row">{{$key+1}}</th>
                 <td>{{$data->car_type}}</td>
@@ -159,16 +170,7 @@
                 <td>{{$data->container_open_s}}</td>
                 @endif
                 <td>{{$data->shipping_dolar_s}}</td>
-                <td>
-                    <strong>{{$data->expenses_s}}</strong>
-                    @if($isSingleCarPrint && count($expensePrintLines))
-                        <ul class="expense-print-list">
-                            @foreach($expensePrintLines as $expenseLine)
-                                <li>{{ $expenseLine }}</li>
-                            @endforeach
-                        </ul>
-                    @endif
-                </td>
+                <td><strong>{{$data->expenses_s}}</strong></td>
                 <td>{{$data->land_shipping_s}}</td>
                 <td>{{$data->total_s}}</td>
                 <td>
@@ -179,6 +181,36 @@
         </tbody>
       </table>  
   </div>
+
+  @if($isSingleCarPrint && count($expenseBreakdown))
+  <div class="expense-print-section">
+    <h5>تفصيل المصاريف</h5>
+    <table class="table table-sm table-bordered expense-print-table">
+      <thead>
+        <tr class="table-light">
+          <th style="width: 50px">#</th>
+          <th>الوصف</th>
+          <th style="width: 120px">المبلغ $</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach($expenseBreakdown as $i => $item)
+        <tr>
+          <td class="text-center">{{ $i + 1 }}</td>
+          <td class="text-end">{{ $item['description'] }}</td>
+          <td class="text-center fw-bold">{{ (int) ($item['sales'] ?? $item['purchase'] ?? 0) }}</td>
+        </tr>
+        @endforeach
+      </tbody>
+      <tfoot>
+        <tr>
+          <th colspan="2" class="text-end">مجموع المصاريف</th>
+          <th class="text-center">{{ \App\Services\CarExpenseBreakdownService::sumSales($expenseBreakdown) }}</th>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  @endif
 </div>
 
 

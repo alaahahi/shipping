@@ -208,30 +208,34 @@ function printExpenses() {
     </template>
 
     <template #footer>
-      <div class="flex flex-wrap gap-2 justify-between w-full px-1">
+      <div class="w-full space-y-2">
         <button
           type="button"
-          class="px-4 py-2 bg-gray-500 text-white rounded"
-          @click="$emit('close')"
+          class="w-full py-3 bg-slate-600 text-white rounded"
+          @click="printExpenses"
         >
-          إغلاق
+          طباعة
         </button>
-        <div class="flex gap-2">
-          <button
-            type="button"
-            class="px-4 py-2 bg-slate-600 text-white rounded"
-            @click="printExpenses"
-          >
-            طباعة
-          </button>
-          <button
-            type="button"
-            class="px-4 py-2 bg-rose-600 text-white rounded disabled:opacity-50"
-            :disabled="saving"
-            @click="save"
-          >
-            {{ saving ? "جاري الحفظ..." : "حفظ" }}
-          </button>
+        <div class="flex flex-row w-full">
+          <div class="basis-1/2 px-2">
+            <button
+              type="button"
+              class="modal-default-button w-full py-3 bg-gray-500 text-white rounded"
+              @click="$emit('close')"
+            >
+              إغلاق
+            </button>
+          </div>
+          <div class="basis-1/2 px-2">
+            <button
+              type="button"
+              class="modal-default-button w-full py-3 bg-rose-600 text-white rounded disabled:opacity-50"
+              :disabled="saving"
+              @click="save"
+            >
+              {{ saving ? "جاري الحفظ..." : "حفظ" }}
+            </button>
+          </div>
         </div>
       </div>
     </template>
