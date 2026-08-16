@@ -947,7 +947,7 @@ function printTagDetails() {
                                 type="number"
                                 disabled
                                 class="mt-1 block w-full"
-                                :value="isLegacyExpenseBox ? (laravelData.sumOutTransactionsUser || 0) : (laravelData.sumInTransactionsUser - laravelData.sumOutTransactionsUser)"
+                                :value="isLegacyExpenseBox ? Math.abs(laravelData.sumOutTransactionsUser || 0) : walletNetUsd"
                               />
                             </div>
               </div>
@@ -961,7 +961,7 @@ function printTagDetails() {
                                 type="number"
                                 disabled
                                 class="mt-1 block w-full"
-                                :value="isLegacyExpenseBox ? (laravelData.sumOutTransactionsDinarUser || 0) : (laravelData.sumInTransactionsDinarUser - laravelData.sumOutTransactionsDinarUser)"
+                                :value="isLegacyExpenseBox ? Math.abs(laravelData.sumOutTransactionsDinarUser || 0) : walletNetIqd"
                               />
                             </div>
               </div>
@@ -973,7 +973,7 @@ function printTagDetails() {
                                 type="number"
                                 disabled
                                 class="mt-1 block w-full bg-blue-50"
-                                :value="(laravelData.sumInTransactionsUserAmanah||0)-(laravelData.sumOutTransactionsUserAmanah||0)"
+                                :value="walletNetUsdAmanah"
                               />
                             </div>
               </div>
@@ -985,7 +985,7 @@ function printTagDetails() {
                                 type="number"
                                 disabled
                                 class="mt-1 block w-full bg-blue-50"
-                                :value="(laravelData.sumInTransactionsDinarUserAmanah||0)-(laravelData.sumOutTransactionsDinarUserAmanah||0)"
+                                :value="walletNetIqdAmanah"
                               />
                             </div>
               </div>
@@ -1087,43 +1087,43 @@ function printTagDetails() {
             </div>
 
             <div class="overflow-x-auto shadow-md mt-5">
-              <table class="w-full text-right text-gray-500   dark:text-gray-400 text-center">
+              <table class="w-full text-right text-gray-800 dark:text-gray-100 text-center">
                 <thead
-                  class="text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center"
+                  class="text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-100 text-center"
                 >
                   <tr class="rounded-l-lg mb-2 sm:mb-0">
-                    <th className="px-2 py-2">تسلسل</th>
-                    <th className="px-2 py-2">رقم الوصل</th>
-                    <th className="px-2 py-2">التاريخ</th>
-                    <th className="px-2 py-2">الوصف</th>
-                    <th v-if="hasWalletTags" className="px-2 py-2">التاغ / التفاصيل</th>
-                    <th v-if="!isLegacyExpenseBox" className="px-2 py-2">ايداع</th>
-                    <th className="px-2 py-2">سحب</th>
-                    <th className="px-2 py-2">{{ isLegacyExpenseBox ? 'مجموع تراكمي' : 'الرصيد' }}</th>
-                    <th className="px-2 py-2">المرفقات</th>
-                    <th className="px-2 py-2">تنفيذ</th>
+                    <th class="px-2 py-2">تسلسل</th>
+                    <th class="px-2 py-2">رقم الوصل</th>
+                    <th class="px-2 py-2">التاريخ</th>
+                    <th class="px-2 py-2">الوصف</th>
+                    <th v-if="hasWalletTags" class="px-2 py-2">التاغ / التفاصيل</th>
+                    <th v-if="!isLegacyExpenseBox" class="px-2 py-2">ايداع</th>
+                    <th class="px-2 py-2">سحب</th>
+                    <th class="px-2 py-2">{{ isLegacyExpenseBox ? 'مجموع تراكمي' : 'الرصيد' }}</th>
+                    <th class="px-2 py-2">المرفقات</th>
+                    <th class="px-2 py-2">تنفيذ</th>
                   </tr>
                 </thead>
                 <tbody>
          
                   <tr v-for="(tran, index) in transactions" :key="tran.id" :class="walletRowClass(tran)">
 
-                  <td className="border dark:border-gray-800 text-center px-2 py-1 font-semibold">
+                  <td class="border dark:border-gray-800 text-center px-2 py-1 font-semibold">
                     {{ index + 1 }}
                   </td>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">
+                  <td class="border dark:border-gray-800 text-center px-2 py-1">
                     {{ tran.id }}
-                    <span v-if="tran.type == 'inUserAmanah' || tran.type == 'outUserAmanah'" class="text-xs text-blue-600 dark:text-blue-300 font-bold">(أمانة)</span>
+                    <span v-if="tran.type == 'inUserAmanah' || tran.type == 'outUserAmanah'" class="text-xs text-blue-700 dark:text-blue-200 font-bold">(أمانة)</span>
                   </td>
-                  <!-- <td className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.morphed?.name }}</td> -->
+                  <!-- <td class="border dark:border-gray-800 text-center px-2 py-1">{{ tran.morphed?.name }}</td> -->
 
                   
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">{{ formatBaghdadTimestamp(tran?.created_at) }}</td>
-                  <th className="border dark:border-gray-800 text-center px-2 py-1">{{ tran.description }}</th>
-                  <td v-if="hasWalletTags" className="border dark:border-gray-800 text-center px-2 py-1 text-sm">
+                  <td class="border dark:border-gray-800 text-center px-2 py-1">{{ formatBaghdadTimestamp(tran?.created_at) }}</td>
+                  <th class="border dark:border-gray-800 text-center px-2 py-1 font-medium">{{ tran.description }}</th>
+                  <td v-if="hasWalletTags" class="border dark:border-gray-800 text-center px-2 py-1 text-sm">
                     <span v-if="tran.tag" class="inline-block px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">{{ tran.tag }}</span>
                     <template v-if="tran.details && (tran.details.driver_name || tran.details.cmr || tran.details.entry_date || tran.details.cars_count)">
-                      <div class="mt-1 text-gray-600 dark:text-gray-400">
+                      <div class="mt-1 opacity-80">
                         <span v-if="tran.details.driver_name">{{ tran.details.driver_name }}</span>
                         <span v-if="tran.details.cmr"> · CMR: {{ tran.details.cmr }}</span>
                         <span v-if="tran.details.entry_date"> · {{ tran.details.entry_date }}</span>
@@ -1131,19 +1131,19 @@ function printTagDetails() {
                       </div>
                     </template>
                   </td>
-                  <td v-if="!isLegacyExpenseBox" className="border dark:border-gray-800 text-center px-2 py-1">
-                    {{ (tran.type == 'inUser' || tran.type == 'inUserAmanah') ? tran.amount+' '+(tran.currency ?? '$') : '' }}
+                  <td v-if="!isLegacyExpenseBox" class="border dark:border-gray-800 text-center px-2 py-1">
+                    {{ (tran.type == 'inUser' || tran.type == 'inUserAmanah') ? Math.abs(tran.amount)+' '+(tran.currency ?? '$') : '' }}
                   </td>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">
-                    {{ (tran.type == 'outUser' || tran.type == 'outUserAmanah') ? tran.amount+' '+(tran.currency ?? '$') : '' }}
+                  <td class="border dark:border-gray-800 text-center px-2 py-1">
+                    {{ (tran.type == 'outUser' || tran.type == 'outUserAmanah') ? Math.abs(tran.amount)+' '+(tran.currency ?? '$') : '' }}
                   </td>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">
+                  <td class="border dark:border-gray-800 text-center px-2 py-1">
                     <span v-if="tran.type == 'inUser' || tran.type == 'outUser'">
-                      {{ updateResults(calculateBalance(tran, index)) }} {{ tran.currency ?? '$' }}
+                      {{ updateResults(calculateBalance(tran)) }} {{ tran.currency ?? '$' }}
                     </span>
-                    <span v-else class="text-gray-400">-</span>
+                    <span v-else class="opacity-60">-</span>
                   </td>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">
+                  <td class="border dark:border-gray-800 text-center px-2 py-1">
                     <div class="flex flex-wrap justify-center gap-1">
                       <a
                         v-for="(image, index) in tran.transactions_images || []"
@@ -1165,7 +1165,7 @@ function printTagDetails() {
                       </span>
                     </div>
                   </td>
-                  <td className="border dark:border-gray-800 text-center px-2 py-1">
+                  <td class="border dark:border-gray-800 text-center px-2 py-1">
                     <div class="action-group">
                       <button
                         v-if="hasWalletTags"
