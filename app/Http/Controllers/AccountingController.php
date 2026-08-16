@@ -309,11 +309,6 @@ class AccountingController extends Controller
      $sumOutTransactionsUser = $sumAmount('$', ['outUser']);
      $sumInTransactionsUserAmanah = $sumSigned('$', ['inUserAmanah']);
      $sumOutTransactionsUserAmanah = $sumAmount('$', ['outUserAmanah']);
-     // صافي الصندوق = مجموع المبالغ الموقعة (الإيداع موجب والسحب سالب) حتى لا يصبح in - (-out) = in+out
-     $walletNetUsd = $sumSigned('$', ['inUser', 'outUser']);
-     $walletNetIqd = $sumSigned('IQD', ['inUser', 'outUser']);
-     $walletNetUsdAmanah = $sumSigned('$', ['inUserAmanah', 'outUserAmanah']);
-     $walletNetIqdAmanah = $sumSigned('IQD', ['inUserAmanah', 'outUserAmanah']);
 
      $sumAllTransactionsDinar = $sumSigned('IQD', ['in', 'inUser', 'inUserBox', 'out', 'outUser', 'outUserBox', 'debt', 'inUserAmanah', 'outUserAmanah']);
      $sumDebitTransactionsDinar = $sumAmount('IQD', ['debt', 'outUserBox']);
@@ -342,11 +337,7 @@ class AccountingController extends Controller
          'sumInTransactionsUserAmanah' =>  $sumInTransactionsUserAmanah,
          'sumInTransactionsDinarUserAmanah' => $sumInTransactionsDinarUserAmanah,
          'sumOutTransactionsUserAmanah' =>  $sumOutTransactionsUserAmanah,
-         'sumOutTransactionsDinarUserAmanah' => $sumOutTransactionsDinarUserAmanah,
-         'walletNetUsd' => $walletNetUsd,
-         'walletNetIqd' => $walletNetIqd,
-         'walletNetUsdAmanah' => $walletNetUsdAmanah,
-         'walletNetIqdAmanah' => $walletNetIqdAmanah,
+         'sumOutTransactionsDinarUserAmanah' => $sumOutTransactionsDinarUserAmanah
      ];
      if ($request->get('group_by_driver') && $user && $user->wallet) {
          $walletTrans = Transactions::where('wallet_id', $user->wallet->id)
