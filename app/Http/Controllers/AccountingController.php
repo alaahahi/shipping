@@ -291,9 +291,8 @@ class AccountingController extends Controller
 
      $sumAmount = function ($currency, $types) use ($totalsQuery) {
          $types = (array) $types;
-         $q = (clone $totalsQuery)->where('currency', $currency)->whereIn('type', $types);
 
-         return (float) $q->sum(\DB::raw('ABS(amount)'));
+         return abs((float) (clone $totalsQuery)->where('currency', $currency)->whereIn('type', $types)->sum('amount'));
      };
 
      $sumSigned = function ($currency, $types) use ($totalsQuery) {
