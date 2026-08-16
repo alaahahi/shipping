@@ -429,90 +429,111 @@ function normalizeWalletCurrency(currency) {
   return value;
 }
 
-function signedWalletAmount(tran) {
+function isWalletCashType(type) {
+  return type === 'inUser' || type === 'outUser';
+}
+
+function walletStoredAmount(tran) {
   const amount = Number(tran?.amount);
-  if (!Number.isFinite(amount)) {
-    return 0;
-  }
-  if (tran.type === 'outUser' || tran.type === 'outUserAmanah') {
-    return -Math.abs(amount);
-  }
-  if (tran.type === 'inUser' || tran.type === 'inUserAmanah') {
-    return Math.abs(amount);
-  }
-  return amount;
+  return Number.isFinite(amount) ? amount : 0;
 }
 
-function netWalletAmount(inSum, outSum) {
-  return (Number(inSum) || 0) - Math.abs(Number(outSum) || 0);
+function sumLoadedWalletNet(currency) {
+  return transactions.value.reduce((sum, tran) => {
+    if (!tran || !isWalletCashType(tran.type)) {
+      return sum;
+    }
+    if (normalizeWalletCurrency(tran.currency) !== currency) {
+      return sum;
+    }
+    return sum + walletStoredAmount(tran);
+  }, 0);
 }
 
+function sumLoadedAmanahNet(currency) {
+  return transactions.value.reduce((sum, tran) => {
+    if (!tran || (tran.type !== 'inUserAmanah' && tran.type !== 'outUserAmanah')) {
+      return sum;
+    }
+    if (normalizeWalletCurrency(tran.currency) !== currency) {
+      return sum;
+    }
+    return sum + walletStoredAmount(tran);
+  }, 0);
+}
+
+// نفس رقم الـ INPUT: مجموع amount المخزّن (إيداع + سحب السالب)
 const walletNetUsd = computed(() => {
   if (laravelData.value.walletNetUsd != null) {
     return Number(laravelData.value.walletNetUsd) || 0;
   }
-  return netWalletAmount(laravelData.value.sumInTransactionsUser, laravelData.value.sumOutTransactionsUser);
+  return sumLoadedWalletNet('$');
 });
 
 const walletNetIqd = computed(() => {
   if (laravelData.value.walletNetIqd != null) {
     return Number(laravelData.value.walletNetIqd) || 0;
   }
-  return netWalletAmount(laravelData.value.sumInTransactionsDinarUser, laravelData.value.sumOutTransactionsDinarUser);
+  return sumLoadedWalletNet('IQD');
 });
 
 const walletNetUsdAmanah = computed(() => {
   if (laravelData.value.walletNetUsdAmanah != null) {
     return Number(laravelData.value.walletNetUsdAmanah) || 0;
   }
-  return netWalletAmount(laravelData.value.sumInTransactionsUserAmanah, laravelData.value.sumOutTransactionsUserAmanah);
+  return sumLoadedAmanahNet('$');
 });
 
 const walletNetIqdAmanah = computed(() => {
   if (laravelData.value.walletNetIqdAmanah != null) {
     return Number(laravelData.value.walletNetIqdAmanah) || 0;
   }
-  return netWalletAmount(laravelData.value.sumInTransactionsDinarUserAmanah, laravelData.value.sumOutTransactionsDinarUserAmanah);
+  return sumLoadedAmanahNet('IQD');
 });
 
-// الرصيد التراكمي بالدولار/الدينار من صافي كل الحركات، ثم نطرح الأحدث حتى هذه الحركة
-function calculateBalance(transaction) {
-  const currency = normalizeWalletCurrency(transaction.currency);
-  const transactionId = String(transaction.id ?? '');
-  let remaining = currency === 'IQD' ? walletNetIqd.value : walletNetUsd.value;
-
-  if (props.isLegacyExpenseBox) {
-    remaining = currency === 'IQD'
+// الرصيد في كل صف = الـ INPUT، ثم نرجع للخلف بطرح amount كما هو حتى هذه الحركة
+const runningBalanceById = computed(() => {
+  const remaining = {
+    $: props.isLegacyExpenseBox
+      ? Math.abs(Number(laravelData.value.sumOutTransactionsUser) || 0)
+      : walletNetUsd.value,
+    IQD: props.isLegacyExpenseBox
       ? Math.abs(Number(laravelData.value.sumOutTransactionsDinarUser) || 0)
-      : Math.abs(Number(laravelData.value.sumOutTransactionsUser) || 0);
-  }
+      : walletNetIqd.value,
+  };
+  const map = {};
 
   for (const tran of transactions.value) {
-    if (!tran || normalizeWalletCurrency(tran.currency) !== currency) {
+    if (!tran) {
       continue;
     }
-
-    if (props.isLegacyExpenseBox) {
-      if (tran.type !== 'outUser') {
-        continue;
-      }
-      if (String(tran.id) === transactionId) {
-        return remaining;
-      }
-      remaining -= Math.abs(Number(tran.amount) || 0);
+    const isCash = props.isLegacyExpenseBox
+      ? tran.type === 'outUser'
+      : isWalletCashType(tran.type);
+    if (!isCash) {
       continue;
     }
-
-    if (tran.type !== 'inUser' && tran.type !== 'outUser') {
-      continue;
+    const currency = normalizeWalletCurrency(tran.currency);
+    if (remaining[currency] === undefined) {
+      remaining[currency] = 0;
     }
-    if (String(tran.id) === transactionId) {
-      return remaining;
-    }
-    remaining -= signedWalletAmount(tran);
+    map[tran.id] = remaining[currency];
+    remaining[currency] -= props.isLegacyExpenseBox
+      ? Math.abs(walletStoredAmount(tran))
+      : walletStoredAmount(tran);
   }
 
-  return remaining;
+  return map;
+});
+
+function calculateBalance(transaction) {
+  const stored = runningBalanceById.value[transaction.id];
+  if (stored !== undefined) {
+    return stored;
+  }
+  return normalizeWalletCurrency(transaction.currency) === 'IQD'
+    ? walletNetIqd.value
+    : walletNetUsd.value;
 }
 
 function conGenfirmExpenses(V) {
