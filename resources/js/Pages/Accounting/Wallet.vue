@@ -418,122 +418,43 @@ function getDownloadUrl(name) {
   return `/public/uploads/${name}`;
 }
 
-function normalizeWalletCurrency(currency) {
-  const value = String(currency ?? '$').trim();
-  if (value === 'USD' || value === 'usd' || value === '$' || value === 'دولار') {
-    return '$';
-  }
-  if (value === 'IQD' || value === 'iqd' || value === 'د.ع' || value === 'دينار') {
-    return 'IQD';
-  }
-  return value;
-}
+// حساب الرصيد التراكمي
+function calculateBalance(transaction, index) {
+  let balance = 0;
+  const sortedTransactions = [...transactions.value]
+    .filter(t => t && (t.currency ?? '$') === (transaction.currency ?? '$'))
+    .sort((a, b) => {
+      const dateA = new Date(a.created_at || a.created || 0);
+      const dateB = new Date(b.created_at || b.created || 0);
+      const dateDiff = dateA.getTime() - dateB.getTime();
 
-function isWalletCashType(type) {
-  return type === 'inUser' || type === 'outUser';
-}
+      if (dateDiff === 0) {
+        return (a.id || 0) - (b.id || 0);
+      }
+      return dateDiff;
+    });
 
-function walletStoredAmount(tran) {
-  const amount = Number(tran?.amount);
-  return Number.isFinite(amount) ? amount : 0;
-}
+  const transactionId = transaction.id || 0;
 
-function sumLoadedWalletNet(currency) {
-  return transactions.value.reduce((sum, tran) => {
-    if (!tran || !isWalletCashType(tran.type)) {
-      return sum;
+  for (let i = 0; i < sortedTransactions.length; i++) {
+    const tran = sortedTransactions[i];
+
+    if (props.isLegacyExpenseBox) {
+      if (tran.type === 'outUser') {
+        balance += Math.abs(parseFloat(tran.amount) || 0);
+      }
+    } else if (tran.type === 'inUser') {
+      balance += parseFloat(tran.amount) || 0;
+    } else if (tran.type === 'outUser') {
+      balance -= Math.abs(parseFloat(tran.amount) || 0);
     }
-    if (normalizeWalletCurrency(tran.currency) !== currency) {
-      return sum;
+
+    if (tran.id === transactionId) {
+      break;
     }
-    return sum + walletStoredAmount(tran);
-  }, 0);
-}
-
-function sumLoadedAmanahNet(currency) {
-  return transactions.value.reduce((sum, tran) => {
-    if (!tran || (tran.type !== 'inUserAmanah' && tran.type !== 'outUserAmanah')) {
-      return sum;
-    }
-    if (normalizeWalletCurrency(tran.currency) !== currency) {
-      return sum;
-    }
-    return sum + walletStoredAmount(tran);
-  }, 0);
-}
-
-// نفس رقم الـ INPUT: مجموع amount المخزّن (إيداع + سحب السالب)
-const walletNetUsd = computed(() => {
-  if (laravelData.value.walletNetUsd != null) {
-    return Number(laravelData.value.walletNetUsd) || 0;
-  }
-  return sumLoadedWalletNet('$');
-});
-
-const walletNetIqd = computed(() => {
-  if (laravelData.value.walletNetIqd != null) {
-    return Number(laravelData.value.walletNetIqd) || 0;
-  }
-  return sumLoadedWalletNet('IQD');
-});
-
-const walletNetUsdAmanah = computed(() => {
-  if (laravelData.value.walletNetUsdAmanah != null) {
-    return Number(laravelData.value.walletNetUsdAmanah) || 0;
-  }
-  return sumLoadedAmanahNet('$');
-});
-
-const walletNetIqdAmanah = computed(() => {
-  if (laravelData.value.walletNetIqdAmanah != null) {
-    return Number(laravelData.value.walletNetIqdAmanah) || 0;
-  }
-  return sumLoadedAmanahNet('IQD');
-});
-
-// الرصيد في كل صف = الـ INPUT، ثم نرجع للخلف بطرح amount كما هو حتى هذه الحركة
-const runningBalanceById = computed(() => {
-  const remaining = {
-    $: props.isLegacyExpenseBox
-      ? Math.abs(Number(laravelData.value.sumOutTransactionsUser) || 0)
-      : walletNetUsd.value,
-    IQD: props.isLegacyExpenseBox
-      ? Math.abs(Number(laravelData.value.sumOutTransactionsDinarUser) || 0)
-      : walletNetIqd.value,
-  };
-  const map = {};
-
-  for (const tran of transactions.value) {
-    if (!tran) {
-      continue;
-    }
-    const isCash = props.isLegacyExpenseBox
-      ? tran.type === 'outUser'
-      : isWalletCashType(tran.type);
-    if (!isCash) {
-      continue;
-    }
-    const currency = normalizeWalletCurrency(tran.currency);
-    if (remaining[currency] === undefined) {
-      remaining[currency] = 0;
-    }
-    map[tran.id] = remaining[currency];
-    remaining[currency] -= props.isLegacyExpenseBox
-      ? Math.abs(walletStoredAmount(tran))
-      : walletStoredAmount(tran);
   }
 
-  return map;
-});
-
-function calculateBalance(transaction) {
-  const stored = runningBalanceById.value[transaction.id];
-  if (stored !== undefined) {
-    return stored;
-  }
-  return normalizeWalletCurrency(transaction.currency) === 'IQD'
-    ? walletNetIqd.value
-    : walletNetUsd.value;
+  return balance;
 }
 
 function conGenfirmExpenses(V) {
@@ -968,7 +889,7 @@ function printTagDetails() {
                                 type="number"
                                 disabled
                                 class="mt-1 block w-full"
-                                :value="isLegacyExpenseBox ? Math.abs(laravelData.sumOutTransactionsUser || 0) : walletNetUsd"
+                                :value="isLegacyExpenseBox ? (laravelData.sumOutTransactionsUser || 0) : (laravelData.sumInTransactionsUser - laravelData.sumOutTransactionsUser)"
                               />
                             </div>
               </div>
@@ -982,7 +903,7 @@ function printTagDetails() {
                                 type="number"
                                 disabled
                                 class="mt-1 block w-full"
-                                :value="isLegacyExpenseBox ? Math.abs(laravelData.sumOutTransactionsDinarUser || 0) : walletNetIqd"
+                                :value="isLegacyExpenseBox ? (laravelData.sumOutTransactionsDinarUser || 0) : (laravelData.sumInTransactionsDinarUser - laravelData.sumOutTransactionsDinarUser)"
                               />
                             </div>
               </div>
@@ -994,7 +915,7 @@ function printTagDetails() {
                                 type="number"
                                 disabled
                                 class="mt-1 block w-full bg-blue-50"
-                                :value="walletNetUsdAmanah"
+                                :value="(laravelData.sumInTransactionsUserAmanah||0)-(laravelData.sumOutTransactionsUserAmanah||0)"
                               />
                             </div>
               </div>
@@ -1006,7 +927,7 @@ function printTagDetails() {
                                 type="number"
                                 disabled
                                 class="mt-1 block w-full bg-blue-50"
-                                :value="walletNetIqdAmanah"
+                                :value="(laravelData.sumInTransactionsDinarUserAmanah||0)-(laravelData.sumOutTransactionsDinarUserAmanah||0)"
                               />
                             </div>
               </div>
@@ -1153,14 +1074,14 @@ function printTagDetails() {
                     </template>
                   </td>
                   <td v-if="!isLegacyExpenseBox" class="border dark:border-gray-800 text-center px-2 py-1">
-                    {{ (tran.type == 'inUser' || tran.type == 'inUserAmanah') ? Math.abs(tran.amount)+' '+(tran.currency ?? '$') : '' }}
+                    {{ (tran.type == 'inUser' || tran.type == 'inUserAmanah') ? tran.amount+' '+(tran.currency ?? '$') : '' }}
                   </td>
                   <td class="border dark:border-gray-800 text-center px-2 py-1">
-                    {{ (tran.type == 'outUser' || tran.type == 'outUserAmanah') ? Math.abs(tran.amount)+' '+(tran.currency ?? '$') : '' }}
+                    {{ (tran.type == 'outUser' || tran.type == 'outUserAmanah') ? tran.amount+' '+(tran.currency ?? '$') : '' }}
                   </td>
                   <td class="border dark:border-gray-800 text-center px-2 py-1">
                     <span v-if="tran.type == 'inUser' || tran.type == 'outUser'">
-                      {{ updateResults(calculateBalance(tran)) }} {{ tran.currency ?? '$' }}
+                      {{ updateResults(calculateBalance(tran, index)) }} {{ tran.currency ?? '$' }}
                     </span>
                     <span v-else class="opacity-60">-</span>
                   </td>
