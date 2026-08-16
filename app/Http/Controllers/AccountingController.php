@@ -291,8 +291,14 @@ class AccountingController extends Controller
 
      $sumAmount = function ($currency, $types) use ($totalsQuery) {
          $types = (array) $types;
+         // مطلق كل حركة على حدة — حتى لا يلغي سحب سالب (قرض سائق) سحب موجب
+         $total = (clone $totalsQuery)
+             ->where('currency', $currency)
+             ->whereIn('type', $types)
+             ->selectRaw('COALESCE(SUM(ABS(amount)), 0) as total')
+             ->value('total');
 
-         return abs((float) (clone $totalsQuery)->where('currency', $currency)->whereIn('type', $types)->sum('amount'));
+         return (float) $total;
      };
 
      $sumSigned = function ($currency, $types) use ($totalsQuery) {
