@@ -639,7 +639,14 @@ class SystemConfigController extends Controller
                     'percent'     => $dbSize && $sz ? round($sz / $dbSize * 100, 2) : null,
                 ];
             }
-            usort($items, fn ($a, $b) => ($b['size_bytes'] ?? -1) <=> ($a['size_bytes'] ?? -1));
+            usort($items, function ($a, $b) {
+                $sizeCmp = ($b['size_bytes'] ?? -1) <=> ($a['size_bytes'] ?? -1);
+                if ($sizeCmp !== 0) {
+                    return $sizeCmp;
+                }
+
+                return ($b['rows'] ?? 0) <=> ($a['rows'] ?? 0);
+            });
 
             return response()->json([
                 'driver'      => $driver,

@@ -828,10 +828,41 @@ const dbLoading = ref(false);
 const vacuuming = ref(false);
 const dbColors  = ['#6366f1','#22c55e','#f59e0b','#3b82f6','#ec4899','#14b8a6','#fb923c','#a855f7','#ef4444','#64748b'];
 
-const dbTopTables = computed(() => (dbData.value?.tables ?? []).slice(0, 10));
+const dbTables = computed(() => dbData.value?.tables ?? []);
+const dbTableQuery = ref('');
+const dbFilteredTables = computed(() => {
+  const q = dbTableQuery.value.trim().toLowerCase();
+  if (!q) {
+    return dbTables.value;
+  }
+
+  return dbTables.value.filter((row) => String(row.name ?? '').toLowerCase().includes(q));
+});
+const dbChartTables = computed(() => {
+  const tables = dbTables.value;
+  if (tables.length <= 10) {
+    return tables;
+  }
+
+  const top = tables.slice(0, 10);
+  const rest = tables.slice(10);
+  const restSize = rest.reduce((sum, row) => sum + (row.size_bytes ?? 0), 0);
+  const restRows = rest.reduce((sum, row) => sum + (row.rows ?? 0), 0);
+  const total = dbData.value?.db_size ?? restSize;
+
+  return [
+    ...top,
+    {
+      name: 'أخرى',
+      rows: restRows,
+      size_bytes: restSize,
+      percent: total > 0 ? Math.round((restSize / total) * 10000) / 100 : null,
+    },
+  ];
+});
 
 const dbChartGradient = computed(() => {
-  const tables = dbTopTables.value;
+  const tables = dbChartTables.value;
   if (!tables.length) return '#334155';
   const total = dbData.value?.db_size ?? tables.reduce((s, r) => s + (r.size_bytes ?? 0), 0);
   let offset = 0;
@@ -1822,7 +1853,7 @@ async function runVacuum() {
               <div class="w-40 h-40 rounded-full" :style="{ background: dbChartGradient }"></div>
               <div class="absolute inset-0 flex items-center justify-center">
                 <div class="w-20 h-20 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center">
-                  <span class="text-xs text-gray-500 text-center">{{ dbTopTables.length }}<br>جدول</span>
+                  <span class="text-xs text-gray-500 text-center">{{ dbTables.length }}<br>جدول</span>
                 </div>
               </div>
             </div>
@@ -1830,8 +1861,18 @@ async function runVacuum() {
 
           <!-- Table list -->
           <div class="flex-1 overflow-x-auto">
+            <div class="flex flex-wrap items-center gap-2 mb-2">
+              <input
+                v-model="dbTableQuery"
+                type="search"
+                class="block w-full max-w-xs rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm"
+                placeholder="بحث عن جدول…"
+              />
+              <span class="text-xs text-gray-500">{{ dbFilteredTables.length }} / {{ dbTables.length }}</span>
+            </div>
+            <div class="max-h-[28rem] overflow-auto">
             <table class="w-full text-sm text-right">
-              <thead class="text-xs text-gray-500 border-b dark:border-gray-700">
+              <thead class="text-xs text-gray-500 border-b dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800">
                 <tr>
                   <th class="py-2 font-medium">الجدول</th>
                   <th class="py-2 font-medium text-center">الصفوف</th>
@@ -1841,7 +1882,7 @@ async function runVacuum() {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(row, idx) in dbTopTables" :key="row.name" class="border-b dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <tr v-for="(row, idx) in dbFilteredTables" :key="row.name" class="border-b dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
                   <td class="py-2 flex items-center gap-2">
                     <span class="inline-block w-3 h-3 rounded-full flex-shrink-0" :style="{ background: dbColors[idx % dbColors.length] }"></span>
                     <code class="text-xs">{{ row.name }}</code>
@@ -1857,6 +1898,7 @@ async function runVacuum() {
                 </tr>
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       </template>

@@ -209,6 +209,20 @@ function isAmanahTransaction(tran) {
   return tran?.type === 'inUserAmanah' || tran?.type === 'outUserAmanah';
 }
 
+function walletRowClass(tran) {
+  if (tran?.type === 'inUserAmanah') {
+    return 'border-b border-r-4 border-blue-500 bg-blue-100 text-blue-950 dark:bg-blue-950 dark:text-blue-100 dark:border-blue-400';
+  }
+  if (tran?.type === 'outUserAmanah') {
+    return 'border-b border-r-4 border-orange-500 bg-orange-100 text-orange-950 dark:bg-orange-950 dark:text-orange-100 dark:border-orange-400';
+  }
+  if (tran?.type === 'inUser') {
+    return 'border-b border-r-4 border-green-500 bg-green-100 text-green-950 dark:bg-emerald-950 dark:text-emerald-100 dark:border-emerald-400';
+  }
+
+  return 'border-b border-r-4 border-red-500 bg-red-100 text-red-950 dark:bg-red-950 dark:text-red-100 dark:border-red-400';
+}
+
 function openModalDel(tran){
   if (isAmanahTransaction(tran)) {
     deleteAmanahTransaction(tran);
@@ -1044,14 +1058,7 @@ function printTagDetails() {
                 </thead>
                 <tbody>
          
-                  <tr v-for="(tran, index) in   transactions" :key="tran.id" 
-                      :class="[
-                        tran.type == 'inUserAmanah' ? 'bg-blue-100 dark:bg-blue-900 border-r-4 border-blue-500' :
-                        tran.type == 'outUserAmanah' ? 'bg-orange-100 dark:bg-orange-900 border-r-4 border-orange-500' :
-                        tran.type == 'inUser' ? 'bg-green-100 dark:bg-green-900/40 border-r-4 border-green-500' :
-                        'bg-red-100 dark:bg-red-900/40 border-r-4 border-red-500'
-                      ]"  
-                      class="bg-white border-b dark:bg-gray-900 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-600">
+                  <tr v-for="(tran, index) in transactions" :key="tran.id" :class="walletRowClass(tran)">
 
                   <td className="border dark:border-gray-800 text-center px-2 py-1 font-semibold">
                     {{ index + 1 }}

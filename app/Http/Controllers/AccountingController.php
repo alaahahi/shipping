@@ -201,7 +201,7 @@ class AccountingController extends Controller
      $from =  $_GET['from'] ?? 0;
      $to =$_GET['to'] ?? 0;
      $print =$_GET['print'] ?? 0;
-     $q= $_GET['q'] ?? 0;
+     $q= trim((string) ($_GET['q'] ?? ''));
      $type = $_GET['type'] ??'';
      $transactions_id = $_GET['transactions_id'] ?? 0;
      $owner_id = $owner_id ?? Auth::user()->owner_id;
@@ -221,7 +221,8 @@ class AccountingController extends Controller
          ->with(['TransactionsImages', 'morphed'])
          ->where('wallet_id', $user->wallet->id);
 
-     if ($from && $to) {
+     // البحث برقم الوصل أو الوصف لا يرتبط بنطاق التاريخ
+     if ($from && $to && $q === '') {
          if ($deletedOnly) {
              $transactionsQuery->whereBetween('deleted_at', [$from.' 00:00:00', $to.' 23:59:59']);
          } else {
@@ -231,7 +232,7 @@ class AccountingController extends Controller
 
      $transactionsQuery->orderBy($deletedOnly ? 'deleted_at' : 'created_at', 'desc')->orderBy('id', 'desc');
 
-     if ($q) {
+     if ($q !== '') {
         $transactionsQuery->where(function ($query) use ($q) {
             $query->where('id', $q)
                   ->orWhere('description', 'LIKE', '%' . $q . '%');
@@ -273,22 +274,50 @@ class AccountingController extends Controller
          else{
         $allTransactions = $transactions->simplePaginate(100);
      }
-     // TransactionsImages already eager-loaded above; avoid a second query.
-     $sumAllTransactions = $allTransactions->where('currency','$')->sum('amount');
-     $sumDebitTransactions = $allTransactions->where('currency','$')->whereIn('type', ['debt','outUserBox'])->sum('amount');
-     $sumInTransactions = $allTransactions->where('currency','$')->whereIn('type', ['in', 'inUserBox'])->sum('amount');
-     $sumInTransactionsUser = $allTransactions->where('currency','$')->where('type', 'inUser')->sum('amount');
-     $sumOutTransactionsUser = $allTransactions->where('currency','$')->where('type', 'outUser')->sum('amount');
-     $sumInTransactionsUserAmanah = $allTransactions->where('currency','$')->where('type', 'inUserAmanah')->sum('amount');
-     $sumOutTransactionsUserAmanah = $allTransactions->where('currency','$')->where('type', 'outUserAmanah')->sum('amount');
 
-     $sumAllTransactionsDinar = $allTransactions->where('currency','IQD')->sum('amount');
-     $sumDebitTransactionsDinar = $allTransactions->where('currency','IQD')->whereIn('type', ['debt','outUserBox'])->sum('amount');
-     $sumInTransactionsDinar = $allTransactions->where('currency','IQD')->whereIn('type', ['in', 'inUserBox'])->sum('amount');
-     $sumInTransactionsDinarUser = $allTransactions->where('currency','IQD')->where('type', 'inUser')->sum('amount');
-     $sumOutTransactionsDinarUser = $allTransactions->where('currency','IQD')->where('type', 'outUser')->sum('amount');
-     $sumInTransactionsDinarUserAmanah = $allTransactions->where('currency','IQD')->where('type', 'inUserAmanah')->sum('amount');
-     $sumOutTransactionsDinarUserAmanah = $allTransactions->where('currency','IQD')->where('type', 'outUserAmanah')->sum('amount');
+     $totalsQuery = ($deletedOnly ? Transactions::onlyTrashed() : Transactions::query())
+         ->where('wallet_id', $user->wallet->id);
+
+     if ($type === 'wallet') {
+         $totalsQuery->whereIn('type', ['inUser', 'outUser', 'inUserAmanah', 'outUserAmanah']);
+     }
+
+     if ($year >= 2000 && $year <= 2100) {
+         $totalsQuery->where(function ($query) use ($year) {
+             $query->whereYear('created_at', $year)
+                 ->orWhere('created', 'LIKE', $year.'-%');
+         });
+     }
+
+     $sumAmount = function ($currency, $types) use ($totalsQuery) {
+         $types = (array) $types;
+         $q = (clone $totalsQuery)->where('currency', $currency)->whereIn('type', $types);
+
+         return (float) $q->sum(\DB::raw('ABS(amount)'));
+     };
+
+     $sumSigned = function ($currency, $types) use ($totalsQuery) {
+         $types = (array) $types;
+
+         return (float) (clone $totalsQuery)->where('currency', $currency)->whereIn('type', $types)->sum('amount');
+     };
+
+     // إيداع = مجموع الموجب كما هو؛ سحب = القيمة المطلقة لأن decreaseWallet يخزن amount سالب
+     $sumAllTransactions = $sumSigned('$', ['in', 'inUser', 'inUserBox', 'out', 'outUser', 'outUserBox', 'debt', 'inUserAmanah', 'outUserAmanah']);
+     $sumDebitTransactions = $sumAmount('$', ['debt', 'outUserBox']);
+     $sumInTransactions = $sumSigned('$', ['in', 'inUserBox']);
+     $sumInTransactionsUser = $sumSigned('$', ['inUser']);
+     $sumOutTransactionsUser = $sumAmount('$', ['outUser']);
+     $sumInTransactionsUserAmanah = $sumSigned('$', ['inUserAmanah']);
+     $sumOutTransactionsUserAmanah = $sumAmount('$', ['outUserAmanah']);
+
+     $sumAllTransactionsDinar = $sumSigned('IQD', ['in', 'inUser', 'inUserBox', 'out', 'outUser', 'outUserBox', 'debt', 'inUserAmanah', 'outUserAmanah']);
+     $sumDebitTransactionsDinar = $sumAmount('IQD', ['debt', 'outUserBox']);
+     $sumInTransactionsDinar = $sumSigned('IQD', ['in', 'inUserBox']);
+     $sumInTransactionsDinarUser = $sumSigned('IQD', ['inUser']);
+     $sumOutTransactionsDinarUser = $sumAmount('IQD', ['outUser']);
+     $sumInTransactionsDinarUserAmanah = $sumSigned('IQD', ['inUserAmanah']);
+     $sumOutTransactionsDinarUserAmanah = $sumAmount('IQD', ['outUserAmanah']);
 
      
      // Additional logic to retrieve client data
