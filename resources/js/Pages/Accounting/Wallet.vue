@@ -210,17 +210,18 @@ function isAmanahTransaction(tran) {
 }
 
 function walletRowClass(tran) {
+  const cells = '[&>td]:text-inherit [&>th]:text-inherit';
   if (tran?.type === 'inUserAmanah') {
-    return 'border-b border-r-4 border-blue-500 bg-blue-100 text-blue-950 dark:bg-blue-950 dark:text-blue-100 dark:border-blue-400';
+    return `${cells} border-b border-r-4 border-blue-500 bg-blue-100 text-blue-950 dark:bg-blue-900 dark:!text-blue-50 dark:border-blue-400`;
   }
   if (tran?.type === 'outUserAmanah') {
-    return 'border-b border-r-4 border-orange-500 bg-orange-100 text-orange-950 dark:bg-orange-950 dark:text-orange-100 dark:border-orange-400';
+    return `${cells} border-b border-r-4 border-orange-500 bg-orange-100 text-orange-950 dark:bg-orange-900 dark:!text-orange-50 dark:border-orange-400`;
   }
   if (tran?.type === 'inUser') {
-    return 'border-b border-r-4 border-green-500 bg-green-100 text-green-950 dark:bg-emerald-950 dark:text-emerald-100 dark:border-emerald-400';
+    return `${cells} border-b border-r-4 border-green-500 bg-green-100 text-green-950 dark:bg-emerald-900 dark:!text-emerald-50 dark:border-emerald-400`;
   }
 
-  return 'border-b border-r-4 border-red-500 bg-red-100 text-red-950 dark:bg-red-950 dark:text-red-100 dark:border-red-400';
+  return `${cells} border-b border-r-4 border-red-500 bg-red-100 text-red-950 dark:bg-rose-900 dark:!text-rose-50 dark:border-rose-400`;
 }
 
 function openModalDel(tran){
@@ -417,54 +418,101 @@ function getDownloadUrl(name) {
   return `/public/uploads/${name}`;
 }
 
-// حساب الرصيد التراكمي
-function calculateBalance(transaction, index) {
-  let balance = 0;
-  // نحتاج لحساب الرصيد من أقدم معاملة حتى هذه المعاملة
-  // المعاملات مرتبة من الأحدث للأقدم، لذا نحتاج لعكس الترتيب في الحساب
-  
-  // إنشاء نسخة مرتبة من المعاملات حسب التاريخ والـ ID من الأقدم للأحدث
-  const sortedTransactions = [...transactions.value]
-    .filter(t => t && (t.currency ?? '$') === (transaction.currency ?? '$'))
-    .sort((a, b) => {
-      // الترتيب حسب التاريخ أولاً
-      const dateA = new Date(a.created_at || a.created || 0);
-      const dateB = new Date(b.created_at || b.created || 0);
-      const dateDiff = dateA.getTime() - dateB.getTime();
-      
-      // إذا كانت التواريخ متساوية، نرتب حسب ID (الأقدم أولاً - ID أصغر)
-      if (dateDiff === 0) {
-        return (a.id || 0) - (b.id || 0);
-      }
-      return dateDiff;
-    });
-  
-  // العثور على موضع هذه المعاملة في القائمة المرتبة
-  const transactionId = transaction.id || 0;
-  
-  for (let i = 0; i < sortedTransactions.length; i++) {
-    const tran = sortedTransactions[i];
-    
-    // نأخذ فقط معاملات الصندوق (ليس الأمانة) لحساب الرصيد
-    // Legacy expense treasuries: running total of withdrawals (expenses)
-    if (props.isLegacyExpenseBox) {
-      if (tran.type === 'outUser') {
-        balance += Math.abs(parseFloat(tran.amount) || 0);
-      }
-    } else if (tran.type === 'inUser') {
-      balance += parseFloat(tran.amount) || 0;
-    } else if (tran.type === 'outUser') {
-      balance -= Math.abs(parseFloat(tran.amount) || 0);
-    }
-    // نتجاهل معاملات الأمانة لأنها لا تؤثر على balance
-    
-    // إذا وصلنا إلى هذه المعاملة، نتوقف
-    if (tran.id === transactionId) {
-      break;
-    }
+function normalizeWalletCurrency(currency) {
+  const value = String(currency ?? '$').trim();
+  if (value === 'USD' || value === 'usd' || value === '$' || value === 'دولار') {
+    return '$';
   }
-  
-  return balance;
+  if (value === 'IQD' || value === 'iqd' || value === 'د.ع' || value === 'دينار') {
+    return 'IQD';
+  }
+  return value;
+}
+
+function signedWalletAmount(tran) {
+  const amount = Number(tran?.amount);
+  if (!Number.isFinite(amount)) {
+    return 0;
+  }
+  if (tran.type === 'outUser' || tran.type === 'outUserAmanah') {
+    return -Math.abs(amount);
+  }
+  if (tran.type === 'inUser' || tran.type === 'inUserAmanah') {
+    return Math.abs(amount);
+  }
+  return amount;
+}
+
+function netWalletAmount(inSum, outSum) {
+  return (Number(inSum) || 0) - Math.abs(Number(outSum) || 0);
+}
+
+const walletNetUsd = computed(() => {
+  if (laravelData.value.walletNetUsd != null) {
+    return Number(laravelData.value.walletNetUsd) || 0;
+  }
+  return netWalletAmount(laravelData.value.sumInTransactionsUser, laravelData.value.sumOutTransactionsUser);
+});
+
+const walletNetIqd = computed(() => {
+  if (laravelData.value.walletNetIqd != null) {
+    return Number(laravelData.value.walletNetIqd) || 0;
+  }
+  return netWalletAmount(laravelData.value.sumInTransactionsDinarUser, laravelData.value.sumOutTransactionsDinarUser);
+});
+
+const walletNetUsdAmanah = computed(() => {
+  if (laravelData.value.walletNetUsdAmanah != null) {
+    return Number(laravelData.value.walletNetUsdAmanah) || 0;
+  }
+  return netWalletAmount(laravelData.value.sumInTransactionsUserAmanah, laravelData.value.sumOutTransactionsUserAmanah);
+});
+
+const walletNetIqdAmanah = computed(() => {
+  if (laravelData.value.walletNetIqdAmanah != null) {
+    return Number(laravelData.value.walletNetIqdAmanah) || 0;
+  }
+  return netWalletAmount(laravelData.value.sumInTransactionsDinarUserAmanah, laravelData.value.sumOutTransactionsDinarUserAmanah);
+});
+
+// الرصيد التراكمي بالدولار/الدينار من صافي كل الحركات، ثم نطرح الأحدث حتى هذه الحركة
+function calculateBalance(transaction) {
+  const currency = normalizeWalletCurrency(transaction.currency);
+  const transactionId = String(transaction.id ?? '');
+  let remaining = currency === 'IQD' ? walletNetIqd.value : walletNetUsd.value;
+
+  if (props.isLegacyExpenseBox) {
+    remaining = currency === 'IQD'
+      ? Math.abs(Number(laravelData.value.sumOutTransactionsDinarUser) || 0)
+      : Math.abs(Number(laravelData.value.sumOutTransactionsUser) || 0);
+  }
+
+  for (const tran of transactions.value) {
+    if (!tran || normalizeWalletCurrency(tran.currency) !== currency) {
+      continue;
+    }
+
+    if (props.isLegacyExpenseBox) {
+      if (tran.type !== 'outUser') {
+        continue;
+      }
+      if (String(tran.id) === transactionId) {
+        return remaining;
+      }
+      remaining -= Math.abs(Number(tran.amount) || 0);
+      continue;
+    }
+
+    if (tran.type !== 'inUser' && tran.type !== 'outUser') {
+      continue;
+    }
+    if (String(tran.id) === transactionId) {
+      return remaining;
+    }
+    remaining -= signedWalletAmount(tran);
+  }
+
+  return remaining;
 }
 
 function conGenfirmExpenses(V) {
