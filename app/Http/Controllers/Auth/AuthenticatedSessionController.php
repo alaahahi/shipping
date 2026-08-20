@@ -1,14 +1,15 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
-use App\Models\User;
-use App\Models\UserType;
+
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\User;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class AuthenticatedSessionController extends Controller
@@ -34,20 +35,18 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request)
     {
-        
-        //$admin_id =UserType::where('name', 'admin')->first() ? UserType::where('name', 'admin')->first()->id :"";
-        $user_id=User::where('email', $request->email)->first() ? User::where('email', $request->email)->first()->is_band :1;
-        if(!$user_id){
-            $request->authenticate();
-            $request->session()->regenerate();
-            return redirect()->intended(RouteServiceProvider::HOME);
-        }else
+        $user = User::where('email', $request->email)->first();
 
-        return Inertia::render('Auth/Login', [
-            'canResetPassword' => Route::has('password.request'),
-            'status' => session('status'),
-        ]);
+        if ($user && (int) $user->is_band === 1) {
+            throw ValidationException::withMessages([
+                'email' => 'هذا الحساب مقيّد. راجع الإدارة.',
+            ]);
+        }
 
+        $request->authenticate();
+        $request->session()->regenerate();
+
+        return redirect()->intended(RouteServiceProvider::HOME);
     }
 
     /**
@@ -61,7 +60,6 @@ class AuthenticatedSessionController extends Controller
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
         return redirect('/');

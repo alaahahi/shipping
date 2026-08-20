@@ -19,6 +19,14 @@ class ForceAppUrl
         URL::forceRootUrl($host);
         config(['app.url' => $host]);
 
+        // Keep Sanctum stateful CSRF in sync with the live host (fixes 419 on api/* from browser)
+        $hostOnly = $request->getHost();
+        $stateful = config('sanctum.stateful', []);
+        if (! in_array($hostOnly, $stateful, true)) {
+            $stateful[] = $hostOnly;
+            config(['sanctum.stateful' => $stateful]);
+        }
+
         return $next($request);
     }
 }

@@ -122,6 +122,9 @@ Route::get('statistics/export-payments-excel',[StatisticsController::class, 'exp
 Route::get('statistics/check-traders-payments',[StatisticsController::class, 'checkTradersPayments'])->name('statistics.checkTradersPayments');
 Route::get('statistics/deleted-cars',[StatisticsController::class, 'getDeletedCars'])->name('statistics.getDeletedCars');
 
+// تسجيل دخول API — خارج auth:sanctum (وإلا يرجع 401/419 قبل التحقق من البيانات)
+Route::post('login', [UserController::class, 'login']);
+
 Route::middleware('auth:sanctum')->group(function () {
 Route::apiResource('upload', UploadController::class);
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {return $request->user();});
@@ -129,7 +132,6 @@ Route::get('/user/{id}', function (Request $request) { return  User::find($reque
 Route::get('/user/{id}',[UserController::class, 'getMassages']);
 Route::get('/getUserMassages/{id}/{user}',[UserController::class, 'getUserMassages']);
 Route::middleware('auth:api')->get('/user', function (Request $request) { return $request->user();});
-Route::post('login',[UserController::class, 'login']);
 Route::get('getcontact/{id}',[UserController::class, 'getcontact']);
 
 

@@ -12,6 +12,7 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        //
+        // API login is token/credential based (mobile/apps) — Sanctum stateful CSRF was returning 419
+        'api/login',
     ];
 }

@@ -25,9 +25,22 @@ const form = useForm({
     remember: false,
 });
 
+const sessionError = ref('');
+
 const submit = () => {
+    sessionError.value = '';
     form.post(route('login'), {
+        preserveScroll: true,
         onFinish: () => form.reset('password'),
+        onError: (errors) => {
+            // 419 CSRF / جلسة منتهية غالباً يظهر بدون رسالة واضحة
+            if (!errors || Object.keys(errors).length === 0) {
+                sessionError.value = 'انتهت الجلسة أو فشل التحقق الأمني (419). جاري تحديث الصفحة...';
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1200);
+            }
+        },
     });
 };
 </script>
@@ -74,6 +87,10 @@ const submit = () => {
 
                     <div v-if="status" class="login-status" role="status">
                         {{ status }}
+                    </div>
+
+                    <div v-if="sessionError" class="login-alert" role="alert">
+                        {{ sessionError }}
                     </div>
 
                     <form class="login-form" @submit.prevent="submit">
@@ -343,6 +360,17 @@ const submit = () => {
     background: rgba(16, 185, 129, 0.15);
     color: #6ee7b7;
     font-size: 0.875rem;
+}
+
+.login-alert {
+    margin-bottom: 1rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.65rem;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.12);
+    color: #fca5a5;
+    font-size: 0.875rem;
+    line-height: 1.5;
 }
 
 .login-form {
