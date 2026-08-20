@@ -155,7 +155,29 @@ return [
     |
     */
 
-    'domain' => env('SESSION_DOMAIN'),
+    /*
+    | Domain must be a host only (e.g. a.intellij-app.com or .intellij-app.com).
+    | Values like https://a.intellij-app.com are invalid Cookie Domain attrs —
+    | browsers reject the session cookie → CSRF 419 on login.
+    */
+    'domain' => (static function () {
+        $domain = env('SESSION_DOMAIN');
+
+        if ($domain === null || $domain === '' || $domain === 'null') {
+            return null;
+        }
+
+        $domain = trim((string) $domain);
+
+        if (str_contains($domain, '://')) {
+            $host = parse_url($domain, PHP_URL_HOST);
+            $domain = is_string($host) && $host !== '' ? $host : $domain;
+        }
+
+        $domain = rtrim($domain, '/');
+
+        return $domain !== '' ? $domain : null;
+    })(),
 
     /*
     |--------------------------------------------------------------------------

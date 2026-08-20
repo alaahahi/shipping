@@ -15,7 +15,9 @@ Route::middleware('guest')->group(function () {
 
     Route::post('register', [RegisteredUserController::class, 'store']);
 
-    Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
+    Route::get('login', [AuthenticatedSessionController::class, 'create'])
+        ->middleware('cache.headers:no_store;no_cache;must_revalidate;max_age=0')
+        ->name('login');
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 

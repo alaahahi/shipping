@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Session\TokenMismatchException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -53,6 +54,17 @@ class Handler extends ExceptionHandler
             if (app()->bound(\App\Monitor\Services\ExceptionMonitor::class)) {
                 app(\App\Monitor\Services\ExceptionMonitor::class)->log($e);
             }
+        });
+
+        // Avoid raw "419 | PAGE EXPIRED" HTML on login — send user back with a fresh session/CSRF.
+        $this->renderable(function (TokenMismatchException $e, $request) {
+            if ($request->is('login') || $request->routeIs('login')) {
+                return redirect()
+                    ->route('login')
+                    ->with('status', 'انتهت صلاحية الجلسة. حدّث الصفحة وأعد تسجيل الدخول.');
+            }
+
+            return null;
         });
     }
 }

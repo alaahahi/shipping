@@ -19,6 +19,9 @@ const loginBackground = computed(
     () => page.props.loginBackground || null
 );
 
+const readCsrfToken = () =>
+    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
 const form = useForm({
     email: '',
     password: '',
@@ -26,22 +29,54 @@ const form = useForm({
 });
 
 const sessionError = ref('');
+const refreshingSession = ref(false);
+
+const softReloadForFreshCsrf = (message) => {
+    if (refreshingSession.value) {
+        return;
+    }
+    refreshingSession.value = true;
+    sessionError.value = message;
+    // Full navigation (not Inertia) so blade meta csrf-token + session cookie refresh
+    setTimeout(() => {
+        window.location.href = route('login');
+    }, 900);
+};
 
 const submit = () => {
     sessionError.value = '';
-    form.post(route('login'), {
-        preserveScroll: true,
-        onFinish: () => form.reset('password'),
-        onError: (errors) => {
-            // 419 CSRF / جلسة منتهية غالباً يظهر بدون رسالة واضحة
-            if (!errors || Object.keys(errors).length === 0) {
-                sessionError.value = 'انتهت الجلسة أو فشل التحقق الأمني (419). جاري تحديث الصفحة...';
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1200);
-            }
-        },
-    });
+    const token = readCsrfToken();
+
+    form
+        .transform((data) => ({
+            ...data,
+            _token: token,
+        }))
+        .post(route('login'), {
+            preserveScroll: true,
+            headers: token
+                ? {
+                      'X-CSRF-TOKEN': token,
+                      'X-XSRF-TOKEN': decodeURIComponent(
+                          document.cookie
+                              .split('; ')
+                              .find((row) => row.startsWith('XSRF-TOKEN='))
+                              ?.split('=')
+                              .slice(1)
+                              .join('=') || token
+                      ),
+                  }
+                : {},
+            onFinish: () => form.reset('password'),
+            onError: (errors) => {
+                // 419 CSRF / جلسة منتهية غالباً يظهر بدون رسالة واضحة
+                if (!errors || Object.keys(errors).length === 0) {
+                    softReloadForFreshCsrf(
+                        'انتهت الجلسة أو فشل التحقق الأمني (419). جاري تحديث الصفحة...'
+                    );
+                }
+            },
+        });
 };
 </script>
 

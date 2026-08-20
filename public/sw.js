@@ -1,10 +1,9 @@
 // Service Worker - PWA محسّن - دعم Offline سريع
 // الهدف: تسريع التطبيق + دعم offline بدون تخزين IndexedDB
 
-const CACHE_NAME = 'shipping-v3.0.1'; // ⬆️ تحديث الإصدار - PWA محسّن
-const RUNTIME_CACHE = 'shipping-runtime-v3.0.1';
+const CACHE_NAME = 'shipping-v3.0.2'; // ⬆️ لا تخزّن /login (CSRF stale → 419)
+const RUNTIME_CACHE = 'shipping-runtime-v3.0.2';
 const ASSETS_TO_CACHE = [
-  '/',
   '/offline.html',
   '/app-shell.html'
 ];
@@ -65,49 +64,37 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // ✅ دعم طلبات Inertia (زيارة الصفحات داخل التطبيق)
+  // ✅ دعم طلبات Inertia — بدون cache (صفحات ديناميكية + CSRF)
   const isInertiaRequest = request.headers.get('X-Inertia') || request.headers.get('X-Inertia-Version');
   if (isInertiaRequest) {
     event.respondWith(
-      fetch(request)
-        .then(response => {
-          if (response && response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
-          }
-          return response;
-        })
-        .catch(async () => {
-          const cached = await caches.match(request);
-          if (cached) {
-            return cached;
-          }
-          const shell = await caches.match('/app-shell.html');
-          if (shell) {
-            return shell;
-          }
-          return caches.match('/offline.html');
-        })
+      fetch(request).catch(async () => {
+        const cached = await caches.match(request);
+        if (cached) {
+          return cached;
+        }
+        const shell = await caches.match('/app-shell.html');
+        if (shell) {
+          return shell;
+        }
+        return caches.match('/offline.html');
+      })
     );
     return;
   }
   
-  // ❌ تجاهل تماماً: API endpoints
-  if (url.pathname.startsWith('/api/') || 
-      url.pathname.includes('logout') || 
-      url.pathname.includes('login')) {
+  // ❌ تجاهل تماماً: API + auth (لا تخزين صفحات فيها CSRF/session)
+  if (url.pathname.startsWith('/api/') ||
+      url.pathname.includes('logout') ||
+      url.pathname.includes('login') ||
+      url.pathname.includes('register')) {
     return;
   }
   
-  // ✅ تعامل مع طلبات التصفّح (navigate) لتوفير fallback
+  // ✅ تعامل مع طلبات التصفّح (navigate) لتوفير fallback — بدون تخزين صفحات HTML الحية
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
-        .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
-          return response;
-        })
         .catch(async () => {
           const cachedPage = await caches.match(request);
           if (cachedPage) {
