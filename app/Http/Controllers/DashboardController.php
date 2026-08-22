@@ -26,6 +26,7 @@ use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\SystemConfig;
 use App\Services\AccountingCacheService;
+use App\Services\CashBoxLedgerService;
 use App\Services\CarExpenseBreakdownService;
 use App\Services\ExchangeRateService;
 use App\Services\WeatherService;
@@ -248,8 +249,15 @@ class DashboardController extends Controller
             $this->accounting->loadAccounts($owner_id);
             $from =  $_GET['from'] ?? Carbon::now()->format('Y-m-d');
             $to =$_GET['to'] ?? Carbon::now()->format('Y-m-d');
-            $mainBoxId=$this->accounting->mainBox()->wallet->id;
-       
+            $mainBox = $this->accounting->mainBox();
+            $mainBoxId = $mainBox->wallet->id ?? null;
+            $ledger = app(CashBoxLedgerService::class);
+            if ($mainBox && $mainBox->wallet) {
+                // مزامنة كاش الصندوق من الدفتر عند وجود انحراف — دون المساس بباقي الحسابات
+                $ledger->alignWalletCacheIfMainBox($mainBox);
+                $mainBox->load('wallet');
+            }
+
             $transactionIn = (int) Transactions::where('wallet_id', $mainBoxId)
         ->where('currency', '$')
         ->whereIn('type', ['in', 'inUserBox'])
@@ -257,7 +265,7 @@ class DashboardController extends Controller
 
         $transactionOut =(int) Transactions::where('wallet_id', $mainBoxId)
         ->where('currency', '$')
-        ->whereIn('type', ['out', 'debt'])
+        ->whereIn('type', ['out', 'debt', 'outUserBox'])
         ->sum('amount');
 
         $car = Car::all()->where('owner_id',$owner_id);
@@ -297,6 +305,9 @@ class DashboardController extends Controller
         $transactionOutTodayDinar = (int) $transactionsTodayDinar->clone()
             ->whereIn('type', ['out', 'debt', 'outUserBox'])
             ->sum('amount');
+
+        $ledgerDollar = $mainBoxId ? $ledger->ledgerBalance((int) $mainBoxId, '$') : 0;
+        $ledgerDinar = $mainBoxId ? $ledger->ledgerBalance((int) $mainBoxId, 'IQD') : 0;
         
         $data = [
         'mainAccount'=>0,
@@ -314,9 +325,10 @@ class DashboardController extends Controller
         'purchasesCost'=>$sumTotalS??0,
         'clientPaid'=>$sumPaid??0,
         'clientDebit'=>$sumDebit ?? 0,
-        'mainBoxDollar'=>$this->accounting->mainBox()->wallet->balance??0,
-        'mainBoxDinar' =>$this->accounting->mainBox()->wallet->balance_dinar??0,
-        'mainBoxDollarNew'=>$transactionIn+$transactionOut,
+        // مصدر الحقيقة: دفتر القيود (مجموع transactions)
+        'mainBoxDollar'=>$ledgerDollar,
+        'mainBoxDinar' =>$ledgerDinar,
+        'mainBoxDollarNew'=>$ledgerDollar,
         'transactionInTodayDollar' => $transactionInTodayDollar,
         'transactionOutTodayDollar' => $transactionOutTodayDollar,
         'transactionInTodayDinar' => $transactionInTodayDinar,

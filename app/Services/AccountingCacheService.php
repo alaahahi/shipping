@@ -28,6 +28,43 @@ class AccountingCacheService
     
     }
 
+    /**
+     * Shadow / system accounting emails (not customer قاصات).
+     *
+     * @return array<int, string>
+     */
+    public function systemAccountEmails(): array
+    {
+        return array_values($this->accountEmailMap());
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function accountEmailMap(): array
+    {
+        return [
+            'main_account' => 'main@account.com',
+            'in_account' => 'in@account.com',
+            'out_account' => 'out@account.com',
+            'debt_account' => 'debt@account.com',
+            'transfers_account' => 'transfers@account.com',
+            'out_supplier' => 'supplier-out',
+            'debt_supplier' => 'supplier-debt',
+            'howler' => 'howler',
+            'shipping_coc' => 'shipping-coc',
+            'border' => 'border',
+            'iran' => 'iran',
+            'dubai' => 'dubai',
+            'main_box' => 'mainBox@account.com',
+            'online_contracts' => 'online-contracts',
+            'online_contracts_dinar' => 'online-contracts-dinar',
+            'debt_online_contracts' => 'online-contracts-debt',
+            'debt_online_contracts_dinar' => 'online-contracts-debit-dinar',
+            'main_box_contract' => 'mainBoxContract@account.com',
+        ];
+    }
+
     public function loadAccounts($ownerId)
     {
         $accountId = Cache::get('user_type_account');
@@ -39,26 +76,7 @@ class AccountingCacheService
             Cache::rememberForever('owner_id', fn () => $ownerId);
         }
         }
-          $accounts = [
-            'main_account'      => 'main@account.com',
-            'in_account'        => 'in@account.com',
-            'out_account'       => 'out@account.com',
-            'debt_account'      => 'debt@account.com',
-            'transfers_account' => 'transfers@account.com',
-            'out_supplier'      => 'supplier-out',
-            'debt_supplier'     => 'supplier-debt',
-            'howler'            => 'howler',
-            'shipping_coc'      => 'shipping-coc',
-            'border'            => 'border',
-            'iran'              => 'iran',
-            'dubai'             => 'dubai',
-            'main_box'          => 'mainBox@account.com',
-            'online_contracts' => 'online-contracts',
-            'online_contracts_dinar' => 'online-contracts-dinar',
-            'debt_online_contracts' => 'online-contracts-debt', 
-            'debt_online_contracts_dinar' => 'online-contracts-debit-dinar',
-            
-        ];
+          $accounts = $this->accountEmailMap();
   
         foreach ($accounts as $key => $email) {
         Cache::remember("account_{$ownerId}_$key", now()->addMinutes(60), function () use ($accountId, $ownerId, $email) {
@@ -125,7 +143,8 @@ class AccountingCacheService
             'main_account', 'in_account', 'out_account', 'debt_account',
             'transfers_account', 'out_supplier', 'debt_supplier',
             'howler', 'shipping_coc', 'border', 'iran', 'dubai', 'main_box',
-            'online_contracts', 'online_contracts_dinar', 'debt_online_contracts', 'debt_online_contracts_dinar'
+            'online_contracts', 'online_contracts_dinar', 'debt_online_contracts', 'debt_online_contracts_dinar',
+            'main_box_contract',
         ] as $key) {
             Cache::forget("account_{$ownerId}_$key");
         }
@@ -146,6 +165,7 @@ class AccountingCacheService
             'transfers_account', 'out_supplier', 'debt_supplier',
             'howler', 'shipping_coc', 'border', 'iran', 'dubai', 'main_box',
             'online_contracts', 'online_contracts_dinar', 'debt_online_contracts', 'debt_online_contracts_dinar',
+            'main_box_contract',
         ] as $key) {
             Cache::forget("account_{$ownerId}_$key");
         }

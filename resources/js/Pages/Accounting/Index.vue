@@ -2,7 +2,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
 import { Head, Link, useForm, usePage } from "@inertiajs/inertia-vue3";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import ModalAddSales from "@/Components/ModalAddSales.vue";
 import ModalAddDebt from "@/Components/ModalAddDebt.vue";
 import ModalAddExpenses from "@/Components/ModalAddExpenses.vue";
@@ -15,13 +15,14 @@ import ModalConvertDollarDinar from "@/Components/ModalConvertDollarDinar.vue";
 import ModalConvertDinarDollar from "@/Components/ModalConvertDinarDollar.vue";
 import ModalDel from "@/Components/ModalDel.vue";
 import ModalUploader from "@/Components/ModalUploader.vue";
-import ModalAssignTransactionToWallet from "@/Components/ModalAssignTransactionToWallet.vue";
+import ModalTransferWalletTransaction from "@/Components/ModalTransferWalletTransaction.vue";
 import axios from 'axios';
 import show from "@/Components/icon/show.vue";
 import imags from "@/Components/icon/imags.vue";
 import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
 import print from "@/Components/icon/print.vue";
+import transfer from "@/Components/icon/transfer.vue";
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
 import debounce from 'lodash/debounce';
@@ -36,6 +37,21 @@ const showKirkukTransfers = computed(
 );
 
 const laravelData = ref({});
+/** رصيد الصندوق من دفتر القيود (transactions) — ليس من wallet.balance المخزّن */
+const cashBoxBalanceDollar = computed(() => {
+  const d = laravelData.value;
+  if (d?.ledger_balance !== null && d?.ledger_balance !== undefined) {
+    return d.ledger_balance;
+  }
+  return d?.user?.wallet?.balance ?? 0;
+});
+const cashBoxBalanceDinar = computed(() => {
+  const d = laravelData.value;
+  if (d?.ledger_balance_dinar !== null && d?.ledger_balance_dinar !== undefined) {
+    return d.ledger_balance_dinar;
+  }
+  return d?.user?.wallet?.balance_dinar ?? 0;
+});
 const searchTerm = ref('');
 let showModalAddSales = ref(false);
 let showModaldebtSales = ref(false);
@@ -47,8 +63,8 @@ let showModalAddExpensesToMainBransh = ref(false);
 let showModalExpensesFromOtherBransh = ref(false);
 let showModalDel = ref(false);
 let showModalUploader = ref(false);
-let showModalAssignToWallet = ref(false);
-let tranForAssignWallet = ref(null);
+let showModalTransfer = ref(false);
+let tranForTransfer = ref(null);
 let transactions= ref([]);
 let expenses_type_id = ref(0);
 let tranId =ref({});
@@ -84,6 +100,161 @@ const descriptionDraft = ref('');
 const isSavingDescription = ref(false);
 const descriptionError = ref('');
 const DESCRIPTION_MAX_LENGTH = 1000;
+
+/** تبويبات: الحركات | تاريخ رصيد الصندوق (lazy API) */
+const activeTab = ref('movements');
+const historyRows = ref([]);
+const historyMeta = ref({
+  current_ledger: null,
+  latest_verification: null,
+  verified_until_transaction_id: null,
+  can_verify: false,
+  pagination: null,
+});
+const historyLoading = ref(false);
+const historyError = ref('');
+const historyPage = ref(1);
+const historyLoadedOnce = ref(false);
+const historyHasMore = ref(false);
+const showVerifyModal = ref(false);
+const verifyTarget = ref(null);
+const verifyNote = ref('');
+const verifySubmitting = ref(false);
+const verifyError = ref('');
+
+const isAdminUser = computed(
+  () => Number(inertiaPage.props.value?.auth?.user?.type_id) === 1
+);
+
+function applyHistoryMeta(data) {
+  historyMeta.value = {
+    current_ledger: data.current_ledger || null,
+    latest_verification: data.latest_verification || null,
+    verified_until_transaction_id: data.verified_until_transaction_id ?? null,
+    can_verify: !!data.can_verify,
+    pagination: data.pagination || null,
+  };
+  const pag = data.pagination || {};
+  if (typeof pag.has_more === 'boolean') {
+    historyHasMore.value = pag.has_more;
+  } else if (pag.has_more === 1 || pag.has_more === '1') {
+    historyHasMore.value = true;
+  } else if (pag.has_more === 0 || pag.has_more === '0') {
+    historyHasMore.value = false;
+  } else {
+    historyHasMore.value =
+      Number(pag.current_page) > 0 &&
+      Number(pag.last_page) > 0 &&
+      Number(pag.current_page) < Number(pag.last_page);
+  }
+  if (pag.current_page) {
+    historyPage.value = Number(pag.current_page);
+  }
+}
+
+async function loadCashBoxHistory(reset = true) {
+  if (historyLoading.value) return;
+  historyLoading.value = true;
+  historyError.value = '';
+  const pageToLoad = reset ? 1 : historyPage.value + 1;
+  try {
+    if (reset) {
+      historyPage.value = 1;
+      historyRows.value = [];
+    }
+    const lastId =
+      !reset && historyRows.value.length
+        ? historyRows.value[historyRows.value.length - 1].id
+        : null;
+    const response = await axios.get('/getCashBoxHistory', {
+      params: {
+        page: pageToLoad,
+        per_page: 50,
+        ...(lastId ? { before_id: lastId } : {}),
+      },
+    });
+    const data = response.data || {};
+    const rows = Array.isArray(data.transactions) ? data.transactions : [];
+    if (reset) {
+      historyRows.value = rows;
+    } else {
+      const seen = new Set(historyRows.value.map((r) => r.id));
+      const fresh = rows.filter((r) => !seen.has(r.id));
+      historyRows.value = [...historyRows.value, ...fresh];
+    }
+    applyHistoryMeta(data);
+    historyLoadedOnce.value = true;
+  } catch (error) {
+    historyError.value =
+      error?.response?.data?.message || 'تعذر تحميل تاريخ رصيد الصندوق';
+  } finally {
+    historyLoading.value = false;
+  }
+}
+
+function openCashBoxHistoryTab() {
+  activeTab.value = 'history';
+  if (!historyLoadedOnce.value) {
+    loadCashBoxHistory(true);
+  }
+}
+
+async function loadMoreHistory() {
+  if (!historyHasMore.value || historyLoading.value) return;
+  await loadCashBoxHistory(false);
+}
+
+function openVerifyModal(row) {
+  if (!historyMeta.value.can_verify && !isAdminUser.value) return;
+  if (row?.is_trusted) return;
+  verifyTarget.value = row;
+  verifyNote.value = '';
+  verifyError.value = '';
+  showVerifyModal.value = true;
+}
+
+function closeVerifyModal() {
+  showVerifyModal.value = false;
+  verifyTarget.value = null;
+  verifyNote.value = '';
+  verifyError.value = '';
+}
+
+async function confirmVerify() {
+  if (!verifyTarget.value?.id || verifySubmitting.value) return;
+  verifySubmitting.value = true;
+  verifyError.value = '';
+  try {
+    const response = await axios.post('/verifyCashBoxHistory', {
+      transaction_id: verifyTarget.value.id,
+      note: verifyNote.value || null,
+    });
+    const history = response.data?.history;
+    if (history) {
+      historyRows.value = history.transactions || [];
+      applyHistoryMeta(history);
+      historyPage.value = 1;
+      historyLoadedOnce.value = true;
+    } else {
+      await loadCashBoxHistory(true);
+    }
+    closeVerifyModal();
+  } catch (error) {
+    verifyError.value =
+      error?.response?.data?.message ||
+      (error?.response?.status === 403
+        ? 'غير مصرح: التوثيق للمسؤول فقط'
+        : 'تعذر توثيق الحركة');
+  } finally {
+    verifySubmitting.value = false;
+  }
+}
+
+watch(activeTab, (tab) => {
+  if (tab === 'history' && !historyLoadedOnce.value) {
+    loadCashBoxHistory(true);
+  }
+});
 
 const refresh = () => {
   page = 0;
@@ -218,7 +389,7 @@ function openModalUploader(tran){
   showModalUploader.value = true;
 }
 
-function canAssignToWallet(tran) {
+function canTransferBoxTransaction(tran) {
   if (!tran) {
     return false;
   }
@@ -226,17 +397,19 @@ function canAssignToWallet(tran) {
   if (parentId > 0) {
     return false;
   }
-  return tran.type === 'debt' || tran.type === 'out';
+  // Direct add/withdraw, or already-assigned box rows (re-target)
+  return ['in', 'out', 'debt', 'inUserBox', 'outUserBox'].includes(tran.type);
 }
 
-function openAssignToWalletModal(tran) {
-  tranForAssignWallet.value = tran;
-  showModalAssignToWallet.value = true;
+function openModalTransfer(tran) {
+  if (!canTransferBoxTransaction(tran)) return;
+  tranForTransfer.value = tran;
+  showModalTransfer.value = true;
 }
 
-function onAssignToWalletSaved() {
-  showModalAssignToWallet.value = false;
-  tranForAssignWallet.value = null;
+function onTransferSaved() {
+  showModalTransfer.value = false;
+  tranForTransfer.value = null;
   refresh();
 }
 
@@ -616,17 +789,18 @@ function getOrangeColorClass(index) {
     <template #header>
  
     </template>
-    <ModalAssignTransactionToWallet
-      :show="showModalAssignToWallet"
-      :transaction="tranForAssignWallet"
-      :wallet-users="walletUsers"
-      @saved="onAssignToWalletSaved"
-      @close="showModalAssignToWallet = false; tranForAssignWallet = null"
+    <ModalTransferWalletTransaction
+      :show="showModalTransfer"
+      :transaction="tranForTransfer"
+      mode="box"
+      source-user-name="الصندوق"
+      @saved="onTransferSaved"
+      @close="showModalTransfer = false; tranForTransfer = null"
     >
       <template #header>
-        <h2 class="text-center text-lg font-semibold">إسناد السحب إلى قاسة</h2>
+        <h2 class="mb-2 text-center text-lg font-semibold dark:text-white">نقل حركة الصندوق إلى قاصة</h2>
       </template>
-    </ModalAssignTransactionToWallet>
+    </ModalTransferWalletTransaction>
 
     <ModalDel
             :show="showModalDel ? true : false"
@@ -762,7 +936,45 @@ function getOrangeColorClass(index) {
     <div>
       <div class="max-w-9xl mx-auto sm:px-6 lg:px-8">
         <div class="overflow-hidden shadow-sm sm:rounded-lg">
-          <div class=" border-b border-gray-200">
+          <!-- تبويبات المحاسبة -->
+          <div class="border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 print:hidden">
+            <nav class="-mb-px flex flex-wrap gap-4 sm:gap-6">
+              <button
+                type="button"
+                @click="activeTab = 'movements'"
+                :class="[
+                  activeTab === 'movements'
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400',
+                  'whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm',
+                ]"
+              >
+                حركات الصندوق
+              </button>
+              <button
+                type="button"
+                @click="openCashBoxHistoryTab()"
+                :class="[
+                  activeTab === 'history'
+                    ? 'border-teal-500 text-teal-700 dark:text-teal-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400',
+                  'whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm',
+                ]"
+              >
+                تاريخ رصيد الصندوق
+              </button>
+            </nav>
+            <p
+              v-if="activeTab === 'history'"
+              class="mt-2 mb-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed max-w-3xl"
+            >
+              يُستخدم لمطابقة رصيد الصندوق مع الكاش الفعلي وتوثيق الحركات.
+              عند توثيق صف، تصبح كل الحركات السابقة حتى تلك النقطة موثوقة.
+              لا يُحمَّل هذا السجل إلا عند فتح التبويب.
+            </p>
+          </div>
+
+          <div v-show="activeTab === 'movements'" class="border-b border-gray-200">
           
 
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-3">
@@ -951,23 +1163,23 @@ function getOrangeColorClass(index) {
 
 
               <div class=" px-4">
-                              <InputLabel for="to" value="رصيد الصندوق بالدولار" />
+                              <InputLabel for="to" value="رصيد الصندوق بالدولار (من دفتر القيود)" />
                               <TextInput
                                 id="to"
                                 type="number"
                                 disabled
                                 class="mt-1 block w-full"
-                                :value="laravelData?.user?.wallet.balance"
+                                :value="cashBoxBalanceDollar"
                               />
               </div>
               <div class=" px-4">
-                              <InputLabel for="to" value="رصيد الصندوق بالدينار العراقي" />
+                              <InputLabel for="to" value="رصيد الصندوق بالدينار العراقي (من دفتر القيود)" />
                               <TextInput
                                 id="to"
                                 type="number"
                                 disabled
                                 class="mt-1 block w-full"
-                                :value="laravelData?.user?.wallet.balance_dinar"
+                                :value="cashBoxBalanceDinar"
                               />
               </div>
               <div class="relative w-full px-4">
@@ -1140,12 +1352,13 @@ function getOrangeColorClass(index) {
                           <edit class="w-4 h-4" />
                         </button>
                         <button
-                          v-if="canAssignToWallet(tran)"
-                          class="action-btn action-btn--wallet"
-                          title="إسناد إلى قاسة"
-                          @click="openAssignToWalletModal(tran)"
+                          v-if="canTransferBoxTransaction(tran)"
+                          class="action-btn action-btn--transfer"
+                          title="نقل"
+                          aria-label="نقل"
+                          @click="openModalTransfer(tran)"
                         >
-                          قاسة
+                          <transfer />
                         </button>
                         <button class="action-btn action-btn--delete" @click="openModalDel(tran)" title="حذف الحركة">
                           <trash />
@@ -1210,9 +1423,232 @@ function getOrangeColorClass(index) {
                           <InfiniteLoading :transactions="transactions" @infinite="getResults" :identifier="resetData" />
             </div>
           </div>
+
+          <!-- تبويب تاريخ رصيد الصندوق (lazy) -->
+          <div v-if="activeTab === 'history'" class="p-4 space-y-4">
+            <div
+              v-if="historyMeta.current_ledger"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
+            >
+              <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 p-3">
+                <div class="text-xs text-gray-500 dark:text-gray-400">رصيد الدفتر ($)</div>
+                <div class="text-lg font-bold text-emerald-700 dark:text-emerald-300" dir="ltr">
+                  {{ historyMeta.current_ledger.ledger_balance }}
+                </div>
+              </div>
+              <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 p-3">
+                <div class="text-xs text-gray-500 dark:text-gray-400">رصيد الدفتر (د.ع)</div>
+                <div class="text-lg font-bold text-indigo-700 dark:text-indigo-300" dir="ltr">
+                  {{ historyMeta.current_ledger.ledger_balance_dinar }}
+                </div>
+              </div>
+              <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 p-3 sm:col-span-2">
+                <div class="text-xs text-gray-500 dark:text-gray-400">آخر توثيق مطابقة للكاش</div>
+                <div v-if="historyMeta.latest_verification" class="text-sm text-gray-800 dark:text-gray-100 mt-1">
+                  حتى الحركة
+                  <span class="font-mono font-semibold" dir="ltr">#{{ historyMeta.latest_verification.transaction_id }}</span>
+                  —
+                  رصيد عند التوثيق:
+                  <span dir="ltr">${{ historyMeta.latest_verification.ledger_balance_at_confirm }}</span>
+                  /
+                  <span dir="ltr">{{ historyMeta.latest_verification.ledger_balance_dinar_at_confirm }} د.ع</span>
+                  <span v-if="historyMeta.latest_verification.verified_by_name" class="block text-xs text-gray-500 mt-1">
+                    بواسطة {{ historyMeta.latest_verification.verified_by_name }}
+                    —
+                    {{ formatBaghdadTimestamp(historyMeta.latest_verification.verified_at) }}
+                  </span>
+                </div>
+                <div v-else class="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                  لا يوجد توثيق بعد — كل الحركات غير موثوقة حتى يؤكد المسؤول نقطة مطابقة.
+                </div>
+              </div>
+            </div>
+
+            <div v-if="historyError" class="rounded bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-200 px-4 py-2 text-sm">
+              {{ historyError }}
+            </div>
+            <div v-if="historyLoading && !historyRows.length" class="text-center text-gray-500 py-8">
+              جاري تحميل تاريخ الرصيد…
+            </div>
+
+            <div class="overflow-x-auto shadow-lg rounded-lg">
+              <table class="w-full text-right text-gray-100 text-center bg-slate-900 rounded-lg overflow-hidden text-sm">
+                <thead class="uppercase bg-slate-800 text-gray-100">
+                  <tr>
+                    <th class="px-2 py-2">#</th>
+                    <th class="px-2 py-2">التاريخ</th>
+                    <th class="px-2 py-2">الوصف</th>
+                    <th class="px-2 py-2">النوع</th>
+                    <th class="px-2 py-2">المبلغ</th>
+                    <th class="px-2 py-2">الرصيد الجاري $</th>
+                    <th class="px-2 py-2">الرصيد الجاري د.ع</th>
+                    <th class="px-2 py-2">الحالة</th>
+                    <th class="px-2 py-2 print:hidden">توثيق</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="row in historyRows"
+                    :key="'hist-' + row.id"
+                    :class="row.is_verification_point
+                      ? 'bg-teal-950/50'
+                      : (row.is_trusted ? 'bg-emerald-950/20' : 'bg-slate-900')"
+                  >
+                    <td class="border border-transparent px-2 py-1 font-mono" dir="ltr">{{ row.id }}</td>
+                    <td class="border border-transparent px-2 py-1 whitespace-nowrap">
+                      {{ formatBaghdadTimestamp(row.created_at) }}
+                    </td>
+                    <td class="border border-transparent px-2 py-1 text-right max-w-xs truncate" :title="row.description">
+                      {{ row.description || '—' }}
+                      <span v-if="row.morphed_name" class="block text-xs text-gray-400">{{ row.morphed_name }}</span>
+                    </td>
+                    <td class="border border-transparent px-2 py-1">
+                      <span
+                        :class="row.direction === 'in'
+                          ? 'text-emerald-300 font-semibold'
+                          : 'text-rose-300 font-semibold'"
+                      >
+                        {{ row.direction === 'in' ? 'إيداع' : 'سحب' }}
+                      </span>
+                      <span class="block text-xs text-gray-400">{{ row.type }}</span>
+                    </td>
+                    <td class="border border-transparent px-2 py-1 font-semibold" dir="ltr">
+                      <span :class="row.direction === 'in' ? 'text-emerald-300' : 'text-rose-300'">
+                        {{ row.amount }}
+                      </span>
+                      <span class="text-xs text-gray-400 ms-1">{{ row.currency }}</span>
+                    </td>
+                    <td class="border border-transparent px-2 py-1 font-mono" dir="ltr">
+                      {{ row.running_balance }}
+                    </td>
+                    <td class="border border-transparent px-2 py-1 font-mono" dir="ltr">
+                      {{ row.running_balance_dinar }}
+                    </td>
+                    <td class="border border-transparent px-2 py-1">
+                      <span
+                        v-if="row.is_trusted"
+                        class="inline-block px-2 py-0.5 rounded text-xs font-bold bg-emerald-700/40 text-emerald-200"
+                      >
+                        موثوق
+                      </span>
+                      <span
+                        v-else
+                        class="inline-block px-2 py-0.5 rounded text-xs font-bold bg-amber-700/40 text-amber-200"
+                      >
+                        غير موثوق
+                      </span>
+                      <span
+                        v-if="row.is_verification_point"
+                        class="block mt-1 text-[10px] text-teal-300 font-semibold"
+                      >
+                        نقطة التوثيق الحالية
+                      </span>
+                    </td>
+                    <td class="border border-transparent px-2 py-1 print:hidden">
+                      <button
+                        v-if="(historyMeta.can_verify || isAdminUser) && !row.is_trusted"
+                        type="button"
+                        class="px-3 py-1.5 text-xs font-bold rounded bg-teal-600 hover:bg-teal-500 text-white"
+                        @click="openVerifyModal(row)"
+                      >
+                        تأكيد المطابقة
+                      </button>
+                      <span v-else class="text-xs text-gray-500">—</span>
+                    </td>
+                  </tr>
+                  <tr v-if="!historyLoading && historyLoadedOnce && !historyRows.length">
+                    <td colspan="9" class="py-8 text-gray-400">لا توجد حركات صندوق لعرضها</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="flex justify-center gap-3 pb-4 print:hidden">
+              <button
+                v-if="historyHasMore || (historyLoading && historyRows.length)"
+                type="button"
+                class="px-6 py-2 rounded bg-slate-700 text-white font-semibold disabled:opacity-50"
+                :disabled="historyLoading"
+                @click="loadMoreHistory()"
+              >
+                {{ historyLoading ? 'جاري التحميل…' : 'تحميل المزيد' }}
+              </button>
+              <button
+                type="button"
+                class="px-6 py-2 rounded bg-gray-500 text-white font-semibold disabled:opacity-50"
+                :disabled="historyLoading"
+                @click="loadCashBoxHistory(true)"
+              >
+                تحديث
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- نافذة تأكيد مطابقة الكاش -->
+    <Modal :show="showVerifyModal" @close="closeVerifyModal">
+      <template #header>
+        <h3 class="text-center text-lg font-semibold text-gray-900 dark:text-gray-100">
+          تأكيد مطابقة الرصيد مع الكاش الفعلي
+        </h3>
+      </template>
+      <template #body>
+        <div class="space-y-3 text-sm text-gray-800 dark:text-gray-200 text-right leading-relaxed">
+          <p>
+            سيتم اعتبار الحركة
+            <span class="font-mono font-bold" dir="ltr">#{{ verifyTarget?.id }}</span>
+            نقطة مطابقة مع الكاش الحقيقي.
+          </p>
+          <p class="text-amber-800 dark:text-amber-200 font-semibold">
+            كل حركات الصندوق السابقة حتى هذه النقطة (بما فيها) ستصبح موثوقة.
+            الحركات الأحدث تبقى غير موثوقة حتى توثيق لاحق.
+          </p>
+          <div v-if="verifyTarget" class="rounded border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-slate-800 text-xs space-y-1">
+            <div>الوصف: {{ verifyTarget.description || '—' }}</div>
+            <div dir="ltr">المبلغ: {{ verifyTarget.amount }} {{ verifyTarget.currency }}</div>
+            <div dir="ltr">الرصيد الجاري بعد الحركة: ${{ verifyTarget.running_balance }} / {{ verifyTarget.running_balance_dinar }} IQD</div>
+          </div>
+          <div>
+            <InputLabel for="verify_note" value="ملاحظة (اختياري)" />
+            <TextInput
+              id="verify_note"
+              type="text"
+              class="mt-1 block w-full"
+              v-model="verifyNote"
+              maxlength="1000"
+              placeholder="مثال: جرد صندوق صباح 22/8"
+            />
+          </div>
+          <p v-if="verifyError" class="text-rose-600 dark:text-rose-300 text-sm">{{ verifyError }}</p>
+        </div>
+      </template>
+      <template #footer>
+        <div class="flex flex-row w-full">
+          <div class="basis-1/2 px-2">
+            <button
+              type="button"
+              class="w-full py-3 bg-gray-500 text-white rounded"
+              :disabled="verifySubmitting"
+              @click="closeVerifyModal"
+            >
+              إغلاق
+            </button>
+          </div>
+          <div class="basis-1/2 px-2">
+            <button
+              type="button"
+              class="w-full py-3 bg-teal-600 text-white rounded font-bold disabled:opacity-50"
+              :disabled="verifySubmitting"
+              @click="confirmVerify"
+            >
+              {{ verifySubmitting ? 'جاري التأكيد…' : 'تأكيد' }}
+            </button>
+          </div>
+        </div>
+      </template>
+    </Modal>
   </AuthenticatedLayout>
 </template>
 
@@ -1288,14 +1724,8 @@ function getOrangeColorClass(index) {
   background: linear-gradient(135deg, #22c55e, #16a34a);
 }
 
-.action-btn--wallet {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  width: auto;
-  min-width: 3rem;
-  padding: 0 0.5rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+.action-btn--transfer {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
 }
 
 .account-link {

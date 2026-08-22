@@ -227,6 +227,8 @@ Route::post('updateTransactionDescription',[AccountingController::class, 'update
 Route::post('updateTransaction',[AccountingController::class, 'updateTransaction'])->name('updateTransaction');
 Route::post('toggleWalletTags',[AccountingController::class, 'toggleWalletTags'])->name('toggleWalletTags');
 Route::post('assignTransactionToWallet',[AccountingController::class, 'assignTransactionToWallet'])->name('assignTransactionToWallet');
+Route::get('walletUsersForTransfer',[AccountingController::class, 'walletUsersForTransfer'])->name('walletUsersForTransfer');
+Route::post('transferWalletTransaction',[AccountingController::class, 'transferWalletTransaction'])->name('transferWalletTransaction');
 Route::get('paymentTags',[AccountingController::class, 'getPaymentTags'])->name('getPaymentTags');
 Route::post('paymentTags',[AccountingController::class, 'storePaymentTag'])->name('storePaymentTag');
 Route::post('deletePaymentTag',[AccountingController::class, 'deletePaymentTag'])->name('deletePaymentTag');

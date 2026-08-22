@@ -10,6 +10,7 @@ use App\Http\Controllers\FormRegistrationController;
 use App\Http\Controllers\ResultsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AccountingController;
+use App\Http\Controllers\CashBoxHistoryController;
 use App\Http\Controllers\TransfersController;
 use App\Http\Controllers\CarConfigController;
 use App\Http\Controllers\OnlineContractsController;
@@ -289,6 +290,8 @@ Route::group(['middleware' => ['auth','verified', 'check.license', 'page.permiss
     Route::get('coc',[TransfersController::class, 'coc'])->name('coc');
     Route::get('howler',[TransfersController::class, 'howler'])->name('howler');
     Route::get('getIndexAccounting',[AccountingController::class, 'getIndexAccounting'])->name("getIndexAccounting");
+    Route::get('getCashBoxHistory', [CashBoxHistoryController::class, 'index'])->name('getCashBoxHistory');
+    Route::post('verifyCashBoxHistory', [CashBoxHistoryController::class, 'verify'])->name('verifyCashBoxHistory');
 
     Route::get('annual_information',[AnnualController::class, 'index'])->name('annual_information');
     Route::get('hunter',[HunterController::class, 'index'])->name('hunter');

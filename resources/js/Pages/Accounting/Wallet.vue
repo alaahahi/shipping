@@ -13,6 +13,7 @@ import ModalConvertDinarDollar from "@/Components/ModalConvertDinarDollar.vue";
 import ModalDel from "@/Components/ModalDel.vue";
 import ModalUploader from "@/Components/ModalUploader.vue";
 import ModalEditTransaction from "@/Components/ModalEditTransaction.vue";
+import ModalTransferWalletTransaction from "@/Components/ModalTransferWalletTransaction.vue";
 import ModalDriverLoan from "@/Components/ModalDriverLoan.vue";
 import ModalDriverLoanRepayment from "@/Components/ModalDriverLoanRepayment.vue";
 
@@ -24,6 +25,7 @@ import trash from "@/Components/icon/trash.vue";
 import edit from "@/Components/icon/edit.vue";
 import imags from "@/Components/icon/imags.vue";
 import print from "@/Components/icon/print.vue";
+import transfer from "@/Components/icon/transfer.vue";
 
 import InfiniteLoading from "v3-infinite-loading";
 import "v3-infinite-loading/lib/style.css";
@@ -40,6 +42,7 @@ let showModalAddGenExpenses = ref(false);
 let showModalConvertDollarDinar = ref(false);
 let showModalConvertDinarDollar = ref(false);
 let showModalDel = ref(false);
+let showModalTransfer = ref(false);
 let showModalUploader = ref(false);
 let showModalAddSalesAmanah = ref(false);
 let showModaldebtSalesAmanah = ref(false);
@@ -231,6 +234,21 @@ function openModalDel(tran){
   }
   tranId.value = tran
   showModalDel.value = true;
+}
+
+function canTransferTransaction(tran) {
+  return ['inUser', 'outUser', 'inUserAmanah', 'outUserAmanah'].includes(tran?.type);
+}
+
+function openModalTransfer(tran) {
+  if (!canTransferTransaction(tran)) return;
+  tranId.value = tran;
+  showModalTransfer.value = true;
+}
+
+function onTransferSaved() {
+  showModalTransfer.value = false;
+  refresh();
 }
 
 function deleteAmanahTransaction(tran) {
@@ -617,6 +635,19 @@ function printTagDetails() {
           </h2>
           </template>
     </ModalDel>
+
+    <ModalTransferWalletTransaction
+      :show="showModalTransfer"
+      :transaction="tranId"
+      :source-user-id="props.boxes?.id"
+      :source-user-name="props.boxes?.name || ''"
+      @close="showModalTransfer = false"
+      @saved="onTransferSaved"
+    >
+      <template #header>
+        <h2 class="mb-2 text-center text-lg font-semibold dark:text-white">نقل دفعة إلى قاصة أخرى</h2>
+      </template>
+    </ModalTransferWalletTransaction>
 
     <ModalUploader
             :show="showModalUploader ? true : false"
@@ -1160,6 +1191,16 @@ function printTagDetails() {
                       >
                         <print />
                       </a>
+                      <button
+                        v-if="canTransferTransaction(tran)"
+                        type="button"
+                        class="action-btn action-btn--transfer"
+                        title="نقل"
+                        aria-label="نقل"
+                        @click="openModalTransfer(tran)"
+                      >
+                        <transfer />
+                      </button>
                       <button 
                         class="action-btn action-btn--delete"
                         @click="isAmanahTransaction(tran) ? deleteAmanahTransaction(tran) : openModalDel(tran)" 
@@ -1230,6 +1271,7 @@ function printTagDetails() {
                         <td class="px-2 py-1">{{ tran.amount }} {{ tran.currency ?? '$' }}</td>
                         <td class="px-2 py-1">
                           <button type="button" class="px-2 py-1 bg-amber-600 text-white rounded text-xs" @click="openModalEditTransaction(tran)">تعديل</button>
+                          <button type="button" class="action-btn action-btn--transfer mr-1" title="نقل" aria-label="نقل" @click="openModalTransfer(tran)"><transfer /></button>
                           <button type="button" class="px-2 py-1 bg-red-600 text-white rounded text-xs mr-1" @click="openModalDel(tran); showModalEditTransaction = false">حذف</button>
                         </td>
                       </tr>
@@ -1311,5 +1353,9 @@ function printTagDetails() {
 
 .action-btn--delete {
   background: linear-gradient(135deg, #f43f5e, #e11d48);
+}
+
+.action-btn--transfer {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
 }
 </style>

@@ -36,9 +36,13 @@ use App\Imports\ImportInfo;
 use App\Exports\ExportInfo;
 use App\Exports\ExportAccount;
 use App\Services\AccountingCacheService;
+use App\Services\CashBoxLedgerService;
+use App\Services\DeleteTransactionService;
 use App\Services\MigrateLegacyExpenseBoxesService;
 use App\Services\RestoreTransactionService;
+use App\Services\TransferWalletTransactionService;
 use App\Services\WhatsAppQueueService;
+use App\Http\Requests\TransferWalletTransactionRequest;
 use App\Support\DatabaseDriver;
 use Illuminate\Support\Facades\Auth;
 
@@ -210,6 +214,9 @@ class AccountingController extends Controller
          return response()->json(['message' => 'Wallet not found'], 404);
      }
 
+     // الصندوق: الرصيد من دفتر القيود (transactions) مع مزامنة الكاش عند الانحراف فقط
+     $ledgerSnap = app(CashBoxLedgerService::class)->alignWalletCacheIfMainBox($user);
+
      $deletedOnly = $request->boolean('deleted_only')
          || (string) $request->get('deleted_only') === '1';
 
@@ -325,6 +332,20 @@ class AccountingController extends Controller
      $sumOutTransactionsDinarUserAmanah = $sumAmount('IQD', ['outUserAmanah']);
 
      
+     // رصيد دفتر الصندوق — فقط لحساب mainBox (لا يُستخدم لحسابات العملاء/القاصات الأخرى)
+     if ($ledgerSnap === null) {
+         $ledgerSnap = [
+             'ledger_balance' => null,
+             'ledger_balance_dinar' => null,
+             'drift' => null,
+             'drift_dinar' => null,
+             'auto_synced' => false,
+             'is_main_box' => false,
+         ];
+     } else {
+         $ledgerSnap['is_main_box'] = true;
+     }
+
      // Additional logic to retrieve client data
      $data = [
          'user' => $user,
@@ -343,7 +364,14 @@ class AccountingController extends Controller
          'sumInTransactionsUserAmanah' =>  $sumInTransactionsUserAmanah,
          'sumInTransactionsDinarUserAmanah' => $sumInTransactionsDinarUserAmanah,
          'sumOutTransactionsUserAmanah' =>  $sumOutTransactionsUserAmanah,
-         'sumOutTransactionsDinarUserAmanah' => $sumOutTransactionsDinarUserAmanah
+         'sumOutTransactionsDinarUserAmanah' => $sumOutTransactionsDinarUserAmanah,
+         // مصدر الحقيقة لرصيد الصندوق من دفتر القيود
+         'ledger_balance' => $ledgerSnap['ledger_balance'] ?? null,
+         'ledger_balance_dinar' => $ledgerSnap['ledger_balance_dinar'] ?? null,
+         'ledger_drift' => $ledgerSnap['drift'] ?? null,
+         'ledger_drift_dinar' => $ledgerSnap['drift_dinar'] ?? null,
+         'ledger_auto_synced' => $ledgerSnap['auto_synced'] ?? false,
+         'is_main_box' => $ledgerSnap['is_main_box'] ?? false,
      ];
      if ($request->get('group_by_driver') && $user && $user->wallet) {
          $walletTrans = Transactions::where('wallet_id', $user->wallet->id)
@@ -1164,128 +1192,118 @@ class AccountingController extends Controller
     }
 
     /**
-     * Convert a main-box withdrawal (debt/out) into a wallet withdrawal (outUserBox + outUser).
+     * Lightweight list of customer قاصة users for transfer modal (id + name only).
+     * Only زبائن/clients (same kind as /wallet?id=3298) — excludes shadow accounting accounts.
      */
-    public function assignTransactionToWallet(Request $request)
+    public function walletUsersForTransfer()
     {
+        $ownerId = Auth::user()->owner_id;
+        $this->accounting->loadAccounts($ownerId);
+
+        $clientTypeId = $this->accounting->userClient();
+        if (! $clientTypeId) {
+            return Response::json([], 200);
+        }
+
+        $systemEmails = $this->accounting->systemAccountEmails();
+
+        $walletUsers = User::query()
+            ->where('owner_id', $ownerId)
+            ->where('type_id', $clientTypeId)
+            ->whereHas('wallet')
+            ->where(function ($query) use ($systemEmails) {
+                $query->whereNull('email')
+                    ->orWhere(function ($emailQuery) use ($systemEmails) {
+                        $emailQuery->whereNotIn('email', $systemEmails)
+                            ->where('email', 'not like', '%@account.com');
+                    });
+            })
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return Response::json($walletUsers, 200);
+    }
+
+    /**
+     * Reassign a قاصة payment to another wallet user (update, no delete).
+     */
+    public function transferWalletTransaction(
+        TransferWalletTransactionRequest $request,
+        TransferWalletTransactionService $transferService
+    ) {
+        try {
+            $result = $transferService->transfer(
+                (int) $request->validated('transaction_id'),
+                (int) $request->validated('target_user_id'),
+                (int) Auth::user()->owner_id,
+                $request->input('note'),
+                Auth::id()
+            );
+        } catch (\RuntimeException $e) {
+            $message = $e->getMessage();
+            $status = str_contains($message, 'authorized') ? 403 : 422;
+            if (str_contains($message, 'not found') || str_contains($message, 'غير موجودة')) {
+                $status = 404;
+            }
+
+            return Response::json(['message' => $message], $status);
+        }
+
+        $mode = $result['mode'] ?? 'qasa_to_qasa';
+        $message = match ($mode) {
+            'box_to_qasa' => 'تم نقل حركة الصندوق إلى القاصة بنجاح',
+            'box_retarget' => 'تم إعادة نقل الحركة إلى القاصة بنجاح',
+            default => 'تم نقل الدفعة إلى القاصة بنجاح',
+        };
+
+        return Response::json([
+            'message' => $message,
+            'transaction_id' => $result['transaction']->id,
+            'from_user_id' => $result['from_user_id'],
+            'to_user_id' => $result['to_user_id'],
+            'parent_updated' => $result['parent_updated'],
+            'mode' => $mode,
+            'transaction' => $result['transaction'],
+        ], 200);
+    }
+
+    /**
+     * Convert a main-box movement (in/out/debt) into a wallet assignment (inUserBox/outUserBox + child).
+     * Delegates to TransferWalletTransactionService (same behavior as transfer modal).
+     */
+    public function assignTransactionToWallet(
+        Request $request,
+        TransferWalletTransactionService $transferService
+    ) {
         $validated = $request->validate([
             'transaction_id' => ['required', 'integer', 'exists:transactions,id'],
             'user_id' => ['required', 'integer', 'exists:users,id'],
+            'note' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $this->accounting->loadAccounts(Auth::user()->owner_id);
-        $mainBox = $this->accounting->mainBox();
-        $mainBoxWalletId = $mainBox->wallet->id ?? null;
-
-        if (!$mainBoxWalletId) {
-            return Response::json(['message' => 'لم يتم العثور على صندوق المحاسبة'], 422);
-        }
-
-        $transaction = Transactions::with('wallet.user')->find($validated['transaction_id']);
-
-        if (!$transaction || (int) $transaction->wallet_id !== (int) $mainBoxWalletId) {
-            return Response::json(['message' => 'هذه الحركة ليست من صندوق المحاسبة'], 422);
-        }
-
-        if (!in_array($transaction->type, ['debt', 'out'], true)) {
-            return Response::json(['message' => 'يمكن تحويل حركات السحب من الصندوق فقط'], 422);
-        }
-
-        if ((int) ($transaction->parent_id ?? 0) > 0) {
-            return Response::json(['message' => 'لا يمكن تحويل حركة مرتبطة بحركة أخرى'], 422);
-        }
-
-        if (Transactions::where('parent_id', $transaction->id)->where('type', 'outUser')->exists()) {
-            return Response::json(['message' => 'الحركة مرتبطة مسبقاً بقاسة'], 422);
-        }
-
-        $targetUser = User::with('wallet')
-            ->where('id', $validated['user_id'])
-            ->where('owner_id', Auth::user()->owner_id)
-            ->first();
-
-        if (!$targetUser) {
-            return Response::json(['message' => 'القاسة المحددة غير موجودة'], 404);
-        }
-
-        if ((int) $targetUser->id === (int) $mainBox->id) {
-            return Response::json(['message' => 'لا يمكن إسناد الحركة إلى الصندوق نفسه'], 422);
-        }
-
-        if (!$targetUser->wallet) {
-            Wallet::create(['user_id' => $targetUser->id, 'balance' => 0, 'balance_dinar' => 0]);
-            $targetUser->load('wallet');
-        }
-
-        $amount = abs((float) $transaction->amount);
-        if ($amount <= 0) {
-            return Response::json(['message' => 'مبلغ الحركة غير صالح'], 422);
-        }
-
-        $originalDescription = trim($transaction->description ?? '');
-        $genExpenseAccountUserId = $this->resolveGenExpenseAccountUserId($originalDescription);
-        $existingDetails = is_array($transaction->details) ? $transaction->details : [];
-
-        if ($genExpenseAccountUserId) {
-            // البوكسات الخمسة: إبقاء وصف المصروف الأصلي وربط الحساب بصندوق المصروف (دبي/إيران/الحدود...)
-            $description = $originalDescription;
-            $morphedId = $genExpenseAccountUserId;
-            $childDetails = array_merge($existingDetails, [
-                'gen_expense_box' => true,
-                'assigned_wallet_user_id' => $targetUser->id,
-            ]);
-        } else {
-            $noteSuffix = $originalDescription;
-            if (preg_match('/سحب\s+دفعة\s*(.*)/u', $noteSuffix, $matches)) {
-                $noteSuffix = trim($matches[1]);
+        try {
+            $result = $transferService->transfer(
+                (int) $validated['transaction_id'],
+                (int) $validated['user_id'],
+                (int) Auth::user()->owner_id,
+                $validated['note'] ?? null,
+                Auth::id()
+            );
+        } catch (\RuntimeException $e) {
+            $message = $e->getMessage();
+            $status = str_contains($message, 'authorized') ? 403 : 422;
+            if (str_contains($message, 'not found') || str_contains($message, 'غير موجودة')) {
+                $status = 404;
             }
-            $description = 'وصل سحب مباشر'.' '.'قاسه'.' '.$targetUser->name.($noteSuffix !== '' ? ' '.$noteSuffix : '');
-            $morphedId = $targetUser->id;
-            $childDetails = $existingDetails;
+
+            return Response::json(['message' => $message], $status);
         }
-
-        $originalCreatedAt = $transaction->created_at;
-        $originalCreated = $transaction->created;
-        $currentDate = $this->currentDate;
-
-        DB::transaction(function () use ($transaction, $targetUser, $description, $amount, $originalCreatedAt, $originalCreated, $morphedId, $childDetails, $currentDate) {
-            $transaction->type = 'outUserBox';
-            $transaction->morphed_id = $morphedId;
-            $transaction->morphed_type = User::class;
-            $transaction->description = $description;
-            if (!empty($childDetails)) {
-                $transaction->details = $childDetails;
-            }
-            $transaction->save();
-
-            $child = Transactions::create([
-                'type' => 'outUser',
-                'wallet_id' => $targetUser->wallet->id,
-                'description' => $description,
-                'amount' => $amount,
-                'is_pay' => $transaction->is_pay,
-                'morphed_id' => $morphedId,
-                'morphed_type' => User::class,
-                'user_added' => 0,
-                'created' => $originalCreated ?: ($originalCreatedAt ? Carbon::parse($originalCreatedAt)->format('Y-m-d') : $currentDate),
-                'discount' => $transaction->discount ?? 0,
-                'currency' => $transaction->currency,
-                'parent_id' => $transaction->id,
-                'details' => $childDetails ?: null,
-                'tag' => $transaction->tag,
-            ]);
-
-            if ($originalCreatedAt) {
-                $child->created_at = $originalCreatedAt;
-                $child->updated_at = $originalCreatedAt;
-                $child->save();
-            }
-        });
 
         return Response::json([
             'message' => 'تم إسناد الحركة إلى القاسة بنجاح',
-            'transaction_id' => $transaction->id,
-            'wallet_user_id' => $targetUser->id,
+            'transaction_id' => $result['transaction']->id,
+            'wallet_user_id' => $result['to_user_id'],
+            'mode' => $result['mode'] ?? 'box_to_qasa',
         ], 200);
     }
 
@@ -1655,187 +1673,68 @@ class AccountingController extends Controller
         ], 200);
     }
 
-    public function delTransactions(Request $request)
+    public function delTransactions(Request $request, DeleteTransactionService $deleteService)
     {
         $this->accounting->loadAccounts(Auth::user()->owner_id);
-        $owner_id=Auth::user()->owner_id;
-        $transaction_id = $request->id ?? 0;
-        $originalTransaction = Transactions::with('TransactionsImages')->find($transaction_id);
-        if (!$originalTransaction) {
-          return response()->json(['message' => 'Transaction not found'], 404);
+        $owner_id = Auth::user()->owner_id;
+        $transaction_id = (int) ($request->id ?? 0);
+
+        try {
+            $result = $deleteService->delete($transaction_id, (int) $owner_id);
+        } catch (\RuntimeException $e) {
+            $status = str_contains($e->getMessage(), 'authorized') ? 403 : 404;
+
+            return response()->json(['message' => $e->getMessage()], $status);
         }
 
-        if (in_array($originalTransaction->type, ['inUserAmanah', 'outUserAmanah'], true)) {
-            foreach ($originalTransaction->TransactionsImages as $transactionsImage) {
-                File::delete(public_path('uploads/' . $transactionsImage->name));
-                File::delete(public_path('uploadsResized/' . $transactionsImage->name));
-                $transactionsImage->delete();
-            }
-            $originalTransaction->delete();
-            return response()->json(['message' => 'deleted'], 200);
-        }
+        // آثار جانبية قديمة لعقود الإنترنت / المصاريف (إن وُجدت على أول ابن)
+        $firstChild = Transactions::withTrashed()
+            ->whereIn('id', $result['deleted_ids'])
+            ->where('parent_id', '>', 0)
+            ->first();
 
-        $wallet_id=$originalTransaction->wallet_id;
-        $refundTransaction = 'مرتجع حذف حركة';
-        $firstTransaction = null;
-
-        $wallet=Wallet::find($wallet_id);
-        if($originalTransaction->currency=='$'){
-            if($originalTransaction->type=='inUserBox' || $originalTransaction->type=='outUserBox')
-            {
-                $wallet->decrement('balance', $originalTransaction->amount);
-                $all=  Transactions::where('parent_id',$transaction_id)->get();
- 
-                $firstTransaction=Transactions::where('parent_id',$transaction_id)->first();
-                 if ($all->isNotEmpty()) { // Check if there are records in the collection
-                  foreach ($all as $transaction) {
-                      if($transaction->currency=='$'){
-                          $wallet_id = $transaction->wallet_id;
-                           $wallet = Wallet::find($wallet_id);
-                          $transaction->delete();
-                      }
-                      if($transaction->currency=='IQD'){
-                          $wallet_id = $transaction->wallet_id;
-                           $wallet = Wallet::find($wallet_id);
-                          $transaction->delete();
-                      }
-                  }
-              }
-            }else{
-                $wallet->decrement('balance', $originalTransaction->amount);
-                $all=  Transactions::where('parent_id',$transaction_id)->get();
-      
-                $firstTransaction=Transactions::where('parent_id',$transaction_id)->first();
-                if ($all->isNotEmpty()) { // Check if there are records in the collection
-                  foreach ($all as $transaction) {
-                      if($transaction->currency=='$'){
-                          $wallet_id = $transaction->wallet_id;
-                          $wallet = Wallet::find($wallet_id);
-                          $wallet->decrement('balance', $transaction->amount);
-                          $transaction->delete();
-                      }
-                      if($transaction->currency=='IQD'){
-                          $wallet_id = $transaction->wallet_id;
-                          $wallet = Wallet::find($wallet_id);
-                          $wallet->decrement('balance_dinar', $transaction->amount);
-                          $transaction->delete();
-                      }
-                  }
-              }
-            }
-
-        }
-        if($originalTransaction->currency=='IQD'){
-            if($originalTransaction->type=='inUserBox'|| $originalTransaction->type=='outUserBox')
-            {
-                $wallet->decrement('balance_dinar', $originalTransaction->amount);
-                $all=  Transactions::where('parent_id',$transaction_id)->get();
-                $firstTransaction=Transactions::where('parent_id',$transaction_id)->first();
-      
-                if ($all->isNotEmpty()) { // Check if there are records in the collection
-                  foreach ($all as $transaction) {
-                      if($transaction->currency=='$'){
-                          $wallet_id = $transaction->wallet_id;
-                          $wallet = Wallet::find($wallet_id);
-                          $transaction->delete();
-                      }
-                      if($transaction->currency=='IQD'){
-                          $wallet_id = $transaction->wallet_id;
-                          $wallet = Wallet::find($wallet_id);
-                          $transaction->delete();
-                      }
-                  }
-              }
-            }else{
-                $wallet->decrement('balance_dinar', $originalTransaction->amount);
-                $all=  Transactions::where('parent_id',$transaction_id)->get();
-                $firstTransaction=Transactions::where('parent_id',$transaction_id)->first();
-      
-                if ($all->isNotEmpty()) { // Check if there are records in the collection
-                  foreach ($all as $transaction) {
-                      if($transaction->currency=='$'){
-                          $wallet_id = $transaction->wallet_id;
-                          $wallet = Wallet::find($wallet_id);
-                          $wallet->decrement('balance', $transaction->amount);
-                          $transaction->delete();
-                      }
-                      if($transaction->currency=='IQD'){
-                          $wallet_id = $transaction->wallet_id;
-                          $wallet = Wallet::find($wallet_id);
-                          $wallet->decrement('balance_dinar', $transaction->amount);
-                          $transaction->delete();
-                      }
-                  }
-              }
-            }
-
-
-        }
-        $walletExpensesIds = [];
-        if ($this->accounting->howler() && $this->accounting->howler()->wallet) {
-            $walletExpensesIds[] = $this->accounting->howler()->wallet->id;
-        }
-        if ($this->accounting->shippingCoc() && $this->accounting->shippingCoc()->wallet) {
-            $walletExpensesIds[] = $this->accounting->shippingCoc()->wallet->id;
-        }
-        if ($this->accounting->border() && $this->accounting->border()->wallet) {
-            $walletExpensesIds[] = $this->accounting->border()->wallet->id;
-        }
-        if ($this->accounting->iran() && $this->accounting->iran()->wallet) {
-            $walletExpensesIds[] = $this->accounting->iran()->wallet->id;
-        }
-        if ($this->accounting->dubai() && $this->accounting->dubai()->wallet) {
-            $walletExpensesIds[] = $this->accounting->dubai()->wallet->id;
-        }
-        if ($firstTransaction && in_array($wallet_id, $walletExpensesIds)) {
-            $expenses = Expenses::where('transaction_id',$firstTransaction->id);
-            $expenses->delete();
-        }
-        $walletContractsIds = [];
-        if ($this->accounting->onlineContracts() && $this->accounting->onlineContracts()->wallet) {
-            $walletContractsIds[] = $this->accounting->onlineContracts()->wallet->id;
-        }
-        if ($this->accounting->onlineContractsDinar() && $this->accounting->onlineContractsDinar()->wallet) {
-            $walletContractsIds[] = $this->accounting->onlineContractsDinar()->wallet->id;
-        }
-        if ($this->accounting->debtOnlineContracts() && $this->accounting->debtOnlineContracts()->wallet) {
-            $walletContractsIds[] = $this->accounting->debtOnlineContracts()->wallet->id;
-        }
-        if ($this->accounting->debtOnlineContractsDinar() && $this->accounting->debtOnlineContractsDinar()->wallet) {
-            $walletContractsIds[] = $this->accounting->debtOnlineContractsDinar()->wallet->id;
-        }
-        if ($firstTransaction && in_array($wallet_id, $walletContractsIds)) {
-            $refundTransaction = 'مرتجع حذف حركة';
-            $contract = Contract::where('car_id',$firstTransaction->morphed_id)->first();
-            if($firstTransaction->currency=='$'){
-                $this->increaseWallet($firstTransaction->amount, $refundTransaction,$this->accounting->debtOnlineContracts()->id,$firstTransaction->id,'App\Models\Car',0,0,'$',0);
-                if($contract){
-                    $contract->delete();
+        if ($firstChild) {
+            $wallet_id = $firstChild->wallet_id;
+            $walletExpensesIds = [];
+            foreach (['howler', 'shippingCoc', 'border', 'iran', 'dubai'] as $method) {
+                $acc = $this->accounting->{$method}();
+                if ($acc && $acc->wallet) {
+                    $walletExpensesIds[] = $acc->wallet->id;
                 }
             }
-            if($firstTransaction->currency=='IQD'){
-                $this->increaseWallet($firstTransaction->amount, $refundTransaction,$this->accounting->debtOnlineContractsDinar()->id,$firstTransaction->id,'App\Models\Car',0,0,'IQD',0);
-                if($contract){
-                    $contract->delete();
-                }
+            if (in_array($wallet_id, $walletExpensesIds, true)) {
+                Expenses::where('transaction_id', $firstChild->id)->delete();
+            }
 
+            $walletContractsIds = [];
+            foreach (['onlineContracts', 'onlineContractsDinar', 'debtOnlineContracts', 'debtOnlineContractsDinar'] as $method) {
+                $acc = $this->accounting->{$method}();
+                if ($acc && $acc->wallet) {
+                    $walletContractsIds[] = $acc->wallet->id;
+                }
+            }
+            if (in_array($wallet_id, $walletContractsIds, true)) {
+                $refundTransaction = 'مرتجع حذف حركة';
+                $contract = Contract::where('car_id', $firstChild->morphed_id)->first();
+                if ($firstChild->currency == '$') {
+                    $this->increaseWallet($firstChild->amount, $refundTransaction, $this->accounting->debtOnlineContracts()->id, $firstChild->id, 'App\Models\Car', 0, 0, '$', 0);
+                    if ($contract) {
+                        $contract->delete();
+                    }
+                }
+                if ($firstChild->currency == 'IQD') {
+                    $this->increaseWallet($firstChild->amount, $refundTransaction, $this->accounting->debtOnlineContractsDinar()->id, $firstChild->id, 'App\Models\Car', 0, 0, 'IQD', 0);
+                    if ($contract) {
+                        $contract->delete();
+                    }
+                }
             }
         }
-         
-        if($originalTransaction){
-            foreach ($originalTransaction->TransactionsImages as $transactionsImage) {
-                // Delete the image file from the public directory
-                File::delete(public_path('uploads/' . $transactionsImage->name));
-                File::delete(public_path('uploadsResized/' . $transactionsImage->name));
-    
-                // Delete the image record from the database
-                $transactionsImage->delete();
-            }
-        }
- 
- 
-        $originalTransaction->delete();
-    
-        return response()->json(['message' => $all], 200);
+
+        return response()->json([
+            'message' => 'deleted',
+            'deleted_ids' => $result['deleted_ids'],
+            'main_box_resynced' => $result['main_box_resynced'],
+        ], 200);
     }
-    }
+}
