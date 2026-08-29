@@ -3,7 +3,11 @@
 export default {
     props: {
       show: Boolean,
-      data:Object
+      data:Object,
+      containerClass: {
+        type: String,
+        default: ''
+      }
     }
   }
 
@@ -11,10 +15,11 @@ export default {
   </script>
   
   <template>
+    <Teleport to="body">
     <Transition name="modal">
       <div v-if="show" class="modal-mask " ref="dialog">
         <div class="modal-wrapper  max-h-[80vh]">
-          <div class="modal-container dark:bg-gray-900 overflow-auto  max-h-[80vh]">
+          <div class="modal-container dark:bg-gray-900 overflow-auto  max-h-[80vh]" :class="containerClass">
             <div class="modal-header">
               <slot name="header"></slot>
             </div>
@@ -46,6 +51,7 @@ export default {
         </div>
       </div>
     </Transition>
+    </Teleport>
   </template>
   
   <style>

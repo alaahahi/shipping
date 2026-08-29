@@ -6,6 +6,7 @@ import { useToast } from 'vue-toastification';
 import axios from 'axios';
 import { ref, onMounted } from 'vue';
 import TrashIcon from '@/Components/icon/trash.vue';
+import Modal from '@/Components/Modal.vue';
 
 const toast = useToast();
 
@@ -260,18 +261,15 @@ onMounted(() => load(1));
       </div>
     </div>
 
-    <Transition name="modal">
-      <div v-if="selected" class="modal-mask">
-        <div class="modal-wrapper">
-          <div
-            class="modal-container dark:bg-gray-900 w-full max-w-full sm:max-w-2xl overflow-y-auto max-h-[85vh]"
-            dir="rtl"
-          >
-            <div class="modal-header text-center py-4 dark:text-gray-200">
-              تخويل قيادة رقم {{ selected.id }}
-            </div>
+    <Modal :show="!!selected" container-class="modal-rtl" @close="selected = null">
+      <template #header>
+        <div v-if="selected" class="text-center py-2 dark:text-gray-200">
+          تخويل قيادة رقم {{ selected.id }}
+        </div>
+      </template>
 
-            <div class="modal-body px-4 sm:px-5 space-y-4">
+      <template #body>
+        <div v-if="selected" class="px-1 sm:px-2 space-y-4">
               <p v-if="viewLoading" class="text-center text-gray-500 py-4">جاري التحميل...</p>
               <p v-else class="leading-8 text-gray-700 dark:text-gray-200 whitespace-pre-line break-words">
                 {{ selected.rendered_note }}
@@ -302,74 +300,78 @@ onMounted(() => load(1));
                   </tr>
                 </tbody>
               </table>
-            </div>
+        </div>
+      </template>
 
-            <div class="modal-footer my-2 px-3">
-              <div class="flex flex-row w-full">
-                <div class="basis-1/2 px-2">
-                  <button type="button" class="w-full py-3 bg-gray-500 text-white rounded" @click="selected = null">
-                    إغلاق
-                  </button>
-                </div>
-                <div class="basis-1/2 px-2">
-                  <button
-                    type="button"
-                    class="w-full py-3 bg-rose-600 text-white rounded"
-                    @click="printDoc(selected)"
-                  >
-                    طباعة
-                  </button>
-                </div>
-              </div>
-            </div>
+      <template #footer>
+        <div class="flex flex-row w-full">
+          <div class="basis-1/2 px-2">
+            <button type="button" class="w-full py-3 bg-gray-500 text-white rounded" @click="selected = null">
+              إغلاق
+            </button>
+          </div>
+          <div class="basis-1/2 px-2">
+            <button
+              type="button"
+              class="w-full py-3 bg-rose-600 text-white rounded"
+              @click="printDoc(selected)"
+            >
+              طباعة
+            </button>
           </div>
         </div>
-      </div>
-    </Transition>
+      </template>
+    </Modal>
 
-    <Transition name="modal">
-      <div v-if="toDelete" class="modal-mask">
-        <div class="modal-wrapper">
-          <div class="modal-container dark:bg-gray-900" dir="rtl">
-            <div class="modal-header text-center py-4 dark:text-gray-200">
-              حذف تخويل القيادة
-            </div>
+    <Modal :show="!!toDelete" container-class="modal-rtl" @close="toDelete = null">
+      <template #header>
+        <div class="text-center py-2 dark:text-gray-200">حذف تخويل القيادة</div>
+      </template>
 
-            <div class="modal-body px-5 text-center dark:text-gray-200">
-              <p>
-                هل أنت متأكد من حذف تخويل القيادة رقم {{ toDelete.id }} الخاص بـ
-                <span class="font-bold">{{ toDelete.name }}</span>؟
-              </p>
-              <p class="text-sm text-gray-500 mt-2">الحذف قابل للاسترجاع ويتم تسجيله في سجل النظام.</p>
-            </div>
+      <template #body>
+        <div v-if="toDelete" class="px-2 text-center dark:text-gray-200">
+          <p>
+            هل أنت متأكد من حذف تخويل القيادة رقم {{ toDelete.id }} الخاص بـ
+            <span class="font-bold">{{ toDelete.name }}</span>؟
+          </p>
+          <p class="text-sm text-gray-500 mt-2">الحذف قابل للاسترجاع ويتم تسجيله في سجل النظام.</p>
+        </div>
+      </template>
 
-            <div class="modal-footer my-2 px-3">
-              <div class="flex flex-row w-full">
-                <div class="basis-1/2 px-2">
-                  <button
-                    type="button"
-                    class="w-full py-3 bg-gray-500 text-white rounded"
-                    :disabled="deleting"
-                    @click="toDelete = null"
-                  >
-                    إغلاق
-                  </button>
-                </div>
-                <div class="basis-1/2 px-2">
-                  <button
-                    type="button"
-                    class="w-full py-3 bg-rose-600 text-white rounded disabled:opacity-50"
-                    :disabled="deleting"
-                    @click="confirmDelete"
-                  >
-                    حذف
-                  </button>
-                </div>
-              </div>
-            </div>
+      <template #footer>
+        <div class="flex flex-row w-full">
+          <div class="basis-1/2 px-2">
+            <button
+              type="button"
+              class="w-full py-3 bg-gray-500 text-white rounded"
+              :disabled="deleting"
+              @click="toDelete = null"
+            >
+              إغلاق
+            </button>
+          </div>
+          <div class="basis-1/2 px-2">
+            <button
+              type="button"
+              class="w-full py-3 bg-rose-600 text-white rounded disabled:opacity-50"
+              :disabled="deleting"
+              @click="confirmDelete"
+            >
+              حذف
+            </button>
           </div>
         </div>
-      </div>
-    </Transition>
+      </template>
+    </Modal>
   </AuthenticatedLayout>
 </template>
+
+<style>
+.modal-container.modal-rtl {
+  direction: rtl;
+  text-align: right;
+  width: 90%;
+  min-width: 0;
+  max-width: 42rem;
+}
+</style>
