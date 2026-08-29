@@ -5,6 +5,9 @@ namespace App\Services;
 use App\Models\Driving;
 use App\Models\SystemConfig;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use RuntimeException;
 
 class DrivingAuthorizationService
 {
@@ -100,5 +103,53 @@ class DrivingAuthorizationService
             ->when($from && $to, fn ($query) => $query->whereBetween('created', [$from, $to]))
             ->orderByDesc('id')
             ->paginate($perPage);
+    }
+
+    /**
+     * سجل واحد مقيّد بالفرع (لعرضه في نافذة منبثقة).
+     */
+    public function find(int $id, int $ownerId): Driving
+    {
+        $doc = Driving::query()->find($id);
+
+        if (! $doc) {
+            throw new RuntimeException('Driving authorization not found.');
+        }
+
+        if ((int) $doc->owner_id !== $ownerId) {
+            throw new RuntimeException('Not authorized to view this driving authorization.');
+        }
+
+        return $doc;
+    }
+
+    /**
+     * حذف ناعم لتخويل قيادة (قابل للاسترجاع) مع تسجيل العملية.
+     */
+    public function delete(int $id, int $ownerId): Driving
+    {
+        $doc = Driving::query()->find($id);
+
+        if (! $doc) {
+            throw new RuntimeException('Driving authorization not found.');
+        }
+
+        if ((int) $doc->owner_id !== $ownerId) {
+            throw new RuntimeException('Not authorized to delete this driving authorization.');
+        }
+
+        $doc->delete();
+
+        Log::info('Driving authorization deleted', [
+            'driving_id' => $doc->id,
+            'client_id' => $doc->client_id,
+            'name' => $doc->name,
+            'car_number' => $doc->car_number,
+            'vin' => $doc->vin,
+            'deleted_by' => Auth::id(),
+            'owner_id' => $ownerId,
+        ]);
+
+        return $doc;
     }
 }

@@ -454,6 +454,8 @@ Route::middleware('auth')->group(function () {
     Route::get('driving-authorizations',[\App\Http\Controllers\DrivingAuthorizationController::class, 'list'])->name('drivingAuthorizations.list');
     Route::get('driving-authorizations/template',[\App\Http\Controllers\DrivingAuthorizationController::class, 'template'])->name('drivingAuthorizations.template');
     Route::post('driving-authorizations/template',[\App\Http\Controllers\DrivingAuthorizationController::class, 'updateTemplate'])->name('drivingAuthorizations.template.update');
+    Route::post('driving-authorizations/delete',[\App\Http\Controllers\DrivingAuthorizationController::class, 'destroy'])->name('drivingAuthorizations.destroy');
+    Route::get('driving-authorizations/{id}',[\App\Http\Controllers\DrivingAuthorizationController::class, 'show'])->whereNumber('id')->name('drivingAuthorizations.show');
 
     Route::post('storeDamageReport',[CarDamageReportController::class, 'store'])->name('storeDamageReport');
     Route::post('updateDamageReport',[CarDamageReportController::class, 'update'])->name('updateDamageReport');

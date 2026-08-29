@@ -7,11 +7,21 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class DrivingAuthorizationResource extends JsonResource
 {
+    /**
+     * نص التخويل النهائي يُحسب فقط عند طلب سجل واحد (تجنّب استعلام لكل صف في القائمة).
+     */
+    protected $withRendered = false;
+
+    public function withRendered(bool $value = true): self
+    {
+        $this->withRendered = $value;
+
+        return $this;
+    }
+
     public function toArray($request)
     {
-        $service = app(DrivingAuthorizationService::class);
-
-        return [
+        $data = [
             'id' => (int) $this->id,
             'client_id' => $this->client_id,
             'name' => $this->name,
@@ -23,8 +33,14 @@ class DrivingAuthorizationResource extends JsonResource
             'created' => $this->created,
             'created_at' => optional($this->created_at)->toDateTimeString(),
             'note' => $this->note,
-            'rendered_note' => $service->render($this->note, $this->resource),
             'print_url' => '/makeDrivingDocumentPdf?doc_id='.$this->id,
         ];
+
+        if ($this->withRendered) {
+            $data['rendered_note'] = app(DrivingAuthorizationService::class)
+                ->render($this->note, $this->resource);
+        }
+
+        return $data;
     }
 }

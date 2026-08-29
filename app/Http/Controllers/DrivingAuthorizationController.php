@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DeleteDrivingAuthorizationRequest;
 use App\Http\Requests\UpdateDrivingAuthorizationTextRequest;
 use App\Http\Resources\DrivingAuthorizationResource;
 use App\Services\DrivingAuthorizationService;
@@ -32,6 +33,19 @@ class DrivingAuthorizationController extends Controller
         return DrivingAuthorizationResource::collection($paginator);
     }
 
+    public function show($id)
+    {
+        try {
+            $doc = $this->service->find((int) $id, (int) Auth::user()->owner_id);
+        } catch (\RuntimeException $e) {
+            $status = str_contains($e->getMessage(), 'authorized') ? 403 : 404;
+
+            return response()->json(['message' => $e->getMessage()], $status);
+        }
+
+        return (new DrivingAuthorizationResource($doc))->withRendered();
+    }
+
     public function template()
     {
         return response()->json([
@@ -48,6 +62,25 @@ class DrivingAuthorizationController extends Controller
         return response()->json([
             'message' => 'تم حفظ نص تخويل القيادة بنجاح',
             'text' => $text,
+        ]);
+    }
+
+    public function destroy(DeleteDrivingAuthorizationRequest $request)
+    {
+        try {
+            $doc = $this->service->delete(
+                (int) $request->validated()['id'],
+                (int) Auth::user()->owner_id
+            );
+        } catch (\RuntimeException $e) {
+            $status = str_contains($e->getMessage(), 'authorized') ? 403 : 404;
+
+            return response()->json(['message' => $e->getMessage()], $status);
+        }
+
+        return response()->json([
+            'message' => 'تم حذف تخويل القيادة بنجاح',
+            'id' => $doc->id,
         ]);
     }
 }

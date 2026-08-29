@@ -5,6 +5,7 @@ import debounce from 'lodash/debounce';
 import { useToast } from 'vue-toastification';
 import axios from 'axios';
 import { ref, onMounted } from 'vue';
+import TrashIcon from '@/Components/icon/trash.vue';
 
 const toast = useToast();
 
@@ -16,6 +17,9 @@ const page = ref(1);
 const lastPage = ref(1);
 const loading = ref(false);
 const selected = ref(null);
+const viewLoading = ref(false);
+const toDelete = ref(null);
+const deleting = ref(false);
 
 function formatDate(value) {
   if (!value) return '';
@@ -53,6 +57,49 @@ const debouncedSearch = debounce(() => load(1), 400);
 
 function printDoc(doc) {
   window.open(doc.print_url, '_blank');
+}
+
+async function openView(doc) {
+  selected.value = { ...doc, rendered_note: '' };
+  viewLoading.value = true;
+  try {
+    const { data } = await axios.get(`/api/driving-authorizations/${doc.id}`);
+    if (selected.value && selected.value.id === doc.id) {
+      selected.value = { ...selected.value, ...(data.data ?? data) };
+    }
+  } catch (error) {
+    toast.error(error?.response?.data?.message || 'تعذر جلب تفاصيل التخويل', {
+      timeout: 3000,
+      position: 'bottom-right',
+      rtl: true,
+    });
+  } finally {
+    viewLoading.value = false;
+  }
+}
+
+async function confirmDelete() {
+  if (!toDelete.value || deleting.value) return;
+
+  deleting.value = true;
+  try {
+    const { data } = await axios.post('/api/driving-authorizations/delete', { id: toDelete.value.id });
+    docs.value = docs.value.filter((d) => d.id !== toDelete.value.id);
+    toDelete.value = null;
+    toast.success(data?.message || 'تم حذف تخويل القيادة بنجاح', {
+      timeout: 2500,
+      position: 'bottom-right',
+      rtl: true,
+    });
+  } catch (error) {
+    toast.error(error?.response?.data?.message || 'تعذر حذف التخويل', {
+      timeout: 3000,
+      position: 'bottom-right',
+      rtl: true,
+    });
+  } finally {
+    deleting.value = false;
+  }
 }
 
 function exportExcel() {
@@ -160,7 +207,7 @@ onMounted(() => load(1));
                       <button
                         type="button"
                         class="px-3 py-1 rounded bg-slate-600 text-white hover:bg-slate-700"
-                        @click="selected = doc"
+                        @click="openView(doc)"
                       >
                         عرض
                       </button>
@@ -170,6 +217,15 @@ onMounted(() => load(1));
                         @click="printDoc(doc)"
                       >
                         طباعة
+                      </button>
+                      <button
+                        v-if="$page.props.auth.user.type_id == 1"
+                        type="button"
+                        class="px-3 py-1 rounded bg-red-700 text-white hover:bg-red-800 flex items-center"
+                        title="حذف"
+                        @click="toDelete = doc"
+                      >
+                        <TrashIcon />
                       </button>
                     </div>
                   </td>
@@ -206,14 +262,18 @@ onMounted(() => load(1));
 
     <Transition name="modal">
       <div v-if="selected" class="modal-mask">
-        <div class="modal-wrapper max-h-[85vh]">
-          <div class="modal-container dark:bg-gray-900 overflow-auto max-h-[85vh]" dir="rtl">
+        <div class="modal-wrapper">
+          <div
+            class="modal-container dark:bg-gray-900 w-full max-w-full sm:max-w-2xl overflow-y-auto max-h-[85vh]"
+            dir="rtl"
+          >
             <div class="modal-header text-center py-4 dark:text-gray-200">
               تخويل قيادة رقم {{ selected.id }}
             </div>
 
-            <div class="modal-body px-5 space-y-4">
-              <p class="leading-8 text-gray-700 dark:text-gray-200 whitespace-pre-line">
+            <div class="modal-body px-4 sm:px-5 space-y-4">
+              <p v-if="viewLoading" class="text-center text-gray-500 py-4">جاري التحميل...</p>
+              <p v-else class="leading-8 text-gray-700 dark:text-gray-200 whitespace-pre-line break-words">
                 {{ selected.rendered_note }}
               </p>
 
@@ -245,13 +305,6 @@ onMounted(() => load(1));
             </div>
 
             <div class="modal-footer my-2 px-3">
-              <button
-                type="button"
-                class="w-full py-3 mb-2 bg-slate-600 text-white rounded"
-                @click="printDoc(selected)"
-              >
-                طباعة
-              </button>
               <div class="flex flex-row w-full">
                 <div class="basis-1/2 px-2">
                   <button type="button" class="w-full py-3 bg-gray-500 text-white rounded" @click="selected = null">
@@ -259,8 +312,57 @@ onMounted(() => load(1));
                   </button>
                 </div>
                 <div class="basis-1/2 px-2">
-                  <button type="button" class="w-full py-3 bg-rose-600 text-white rounded" @click="selected = null">
-                    تم
+                  <button
+                    type="button"
+                    class="w-full py-3 bg-rose-600 text-white rounded"
+                    @click="printDoc(selected)"
+                  >
+                    طباعة
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <Transition name="modal">
+      <div v-if="toDelete" class="modal-mask">
+        <div class="modal-wrapper">
+          <div class="modal-container dark:bg-gray-900" dir="rtl">
+            <div class="modal-header text-center py-4 dark:text-gray-200">
+              حذف تخويل القيادة
+            </div>
+
+            <div class="modal-body px-5 text-center dark:text-gray-200">
+              <p>
+                هل أنت متأكد من حذف تخويل القيادة رقم {{ toDelete.id }} الخاص بـ
+                <span class="font-bold">{{ toDelete.name }}</span>؟
+              </p>
+              <p class="text-sm text-gray-500 mt-2">الحذف قابل للاسترجاع ويتم تسجيله في سجل النظام.</p>
+            </div>
+
+            <div class="modal-footer my-2 px-3">
+              <div class="flex flex-row w-full">
+                <div class="basis-1/2 px-2">
+                  <button
+                    type="button"
+                    class="w-full py-3 bg-gray-500 text-white rounded"
+                    :disabled="deleting"
+                    @click="toDelete = null"
+                  >
+                    إغلاق
+                  </button>
+                </div>
+                <div class="basis-1/2 px-2">
+                  <button
+                    type="button"
+                    class="w-full py-3 bg-rose-600 text-white rounded disabled:opacity-50"
+                    :disabled="deleting"
+                    @click="confirmDelete"
+                  >
+                    حذف
                   </button>
                 </div>
               </div>
