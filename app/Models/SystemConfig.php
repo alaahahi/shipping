@@ -45,6 +45,7 @@ class SystemConfig extends Model
         'wa_msg_payment_receipt',
         'wa_msg_car_added',
         'car_expenses_wallet_user_id',
+        'driving_authorization_text',
     ];
 
     protected $attributes = [
@@ -103,6 +104,26 @@ class SystemConfig extends Model
             }
         } catch (\Throwable $e) {
             // Ignore — uploads will still surface a clear error if schema cannot change.
+        }
+    }
+
+    /**
+     * Ensure the driving authorization text column exists (covers SQLite prod when migrate was skipped).
+     */
+    public static function ensureDrivingAuthorizationColumn(): void
+    {
+        try {
+            if (! Schema::hasTable('system_config')) {
+                return;
+            }
+
+            if (! Schema::hasColumn('system_config', 'driving_authorization_text')) {
+                Schema::table('system_config', function (Blueprint $table) {
+                    $table->longText('driving_authorization_text')->nullable();
+                });
+            }
+        } catch (\Throwable $e) {
+            // Ignore — the service falls back to the default text.
         }
     }
 

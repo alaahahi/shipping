@@ -880,7 +880,34 @@ function openModalShowExitCar(form={}) {
   formData.value=form
   showModalShowExitCar.value = true;
 }
-function openModalShowDriving(form={}) {
+const drivingTemplate = ref('');
+
+async function loadDrivingTemplate() {
+  if (drivingTemplate.value) {
+    return drivingTemplate.value;
+  }
+
+  try {
+    const { data } = await axios.get('/api/driving-authorizations/template');
+    drivingTemplate.value = data.text || '';
+  } catch (e) {
+    drivingTemplate.value = '';
+  }
+
+  return drivingTemplate.value;
+}
+
+function renderDrivingTemplate(template, values) {
+  if (!template) {
+    return '';
+  }
+
+  return template
+    .replace('(name)', `(${values.name ?? ''})`)
+    .replace(/\{(\w+)\}/g, (match, key) => (values[key] ?? ''));
+}
+
+async function openModalShowDriving(form={}) {
   formDriving.value.car_typeDriving = form.car_type
   formDriving.value.yearDriving = form.year
   formDriving.value.car_colorDriving= form.car_color
@@ -889,8 +916,19 @@ function openModalShowDriving(form={}) {
   formDriving.value.clientIdDriving= client_Select.value
   formDriving.value.car_numberDriving= form.car_number
   formDriving.value.createdDriving=  getTodayDate()
-  formDriving.value.noteDriving= `انا كارزان سرهنك محمد (وكيل عام سلام جلال ايوب ) (مدير مفوض شركة سلام جلال ايوب) قد خولت السيد(name) بقيادة السيارة ذات المواصفات ادناه له حق  نقلها  من محافظة الى محافظة اخرى ودفع الرسوم والغرمات بيع وشراء القبض الثمن.`;
+  formDriving.value.noteDriving = '';
   showModalShowDriving.value = true;
+
+  const template = await loadDrivingTemplate();
+  formDriving.value.noteDriving = renderDrivingTemplate(template, {
+    name: props.client.name,
+    car_type: form.car_type,
+    vin: form.vin,
+    year: form.year,
+    color: form.car_color,
+    car_number: form.car_number,
+    date: formDriving.value.createdDriving,
+  });
 }
 function carHasRegistrationWorkflow(car) {
   if (car?.has_registration_workflow !== undefined) {

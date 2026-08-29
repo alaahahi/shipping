@@ -299,6 +299,8 @@ Route::group(['middleware' => ['auth','verified', 'check.license', 'page.permiss
 
     Route::get('wallet',[AccountingController::class, 'wallet'])->name("wallet");
 
+    Route::get('driving-authorizations',[\App\Http\Controllers\DrivingAuthorizationController::class, 'index'])->name('drivingAuthorizations.index');
+
     Route::get('damage_report',[CarDamageReportController::class, 'index'])->name('damage_report.index');
     Route::get('damage_report/{id}/edit', [CarDamageReportController::class, 'edit'])->name('damage_report.edit');
 

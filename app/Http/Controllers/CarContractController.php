@@ -1329,8 +1329,12 @@ class CarContractController extends Controller
         $doc = Driving::find($id);
 
         $config=SystemConfig::first();
-        
-        return view('documents.driving',compact('doc','config'));
+
+        $noteText = $doc
+            ? app(\App\Services\DrivingAuthorizationService::class)->render($doc->note, $doc)
+            : '';
+
+        return view('documents.driving',compact('doc','config','noteText'));
     }
 
     public function verify($token)

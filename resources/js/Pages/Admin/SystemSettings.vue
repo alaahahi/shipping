@@ -822,6 +822,42 @@ function printCarTagDetails(tag) {
   window.open(`/printCarTagDetails?${query.toString()}`, '_blank');
 }
 
+// ─── Driving Authorization Text ──────────────────────────────────────────────
+const drivingText = ref('');
+const drivingDefault = ref('');
+const drivingPlaceholders = ref({});
+const drivingLoaded = ref(false);
+const drivingSaving = ref(false);
+
+async function loadDrivingText() {
+  if (drivingLoaded.value) return;
+
+  try {
+    const { data } = await axios.get('/api/driving-authorizations/template');
+    drivingText.value = data.text || '';
+    drivingDefault.value = data.default || '';
+    drivingPlaceholders.value = data.placeholders || {};
+    drivingLoaded.value = true;
+  } catch (error) {
+    toast.error('تعذر جلب نص تخويل القيادة');
+  }
+}
+
+async function saveDrivingText() {
+  drivingSaving.value = true;
+  try {
+    const { data } = await axios.post('/api/driving-authorizations/template', {
+      driving_authorization_text: drivingText.value,
+    });
+    drivingText.value = data.text || '';
+    toast.success(data.message || 'تم الحفظ');
+  } catch (error) {
+    toast.error(error?.response?.data?.message || 'تعذر حفظ النص');
+  } finally {
+    drivingSaving.value = false;
+  }
+}
+
 // ─── Database Insights ───────────────────────────────────────────────────────
 const dbData    = ref(null);
 const dbLoading = ref(false);
@@ -955,6 +991,15 @@ async function runVacuum() {
                   class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
                 >
                   إشعارات واتساب
+                </button>
+                <button
+                  @click="activeTab = 'driving'; loadDrivingText()"
+                  :class="activeTab === 'driving'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+                  class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                >
+                  نص تخويل القيادة
                 </button>
                 <button
                   @click="activeTab = 'database'; loadDbInsights()"
@@ -1593,6 +1638,64 @@ async function runVacuum() {
                     {{ saving ? 'جاري الحفظ...' : 'حفظ إعدادات واتساب' }}
                   </button>
                 </div>
+              </div>
+            </div>
+
+            <!-- Driving Authorization Text Tab -->
+            <div v-show="activeTab === 'driving'" class="space-y-6" dir="rtl">
+              <div>
+                <h3 class="text-lg font-semibold">نص تخويل القيادة الثابت</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  هذا النص يظهر تلقائياً عند إنشاء كتاب تخويل قيادة من قائمة سيارات الزبون، ويمكن تعديله قبل الطباعة.
+                </p>
+              </div>
+
+              <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                <p class="text-sm font-semibold mb-2">المتغيرات المتاحة</p>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="(label, key) in drivingPlaceholders"
+                    :key="key"
+                    type="button"
+                    class="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200"
+                    @click="drivingText += ' ' + key"
+                  >
+                    {{ key }} — {{ label }}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <InputLabel for="driving_authorization_text" value="النص" />
+                <textarea
+                  id="driving_authorization_text"
+                  v-model="drivingText"
+                  rows="8"
+                  dir="rtl"
+                  :disabled="!isAdmin"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 disabled:opacity-60"
+                ></textarea>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  اترك الحقل فارغاً للرجوع إلى النص الافتراضي.
+                </p>
+              </div>
+
+              <div class="flex justify-end gap-3">
+                <button
+                  type="button"
+                  class="px-4 py-2 rounded bg-gray-500 text-white hover:bg-gray-600"
+                  @click="drivingText = drivingDefault"
+                >
+                  استعادة النص الافتراضي
+                </button>
+                <button
+                  type="button"
+                  :disabled="drivingSaving || !isAdmin"
+                  class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                  @click="saveDrivingText"
+                >
+                  {{ drivingSaving ? 'جاري الحفظ...' : 'حفظ النص' }}
+                </button>
               </div>
             </div>
 

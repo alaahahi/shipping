@@ -31,6 +31,13 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'vin_decoder' => [
+        'base_url' => env('VIN_DECODER_BASE_URL', 'https://vpic.nhtsa.dot.gov/api/vehicles'),
+        'api_key' => env('VIN_DECODER_API_KEY'),
+        'timeout' => (int) env('VIN_DECODER_TIMEOUT', 10),
+        'cache_ttl' => (int) env('VIN_DECODER_CACHE_TTL', 86400),
+    ],
+
     'whatsapp_queue' => [
         'base_url' => env('WA_QUEUE_BASE_URL', 'https://wa.intellij-app.com'),
         'created_by' => env('WA_QUEUE_CREATED_BY', 'shipping-erp'),

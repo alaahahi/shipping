@@ -65,7 +65,7 @@ $Help = new MyHelp();
 
     <!-- Content Section -->
     <p class="fs-6 text-center"  style="margin: 0 40px">
-      {{ str_replace('name', $doc['name'], $doc['note']) }}
+      {{ $noteText }}
     </p>
     <div  style="margin: 0 50px" class="py-3">
       <table class="table table-bordered text-center">

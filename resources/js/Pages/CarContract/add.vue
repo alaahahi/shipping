@@ -456,14 +456,16 @@ function checkApisVin(vin) {
     } 
 }
 function VinApi (v){
-    axios.get(`https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${v}?format=json`)
+    axios.get('/api/decode_vin', { params: { vin: v } })
   .then(response => {
-    form.value.car_name=(response.data.Results[0].Make ? response.data.Results[0].Make:response.data.Results[0].Manufacturer)+' '+response.data.Results[0].Model
-    form.value.modal=response.data.Results[0].ModelYear
-    form.value.size=response.data.Results[0].Doors
+    const result = response.data?.data
+    if (!result) return
+    form.value.car_name=result.car_type
+    form.value.modal=result.year
+    form.value.size=result.doors
     form.value.vin=''
-    form.value.vin=response.data.Results[0].VIN
-    
+    form.value.vin=result.vin
+
   })
   .catch(error => {
     console.error(error);
@@ -476,13 +478,15 @@ function checkApisVin1(vin) {
     } 
 }
 function VinApi1 (v){
-    axios.get(`https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${v}?format=json`)
+    axios.get('/api/decode_vin', { params: { vin: v } })
   .then(response => {
-    form.value.car_name_s=(response.data.Results[0].Make ? response.data.Results[0].Make:response.data.Results[0].Manufacturer)+' '+response.data.Results[0].Model
-    form.value.modal_s=response.data.Results[0].ModelYear
-    form.value.size_s=response.data.Results[0].Doors
-    form.value.vin_s=response.data.Results[0].VIN
-    
+    const result = response.data?.data
+    if (!result) return
+    form.value.car_name_s=result.car_type
+    form.value.modal_s=result.year
+    form.value.size_s=result.doors
+    form.value.vin_s=result.vin
+
   })
   .catch(error => {
     console.error(error);

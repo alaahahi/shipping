@@ -33,6 +33,7 @@ use App\Http\Controllers\SystemConfigController;
 use App\Http\Controllers\WhatsAppController;
 use App\Http\Controllers\PagePermissionController;
 use App\Http\Controllers\CarHistoryController;
+use App\Http\Controllers\VinLookupController;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Cache\FileStore;
@@ -365,6 +366,7 @@ Route::get('addToBox',[DashboardController::class, 'addToBox'])->name('addToBox'
 Route::get('withDrawFromBox',[DashboardController::class, 'withDrawFromBox'])->name('withDrawFromBox');
 
 Route::get('check_vin',[CarConfigController::class, 'check_vin']);
+Route::get('decode_vin',[VinLookupController::class, 'decode'])->name('api.decode_vin');
 
 
 
@@ -449,6 +451,10 @@ Route::post('makeDrivingDocument',[CarContractController::class, 'makeDrivingDoc
 Route::get('makeDrivingDocumentPdf',[CarContractController::class, 'makeDrivingDocumentPdf'])->name('makeDrivingDocumentPdf');
 
 Route::middleware('auth')->group(function () {
+    Route::get('driving-authorizations',[\App\Http\Controllers\DrivingAuthorizationController::class, 'list'])->name('drivingAuthorizations.list');
+    Route::get('driving-authorizations/template',[\App\Http\Controllers\DrivingAuthorizationController::class, 'template'])->name('drivingAuthorizations.template');
+    Route::post('driving-authorizations/template',[\App\Http\Controllers\DrivingAuthorizationController::class, 'updateTemplate'])->name('drivingAuthorizations.template.update');
+
     Route::post('storeDamageReport',[CarDamageReportController::class, 'store'])->name('storeDamageReport');
     Route::post('updateDamageReport',[CarDamageReportController::class, 'update'])->name('updateDamageReport');
     Route::get('getIndexDamageReport',[CarDamageReportController::class, 'getIndex'])->name('getIndexDamageReport');

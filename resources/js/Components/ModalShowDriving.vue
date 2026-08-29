@@ -109,6 +109,15 @@ let props = defineProps({
           </div>
 
           <div class="modal-footer my-2">
+            <div class="px-4 pb-2">
+              <a
+                href="/driving-authorizations"
+                target="_blank"
+                class="block w-full py-3 text-center bg-slate-600 text-white rounded"
+              >
+                سجل تخويلات القيادة
+              </a>
+            </div>
             <div class="flex flex-row">
               <div class="basis-1/2 px-4">
                 <button class="modal-default-button py-3 bg-gray-500 rounded" @click="$emit('close');">

@@ -35,6 +35,7 @@ function createCarEntry(data = {}) {
     expenses: data.expenses ?? "",
     error: false,
     hunterWarning: false,
+    vinInfoError: "",
   };
 }
 
@@ -114,15 +115,19 @@ function VinApi(entry) {
   if (!v) return;
   entry.car_type = "";
   entry.year = "";
+  entry.vinInfoError = "";
   axios
-    .get(`https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${v}?format=json`)
+    .get("/api/decode_vin", { params: { vin: v } })
     .then((response) => {
-      const result = response.data.Results[0];
-      entry.car_type =
-        (result.Make ? result.Make : result.Manufacturer) + " " + result.Model;
-      entry.year = result.ModelYear;
+      const result = response.data?.data;
+      if (!result) return;
+      entry.car_type = result.car_type ?? "";
+      entry.year = result.year ?? "";
     })
     .catch((error) => {
+      entry.vinInfoError =
+        error?.response?.data?.message ||
+        "تعذر جلب معلومات السيارة من رقم الشاصي.";
       console.error(error);
     });
 }
@@ -155,6 +160,7 @@ function removeCarEntry(index) {
     carEntries.value[0].expenses = "";
     carEntries.value[0].error = false;
     carEntries.value[0].hunterWarning = false;
+    carEntries.value[0].vinInfoError = "";
     return;
   }
   carEntries.value.splice(index, 1);
@@ -164,6 +170,7 @@ function checkVin(entry) {
   if (!vin) {
     entry.error = false;
     entry.hunterWarning = false;
+    entry.vinInfoError = "";
     return;
   }
   VinApi(entry);
@@ -627,6 +634,12 @@ async function removeTagFromCar(tagValue) {
                         v-else-if="isDuplicateVin(entry)"
                       >
                         رقم الشاصي مكرر في القائمة الحالية.
+                      </div>
+                      <div
+                        class="text-amber-600 text-sm mt-2"
+                        v-if="entry.vinInfoError"
+                      >
+                        {{ entry.vinInfoError }}
                       </div>
                     </div>
                     <div>
