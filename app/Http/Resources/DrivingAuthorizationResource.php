@@ -3,12 +3,11 @@
 namespace App\Http\Resources;
 
 use App\Services\DrivingAuthorizationService;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class DrivingAuthorizationResource extends JsonResource
 {
-    public function toArray(Request $request): array
+    public function toArray($request)
     {
         $service = app(DrivingAuthorizationService::class);
 
