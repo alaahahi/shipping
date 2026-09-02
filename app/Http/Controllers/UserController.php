@@ -1887,65 +1887,70 @@ class UserController extends Controller
     }
     public function login(LoginRequest $request)
     {
-        try {
-            $request->authenticate();
-            $user = User::where('email', $request->email)->first();
-            if (! $user) {
-                return Response::json(['status' => 400, 'massage' => 'user not found'], 400);
-            }
+        $request->authenticate();
 
-            $publickey_receiver = User::find($user->parent_id)->public_key ?? 0;
-            if ($user->device) {
-                $request->device = $user->device.' | '.$request->device;
-            }
-            $user->append(['token']);
+        $user = User::where('email', $request->email)->first();
 
-            if ($user->is_band) {
-                return Response::json(['status' => 403, 'massage' => 'user is band'], 403);
-            }
-
-            if ($user->type_id == $this->userChief) {
-                if ($request->public_key) {
-                    $user->update([
-                        'public_key' => $request->public_key,
-                        'device' => $request->device,
-                        'publickey_receiver' => $publickey_receiver,
-                    ]);
-                }
-
-                return Response::json([
-                    'status' => 200,
-                    'massage' => 'user found',
-                    'data' => $user,
-                    'token' => Crypt::encryptString((string) $user->id),
-                ], 200);
-            }
-
-            if ($publickey_receiver) {
-                if ($request->public_key) {
-                    $user->update([
-                        'public_key' => $request->public_key,
-                        'device' => $request->device,
-                        'publickey_receiver' => $publickey_receiver,
-                    ]);
-                }
-
-                return Response::json([
-                    'status' => 200,
-                    'massage' => 'user found',
-                    'data' => $user,
-                    'token' => Crypt::encryptString((string) $user->id),
-                ], 200);
-            }
-
-            return Response::json(['status' => 407, 'massage' => 'user found but publickey for parent notfound'], 407);
-        } catch (\Throwable $th) {
+        if (! $user) {
             return Response::json([
-                'status' => 400,
-                'massage' => 'user not found',
-                'error' => $th->getMessage(),
-            ], 400);
+                'status' => 422,
+                'message' => trans('auth.email_not_found'),
+                'errors' => ['email' => [trans('auth.email_not_found')]],
+            ], 422);
         }
+
+        $publickey_receiver = User::find($user->parent_id)->public_key ?? 0;
+        if ($user->device) {
+            $request->device = $user->device.' | '.$request->device;
+        }
+        $user->append(['token']);
+
+        if ($user->is_band) {
+            return Response::json([
+                'status' => 403,
+                'message' => trans('auth.account_restricted'),
+                'errors' => ['email' => [trans('auth.account_restricted')]],
+            ], 403);
+        }
+
+        if ($user->type_id == $this->userChief) {
+            if ($request->public_key) {
+                $user->update([
+                    'public_key' => $request->public_key,
+                    'device' => $request->device,
+                    'publickey_receiver' => $publickey_receiver,
+                ]);
+            }
+
+            return Response::json([
+                'status' => 200,
+                'message' => 'تم تسجيل الدخول بنجاح',
+                'data' => $user,
+                'token' => Crypt::encryptString((string) $user->id),
+            ], 200);
+        }
+
+        if ($publickey_receiver) {
+            if ($request->public_key) {
+                $user->update([
+                    'public_key' => $request->public_key,
+                    'device' => $request->device,
+                    'publickey_receiver' => $publickey_receiver,
+                ]);
+            }
+
+            return Response::json([
+                'status' => 200,
+                'message' => 'تم تسجيل الدخول بنجاح',
+                'data' => $user,
+                'token' => Crypt::encryptString((string) $user->id),
+            ], 200);
+        }
+
+        return Response::json([
+            'status' => 407,
+            'message' => 'الحساب يحتاج إعداد مفتاح من الإدارة',
+        ], 407);
     }
 
 

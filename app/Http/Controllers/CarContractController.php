@@ -252,7 +252,7 @@ class CarContractController extends Controller
             default => 'receiptContract',
         };
         // أولوية: organizer_name في العقد ← اسم منظم العقد من المستخدم المنشئ (users.organizer_name)
-        $creatorOrganizer = $data->user?->organizer_name ?? '';
+        $creatorOrganizer = $data?->user?->organizer_name ?? '';
         $contractOrganizer = $data->organizer_name ?? $creatorOrganizer;
         $isExternalContract = $data && ($data->contract_type ?? '') === 'external';
         $contractTitleKu = $isExternalContract ? 'گرێبەستی دەرەکی' : 'گرێبەستی فرۆشتن و کڕینی ئۆتۆمبێل';

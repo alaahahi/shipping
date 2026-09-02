@@ -6,6 +6,7 @@ import { useToast } from 'vue-toastification';
 import axios from 'axios';
 import { ref, onMounted } from 'vue';
 import TrashIcon from '@/Components/icon/trash.vue';
+import EditIcon from '@/Components/icon/edit.vue';
 import Modal from '@/Components/Modal.vue';
 
 const toast = useToast();
@@ -21,6 +22,9 @@ const selected = ref(null);
 const viewLoading = ref(false);
 const toDelete = ref(null);
 const deleting = ref(false);
+const editForm = ref(null);
+const saving = ref(false);
+const editErrors = ref({});
 
 function formatDate(value) {
   if (!value) return '';
@@ -76,6 +80,52 @@ async function openView(doc) {
     });
   } finally {
     viewLoading.value = false;
+  }
+}
+
+function openEdit(doc) {
+  editErrors.value = {};
+  editForm.value = {
+    id: doc.id,
+    name: doc.name ?? '',
+    car_type: doc.car_type ?? '',
+    car_number: doc.car_number ?? '',
+    vin: doc.vin ?? '',
+    year: doc.year ?? '',
+    color: doc.color ?? '',
+    created: formatDate(doc.created),
+  };
+}
+
+async function saveEdit() {
+  if (!editForm.value || saving.value) return;
+
+  saving.value = true;
+  editErrors.value = {};
+  try {
+    const { data } = await axios.post('/api/driving-authorizations/update', editForm.value);
+    const updated = data.data ?? data;
+
+    docs.value = docs.value.map((d) => (d.id === updated.id ? { ...d, ...updated } : d));
+    if (selected.value && selected.value.id === updated.id) {
+      selected.value = { ...selected.value, ...updated };
+    }
+
+    editForm.value = null;
+    toast.success(data?.message || 'تم تعديل تخويل القيادة بنجاح', {
+      timeout: 2500,
+      position: 'bottom-right',
+      rtl: true,
+    });
+  } catch (error) {
+    editErrors.value = error?.response?.data?.errors ?? {};
+    toast.error(error?.response?.data?.message || 'تعذر تعديل التخويل', {
+      timeout: 3000,
+      position: 'bottom-right',
+      rtl: true,
+    });
+  } finally {
+    saving.value = false;
   }
 }
 
@@ -222,6 +272,15 @@ onMounted(() => load(1));
                       <button
                         v-if="$page.props.auth.user.type_id == 1"
                         type="button"
+                        class="px-3 py-1 rounded bg-amber-600 text-white hover:bg-amber-700 flex items-center"
+                        title="تعديل"
+                        @click="openEdit(doc)"
+                      >
+                        <EditIcon />
+                      </button>
+                      <button
+                        v-if="$page.props.auth.user.type_id == 1"
+                        type="button"
                         class="px-3 py-1 rounded bg-red-700 text-white hover:bg-red-800 flex items-center"
                         title="حذف"
                         @click="toDelete = doc"
@@ -317,6 +376,113 @@ onMounted(() => load(1));
               @click="printDoc(selected)"
             >
               طباعة
+            </button>
+          </div>
+        </div>
+      </template>
+    </Modal>
+
+    <Modal :show="!!editForm" container-class="modal-rtl" @close="editForm = null">
+      <template #header>
+        <div v-if="editForm" class="text-center py-2 dark:text-gray-200">
+          تعديل تخويل قيادة رقم {{ editForm.id }}
+        </div>
+      </template>
+
+      <template #body>
+        <div v-if="editForm" class="px-1 sm:px-2">
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+            النص العام للتخويل يُعدّل من الإعدادات، وهنا تُعدّل بيانات هذا السجل فقط.
+          </p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label class="block">
+              <span class="text-sm font-semibold dark:text-gray-200">الاسم</span>
+              <input
+                v-model="editForm.name"
+                type="text"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+              />
+              <span v-if="editErrors.name" class="text-xs text-rose-600">{{ editErrors.name[0] }}</span>
+            </label>
+            <label class="block">
+              <span class="text-sm font-semibold dark:text-gray-200">نوع السيارة</span>
+              <input
+                v-model="editForm.car_type"
+                type="text"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+              />
+              <span v-if="editErrors.car_type" class="text-xs text-rose-600">{{ editErrors.car_type[0] }}</span>
+            </label>
+            <label class="block">
+              <span class="text-sm font-semibold dark:text-gray-200">رقم الشاصي</span>
+              <input
+                v-model="editForm.vin"
+                type="text"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+              />
+              <span v-if="editErrors.vin" class="text-xs text-rose-600">{{ editErrors.vin[0] }}</span>
+            </label>
+            <label class="block">
+              <span class="text-sm font-semibold dark:text-gray-200">الموديل</span>
+              <input
+                v-model="editForm.year"
+                type="text"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+              />
+              <span v-if="editErrors.year" class="text-xs text-rose-600">{{ editErrors.year[0] }}</span>
+            </label>
+            <label class="block">
+              <span class="text-sm font-semibold dark:text-gray-200">اللون</span>
+              <input
+                v-model="editForm.color"
+                type="text"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+              />
+              <span v-if="editErrors.color" class="text-xs text-rose-600">{{ editErrors.color[0] }}</span>
+            </label>
+            <label class="block">
+              <span class="text-sm font-semibold dark:text-gray-200">رقم السيارة</span>
+              <input
+                v-model="editForm.car_number"
+                type="text"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+              />
+              <span v-if="editErrors.car_number" class="text-xs text-rose-600">{{ editErrors.car_number[0] }}</span>
+            </label>
+            <label class="block sm:col-span-2">
+              <span class="text-sm font-semibold dark:text-gray-200">تاريخ التخويل</span>
+              <input
+                v-model="editForm.created"
+                type="date"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+              />
+              <span v-if="editErrors.created" class="text-xs text-rose-600">{{ editErrors.created[0] }}</span>
+            </label>
+          </div>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="flex flex-row w-full">
+          <div class="basis-1/2 px-2">
+            <button
+              type="button"
+              class="w-full py-3 bg-gray-500 text-white rounded"
+              :disabled="saving"
+              @click="editForm = null"
+            >
+              إغلاق
+            </button>
+          </div>
+          <div class="basis-1/2 px-2">
+            <button
+              type="button"
+              class="w-full py-3 bg-rose-600 text-white rounded disabled:opacity-50"
+              :disabled="saving"
+              @click="saveEdit"
+            >
+              حفظ
             </button>
           </div>
         </div>

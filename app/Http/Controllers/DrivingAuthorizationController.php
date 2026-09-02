@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\DeleteDrivingAuthorizationRequest;
+use App\Http\Requests\UpdateDrivingAuthorizationRequest;
 use App\Http\Requests\UpdateDrivingAuthorizationTextRequest;
 use App\Http\Resources\DrivingAuthorizationResource;
 use App\Services\DrivingAuthorizationService;
@@ -63,6 +64,27 @@ class DrivingAuthorizationController extends Controller
             'message' => 'تم حفظ نص تخويل القيادة بنجاح',
             'text' => $text,
         ]);
+    }
+
+    public function update(UpdateDrivingAuthorizationRequest $request)
+    {
+        $data = $request->validated();
+
+        try {
+            $doc = $this->service->update(
+                (int) $data['id'],
+                (int) Auth::user()->owner_id,
+                $data
+            );
+        } catch (\RuntimeException $e) {
+            $status = str_contains($e->getMessage(), 'authorized') ? 403 : 404;
+
+            return response()->json(['message' => $e->getMessage()], $status);
+        }
+
+        return (new DrivingAuthorizationResource($doc))
+            ->withRendered()
+            ->additional(['message' => 'تم تعديل تخويل القيادة بنجاح']);
     }
 
     public function destroy(DeleteDrivingAuthorizationRequest $request)

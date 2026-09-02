@@ -124,6 +124,63 @@ class DrivingAuthorizationService
     }
 
     /**
+     * الحقول القابلة للتعديل على مستوى السجل (النص العام يُدار من الإعدادات).
+     *
+     * @var array<int, string>
+     */
+    public const EDITABLE_FIELDS = ['name', 'car_type', 'car_number', 'vin', 'year', 'color', 'created'];
+
+    /**
+     * تعديل بيانات تخويل قيادة مع تسجيل الحقول المتغيرة (قبل/بعد).
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function update(int $id, int $ownerId, array $data): Driving
+    {
+        $doc = Driving::query()->find($id);
+
+        if (! $doc) {
+            throw new RuntimeException('Driving authorization not found.');
+        }
+
+        if ((int) $doc->owner_id !== $ownerId) {
+            throw new RuntimeException('Not authorized to update this driving authorization.');
+        }
+
+        $changes = [];
+
+        foreach (self::EDITABLE_FIELDS as $field) {
+            if (! array_key_exists($field, $data)) {
+                continue;
+            }
+
+            $new = is_string($data[$field]) ? trim($data[$field]) : $data[$field];
+            $old = $doc->{$field};
+
+            if ((string) $old === (string) $new) {
+                continue;
+            }
+
+            $changes[$field] = ['from' => $old, 'to' => $new];
+            $doc->{$field} = $new;
+        }
+
+        if ($changes !== []) {
+            $doc->save();
+        }
+
+        Log::info('Driving authorization updated', [
+            'driving_id' => $doc->id,
+            'client_id' => $doc->client_id,
+            'changes' => $changes,
+            'updated_by' => Auth::id(),
+            'owner_id' => $ownerId,
+        ]);
+
+        return $doc;
+    }
+
+    /**
      * حذف ناعم لتخويل قيادة (قابل للاسترجاع) مع تسجيل العملية.
      */
     public function delete(int $id, int $ownerId): Driving

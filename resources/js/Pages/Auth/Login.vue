@@ -2,7 +2,7 @@
 import Checkbox from '@/Components/Checkbox.vue';
 import InputError from '@/Components/InputError.vue';
 import { Head, useForm, usePage } from '@inertiajs/inertia-vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 defineProps({
     canResetPassword: Boolean,
@@ -19,9 +19,6 @@ const loginBackground = computed(
     () => page.props.loginBackground || null
 );
 
-const readCsrfToken = () =>
-    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-
 const form = useForm({
     email: '',
     password: '',
@@ -29,7 +26,21 @@ const form = useForm({
 });
 
 const sessionError = ref('');
+const networkError = ref('');
 const refreshingSession = ref(false);
+
+const authError = computed(() => sessionError.value || networkError.value || '');
+
+const clearFieldError = (field) => {
+    if (form.errors[field]) {
+        form.clearErrors(field);
+    }
+    networkError.value = '';
+    sessionError.value = '';
+};
+
+watch(() => form.email, () => clearFieldError('email'));
+watch(() => form.password, () => clearFieldError('password'));
 
 const softReloadForFreshCsrf = (message) => {
     if (refreshingSession.value) {
@@ -37,7 +48,6 @@ const softReloadForFreshCsrf = (message) => {
     }
     refreshingSession.value = true;
     sessionError.value = message;
-    // Full navigation (not Inertia) so blade meta csrf-token + session cookie refresh
     setTimeout(() => {
         window.location.href = route('login');
     }, 900);
@@ -45,38 +55,23 @@ const softReloadForFreshCsrf = (message) => {
 
 const submit = () => {
     sessionError.value = '';
-    const token = readCsrfToken();
+    networkError.value = '';
+    form.clearErrors();
 
-    form
-        .transform((data) => ({
-            ...data,
-            _token: token,
-        }))
-        .post(route('login'), {
-            preserveScroll: true,
-            headers: token
-                ? {
-                      'X-CSRF-TOKEN': token,
-                      'X-XSRF-TOKEN': decodeURIComponent(
-                          document.cookie
-                              .split('; ')
-                              .find((row) => row.startsWith('XSRF-TOKEN='))
-                              ?.split('=')
-                              .slice(1)
-                              .join('=') || token
-                      ),
-                  }
-                : {},
-            onFinish: () => form.reset('password'),
-            onError: (errors) => {
-                // 419 CSRF / جلسة منتهية غالباً يظهر بدون رسالة واضحة
-                if (!errors || Object.keys(errors).length === 0) {
-                    softReloadForFreshCsrf(
-                        'انتهت الجلسة أو فشل التحقق الأمني (419). جاري تحديث الصفحة...'
-                    );
-                }
-            },
-        });
+    form.post(route('login'), {
+        preserveScroll: true,
+        onFinish: () => form.reset('password'),
+        onError: (errors) => {
+            if (!errors || Object.keys(errors).length === 0) {
+                softReloadForFreshCsrf(
+                    'انتهت الجلسة، جاري تحديث الصفحة...'
+                );
+            }
+        },
+        onCancel: () => {
+            networkError.value = 'تعذر الاتصال بالخادم. تحقق من الإنترنت وحاول مجدداً.';
+        },
+    });
 };
 </script>
 
@@ -117,29 +112,32 @@ const submit = () => {
                 <div class="login-panel__inner">
                     <header class="login-panel__header">
                         <h2>تسجيل الدخول</h2>
-                        <p>أدخل بياناتك للمتابعة</p>
+                        <p>أدخل بريدك الإلكتروني وكلمة المرور</p>
                     </header>
 
                     <div v-if="status" class="login-status" role="status">
                         {{ status }}
                     </div>
 
-                    <div v-if="sessionError" class="login-alert" role="alert">
-                        {{ sessionError }}
+                    <div v-if="authError" class="login-alert" role="alert">
+                        {{ authError }}
                     </div>
 
                     <form class="login-form" @submit.prevent="submit">
                         <div class="login-field">
-                            <label for="email">اسم المستخدم</label>
+                            <label for="email">البريد الإلكتروني</label>
                             <input
                                 id="email"
                                 v-model="form.email"
-                                type="text"
+                                type="email"
                                 class="login-input"
+                                :class="{ 'login-input--error': form.errors.email }"
                                 required
                                 autofocus
                                 autocomplete="username"
-                                placeholder="اسم المستخدم"
+                                placeholder="example@company.com"
+                                :disabled="form.processing"
+                                @input="clearFieldError('email')"
                             />
                             <InputError class="mt-2" :message="form.errors.email" />
                         </div>
@@ -152,14 +150,18 @@ const submit = () => {
                                     v-model="form.password"
                                     :type="showPassword ? 'text' : 'password'"
                                     class="login-input login-input--password"
+                                    :class="{ 'login-input--error': form.errors.password }"
                                     required
                                     autocomplete="current-password"
                                     placeholder="••••••••"
+                                    :disabled="form.processing"
+                                    @input="clearFieldError('password')"
                                 />
                                 <button
                                     type="button"
                                     class="login-toggle"
                                     :aria-label="showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'"
+                                    :disabled="form.processing"
                                     @click="showPassword = !showPassword"
                                 >
                                     <svg v-if="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -432,6 +434,10 @@ const submit = () => {
     font-family: inherit;
     font-size: 1rem;
     transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.login-input--error {
+    border-color: rgba(239, 68, 68, 0.65);
 }
 
 .login-input::placeholder {
