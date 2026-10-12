@@ -11,6 +11,8 @@ class SystemConfig extends Model
 {
     use HasFactory;
 
+    public const DEFAULT_DIRECT_DISCOUNT_BASE = 130000;
+
     protected $table = 'system_config';
     public $timestamps = false;
     protected $fillable = [
@@ -25,6 +27,7 @@ class SystemConfig extends Model
         'default_price_p',
         'usd_to_aed_rate',
         'usd_to_dinar_rate',
+        'direct_discount_base',
         'contract_terms',
         'contract_terms_2',
         'external_contract_terms',
@@ -51,6 +54,7 @@ class SystemConfig extends Model
     protected $attributes = [
         'usd_to_aed_rate' => 3.67,
         'usd_to_dinar_rate' => 150,
+        'direct_discount_base' => self::DEFAULT_DIRECT_DISCOUNT_BASE,
         'contract_template' => 1,
         'contract_currency' => 'usd',
         'primary_color' => '#c00',
@@ -74,6 +78,7 @@ class SystemConfig extends Model
         'wa_notify_payment_receipt' => 'boolean',
         'wa_notify_car_added' => 'boolean',
         'car_expenses_wallet_user_id' => 'integer',
+        'direct_discount_base' => 'integer',
     ];
 
     protected $appends = [
@@ -124,6 +129,41 @@ class SystemConfig extends Model
             }
         } catch (\Throwable $e) {
             // Ignore — the service falls back to the default text.
+        }
+    }
+
+    /**
+     * Ensure the client-page manifest / direct-discount base column exists.
+     */
+    public static function ensureDirectDiscountBaseColumn(): void
+    {
+        try {
+            if (! Schema::hasTable('system_config')) {
+                return;
+            }
+
+            if (! Schema::hasColumn('system_config', 'direct_discount_base')) {
+                Schema::table('system_config', function (Blueprint $table) {
+                    $table->unsignedInteger('direct_discount_base')->default(self::DEFAULT_DIRECT_DISCOUNT_BASE);
+                });
+            }
+        } catch (\Throwable $e) {
+            // Ignore — callers fall back to DEFAULT_DIRECT_DISCOUNT_BASE.
+        }
+    }
+
+    /**
+     * IQD exchange-rate base used for «جمرك منفست» and «خصم مباشر» on the client page.
+     */
+    public static function directDiscountBase(): int
+    {
+        try {
+            self::ensureDirectDiscountBaseColumn();
+            $value = (int) static::query()->value('direct_discount_base');
+
+            return $value > 0 ? $value : self::DEFAULT_DIRECT_DISCOUNT_BASE;
+        } catch (\Throwable $e) {
+            return self::DEFAULT_DIRECT_DISCOUNT_BASE;
         }
     }
 

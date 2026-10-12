@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
+use App\Http\Requests\UpdateSystemConfigRequest;
 use App\Models\SystemConfig;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +22,7 @@ class SystemConfigController extends Controller
     {
         SystemConfig::ensureMediaColumns();
         SystemConfig::ensureWhatsAppColumns();
+        SystemConfig::ensureDirectDiscountBaseColumn();
 
         $config = SystemConfig::first();
 
@@ -36,6 +38,7 @@ class SystemConfigController extends Controller
         }
 
         $payload = $config->toArray();
+        $payload['direct_discount_base'] = SystemConfig::directDiscountBase();
         $payload['car_expenses_wallet'] = $this->resolveCarExpensesWallet(
             $payload['car_expenses_wallet_user_id'] ?? null
         );
@@ -46,48 +49,9 @@ class SystemConfigController extends Controller
     /**
      * تحديث إعدادات النظام
      */
-    public function update(Request $request)
+    public function update(UpdateSystemConfigRequest $request)
     {
-        if (auth()->user() && auth()->user()->type_id == 10) {
-            return Response::json(['error' => 'غير مسموح الوصول'], 403);
-        }
-        $validator = Validator::make($request->all(), [
-            'first_title_ar' => 'nullable|string|max:255',
-            'first_title_kr' => 'nullable|string|max:255',
-            'second_title_ar' => 'nullable|string|max:255',
-            'second_title_kr' => 'nullable|string|max:255',
-            'third_title_ar' => 'nullable|string|max:255',
-            'third_title_kr' => 'nullable|string|max:255',
-            'default_price_s' => 'nullable|array',
-            'default_price_p' => 'nullable|array',
-            'usd_to_aed_rate' => 'nullable|numeric|min:0',
-            'usd_to_dinar_rate' => 'nullable|numeric|min:0',
-            'contract_terms' => 'nullable|array',
-            'contract_terms_2' => 'nullable|array',
-            'external_contract_terms' => 'nullable|array',
-            'external_contract_terms_2' => 'nullable|array',
-            'contract_template' => 'nullable|in:1,2,3',
-            'contract_currency' => 'nullable|in:usd,dinar',
-            'primary_color' => 'nullable|string|max:20',
-            'wa_enabled' => 'nullable|boolean',
-            'wa_tenant' => 'nullable|string|max:100',
-            'wa_base_url' => 'nullable|string|max:255',
-            'wa_created_by' => 'nullable|string|max:100',
-            'wa_notify_client_debt' => 'nullable|boolean',
-            'wa_notify_payment_receipt' => 'nullable|boolean',
-            'wa_notify_car_added' => 'nullable|boolean',
-            'wa_msg_client_debt' => 'nullable|string|max:4096',
-            'wa_msg_payment_receipt' => 'nullable|string|max:4096',
-            'wa_msg_car_added' => 'nullable|string|max:4096',
-            'car_expenses_wallet_user_id' => 'nullable|integer|exists:users,id',
-        ]);
-
-        if ($validator->fails()) {
-            return Response::json([
-                'error' => 'خطأ في التحقق من البيانات',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
+        SystemConfig::ensureDirectDiscountBaseColumn();
 
         $config = SystemConfig::first();
 
@@ -103,6 +67,9 @@ class SystemConfigController extends Controller
                 'default_price_p' => $request->default_price_p ?? [],
                 'usd_to_aed_rate' => $request->usd_to_aed_rate ?? 3.6725,
                 'usd_to_dinar_rate' => $request->usd_to_dinar_rate ?? 150.00,
+                'direct_discount_base' => (int) auth()->user()->type_id === 1
+                    ? $this->normalizeDirectDiscountBase($request->direct_discount_base)
+                    : SystemConfig::DEFAULT_DIRECT_DISCOUNT_BASE,
                 'contract_terms' => $request->contract_terms ?? null,
                 'contract_terms_2' => $request->contract_terms_2 ?? null,
                 'external_contract_terms' => $request->external_contract_terms ?? null,
@@ -142,6 +109,9 @@ class SystemConfigController extends Controller
             }
             if ($request->has('usd_to_dinar_rate')) {
                 $updateData['usd_to_dinar_rate'] = $request->usd_to_dinar_rate;
+            }
+            if ($request->has('direct_discount_base') && (int) auth()->user()->type_id === 1) {
+                $updateData['direct_discount_base'] = $this->normalizeDirectDiscountBase($request->direct_discount_base);
             }
             if ($request->has('contract_terms')) {
                 $updateData['contract_terms'] = $request->contract_terms;
@@ -209,6 +179,7 @@ class SystemConfigController extends Controller
 
         $fresh = $config->fresh();
         $payload = $fresh->toArray();
+        $payload['direct_discount_base'] = SystemConfig::directDiscountBase();
         $payload['car_expenses_wallet'] = $this->resolveCarExpensesWallet(
             $payload['car_expenses_wallet_user_id'] ?? null
         );
@@ -552,6 +523,13 @@ class SystemConfigController extends Controller
         return response()->file($absolute, [
             'Cache-Control' => 'public, max-age=86400',
         ]);
+    }
+
+    protected function normalizeDirectDiscountBase(mixed $value): int
+    {
+        $base = (int) $value;
+
+        return $base > 0 ? $base : SystemConfig::DEFAULT_DIRECT_DISCOUNT_BASE;
     }
 
     protected function firstOrCreateConfig(): SystemConfig

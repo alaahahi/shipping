@@ -28,6 +28,7 @@ const systemConfig = ref({
   default_price_p: [],
   usd_to_aed_rate: 3.6725,
   usd_to_dinar_rate: 150.00,
+  direct_discount_base: 130000,
   contract_terms: [],
   contract_terms_2: [],
   external_contract_terms: [],
@@ -304,6 +305,9 @@ function loadSystemConfig() {
         wa_msg_payment_receipt: response.data.wa_msg_payment_receipt || '',
         wa_msg_car_added: response.data.wa_msg_car_added || '',
         car_expenses_wallet_user_id: response.data.car_expenses_wallet_user_id || null,
+        direct_discount_base: Number(response.data.direct_discount_base) > 0
+          ? Number(response.data.direct_discount_base)
+          : 130000,
       };
       carExpensesWalletSelected.value = response.data.car_expenses_wallet || null;
       delete systemConfig.value.car_expenses_wallet;
@@ -394,6 +398,9 @@ function saveSystemConfig() {
     car_expenses_wallet_user_id: systemConfig.value.car_expenses_wallet_user_id
       ? Number(systemConfig.value.car_expenses_wallet_user_id)
       : null,
+    direct_discount_base: Number(systemConfig.value.direct_discount_base) > 0
+      ? Number(systemConfig.value.direct_discount_base)
+      : 130000,
   };
   delete dataToSave.car_expenses_wallets;
   delete dataToSave.car_expenses_wallet;
@@ -1146,6 +1153,24 @@ async function runVacuum() {
                         مثال: 100 دولار = {{ systemConfig.usd_to_dinar_rate }} دينار عراقي
                       </p>
                     </div>
+                  </div>
+
+                  <div class="mt-4 max-w-xl">
+                    <InputLabel for="direct_discount_base" value="مبلغ أساس الخصم المباشر والمنفست" />
+                    <TextInput
+                      id="direct_discount_base"
+                      v-model="systemConfig.direct_discount_base"
+                      type="number"
+                      step="1"
+                      min="1"
+                      class="mt-1 block w-full"
+                      placeholder="130000"
+                      :disabled="!isAdmin"
+                    />
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      يُستخدم في صفحة الزبون لحساب عمودَي «جمرك منفست» و«خصم مباشر» بدل القيمة الثابتة القديمة 130000.
+                      يمكن للمدير فقط تعديل هذا المبلغ.
+                    </p>
                   </div>
                 </div>
 

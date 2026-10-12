@@ -149,7 +149,8 @@ class UserController extends Controller
             $client->has_internal_sales = (bool)($client->has_internal_sales ?? false);
         }
         $this->accounting->loadAccounts(Auth::user()->owner_id);
-        $config = \App\Models\SystemConfig::first();
+        SystemConfig::ensureDirectDiscountBaseColumn();
+        $config = SystemConfig::first();
         return Inertia::render('Clients/Show', ['url'=>$this->url,'client'=>$client,'clients'=>$clients,'client_id'=>$id,'q'=>$q,'config'=>$config]);
     }
 
