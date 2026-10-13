@@ -407,7 +407,8 @@ class DashboardController extends Controller
             'image'=>$images ? json_encode($images):"",
             'user_id'=> $request->user_id??0,
             'no'=>$no,
-            'owner_id'=>$owner_id
+            'owner_id'=>$owner_id,
+            'direct_discount_base' => SystemConfig::directDiscountBase(),
              ]);
              if($paid_amount){
                 $desc=trans('text.payCar').' '.$purchase_price.trans('text.payDone').$paid_amount;
@@ -542,6 +543,7 @@ class DashboardController extends Controller
 
         $createdCars = collect();
         $incomingTags = $request->get('tags', []);
+        $directDiscountBase = SystemConfig::directDiscountBase();
 
         DB::transaction(function () use (
             $request,
@@ -561,6 +563,7 @@ class DashboardController extends Controller
             $land_shipping,
             $land_shipping_dinar,
             $incomingTags,
+            $directDiscountBase,
             &$maxNo,
             &$createdCars
         ) {
@@ -598,6 +601,7 @@ class DashboardController extends Controller
                     'profit' => 0,
                     'registration_sync_sales' => 0,
                     'car_price' => 0,
+                    'direct_discount_base' => $directDiscountBase,
                 ]);
 
                 if (!empty($carData['hunter_price_p']) || !empty($carData['hunter_price_s'])) {

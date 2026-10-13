@@ -153,7 +153,8 @@ class SystemConfig extends Model
     }
 
     /**
-     * IQD exchange-rate base used for «جمرك منفست» and «خصم مباشر» on the client page.
+     * Current IQD base copied onto each new car at creation.
+     * Historical cars keep the snapshot stored on `car.direct_discount_base`.
      */
     public static function directDiscountBase(): int
     {

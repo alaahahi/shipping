@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class Car extends Model
@@ -110,7 +112,8 @@ class Car extends Model
         'land_shipping_s',
         'land_shipping_dinar',
         'land_shipping_dinar_s',
-        'car_price'
+        'car_price',
+        'direct_discount_base',
     ];
     
     // منع حفظ oldAttributes كعمود في قاعدة البيانات
@@ -140,6 +143,7 @@ class Car extends Model
         'land_shipping_dinar' => 'integer',
         'land_shipping_dinar_s' => 'integer',
         'car_price' => 'integer',
+        'direct_discount_base' => 'integer',
         'car_color' => 'string',
         'year' => 'integer',
         'car_type' => 'string',
@@ -157,6 +161,51 @@ class Car extends Model
         'paid' => 'integer',
         'profit' => 'integer',
     ];
+    protected static function booted(): void
+    {
+        static::creating(function (self $car) {
+            self::ensureDirectDiscountBaseColumn();
+
+            $current = (int) ($car->direct_discount_base ?? 0);
+            if ($current > 0) {
+                return;
+            }
+
+            $car->direct_discount_base = SystemConfig::directDiscountBase();
+        });
+    }
+
+    /**
+     * Ensure the per-car snapshot column exists (covers SQLite when migrate was skipped).
+     */
+    public static function ensureDirectDiscountBaseColumn(): void
+    {
+        try {
+            if (! Schema::hasTable('car')) {
+                return;
+            }
+
+            if (! Schema::hasColumn('car', 'direct_discount_base')) {
+                Schema::table('car', function (Blueprint $table) {
+                    $table->unsignedInteger('direct_discount_base')->default(SystemConfig::DEFAULT_DIRECT_DISCOUNT_BASE);
+                });
+            }
+        } catch (\Throwable $e) {
+            // Callers fall back to DEFAULT_DIRECT_DISCOUNT_BASE.
+        }
+    }
+
+    /**
+     * Snapshot rate used for «جمرك منفست» / «خصم مباشر».
+     * Existing cars without a value stay on the historical 130000 base.
+     */
+    public function resolveDirectDiscountBase(): int
+    {
+        $value = (int) ($this->direct_discount_base ?? 0);
+
+        return $value > 0 ? $value : SystemConfig::DEFAULT_DIRECT_DISCOUNT_BASE;
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

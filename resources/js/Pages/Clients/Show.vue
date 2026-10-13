@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
-import { Head, Link, useForm, usePage } from "@inertiajs/inertia-vue3";
+import { Head, Link, useForm } from "@inertiajs/inertia-vue3";
 import { Inertia } from "@inertiajs/inertia";
 import { onMounted, ref, watch, computed, nextTick } from 'vue';
 import { TailwindPagination } from "laravel-vue-pagination";
@@ -97,26 +97,18 @@ const props = defineProps({
   config: [Array, Object]
 });
 
-const page = usePage();
 const DIRECT_DISCOUNT_BASE_DEFAULT = 130000;
 
-const directDiscountBase = computed(() => {
-  const candidates = [
-    props.config?.direct_discount_base,
-    page.props.value?.directDiscountBase,
-    page.props.value?.config?.direct_discount_base,
-  ];
-  for (const value of candidates) {
-    const n = Number(value);
-    if (Number.isFinite(n) && n > 0) {
-      return n;
-    }
+function carDirectDiscountBase(car) {
+  const n = Number(car?.direct_discount_base);
+  if (Number.isFinite(n) && n > 0) {
+    return n;
   }
   return DIRECT_DISCOUNT_BASE_DEFAULT;
-});
+}
 
-function manifestCustomsAmount(dinarS) {
-  const base = directDiscountBase.value;
+function manifestCustomsAmount(dinarS, car) {
+  const base = carDirectDiscountBase(car);
   if (!base) {
     return 0;
   }
@@ -131,8 +123,8 @@ function actualCustomsAmount(dinarS, dolarPriceS) {
   return Number(((Number(dinarS || 0) / rate) * 100).toFixed(0)) || 0;
 }
 
-function directDiscountAmount(dinarS, dolarPriceS) {
-  return manifestCustomsAmount(dinarS) - actualCustomsAmount(dinarS, dolarPriceS);
+function directDiscountAmount(dinarS, dolarPriceS, car) {
+  return manifestCustomsAmount(dinarS, car) - actualCustomsAmount(dinarS, dolarPriceS);
 }
 
 const vinSearchInput = ref(props.q ?? '');
@@ -2365,12 +2357,12 @@ async function savePaymentDescription(payment) {
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1 print:hidden"
                     >
-                      {{ manifestCustomsAmount(item.data.dinar_s) }}
+                      {{ manifestCustomsAmount(item.data.dinar_s, item.data) }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1 print:hidden"
                     >
-                      {{ directDiscountAmount(item.data.dinar_s, item.data.dolar_price_s) }}
+                      {{ directDiscountAmount(item.data.dinar_s, item.data.dolar_price_s, item.data) }}
                     </td>
                     <td
                       className="border dark:border-gray-800 text-center px-2 py-1"

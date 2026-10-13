@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Car;
 use App\Models\SystemConfig;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -67,5 +68,67 @@ class DirectDiscountBaseSettingTest extends TestCase
                 'direct_discount_base' => 140000,
             ])
             ->assertStatus(403);
+    }
+
+    /** @test */
+    public function old_cars_keep_130000_and_new_cars_snapshot_the_setting()
+    {
+        $admin = User::factory()->create([
+            'owner_id' => 1,
+            'type_id' => 1,
+        ]);
+        $client = User::factory()->create([
+            'owner_id' => 1,
+            'type_id' => 2,
+        ]);
+
+        $this->actingAs($admin, 'sanctum');
+
+        $oldCar = Car::factory()->create([
+            'client_id' => $client->id,
+            'owner_id' => 1,
+            'direct_discount_base' => 130000,
+            'vin' => 'OLDVIN00000000001',
+        ]);
+
+        $this->putJson('/api/system-config', [
+            'direct_discount_base' => 140000,
+        ])->assertOk();
+
+        $this->assertSame(130000, (int) $oldCar->fresh()->direct_discount_base);
+        $this->assertSame(140000, SystemConfig::directDiscountBase());
+
+        $response = $this->postJson('/api/addCars', [
+            'client_id' => $client->id,
+            'vin' => 'NEWVIN00000000001',
+            'car_type' => 'Toyota',
+            'dinar' => 1400000,
+            'dolar_price' => 140000,
+            'date' => now()->format('Y-m-d'),
+        ]);
+
+        $response->assertOk();
+
+        $newCar = Car::where('vin', 'NEWVIN00000000001')->first();
+        $this->assertNotNull($newCar);
+        $this->assertSame(140000, (int) $newCar->direct_discount_base);
+
+        $this->putJson('/api/system-config', [
+            'direct_discount_base' => 150000,
+        ])->assertOk();
+
+        $this->assertSame(130000, (int) $oldCar->fresh()->direct_discount_base);
+        $this->assertSame(140000, (int) $newCar->fresh()->direct_discount_base);
+        $this->assertSame(150000, SystemConfig::directDiscountBase());
+
+        $laterCar = Car::factory()->create([
+            'client_id' => $client->id,
+            'owner_id' => 1,
+            'vin' => 'LATERVIN000000001',
+        ]);
+
+        $this->assertSame(150000, (int) $laterCar->direct_discount_base);
+        $this->assertSame(130000, $oldCar->resolveDirectDiscountBase());
+        $this->assertSame(140000, $newCar->fresh()->resolveDirectDiscountBase());
     }
 }
