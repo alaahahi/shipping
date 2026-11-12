@@ -7,6 +7,7 @@ import TextInput from "@/Components/TextInput.vue";
 import IranPinGate from "@/Components/IranPinGate.vue";
 import { ref, computed, watch } from "vue";
 import { useToast } from "vue-toastification";
+import { useI18n } from "vue-i18n";
 import { useIranPageAccess } from "@/composables/useIranPageAccess";
 
 const props = defineProps({
@@ -17,6 +18,7 @@ const props = defineProps({
   iran_is_admin: { type: Boolean, default: false },
 });
 
+const { t } = useI18n();
 const { unlocked, canDelete, pin, pinError, unlocking, iranAxios } = useIranPageAccess(props);
 
 const toast = useToast();
@@ -314,15 +316,15 @@ watch(
 </script>
 
 <template>
-  <Head :title="isEdit ? 'Edit Iran Invoice' : 'New Iran Invoice'" />
+  <Head :title="isEdit ? $t('iran_head_edit') : $t('iran_head_new')" />
   <AuthenticatedLayout>
     <template #header>
       <div class="flex justify-between items-center">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-          {{ isEdit ? "تعديل فاتورة إيران" : "فاتورة إيران جديدة" }}
+          {{ isEdit ? $t("iran_form_title_edit") : $t("iran_form_title_new") }}
         </h2>
         <Link :href="route('iranInvoices.index')" class="text-sm text-indigo-600 dark:text-indigo-400">
-          ← رجوع للقائمة
+          ← {{ $t("iran_form_back") }}
         </Link>
       </div>
     </template>
@@ -334,7 +336,7 @@ watch(
           <!-- Invoice header -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
-              <InputLabel for="invoice_no" value="رقم الفاتورة (اختياري - يُولّد تلقائياً)" />
+              <InputLabel for="invoice_no" :value="$t('iran_form_invoice_no')" />
               <TextInput
                 id="invoice_no"
                 type="text"
@@ -343,15 +345,15 @@ watch(
                 :placeholder="isEdit ? '' : (nextInvoiceNo || 'IR-2026-0001')"
               />
               <p v-if="!isEdit && nextInvoiceNo" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                الرقم التالي: {{ nextInvoiceNo }}
+                {{ $t("iran_form_next_no", { no: nextInvoiceNo }) }}
               </p>
             </div>
             <div>
-              <InputLabel for="invoice_date" value="التاريخ" />
+              <InputLabel for="invoice_date" :value="$t('iran_form_date')" />
               <TextInput id="invoice_date" type="date" class="mt-1 block w-full" v-model="form.invoice_date" />
             </div>
             <div>
-              <InputLabel for="currency" value="العملة" />
+              <InputLabel for="currency" :value="$t('iran_currency')" />
               <select id="currency" v-model="form.currency" class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600">
                 <option value="USD">USD</option>
                 <option value="IQD">IQD</option>
@@ -360,54 +362,54 @@ watch(
               </select>
             </div>
             <div>
-              <InputLabel for="carrier" value="الجهة الناقلة (Carrier)" />
+              <InputLabel for="carrier" :value="$t('iran_form_carrier')" />
               <div class="flex gap-2 mt-1">
                 <select id="carrier" v-model="form.carrier_id" class="block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600">
-                  <option value="">— اختر —</option>
+                  <option value="">{{ $t("iran_form_choose") }}</option>
                   <option v-for="c in carriers" :key="c.id" :value="c.id">{{ c.name }}</option>
                 </select>
                 <button type="button" @click="addCarrierInline" class="px-3 bg-indigo-600 text-white rounded">+</button>
               </div>
             </div>
             <div>
-              <InputLabel for="consignee" value="المستخدم / المستفيد (Consignee)" />
+              <InputLabel for="consignee" :value="$t('iran_form_consignee')" />
               <div class="flex gap-2 mt-1">
                 <select id="consignee" v-model="form.consignee_id" class="block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600">
-                  <option value="">— اختر —</option>
+                  <option value="">{{ $t("iran_form_choose") }}</option>
                   <option v-for="c in consignees" :key="c.id" :value="c.id">{{ c.name }}</option>
                 </select>
                 <button type="button" @click="addConsigneeInline" class="px-3 bg-indigo-600 text-white rounded">+</button>
               </div>
             </div>
             <div>
-              <InputLabel for="destination" value="الوجهة (TRANSIT TO / Destination CIP)" />
+              <InputLabel for="destination" :value="$t('iran_form_destination')" />
               <TextInput id="destination" type="text" class="mt-1 block w-full" v-model="form.destination" placeholder="ANZALI HASSAN ROAD" />
             </div>
             <div>
-              <InputLabel for="total_price" value="الإجمالي (اختياري - يُحسب تلقائياً)" />
-              <TextInput id="total_price" type="number" step="0.01" class="mt-1 block w-full" v-model="form.total_price" :placeholder="computedTotal !== null ? String(computedTotal) : 'فارغ'" />
+              <InputLabel for="total_price" :value="$t('iran_form_total_optional')" />
+              <TextInput id="total_price" type="number" step="0.01" class="mt-1 block w-full" v-model="form.total_price" :placeholder="computedTotal !== null ? String(computedTotal) : $t('iran_form_empty')" />
             </div>
           </div>
 
           <!-- Items table -->
           <div class="flex justify-between items-center mb-2">
-            <h3 class="font-semibold text-gray-700 dark:text-gray-200">السيارات في الفاتورة</h3>
-            <button type="button" @click="addItem" class="px-3 py-1 bg-green-600 text-white rounded text-sm">+ إضافة سيارة</button>
+            <h3 class="font-semibold text-gray-700 dark:text-gray-200">{{ $t("iran_form_cars_in_invoice") }}</h3>
+            <button type="button" @click="addItem" class="px-3 py-1 bg-green-600 text-white rounded text-sm">{{ $t("iran_form_add_car") }}</button>
           </div>
           <div class="overflow-x-auto border rounded-lg dark:border-gray-700">
             <table class="w-full text-sm text-center">
               <thead class="bg-gray-50 dark:bg-gray-900 text-xs uppercase text-gray-500 dark:text-gray-400">
                 <tr>
                   <th class="px-2 py-2">#</th>
-                  <th class="px-2 py-2">Chassis No</th>
-                  <th class="px-2 py-2">Make</th>
-                  <th class="px-2 py-2">Model</th>
-                  <th class="px-2 py-2">Year</th>
-                  <th class="px-2 py-2">Color</th>
-                  <th class="px-2 py-2">Weight</th>
-                  <th class="px-2 py-2">Unit Price</th>
-                  <th class="px-2 py-2">Notes</th>
-                  <th v-if="isEdit" class="px-2 py-2 print:hidden">صور السيارة</th>
+                  <th class="px-2 py-2">{{ $t("iran_col_chassis") }}</th>
+                  <th class="px-2 py-2">{{ $t("iran_make") }}</th>
+                  <th class="px-2 py-2">{{ $t("iran_model") }}</th>
+                  <th class="px-2 py-2">{{ $t("iran_col_year") }}</th>
+                  <th class="px-2 py-2">{{ $t("iran_col_color") }}</th>
+                  <th class="px-2 py-2">{{ $t("iran_col_weight") }}</th>
+                  <th class="px-2 py-2">{{ $t("iran_col_amount") }}</th>
+                  <th class="px-2 py-2">{{ $t("iran_notes") }}</th>
+                  <th v-if="isEdit" class="px-2 py-2 print:hidden">{{ $t("iran_form_car_photos") }}</th>
                   <th class="px-2 py-2"></th>
                 </tr>
               </thead>
@@ -516,7 +518,7 @@ watch(
                     </td>
                     <td class="px-3 py-2 text-gray-500 dark:text-gray-400">{{ att.created_at ? String(att.created_at).slice(0, 10) : "—" }}</td>
                     <td class="px-3 py-2">
-                      <button v-if="canDelete" type="button" @click="deleteAttachment(att)" class="px-2 py-1 bg-red-500 text-white rounded text-xs">حذف</button>
+                      <button v-if="canDelete" type="button" @click="deleteAttachment(att)" class="px-2 py-1 bg-red-500 text-white rounded text-xs">{{ $t("iran_delete") }}</button>
                     </td>
                   </tr>
                 </tbody>
@@ -524,13 +526,13 @@ watch(
             </div>
           </div>
           <p v-else class="mt-4 text-sm text-gray-500 dark:text-gray-400 print:hidden">
-            يمكن إرفاق الصور والملفات بعد حفظ الفاتورة من صفحة التعديل.
+            {{ $t("iran_form_save_first") }}
           </p>
 
           <div class="mt-6 flex justify-end gap-3">
-            <Link :href="route('iranInvoices.index')" class="px-5 py-2 bg-gray-300 dark:bg-gray-600 rounded">إلغاء</Link>
+            <Link :href="route('iranInvoices.index')" class="px-5 py-2 bg-gray-300 dark:bg-gray-600 rounded">{{ $t("iran_cancel") }}</Link>
             <button @click="save" :disabled="saving" class="px-6 py-2 bg-green-600 text-white font-bold rounded disabled:opacity-60">
-              {{ saving ? "جاري الحفظ..." : "حفظ الفاتورة" }}
+              {{ saving ? $t("iran_loading") : $t("iran_save") }}
             </button>
           </div>
         </div>
