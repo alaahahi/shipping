@@ -291,9 +291,10 @@ Route::get('carsHunterImageDel',[HunterController::class, 'carsHunterImageDel'])
 Route::post('updateCarsHunter',[HunterController::class, 'updateCarsHunter'])->name('updateCarsHunter');
 Route::post('delCarsHunterr',[HunterController::class, 'delCarsHunterr'])->name('delCarsHunterr');
 Route::get('checkCarInCars',[HunterController::class, 'checkCarInCars'])->name('checkCarInCars');
-Route::post('updateCarExpenses',[HunterController::class, 'updateCarExpenses'])->name('updateCarExpenses'); 
+Route::post('updateCarExpenses',[HunterController::class, 'updateCarExpenses'])->name('updateCarExpenses');
+}); // end auth:sanctum
 
-// Iran Invoices (standalone module - isolated from legacy accounting)
+// Iran Invoices — outside auth:sanctum (login OR shared token + PIN)
 Route::post('iran/unlock', [\App\Http\Controllers\IranPageAccessController::class, 'unlock'])
     ->middleware(['iran', 'throttle:10,1'])
     ->name('iran.unlock');
@@ -326,7 +327,6 @@ Route::middleware(['iran', 'iran.access'])->group(function () {
     Route::post('iran-invoice-carriers',[\App\Http\Controllers\IranInvoiceController::class, 'storeCarrier'])->name('iranInvoiceCarriers.store');
     Route::get('iran-invoice-consignees',[\App\Http\Controllers\IranInvoiceController::class, 'getConsignees'])->name('iranInvoiceConsignees.list');
     Route::post('iran-invoice-consignees',[\App\Http\Controllers\IranInvoiceController::class, 'storeConsignee'])->name('iranInvoiceConsignees.store');
-});
 });
 
 // External APIs (without auth, but with API key)

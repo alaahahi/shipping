@@ -164,10 +164,45 @@ class IranPageAccessTest extends TestCase
     }
 
     /** @test */
-    public function guest_cannot_unlock_iran_page()
+    public function guest_cannot_unlock_iran_page_without_token()
     {
         $this->postJson('/api/iran/unlock', ['pin' => '134679'])
-            ->assertStatus(401);
+            ->assertStatus(403);
+    }
+
+    /** @test */
+    public function guest_with_token_can_open_page_and_list_after_pin()
+    {
+        $token = config('iran.page_token');
+
+        $this->get('/iran?token=' . $token)
+            ->assertOk();
+
+        $this->withHeaders(['X-Iran-Token' => $token])
+            ->postJson('/api/iran/unlock', ['pin' => '134679'])
+            ->assertOk()
+            ->assertJsonPath('unlocked', true);
+
+        IranInvoice::create([
+            'invoice_no' => 'IR-GUEST',
+            'owner_id' => 1,
+            'created_by' => null,
+        ]);
+
+        $list = $this->withHeader('X-Iran-Token', $token)
+            ->getJson('/api/iran-invoices')
+            ->assertOk()
+            ->json('data');
+
+        $this->assertNotEmpty($list);
+        $this->assertSame('IR-GUEST', $list[0]['invoice_no']);
+    }
+
+    /** @test */
+    public function guest_without_token_is_redirected_to_login()
+    {
+        $this->get('/iran')
+            ->assertRedirect(route('login'));
     }
 
     /** @test */

@@ -11,6 +11,8 @@ class IranPageAccessService
 {
     public const SESSION_KEY = 'iran_page_unlocked';
 
+    public const TOKEN_SESSION_KEY = 'iran_page_token_ok';
+
     public function isAdmin(?User $user): bool
     {
         if (!$user) {
@@ -60,6 +62,52 @@ class IranPageAccessService
         return (string) config('iran.page_token');
     }
 
+    /**
+     * Default owner for token-guest sessions (no logged-in user).
+     */
+    public function ownerId(Request $request): int
+    {
+        $user = $request->user();
+        if ($user && $user->owner_id !== null) {
+            return (int) $user->owner_id;
+        }
+
+        return (int) config('iran.owner_id', 1);
+    }
+
+    public function rememberValidToken(Request $request): bool
+    {
+        if (!$this->tokenMatches($request)) {
+            return $this->hasRememberedToken($request);
+        }
+
+        $request->session()->put(self::TOKEN_SESSION_KEY, true);
+
+        return true;
+    }
+
+    public function hasRememberedToken(Request $request): bool
+    {
+        return (bool) $request->session()->get(self::TOKEN_SESSION_KEY, false);
+    }
+
+    public function hasValidTokenAccess(Request $request): bool
+    {
+        return $this->rememberValidToken($request);
+    }
+
+    /**
+     * Page/API entry: logged-in user OR valid shared token.
+     */
+    public function canEnter(Request $request): bool
+    {
+        if ($request->user()) {
+            return true;
+        }
+
+        return $this->hasValidTokenAccess($request);
+    }
+
     public function tokenMatches(Request $request): bool
     {
         $expected = $this->pageToken();
@@ -87,11 +135,19 @@ class IranPageAccessService
             return substr($auth, 7);
         }
 
+        $query = $request->query('token');
+        if (is_string($query) && $query !== '') {
+            return $query;
+        }
+
         return null;
     }
 
     public function pageProps(Request $request): array
     {
+        // Persist token from ?token= / header into the session for later API calls.
+        $this->rememberValidToken($request);
+
         $user = $request->user();
         $unlocked = $this->isUnlocked($request);
         $isAdmin = $this->isAdmin($user);
@@ -100,6 +156,7 @@ class IranPageAccessService
             'iran_unlocked' => $unlocked,
             'iran_can_delete' => $isAdmin,
             'iran_is_admin' => $isAdmin,
+            'iran_token_guest' => $user === null && $this->hasRememberedToken($request),
         ];
     }
 

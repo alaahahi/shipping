@@ -285,7 +285,6 @@ Route::group(['middleware' => ['auth','verified', 'check.license', 'page.permiss
     
     
     Route::get('dubai',[TransfersController::class, 'dubai'])->name('dubai');
-    Route::get('iran',[\App\Http\Controllers\IranInvoiceController::class, 'index'])->name('iran');
     Route::get('border',[TransfersController::class, 'border'])->name('border');
     Route::get('coc',[TransfersController::class, 'coc'])->name('coc');
     Route::get('howler',[TransfersController::class, 'howler'])->name('howler');
@@ -308,15 +307,18 @@ Route::group(['middleware' => ['auth','verified', 'check.license', 'page.permiss
     // Route::get('car/{carId}/history', [CarHistoryController::class, 'index'])->name('car.history');
     // Route::get('car/{carId}/history/{historyId}', [CarHistoryController::class, 'show'])->name('car.history.show');
 
-    // Iran Invoices Routes (standalone module)
-    Route::get('iran-invoices',[\App\Http\Controllers\IranInvoiceController::class, 'index'])->name('iranInvoices.index');
-    Route::get('iran-invoices/create',[\App\Http\Controllers\IranInvoiceController::class, 'create'])->name('iranInvoices.create');
-    Route::get('iran-invoices/{id}/edit',[\App\Http\Controllers\IranInvoiceController::class, 'edit'])->name('iranInvoices.edit');
-    Route::get('iran-invoices/{id}/print',[\App\Http\Controllers\IranInvoiceController::class, 'printInvoice'])
-        ->middleware('iran.access:session')
-        ->name('iranInvoices.print');
+});
 
- });
+// Iran invoices: login OR shared ?token= (no auth required when token is valid)
+Route::middleware(['iran.access:entry'])->group(function () {
+    Route::get('iran', [\App\Http\Controllers\IranInvoiceController::class, 'index'])->name('iran');
+    Route::get('iran-invoices', [\App\Http\Controllers\IranInvoiceController::class, 'index'])->name('iranInvoices.index');
+    Route::get('iran-invoices/create', [\App\Http\Controllers\IranInvoiceController::class, 'create'])->name('iranInvoices.create');
+    Route::get('iran-invoices/{id}/edit', [\App\Http\Controllers\IranInvoiceController::class, 'edit'])->name('iranInvoices.edit');
+    Route::get('iran-invoices/{id}/print', [\App\Http\Controllers\IranInvoiceController::class, 'printInvoice'])
+        ->middleware('iran.access:api')
+        ->name('iranInvoices.print');
+});
 
 Route::get('contract/verify/{token}', [CarContractController::class, 'verify'])->name('contract.verify');
 Route::get('damage_report/verify/{token}', [CarDamageReportController::class, 'verify'])->name('damage_report.verify');

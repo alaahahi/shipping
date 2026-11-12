@@ -72,7 +72,7 @@ class IranInvoiceController extends Controller
 
     public function getInvoices(Request $request)
     {
-        $owner_id = Auth::user()->owner_id;
+        $owner_id = $this->currentOwnerId();
         $q = $request->get('q', '');
         $from = $request->get('from', '');
         $to = $request->get('to', '');
@@ -108,7 +108,7 @@ class IranInvoiceController extends Controller
     public function getInvoice($id)
     {
         $invoice = IranInvoice::with(['items.attachments', 'carrier', 'consignee', 'attachments', 'creator:id,name'])
-            ->where('owner_id', Auth::user()->owner_id);
+            ->where('owner_id', $this->currentOwnerId());
 
         $this->restrictToOwnInvoicesUnlessAdmin($invoice);
 
@@ -127,7 +127,7 @@ class IranInvoiceController extends Controller
             'items' => 'required|array|min:1',
         ])->validate();
 
-        $owner_id = Auth::user()->owner_id;
+        $owner_id = $this->currentOwnerId();
 
         $invoice = DB::transaction(function () use ($request, $owner_id) {
             $invoice = IranInvoice::create($this->invoiceAttributes($request, $owner_id, true));
@@ -142,7 +142,7 @@ class IranInvoiceController extends Controller
 
     public function getNextInvoiceNo()
     {
-        $owner_id = Auth::user()->owner_id;
+        $owner_id = $this->currentOwnerId();
 
         return Response::json([
             'invoice_no' => $this->nextInvoiceNo($owner_id, false),
@@ -151,7 +151,7 @@ class IranInvoiceController extends Controller
 
     public function updateInvoice(Request $request, $id)
     {
-        $owner_id = Auth::user()->owner_id;
+        $owner_id = $this->currentOwnerId();
         $invoice = $this->findOwnedInvoice($id);
 
         if (!$invoice) {
@@ -226,7 +226,7 @@ class IranInvoiceController extends Controller
     public function printInvoice($id)
     {
         $invoice = IranInvoice::with(['items', 'carrier', 'consignee', 'creator:id,name'])
-            ->where('owner_id', Auth::user()->owner_id);
+            ->where('owner_id', $this->currentOwnerId());
         $this->restrictToOwnInvoicesUnlessAdmin($invoice);
         $invoice = $invoice->find($id);
 
@@ -265,7 +265,7 @@ class IranInvoiceController extends Controller
 
     public function getCars(Request $request)
     {
-        $owner_id = Auth::user()->owner_id;
+        $owner_id = $this->currentOwnerId();
         $q = $request->get('q', '');
         $limit = (int) $request->get('limit', 25);
 
@@ -293,7 +293,7 @@ class IranInvoiceController extends Controller
 
     public function updateCar(Request $request, $id)
     {
-        $car = IranInvoiceCar::where('owner_id', Auth::user()->owner_id)->find($id);
+        $car = IranInvoiceCar::where('owner_id', $this->currentOwnerId())->find($id);
 
         if (!$car) {
             return Response::json(['error' => 'Not found'], 404);
@@ -306,7 +306,7 @@ class IranInvoiceController extends Controller
 
     public function destroyCar(DeleteIranResourceRequest $request, $id)
     {
-        $car = IranInvoiceCar::where('owner_id', Auth::user()->owner_id)->find($id);
+        $car = IranInvoiceCar::where('owner_id', $this->currentOwnerId())->find($id);
 
         if (!$car) {
             return Response::json(['error' => 'Not found'], 404);
@@ -336,7 +336,7 @@ class IranInvoiceController extends Controller
             'file' => 'required|file|max:10240',
         ])->validate();
 
-        $owner_id = Auth::user()->owner_id;
+        $owner_id = $this->currentOwnerId();
         $model = $this->resolveAttachable($request->get('type'), $request->get('id'), $owner_id);
 
         if (!$model) {
@@ -387,7 +387,7 @@ class IranInvoiceController extends Controller
     public function deleteAttachment(DeleteIranResourceRequest $request)
     {
         $id = $request->get('id');
-        $attachment = IranInvoiceAttachment::where('owner_id', Auth::user()->owner_id)->find($id);
+        $attachment = IranInvoiceAttachment::where('owner_id', $this->currentOwnerId())->find($id);
 
         if (!$attachment) {
             return Response::json(['error' => 'Not found'], 404);
@@ -415,7 +415,7 @@ class IranInvoiceController extends Controller
 
     public function getTransfers(Request $request)
     {
-        $owner_id = Auth::user()->owner_id;
+        $owner_id = $this->currentOwnerId();
         $q = $request->get('q', '');
         $from = $request->get('from', '');
         $to = $request->get('to', '');
@@ -451,7 +451,7 @@ class IranInvoiceController extends Controller
 
     public function updateTransfer(Request $request, $id)
     {
-        $transfer = IranInvoiceTransfer::where('owner_id', Auth::user()->owner_id)->find($id);
+        $transfer = IranInvoiceTransfer::where('owner_id', $this->currentOwnerId())->find($id);
 
         if (!$transfer) {
             return Response::json(['error' => 'Not found'], 404);
@@ -464,7 +464,7 @@ class IranInvoiceController extends Controller
 
     public function archiveTransfer(Request $request, $id)
     {
-        $transfer = IranInvoiceTransfer::where('owner_id', Auth::user()->owner_id)->find($id);
+        $transfer = IranInvoiceTransfer::where('owner_id', $this->currentOwnerId())->find($id);
 
         if (!$transfer) {
             return Response::json(['error' => 'Not found'], 404);
@@ -480,7 +480,7 @@ class IranInvoiceController extends Controller
 
     public function destroyTransfer(DeleteIranResourceRequest $request, $id)
     {
-        $transfer = IranInvoiceTransfer::where('owner_id', Auth::user()->owner_id)->find($id);
+        $transfer = IranInvoiceTransfer::where('owner_id', $this->currentOwnerId())->find($id);
 
         if (!$transfer) {
             return Response::json(['error' => 'Not found'], 404);
@@ -504,7 +504,7 @@ class IranInvoiceController extends Controller
 
     public function getCarriers(Request $request)
     {
-        $carriers = IranInvoiceCarrier::where('owner_id', Auth::user()->owner_id)
+        $carriers = IranInvoiceCarrier::where('owner_id', $this->currentOwnerId())
             ->orderBy('name')
             ->get();
 
@@ -522,7 +522,7 @@ class IranInvoiceController extends Controller
             'phone' => $request->get('phone'),
             'address' => $request->get('address'),
             'notes' => $request->get('notes'),
-            'owner_id' => Auth::user()->owner_id,
+            'owner_id' => $this->currentOwnerId(),
         ]);
 
         return Response::json($carrier, 200);
@@ -530,7 +530,7 @@ class IranInvoiceController extends Controller
 
     public function getConsignees(Request $request)
     {
-        $consignees = IranInvoiceConsignee::where('owner_id', Auth::user()->owner_id)
+        $consignees = IranInvoiceConsignee::where('owner_id', $this->currentOwnerId())
             ->orderBy('name')
             ->get();
 
@@ -548,7 +548,7 @@ class IranInvoiceController extends Controller
             'phone' => $request->get('phone'),
             'address' => $request->get('address'),
             'notes' => $request->get('notes'),
-            'owner_id' => Auth::user()->owner_id,
+            'owner_id' => $this->currentOwnerId(),
         ]);
 
         return Response::json($consignee, 200);
@@ -561,25 +561,35 @@ class IranInvoiceController extends Controller
     private function pageShare(): array
     {
         return array_merge(
-            ['owner_id' => Auth::user()->owner_id],
+            ['owner_id' => $this->currentOwnerId()],
             $this->iranAccess->pageProps(request())
         );
     }
 
+    private function currentOwnerId(): int
+    {
+        return $this->iranAccess->ownerId(request());
+    }
+
     /**
-     * PIN users (non-admin) only see/edit their own invoices.
-     * Regular admin sees all invoices for the owner_id.
+     * Logged-in non-admin staff only see/edit their own invoices.
+     * Admins and token guests see all invoices for the owner_id.
      */
     private function restrictToOwnInvoicesUnlessAdmin($query): void
     {
-        if (!$this->iranAccess->isAdmin(Auth::user())) {
-            $query->where('created_by', Auth::id());
+        $user = Auth::user();
+        if (!$user) {
+            return;
+        }
+
+        if (!$this->iranAccess->isAdmin($user)) {
+            $query->where('created_by', $user->id);
         }
     }
 
     private function findOwnedInvoice($id): ?IranInvoice
     {
-        $query = IranInvoice::where('owner_id', Auth::user()->owner_id);
+        $query = IranInvoice::where('owner_id', $this->currentOwnerId());
         $this->restrictToOwnInvoicesUnlessAdmin($query);
 
         return $query->find($id);
@@ -769,7 +779,7 @@ class IranInvoiceController extends Controller
             'notes' => $request->get('notes'),
             'carrier_id' => $request->get('carrier_id'),
             'consignee_id' => $request->get('consignee_id'),
-            'owner_id' => Auth::user()->owner_id,
+            'owner_id' => $this->currentOwnerId(),
             'created_by' => Auth::id(),
         ];
     }
@@ -785,7 +795,7 @@ class IranInvoiceController extends Controller
             'to_text' => $request->get('to_text'),
             'notes' => $request->get('notes'),
             'invoice_id' => $request->get('invoice_id'),
-            'owner_id' => Auth::user()->owner_id,
+            'owner_id' => $this->currentOwnerId(),
             'created_by' => Auth::id(),
         ];
     }

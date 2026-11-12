@@ -9,7 +9,8 @@ class UnlockIranPageRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        // Logged-in staff OR guest with valid shared token.
+        return app(IranPageAccessService::class)->canEnter($this);
     }
 
     public function rules(): array

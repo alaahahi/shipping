@@ -15,16 +15,20 @@ class EnsureIranPageAccess
     /**
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
-     * @param  string  $mode  kept for route BC; auth + PIN session unlock only
+     * @param  string  $mode  entry|api — entry allows page without PIN; api requires unlock
      * @return mixed
      */
     public function handle(Request $request, Closure $next, string $mode = 'api')
     {
-        $user = $request->user();
-        if (!$user) {
-            return $this->deny($request, 401, 'يجب تسجيل الدخول');
+        if (!$this->access->canEnter($request)) {
+            return $this->deny($request, 401, 'يجب تسجيل الدخول أو إدخال التوكن');
         }
 
+        if ($mode === 'entry') {
+            return $next($request);
+        }
+
+        // API / print: PIN unlock (admins skip)
         if (!$this->access->isUnlocked($request)) {
             return $this->deny($request, 403, 'يجب إدخال رمز PIN لصفحة إيران');
         }
@@ -38,7 +42,7 @@ class EnsureIranPageAccess
             return response()->json(['message' => $message], $status);
         }
 
-        if ($status === 401) {
+        if ($status === 401 && !$request->user()) {
             return redirect()->guest(route('login'));
         }
 

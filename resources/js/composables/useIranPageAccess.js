@@ -1,6 +1,33 @@
 import { computed, ref, watch } from 'vue';
 import axios from 'axios';
 
+const TOKEN_STORAGE_KEY = 'iran_page_token';
+
+function readTokenFromUrl() {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+  try {
+    return new URLSearchParams(window.location.search).get('token') || '';
+  } catch (e) {
+    return '';
+  }
+}
+
+function storedToken() {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+  return sessionStorage.getItem(TOKEN_STORAGE_KEY) || '';
+}
+
+function persistToken(token) {
+  if (typeof window === 'undefined' || !token) {
+    return;
+  }
+  sessionStorage.setItem(TOKEN_STORAGE_KEY, token);
+}
+
 export function useIranPageAccess(props) {
   const unlocked = ref(!!props.iran_unlocked);
   const canDelete = ref(!!props.iran_can_delete);
@@ -9,12 +36,25 @@ export function useIranPageAccess(props) {
   const pinError = ref('');
   const unlocking = ref(false);
 
-  // Login session + CSRF only — no X-Iran-Token header
+  const urlToken = readTokenFromUrl();
+  if (urlToken) {
+    persistToken(urlToken);
+  }
+  const token = ref(urlToken || storedToken());
+
   const iranAxios = axios.create({
     withCredentials: true,
     headers: { 'X-Requested-With': 'XMLHttpRequest' },
     xsrfCookieName: 'XSRF-TOKEN',
     xsrfHeaderName: 'X-XSRF-TOKEN',
+  });
+
+  iranAxios.interceptors.request.use((config) => {
+    if (token.value) {
+      config.headers = config.headers || {};
+      config.headers['X-Iran-Token'] = token.value;
+    }
+    return config;
   });
 
   const submitPin = async () => {
@@ -26,7 +66,21 @@ export function useIranPageAccess(props) {
     unlocking.value = true;
     pinError.value = '';
     try {
-      const response = await axios.post('/api/iran/unlock', { pin: digits });
+      const headers = {};
+      if (token.value) {
+        headers['X-Iran-Token'] = token.value;
+      }
+      const response = await axios.post(
+        '/api/iran/unlock',
+        { pin: digits },
+        {
+          withCredentials: true,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            ...headers,
+          },
+        }
+      );
       canDelete.value = !!response.data?.can_delete;
       isAdmin.value = !!(response.data?.is_admin ?? response.data?.can_delete);
       unlocked.value = true;
