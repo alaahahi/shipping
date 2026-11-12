@@ -2,11 +2,12 @@
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import { TailwindPagination } from "laravel-vue-pagination";
-import { ref, onMounted, watch } from "vue";
-import axios from "axios";
+import { ref, inject, onMounted, watch } from "vue";
 import { useToast } from "vue-toastification";
 
 const toast = useToast();
+const iranAxios = inject("iranAxios");
+const canDelete = inject("iranCanDelete", ref(false));
 
 const cars = ref({});
 const q = ref("");
@@ -19,7 +20,7 @@ const form = ref({ chassis_no: "", make: "", model: "", year: "", color: "", wei
 const fetchCars = async (page = 1) => {
   loading.value = true;
   try {
-    const response = await axios.get("/api/iran-invoice-cars", { params: { page, q: q.value, limit: 25 } });
+    const response = await iranAxios.get("/api/iran-invoice-cars", { params: { page, q: q.value, limit: 25 } });
     cars.value = response.data;
   } catch (error) {
     toast.error("تعذر تحميل السيارات");
@@ -55,10 +56,10 @@ const openEdit = (car) => {
 const saveCar = async () => {
   try {
     if (editingId.value) {
-      await axios.post(`/api/iran-invoice-cars/${editingId.value}`, form.value);
+      await iranAxios.post(`/api/iran-invoice-cars/${editingId.value}`, form.value);
       toast.success("تم تحديث السيارة");
     } else {
-      await axios.post("/api/iran-invoice-cars", form.value);
+      await iranAxios.post("/api/iran-invoice-cars", form.value);
       toast.success("تمت إضافة السيارة");
     }
     showForm.value = false;
@@ -72,11 +73,11 @@ const saveCar = async () => {
 const deleteCar = async (car) => {
   if (!confirm("هل تريد حذف هذه السيارة؟")) return;
   try {
-    await axios.post(`/api/iran-invoice-cars/${car.id}/delete`);
+    await iranAxios.post(`/api/iran-invoice-cars/${car.id}/delete`);
     toast.success("تم حذف السيارة");
     fetchCars();
   } catch (error) {
-    toast.error("تعذر حذف السيارة");
+    toast.error(error.response?.data?.message || "تعذر حذف السيارة");
   }
 };
 
@@ -90,7 +91,7 @@ const uploadAttachment = async (car, event) => {
     data.append("id", car.id);
     data.append("file", file);
     try {
-      await axios.post("/api/iran-invoice-attachments", data, {
+      await iranAxios.post("/api/iran-invoice-attachments", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       uploaded++;
@@ -109,11 +110,11 @@ const uploadAttachment = async (car, event) => {
 const deleteAttachment = async (attachment) => {
   if (!confirm("حذف المرفق؟")) return;
   try {
-    await axios.post("/api/iran-invoice-attachments/delete", { id: attachment.id });
+    await iranAxios.post("/api/iran-invoice-attachments/delete", { id: attachment.id });
     toast.success("تم حذف المرفق");
     fetchCars();
   } catch (error) {
-    toast.error("تعذر حذف المرفق");
+    toast.error(error.response?.data?.message || "تعذر حذف المرفق");
   }
 };
 
@@ -193,7 +194,7 @@ onMounted(() => fetchCars());
                   class="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded text-xs inline-flex items-center gap-1"
                 >
                   📎
-                  <button @click.prevent="deleteAttachment(att)" class="text-red-600 font-bold">×</button>
+                  <button v-if="canDelete" @click.prevent="deleteAttachment(att)" class="text-red-600 font-bold">×</button>
                 </a>
                 <label class="px-2 py-1 bg-indigo-500 text-white rounded text-xs cursor-pointer">
                   +
@@ -204,7 +205,7 @@ onMounted(() => fetchCars());
             <td class="px-3 py-2">
               <div class="flex justify-center gap-1">
                 <button @click="openEdit(car)" class="px-2 py-1 bg-blue-500 text-white rounded text-xs">تعديل</button>
-                <button @click="deleteCar(car)" class="px-2 py-1 bg-red-500 text-white rounded text-xs">حذف</button>
+                <button v-if="canDelete" @click="deleteCar(car)" class="px-2 py-1 bg-red-500 text-white rounded text-xs">حذف</button>
               </div>
             </td>
           </tr>

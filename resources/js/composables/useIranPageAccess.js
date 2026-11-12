@@ -1,0 +1,63 @@
+import { computed, ref, watch } from 'vue';
+import axios from 'axios';
+
+export function useIranPageAccess(props) {
+  const unlocked = ref(!!props.iran_unlocked);
+  const canDelete = ref(!!props.iran_can_delete);
+  const isAdmin = ref(!!(props.iran_is_admin ?? props.iran_can_delete));
+  const pin = ref('');
+  const pinError = ref('');
+  const unlocking = ref(false);
+
+  // Login session + CSRF only — no X-Iran-Token header
+  const iranAxios = axios.create({
+    withCredentials: true,
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    xsrfCookieName: 'XSRF-TOKEN',
+    xsrfHeaderName: 'X-XSRF-TOKEN',
+  });
+
+  const submitPin = async () => {
+    const digits = String(pin.value ?? '').replace(/\D/g, '');
+    if (digits.length !== 6 || unlocking.value) {
+      return;
+    }
+
+    unlocking.value = true;
+    pinError.value = '';
+    try {
+      const response = await axios.post('/api/iran/unlock', { pin: digits });
+      canDelete.value = !!response.data?.can_delete;
+      isAdmin.value = !!(response.data?.is_admin ?? response.data?.can_delete);
+      unlocked.value = true;
+      pin.value = '';
+    } catch (error) {
+      const message =
+        error.response?.data?.errors?.pin?.[0] ||
+        error.response?.data?.message ||
+        'رمز PIN غير صحيح';
+      pinError.value = message;
+      pin.value = '';
+    } finally {
+      unlocking.value = false;
+    }
+  };
+
+  watch(pin, (value) => {
+    const digits = String(value ?? '').replace(/\D/g, '');
+    if (digits.length === 6) {
+      submitPin();
+    }
+  });
+
+  return {
+    unlocked,
+    canDelete: computed(() => canDelete.value),
+    isAdmin: computed(() => isAdmin.value),
+    pin,
+    pinError,
+    unlocking,
+    iranAxios,
+    submitPin,
+  };
+}

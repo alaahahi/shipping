@@ -4,15 +4,23 @@ import { Head, Link } from "@inertiajs/inertia-vue3";
 import { TailwindPagination } from "laravel-vue-pagination";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
-import { ref, watch, onMounted } from "vue";
-import axios from "axios";
+import IranPinGate from "@/Components/IranPinGate.vue";
+import { ref, watch, provide } from "vue";
 import { useToast } from "vue-toastification";
 import IranInvoiceCars from "./Cars.vue";
 import IranInvoiceTransfers from "./Transfers.vue";
+import { useIranPageAccess } from "@/composables/useIranPageAccess";
 
 const props = defineProps({
   owner_id: Number,
+  iran_unlocked: { type: Boolean, default: false },
+  iran_can_delete: { type: Boolean, default: false },
+  iran_is_admin: { type: Boolean, default: false },
 });
+
+const { unlocked, canDelete, pin, pinError, unlocking, iranAxios } = useIranPageAccess(props);
+provide("iranAxios", iranAxios);
+provide("iranCanDelete", canDelete);
 
 const toast = useToast();
 
@@ -28,7 +36,7 @@ const loading = ref(false);
 const fetchInvoices = async (page = 1) => {
   loading.value = true;
   try {
-    const response = await axios.get("/api/iran-invoices", {
+    const response = await iranAxios.get("/api/iran-invoices", {
       params: {
         page,
         q: q.value,
@@ -49,7 +57,7 @@ const fetchInvoices = async (page = 1) => {
 
 const archiveInvoice = async (invoice) => {
   try {
-    await axios.post(`/api/iran-invoices/${invoice.id}/archive`);
+    await iranAxios.post(`/api/iran-invoices/${invoice.id}/archive`);
     toast.success("تمت أرشفة الفاتورة");
     fetchInvoices();
   } catch (error) {
@@ -59,7 +67,7 @@ const archiveInvoice = async (invoice) => {
 
 const unarchiveInvoice = async (invoice) => {
   try {
-    await axios.post(`/api/iran-invoices/${invoice.id}/unarchive`);
+    await iranAxios.post(`/api/iran-invoices/${invoice.id}/unarchive`);
     toast.success("تم إلغاء الأرشفة");
     fetchInvoices();
   } catch (error) {
@@ -70,11 +78,11 @@ const unarchiveInvoice = async (invoice) => {
 const deleteInvoice = async (invoice) => {
   if (!confirm(`هل تريد حذف الفاتورة ${invoice.invoice_no || invoice.id}؟`)) return;
   try {
-    await axios.post(`/api/iran-invoices/${invoice.id}/delete`);
+    await iranAxios.post(`/api/iran-invoices/${invoice.id}/delete`);
     toast.success("تم حذف الفاتورة");
     fetchInvoices();
   } catch (error) {
-    toast.error("تعذر حذف الفاتورة");
+    toast.error(error.response?.data?.message || "تعذر حذف الفاتورة");
   }
 };
 
@@ -93,7 +101,7 @@ const uploadAttachment = async (invoice, event) => {
   data.append("id", invoice.id);
   data.append("file", file);
   try {
-    const response = await axios.post("/api/iran-invoice-attachments", data, {
+    const response = await iranAxios.post("/api/iran-invoice-attachments", data, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     if (!invoice.attachments) invoice.attachments = [];
@@ -109,29 +117,35 @@ const uploadAttachment = async (invoice, event) => {
 const deleteAttachment = async (invoice, attachment) => {
   if (!confirm("حذف المرفق؟")) return;
   try {
-    await axios.post("/api/iran-invoice-attachments/delete", { id: attachment.id });
+    await iranAxios.post("/api/iran-invoice-attachments/delete", { id: attachment.id });
     invoice.attachments = (invoice.attachments || []).filter((a) => a.id !== attachment.id);
     toast.success("تم حذف المرفق");
   } catch (error) {
-    toast.error("تعذر حذف المرفق");
+    toast.error(error.response?.data?.message || "تعذر حذف المرفق");
   }
 };
 
 watch([showArchived, q, from, to], () => {
-  if (activeTab.value === "invoices") {
+  if (unlocked.value && activeTab.value === "invoices") {
     fetchInvoices();
   }
 });
 
 watch(activeTab, (tab) => {
-  if (tab === "invoices") {
+  if (unlocked.value && tab === "invoices") {
     fetchInvoices();
   }
 });
 
-onMounted(() => {
-  fetchInvoices();
-});
+watch(
+  unlocked,
+  (isUnlocked) => {
+    if (isUnlocked && activeTab.value === "invoices") {
+      fetchInvoices();
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
@@ -143,6 +157,7 @@ onMounted(() => {
       </h2>
     </template>
 
+    <IranPinGate :unlocked="unlocked" :pin="pin" :error="pinError" :unlocking="unlocking" @update:pin="pin = $event">
     <div class="py-8">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <!-- Tabs -->
@@ -225,16 +240,17 @@ onMounted(() => {
                   <th class="px-3 py-3">Consignee</th>
                   <th class="px-3 py-3">Cars</th>
                   <th class="px-3 py-3">Total</th>
+                  <th class="px-3 py-3">أنشأها</th>
                   <th class="px-3 py-3 print:hidden">المرفقات</th>
                   <th class="px-3 py-3 print:hidden">تنفيذ</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-if="loading">
-                  <td colspan="8" class="py-8 text-gray-400">جاري التحميل...</td>
+                  <td colspan="9" class="py-8 text-gray-400">جاري التحميل...</td>
                 </tr>
                 <tr v-else-if="!invoices.data || invoices.data.length === 0">
-                  <td colspan="8" class="py-8 text-gray-400">لا توجد فواتير</td>
+                  <td colspan="9" class="py-8 text-gray-400">لا توجد فواتير</td>
                 </tr>
                 <tr
                   v-for="invoice in invoices.data"
@@ -247,6 +263,7 @@ onMounted(() => {
                   <td class="px-3 py-2">{{ invoice.consignee_name || invoice.consignee?.name || "—" }}</td>
                   <td class="px-3 py-2">{{ invoice.items_count }}</td>
                   <td class="px-3 py-2">{{ formatPrice(invoice.total_price) }} {{ invoice.currency }}</td>
+                  <td class="px-3 py-2">{{ invoice.created_by_name || invoice.creator?.name || "—" }}</td>
                   <td class="px-3 py-2 print:hidden">
                     <div class="flex flex-wrap gap-1 justify-center items-center">
                       <a
@@ -257,7 +274,7 @@ onMounted(() => {
                         class="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded text-xs inline-flex items-center gap-1"
                       >
                         📎
-                        <button @click.prevent="deleteAttachment(invoice, att)" class="text-red-600 font-bold">×</button>
+                        <button v-if="canDelete" @click.prevent="deleteAttachment(invoice, att)" class="text-red-600 font-bold">×</button>
                       </a>
                       <label class="px-2 py-1 bg-indigo-500 text-white rounded text-xs cursor-pointer">
                         +
@@ -287,6 +304,7 @@ onMounted(() => {
                         class="px-2 py-1 text-white bg-teal-500 rounded text-xs"
                       >استرجاع</button>
                       <button
+                        v-if="canDelete"
                         @click="deleteInvoice(invoice)"
                         class="px-2 py-1 text-white bg-red-500 rounded text-xs"
                       >حذف</button>
@@ -314,5 +332,6 @@ onMounted(() => {
         <IranInvoiceTransfers v-if="activeTab === 'transfers'" />
       </div>
     </div>
+    </IranPinGate>
   </AuthenticatedLayout>
 </template>

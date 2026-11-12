@@ -69,12 +69,21 @@ class IranInvoice extends Model
         return $this->hasMany(IranInvoiceTransfer::class, 'invoice_id');
     }
 
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public function toArray()
     {
         $array = parent::toArray();
 
         if ($this->invoice_date) {
             $array['invoice_date'] = $this->invoice_date->format('Y-m-d');
+        }
+
+        if ($this->relationLoaded('creator')) {
+            $array['created_by_name'] = optional($this->creator)->name;
         }
 
         return $array;

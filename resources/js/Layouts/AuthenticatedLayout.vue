@@ -20,16 +20,25 @@ const morePages = computed(() => moreNavPages(page.props.value.auth?.navPages ||
 const i18n = useI18n();
 const { t, te } = i18n;
 
+const applyDocumentLang = (locale) => {
+  if (typeof document === "undefined") {
+    return;
+  }
+  document.documentElement.lang = locale;
+  // ar / kr stay RTL; English is LTR
+  document.documentElement.dir = locale === "en" ? "ltr" : "rtl";
+};
+
 const switchLocale = (locale) => {
   i18n.locale.value = locale;
   localStorage.setItem("lang", locale);
+  applyDocumentLang(locale);
 };
 
 onMounted(() => {
-  const stored = localStorage.getItem("lang");
-  if (stored) {
-    i18n.locale.value = stored;
-  }
+  const stored = localStorage.getItem("lang") || i18n.locale.value || "ar";
+  i18n.locale.value = stored;
+  applyDocumentLang(stored);
 });
 
 const moreMenuActive = computed(() => morePages.value.some((navPage) => isPageActive(navPage)));

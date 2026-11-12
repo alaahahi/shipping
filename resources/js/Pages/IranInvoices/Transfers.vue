@@ -2,11 +2,12 @@
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import { TailwindPagination } from "laravel-vue-pagination";
-import { ref, onMounted, watch } from "vue";
-import axios from "axios";
+import { ref, inject, onMounted, watch } from "vue";
 import { useToast } from "vue-toastification";
 
 const toast = useToast();
+const iranAxios = inject("iranAxios");
+const canDelete = inject("iranCanDelete", ref(false));
 
 const transfers = ref({});
 const q = ref("");
@@ -30,7 +31,7 @@ const form = ref({
 const fetchTransfers = async (page = 1) => {
   loading.value = true;
   try {
-    const response = await axios.get("/api/iran-invoice-transfers", {
+    const response = await iranAxios.get("/api/iran-invoice-transfers", {
       params: { page, q: q.value, from: from.value, to: to.value, archived: showArchived.value ? 1 : 0, limit: 25 },
     });
     transfers.value = response.data;
@@ -76,10 +77,10 @@ const openEdit = (t) => {
 const saveTransfer = async () => {
   try {
     if (editingId.value) {
-      await axios.post(`/api/iran-invoice-transfers/${editingId.value}`, form.value);
+      await iranAxios.post(`/api/iran-invoice-transfers/${editingId.value}`, form.value);
       toast.success("تم تحديث الحولة");
     } else {
-      await axios.post("/api/iran-invoice-transfers", form.value);
+      await iranAxios.post("/api/iran-invoice-transfers", form.value);
       toast.success("تمت إضافة الحولة");
     }
     showForm.value = false;
@@ -92,7 +93,7 @@ const saveTransfer = async () => {
 
 const archiveTransfer = async (t) => {
   try {
-    await axios.post(`/api/iran-invoice-transfers/${t.id}/archive`);
+    await iranAxios.post(`/api/iran-invoice-transfers/${t.id}/archive`);
     fetchTransfers();
   } catch (error) {
     toast.error("تعذر الأرشفة");
@@ -102,11 +103,11 @@ const archiveTransfer = async (t) => {
 const deleteTransfer = async (t) => {
   if (!confirm("حذف الحولة؟")) return;
   try {
-    await axios.post(`/api/iran-invoice-transfers/${t.id}/delete`);
+    await iranAxios.post(`/api/iran-invoice-transfers/${t.id}/delete`);
     toast.success("تم حذف الحولة");
     fetchTransfers();
   } catch (error) {
-    toast.error("تعذر حذف الحولة");
+    toast.error(error.response?.data?.message || "تعذر حذف الحولة");
   }
 };
 
@@ -206,7 +207,7 @@ onMounted(() => fetchTransfers());
                 <button @click="archiveTransfer(t)" class="px-2 py-1 bg-amber-500 text-white rounded text-xs">
                   {{ t.is_archived ? "استرجاع" : "أرشفة" }}
                 </button>
-                <button @click="deleteTransfer(t)" class="px-2 py-1 bg-red-500 text-white rounded text-xs">حذف</button>
+                <button v-if="canDelete" @click="deleteTransfer(t)" class="px-2 py-1 bg-red-500 text-white rounded text-xs">حذف</button>
               </div>
             </td>
           </tr>

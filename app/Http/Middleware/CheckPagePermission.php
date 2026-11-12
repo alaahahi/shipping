@@ -27,7 +27,14 @@ class CheckPagePermission
         }
 
         $routeName = $request->route()?->getName();
-        if (!$routeName || in_array($routeName, ['logout'], true)) {
+        if (!$routeName || in_array($routeName, [
+            'logout',
+            'iran',
+            'iranInvoices.index',
+            'iranInvoices.create',
+            'iranInvoices.edit',
+            'iranInvoices.print',
+        ], true)) {
             return $next($request);
         }
 

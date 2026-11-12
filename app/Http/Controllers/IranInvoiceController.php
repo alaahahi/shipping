@@ -7,11 +7,13 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Intervention\Image\Facades\Image;
 use Carbon\Carbon;
 use Inertia\Inertia;
+use App\Http\Requests\DeleteIranResourceRequest;
 use App\Models\IranInvoice;
 use App\Models\IranInvoiceItem;
 use App\Models\IranInvoiceCar;
@@ -20,6 +22,7 @@ use App\Models\IranInvoiceConsignee;
 use App\Models\IranInvoiceAttachment;
 use App\Models\IranInvoiceTransfer;
 use App\Models\SystemConfig;
+use App\Services\IranPageAccessService;
 
 /**
  * Standalone Iran invoices module.
@@ -30,37 +33,37 @@ use App\Models\SystemConfig;
  */
 class IranInvoiceController extends Controller
 {
+    public function __construct(protected IranPageAccessService $iranAccess)
+    {
+    }
+
     // ---------------------------------------------------------------------
     // Inertia pages
     // ---------------------------------------------------------------------
 
     public function index()
     {
-        return Inertia::render('IranInvoices/Index', [
-            'owner_id' => Auth::user()->owner_id,
-        ]);
+        return Inertia::render('IranInvoices/Index', $this->pageShare());
     }
 
     public function create()
     {
-        return Inertia::render('IranInvoices/Form', [
-            'owner_id' => Auth::user()->owner_id,
+        return Inertia::render('IranInvoices/Form', array_merge($this->pageShare(), [
             'invoice_id' => null,
-        ]);
+        ]));
     }
 
     public function edit($id)
     {
-        $invoice = IranInvoice::where('owner_id', Auth::user()->owner_id)->find($id);
+        $invoice = $this->findOwnedInvoice($id);
 
         if (!$invoice) {
             return redirect()->route('iranInvoices.index');
         }
 
-        return Inertia::render('IranInvoices/Form', [
-            'owner_id' => Auth::user()->owner_id,
+        return Inertia::render('IranInvoices/Form', array_merge($this->pageShare(), [
             'invoice_id' => (int) $id,
-        ]);
+        ]));
     }
 
     // ---------------------------------------------------------------------
@@ -76,11 +79,13 @@ class IranInvoiceController extends Controller
         $archived = $request->get('archived', 0);
         $limit = (int) $request->get('limit', 25);
 
-        $query = IranInvoice::with(['carrier', 'consignee', 'attachments'])
+        $query = IranInvoice::with(['carrier', 'consignee', 'attachments', 'creator:id,name'])
             ->withCount('items')
             ->where('owner_id', $owner_id)
             ->where('is_archived', $archived ? 1 : 0)
             ->orderBy('id', 'desc');
+
+        $this->restrictToOwnInvoicesUnlessAdmin($query);
 
         if ($from && $to && $from != '0' && $to != '0') {
             $query->whereBetween('invoice_date', [$from, $to]);
@@ -102,9 +107,12 @@ class IranInvoiceController extends Controller
 
     public function getInvoice($id)
     {
-        $invoice = IranInvoice::with(['items.attachments', 'carrier', 'consignee', 'attachments'])
-            ->where('owner_id', Auth::user()->owner_id)
-            ->find($id);
+        $invoice = IranInvoice::with(['items.attachments', 'carrier', 'consignee', 'attachments', 'creator:id,name'])
+            ->where('owner_id', Auth::user()->owner_id);
+
+        $this->restrictToOwnInvoicesUnlessAdmin($invoice);
+
+        $invoice = $invoice->find($id);
 
         if (!$invoice) {
             return Response::json(['error' => 'Not found'], 404);
@@ -144,7 +152,7 @@ class IranInvoiceController extends Controller
     public function updateInvoice(Request $request, $id)
     {
         $owner_id = Auth::user()->owner_id;
-        $invoice = IranInvoice::where('owner_id', $owner_id)->find($id);
+        $invoice = $this->findOwnedInvoice($id);
 
         if (!$invoice) {
             return Response::json(['error' => 'Not found'], 404);
@@ -165,7 +173,7 @@ class IranInvoiceController extends Controller
 
     public function archiveInvoice(Request $request, $id)
     {
-        $invoice = IranInvoice::where('owner_id', Auth::user()->owner_id)->find($id);
+        $invoice = $this->findOwnedInvoice($id);
 
         if (!$invoice) {
             return Response::json(['error' => 'Not found'], 404);
@@ -181,7 +189,7 @@ class IranInvoiceController extends Controller
 
     public function unarchiveInvoice(Request $request, $id)
     {
-        $invoice = IranInvoice::where('owner_id', Auth::user()->owner_id)->find($id);
+        $invoice = $this->findOwnedInvoice($id);
 
         if (!$invoice) {
             return Response::json(['error' => 'Not found'], 404);
@@ -195,9 +203,9 @@ class IranInvoiceController extends Controller
         return Response::json(['success' => true], 200);
     }
 
-    public function destroyInvoice($id)
+    public function destroyInvoice(DeleteIranResourceRequest $request, $id)
     {
-        $invoice = IranInvoice::where('owner_id', Auth::user()->owner_id)->find($id);
+        $invoice = $this->findOwnedInvoice($id);
 
         if (!$invoice) {
             return Response::json(['error' => 'Not found'], 404);
@@ -205,14 +213,22 @@ class IranInvoiceController extends Controller
 
         $invoice->delete();
 
+        Log::info('Iran invoice deleted', [
+            'invoice_id' => $invoice->id,
+            'invoice_no' => $invoice->invoice_no,
+            'deleted_by' => Auth::id(),
+            'owner_id' => $invoice->owner_id,
+        ]);
+
         return Response::json(['success' => true], 200);
     }
 
     public function printInvoice($id)
     {
-        $invoice = IranInvoice::with(['items', 'carrier', 'consignee'])
-            ->where('owner_id', Auth::user()->owner_id)
-            ->find($id);
+        $invoice = IranInvoice::with(['items', 'carrier', 'consignee', 'creator:id,name'])
+            ->where('owner_id', Auth::user()->owner_id);
+        $this->restrictToOwnInvoicesUnlessAdmin($invoice);
+        $invoice = $invoice->find($id);
 
         if (!$invoice) {
             abort(404);
@@ -288,7 +304,7 @@ class IranInvoiceController extends Controller
         return Response::json($car->fresh('attachments'), 200);
     }
 
-    public function destroyCar($id)
+    public function destroyCar(DeleteIranResourceRequest $request, $id)
     {
         $car = IranInvoiceCar::where('owner_id', Auth::user()->owner_id)->find($id);
 
@@ -297,6 +313,13 @@ class IranInvoiceController extends Controller
         }
 
         $car->delete();
+
+        Log::info('Iran invoice car deleted', [
+            'car_id' => $car->id,
+            'chassis_no' => $car->chassis_no,
+            'deleted_by' => Auth::id(),
+            'owner_id' => $car->owner_id,
+        ]);
 
         return Response::json(['success' => true], 200);
     }
@@ -361,7 +384,7 @@ class IranInvoiceController extends Controller
         return Response::json($attachment, 200);
     }
 
-    public function deleteAttachment(Request $request)
+    public function deleteAttachment(DeleteIranResourceRequest $request)
     {
         $id = $request->get('id');
         $attachment = IranInvoiceAttachment::where('owner_id', Auth::user()->owner_id)->find($id);
@@ -373,6 +396,15 @@ class IranInvoiceController extends Controller
         File::delete(public_path('uploads/' . $attachment->file_name));
         File::delete(public_path('uploadsResized/' . $attachment->file_name));
         $attachment->delete();
+
+        Log::info('Iran invoice attachment deleted', [
+            'attachment_id' => $attachment->id,
+            'file_name' => $attachment->file_name,
+            'attachable_type' => $attachment->attachable_type,
+            'attachable_id' => $attachment->attachable_id,
+            'deleted_by' => Auth::id(),
+            'owner_id' => $attachment->owner_id,
+        ]);
 
         return Response::json(['success' => true], 200);
     }
@@ -446,7 +478,7 @@ class IranInvoiceController extends Controller
         return Response::json(['success' => true], 200);
     }
 
-    public function destroyTransfer($id)
+    public function destroyTransfer(DeleteIranResourceRequest $request, $id)
     {
         $transfer = IranInvoiceTransfer::where('owner_id', Auth::user()->owner_id)->find($id);
 
@@ -455,6 +487,13 @@ class IranInvoiceController extends Controller
         }
 
         $transfer->delete();
+
+        Log::info('Iran invoice transfer deleted', [
+            'transfer_id' => $transfer->id,
+            'reference_no' => $transfer->reference_no,
+            'deleted_by' => Auth::id(),
+            'owner_id' => $transfer->owner_id,
+        ]);
 
         return Response::json(['success' => true], 200);
     }
@@ -518,6 +557,33 @@ class IranInvoiceController extends Controller
     // ---------------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------------
+
+    private function pageShare(): array
+    {
+        return array_merge(
+            ['owner_id' => Auth::user()->owner_id],
+            $this->iranAccess->pageProps(request())
+        );
+    }
+
+    /**
+     * PIN users (non-admin) only see/edit their own invoices.
+     * Regular admin sees all invoices for the owner_id.
+     */
+    private function restrictToOwnInvoicesUnlessAdmin($query): void
+    {
+        if (!$this->iranAccess->isAdmin(Auth::user())) {
+            $query->where('created_by', Auth::id());
+        }
+    }
+
+    private function findOwnedInvoice($id): ?IranInvoice
+    {
+        $query = IranInvoice::where('owner_id', Auth::user()->owner_id);
+        $this->restrictToOwnInvoicesUnlessAdmin($query);
+
+        return $query->find($id);
+    }
 
     private function invoiceAttributes(Request $request, $owner_id, bool $isNew, ?IranInvoice $existing = null): array
     {

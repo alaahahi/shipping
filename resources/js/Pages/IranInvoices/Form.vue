@@ -4,14 +4,20 @@ import { Head, Link } from "@inertiajs/inertia-vue3";
 import { Inertia } from "@inertiajs/inertia";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
-import { ref, onMounted, computed } from "vue";
-import axios from "axios";
+import IranPinGate from "@/Components/IranPinGate.vue";
+import { ref, computed, watch } from "vue";
 import { useToast } from "vue-toastification";
+import { useIranPageAccess } from "@/composables/useIranPageAccess";
 
 const props = defineProps({
   owner_id: Number,
   invoice_id: { type: Number, default: null },
+  iran_unlocked: { type: Boolean, default: false },
+  iran_can_delete: { type: Boolean, default: false },
+  iran_is_admin: { type: Boolean, default: false },
 });
+
+const { unlocked, canDelete, pin, pinError, unlocking, iranAxios } = useIranPageAccess(props);
 
 const toast = useToast();
 
@@ -88,8 +94,8 @@ const computedTotal = computed(() => {
 const fetchLookups = async () => {
   try {
     const [c, cn] = await Promise.all([
-      axios.get("/api/iran-invoice-carriers"),
-      axios.get("/api/iran-invoice-consignees"),
+      iranAxios.get("/api/iran-invoice-carriers"),
+      iranAxios.get("/api/iran-invoice-consignees"),
     ]);
     carriers.value = c.data || [];
     consignees.value = cn.data || [];
@@ -100,7 +106,7 @@ const fetchLookups = async () => {
 
 const fetchNextInvoiceNo = async () => {
   try {
-    const response = await axios.get("/api/iran-invoices/next-no");
+    const response = await iranAxios.get("/api/iran-invoices/next-no");
     nextInvoiceNo.value = response.data.invoice_no || "";
   } catch (error) {
     console.error(error);
@@ -110,7 +116,7 @@ const fetchNextInvoiceNo = async () => {
 const fetchInvoice = async () => {
   if (!props.invoice_id) return;
   try {
-    const response = await axios.get(`/api/iran-invoices/${props.invoice_id}`);
+    const response = await iranAxios.get(`/api/iran-invoices/${props.invoice_id}`);
     const data = response.data;
     form.value = {
       invoice_no: data.invoice_no || "",
@@ -146,7 +152,7 @@ const addCarrierInline = async () => {
   const name = prompt("اسم الجهة الناقلة الجديدة:");
   if (!name) return;
   try {
-    const response = await axios.post("/api/iran-invoice-carriers", { name });
+    const response = await iranAxios.post("/api/iran-invoice-carriers", { name });
     carriers.value.push(response.data);
     form.value.carrier_id = response.data.id;
     toast.success("تمت إضافة الجهة الناقلة");
@@ -159,7 +165,7 @@ const addConsigneeInline = async () => {
   const name = prompt("اسم المستخدم / المستفيد الجديد:");
   if (!name) return;
   try {
-    const response = await axios.post("/api/iran-invoice-consignees", { name });
+    const response = await iranAxios.post("/api/iran-invoice-consignees", { name });
     consignees.value.push(response.data);
     form.value.consignee_id = response.data.id;
     toast.success("تمت إضافة المستفيد");
@@ -183,7 +189,7 @@ const uploadAttachment = async (event) => {
     data.append("id", props.invoice_id);
     data.append("file", file);
     try {
-      const response = await axios.post("/api/iran-invoice-attachments", data, {
+      const response = await iranAxios.post("/api/iran-invoice-attachments", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       attachments.value.push(response.data);
@@ -208,7 +214,7 @@ const uploadItemAttachment = async (item, event) => {
     data.append("id", item.id);
     data.append("file", file);
     try {
-      const response = await axios.post("/api/iran-invoice-attachments", data, {
+      const response = await iranAxios.post("/api/iran-invoice-attachments", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       item.attachments.push(response.data);
@@ -225,22 +231,22 @@ const uploadItemAttachment = async (item, event) => {
 const deleteItemAttachment = async (item, attachment) => {
   if (!confirm("حذف المرفق؟")) return;
   try {
-    await axios.post("/api/iran-invoice-attachments/delete", { id: attachment.id });
+    await iranAxios.post("/api/iran-invoice-attachments/delete", { id: attachment.id });
     item.attachments = (item.attachments || []).filter((a) => a.id !== attachment.id);
     toast.success("تم حذف المرفق");
   } catch (error) {
-    toast.error("تعذر حذف المرفق");
+    toast.error(error.response?.data?.message || "تعذر حذف المرفق");
   }
 };
 
 const deleteAttachment = async (attachment) => {
   if (!confirm("حذف المرفق؟")) return;
   try {
-    await axios.post("/api/iran-invoice-attachments/delete", { id: attachment.id });
+    await iranAxios.post("/api/iran-invoice-attachments/delete", { id: attachment.id });
     attachments.value = attachments.value.filter((a) => a.id !== attachment.id);
     toast.success("تم حذف المرفق");
   } catch (error) {
-    toast.error("تعذر حذف المرفق");
+    toast.error(error.response?.data?.message || "تعذر حذف المرفق");
   }
 };
 
@@ -271,9 +277,9 @@ const save = async () => {
       delete payload.invoice_no;
     }
     if (isEdit.value) {
-      await axios.post(`/api/iran-invoices/${props.invoice_id}`, payload);
+      await iranAxios.post(`/api/iran-invoices/${props.invoice_id}`, payload);
     } else {
-      await axios.post("/api/iran-invoices", payload);
+      await iranAxios.post("/api/iran-invoices", payload);
     }
     succeeded = true;
   } catch (error) {
@@ -291,15 +297,20 @@ const save = async () => {
   }
 };
 
-onMounted(async () => {
-  await fetchLookups();
-  if (isEdit.value) {
-    await fetchInvoice();
-  } else {
-    addItem();
-    await fetchNextInvoiceNo();
-  }
-});
+watch(
+  unlocked,
+  async (isUnlocked) => {
+    if (!isUnlocked) return;
+    await fetchLookups();
+    if (isEdit.value) {
+      await fetchInvoice();
+    } else if (form.value.items.length === 0) {
+      addItem();
+      await fetchNextInvoiceNo();
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
@@ -316,6 +327,7 @@ onMounted(async () => {
       </div>
     </template>
 
+    <IranPinGate :unlocked="unlocked" :pin="pin" :error="pinError" :unlocking="unlocking" @update:pin="pin = $event">
     <div class="py-8">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
@@ -428,6 +440,7 @@ onMounted(async () => {
                         />
                         <span v-else class="inline-flex h-10 w-10 items-center justify-center bg-gray-200 dark:bg-gray-600 rounded text-xs">📎</span>
                         <button
+                          v-if="canDelete"
                           type="button"
                           @click.prevent="deleteItemAttachment(item, att)"
                           class="absolute -top-1 -right-1 h-4 w-4 bg-red-600 text-white rounded-full text-xs leading-none"
@@ -503,7 +516,7 @@ onMounted(async () => {
                     </td>
                     <td class="px-3 py-2 text-gray-500 dark:text-gray-400">{{ att.created_at ? String(att.created_at).slice(0, 10) : "—" }}</td>
                     <td class="px-3 py-2">
-                      <button type="button" @click="deleteAttachment(att)" class="px-2 py-1 bg-red-500 text-white rounded text-xs">حذف</button>
+                      <button v-if="canDelete" type="button" @click="deleteAttachment(att)" class="px-2 py-1 bg-red-500 text-white rounded text-xs">حذف</button>
                     </td>
                   </tr>
                 </tbody>
@@ -523,5 +536,6 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+    </IranPinGate>
   </AuthenticatedLayout>
 </template>

@@ -29,5 +29,7 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="LOCAL_NO_REMOTE" value="false"/>
         <env name="MONITOR_ENABLED" value="false"/>
+        <env name="IRAN_PAGE_PIN" value="134679"/>
+        <env name="IRAN_PAGE_TOKEN" value="testing-iran-page-token"/>
     </php>
 </phpunit>

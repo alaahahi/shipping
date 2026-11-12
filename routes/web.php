@@ -312,7 +312,9 @@ Route::group(['middleware' => ['auth','verified', 'check.license', 'page.permiss
     Route::get('iran-invoices',[\App\Http\Controllers\IranInvoiceController::class, 'index'])->name('iranInvoices.index');
     Route::get('iran-invoices/create',[\App\Http\Controllers\IranInvoiceController::class, 'create'])->name('iranInvoices.create');
     Route::get('iran-invoices/{id}/edit',[\App\Http\Controllers\IranInvoiceController::class, 'edit'])->name('iranInvoices.edit');
-    Route::get('iran-invoices/{id}/print',[\App\Http\Controllers\IranInvoiceController::class, 'printInvoice'])->name('iranInvoices.print');
+    Route::get('iran-invoices/{id}/print',[\App\Http\Controllers\IranInvoiceController::class, 'printInvoice'])
+        ->middleware('iran.access:session')
+        ->name('iranInvoices.print');
 
  });
 
