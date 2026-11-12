@@ -133,86 +133,88 @@ onMounted(() => fetchCars());
 
 <template>
   <div>
-    <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4 mb-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+    <div class="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5">
+      <div class="grid grid-cols-1 items-end gap-3 md:grid-cols-3">
         <div>
-          <InputLabel for="car_search" :value="$t('iran_search')" />
-          <TextInput id="car_search" type="text" class="mt-1 block w-full" v-model="q" :placeholder="$t('iran_search_car_ph')" />
+          <InputLabel for="car_search" :value="$t('iran_search')" class="!text-slate-600 dark:!text-slate-200" />
+          <TextInput id="car_search" type="text" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:placeholder-slate-400" v-model="q" :placeholder="$t('iran_search_car_ph')" />
         </div>
-        <div class="md:col-start-3 pt-6">
-          <button @click="openCreate" class="block w-full text-center px-4 py-2 font-bold text-white bg-green-600 rounded hover:bg-green-700">
+        <div class="md:col-start-3 pt-1 md:pt-6">
+          <button type="button" @click="openCreate" class="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-500">
             {{ $t("iran_new_car") }}
           </button>
         </div>
       </div>
     </div>
 
-    <div v-if="showForm" class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4 mb-4">
-      <h3 class="font-semibold mb-3 dark:text-gray-200">{{ editingId ? $t("iran_edit_car") : $t("iran_new_car_title") }}</h3>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div><InputLabel :value="$t('iran_col_chassis')" /><TextInput type="text" class="mt-1 block w-full" v-model="form.chassis_no" /></div>
-        <div><InputLabel :value="$t('iran_make')" /><TextInput type="text" class="mt-1 block w-full" v-model="form.make" /></div>
-        <div><InputLabel :value="$t('iran_model')" /><TextInput type="text" class="mt-1 block w-full" v-model="form.model" /></div>
-        <div><InputLabel :value="$t('iran_col_year')" /><TextInput type="text" class="mt-1 block w-full" v-model="form.year" /></div>
-        <div><InputLabel :value="$t('iran_col_color')" /><TextInput type="text" class="mt-1 block w-full" v-model="form.color" /></div>
-        <div><InputLabel :value="$t('iran_col_weight')" /><TextInput type="text" class="mt-1 block w-full" v-model="form.weight" /></div>
-        <div class="md:col-span-2"><InputLabel :value="$t('iran_notes')" /><TextInput type="text" class="mt-1 block w-full" v-model="form.notes" /></div>
+    <div v-if="showForm" class="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5">
+      <h3 class="mb-3 text-base font-bold text-slate-900 dark:text-white">{{ editingId ? $t("iran_edit_car") : $t("iran_new_car_title") }}</h3>
+      <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div><InputLabel :value="$t('iran_col_chassis')" class="!text-slate-600 dark:!text-slate-200" /><TextInput type="text" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white" v-model="form.chassis_no" /></div>
+        <div><InputLabel :value="$t('iran_make')" class="!text-slate-600 dark:!text-slate-200" /><TextInput type="text" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white" v-model="form.make" /></div>
+        <div><InputLabel :value="$t('iran_model')" class="!text-slate-600 dark:!text-slate-200" /><TextInput type="text" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white" v-model="form.model" /></div>
+        <div><InputLabel :value="$t('iran_col_year')" class="!text-slate-600 dark:!text-slate-200" /><TextInput type="text" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white" v-model="form.year" /></div>
+        <div><InputLabel :value="$t('iran_col_color')" class="!text-slate-600 dark:!text-slate-200" /><TextInput type="text" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white" v-model="form.color" /></div>
+        <div><InputLabel :value="$t('iran_col_weight')" class="!text-slate-600 dark:!text-slate-200" /><TextInput type="text" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white" v-model="form.weight" /></div>
+        <div class="md:col-span-2"><InputLabel :value="$t('iran_notes')" class="!text-slate-600 dark:!text-slate-200" /><TextInput type="text" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white" v-model="form.notes" /></div>
       </div>
       <div class="mt-4 flex justify-end gap-2">
-        <button @click="showForm = false" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded">{{ $t("iran_cancel") }}</button>
-        <button @click="saveCar" class="px-5 py-2 bg-green-600 text-white font-bold rounded">{{ $t("iran_save") }}</button>
+        <button type="button" @click="showForm = false" class="rounded-xl bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600">{{ $t("iran_cancel") }}</button>
+        <button type="button" @click="saveCar" class="rounded-xl bg-emerald-600 px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-500">{{ $t("iran_save") }}</button>
       </div>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-x-auto">
-      <table class="w-full text-sm text-center text-gray-600 dark:text-gray-300">
-        <thead class="bg-gray-50 dark:bg-gray-900 text-xs uppercase">
-          <tr>
-            <th class="px-3 py-3">{{ $t("iran_col_chassis") }}</th>
-            <th class="px-3 py-3">{{ $t("iran_col_make_model") }}</th>
-            <th class="px-3 py-3">{{ $t("iran_col_year") }}</th>
-            <th class="px-3 py-3">{{ $t("iran_col_color") }}</th>
-            <th class="px-3 py-3">{{ $t("iran_col_weight") }}</th>
-            <th class="px-3 py-3">{{ $t("iran_col_attachments") }}</th>
-            <th class="px-3 py-3">{{ $t("iran_col_actions") }}</th>
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <div class="overflow-x-auto">
+      <table class="w-full text-sm text-center text-slate-700 dark:text-slate-200">
+        <thead>
+          <tr class="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+            <th class="px-3 py-3.5">{{ $t("iran_col_chassis") }}</th>
+            <th class="px-3 py-3.5">{{ $t("iran_col_make_model") }}</th>
+            <th class="px-3 py-3.5">{{ $t("iran_col_year") }}</th>
+            <th class="px-3 py-3.5">{{ $t("iran_col_color") }}</th>
+            <th class="px-3 py-3.5">{{ $t("iran_col_weight") }}</th>
+            <th class="px-3 py-3.5">{{ $t("iran_col_attachments") }}</th>
+            <th class="px-3 py-3.5">{{ $t("iran_col_actions") }}</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-if="loading"><td colspan="7" class="py-8 text-gray-400">{{ $t("iran_loading") }}</td></tr>
-          <tr v-else-if="!cars.data || cars.data.length === 0"><td colspan="7" class="py-8 text-gray-400">{{ $t("iran_no_cars") }}</td></tr>
-          <tr v-for="car in cars.data" :key="car.id" class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-            <td class="px-3 py-2 font-semibold">{{ car.chassis_no || "—" }}</td>
-            <td class="px-3 py-2">{{ [car.make, car.model].filter(Boolean).join(" ") || "—" }}</td>
-            <td class="px-3 py-2">{{ car.year || "—" }}</td>
-            <td class="px-3 py-2">{{ car.color || "—" }}</td>
-            <td class="px-3 py-2">{{ car.weight || "—" }}</td>
-            <td class="px-3 py-2">
-              <div class="flex flex-wrap gap-1 justify-center items-center">
+          <tr v-if="loading"><td colspan="7" class="py-12 text-slate-400">{{ $t("iran_loading") }}</td></tr>
+          <tr v-else-if="!cars.data || cars.data.length === 0"><td colspan="7" class="py-12 text-slate-500 dark:text-slate-400">{{ $t("iran_no_cars") }}</td></tr>
+          <tr v-for="car in cars.data" :key="car.id" class="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50/80 dark:border-slate-700/80 dark:hover:bg-slate-900/50">
+            <td class="px-3 py-3 font-bold tabular-nums text-slate-900 dark:text-white">{{ car.chassis_no || "—" }}</td>
+            <td class="px-3 py-3">{{ [car.make, car.model].filter(Boolean).join(" ") || "—" }}</td>
+            <td class="px-3 py-3 tabular-nums">{{ car.year || "—" }}</td>
+            <td class="px-3 py-3">{{ car.color || "—" }}</td>
+            <td class="px-3 py-3 tabular-nums">{{ car.weight || "—" }}</td>
+            <td class="px-3 py-3">
+              <div class="flex flex-wrap items-center justify-center gap-1.5">
                 <a
                   v-for="att in (car.attachments || [])"
                   :key="att.id"
                   :href="fileUrl(att.file_name)"
                   target="_blank"
-                  class="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded text-xs inline-flex items-center gap-1"
+                  class="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-100"
                 >
                   📎
-                  <button v-if="canDelete" @click.prevent="deleteAttachment(att)" class="text-red-600 font-bold">×</button>
+                  <button v-if="canDelete" type="button" @click.prevent="deleteAttachment(att)" class="font-bold text-rose-600 dark:text-rose-300">×</button>
                 </a>
-                <label class="px-2 py-1 bg-indigo-500 text-white rounded text-xs cursor-pointer">
+                <label class="cursor-pointer rounded-lg bg-sky-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-sky-500">
                   +
                   <input type="file" class="hidden" accept="image/*,.pdf" multiple @change="uploadAttachment(car, $event)" />
                 </label>
               </div>
             </td>
-            <td class="px-3 py-2">
-              <div class="flex justify-center gap-1">
-                <button @click="openEdit(car)" class="px-2 py-1 bg-blue-500 text-white rounded text-xs">{{ $t("iran_edit") }}</button>
-                <button v-if="canDelete" @click="deleteCar(car)" class="px-2 py-1 bg-red-500 text-white rounded text-xs">{{ $t("iran_delete") }}</button>
+            <td class="px-3 py-3">
+              <div class="flex flex-wrap justify-center gap-1.5">
+                <button type="button" @click="openEdit(car)" class="rounded-lg bg-sky-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-500">{{ $t("iran_edit") }}</button>
+                <button v-if="canDelete" type="button" @click="deleteCar(car)" class="rounded-lg bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-500">{{ $t("iran_delete") }}</button>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <div class="mt-4 text-center" style="direction: ltr">

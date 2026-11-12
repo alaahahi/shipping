@@ -129,26 +129,26 @@ onMounted(() => fetchTransfers());
 
 <template>
   <div>
-    <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4 mb-4">
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+    <div class="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5">
+      <div class="grid grid-cols-1 items-end gap-3 md:grid-cols-5">
         <div>
-          <InputLabel for="t_search" :value="$t('iran_search')" />
-          <TextInput id="t_search" type="text" class="mt-1 block w-full" v-model="q" :placeholder="$t('iran_search_transfer_ph')" />
-        </div>
-        <div>
-          <InputLabel for="t_from" :value="$t('iran_from_date')" />
-          <TextInput id="t_from" type="date" class="mt-1 block w-full" v-model="from" />
+          <InputLabel for="t_search" :value="$t('iran_search')" class="!text-slate-600 dark:!text-slate-200" />
+          <TextInput id="t_search" type="text" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:placeholder-slate-400" v-model="q" :placeholder="$t('iran_search_transfer_ph')" />
         </div>
         <div>
-          <InputLabel for="t_to" :value="$t('iran_to_date')" />
-          <TextInput id="t_to" type="date" class="mt-1 block w-full" v-model="to" />
+          <InputLabel for="t_from" :value="$t('iran_from_date')" class="!text-slate-600 dark:!text-slate-200" />
+          <TextInput id="t_from" type="date" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white" v-model="from" />
         </div>
-        <div class="flex items-center gap-2 pt-6">
-          <input id="t_archived" type="checkbox" v-model="showArchived" class="rounded border-gray-300" />
-          <label for="t_archived" class="text-sm text-gray-700 dark:text-gray-300">{{ $t("iran_archived") }}</label>
+        <div>
+          <InputLabel for="t_to" :value="$t('iran_to_date')" class="!text-slate-600 dark:!text-slate-200" />
+          <TextInput id="t_to" type="date" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white" v-model="to" />
         </div>
-        <div class="pt-6">
-          <button @click="openCreate" class="block w-full text-center px-4 py-2 font-bold text-white bg-green-600 rounded hover:bg-green-700">
+        <div class="flex items-center gap-2.5 pt-2 md:pt-7">
+          <input id="t_archived" type="checkbox" v-model="showArchived" class="h-4 w-4 rounded border-slate-400 text-emerald-600 focus:ring-emerald-500 dark:border-slate-500 dark:bg-slate-900" />
+          <label for="t_archived" class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ $t("iran_archived") }}</label>
+        </div>
+        <div class="pt-1 md:pt-6">
+          <button type="button" @click="openCreate" class="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-500">
             {{ $t("iran_new_transfer") }}
           </button>
         </div>

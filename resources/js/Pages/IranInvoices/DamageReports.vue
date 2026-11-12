@@ -97,24 +97,24 @@ watch([q, from, to], () => fetchReports(), { immediate: true });
       @close="showModal = false"
     />
 
-    <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4 mb-4">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+    <div class="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5">
+      <div class="grid grid-cols-1 items-end gap-3 md:grid-cols-4">
         <div>
-          <InputLabel for="damage-q" :value="$t('iran_search')" />
-          <TextInput id="damage-q" type="text" class="mt-1 block w-full" v-model="q" :placeholder="$t('iran_search_damage_ph')" />
+          <InputLabel for="damage-q" :value="$t('iran_search')" class="!text-slate-600 dark:!text-slate-200" />
+          <TextInput id="damage-q" type="text" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:placeholder-slate-400" v-model="q" :placeholder="$t('iran_search_damage_ph')" />
         </div>
         <div>
-          <InputLabel for="damage-from" :value="$t('iran_from_date')" />
-          <TextInput id="damage-from" type="date" class="mt-1 block w-full" v-model="from" />
+          <InputLabel for="damage-from" :value="$t('iran_from_date')" class="!text-slate-600 dark:!text-slate-200" />
+          <TextInput id="damage-from" type="date" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white" v-model="from" />
         </div>
         <div>
-          <InputLabel for="damage-to" :value="$t('iran_to_date')" />
-          <TextInput id="damage-to" type="date" class="mt-1 block w-full" v-model="to" />
+          <InputLabel for="damage-to" :value="$t('iran_to_date')" class="!text-slate-600 dark:!text-slate-200" />
+          <TextInput id="damage-to" type="date" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white" v-model="to" />
         </div>
-        <div class="pt-6">
+        <div class="pt-1 md:pt-6">
           <button
             type="button"
-            class="w-full px-4 py-2 font-bold text-white bg-blue-600 rounded hover:bg-blue-700"
+            class="inline-flex w-full items-center justify-center rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-sky-500"
             @click="openNew"
           >
             {{ $t("iran_new_damage") }}
@@ -123,49 +123,50 @@ watch([q, from, to], () => fetchReports(), { immediate: true });
       </div>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-x-auto">
-      <table class="w-full text-sm text-center text-gray-600 dark:text-gray-300">
-        <thead class="bg-gray-50 dark:bg-gray-900 text-xs uppercase">
-          <tr>
-            <th class="px-3 py-3">#</th>
-            <th class="px-3 py-3">{{ $t("iran_col_date") }}</th>
-            <th class="px-3 py-3">{{ $t("iran_col_driver") }}</th>
-            <th class="px-3 py-3">{{ $t("iran_col_cmr") }}</th>
-            <th class="px-3 py-3">{{ $t("iran_col_cars") }}</th>
-            <th class="px-3 py-3">{{ $t("iran_col_damage_total") }}</th>
-            <th class="px-3 py-3 print:hidden">{{ $t("iran_col_actions") }}</th>
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <div class="overflow-x-auto">
+      <table class="w-full text-sm text-center text-slate-700 dark:text-slate-200">
+        <thead>
+          <tr class="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+            <th class="px-3 py-3.5">#</th>
+            <th class="px-3 py-3.5">{{ $t("iran_col_date") }}</th>
+            <th class="px-3 py-3.5">{{ $t("iran_col_driver") }}</th>
+            <th class="px-3 py-3.5">{{ $t("iran_col_cmr") }}</th>
+            <th class="px-3 py-3.5">{{ $t("iran_col_cars") }}</th>
+            <th class="px-3 py-3.5">{{ $t("iran_col_damage_total") }}</th>
+            <th class="px-3 py-3.5 print:hidden">{{ $t("iran_col_actions") }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="7" class="py-8 text-gray-400">{{ $t("iran_loading") }}</td>
+            <td colspan="7" class="py-12 text-slate-400">{{ $t("iran_loading") }}</td>
           </tr>
           <tr v-else-if="!reports.data || reports.data.length === 0">
-            <td colspan="7" class="py-8 text-gray-400">{{ $t("iran_no_damage") }}</td>
+            <td colspan="7" class="py-12 text-slate-500 dark:text-slate-400">{{ $t("iran_no_damage") }}</td>
           </tr>
           <tr
             v-for="report in reports.data"
             :key="report.id"
-            class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+            class="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50/80 dark:border-slate-700/80 dark:hover:bg-slate-900/50"
           >
-            <td class="px-3 py-2 font-semibold">{{ report.id }}</td>
-            <td class="px-3 py-2">{{ report.created }}</td>
-            <td class="px-3 py-2">{{ report.driver_name || "—" }}</td>
-            <td class="px-3 py-2">{{ report.cmr_number || "—" }}</td>
-            <td class="px-3 py-2">{{ report.cars_count }}</td>
-            <td class="px-3 py-2 font-bold">{{ report.total_damage }}$</td>
-            <td class="px-3 py-2 print:hidden">
-              <div class="flex justify-center gap-1 flex-wrap">
+            <td class="px-3 py-3 font-bold tabular-nums">{{ report.id }}</td>
+            <td class="px-3 py-3 tabular-nums">{{ report.created }}</td>
+            <td class="px-3 py-3">{{ report.driver_name || "—" }}</td>
+            <td class="px-3 py-3">{{ report.cmr_number || "—" }}</td>
+            <td class="px-3 py-3 tabular-nums">{{ report.cars_count }}</td>
+            <td class="px-3 py-3 font-bold tabular-nums text-rose-600 dark:text-rose-300">{{ report.total_damage }}$</td>
+            <td class="px-3 py-3 print:hidden">
+              <div class="flex flex-wrap justify-center gap-1.5">
                 <button
                   type="button"
-                  class="px-2 py-1 text-white bg-gray-800 rounded text-xs"
+                  class="rounded-lg bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-700 dark:bg-slate-700"
                   @click="printReport(report)"
                 >
                   {{ $t("iran_print") }}
                 </button>
                 <button
                   type="button"
-                  class="px-2 py-1 text-white bg-red-500 rounded text-xs"
+                  class="rounded-lg bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-500"
                   @click="deleteReport(report)"
                 >
                   {{ $t("iran_delete") }}
@@ -175,6 +176,7 @@ watch([q, from, to], () => fetchReports(), { immediate: true });
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <div class="mt-4 text-center" style="direction: ltr">
