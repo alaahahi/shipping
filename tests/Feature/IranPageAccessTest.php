@@ -381,5 +381,62 @@ class IranPageAccessTest extends TestCase
         $this->assertFalse($props['iran_unlocked']);
         $this->assertFalse($props['iran_can_delete']);
         $this->assertFalse($props['iran_is_admin']);
+        $this->assertFalse($props['iran_token_guest']);
+    }
+
+    /** @test */
+    public function token_guest_page_props_mark_token_guest()
+    {
+        $token = config('iran.page_token');
+        $request = \Illuminate\Http\Request::create('/iran?token=' . $token, 'GET');
+        $request->setLaravelSession($this->app['session.store']);
+
+        $props = app(IranPageAccessService::class)->pageProps($request);
+
+        $this->assertTrue($props['iran_token_guest']);
+        $this->assertFalse($props['iran_is_admin']);
+    }
+
+    /** @test */
+    public function staff_cars_and_transfers_are_scoped_to_creator()
+    {
+        IranInvoiceCar::create([
+            'chassis_no' => 'OWN-CAR',
+            'owner_id' => 1,
+            'created_by' => $this->staff->id,
+        ]);
+        IranInvoiceCar::create([
+            'chassis_no' => 'OTHER-CAR',
+            'owner_id' => 1,
+            'created_by' => $this->otherStaff->id,
+        ]);
+        IranInvoiceTransfer::create([
+            'amount' => 10,
+            'owner_id' => 1,
+            'created_by' => $this->staff->id,
+        ]);
+        IranInvoiceTransfer::create([
+            'amount' => 20,
+            'owner_id' => 1,
+            'created_by' => $this->otherStaff->id,
+        ]);
+
+        $this->actingAs($this->staff)
+            ->postJson('/api/iran/unlock', ['pin' => '134679'])
+            ->assertOk();
+
+        $cars = $this->actingAs($this->staff)
+            ->getJson('/api/iran-invoice-cars')
+            ->assertOk()
+            ->json('data');
+        $this->assertCount(1, $cars);
+        $this->assertSame('OWN-CAR', $cars[0]['chassis_no']);
+
+        $transfers = $this->actingAs($this->staff)
+            ->getJson('/api/iran-invoice-transfers')
+            ->assertOk()
+            ->json('data');
+        $this->assertCount(1, $transfers);
+        $this->assertEquals(10, (float) $transfers[0]['amount']);
     }
 }

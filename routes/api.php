@@ -327,6 +327,11 @@ Route::middleware(['iran', 'iran.access'])->group(function () {
     Route::post('iran-invoice-carriers',[\App\Http\Controllers\IranInvoiceController::class, 'storeCarrier'])->name('iranInvoiceCarriers.store');
     Route::get('iran-invoice-consignees',[\App\Http\Controllers\IranInvoiceController::class, 'getConsignees'])->name('iranInvoiceConsignees.list');
     Route::post('iran-invoice-consignees',[\App\Http\Controllers\IranInvoiceController::class, 'storeConsignee'])->name('iranInvoiceConsignees.store');
+
+    Route::get('iran-damage-reports',[\App\Http\Controllers\IranDamageReportController::class, 'index'])->name('iranDamageReports.list');
+    Route::post('iran-damage-reports',[\App\Http\Controllers\IranDamageReportController::class, 'store'])->name('iranDamageReports.store');
+    Route::post('iran-damage-reports/delete',[\App\Http\Controllers\IranDamageReportController::class, 'destroy'])->name('iranDamageReports.delete');
+    Route::get('iran-damage-reports/pdf',[\App\Http\Controllers\IranDamageReportController::class, 'pdf'])->name('iranDamageReports.pdf');
 });
 
 // External APIs (without auth, but with API key)

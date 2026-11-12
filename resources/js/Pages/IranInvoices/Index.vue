@@ -5,10 +5,11 @@ import { TailwindPagination } from "laravel-vue-pagination";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import IranPinGate from "@/Components/IranPinGate.vue";
-import { ref, watch, provide } from "vue";
+import { ref, watch, provide, computed } from "vue";
 import { useToast } from "vue-toastification";
 import IranInvoiceCars from "./Cars.vue";
 import IranInvoiceTransfers from "./Transfers.vue";
+import IranDamageReports from "./DamageReports.vue";
 import { useIranPageAccess } from "@/composables/useIranPageAccess";
 
 const props = defineProps({
@@ -16,6 +17,7 @@ const props = defineProps({
   iran_unlocked: { type: Boolean, default: false },
   iran_can_delete: { type: Boolean, default: false },
   iran_is_admin: { type: Boolean, default: false },
+  iran_token_guest: { type: Boolean, default: false },
 });
 
 const { unlocked, canDelete, pin, pinError, unlocking, iranAxios } = useIranPageAccess(props);
@@ -24,7 +26,11 @@ provide("iranCanDelete", canDelete);
 
 const toast = useToast();
 
-const activeTab = ref("invoices"); // invoices | cars | transfers
+/** Token-guest (أدمن التوكن): hide cars/transfers registry tabs. */
+const isTokenGuest = computed(() => !!props.iran_token_guest);
+const showRegistryTabs = computed(() => !isTokenGuest.value);
+
+const activeTab = ref("invoices"); // invoices | cars | transfers | damage
 const showArchived = ref(false);
 
 const invoices = ref({});
@@ -135,6 +141,15 @@ watch(activeTab, (tab) => {
   if (unlocked.value && tab === "invoices") {
     fetchInvoices();
   }
+  if (!showRegistryTabs.value && (tab === "cars" || tab === "transfers")) {
+    activeTab.value = "damage";
+  }
+});
+
+watch(showRegistryTabs, (allowed) => {
+  if (!allowed && (activeTab.value === "cars" || activeTab.value === "transfers")) {
+    activeTab.value = "damage";
+  }
 });
 
 watch(
@@ -175,6 +190,7 @@ watch(
               الفواتير
             </button>
             <button
+              v-if="showRegistryTabs"
               @click="activeTab = 'cars'"
               :class="[
                 activeTab === 'cars'
@@ -186,6 +202,7 @@ watch(
               السيارات
             </button>
             <button
+              v-if="showRegistryTabs"
               @click="activeTab = 'transfers'"
               :class="[
                 activeTab === 'transfers'
@@ -195,6 +212,17 @@ watch(
               ]"
             >
               الحولات
+            </button>
+            <button
+              @click="activeTab = 'damage'"
+              :class="[
+                activeTab === 'damage'
+                  ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400',
+                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm',
+              ]"
+            >
+              تقرير الضرر السيارات
             </button>
           </nav>
         </div>
@@ -325,11 +353,14 @@ watch(
           </div>
         </div>
 
-        <!-- Cars Tab -->
-        <IranInvoiceCars v-if="activeTab === 'cars'" />
+        <!-- Cars Tab (hidden for token guest / أدمن التوكن) -->
+        <IranInvoiceCars v-if="showRegistryTabs && activeTab === 'cars'" />
 
-        <!-- Transfers Tab -->
-        <IranInvoiceTransfers v-if="activeTab === 'transfers'" />
+        <!-- Transfers Tab (hidden for token guest / أدمن التوكن) -->
+        <IranInvoiceTransfers v-if="showRegistryTabs && activeTab === 'transfers'" />
+
+        <!-- Damage reports tab (replacement for token-guest registry tabs) -->
+        <IranDamageReports v-if="activeTab === 'damage'" />
       </div>
     </div>
     </IranPinGate>

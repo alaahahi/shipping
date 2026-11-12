@@ -273,6 +273,8 @@ class IranInvoiceController extends Controller
             ->where('owner_id', $owner_id)
             ->orderBy('id', 'desc');
 
+        $this->restrictToOwnInvoicesUnlessAdmin($query);
+
         if ($q) {
             $query->where(function ($sub) use ($q) {
                 $sub->where('chassis_no', 'LIKE', '%' . $q . '%')
@@ -427,6 +429,8 @@ class IranInvoiceController extends Controller
             ->where('is_archived', $archived ? 1 : 0)
             ->orderBy('id', 'desc');
 
+        $this->restrictToOwnInvoicesUnlessAdmin($query);
+
         if ($from && $to && $from != '0' && $to != '0') {
             $query->whereBetween('transfer_date', [$from, $to]);
         }
@@ -572,18 +576,20 @@ class IranInvoiceController extends Controller
     }
 
     /**
-     * Logged-in non-admin staff only see/edit their own invoices.
-     * Admins and token guests see all invoices for the owner_id.
+     * Logged-in non-admin staff only see/edit their own rows.
+     * Admins and token guests (no Auth user) see all for the owner_id.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder  $query
      */
-    private function restrictToOwnInvoicesUnlessAdmin($query): void
+    private function restrictToOwnInvoicesUnlessAdmin($query, string $column = 'created_by'): void
     {
-        $user = Auth::user();
-        if (!$user) {
+        $user = Auth::user() ?: request()->user();
+        if (! $user) {
             return;
         }
 
-        if (!$this->iranAccess->isAdmin($user)) {
-            $query->where('created_by', $user->id);
+        if (! $this->iranAccess->isAdmin($user)) {
+            $query->where($column, $user->id);
         }
     }
 

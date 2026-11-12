@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Models\CarDamageReport;
 use App\Models\SystemConfig;
+use App\Services\IranPageAccessService;
 use Carbon\Carbon;
 use Inertia\Inertia;
 
@@ -156,6 +157,12 @@ class CarDamageReportController extends Controller
 
             $data = CarDamageReport::where('owner_id', $owner_id)->orderBy('id', 'desc');
 
+            // Non-admin staff only see reports they created.
+            $iranAccess = app(IranPageAccessService::class);
+            if (! $iranAccess->isAdmin(Auth::user())) {
+                $data->where('user_id', Auth::id());
+            }
+
             // فقط إذا تم تحديد التواريخ بشكل صحيح، نطبق الفلتر
             if ($from && $to && $from != '0' && $to != '0' && $from != '' && $to != '') {
                 $data->whereBetween('created', [$from, $to]);
@@ -230,7 +237,13 @@ class CarDamageReportController extends Controller
         
         $report = CarDamageReport::find($id);
         
-        if (!$report || ($report->owner_id != $owner_id && Auth::user()->type_id != 1)) {
+        $iranAccess = app(IranPageAccessService::class);
+        $isAdmin = $iranAccess->isAdmin(Auth::user());
+        if (
+            ! $report
+            || ((int) $report->owner_id !== (int) $owner_id && ! $isAdmin)
+            || (! $isAdmin && (int) $report->user_id !== (int) Auth::id())
+        ) {
             return Response::json(['error' => 'Unauthorized'], 403);
         }
 
