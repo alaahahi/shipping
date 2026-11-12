@@ -127,7 +127,11 @@ class IranDamageReportController extends Controller
     private function restrictToOwnUnlessAdmin($query): void
     {
         $user = Auth::user() ?: request()->user();
+
+        // Token guest has no user identity — do not expose all damage reports.
         if (! $user) {
+            $query->whereRaw('0 = 1');
+
             return;
         }
 

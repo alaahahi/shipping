@@ -171,7 +171,7 @@ class IranPageAccessTest extends TestCase
     }
 
     /** @test */
-    public function guest_with_token_can_open_page_and_list_after_pin()
+    public function guest_with_token_can_open_page_but_does_not_see_company_invoices()
     {
         $token = config('iran.page_token');
 
@@ -184,18 +184,40 @@ class IranPageAccessTest extends TestCase
             ->assertJsonPath('unlocked', true);
 
         IranInvoice::create([
-            'invoice_no' => 'IR-GUEST',
+            'invoice_no' => 'IR-STAFF',
+            'owner_id' => 1,
+            'created_by' => $this->staff->id,
+        ]);
+        IranInvoice::create([
+            'invoice_no' => 'IR-ORPHAN',
             'owner_id' => 1,
             'created_by' => null,
         ]);
 
+        // Token guest has no user identity — must not see everyone's invoices.
         $list = $this->withHeader('X-Iran-Token', $token)
             ->getJson('/api/iran-invoices')
             ->assertOk()
             ->json('data');
 
-        $this->assertNotEmpty($list);
-        $this->assertSame('IR-GUEST', $list[0]['invoice_no']);
+        $this->assertSame([], $list);
+    }
+
+    /** @test */
+    public function wrong_token_is_rejected_and_clears_remembered_access()
+    {
+        $token = config('iran.page_token');
+
+        $this->withHeaders(['X-Iran-Token' => $token])
+            ->postJson('/api/iran/unlock', ['pin' => '134679'])
+            ->assertOk();
+
+        $this->withHeaders(['X-Iran-Token' => 'WRONG-TOKEN'])
+            ->getJson('/api/iran-invoices')
+            ->assertStatus(401);
+
+        $this->get('/iran?token=WRONG-TOKEN')
+            ->assertRedirect(route('login'));
     }
 
     /** @test */

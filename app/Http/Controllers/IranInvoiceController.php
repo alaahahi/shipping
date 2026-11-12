@@ -576,15 +576,21 @@ class IranInvoiceController extends Controller
     }
 
     /**
-     * Logged-in non-admin staff only see/edit their own rows.
-     * Admins and token guests (no Auth user) see all for the owner_id.
+     * Data scoping:
+     * - Admin → all owner rows
+     * - Logged-in non-admin → only rows they created
+     * - Token guest (no Auth user) → nothing (must not see everyone's data)
      *
      * @param  \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder  $query
      */
     private function restrictToOwnInvoicesUnlessAdmin($query, string $column = 'created_by'): void
     {
         $user = Auth::user() ?: request()->user();
+
+        // Pure token guest has no identity — never dump the whole company list.
         if (! $user) {
+            $query->whereRaw('0 = 1');
+
             return;
         }
 

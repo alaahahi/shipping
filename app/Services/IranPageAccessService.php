@@ -75,15 +75,26 @@ class IranPageAccessService
         return (int) config('iran.owner_id', 1);
     }
 
+    /**
+     * Persist a *valid* token. An explicitly wrong token clears memory and fails.
+     */
     public function rememberValidToken(Request $request): bool
     {
-        if (!$this->tokenMatches($request)) {
-            return $this->hasRememberedToken($request);
+        $provided = $this->tokenFromRequest($request);
+
+        if ($provided !== null && $provided !== '') {
+            if (! $this->tokenMatches($request)) {
+                $this->forgetTokenAccess($request);
+
+                return false;
+            }
+
+            $request->session()->put(self::TOKEN_SESSION_KEY, true);
+
+            return true;
         }
 
-        $request->session()->put(self::TOKEN_SESSION_KEY, true);
-
-        return true;
+        return $this->hasRememberedToken($request);
     }
 
     public function hasRememberedToken(Request $request): bool
@@ -96,16 +107,39 @@ class IranPageAccessService
         return $this->rememberValidToken($request);
     }
 
+    public function forgetTokenAccess(Request $request): void
+    {
+        $request->session()->forget(self::TOKEN_SESSION_KEY);
+        $request->session()->forget(self::SESSION_KEY);
+    }
+
     /**
-     * Page/API entry: logged-in user OR valid shared token.
+     * Page/API entry:
+     * - Wrong token in request → always denied (even if logged in / previously remembered).
+     * - Valid token → allowed (guest or logged-in).
+     * - No token → logged-in user OR previously remembered valid token.
      */
     public function canEnter(Request $request): bool
     {
+        $provided = $this->tokenFromRequest($request);
+
+        if ($provided !== null && $provided !== '') {
+            if (! $this->tokenMatches($request)) {
+                $this->forgetTokenAccess($request);
+
+                return false;
+            }
+
+            $request->session()->put(self::TOKEN_SESSION_KEY, true);
+
+            return true;
+        }
+
         if ($request->user()) {
             return true;
         }
 
-        return $this->hasValidTokenAccess($request);
+        return $this->hasRememberedToken($request);
     }
 
     public function tokenMatches(Request $request): bool
@@ -146,6 +180,7 @@ class IranPageAccessService
     public function pageProps(Request $request): array
     {
         // Persist token from ?token= / header into the session for later API calls.
+        // Wrong token clears access — do not keep a stale "remembered" unlock.
         $this->rememberValidToken($request);
 
         $user = $request->user();
@@ -162,7 +197,7 @@ class IranPageAccessService
 
     protected function adminTypeId(): ?int
     {
-        if (!Schema::hasTable('user_type')) {
+        if (! Schema::hasTable('user_type')) {
             return null;
         }
 
