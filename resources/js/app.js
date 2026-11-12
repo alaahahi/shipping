@@ -14,11 +14,13 @@ const appName = window.document.getElementsByTagName('title')[0]?.innerText || '
 import en from './lang/en.json';
 import ar from './lang/ar.json';
 import kr from './lang/kr.json';
+import fa from './lang/fa.json';
 
 const i18n = createI18n({
   legacy: false,
   locale: localStorage.getItem('lang')|| 'ar',
-  messages: { en, ar, kr },
+  fallbackLocale: 'ar',
+  messages: { en, ar, kr, fa },
 });
 
 createInertiaApp({

@@ -25,7 +25,7 @@ const applyDocumentLang = (locale) => {
     return;
   }
   document.documentElement.lang = locale;
-  // ar / kr stay RTL; English is LTR
+  // ar / kr / fa stay RTL; English is LTR
   document.documentElement.dir = locale === "en" ? "ltr" : "rtl";
 };
 
@@ -148,6 +148,7 @@ function isPageActive(navPage) {
                     <DropdownLink @click="switchLocale('ar')" as="button">عربي</DropdownLink>
                     <DropdownLink @click="switchLocale('en')" as="button">English</DropdownLink>
                     <DropdownLink @click="switchLocale('kr')" as="button">كردي</DropdownLink>
+                    <DropdownLink @click="switchLocale('fa')" as="button">فارسی</DropdownLink>
                   </template>
                 </Dropdown>
               </div>
@@ -284,6 +285,7 @@ function isPageActive(navPage) {
                   <button type="button" class="rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" @click="switchLocale('ar')">AR</button>
                   <button type="button" class="rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" @click="switchLocale('en')">EN</button>
                   <button type="button" class="rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" @click="switchLocale('kr')">KR</button>
+                  <button type="button" class="rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" @click="switchLocale('fa')">FA</button>
                 </div>
                 <div class="mt-3 space-y-2">
                   <ResponsiveNavLink :href="route('logout')" method="post" as="button">

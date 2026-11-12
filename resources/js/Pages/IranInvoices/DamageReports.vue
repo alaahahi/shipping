@@ -5,7 +5,9 @@ import TextInput from "@/Components/TextInput.vue";
 import ModalShowDamageReport from "@/Components/ModalShowDamageReport.vue";
 import { useToast } from "vue-toastification";
 import { TailwindPagination } from "laravel-vue-pagination";
+import { useI18n } from "vue-i18n";
 
+const { t } = useI18n();
 const iranAxios = inject("iranAxios");
 const toast = useToast();
 
@@ -39,7 +41,7 @@ const fetchReports = async (page = 1) => {
     reports.value = response.data;
   } catch (error) {
     console.error(error);
-    toast.error("تعذر تحميل تقارير الضرر");
+    toast.error(t("iran_toast_load_damage_fail"));
   } finally {
     loading.value = false;
   }
@@ -60,22 +62,22 @@ const openNew = () => {
 const saveReport = async (payload) => {
   try {
     await iranAxios.post("/api/iran-damage-reports", payload);
-    toast.success("تم حفظ تقرير الضرر");
+    toast.success(t("iran_toast_damage_saved"));
     showModal.value = false;
     fetchReports();
   } catch (error) {
-    toast.error(error.response?.data?.message || "تعذر حفظ التقرير");
+    toast.error(error.response?.data?.message || t("iran_toast_damage_save_fail"));
   }
 };
 
 const deleteReport = async (report) => {
-  if (!confirm(`حذف تقرير الضرر #${report.id}؟`)) return;
+  if (!confirm(t("iran_confirm_delete_damage", { id: report.id }))) return;
   try {
     await iranAxios.post("/api/iran-damage-reports/delete", { id: report.id });
-    toast.success("تم حذف التقرير");
+    toast.success(t("iran_toast_damage_deleted"));
     fetchReports();
   } catch (error) {
-    toast.error(error.response?.data?.message || "تعذر حذف التقرير");
+    toast.error(error.response?.data?.message || t("iran_toast_damage_delete_fail"));
   }
 };
 
@@ -98,15 +100,15 @@ watch([q, from, to], () => fetchReports(), { immediate: true });
     <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4 mb-4">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
         <div>
-          <InputLabel for="damage-q" value="بحث" />
-          <TextInput id="damage-q" type="text" class="mt-1 block w-full" v-model="q" placeholder="سائق / CMR / شاصي" />
+          <InputLabel for="damage-q" :value="$t('iran_search')" />
+          <TextInput id="damage-q" type="text" class="mt-1 block w-full" v-model="q" :placeholder="$t('iran_search_damage_ph')" />
         </div>
         <div>
-          <InputLabel for="damage-from" value="من تاريخ" />
+          <InputLabel for="damage-from" :value="$t('iran_from_date')" />
           <TextInput id="damage-from" type="date" class="mt-1 block w-full" v-model="from" />
         </div>
         <div>
-          <InputLabel for="damage-to" value="إلى تاريخ" />
+          <InputLabel for="damage-to" :value="$t('iran_to_date')" />
           <TextInput id="damage-to" type="date" class="mt-1 block w-full" v-model="to" />
         </div>
         <div class="pt-6">
@@ -115,7 +117,7 @@ watch([q, from, to], () => fetchReports(), { immediate: true });
             class="w-full px-4 py-2 font-bold text-white bg-blue-600 rounded hover:bg-blue-700"
             @click="openNew"
           >
-            + تقرير ضرر جديد
+            {{ $t("iran_new_damage") }}
           </button>
         </div>
       </div>
@@ -126,20 +128,20 @@ watch([q, from, to], () => fetchReports(), { immediate: true });
         <thead class="bg-gray-50 dark:bg-gray-900 text-xs uppercase">
           <tr>
             <th class="px-3 py-3">#</th>
-            <th class="px-3 py-3">التاريخ</th>
-            <th class="px-3 py-3">السائق</th>
-            <th class="px-3 py-3">CMR</th>
-            <th class="px-3 py-3">السيارات</th>
-            <th class="px-3 py-3">مجموع الضرر</th>
-            <th class="px-3 py-3 print:hidden">تنفيذ</th>
+            <th class="px-3 py-3">{{ $t("iran_col_date") }}</th>
+            <th class="px-3 py-3">{{ $t("iran_col_driver") }}</th>
+            <th class="px-3 py-3">{{ $t("iran_col_cmr") }}</th>
+            <th class="px-3 py-3">{{ $t("iran_col_cars") }}</th>
+            <th class="px-3 py-3">{{ $t("iran_col_damage_total") }}</th>
+            <th class="px-3 py-3 print:hidden">{{ $t("iran_col_actions") }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="7" class="py-8 text-gray-400">جاري التحميل...</td>
+            <td colspan="7" class="py-8 text-gray-400">{{ $t("iran_loading") }}</td>
           </tr>
           <tr v-else-if="!reports.data || reports.data.length === 0">
-            <td colspan="7" class="py-8 text-gray-400">لا توجد تقارير ضرر</td>
+            <td colspan="7" class="py-8 text-gray-400">{{ $t("iran_no_damage") }}</td>
           </tr>
           <tr
             v-for="report in reports.data"
@@ -159,14 +161,14 @@ watch([q, from, to], () => fetchReports(), { immediate: true });
                   class="px-2 py-1 text-white bg-gray-800 rounded text-xs"
                   @click="printReport(report)"
                 >
-                  طباعة
+                  {{ $t("iran_print") }}
                 </button>
                 <button
                   type="button"
                   class="px-2 py-1 text-white bg-red-500 rounded text-xs"
                   @click="deleteReport(report)"
                 >
-                  حذف
+                  {{ $t("iran_delete") }}
                 </button>
               </div>
             </td>
