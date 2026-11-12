@@ -319,11 +319,11 @@ watch(
   <Head :title="isEdit ? $t('iran_head_edit') : $t('iran_head_new')" />
   <AuthenticatedLayout>
     <template #header>
-      <div class="flex justify-between items-center">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-xl font-bold leading-tight text-slate-900 dark:text-white">
           {{ isEdit ? $t("iran_form_title_edit") : $t("iran_form_title_new") }}
         </h2>
-        <Link :href="route('iranInvoices.index')" class="text-sm text-indigo-600 dark:text-indigo-400">
+        <Link :href="route('iranInvoices.index')" class="text-sm font-semibold text-emerald-600 transition hover:text-emerald-500 dark:text-emerald-300">
           ← {{ $t("iran_form_back") }}
         </Link>
       </div>
@@ -331,30 +331,30 @@ watch(
 
     <IranPinGate :unlocked="unlocked" :pin="pin" :error="pinError" :unlocking="unlocking" @update:pin="pin = $event">
     <div class="py-8">
-      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
+      <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-6">
           <!-- Invoice header -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
-              <InputLabel for="invoice_no" :value="$t('iran_form_invoice_no')" />
+              <InputLabel for="invoice_no" :value="$t('iran_form_invoice_no')" class="!text-slate-600 dark:!text-slate-200" />
               <TextInput
                 id="invoice_no"
                 type="text"
-                class="mt-1 block w-full"
+                class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:placeholder-slate-400"
                 v-model="form.invoice_no"
                 :placeholder="isEdit ? '' : (nextInvoiceNo || 'IR-2026-0001')"
               />
-              <p v-if="!isEdit && nextInvoiceNo" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p v-if="!isEdit && nextInvoiceNo" class="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 {{ $t("iran_form_next_no", { no: nextInvoiceNo }) }}
               </p>
             </div>
             <div>
-              <InputLabel for="invoice_date" :value="$t('iran_form_date')" />
-              <TextInput id="invoice_date" type="date" class="mt-1 block w-full" v-model="form.invoice_date" />
+              <InputLabel for="invoice_date" :value="$t('iran_form_date')" class="!text-slate-600 dark:!text-slate-200" />
+              <TextInput id="invoice_date" type="date" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white" v-model="form.invoice_date" />
             </div>
             <div>
-              <InputLabel for="currency" :value="$t('iran_currency')" />
-              <select id="currency" v-model="form.currency" class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600">
+              <InputLabel for="currency" :value="$t('iran_currency')" class="!text-slate-600 dark:!text-slate-200" />
+              <select id="currency" v-model="form.currency" class="mt-1.5 block w-full rounded-xl border-slate-300 bg-white text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white">
                 <option value="USD">USD</option>
                 <option value="IQD">IQD</option>
                 <option value="AED">AED</option>
@@ -362,70 +362,71 @@ watch(
               </select>
             </div>
             <div>
-              <InputLabel for="carrier" :value="$t('iran_form_carrier')" />
-              <div class="flex gap-2 mt-1">
-                <select id="carrier" v-model="form.carrier_id" class="block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600">
+              <InputLabel for="carrier" :value="$t('iran_form_carrier')" class="!text-slate-600 dark:!text-slate-200" />
+              <div class="mt-1.5 flex gap-2">
+                <select id="carrier" v-model="form.carrier_id" class="block w-full rounded-xl border-slate-300 bg-white text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white">
                   <option value="">{{ $t("iran_form_choose") }}</option>
                   <option v-for="c in carriers" :key="c.id" :value="c.id">{{ c.name }}</option>
                 </select>
-                <button type="button" @click="addCarrierInline" class="px-3 bg-indigo-600 text-white rounded">+</button>
+                <button type="button" @click="addCarrierInline" class="rounded-xl bg-sky-600 px-3 font-bold text-white transition hover:bg-sky-500">+</button>
               </div>
             </div>
             <div>
-              <InputLabel for="consignee" :value="$t('iran_form_consignee')" />
-              <div class="flex gap-2 mt-1">
-                <select id="consignee" v-model="form.consignee_id" class="block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600">
+              <InputLabel for="consignee" :value="$t('iran_form_consignee')" class="!text-slate-600 dark:!text-slate-200" />
+              <div class="mt-1.5 flex gap-2">
+                <select id="consignee" v-model="form.consignee_id" class="block w-full rounded-xl border-slate-300 bg-white text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white">
                   <option value="">{{ $t("iran_form_choose") }}</option>
                   <option v-for="c in consignees" :key="c.id" :value="c.id">{{ c.name }}</option>
                 </select>
-                <button type="button" @click="addConsigneeInline" class="px-3 bg-indigo-600 text-white rounded">+</button>
+                <button type="button" @click="addConsigneeInline" class="rounded-xl bg-sky-600 px-3 font-bold text-white transition hover:bg-sky-500">+</button>
               </div>
             </div>
             <div>
-              <InputLabel for="destination" :value="$t('iran_form_destination')" />
-              <TextInput id="destination" type="text" class="mt-1 block w-full" v-model="form.destination" placeholder="ANZALI HASSAN ROAD" />
+              <InputLabel for="destination" :value="$t('iran_form_destination')" class="!text-slate-600 dark:!text-slate-200" />
+              <TextInput id="destination" type="text" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:placeholder-slate-400" v-model="form.destination" placeholder="ANZALI HASSAN ROAD" />
             </div>
             <div>
-              <InputLabel for="total_price" :value="$t('iran_form_total_optional')" />
-              <TextInput id="total_price" type="number" step="0.01" class="mt-1 block w-full" v-model="form.total_price" :placeholder="computedTotal !== null ? String(computedTotal) : $t('iran_form_empty')" />
+              <InputLabel for="total_price" :value="$t('iran_form_total_optional')" class="!text-slate-600 dark:!text-slate-200" />
+              <TextInput id="total_price" type="number" step="0.01" class="mt-1.5 block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:placeholder-slate-400" v-model="form.total_price" :placeholder="computedTotal !== null ? String(computedTotal) : $t('iran_form_empty')" />
             </div>
           </div>
 
           <!-- Items table -->
-          <div class="flex justify-between items-center mb-2">
-            <h3 class="font-semibold text-gray-700 dark:text-gray-200">{{ $t("iran_form_cars_in_invoice") }}</h3>
-            <button type="button" @click="addItem" class="px-3 py-1 bg-green-600 text-white rounded text-sm">{{ $t("iran_form_add_car") }}</button>
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">{{ $t("iran_form_cars_in_invoice") }}</h3>
+            <button type="button" @click="addItem" class="rounded-xl bg-emerald-600 px-3 py-1.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-500">{{ $t("iran_form_add_car") }}</button>
           </div>
-          <div class="overflow-x-auto border rounded-lg dark:border-gray-700">
-            <table class="w-full text-sm text-center">
-              <thead class="bg-gray-50 dark:bg-gray-900 text-xs uppercase text-gray-500 dark:text-gray-400">
-                <tr>
-                  <th class="px-2 py-2">#</th>
-                  <th class="px-2 py-2">{{ $t("iran_col_chassis") }}</th>
-                  <th class="px-2 py-2">{{ $t("iran_make") }}</th>
-                  <th class="px-2 py-2">{{ $t("iran_model") }}</th>
-                  <th class="px-2 py-2">{{ $t("iran_col_year") }}</th>
-                  <th class="px-2 py-2">{{ $t("iran_col_color") }}</th>
-                  <th class="px-2 py-2">{{ $t("iran_col_weight") }}</th>
-                  <th class="px-2 py-2">{{ $t("iran_col_amount") }}</th>
-                  <th class="px-2 py-2">{{ $t("iran_notes") }}</th>
-                  <th v-if="isEdit" class="px-2 py-2 print:hidden">{{ $t("iran_form_car_photos") }}</th>
-                  <th class="px-2 py-2"></th>
+          <div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700">
+            <div class="overflow-x-auto">
+            <table class="w-full text-center text-sm text-slate-700 dark:text-slate-200">
+              <thead>
+                <tr class="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                  <th class="px-2 py-3">#</th>
+                  <th class="px-2 py-3">{{ $t("iran_col_chassis") }}</th>
+                  <th class="px-2 py-3">{{ $t("iran_make") }}</th>
+                  <th class="px-2 py-3">{{ $t("iran_model") }}</th>
+                  <th class="px-2 py-3">{{ $t("iran_col_year") }}</th>
+                  <th class="px-2 py-3">{{ $t("iran_col_color") }}</th>
+                  <th class="px-2 py-3">{{ $t("iran_col_weight") }}</th>
+                  <th class="px-2 py-3">{{ $t("iran_col_amount") }}</th>
+                  <th class="px-2 py-3">{{ $t("iran_notes") }}</th>
+                  <th v-if="isEdit" class="px-2 py-3 print:hidden">{{ $t("iran_form_car_photos") }}</th>
+                  <th class="px-2 py-3"></th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(item, index) in form.items" :key="item.id || `new-${index}`" class="border-t dark:border-gray-700">
-                  <td class="px-2 py-1">{{ index + 1 }}</td>
-                  <td class="px-2 py-1"><input v-model="item.chassis_no" class="w-28 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
-                  <td class="px-2 py-1"><input v-model="item.make" class="w-24 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
-                  <td class="px-2 py-1"><input v-model="item.model" class="w-24 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
-                  <td class="px-2 py-1"><input v-model="item.year" class="w-16 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
-                  <td class="px-2 py-1"><input v-model="item.color" class="w-20 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
-                  <td class="px-2 py-1"><input v-model="item.weight" class="w-16 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
-                  <td class="px-2 py-1"><input v-model="item.unit_price" type="number" step="0.01" placeholder="فارغ" class="w-20 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
-                  <td class="px-2 py-1"><input v-model="item.notes" class="w-28 rounded border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" /></td>
-                  <td v-if="isEdit" class="px-2 py-1 print:hidden">
-                    <div v-if="item.id" class="flex flex-wrap gap-1 justify-center items-center max-w-[140px] mx-auto">
+                <tr v-for="(item, index) in form.items" :key="item.id || `new-${index}`" class="border-t border-slate-100 dark:border-slate-700/80">
+                  <td class="px-2 py-1.5 font-bold tabular-nums">{{ index + 1 }}</td>
+                  <td class="px-2 py-1.5"><input v-model="item.chassis_no" class="w-28 rounded-lg border-slate-300 bg-white text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white" /></td>
+                  <td class="px-2 py-1.5"><input v-model="item.make" class="w-24 rounded-lg border-slate-300 bg-white text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white" /></td>
+                  <td class="px-2 py-1.5"><input v-model="item.model" class="w-24 rounded-lg border-slate-300 bg-white text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white" /></td>
+                  <td class="px-2 py-1.5"><input v-model="item.year" class="w-16 rounded-lg border-slate-300 bg-white text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white" /></td>
+                  <td class="px-2 py-1.5"><input v-model="item.color" class="w-20 rounded-lg border-slate-300 bg-white text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white" /></td>
+                  <td class="px-2 py-1.5"><input v-model="item.weight" class="w-16 rounded-lg border-slate-300 bg-white text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white" /></td>
+                  <td class="px-2 py-1.5"><input v-model="item.unit_price" type="number" step="0.01" :placeholder="$t('iran_form_empty')" class="w-20 rounded-lg border-slate-300 bg-white text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:placeholder-slate-400" /></td>
+                  <td class="px-2 py-1.5"><input v-model="item.notes" class="w-28 rounded-lg border-slate-300 bg-white text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white" /></td>
+                  <td v-if="isEdit" class="px-2 py-1.5 print:hidden">
+                    <div v-if="item.id" class="mx-auto flex max-w-[140px] flex-wrap items-center justify-center gap-1">
                       <a
                         v-for="att in (item.attachments || [])"
                         :key="att.id"
@@ -437,67 +438,69 @@ watch(
                         <img
                           v-if="isImageFile(att.file_name)"
                           :src="thumbUrl(att.file_name)"
-                          class="h-10 w-10 object-cover rounded border dark:border-gray-600"
+                          class="h-10 w-10 rounded-lg border border-slate-300 object-cover dark:border-slate-600"
                           @error="(e) => { e.target.src = fileUrl(att.file_name); }"
                         />
-                        <span v-else class="inline-flex h-10 w-10 items-center justify-center bg-gray-200 dark:bg-gray-600 rounded text-xs">📎</span>
+                        <span v-else class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-xs dark:bg-slate-700">📎</span>
                         <button
                           v-if="canDelete"
                           type="button"
                           @click.prevent="deleteItemAttachment(item, att)"
-                          class="absolute -top-1 -right-1 h-4 w-4 bg-red-600 text-white rounded-full text-xs leading-none"
+                          class="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-rose-600 text-xs leading-none text-white"
                         >×</button>
                       </a>
-                      <label class="h-10 w-10 flex items-center justify-center bg-indigo-500 text-white rounded cursor-pointer text-lg" title="إرفاق صور">
+                      <label class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg bg-sky-600 text-lg text-white transition hover:bg-sky-500" title="إرفاق صور">
                         +
                         <input type="file" class="hidden" accept="image/*,.pdf" multiple @change="uploadItemAttachment(item, $event)" />
                       </label>
                     </div>
-                    <span v-else class="text-xs text-gray-400">احفظ أولاً</span>
+                    <span v-else class="text-xs text-slate-400">احفظ أولاً</span>
                   </td>
-                  <td class="px-2 py-1">
-                    <button type="button" @click="removeItem(index)" class="px-2 py-1 bg-red-500 text-white rounded text-xs">حذف</button>
+                  <td class="px-2 py-1.5">
+                    <button type="button" @click="removeItem(index)" class="rounded-lg bg-rose-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-rose-500">{{ $t("iran_delete") }}</button>
                   </td>
                 </tr>
                 <tr v-if="form.items.length === 0">
-                  <td :colspan="isEdit ? 11 : 10" class="py-6 text-gray-400">لا توجد سيارات - اضغط "إضافة سيارة"</td>
+                  <td :colspan="isEdit ? 11 : 10" class="py-10 text-slate-500 dark:text-slate-400">لا توجد سيارات - اضغط "إضافة سيارة"</td>
                 </tr>
               </tbody>
             </table>
+            </div>
           </div>
 
           <div class="mt-4">
-            <InputLabel for="notes" value="ملاحظات الفاتورة" />
-            <textarea id="notes" v-model="form.notes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"></textarea>
+            <InputLabel for="notes" value="ملاحظات الفاتورة" class="!text-slate-600 dark:!text-slate-200" />
+            <textarea id="notes" v-model="form.notes" rows="2" class="mt-1.5 block w-full rounded-xl border-slate-300 bg-white text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white"></textarea>
           </div>
 
           <!-- Attachments (edit only — not included on printed invoice) -->
           <div v-if="isEdit" class="mt-6 print:hidden">
-            <div class="flex justify-between items-center mb-2">
-              <h3 class="font-semibold text-gray-700 dark:text-gray-200">المرفقات (صور / ملفات)</h3>
-              <label class="px-3 py-1 bg-indigo-600 text-white rounded text-sm cursor-pointer">
+            <div class="mb-3 flex items-center justify-between gap-3">
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">المرفقات (صور / ملفات)</h3>
+              <label class="cursor-pointer rounded-xl bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-sky-500">
                 + إرفاق ملف
                 <input type="file" class="hidden" accept="image/*,.pdf" multiple @change="uploadAttachment" />
               </label>
             </div>
-            <div class="overflow-x-auto border rounded-lg dark:border-gray-700">
-              <table class="w-full text-sm text-center">
-                <thead class="bg-gray-50 dark:bg-gray-900 text-xs uppercase text-gray-500 dark:text-gray-400">
-                  <tr>
-                    <th class="px-3 py-2 w-20">معاينة</th>
-                    <th class="px-3 py-2">اسم الملف</th>
-                    <th class="px-3 py-2 w-28">تاريخ الرفع</th>
-                    <th class="px-3 py-2 w-24">تنفيذ</th>
+            <div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700">
+              <div class="overflow-x-auto">
+              <table class="w-full text-center text-sm text-slate-700 dark:text-slate-200">
+                <thead>
+                  <tr class="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                    <th class="w-20 px-3 py-3">معاينة</th>
+                    <th class="px-3 py-3">اسم الملف</th>
+                    <th class="w-28 px-3 py-3">تاريخ الرفع</th>
+                    <th class="w-24 px-3 py-3">تنفيذ</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-if="attachments.length === 0">
-                    <td colspan="4" class="py-6 text-gray-400">لا توجد مرفقات — اضغط «إرفاق ملف»</td>
+                    <td colspan="4" class="py-10 text-slate-500 dark:text-slate-400">لا توجد مرفقات — اضغط «إرفاق ملف»</td>
                   </tr>
                   <tr
                     v-for="att in attachments"
                     :key="att.id"
-                    class="border-t dark:border-gray-700"
+                    class="border-t border-slate-100 dark:border-slate-700/80"
                   >
                     <td class="px-3 py-2">
                       <a :href="fileUrl(att.file_name)" target="_blank" class="inline-block">
@@ -505,33 +508,34 @@ watch(
                           v-if="isImageFile(att.file_name)"
                           :src="thumbUrl(att.file_name)"
                           :alt="att.original_name"
-                          class="h-14 w-14 object-cover rounded border dark:border-gray-600 mx-auto"
+                          class="mx-auto h-14 w-14 rounded-lg border border-slate-300 object-cover dark:border-slate-600"
                           @error="(e) => { e.target.src = fileUrl(att.file_name); }"
                         />
                         <span v-else class="text-2xl">📎</span>
                       </a>
                     </td>
-                    <td class="px-3 py-2 text-start dark:text-gray-200">
-                      <a :href="fileUrl(att.file_name)" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                    <td class="px-3 py-2 text-start dark:text-slate-100">
+                      <a :href="fileUrl(att.file_name)" target="_blank" class="font-medium text-sky-600 hover:underline dark:text-sky-300">
                         {{ att.original_name || att.file_name }}
                       </a>
                     </td>
-                    <td class="px-3 py-2 text-gray-500 dark:text-gray-400">{{ att.created_at ? String(att.created_at).slice(0, 10) : "—" }}</td>
+                    <td class="px-3 py-2 tabular-nums text-slate-500 dark:text-slate-400">{{ att.created_at ? String(att.created_at).slice(0, 10) : "—" }}</td>
                     <td class="px-3 py-2">
-                      <button v-if="canDelete" type="button" @click="deleteAttachment(att)" class="px-2 py-1 bg-red-500 text-white rounded text-xs">{{ $t("iran_delete") }}</button>
+                      <button v-if="canDelete" type="button" @click="deleteAttachment(att)" class="rounded-lg bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-500">{{ $t("iran_delete") }}</button>
                     </td>
                   </tr>
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
-          <p v-else class="mt-4 text-sm text-gray-500 dark:text-gray-400 print:hidden">
+          <p v-else class="mt-4 text-sm text-slate-500 dark:text-slate-400 print:hidden">
             {{ $t("iran_form_save_first") }}
           </p>
 
           <div class="mt-6 flex justify-end gap-3">
-            <Link :href="route('iranInvoices.index')" class="px-5 py-2 bg-gray-300 dark:bg-gray-600 rounded">{{ $t("iran_cancel") }}</Link>
-            <button @click="save" :disabled="saving" class="px-6 py-2 bg-green-600 text-white font-bold rounded disabled:opacity-60">
+            <Link :href="route('iranInvoices.index')" class="rounded-xl bg-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600">{{ $t("iran_cancel") }}</Link>
+            <button type="button" @click="save" :disabled="saving" class="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-60">
               {{ saving ? $t("iran_loading") : $t("iran_save") }}
             </button>
           </div>

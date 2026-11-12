@@ -84,84 +84,86 @@ function doSave() {
   <Transition name="modal">
     <div v-if="show" class="modal-mask">
       <div class="modal-wrapper max-h-[90vh]">
-        <div class="modal-container dark:bg-gray-900 overflow-auto max-h-[90vh]">
-          <div class="modal-header text-center py-4 dark:text-gray-300"> 
+        <div class="modal-container max-h-[90vh] overflow-auto !bg-slate-800 !text-slate-100 border border-slate-700 shadow-xl">
+          <div class="modal-header py-4 text-center text-lg font-bold text-white">
             تقرير ضرر السيارات
             <slot name="header"></slot>
           </div>
 
           <div class="modal-body">
             <div class="grid grid-cols-2 gap-3 lg:gap-2">
-              <div class="mb-4 mx-5">
-                <label class="dark:text-gray-200" for="driverName">اسم السائق</label>
+              <div class="mx-5 mb-4">
+                <label class="text-sm font-medium text-slate-200" for="driverName">اسم السائق</label>
                 <input
                   id="driverName"
                   type="text"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  class="mt-1.5 block w-full rounded-xl border border-slate-600 bg-slate-900 text-white placeholder-slate-400 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500/30"
                   v-model="formDamage.driver_name"
                 />
               </div>
-              <div class="mb-4 mx-5">
-                <label class="dark:text-gray-200" for="cmrNumber">رقم CMR</label>
+              <div class="mx-5 mb-4">
+                <label class="text-sm font-medium text-slate-200" for="cmrNumber">رقم CMR</label>
                 <input
                   id="cmrNumber"
                   type="text"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  class="mt-1.5 block w-full rounded-xl border border-slate-600 bg-slate-900 text-white placeholder-slate-400 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500/30"
                   v-model="formDamage.cmr_number"
                 />
               </div>
 
-              <div class="mb-4 mx-5">
-                <label class="dark:text-gray-200" for="carsCount">عدد السيارات</label>
+              <div class="mx-5 mb-4">
+                <label class="text-sm font-medium text-slate-200" for="carsCount">عدد السيارات</label>
                 <input
                   id="carsCount"
                   type="number"
                   readonly
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  class="mt-1.5 block w-full rounded-xl border border-slate-600 bg-slate-900 text-white shadow-sm"
                   :value="carsInfo.length"
                 />
               </div>
-              <div class="mb-4 mx-5">
-                <label class="dark:text-gray-200" for="totalDamage">مجموع الضرر ($)</label>
+              <div class="mx-5 mb-4">
+                <label class="text-sm font-medium text-slate-200" for="totalDamage">مجموع الضرر ($)</label>
                 <input
                   id="totalDamage"
                   type="text"
                   readonly
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  class="mt-1.5 block w-full rounded-xl border border-slate-600 bg-slate-900 font-bold text-rose-300 shadow-sm"
                   :value="totalDamage.toFixed(2) + '$'"
                 />
               </div>
 
-              <div class="mb-4 mx-5">
-                <label class="dark:text-gray-200" for="createdDate">التاريخ</label>
+              <div class="mx-5 mb-4">
+                <label class="text-sm font-medium text-slate-200" for="createdDate">التاريخ</label>
                 <input
                   id="createdDate"
                   type="date"
-                  class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                  class="mt-1.5 block w-full rounded-xl border border-slate-600 bg-slate-900 text-white shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500/30"
                   v-model="formDamage.created"
                 />
               </div>
             </div>
 
             <!-- قائمة السيارات -->
-            <div class="mb-4 mx-5">
-              <div class="flex justify-between items-center mb-2">
-                <label class="dark:text-gray-200 font-bold">معلومات السيارات</label>
+            <div class="mx-5 mb-4">
+              <div class="mb-3 flex items-center justify-between gap-3">
+                <label class="font-bold text-white">معلومات السيارات</label>
                 <button
+                  type="button"
                   @click="addCar"
-                  class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  class="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-500"
                 >
                   إضافة سيارة
                 </button>
               </div>
               
-              <div v-for="(car, index) in carsInfo" :key="index" class="mb-4 p-4 border border-gray-300 dark:border-gray-700 rounded">
-                <div class="flex justify-between items-center mb-2">
-                  <h4 class="dark:text-gray-200 font-semibold">السيارة {{ index + 1 }}</h4>
+              <div v-for="(car, index) in carsInfo" :key="index" class="mb-4 rounded-2xl border border-slate-600 bg-slate-900/60 p-4">
+                <div class="mb-3 flex items-center justify-between gap-2">
+                  <h4 class="font-semibold text-white">السيارة {{ index + 1 }}</h4>
                   <button
                     v-if="carsInfo.length > 1"
+                    type="button"
                     @click="removeCar(index)"
-                    class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                    class="rounded-lg bg-rose-600 px-3 py-1 text-sm font-semibold text-white transition hover:bg-rose-500"
                   >
                     حذف
                   </button>
@@ -169,46 +171,46 @@ function doSave() {
                 
                 <div class="grid grid-cols-2 gap-3">
                   <div>
-                    <label class="dark:text-gray-200 text-sm">السيارة</label>
+                    <label class="text-sm text-slate-200">السيارة</label>
                     <input
                       type="text"
-                      class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                      class="mt-1.5 block w-full rounded-xl border border-slate-600 bg-slate-900 text-white placeholder-slate-400 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500/30"
                       v-model="car.car"
                       placeholder="مثال: TOYOTA COROLLA"
                     />
                   </div>
                   <div>
-                    <label class="dark:text-gray-200 text-sm">رقم الشانصي (VIN)</label>
+                    <label class="text-sm text-slate-200">رقم الشانصي (VIN)</label>
                     <input
                       type="text"
-                      class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                      class="mt-1.5 block w-full rounded-xl border border-slate-600 bg-slate-900 text-white placeholder-slate-400 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500/30"
                       v-model="car.vin"
                       placeholder="مثال: LFMAAA0C9S0664914"
                     />
                   </div>
                   <div>
-                    <label class="dark:text-gray-200 text-sm">الموديل</label>
+                    <label class="text-sm text-slate-200">الموديل</label>
                     <input
                       type="text"
-                      class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                      class="mt-1.5 block w-full rounded-xl border border-slate-600 bg-slate-900 text-white placeholder-slate-400 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500/30"
                       v-model="car.model"
                       placeholder="مثال: 2025"
                     />
                   </div>
                   <div>
-                    <label class="dark:text-gray-200 text-sm">اللون</label>
+                    <label class="text-sm text-slate-200">اللون</label>
                     <input
                       type="text"
-                      class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                      class="mt-1.5 block w-full rounded-xl border border-slate-600 bg-slate-900 text-white placeholder-slate-400 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500/30"
                       v-model="car.color"
                       placeholder="مثال: WHITE"
                     />
                   </div>
                   <div class="col-span-2">
-                    <label class="dark:text-gray-200 text-sm">الضرر ($)</label>
+                    <label class="text-sm text-slate-200">الضرر ($)</label>
                     <input
                       type="text"
-                      class="mt-1 block w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200 dark:border-gray-900"
+                      class="mt-1.5 block w-full rounded-xl border border-slate-600 bg-slate-900 text-white placeholder-slate-400 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500/30"
                       v-model="car.damage"
                       placeholder="مثال: 200$"
                       @input="calculateTotal"
@@ -222,13 +224,14 @@ function doSave() {
           <div class="modal-footer my-2">
             <div class="flex flex-row">
               <div class="basis-1/2 px-4">
-                <button class="modal-default-button py-3 bg-gray-500 rounded" @click="$emit('close');">
+                <button type="button" class="modal-default-button rounded-xl bg-slate-600 py-3 font-semibold text-white transition hover:bg-slate-500" @click="$emit('close');">
                   إلغاء
                 </button>
               </div>
               <div class="basis-1/2 px-4">
                 <button
-                  class="modal-default-button py-3 bg-rose-500 rounded col-6"
+                  type="button"
+                  class="modal-default-button col-6 rounded-xl bg-emerald-600 py-3 font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50"
                   @click="doSave"
                   :disabled="!formDamage.driver_name || !formDamage.cmr_number || carsInfo.length === 0"
                 >
